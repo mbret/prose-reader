@@ -1,5 +1,14 @@
 # Node
 
+{% hint style="warning" %}
+Node `>=22.12` is required. `@prose-reader/streamer`, `@prose-reader/archive-reader`
+and `@prose-reader/metadata-fetcher` parse XML with
+[`xmldoc`](https://www.npmjs.com/package/xmldoc), which is ESM-only from version 3.
+Importing these packages with `import` works on any Node that runs them; reaching
+them through `require()` needs the `require(esm)` support that landed unflagged in
+Node 22.12.
+{% endhint %}
+
 The streamer is source-agnostic — in node you can feed it from a zip library, an extraction tool, raw buffers, URLs, or your own custom source. Pick whatever fits your stack; the only requirement is to turn your source into an `Archive` (see [Archive Reader](../../archive-reader/README.md) for the full list of creators and how to build your own).
 
 As one example, opening a zip-based container (EPUB, CBZ) with `unzipper`:
