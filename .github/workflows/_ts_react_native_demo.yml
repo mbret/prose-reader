@@ -43,6 +43,11 @@ jobs:
       # about Android. Web is left out — `expo export` can build it, but through
       # react-native-web, which is not what this demo ships; its web side is the
       # vite app in `web/`.
+      #
+      # The vite app is covered all the same. It builds the page the WebView
+      # renders, which is not committed and which both native bundles embed as
+      # an asset, so `bundle` builds it before either export. This step
+      # therefore also proves the web side builds against the libraries above.
       - name: Bundle demo
         working-directory: prose-react-native-demo
         run: npm run bundle

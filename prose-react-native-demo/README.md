@@ -4,17 +4,26 @@ This is an [Expo](https://expo.dev) project created with [`create-expo-app`](htt
 
 ## Get started
 
-1. Install dependencies
+1. Build the libraries, from the repository root. The demo depends on them through `file:` links to their build output.
+
+   ```bash
+   npm ci
+   npx lerna run build --stream --scope "@prose-reader/*"
+   ```
+
+2. Install dependencies
 
    ```bash
    npm install
    ```
 
-2. Start the app
+3. Start the app
 
    ```bash
-   npx expo start
+   npm start
    ```
+
+The reader runs inside a WebView whose page is built from the vite app in `web/`, into `web/dist/index.html`. That page is not committed: `npm start` builds it before starting Metro, and so do `npm run start:all`, `npm run ios`, `npm run android` and `npm run bundle`. `npm run start:all` also rebuilds it whenever its sources in `web/` change. Running `npx expo start` directly skips that build, and Metro fails with "Unable to resolve" until the page exists.
 
 In the output, you'll find options to open the app in a
 
