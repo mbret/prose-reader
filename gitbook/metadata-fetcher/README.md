@@ -1,5 +1,12 @@
 # Metadata Fetcher
 
+{% hint style="warning" %}
+On Node, this package requires `>=22.12`. It parses XML with
+[`xmldoc`](https://www.npmjs.com/package/xmldoc), which is ESM-only from version 3,
+so reaching this package through `require()` needs the `require(esm)` support that
+landed unflagged in Node 22.12. `import` and bundler builds are unaffected.
+{% endhint %}
+
 **`@prose-reader/metadata-fetcher`** fetches a book's metadata from online catalogs. [archive-reader](../archive-reader/README.md) reads what the file itself carries; this reads what the world knows about it.
 
 It takes a compact `FetchMetadataInput`, asks a list of **pluggable providers**, scores every rich catalog candidate against that input, and returns the ranked alternatives plus the per-provider detail behind them:

@@ -3,5 +3,5 @@
   "compilerOptions": {
     "jsx": "react-jsx"
   },
-  "include": ["src/web", "src/shared"]
+  "include": ["src/web", "src/shared", "src/**/*.test.ts"]
 }

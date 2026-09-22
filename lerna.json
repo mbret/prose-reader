@@ -1,9 +1,12 @@
 {
   "npmClient": "npm",
-  "version": "1.374.2",
+  "version": "2.0.2",
   "command": {
     "publish": {
       "graphType": "all"
+    },
+    "version": {
+      "changelogPreset": "conventionalcommits"
     }
   },
   "$schema": "node_modules/lerna/schemas/lerna-schema.json"

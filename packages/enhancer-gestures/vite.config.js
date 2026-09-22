@@ -1,7 +1,7 @@
 import { resolve } from "node:path"
 import externals from "rollup-plugin-node-externals"
 import { defineConfig } from "vite"
-import dts from "vite-plugin-dts"
+import { dtsPlugin } from "../../config/vite-lib"
 
 export default defineConfig(({ mode }) => ({
   build: {
@@ -21,8 +21,6 @@ export default defineConfig(({ mode }) => ({
       deps: true,
       devDeps: true,
     }),
-    dts({
-      entryRoot: "src",
-    }),
+    dtsPlugin(),
   ],
 }))
