@@ -217,6 +217,17 @@ Write the assertion against the invariant where you can, not only the symptom.
 code moves; "this one unload clears the flag" stops testing the rule the moment
 the implementation shifts.
 
+Do not assume an existing test is right, or that a green suite is safe. A test
+can pass for the wrong reason — this suite has had a green test that only held
+because of a feedback loop nobody intended, and it went red the moment the loop
+was closed — or assert a symptom that no longer means what it did, or never
+have been seen to fail at all. Challenge tests the way you challenge code: read
+what a test actually proves, degrade the code it claims to guard, and rewrite or
+delete it when it does not hold up. Testing this library is hard, since most of
+what matters happens between stable states and some of it only in a browser, so
+the suite is never finished. Keeping it honest is a standing part of every
+change, not a task that was done once.
+
 # Documentation
 
 The `gitbook/` folder is user-facing documentation that must stay in sync with the code. After any change that alters the public surface or its documented behavior, check whether the docs need updating in the same change — do not defer it.
