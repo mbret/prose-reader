@@ -1,14 +1,9 @@
 /// <reference types="vitest/config" />
-import { defineConfig, mergeConfig } from "vite"
-import dts from "vite-plugin-dts"
+import { defineConfig } from "vite"
 import { createLibConfig } from "../../config/vite-lib"
 
 const libConfig = createLibConfig({
   packageDir: __dirname,
 })
 
-export default defineConfig((env) =>
-  mergeConfig(libConfig(env), {
-    plugins: [dts({ entryRoot: "src", include: ["src/**/*"] })],
-  }),
-)
+export default defineConfig(libConfig)
