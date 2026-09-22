@@ -13,7 +13,6 @@ export class Pagination extends ReactiveEntity<PaginationInfo> {
       isSettled: false,
       begin: createEmptyPaginationEdge(),
       end: createEmptyPaginationEdge(),
-      navigationId: undefined,
     })
   }
 

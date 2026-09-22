@@ -1,58 +1,47 @@
 import {
   distinctUntilChanged,
   filter,
-  first,
   map,
   type Observable,
-  of,
-  switchMap,
   withLatestFrom,
 } from "rxjs"
 import type { Context } from "../../context/Context"
-import type { Spine } from "../../spine/Spine"
 import type { InternalNavigationEntry } from "../types"
-import { withPaginationInfo } from "./withPaginationInfo"
 
+/**
+ * Anchors the navigation on the page being read, so restoration can return
+ * to it. Only a settled result qualifies: a provisional one stands in with the
+ * item start, and anchoring on that would restore the reader to the top of the
+ * item.
+ *
+ * The anchor is written as a new entry, but it is not a navigation. It keeps
+ * the entry's position and request, which is what keeps it out of
+ * `navigation$` and away from every consumer that would treat it as one.
+ */
 export const consolidateWithPagination = (
   context: Context,
   navigation$: Observable<InternalNavigationEntry>,
-  spine: Spine,
 ) =>
   context.bridgeEvent.pagination$.pipe(
+    filter((pagination) => pagination.isSettled),
     withLatestFrom(navigation$),
-    filter(
-      ([pagination, navigation]) => pagination.navigationId === navigation.id,
-    ),
     /**
-     * We only register the pagination cfi IF the spine item is ready.
-     * Otherwise we might save something incomplete and thus restore
-     * the user to an invalid location.
+     * One anchor per entry: the page its navigation settled on. A fresh
+     * navigation onto the same page is a new entry and gets its own. A
+     * restoration keeps the entry, so the page it lands on does not move the
+     * anchor: anchoring the restored page's own first character would restore
+     * to the page before it at the next relayout, and every round trip through
+     * a resize would walk the reader backwards.
      */
-    switchMap(([pagination, navigation]) => {
-      const spineItem = spine.spineItemsManager.get(navigation.spineItem)
-
-      return (spineItem?.isReady$.pipe(first()) ?? of(false)).pipe(
-        filter((isReady) => isReady),
-        map(() => ({
-          pagination,
-          navigation,
-        })),
-      )
-    }),
-    withPaginationInfo(),
     distinctUntilChanged(
-      (prev, curr) =>
-        prev.navigation.paginationBeginCfi ===
-        curr.navigation.paginationBeginCfi,
+      ([, previousNavigation], [, navigation]) =>
+        previousNavigation.id === navigation.id,
     ),
     map(
-      ({ navigation }) =>
-        ({
-          ...navigation,
-          meta: {
-            triggeredBy: "pagination",
-          },
-          requestedPosition: navigation.position,
-        }) satisfies InternalNavigationEntry,
+      ([pagination, navigation]): InternalNavigationEntry => ({
+        ...navigation,
+        paginationBeginCfi: pagination.begin.cfi,
+        meta: { triggeredBy: "pagination" },
+      }),
     ),
   )
