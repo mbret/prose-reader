@@ -24,5 +24,8 @@
   },
   "peerDependencies": {
     "@prose-reader/core": "^2.0.0"
+  },
+  "devDependencies": {
+    "@prose-reader/core": "^2.0.0"
   }
 }
