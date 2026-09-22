@@ -1,6 +1,6 @@
 {
   "name": "@prose-reader/enhancer-pdf",
-  "version": "2.0.2",
+  "version": "2.0.3",
   "type": "module",
   "main": "./dist/index.cjs",
   "module": "./dist/index.js",
@@ -23,8 +23,8 @@
     "build": "tsc && vite build"
   },
   "devDependencies": {
-    "@prose-reader/archive-reader": "^2.0.0",
-    "@prose-reader/core": "^2.0.2",
+    "@prose-reader/archive-reader": "^2.0.3",
+    "@prose-reader/core": "^2.0.3",
     "pdfjs-dist": "^6.2.108"
   },
   "peerDependencies": {

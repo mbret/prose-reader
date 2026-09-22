@@ -1,6 +1,6 @@
 {
   "name": "@prose-reader/archive-reader",
-  "version": "2.0.0",
+  "version": "2.0.3",
   "type": "module",
   "main": "./dist/index/index.cjs",
   "module": "./dist/index/index.js",
@@ -59,7 +59,7 @@
     "test:watch": "vitest watch"
   },
   "dependencies": {
-    "@prose-reader/shared": "^2.0.0",
+    "@prose-reader/shared": "^2.0.3",
     "xmldoc": "^3.0.0"
   },
   "peerDependencies": {

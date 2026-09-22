@@ -3,6 +3,15 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## [2.0.3](https://github.com/mbret/prose-reader/compare/v2.0.2...v2.0.3) (2026-09-22)
+
+
+### Bug Fixes
+
+* **demo:** make the react native demo bundle again ([#375](https://github.com/mbret/prose-reader/issues/375)) ([6fa2cad](https://github.com/mbret/prose-reader/commit/6fa2cad2826e6529dc5bdf484269b44f5f37e85c))
+
+
+
 ## [2.0.2](https://github.com/mbret/prose-reader/compare/v2.0.1...v2.0.2) (2026-09-22)
 
 
