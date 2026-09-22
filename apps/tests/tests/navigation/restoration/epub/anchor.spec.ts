@@ -16,7 +16,7 @@ const url = "http://localhost:3333/tests/navigation/restoration/epub/index.html"
 
 const readPosition = (page: Page) =>
   page.evaluate(() => {
-    // @ts-expect-error the harness exposes the reader on window for tests
+    // @ts-expect-error window.reader is set by this scenario's index.tsx
     const reader = window.reader as Reader
     const pagination = reader.pagination.state
 
@@ -38,7 +38,7 @@ const readPosition = (page: Page) =>
 /** Third page of a long chapter, reached by turning pages. */
 const turnToThirdPageOfLongChapter = async (page: Page) => {
   const chapterIndex = await page.evaluate(() => {
-    // @ts-expect-error the harness exposes the reader on window for tests
+    // @ts-expect-error window.reader is set by this scenario's index.tsx
     const reader = window.reader as Reader
 
     return reader.context.manifest.spineItems.findIndex((item) =>
@@ -50,7 +50,7 @@ const turnToThirdPageOfLongChapter = async (page: Page) => {
 
   await settleAfter(page, () =>
     page.evaluate((indexOrId) => {
-      // @ts-expect-error the harness exposes the reader on window for tests
+      // @ts-expect-error window.reader is set by this scenario's index.tsx
       const reader = window.reader as Reader
 
       reader.navigation.goToSpineItem({ indexOrId })
@@ -60,7 +60,7 @@ const turnToThirdPageOfLongChapter = async (page: Page) => {
   for (let turn = 0; turn < 2; turn++) {
     await settleAfter(page, () =>
       page.evaluate(() => {
-        // @ts-expect-error the harness exposes the reader on window for tests
+        // @ts-expect-error window.reader is set by this scenario's index.tsx
         const reader = window.reader as Reader
 
         reader.navigation.turnRight()
@@ -120,7 +120,7 @@ test.describe("Given a page reached by turning pages", () => {
     // entry, so it needs one of its own even though nothing moved.
     await settleAfter(page, () =>
       page.evaluate(() => {
-        // @ts-expect-error the harness exposes the reader on window for tests
+        // @ts-expect-error window.reader is set by this scenario's index.tsx
         const reader = window.reader as Reader
 
         reader.navigation.navigate({

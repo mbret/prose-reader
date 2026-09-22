@@ -16,7 +16,7 @@ export const settleAfter = async (
   action: () => Promise<unknown>,
 ) => {
   await page.evaluate(() => {
-    // @ts-expect-error the harness exposes the reader on window for tests
+    // @ts-expect-error window.reader is set by this scenario's index.tsx
     const reader = window.reader as Reader
     let seen = 0
 
@@ -54,7 +54,7 @@ export const settleAfter = async (
  */
 export const isCfiPositionVisible = (page: Page, cfi: string) =>
   page.evaluate((cfi) => {
-    // @ts-expect-error the harness exposes the reader on window for tests
+    // @ts-expect-error window.reader is set by this scenario's index.tsx
     const reader = window.reader as Reader
     const { node, offset } = reader.cfi.resolveCfi({ cfi })
 
