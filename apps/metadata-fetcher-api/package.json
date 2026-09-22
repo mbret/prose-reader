@@ -13,11 +13,11 @@
     "docker:down": "docker compose down"
   },
   "dependencies": {
-    "@prose-reader/metadata-fetcher": "^1.335.0",
+    "@prose-reader/metadata-fetcher": "*",
     "express": "^5.2.1"
   },
   "devDependencies": {
-    "@prose-reader/archive-reader": "^1.335.0",
+    "@prose-reader/archive-reader": "*",
     "@types/express": "^5.0.6",
     "@zip.js/zip.js": "^2.8.51",
     "typescript": "*"

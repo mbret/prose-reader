@@ -92,6 +92,22 @@ npx lerna run build --stream --scope "@prose-reader/*"
 
 `nvm install`/`nvm use` read `.nvmrc` from the repo root, so this always follows whatever version is pinned there — no version numbers to keep in sync. Regenerate `package-lock.json` only with the npm that ships with that pinned Node: a mismatched npm rewrites native-binary metadata (e.g. dropping `libc`, mismarking optional platform binaries as `dev`) and produces spurious lockfile churn.
 
+## Internal `@prose-reader/*` ranges
+
+A private app (`apps/*`) declares its siblings as `*`, never as a version range.
+It is never installed by anyone and the copy it means is always the one in this
+checkout, so a range only creates a way for the two to disagree — and the
+disagreement is silent: once a release crosses a major, `^1.x` stops matching
+the workspace and npm quietly installs the last published 1.x into
+`apps/*/node_modules`, leaving the app building and testing against stale
+packages that still typecheck. 2.0.0 did this to all three apps.
+
+Published packages are different, because their ranges are a promise to
+consumers: lerna maintains their `dependencies`, and the root `version`
+lifecycle runs `scripts/sync-internal-ranges.mjs` for the peer ranges it does
+not reach. That script enforces both rules at release time, so a range that
+creeps back in is corrected rather than shipped.
+
 # API design: breaking changes are not a constraint
 
 Cleanliness of the design wins. The goal is a surface that is smaller, simpler and easier to consume; a break is just the cost of getting there. **"I did not do that because it would be a breaking change" is never a valid reason** — do not weigh backward compatibility when choosing a shape, and do not present it as a trade-off. If the cleanest design changes a public type, renames an export, removes an option or reshapes a returned entity, do that.

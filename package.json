@@ -21,7 +21,7 @@
     "test": "lerna run test --parallel",
     "publish-packages": "npm test && npm run build && lerna publish minor --yes",
     "prepare": "husky",
-    "version": "node scripts/sync-internal-peer-ranges.mjs"
+    "version": "node scripts/sync-internal-ranges.mjs"
   },
   "workspaces": [
     "apps/*",
@@ -43,7 +43,7 @@
     "rollup-plugin-node-externals": "^9.0.0",
     "rxjs": "*",
     "vite": "^8",
-    "vite-plugin-dts": "^5.0.1",
+    "vite-plugin-dts": "^5.1.1",
     "vite-plugin-pwa": "^1.0.0",
     "vite-plugin-svgr": "^5.2.0",
     "vitest": "^4.0.16",

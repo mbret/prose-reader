@@ -1,11 +1,16 @@
-import type {
-  createReader as createReaderCore,
-  Manifest,
-} from "@prose-reader/core"
+import type { Manifest, Reader } from "@prose-reader/core"
 import { linkBridge } from "@webview-bridge/web"
 import type { ProseBridgeStore, ProsePostMessageSchema } from "../shared"
 
-type Reader = ReturnType<typeof createReaderCore>
+// Annotated rather than inferred: `Reader` is a large enough type that
+// declaration emit gives up serialising the inferred shape (TS7056).
+export type ReaderBridgeController = {
+  /**
+   * The reader currently rendering, or `undefined` before the first `load`
+   * event and while one is being replaced.
+   */
+  getReader: () => Reader | undefined
+}
 
 export const createReaderBridge = () => {
   const bridge = linkBridge<ProseBridgeStore, ProsePostMessageSchema>({
@@ -30,7 +35,7 @@ export const bridgeReader = ({
   createReader: (manifest: Manifest) => Reader
   bridge: ReturnType<typeof createReaderBridge>
   containerElement: HTMLElement
-}) => {
+}): ReaderBridgeController => {
   let reader: Reader | undefined
 
   bridge.addEventListener("load", (data) => {
