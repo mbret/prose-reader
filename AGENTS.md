@@ -92,6 +92,30 @@ npx lerna run build --stream --scope "@prose-reader/*"
 
 `nvm install`/`nvm use` read `.nvmrc` from the repo root, so this always follows whatever version is pinned there — no version numbers to keep in sync. Regenerate `package-lock.json` only with the npm that ships with that pinned Node: a mismatched npm rewrites native-binary metadata (e.g. dropping `libc`, mismarking optional platform binaries as `dev`) and produces spurious lockfile churn.
 
+## Browser tests
+
+`apps/tests` (`prose-reader-tests`) is a Playwright suite, and the root
+`npm test` runs it alongside the vitest suites, so CI runs every spec in it on
+Chromium, Firefox, WebKit and two mobile profiles. It needs the browser builds
+its Playwright version pins, so install them once per environment, the way CI
+does before `npm test`:
+
+```sh
+npx playwright install chromium
+```
+
+Do not point the suite at a Chromium the machine already has. A different build
+is not the one the snapshots were rendered with, and a pass on it is not a pass
+in CI.
+
+The test app imports `@prose-reader/*` from `dist`, so build the libraries
+first and rebuild the package you changed before re-running a spec, including
+while degrading a guard to watch its test fail. Run one spec with:
+
+```sh
+npm test -w prose-reader-tests -- --project=chromium tests/<path>.spec.ts
+```
+
 ## Internal `@prose-reader/*` ranges
 
 A private app (`apps/*`) declares its siblings as `*`, never as a version range.
@@ -166,6 +190,15 @@ We also support books that are not epubs (eg: comics, text, pdf). At some point 
 Actions such as navigation can happens anytime (eg: user tap the screen) and in some case may happens during layout or other internal state change happening. This is expected and prose should be resilient to it. The entire internal process is asynchronous on purpose but some actions are synchronous. Make sure to always consider race or stale or invalid in between state conditions.
 
 # Testing
+
+There are two layers, and the browser one is not optional. Vitest in each
+package runs in happy-dom or jsdom, which have no layout engine: nothing there
+measures text, paginates a reflowable document, or resolves a cfi to a visible
+node. A change whose behaviour depends on layout — reflowable pagination,
+first-visible-node cfis, restoration after a resize, scrolling — is not covered
+until it has a spec in `apps/tests`, whatever the unit tests say. Use the unit
+layer for logic and the in-between states, and the browser layer for what only
+a browser can show. `apps/tests/AGENTS.md` describes how that suite is built.
 
 A regression test that was never seen to fail proves nothing. Before you rely on
 one, run it against the unfixed code and check that it fails, and that it fails
