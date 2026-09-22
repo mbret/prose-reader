@@ -7,9 +7,11 @@ import {
 } from "../../../utils/pagination"
 
 /**
- * A page reached by turning pages leaves no cfi on the navigation, so
- * restoring it after a resize depends entirely on the anchor pagination writes
- * onto the entry once its result settles.
+ * Restoring a page after a resize needs a cfi, and the navigation entry can
+ * carry two: `cfi`, the target a `goToCfi` asked for, and
+ * `paginationBeginCfi`, the anchor pagination writes onto the entry once its
+ * result settles. A page reached by turning pages asked for a position only,
+ * so the anchor is the one it has. These tests exercise that path.
  */
 
 const url = "http://localhost:3333/tests/navigation/restoration/epub/index.html"
@@ -73,8 +75,8 @@ const turnToThirdPageOfLongChapter = async (page: Page) => {
   expect(position.spineItemIndex).toBe(chapterIndex)
   expect(position.pageIndex).toBe(2)
   expect(position.isRootCfi).toBe(false)
-  // Turning pages sets no cfi on the navigation: restoration has to rely on
-  // the anchor.
+  // Restoration reads `cfi` before the anchor. It must be absent here, or the
+  // resize below could restore through it and prove nothing about the anchor.
   expect(position.navigationCfi).toBeUndefined()
 
   return position
