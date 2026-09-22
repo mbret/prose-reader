@@ -12,10 +12,12 @@
     "tsc": "tsc --noEmit",
     "web:dev": "vite web",
     "web:build": "tsc && vite build web",
-    "web:preview": "vite preview web"
+    "web:preview": "vite preview web",
+    "bundle": "expo export --platform ios"
   },
   "dependencies": {
     "@expo/vector-icons": "^14.1.0",
+    "@prose-reader/archive-reader": "file:../packages/archive-reader",
     "@prose-reader/core": "file:../packages/core",
     "@prose-reader/react-native": "file:../packages/react-native",
     "@prose-reader/shared": "file:../packages/shared",

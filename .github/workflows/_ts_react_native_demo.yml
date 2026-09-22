@@ -32,3 +32,11 @@ jobs:
         run: |
           npm ci
           npm run tsc
+
+      # Typechecking never resolves a module the way Metro does, so the demo
+      # spent a long time unable to bundle at all without anything failing.
+      # Bundling it here is what proves the libraries are consumable from React
+      # Native — including that an ESM-only dependency survives Metro.
+      - name: Bundle demo
+        working-directory: prose-react-native-demo
+        run: npm run bundle
