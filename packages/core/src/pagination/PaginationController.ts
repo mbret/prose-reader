@@ -14,7 +14,6 @@ import {
 } from "rxjs"
 import type { CfiManager } from "../cfi"
 import type { Context } from "../context/Context"
-import type { Navigation } from "../navigation/types"
 import type { PageEntry } from "../spine/Pages"
 import type { Spine } from "../spine/Spine"
 import type { SpineItemsManager } from "../spine/SpineItemsManager"
@@ -54,7 +53,13 @@ export class PaginationController extends DestroyableClass {
      * superseded result can never reach the reader.
      */
     merge(
+      /**
+       * A pagination-triggered entry only records the anchor a result just
+       * produced. Resolving on it would loop pagination through navigation
+       * and back, withdrawing and re-granting settlement over nothing.
+       */
       this.context.bridgeEvent.navigation$.pipe(
+        filter((navigation) => navigation.triggeredBy !== "pagination"),
         map((): PaginationTrigger => "resolve"),
       ),
       spine.layout$.pipe(map((): PaginationTrigger => "resolve")),
@@ -101,7 +106,7 @@ export class PaginationController extends DestroyableClass {
       take(1),
       withLatestFrom(this.context.bridgeEvent.navigation$),
       mergeMap(([, navigation]) => {
-        const metrics = this.resolveMetrics(navigation)
+        const metrics = this.resolveMetrics(navigation.position)
 
         /**
          * When the visible items cannot be resolved the previous metrics are
@@ -152,8 +157,9 @@ export class PaginationController extends DestroyableClass {
    * from the previous result, or fall back to the item start, and are only
    * resolved properly by {@link resolvePositions}.
    */
-  private resolveMetrics(navigation: Navigation): PaginationInfo | undefined {
-    const { position } = navigation
+  private resolveMetrics(
+    position: SpinePosition | UnboundSpinePosition,
+  ): PaginationInfo | undefined {
     const previous = this.pagination.value
 
     const { beginIndex, endIndex } =
@@ -186,7 +192,6 @@ export class PaginationController extends DestroyableClass {
         endPageIndex,
         previous.end,
       ),
-      navigationId: navigation.id,
     }
   }
 
@@ -238,11 +243,9 @@ export class PaginationController extends DestroyableClass {
 
     if (!begin || !end) return undefined
 
-    const { navigationId } = metrics
-
     return visibleRangeIsKnown && begin.isReady && end.isReady
-      ? { isSettled: true, begin: begin.edge, end: end.edge, navigationId }
-      : { isSettled: false, begin: begin.edge, end: end.edge, navigationId }
+      ? { isSettled: true, begin: begin.edge, end: end.edge }
+      : { isSettled: false, begin: begin.edge, end: end.edge }
   }
 
   /**

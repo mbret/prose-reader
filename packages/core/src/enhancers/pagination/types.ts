@@ -34,9 +34,8 @@ export type ExtraPaginationInfo = {
  * does, over its own edge type — settlement is a property of the two edges'
  * positions, so it is expressed once and reused rather than restated here.
  */
-export type EnhancerPaginationInto = ExtraPaginationInfo & {
-  navigationId?: symbol
-} & VisibleRange<EnhancerPaginationEdge>
+export type EnhancerPaginationInto = ExtraPaginationInfo &
+  VisibleRange<EnhancerPaginationEdge>
 
 export type PaginationEnhancerAPI<
   InheritOutput extends EnhancerOutput<RootEnhancer> & LayoutEnhancerOutput,

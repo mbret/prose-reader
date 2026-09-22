@@ -44,6 +44,4 @@ export type VisibleRange<TEdge extends PaginationEdge> =
       end: SettledPaginationEdge<TEdge>
     }
 
-export type PaginationInfo = {
-  navigationId?: symbol
-} & VisibleRange<PaginationEdge>
+export type PaginationInfo = VisibleRange<PaginationEdge>

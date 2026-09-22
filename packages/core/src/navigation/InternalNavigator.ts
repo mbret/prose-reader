@@ -321,7 +321,6 @@ export class InternalNavigator extends DestroyableClass {
     const navigationUpdateOnPaginationUpdate$ = consolidateWithPagination(
       context,
       this.navigationSubject,
-      spine,
     )
 
     const navigationUpdate$ = merge(

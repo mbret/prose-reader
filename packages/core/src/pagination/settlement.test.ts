@@ -173,17 +173,55 @@ describe("pagination settlement", () => {
     await settled(reader)
 
     const states: PaginationInfo[] = []
-    reader.pagination.state$.subscribe((state) => states.push(state))
+    // skip the replayed current result
+    reader.pagination.state$
+      .pipe(skip(1))
+      .subscribe((state) => states.push(state))
 
     reader.navigation.goToSpineItem({ indexOrId: 1, animation: false })
 
-    // Invalidation happens as the request is handled, not once its replacement
-    // has been computed.
-    expect(states.at(-1)?.isSettled).toBe(false)
+    // The withdrawal is the first thing published for the request, ahead of
+    // any result for the new page, however quickly that result follows.
+    expect(states[0]?.isSettled).toBe(false)
 
     const next = await settled(reader)
 
     expect(next.begin.spineItemIndex).toBe(1)
+
+    reader.destroy()
+  })
+
+  it("does not resolve again when a result anchors the navigation", async () => {
+    const reader = createTestReader()
+
+    mount(reader)
+    await settled(reader)
+
+    const states: PaginationInfo[] = []
+    reader.pagination.state$
+      .pipe(skip(1))
+      .subscribe((state) => states.push(state))
+
+    reader.navigation.goToSpineItem({ indexOrId: 1, animation: false })
+
+    await firstValueFrom(
+      reader.pagination.state$.pipe(
+        filter((state) => state.isSettled && state.begin.spineItemIndex === 1),
+        timeout(2000),
+      ),
+    )
+    await new Promise((resolve) => setTimeout(resolve, 50))
+
+    /**
+     * A settled result anchors the navigation, and the anchored entry comes
+     * back through the navigation stream. It is not a trigger: resolving on it
+     * would withdraw and re-grant settlement over nothing.
+     */
+    const firstSettled = states.findIndex(
+      (state) => state.isSettled && state.begin.spineItemIndex === 1,
+    )
+
+    expect(states.slice(firstSettled + 1)).toEqual([])
 
     reader.destroy()
   })
