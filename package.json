@@ -21,7 +21,7 @@
     "test": "lerna run test --parallel",
     "publish-packages": "npm test && npm run build && lerna publish minor --yes",
     "prepare": "husky",
-    "version": "node scripts/sync-internal-peer-ranges.mjs"
+    "version": "node scripts/sync-internal-ranges.mjs"
   },
   "workspaces": [
     "apps/*",
