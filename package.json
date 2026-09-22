@@ -14,7 +14,7 @@
     "build": "lerna run build --stream",
     "build:lib": "lerna run build --stream --scope @prose-reader/*",
     "check:react-reader-enhancers": "npm run check:enhancers --workspace @prose-reader/react-reader",
-    "tsc": "lerna run tsc --parallel",
+    "tsc": "lerna run tsc --parallel && tsc -p tsconfig.configs.json",
     "format": "npx @biomejs/biome format .",
     "lint": "npx @biomejs/biome lint .",
     "check:agent-docs": "node scripts/check-agent-docs.mjs",

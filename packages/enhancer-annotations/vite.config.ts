@@ -1,6 +1,5 @@
 /// <reference types="vitest/config" />
 import { defineConfig, mergeConfig } from "vite"
-import dts from "vite-plugin-dts"
 import { createLibConfig } from "../../config/vite-lib"
 
 const libConfig = createLibConfig({
@@ -9,7 +8,6 @@ const libConfig = createLibConfig({
 
 export default defineConfig((env) =>
   mergeConfig(libConfig(env), {
-    plugins: [dts({ entryRoot: "src", include: ["src/**/*"] })],
     test: {
       coverage: {
         reportsDirectory: `./.test/coverage`,
