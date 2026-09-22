@@ -95,38 +95,21 @@ npx lerna run build --stream --scope "@prose-reader/*"
 ## Internal `@prose-reader/*` ranges
 
 Lerna builds its project graph from `dependencies`, `optionalDependencies` and
-`devDependencies`. A `peerDependencies` entry produces no edge at all, so a
-package whose only tie to a sibling is a peer range is invisible to the release:
-a change to `core` versioned five packages and left `cbz`, `enhancer-pdf`,
-`enhancer-refit`, `enhancer-annotations`, `react-native` and `react-reader`
-published against a core they no longer matched.
-
-So the rules, all three enforced by `npm run check:internal-ranges` in CI:
+`devDependencies` — a `peerDependencies` entry gives it no edge at all — and it
+releases the packages that changed plus their dependents, never everything.
+Three rules follow, each enforced by `npm run check:internal-ranges` in CI, each
+explained where it is implemented:
 
 - **A peer range on a sibling comes with a `devDependencies` entry on the same
-  sibling.** The devDependency is honest on its own terms — these packages
-  import the sibling and only resolve it today because npm hoists the workspace
-  — and it is what gives lerna the edge, after which lerna versions the pair
-  together and maintains that range itself. Do not hand-edit it.
-- **The peer range is a floor, not a mirror of the release.** `^2.0.0` stays
-  true for every 2.x, so nothing has to rewrite it per release; raise it only to
-  say this package needs something a sibling added. It must admit the version in
-  this checkout: `npm install --package-lock-only`, which lerna runs inside
-  `version`, exits ERESOLVE otherwise and takes the publish with it. The root
-  `version` lifecycle runs `scripts/sync-internal-ranges.mjs` for the one case
-  nothing can see coming, a release crossing a major, and raises the floors it
-  would have broken.
-- **A private app (`apps/*`) declares `*`.** It is never installed by anyone and
-  the copy it means is always the one in this checkout, so a range only creates a
-  way for the two to disagree — silently: once a release crosses a major, `^1.x`
-  stops matching the workspace and npm quietly installs the last published 1.x
-  into `apps/*/node_modules`, leaving the app building and testing against stale
-  packages that still typecheck. 2.0.0 did this to all three apps.
+  sibling**, or a release of that sibling silently skips this package.
+- **A peer range is a floor, not a mirror of the release.** `^2.0.0` stays true
+  across all of 2.x; only a release crossing a major has to raise it, which
+  `scripts/sync-internal-ranges.mjs` does from the root `version` lifecycle.
+- **A private app (`apps/*`) declares `*`**, or npm quietly installs a published
+  copy of a sibling beside the workspace one and the app builds against that.
 
-Do not read "fixed mode" as lockstep either. Lerna releases the packages that
-changed and their dependents and leaves the rest alone, so the repository holds
-several versions at once — 2.0.1 moved `react-native` and `react-reader` and
-left the other fifteen at 2.0.0.
+Do not read lerna's "fixed mode" as lockstep either: 2.0.1 moved `react-native`
+and `react-reader` and left the other fifteen packages at 2.0.0.
 
 # API design: breaking changes are not a constraint
 

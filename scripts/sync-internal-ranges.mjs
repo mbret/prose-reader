@@ -5,11 +5,11 @@
  * An internal peer range says which sibling versions a package works with, and
  * it normally outlives a release: `^2.0.0` keeps being true for every 2.x. The
  * one moment it stops being true is a release that crosses a major, and it then
- * fails loudly and expensively — `npm install --package-lock-only`, which lerna
- * runs inside `version` to refresh the lockfile, cannot resolve a workspace
- * package asking for `@prose-reader/core@^2.0.0` next to a `core` being
- * published as `3.0.0`, so it exits ERESOLVE and takes the publish with it,
- * after the tags have been written.
+ * fails loudly — `npm install --package-lock-only`, which lerna runs inside
+ * `version` to refresh the lockfile, cannot resolve a workspace package asking
+ * for `@prose-reader/core@^2.0.0` next to a `core` being published as `3.0.0`,
+ * so it exits ERESOLVE. That refresh runs before `commitAndTagUpdates`, so the
+ * release aborts whole rather than half-landing: no commit, no tag, no publish.
  *
  * Run from the root `version` lifecycle, which lerna fires once it has written
  * every version but before that lockfile refresh and the release commit, so a
