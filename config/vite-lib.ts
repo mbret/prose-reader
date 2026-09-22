@@ -6,6 +6,7 @@ import {
   mergeConfig,
   type UserConfig,
 } from "vite"
+import dts, { type PluginOptions as DtsOptions } from "vite-plugin-dts"
 
 type Entry = string | Record<string, string>
 
@@ -23,7 +24,32 @@ interface LibConfigOptions {
   target?: string
   /** Extra config deep-merged on top of the defaults (extra plugins, custom test config, etc.). */
   override?: UserConfig
+  /**
+   * Options for the declaration build, merged over {@link dtsPlugin}'s
+   * defaults. `false` emits no declarations.
+   */
+  dts?: false | DtsOptions
 }
+
+/**
+ * Test files are type-checked with the package but are not part of it. The
+ * runtime bundle only carries what the entry reaches; the declarations must
+ * not carry more.
+ */
+const TEST_FILES = ["src/**/*.test.ts", "src/**/*.test.tsx", "src/tests/**/*"]
+
+/**
+ * The declaration build every package shares. Options merge over the
+ * defaults, so a package adds `staticImport` or a `tsconfigPath` without
+ * restating what is excluded.
+ */
+export const dtsPlugin = (options: DtsOptions = {}) =>
+  dts({
+    entryRoot: "src",
+    include: ["src/**/*"],
+    exclude: TEST_FILES,
+    ...options,
+  })
 
 type LibConfigInput = LibConfigOptions | ((env: ConfigEnv) => LibConfigOptions)
 
@@ -51,6 +77,7 @@ export const createLibConfig =
       minify: minifyOverride,
       target,
       override,
+      dts: dtsOptions = {},
     } = opts
 
     const minify =
@@ -72,7 +99,10 @@ export const createLibConfig =
         minify,
         ...(target ? { target } : {}),
       },
-      plugins: [externals({ peerDeps: true, deps: true, devDeps: true })],
+      plugins: [
+        externals({ peerDeps: true, deps: true, devDeps: true }),
+        ...(dtsOptions === false ? [] : [dtsPlugin(dtsOptions)]),
+      ],
     }
 
     return override ? mergeConfig(base, override) : base

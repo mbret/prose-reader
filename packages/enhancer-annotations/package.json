@@ -1,6 +1,6 @@
 {
   "name": "@prose-reader/enhancer-annotations",
-  "version": "2.0.0",
+  "version": "2.0.2",
   "type": "module",
   "main": "./dist/index.cjs",
   "module": "./dist/index.js",
@@ -26,6 +26,6 @@
     "@prose-reader/core": "^2.0.0"
   },
   "devDependencies": {
-    "@prose-reader/core": "^2.0.0"
+    "@prose-reader/core": "^2.0.2"
   }
 }

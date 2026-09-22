@@ -3,7 +3,7 @@ import babel from "@rolldown/plugin-babel"
 import react, { reactCompilerPreset } from "@vitejs/plugin-react"
 import externals from "rollup-plugin-node-externals"
 import { defineConfig } from "vite"
-import dts from "vite-plugin-dts"
+import { dtsPlugin } from "../../config/vite-lib"
 
 // https://vite.dev/config/
 export default defineConfig(({ mode }) => ({
@@ -27,9 +27,6 @@ export default defineConfig(({ mode }) => ({
     babel({
       presets: [reactCompilerPreset()],
     }),
-    dts({
-      tsconfigPath: "./tsconfig.app.json",
-      entryRoot: "src",
-    }),
+    dtsPlugin({ tsconfigPath: "./tsconfig.app.json" }),
   ],
 }))
