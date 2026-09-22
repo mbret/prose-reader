@@ -1,0 +1,11 @@
+{
+  "extends": "./tsconfig.node.json",
+  "compilerOptions": {
+    "skipLibCheck": true
+  },
+  "include": [
+    "config/**/*.ts",
+    "packages/*/vite.config.ts",
+    "packages/*/vitest.config.ts"
+  ]
+}
