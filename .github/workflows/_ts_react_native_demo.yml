@@ -37,6 +37,12 @@ jobs:
       # spent a long time unable to bundle at all without anything failing.
       # Bundling it here is what proves the libraries are consumable from React
       # Native — including that an ESM-only dependency survives Metro.
+      #
+      # Both platforms: Metro resolves each one separately, down to platform
+      # specific files and export conditions, so an iOS bundle says nothing
+      # about Android. Web is left out — `expo export` can build it, but through
+      # react-native-web, which is not what this demo ships; its web side is the
+      # vite app in `web/`.
       - name: Bundle demo
         working-directory: prose-react-native-demo
         run: npm run bundle

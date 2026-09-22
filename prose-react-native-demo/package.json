@@ -13,7 +13,7 @@
     "web:dev": "vite web",
     "web:build": "tsc && vite build web",
     "web:preview": "vite preview web",
-    "bundle": "expo export --platform ios"
+    "bundle": "expo export --platform ios && expo export --platform android"
   },
   "dependencies": {
     "@expo/vector-icons": "^14.1.0",
