@@ -7,8 +7,8 @@ This is an [Expo](https://expo.dev) project created with [`create-expo-app`](htt
 1. Build the libraries, from the repository root. The demo depends on them through `file:` links to their build output.
 
    ```bash
-   npm ci
-   npx lerna run build --stream --scope "@prose-reader/*"
+   pnpm install --frozen-lockfile
+   pnpm exec lerna run build --stream --scope "@prose-reader/*"
    ```
 
 2. Install dependencies

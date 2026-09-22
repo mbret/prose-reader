@@ -26,20 +26,15 @@
     "test": "vitest run"
   },
   "devDependencies": {
-    "@prose-reader/archive-reader": "^4.0.0",
-    "@prose-reader/cfi": "^4.0.0",
-    "@prose-reader/core": "^4.0.0",
-    "@prose-reader/shared": "^4.0.0",
-    "@prose-reader/streamer": "^4.0.0",
     "jsdom": "^29.0.0",
     "typescript": "*",
     "vite": "^8"
   },
   "peerDependencies": {
-    "@prose-reader/archive-reader": "^4.0.0",
-    "@prose-reader/cfi": "^4.0.0",
-    "@prose-reader/core": "^4.0.0",
-    "@prose-reader/shared": "^4.0.0",
-    "@prose-reader/streamer": "^4.0.0"
+    "@prose-reader/archive-reader": "workspace:^",
+    "@prose-reader/cfi": "workspace:^",
+    "@prose-reader/core": "workspace:^",
+    "@prose-reader/shared": "workspace:^",
+    "@prose-reader/streamer": "workspace:^"
   }
 }

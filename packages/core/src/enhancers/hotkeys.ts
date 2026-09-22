@@ -1,4 +1,3 @@
-import type { KeyboardEvent } from "react"
 import { EMPTY, fromEvent, map, merge, switchMap, takeUntil } from "rxjs"
 import { isHtmlTagElement } from "../utils/dom"
 import type { NavigationEnhancerOutput } from "./navigation/types"

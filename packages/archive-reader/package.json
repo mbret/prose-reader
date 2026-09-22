@@ -59,7 +59,7 @@
     "test:watch": "vitest watch"
   },
   "dependencies": {
-    "@prose-reader/shared": "^4.0.0",
+    "@prose-reader/shared": "workspace:^",
     "xmldoc": "^3.0.0"
   },
   "peerDependencies": {

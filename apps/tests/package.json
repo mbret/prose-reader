@@ -7,21 +7,26 @@
   "scripts": {
     "dev": "vite",
     "tsc": "tsc",
-    "test": "npx playwright test",
-    "test:ui": "npx playwright test --ui"
+    "test": "playwright test",
+    "test:ui": "playwright test --ui"
   },
   "devDependencies": {
     "@playwright/test": "^1.48.2",
-    "@prose-reader/archive-reader": "*",
-    "@prose-reader/core": "*",
-    "@prose-reader/enhancer-gallery": "*",
-    "@prose-reader/enhancer-gestures": "*",
-    "@prose-reader/enhancer-pdf": "*",
-    "@prose-reader/streamer": "*",
+    "@prose-reader/archive-reader": "workspace:*",
+    "@prose-reader/core": "workspace:*",
+    "@prose-reader/enhancer-annotations": "workspace:*",
+    "@prose-reader/enhancer-gallery": "workspace:*",
+    "@prose-reader/enhancer-gestures": "workspace:*",
+    "@prose-reader/enhancer-pdf": "workspace:*",
+    "@prose-reader/streamer": "workspace:*",
+    "@types/react": "^19.0.2",
+    "@types/react-dom": "^19.0.0",
     "@vitejs/plugin-react": "^6.0.2",
+    "jszip": "^3.10.1",
     "pdfjs-dist": "^6.2.108",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
-    "reactjrx": "^1.126.0"
+    "reactjrx": "^1.126.0",
+    "rxjs": "^7.8.0"
   }
 }

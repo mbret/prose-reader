@@ -1,11 +1,11 @@
 # Repository structure
 
-This repository is a mono-repository and is using lerna. Take it into consideration when you want to check typescript, build or run tests for examples.
+This repository is a mono-repository: pnpm workspaces, with lerna on top for task running and releases. Take it into consideration when you want to check typescript, build or run tests for examples.
 
 Guidelines live in `AGENTS.md`, at the root and per package, so every tool reads
 the same file. Claude Code discovers `CLAUDE.md` rather than `AGENTS.md`, so
 each one needs a sibling `CLAUDE.md` whose body is `@AGENTS.md` — otherwise the
-guidance silently reaches some tools and not others. `npm run check:agent-docs`
+guidance silently reaches some tools and not others. `pnpm run check:agent-docs`
 enforces the pairing and runs in CI; add both files when you add guidelines for
 a package.
 
@@ -78,36 +78,40 @@ of them. Check the shape deliberately:
 
 # Toolchain
 
-Use the Node/npm toolchain the repo pins in `.nvmrc` — do not assume the shell's default Node is correct (web/CI shells may start on a different, older Node). Before running any `npm`, build, test, or lockfile command, activate the pinned version via nvm:
+Use the Node the repo pins in `.nvmrc` and the pnpm it pins in the root `package.json`'s `packageManager` — do not assume the shell's defaults are correct (web/CI shells may start on a different, older Node). Before running any pnpm, build, test, or lockfile command, activate the pinned Node via nvm, then install the pinned pnpm if the shell does not already have it:
 
 ```sh
 export NVM_DIR="${NVM_DIR:-/opt/nvm}" && . "$NVM_DIR/nvm.sh" && nvm install && nvm use
+npm install --global "$(node -p "require('./package.json').packageManager")"
 ```
 
 Workspace packages resolve to their build output, so a package's tests fail with unresolved `@prose-reader/*` imports until its dependencies have been built. Build the libraries before running tests in a fresh checkout, the way CI does:
 
 ```sh
-npx lerna run build --stream --scope "@prose-reader/*"
+pnpm install
+pnpm exec lerna run build --stream --scope "@prose-reader/*"
 ```
 
-`nvm install`/`nvm use` read `.nvmrc` from the repo root, so this always follows whatever version is pinned there — no version numbers to keep in sync. Regenerate `package-lock.json` only with the npm that ships with that pinned Node: a mismatched npm rewrites native-binary metadata (e.g. dropping `libc`, mismarking optional platform binaries as `dev`) and produces spurious lockfile churn.
+`nvm install`/`nvm use` read `.nvmrc` from the repo root, and CI reads `packageManager`, so both follow whatever is pinned — no version numbers to keep in sync. Regenerate `pnpm-lock.yaml` only with that pinned pnpm: another major can rewrite the lockfile's format.
+
+pnpm gives each package only what its own manifest declares. Declare a dependency in the package that imports it: anything the published code or its types import in `dependencies` or `peerDependencies`, a test-only import in `devDependencies`. Build tooling shared by every package (vite, vitest, the dts and externals plugins) is declared once at the root. The React Native demo is the exception to the workspace: it is not a member, and installs with npm from its own lockfile, the way an app consuming the libraries would.
 
 ## Browser tests
 
 `apps/tests` (`prose-reader-tests`) is a Playwright suite, and the root
-`npm test` runs it alongside the vitest suites, so CI runs every spec in it on
+`pnpm test` runs it alongside the vitest suites, so CI runs every spec in it on
 Chromium, Firefox, WebKit and two mobile profiles. It needs the browser builds
 its Playwright version pins. Install them once per environment, the way CI
-does before `npm test`:
+does before `pnpm test`:
 
 ```sh
-npx playwright install --with-deps
+pnpm --filter prose-reader-tests exec playwright install --with-deps
 ```
 
 Chromium alone is enough while you work on a spec and run only its project:
 
 ```sh
-npx playwright install chromium
+pnpm --filter prose-reader-tests exec playwright install chromium
 ```
 
 Never point the suite at a browser the machine already has. A different build
@@ -119,24 +123,27 @@ first and rebuild the package you changed before re-running a spec, including
 while degrading a guard to watch its test fail. Run one spec with:
 
 ```sh
-npm test -w prose-reader-tests -- --project=chromium tests/<path>.spec.ts
+pnpm --filter prose-reader-tests test --project=chromium tests/<path>.spec.ts
 ```
 
 ## Internal `@prose-reader/*` ranges
 
-Lerna builds its project graph from `dependencies`, `optionalDependencies` and
-`devDependencies` — a `peerDependencies` entry gives it no edge at all — and it
-releases the packages that changed plus their dependents, never everything.
-Three rules follow, each enforced by `npm run check:internal-ranges` in CI, each
-explained where it is implemented:
+Every reference to a sibling uses the workspace protocol. Lerna reads those as
+graph edges, peers included, so a release of a sibling also releases everything
+built on it; at publish time it writes `^<version>` in their place, from the
+version each sibling has when the release is cut. Nothing is kept in step by
+hand, and a release crossing a major has nothing to raise. Two rules follow,
+both enforced by `pnpm run check:internal-ranges` in CI and explained where it
+is implemented:
 
-- **A peer range on a sibling comes with a `devDependencies` entry on the same
-  sibling**, or a release of that sibling silently skips this package.
-- **A peer range is a floor, not a mirror of the release.** `^2.0.0` stays true
-  across all of 2.x; only a release crossing a major has to raise it, which
-  `scripts/sync-internal-ranges.mjs` does from the root `version` lifecycle.
-- **A private app (`apps/*`) declares `*`**, or npm quietly installs a published
-  copy of a sibling beside the workspace one and the app builds against that.
+- **A published package declares `workspace:^`, a private app `workspace:*`.**
+  A plain range is resolved from the registry, and pnpm installs a published
+  copy of the sibling beside the one in the checkout without complaint.
+- **A sibling appears in one dependency field of a package.** Lerna rewrites
+  the protocol only in the first field that names it, so a peer range with a
+  devDependency beside it is published as the literal `workspace:^`. A peer
+  needs no devDependency: pnpm links workspace peers for the package's own
+  build and tests.
 
 Do not read lerna's "fixed mode" as lockstep either: 2.0.1 moved `react-native`
 and `react-reader` and left the other fifteen packages at 2.0.0.

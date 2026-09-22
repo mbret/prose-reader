@@ -23,9 +23,8 @@
     "build": "tsc && vite build"
   },
   "peerDependencies": {
-    "@prose-reader/core": "^4.0.0"
-  },
-  "devDependencies": {
-    "@prose-reader/core": "^4.0.0"
+    "@prose-reader/core": "workspace:^",
+    "@prose-reader/shared": "workspace:^",
+    "rxjs": "*"
   }
 }

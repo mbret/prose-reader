@@ -53,10 +53,10 @@ Ready to build? Follow the **[Getting started guide](https://doc.prose-reader.co
 This is a [Lerna](https://lerna.js.org/) monorepo.
 
 ```bash
-npm install
-npm run build:lib   # build all packages
-npm run start:front # run the website (landing page + demo) locally
-npm test            # run the test suites
+pnpm install
+pnpm run build:lib   # build all packages
+pnpm run start:front # run the website (landing page + demo) locally
+pnpm test            # run the test suites
 ```
 
 Issues and pull requests are welcome — see [the issues page](https://github.com/mbret/prose-reader/issues) to get started.

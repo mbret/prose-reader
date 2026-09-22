@@ -28,8 +28,8 @@
     "test:watch": "vitest watch"
   },
   "dependencies": {
-    "@prose-reader/archive-reader": "^4.0.0",
-    "@prose-reader/shared": "^4.0.0",
+    "@prose-reader/archive-reader": "workspace:^",
+    "@prose-reader/shared": "workspace:^",
     "xmldoc": "^3.0.0"
   },
   "peerDependencies": {
