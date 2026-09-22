@@ -4,6 +4,9 @@
   "command": {
     "publish": {
       "graphType": "all"
+    },
+    "version": {
+      "changelogPreset": "conventionalcommits"
     }
   },
   "$schema": "node_modules/lerna/schemas/lerna-schema.json"
