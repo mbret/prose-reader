@@ -32,7 +32,7 @@ const MANIFEST: Manifest = {
     pageSpreadLeft: true,
     pageSpreadRight: true,
     progressionWeight: 0.5,
-    renditionLayout: "pre-paginated" as const,
+    renditionLayout: "pre-paginated",
     index,
   })),
   title: "",
