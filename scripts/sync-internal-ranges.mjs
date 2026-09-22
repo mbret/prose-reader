@@ -1,120 +1,110 @@
 /**
- * Keeps the `@prose-reader/*` ranges that this repository declares on itself
- * pointing at the version being released.
+ * Raises the internal peer floors that the release being cut would otherwise
+ * leave unsatisfiable.
  *
- * Lerna rewrites a sibling range it finds in `dependencies`,
- * `optionalDependencies` or `devDependencies`, but only for a package pair its
- * project graph links, and only for the packages it versions. Two kinds of
- * range fall outside that and went stale for a long time:
+ * An internal peer range says which sibling versions a package works with, and
+ * it normally outlives a release: `^2.0.0` keeps being true for every 2.x. The
+ * one moment it stops being true is a release that crosses a major, and it then
+ * fails loudly — `npm install --package-lock-only`, which lerna runs inside
+ * `version` to refresh the lockfile, cannot resolve a workspace package asking
+ * for `@prose-reader/core@^2.0.0` next to a `core` being published as `3.0.0`,
+ * so it exits ERESOLVE. That refresh runs before `commitAndTagUpdates`, so the
+ * release aborts whole rather than half-landing: no commit, no tag, no publish.
  *
- * - a **peer** range, because a package whose only tie to a sibling is a peer
- *   range produces no graph edge. By 1.372.0 they still read `^1.117.0`,
- *   `^1.169.0`, `^1.215.0`, and so on.
- * - every internal range in a **private** package, because `--no-private`
- *   excludes the apps from versioning entirely. `apps/tests` asked for
- *   `@prose-reader/core@^1.120.0` for hundreds of releases.
+ * Run from the root `version` lifecycle, which lerna fires once it has written
+ * every version but before that lockfile refresh and the release commit, so a
+ * raised floor lands in the same release.
  *
- * Both drifts are invisible while the major stays at 1, because a stale `^1.x`
- * still admits the current version. They stop being invisible the first time a
- * release crosses a major — and they fail differently, which is why they are
- * corrected differently:
+ * Nothing stages these edits explicitly, and nothing needs to: a package that
+ * peer-depends on a sibling also depends on it (`npm run check:internal-ranges`
+ * enforces that pairing), so lerna's graph links them, a release of the sibling
+ * versions this package too, and its manifest is already in the set lerna
+ * commits. Without that pairing lerna would stage its own files only and these
+ * edits would be dropped on the runner while the lockfile kept them — leaving
+ * master with a lockfile its manifests disagree with.
  *
- * - a published package's peer range must name a real range, so it becomes
- *   `^<version>`. Left stale, `cbz@2.0.0` would keep asking for
- *   `@prose-reader/archive-reader@^1.320.0`, which nothing satisfies any more,
- *   and the `npm install --package-lock-only` that lerna runs to refresh the
- *   lockfile fails with ERESOLVE — taking the whole publish with it.
- * - a private app is never installed by anyone, and the copy it means is always
- *   the one in this checkout, so it gets `*`. Left stale, nothing fails: npm
- *   quietly downloads the last published 1.x into `apps/*\/node_modules` and the
- *   app builds and tests against that instead of the workspace. 2.0.0 did
- *   exactly this to all three apps.
- *
- * Run from the root `version` lifecycle, which lerna fires after it has written
- * every package.json but before both that lockfile refresh and the release
- * commit, so the corrected ranges land in the same release.
- *
- * These packages version in lockstep (lerna fixed mode), so a sibling's range is
- * always the version being released.
+ * Only raising, never normalising: a floor above the last major is someone
+ * saying this package needs something that sibling added, and rewriting it to
+ * whatever is being released would quietly throw that away.
  */
-import { readdirSync, readFileSync, writeFileSync } from "node:fs"
-import { dirname, join, resolve } from "node:path"
+import { existsSync, readdirSync, readFileSync, writeFileSync } from "node:fs"
+import { dirname, join } from "node:path"
 import { fileURLToPath } from "node:url"
+import semver from "semver"
 
 const SCOPE = "@prose-reader/"
-const FIELDS = [
-  "dependencies",
-  "devDependencies",
-  "peerDependencies",
-  "optionalDependencies",
-]
-const root = resolve(dirname(fileURLToPath(import.meta.url)), "..")
+const ROOT = join(dirname(fileURLToPath(import.meta.url)), "..")
 
-const manifests = ["packages", "apps"].flatMap((dir) => {
-  const base = join(root, dir)
-  return readdirSync(base, { withFileTypes: true })
+const manifests = ["packages", "apps"].flatMap((directory) =>
+  readdirSync(join(ROOT, directory), { withFileTypes: true })
     .filter((entry) => entry.isDirectory())
-    .map((entry) => join(base, entry.name, "package.json"))
-    .filter((path) => {
-      try {
-        readFileSync(path)
-        return true
-      } catch {
-        return false
-      }
-    })
-})
+    .map((entry) => join(ROOT, directory, entry.name, "package.json"))
+    .filter((path) => existsSync(path)),
+)
 
-const read = (path) => JSON.parse(readFileSync(path, "utf8"))
+const packages = manifests.map((path) => ({
+  path,
+  pkg: JSON.parse(readFileSync(path, "utf8")),
+}))
 
-// Fixed mode: every published package carries the version being released, so any
-// one of them answers what the siblings should point at.
-const released = manifests
-  .map(read)
-  .find((pkg) => pkg.name?.startsWith(SCOPE) && pkg.private !== true)?.version
+// The versions lerna has just written, which are what the floors have to admit.
+const versions = new Map(
+  packages
+    .filter(({ pkg }) => pkg.name?.startsWith(SCOPE) && pkg.private !== true)
+    .map(({ pkg }) => [pkg.name, pkg.version]),
+)
 
-if (!released) {
+if (!versions.size) {
   throw new Error(
-    `no published ${SCOPE}* package found — cannot tell which version is being released`,
+    `no published ${SCOPE}* package found — cannot tell what is being released`,
   )
 }
 
-const range = `^${released}`
-const rewritten = []
+const raised = []
 
-for (const path of manifests) {
-  const pkg = read(path)
-  const isPrivate = pkg.private === true
-  // Lerna already maintains a published package's `dependencies`; only its peer
-  // ranges are ours. A private app is ours in full.
-  const fields = isPrivate ? FIELDS : ["peerDependencies"]
-  const wanted = isPrivate ? "*" : range
-  const stale = []
+for (const { path, pkg } of packages) {
+  if (pkg.private === true) continue
 
-  for (const field of fields) {
-    const deps = pkg[field]
+  const peers = pkg.peerDependencies
+  const changed = []
 
-    if (!deps) continue
+  for (const [name, range] of Object.entries(peers ?? {})) {
+    if (!name.startsWith(SCOPE)) continue
 
-    for (const name of Object.keys(deps)) {
-      if (!name.startsWith(SCOPE) || deps[name] === wanted) continue
+    const version = versions.get(name)
 
-      deps[name] = wanted
-      stale.push(`${field}.${name}`)
+    if (!version) {
+      throw new Error(
+        `${pkg.name} peers ${name}, which this repository does not publish`,
+      )
     }
+
+    if (semver.satisfies(version, range)) continue
+
+    // Below the floor rather than above it: someone wrote a range this
+    // repository cannot satisfy, which `check:internal-ranges` fails on. Say so
+    // instead of "fixing" it by lowering what they asked for.
+    if (!semver.gtr(version, range)) {
+      throw new Error(
+        `${pkg.name} peers ${name}@${range}, which is above the ${version} being released`,
+      )
+    }
+
+    peers[name] = `^${version}`
+    changed.push(`${name} ${range} -> ^${version}`)
   }
 
-  if (!stale.length) continue
+  if (!changed.length) continue
 
   // Matches how the manifests are already written, so the release commit shows
   // the range change and nothing else.
   writeFileSync(path, `${JSON.stringify(pkg, null, 2)}\n`)
-  rewritten.push(`${pkg.name} -> ${wanted}: ${stale.join(", ")}`)
+  raised.push(`${pkg.name}: ${changed.join(", ")}`)
 }
 
-if (rewritten.length) {
-  console.log(`Pointed internal ranges at ${released}:`)
-  for (const line of rewritten) console.log(`  ${line}`)
+if (raised.length) {
+  console.log("Raised the peer floors this release would have broken:")
+  for (const line of raised) console.log(`  ${line}`)
 } else {
-  console.log(`Internal ranges already correct for ${released}`)
+  console.log("Every internal peer floor admits the versions being released")
 }

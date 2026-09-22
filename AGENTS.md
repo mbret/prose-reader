@@ -124,19 +124,22 @@ npm test -w prose-reader-tests -- --project=chromium tests/<path>.spec.ts
 
 ## Internal `@prose-reader/*` ranges
 
-A private app (`apps/*`) declares its siblings as `*`, never as a version range.
-It is never installed by anyone and the copy it means is always the one in this
-checkout, so a range only creates a way for the two to disagree — and the
-disagreement is silent: once a release crosses a major, `^1.x` stops matching
-the workspace and npm quietly installs the last published 1.x into
-`apps/*/node_modules`, leaving the app building and testing against stale
-packages that still typecheck. 2.0.0 did this to all three apps.
+Lerna builds its project graph from `dependencies`, `optionalDependencies` and
+`devDependencies` — a `peerDependencies` entry gives it no edge at all — and it
+releases the packages that changed plus their dependents, never everything.
+Three rules follow, each enforced by `npm run check:internal-ranges` in CI, each
+explained where it is implemented:
 
-Published packages are different, because their ranges are a promise to
-consumers: lerna maintains their `dependencies`, and the root `version`
-lifecycle runs `scripts/sync-internal-ranges.mjs` for the peer ranges it does
-not reach. That script enforces both rules at release time, so a range that
-creeps back in is corrected rather than shipped.
+- **A peer range on a sibling comes with a `devDependencies` entry on the same
+  sibling**, or a release of that sibling silently skips this package.
+- **A peer range is a floor, not a mirror of the release.** `^2.0.0` stays true
+  across all of 2.x; only a release crossing a major has to raise it, which
+  `scripts/sync-internal-ranges.mjs` does from the root `version` lifecycle.
+- **A private app (`apps/*`) declares `*`**, or npm quietly installs a published
+  copy of a sibling beside the workspace one and the app builds against that.
+
+Do not read lerna's "fixed mode" as lockstep either: 2.0.1 moved `react-native`
+and `react-reader` and left the other fifteen packages at 2.0.0.
 
 # API design: breaking changes are not a constraint
 

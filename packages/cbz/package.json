@@ -26,6 +26,11 @@
     "test": "vitest run"
   },
   "devDependencies": {
+    "@prose-reader/archive-reader": "^2.0.0",
+    "@prose-reader/cfi": "^2.0.0",
+    "@prose-reader/core": "^2.0.0",
+    "@prose-reader/shared": "^2.0.0",
+    "@prose-reader/streamer": "^2.0.0",
     "jsdom": "^29.0.0",
     "typescript": "*",
     "vite": "^8"

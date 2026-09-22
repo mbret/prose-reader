@@ -18,3 +18,4 @@ jobs:
           npm run format
           npm run lint
           npm run check:agent-docs
+          npm run check:internal-ranges
