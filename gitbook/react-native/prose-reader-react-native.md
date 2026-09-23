@@ -16,17 +16,17 @@ A runnable example of both sides is in the [demo](https://github.com/mbret/prose
 ## Installation
 
 ```shell
-npm install @prose-reader/react-native @prose-reader/core @prose-reader/streamer \
-  @prose-reader/archive-reader @prose-reader/shared rxjs \
-  @webview-bridge/react-native @webview-bridge/web
-npx expo install expo-file-system react-native-webview
+npm install @prose-reader/react-native
+npx expo install react-native-webview
 ```
 
-Every dependency of the package is a peer, so your app holds the one copy of
-each. It targets Expo SDK 57: the `expo-file-system` peer is `^57.0.0`, and an
-`expo-file-system` major is the SDK it ships with. `npx expo install` picks the
-`expo-file-system` and `react-native-webview` versions your SDK expects.
-`react` 19 is your app's own.
+npm and pnpm install the package's other peers with it. The second line is
+there because `react-native-webview` is a native module: `npx expo install`
+picks the version your Expo SDK expects, where npm would take the latest
+release.
+
+The package targets Expo SDK 57: its `expo-file-system` peer is `^57.0.0`,
+which SDK 57 already ships.
 
 ## Web side
 
