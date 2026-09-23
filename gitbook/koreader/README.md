@@ -27,8 +27,12 @@ const getSpineItem = (spineItemIndex: number) => {
 const cfi = xPointerToCfi("/body/DocFragment[14]/body/div/p[3]/text().42", getSpineItem)
 // => "epubcfi(/6/28[chap05]!/4/2/6/1:42)"
 
-// prose's current position, into what the server and e-readers expect
-const xpointer = cfiToXPointer(reader.pagination.state.begin.cfi, getSpineItem)
+// prose's current position, into what the server and e-readers expect. Only a
+// settled pagination has the cfi of the page actually being read.
+const pagination = reader.pagination.state
+const xpointer = pagination.isSettled
+  ? cfiToXPointer(pagination.begin.cfi, getSpineItem)
+  : undefined
 // => "/body/DocFragment[14]/body/div/p[3]/text().42"
 ```
 

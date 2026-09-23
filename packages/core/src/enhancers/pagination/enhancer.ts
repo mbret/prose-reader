@@ -25,11 +25,11 @@ import {
 } from "./trackPaginationEnrichment"
 import type {
   EnhancerPaginationEdge,
-  EnhancerPaginationInto,
+  EnhancerPaginationInfo,
   PaginationEnhancerAPI,
 } from "./types"
 
-export type { EnhancerPaginationInto, PaginationEnhancerAPI } from "./types"
+export type { EnhancerPaginationInfo, PaginationEnhancerAPI } from "./types"
 
 /**
  * Two returns rather than one spread: the settled variant types each edge's
@@ -39,7 +39,7 @@ export type { EnhancerPaginationInto, PaginationEnhancerAPI } from "./types"
 const publishEnrichment = (
   { source, begin, end, ...extras }: PaginationEnrichment,
   describesCurrentResult: boolean,
-): EnhancerPaginationInto => {
+): EnhancerPaginationInfo => {
   if (source.isSettled && describesCurrentResult) {
     return {
       ...extras,
@@ -75,7 +75,7 @@ export const paginationEnhancer =
       absolutePageIndex: 0,
     })
 
-    const unenrichedPagination: EnhancerPaginationInto = {
+    const unenrichedPagination: EnhancerPaginationInfo = {
       ...reader.pagination.state,
       isSettled: false,
       begin: unenrichedEdge(reader.pagination.state.begin),
@@ -110,7 +110,7 @@ export const paginationEnhancer =
      * `state` is read synchronously, so the derived result is kept here.
      * Nothing writes to it but the stream above.
      */
-    const enhancedPagination = new BehaviorSubject<EnhancerPaginationInto>(
+    const enhancedPagination = new BehaviorSubject<EnhancerPaginationInfo>(
       unenrichedPagination,
     )
     const paginationSub = enhancedPagination$.subscribe(enhancedPagination)

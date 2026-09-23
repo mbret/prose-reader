@@ -26,7 +26,6 @@ export type ExtraPaginationInfo = {
    */
   numberOfTotalPages: number | undefined
   isUsingSpread: boolean
-  // numberOfSpineItems: number | undefined
 }
 
 /**
@@ -34,15 +33,15 @@ export type ExtraPaginationInfo = {
  * does, over its own edge type — settlement is a property of the two edges'
  * positions, so it is expressed once and reused rather than restated here.
  */
-export type EnhancerPaginationInto = ExtraPaginationInfo &
+export type EnhancerPaginationInfo = ExtraPaginationInfo &
   VisibleRange<EnhancerPaginationEdge>
 
 export type PaginationEnhancerAPI<
   InheritOutput extends EnhancerOutput<RootEnhancer> & LayoutEnhancerOutput,
 > = Omit<InheritOutput, "pagination"> & {
   pagination: Omit<InheritOutput["pagination"], "state$" | "state"> & {
-    state$: Observable<EnhancerPaginationInto>
-    state: EnhancerPaginationInto
+    state$: Observable<EnhancerPaginationInfo>
+    state: EnhancerPaginationInfo
   }
   locateResource: ResourcesLocator["locateResource"]
 }
