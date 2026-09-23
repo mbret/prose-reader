@@ -1,6 +1,5 @@
 import {
   concatMap,
-  debounce,
   map,
   merge,
   type Observable,
@@ -38,7 +37,15 @@ export class SpineLayout extends DestroyableClass {
   protected spineItemsRelativeLayouts: SpineItemSpineLayout[] = []
 
   /**
-   * Emit layout info after each layout is done.
+   * Every layout request as it is made, from `layout()` or from an item
+   * loading or unloading.
+   */
+  public readonly requested$: Observable<SpineLayoutOptions>
+
+  /**
+   * Emit layout info after each layout is done. A newer request cancels
+   * whatever is still running for an older one, so what this emits after a
+   * request is the layout that request asked for.
    */
   public readonly layout$: Observable<unknown>
 
@@ -65,94 +72,108 @@ export class SpineLayout extends DestroyableClass {
       ),
     )
 
-    const layoutTrigger$ = merge(
+    this.requested$ = merge(
       this.externalLayoutTrigger,
       spineItemNeedsLayout$,
-    )
+    ).pipe(share())
 
-    this.layout$ = layoutTrigger$.pipe(
+    this.layout$ = this.requested$.pipe(
       tap(() => {
         this.spineItemsManager.items.forEach((item) => {
           item.markDirty()
         })
       }),
-      // Immediate only skips this artificial delay. Item layout itself can still
-      // complete asynchronously depending on the renderer.
-      debounce((options) => (options.immediate ? of(undefined) : timer(50))),
-      switchMap(() => {
-        /**
-         * Local to this pass. A superseded pass is unsubscribed and its array
-         * discarded, so a cancelled layout can never leave the published
-         * layouts holding a mix of two passes.
-         */
-        const layouts: SpineItemSpineLayout[] = []
+      /**
+       * The wait sits inside the switch rather than before it, so a request
+       * cancels a pass already running for an older one instead of letting it
+       * finish while the new request waits. Requests still coalesce, since
+       * each one restarts the wait.
+       *
+       * Immediate only skips this artificial delay. Item layout itself can
+       * still complete asynchronously depending on the renderer.
+       */
+      switchMap((options) => {
+        const wait$: Observable<unknown> = options.immediate
+          ? of(undefined)
+          : timer(50)
 
-        return this.spineItemsManager.items
-          .reduce(
-            (acc$, item, itemIndex) =>
-              acc$.pipe(
-                concatMap(({ horizontalOffset, verticalOffset }) => {
-                  const isScreenStartItem =
-                    horizontalOffset % viewport.absoluteViewport.width === 0
-                  const isLastItem =
-                    itemIndex === spineItemsManager.items.length - 1
-                  const isVertical =
-                    settings.values.computedPageTurnDirection === `vertical`
-                  const isRTL = context.isRTL()
+        return wait$.pipe(
+          switchMap(() => {
+            /**
+             * Local to this pass. A superseded pass is unsubscribed and its array
+             * discarded, so a cancelled layout can never leave the published
+             * layouts holding a mix of two passes.
+             */
+            const layouts: SpineItemSpineLayout[] = []
 
-                  const spreadPosition = this.getSpreadPosition(
-                    isScreenStartItem,
-                    isRTL,
-                  )
-                  const { edgeX, edgeY } = this.getStartEdges(
-                    isVertical,
-                    isScreenStartItem,
-                    horizontalOffset,
-                    verticalOffset,
-                    viewport.absoluteViewport.height,
-                  )
+            return this.spineItemsManager.items
+              .reduce(
+                (acc$, item, itemIndex) =>
+                  acc$.pipe(
+                    concatMap(({ horizontalOffset, verticalOffset }) => {
+                      const isScreenStartItem =
+                        horizontalOffset % viewport.absoluteViewport.width === 0
+                      const isLastItem =
+                        itemIndex === spineItemsManager.items.length - 1
+                      const isVertical =
+                        settings.values.computedPageTurnDirection === `vertical`
+                      const isRTL = context.isRTL()
 
-                  // we trigger an item layout which will update the visual and return
-                  // us with the item new eventual layout information.
-                  // This step is not yet about moving item or adjusting position.
-                  return item
-                    .layout({
-                      spreadPosition,
-                      horizontalOffset,
-                      isLastItem,
-                      edgeX,
-                      edgeY,
-                    })
-                    .pipe(
-                      map(({ width, height }) => {
-                        const layoutPosition = this.createSpineItemLayout(
-                          isVertical,
-                          isRTL,
+                      const spreadPosition = this.getSpreadPosition(
+                        isScreenStartItem,
+                        isRTL,
+                      )
+                      const { edgeX, edgeY } = this.getStartEdges(
+                        isVertical,
+                        isScreenStartItem,
+                        horizontalOffset,
+                        verticalOffset,
+                        viewport.absoluteViewport.height,
+                      )
+
+                      // we trigger an item layout which will update the visual and return
+                      // us with the item new eventual layout information.
+                      // This step is not yet about moving item or adjusting position.
+                      return item
+                        .layout({
+                          spreadPosition,
+                          horizontalOffset,
+                          isLastItem,
                           edgeX,
                           edgeY,
-                          width,
-                          height,
-                          viewport.absoluteViewport.width,
+                        })
+                        .pipe(
+                          map(({ width, height }) => {
+                            const layoutPosition = this.createSpineItemLayout(
+                              isVertical,
+                              isRTL,
+                              edgeX,
+                              edgeY,
+                              width,
+                              height,
+                              viewport.absoluteViewport.width,
+                            )
+
+                            layouts[itemIndex] = layoutPosition
+
+                            return {
+                              horizontalOffset: edgeX + width,
+                              verticalOffset: isVertical ? edgeY + height : 0,
+                            }
+                          }),
                         )
-
-                        layouts[itemIndex] = layoutPosition
-
-                        return {
-                          horizontalOffset: edgeX + width,
-                          verticalOffset: isVertical ? edgeY + height : 0,
-                        }
-                      }),
-                    )
+                    }),
+                  ),
+                of({ horizontalOffset: 0, verticalOffset: 0 }),
+              )
+              .pipe(
+                // The pass completed: publish it in one assignment.
+                tap(() => {
+                  this.spineItemsRelativeLayouts = layouts
                 }),
-              ),
-            of({ horizontalOffset: 0, verticalOffset: 0 }),
-          )
-          .pipe(
-            // The pass completed: publish it in one assignment.
-            tap(() => {
-              this.spineItemsRelativeLayouts = layouts
-            }),
-          )
+              )
+          }),
+        )
       }),
       takeUntil(this.destroy$),
       share(),

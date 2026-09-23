@@ -1,3 +1,4 @@
+import { NEVER } from "rxjs"
 import { describe, expect, it, vi } from "vitest"
 import { CfiManager } from "../../../cfi"
 import { Context } from "../../../context/Context"
@@ -56,6 +57,8 @@ const createContext = () => {
     spineItemLocator,
     settings,
     viewport,
+    // No reader drives these layouts.
+    NEVER,
   )
   const spineItem = spineItemsManager.items[0]
 

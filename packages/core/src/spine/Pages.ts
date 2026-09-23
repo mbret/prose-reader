@@ -221,7 +221,14 @@ export class Pages extends ReactiveEntity<PagesState> {
           [],
         )
 
-        return resolvePagesFirstVisibleNodeInFrames$(pages)
+        /**
+         * Resolving first visible nodes runs across animation frames. A layout
+         * requested meanwhile makes these pages describe a layout already
+         * being replaced, so they are abandoned rather than published.
+         */
+        return resolvePagesFirstVisibleNodeInFrames$(pages).pipe(
+          takeUntil(spineLayout.requested$),
+        )
       }),
       map((pages) => {
         Report.info(`Pages layout`, pages)

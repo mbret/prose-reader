@@ -17,26 +17,41 @@ import {
 
 const url = "http://localhost:3333/tests/navigation/restoration/epub/index.html"
 
-const readPosition = (page: Page) =>
-  page.evaluate(() => {
-    // @ts-expect-error window.reader is set by this scenario's index.tsx
-    const reader = window.reader as Reader
-    const pagination = reader.pagination.state
+/**
+ * The settled position. Settlement drops for a moment whenever the spine lays
+ * itself out again for an item loading nearby, so this waits for a settled
+ * result and reads it in the same evaluation.
+ */
+const readPosition = async (page: Page) => {
+  const handle = await page.waitForFunction(
+    () => {
+      // @ts-expect-error window.reader is set by this scenario's index.tsx
+      const reader = window.reader as Reader
+      const pagination = reader.pagination.state
 
-    if (!pagination.isSettled) throw new Error("pagination is not settled")
+      if (!pagination.isSettled) return undefined
 
-    const { begin } = pagination
-    const navigation = reader.navigation.getNavigation()
+      const { begin } = pagination
+      const navigation = reader.navigation.getNavigation()
 
-    return {
-      cfi: begin.cfi,
-      isRootCfi: reader.cfi.isRootCfi(begin.cfi),
-      pageIndex: begin.pageIndexInSpineItem,
-      spineItemIndex: begin.spineItemIndex,
-      navigationCfi: navigation.cfi,
-      anchor: navigation.paginationBeginCfi,
-    }
-  })
+      return {
+        cfi: begin.cfi,
+        isRootCfi: reader.cfi.isRootCfi(begin.cfi),
+        pageIndex: begin.pageIndexInSpineItem,
+        spineItemIndex: begin.spineItemIndex,
+        navigationCfi: navigation.cfi,
+        anchor: navigation.paginationBeginCfi,
+      }
+    },
+    undefined,
+    { timeout: 10_000 },
+  )
+  const position = await handle.jsonValue()
+
+  if (!position) throw new Error("no settled pagination result")
+
+  return position
+}
 
 /** Third page of a long chapter, reached by turning pages. */
 const turnToThirdPageOfLongChapter = async (page: Page) => {
