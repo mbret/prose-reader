@@ -1,18 +1,11 @@
+/**
+ * A table of contents entry, nested down to the most specific entry. The toc
+ * has no depth limit, so neither does the chain.
+ */
 export type ChapterInfo = {
   title: string
-  subChapter?: {
-    title: string
-    subChapter?: {
-      title: string
-      subChapter?: {
-        title: string
-        path: string
-      }
-      path: string
-    }
-    path: string
-  }
   path: string
+  subChapter?: ChapterInfo
 }
 
 export type TocPathEntry = {
