@@ -3,6 +3,79 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## [5.0.0](https://github.com/mbret/prose-reader/compare/v4.0.2...v5.0.0) (2026-09-23)
+
+
+### ⚠ BREAKING CHANGES
+
+* **react-native:** @prose-reader/react-native requires Expo SDK 57; its
+expo-file-system peer is ^57.0.0.
+
+Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
+Claude-Session: https://claude.ai/code/session_01PCcUZEBkJdYVWXpz1ZerQ7
+
+* docs(react-native): install the package with npm install alone
+
+npm and pnpm install a package's peers with it, so listing all ten of them
+was noise, and it asked apps to add internals such as @prose-reader/shared by
+hand. Installed from a packed tarball into a fresh SDK 57 app, a plain
+`npm install @prose-reader/react-native` brings every peer and leaves `npm
+ls` clean. expo-file-system is already there, since expo depends on it.
+
+The one exception is react-native-webview: npm takes its latest release
+(14.0.1) where SDK 57 ships 13.16.1, and `expo install --check` does not flag
+it because the app does not list it. `npx expo install react-native-webview`
+gets 13.16.1.
+
+Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
+Claude-Session: https://claude.ai/code/session_01PCcUZEBkJdYVWXpz1ZerQ7
+
+* docs(react-native): list every peer in the install command again
+
+The package only uses peer dependencies, all of them required. Listing
+them makes the app declare each one, the way the react-reader page
+documents its own peers, and it works with Yarn, which does not install
+peers for you. It also routes both native modules through `npx expo
+install`. With the plain `npm install`, react-native-webview came in as
+npm's latest release (14.0.1), undeclared, and `expo install --check`
+never saw it.
+
+The paragraph now says why the command is that long.
+
+Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
+Claude-Session: https://claude.ai/code/session_01PCcUZEBkJdYVWXpz1ZerQ7
+
+* build(demo): regenerate the native projects for expo sdk 57
+
+The committed ios/ and android/ projects were SDK 53 prebuild output. The
+iOS one pinned a 15.5 deployment target, while SDK 57's ExpoFileSystem pod
+requires 16.4. `expo run:ios` only prebuilds when the folder is missing,
+so `npm run ios` reused that project and failed at `pod install`.
+
+Both are regenerated with `expo prebuild --clean` under SDK 57, from
+app.json alone, since neither held anything custom:
+- iOS targets 16.4, the SDK default, now that app.json no longer overrides
+  it. The Podfile follows the SDK 57 template.
+- The Kotlin sources move to the directory matching the
+  com.mbret.prosereactnativedemo package. The Gradle wrapper and the
+  debugOptimized variant come from the SDK 57 template.
+- ios/Podfile.lock, resolved against Expo 53 and React Native 0.79, is
+  deleted along with the workspace `pod install` generates. CocoaPods does
+  not run on Linux, so the first `npm run ios` writes both again.
+
+The README says to regenerate the projects after an app.json change or an
+SDK upgrade, since `npm run ios` and `npm run android` build them as they
+are.
+
+Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
+Claude-Session: https://claude.ai/code/session_01PCcUZEBkJdYVWXpz1ZerQ7
+
+### Features
+
+* **react-native:** settle the library and its demo on expo sdk 57 ([#386](https://github.com/mbret/prose-reader/issues/386)) ([fa9448f](https://github.com/mbret/prose-reader/commit/fa9448f511a7b9cf855016e14884854ebf5108d9))
+
+
+
 ## [4.0.1](https://github.com/mbret/prose-reader/compare/v4.0.0...v4.0.1) (2026-09-23)
 
 **Note:** Version bump only for package @prose-reader/react-native
