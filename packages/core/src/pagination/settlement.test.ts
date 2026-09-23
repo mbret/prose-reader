@@ -499,4 +499,73 @@ describe("pagination settlement", () => {
 
     expect(next.begin.spineItemIndex).toBe(0)
   })
+
+  it("does not settle a navigation made while a requested layout measures the viewport", async () => {
+    const reader = createTestReader()
+
+    mountTestReader(reader)
+    await settledOn(reader, 0)
+
+    /**
+     * `reader.layout()` measures the viewport before it lays the spine out,
+     * and the viewport notifies synchronously. Anything reacting to that, an
+     * app following a resize for one, can navigate before the spine has heard
+     * of the request.
+     */
+    const settledInsideTheViewportLayout: boolean[] = []
+    reader.viewport.layout$.pipe(first()).subscribe(() => {
+      reader.navigation.goToSpineItem({ indexOrId: 0, animation: false })
+      settledInsideTheViewportLayout.push(reader.pagination.state.isSettled)
+    })
+
+    reader.layout()
+
+    expect(settledInsideTheViewportLayout).toEqual([false])
+
+    const next = await settledOn(reader, 0)
+
+    expect(next.begin.spineItemIndex).toBe(0)
+  })
+
+  it("keeps settlement through a viewport-only layout", async () => {
+    const reader = createTestReader()
+
+    mountTestReader(reader)
+    await settledOn(reader, 0)
+
+    /**
+     * Zooming re-measures the viewport alone: the spine's geometry still
+     * holds, and no spine layout follows. Treating it as a layout request
+     * would withdraw settlement with nothing to bring it back.
+     */
+    reader.viewport.layout()
+    await waitFor(100)
+
+    expect(reader.pagination.state.isSettled).toBe(true)
+  })
+
+  it("withdraws the enriched result while the spine relays out for another item", async () => {
+    const otherItem = holdItem("/page_1.jpg")
+    const reader = createEnhancedTestReader({
+      getRenderer: otherItem.getRenderer,
+    })
+
+    mountTestReader(reader)
+    await settledOn(reader, 0)
+
+    const visibleItem = reader.spineItemsManager.get(0)
+
+    if (!visibleItem) throw new Error("item 0 is missing")
+
+    otherItem.release()
+    await vi.waitFor(() => expect(visibleItem.value.isDirty).toBe(true))
+
+    // The enhancer throttles its enrichment, and must not keep presenting a
+    // settlement the core result has withdrawn without any new trigger.
+    expect(reader.pagination.state.isSettled).toBe(false)
+
+    const next = await settledOn(reader, 0)
+
+    expect(next.begin.spineItemIndex).toBe(0)
+  })
 })

@@ -40,10 +40,12 @@ export class Spine extends DestroyableClass {
   /**
    * Whether the pages describe the latest layout requested. A request makes
    * them stale at once, whether it came through `reader.layout()` or from an
-   * item loading or unloading. It also cancels everything still running for
-   * older requests, the pass and the page computation both, so the next pages
-   * published are the ones it asked for, and they make the layout current
-   * again.
+   * item loading or unloading. A reader request counts from the moment it is
+   * made, before the reader measures the viewport for it, since the viewport
+   * notifies synchronously and whatever it notifies may navigate. A request
+   * also cancels everything still running for older ones, the pass and the
+   * page computation both, so the next pages published are the ones it asked
+   * for, and they make the layout current again.
    *
    * Item flags cannot tell this: a pass clears an item's dirty flag as soon as
    * it lays that item out, long before the pages are recomputed.
@@ -57,6 +59,8 @@ export class Spine extends DestroyableClass {
     public spineItemLocator: ReturnType<typeof createSpineItemLocationResolver>,
     protected settings: ReaderSettingsManager,
     protected viewport: Viewport,
+    /** The reader's layout requests, as they are made. */
+    layoutRequest$: Observable<unknown>,
   ) {
     super()
 
@@ -103,6 +107,7 @@ export class Spine extends DestroyableClass {
      * over it.
      */
     this.isLayoutCurrent$ = merge(
+      layoutRequest$.pipe(map(() => false)),
       this.spineLayout.requested$.pipe(map(() => false)),
       this.pages.state$.pipe(
         skip(1),

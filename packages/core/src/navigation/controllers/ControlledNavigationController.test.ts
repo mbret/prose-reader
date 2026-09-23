@@ -1,3 +1,4 @@
+import { NEVER } from "rxjs"
 import { describe, expect, it } from "vitest"
 import { Context } from "../../context/Context"
 import { HookManager } from "../../hooks/HookManager"
@@ -35,6 +36,8 @@ const createTestController = () => {
     spineItemLocator,
     settings,
     viewport,
+    // No reader drives these layouts.
+    NEVER,
   )
 
   const controller = new ControlledNavigationController(

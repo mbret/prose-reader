@@ -1,4 +1,4 @@
-import { firstValueFrom, skip } from "rxjs"
+import { firstValueFrom, NEVER, skip } from "rxjs"
 import { describe, expect, it, vi } from "vitest"
 import { CfiManager } from "../cfi"
 import { Context } from "../context/Context"
@@ -48,6 +48,8 @@ const createNavigatorContext = (numberOfItems = 0) => {
     spineItemLocator,
     settings,
     viewport,
+    // No reader drives these layouts.
+    NEVER,
   )
   const navigator = createNavigator({
     cfi,
