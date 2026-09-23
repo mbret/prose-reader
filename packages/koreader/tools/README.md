@@ -45,8 +45,8 @@ their `autoBoxing` steps).
 
 Adding a fixture: put the EPUB in the fixtures directory (`strip_epub.py
 <in.epub> <out.epub>` keeps only its package, navigation and content
-documents), add its name to the fixture lists in `src/fixtures.test.ts` and
-`src/crengineCheck.test.ts`, and run both scripts.
+documents), add its name to `FIXTURES` in `src/tests/epub.ts`, and run both
+scripts.
 `build_synthetic_fixture.py <out.epub>` regenerates `synthetic.epub`, the
 EPUB 2 fixture built to exercise every crengine rule (block probes for every
 HTML element, whitespace runs, entities, emoji, CJK, `pre`, tables, lists,

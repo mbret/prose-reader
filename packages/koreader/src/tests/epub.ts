@@ -5,6 +5,32 @@ import { parseSvgDocument, parseXhtml } from "./dom"
 
 export const FIXTURES_DIR = join(__dirname, "fixtures")
 
+/**
+ * Every fixture EPUB, each with the two files KOReader's crengine produced for
+ * it: its pointers for a sample of the book's words, and its verdict on the
+ * pointers this package emits. Captured with tools/xpointer-oracle.lua and
+ * tools/xpointer-check.lua from a KOReader v2026.07 Linux build (crengine DOM
+ * 20240114, data/epub.css, "web" block rendering).
+ */
+export const FIXTURES = [
+  "synthetic",
+  "accessible-epub-3",
+  "alice-pg11",
+  "frankenstein-pg84",
+  "cc-shared-culture",
+  "haruko",
+  "mathematics",
+]
+
+/**
+ * Timeout for a test whose work grows with a whole book, or with every book.
+ * Such a test takes up to 2 s alone, but CI runs every package's suite and the
+ * Playwright suite at once on a 3-core runner, where it has taken nearly 6 s:
+ * past vitest's 5 s default, which is sized for unit tests. 30 s is five times
+ * the slowest run seen there.
+ */
+export const WHOLE_BOOK_TIMEOUT = 30_000
+
 export type FixtureSpineItem = {
   index: number
   id: string

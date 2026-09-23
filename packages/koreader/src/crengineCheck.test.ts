@@ -6,31 +6,13 @@ import { getCrengineChildren, isTextNode } from "./crengine/children"
 import { isElement } from "./crengine/elements"
 import { generateXPointer } from "./generate"
 import {
+  FIXTURES,
   FIXTURES_DIR,
   isKnownDeviation,
   normalizeText,
   openFixtureBook,
+  WHOLE_BOOK_TIMEOUT,
 } from "./tests/epub"
-
-/**
- * The second half of the ground truth: pointers this package emits, fed to
- * KOReader's crengine by tools/xpointer-check.lua, which reports whether it
- * resolves them and the text it reads between them.
- *
- * `XPOINTER_CHECK_EMIT_DIR=<dir> vitest run src/crengineCheck.test.ts` writes
- * the pairs to send (`<dir>/<fixture>.pairs.json`); the Lua script's answers,
- * saved as `src/tests/fixtures/<fixture>.crengine-check.json`, are what the
- * test asserts against. A fixture without an answer file fails the test.
- */
-const FIXTURES = [
-  "synthetic",
-  "accessible-epub-3",
-  "alice-pg11",
-  "frankenstein-pg84",
-  "cc-shared-culture",
-  "haruko",
-  "mathematics",
-]
 
 type Pair = { xp0: string; xp1: string | null; expected: string | null }
 
@@ -150,12 +132,24 @@ const pairsOf = async (name: string): Promise<Pair[]> => {
 
 const emitDir = process.env.XPOINTER_CHECK_EMIT_DIR
 
+/**
+ * The second half of the ground truth: pointers this package emits, fed to
+ * KOReader's crengine by tools/xpointer-check.lua, which reports whether it
+ * resolves them and the text it reads between them.
+ *
+ * `XPOINTER_CHECK_EMIT_DIR=<dir> vitest run src/crengineCheck.test.ts` writes
+ * the pairs to send (`<dir>/<fixture>.pairs.json`); the Lua script's answers,
+ * saved as `src/tests/fixtures/<fixture>.crengine-check.json`, are what the
+ * test asserts against. A fixture without an answer file fails the test.
+ */
 describe.each(FIXTURES)(
   "crengine accepts what this package emits: %s",
   (name) => {
     const answers = join(FIXTURES_DIR, `${name}.crengine-check.json`)
 
-    it("resolves every emitted pointer to the same text", async () => {
+    it("resolves every emitted pointer to the same text", {
+      timeout: WHOLE_BOOK_TIMEOUT,
+    }, async () => {
       const pairs = await pairsOf(name)
 
       if (emitDir) {
