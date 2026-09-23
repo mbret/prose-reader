@@ -10,6 +10,53 @@ Often useful when you want to navigate based on buttons or gesture. For example 
 
 These represent methods such as `goToItem`, `goToPage`, `goToUrl`, etc. They are not directional nor spatial and are used when you know exactly where you want to go. They are usually used for navigating by bookmarks, table of contents, links and other.
 
+## Reading position
+
+```typescript
+reader.navigation.readingPosition$: Observable<string>
+```
+
+Where the reader is in the book, as a cfi: the value to save, and to pass back
+as the `cfi` option to reopen the book there. It replays the current one on
+subscription, and emits nothing until the first navigation has a position.
+
+It only moves when the reader navigates. A resize, a rotation, a font size
+change or a chapter loading nearby lays the book out again and reflows the page
+around the reading position, but never changes it. The
+[pagination page](pagination.md#pagination-or-reading-position) explains why
+that makes it the value to save rather than pagination's `begin.cfi`.
+
+What it is depends on the navigation:
+
+- **A navigation to a cfi**, with `goToCfi` or by opening the book with the
+  `cfi` option: that cfi, from the moment the navigation starts. It names the
+  exact place asked for, so it is kept as it is, even once the page holding it
+  shows.
+- **Any other navigation**, turning pages, scrolling, `goToSpineItem` or
+  `goToUrl`: the first visible position of the page the navigation lands on,
+  once that page has settled. Until then the previous reading position stands,
+  so a precise position is never replaced by a placeholder for a page still
+  loading.
+
+```typescript
+reader.navigation.readingPosition$.subscribe((cfi) => {
+  localStorage.setItem(`reading-position-${bookId}`, cfi)
+})
+```
+
+## `navigation.navigation$` and `navigation.position$`
+
+`navigation$` emits every navigation as it happens, with its `triggeredBy`:
+
+- `"user"`: a navigation you or a gesture asked for.
+- `"restoration"`: the reader re-applying the current navigation, after the book
+  was laid out again or when a pan ends. A restoration is emitted even when it
+  lands where the navigation already was: what it tells is that the navigation
+  holds on the new layout, where the same position can show other content.
+
+Use it to react to navigating as an event. For where the viewport is,
+`position$` emits the position only when it changes.
+
 
 
 ```typescript

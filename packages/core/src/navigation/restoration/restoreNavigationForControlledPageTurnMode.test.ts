@@ -82,6 +82,7 @@ describe(`Given a backward navigation to a new item`, () => {
 
         const position = await lastValueFrom(
           restoreNavigationForControlledPageTurnMode({
+            anchorCfi: undefined,
             navigation: {
               position: new SpinePosition({
                 x: 0,

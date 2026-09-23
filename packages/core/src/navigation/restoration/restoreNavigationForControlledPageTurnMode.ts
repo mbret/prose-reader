@@ -11,12 +11,15 @@ import type { InternalNavigationEntry } from "../types"
 export const restoreNavigationForControlledPageTurnMode = ({
   spineLocator,
   navigation,
+  anchorCfi,
   navigationResolver,
   spineItemsManager,
   spine,
   cfiManager,
 }: {
   navigation: InternalNavigationEntry
+  /** The anchor of this navigation, once one of its results settled. */
+  anchorCfi: string | undefined
   spineLocator: SpineLocator
   navigationResolver: NavigationResolver
   spineItemsManager: SpineItemsManager
@@ -77,7 +80,7 @@ export const restoreNavigationForControlledPageTurnMode = ({
         }
       }
 
-      const cfi = navigation.cfi ?? navigation.paginationBeginCfi
+      const cfi = navigation.cfi ?? anchorCfi
 
       /**
        * Restoration from cfi.

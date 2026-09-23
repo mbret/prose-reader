@@ -22,11 +22,12 @@ export type SettledPaginationEdge<TEdge extends PaginationEdge> = TEdge & {
  * resolved. `isSettled` is what tells those two states apart.
  *
  * A settled range describes the visible pages of the current layout over
- * content that is ready, which makes it the only one safe to persist as
- * reading progress. That is the whole difference between the two variants: a
- * settled range's edges have resolved positions, so their cfis are typed as
- * present, and establishing settlement is what gives a consumer access to
- * them. Page metrics stay on both, so navigation controls keep working on
+ * content that is ready. That is the whole difference between the two
+ * variants: a settled range's edges have resolved positions, so their cfis
+ * are typed as present, and establishing settlement is what gives a consumer
+ * access to them. It describes how the current layout cuts the pages, so it
+ * moves when the book is laid out again; to save progress, use the
+ * navigator's `readingPosition$`, which does not. Page metrics stay on both, so navigation controls keep working on
  * estimates while a range is pending.
  *
  * It is generic over the edge so the enhancer's enriched edge discriminates

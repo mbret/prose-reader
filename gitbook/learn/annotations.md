@@ -61,6 +61,8 @@ Persisting the text selection is okay since the document should not have its str
 
 There is nothing wrong in persisting pagination or runtime information but just remember that they might be different from a session to another. Most of the time, a user will open a same book on a same device but that's an assumption only you can decide.
 
+The same goes for where the reader is: save the [reading position](navigation.md#reading-position), not pagination's cfi, which moves whenever the book is laid out again.
+
 ## Weak vs Strong references
 
 As discussed above, some references are stronger than others, in other words some things can be more stable than others across devices, resolutions and settings. Here is a couple of examples:

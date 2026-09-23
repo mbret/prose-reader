@@ -83,7 +83,7 @@ describe("pagination settlement", () => {
     expect(next.begin.spineItemIndex).toBe(1)
   })
 
-  it("does not resolve again when a result anchors the navigation", async () => {
+  it("does not resolve again once a navigation settles", async () => {
     const reader = createTestReader()
 
     mountTestReader(reader)
@@ -99,9 +99,10 @@ describe("pagination settlement", () => {
     await waitFor(50)
 
     /**
-     * A settled result anchors the navigation. The anchor is not a navigation
-     * and never reaches the navigation stream, so it cannot trigger another
-     * resolution, which would withdraw and re-grant settlement over nothing.
+     * A settled result becomes the navigation's anchor, which is derived from
+     * the result and never goes through the navigation stream, so it cannot
+     * trigger another resolution, which would withdraw and re-grant settlement
+     * over nothing.
      */
     const firstSettled = states.findIndex(
       (state) => state.isSettled && state.begin.spineItemIndex === 1,
@@ -193,11 +194,16 @@ describe("pagination settlement", () => {
         settledWithSecondItemNotReady.push(state.end.spineItemIndex ?? -1)
       }
     })
+    const readingPositions: string[] = []
+    reader.navigation.readingPosition$.subscribe((cfi) => {
+      readingPositions.push(cfi)
+    })
 
     /**
-     * Pagination resolves when the spine lays out, synchronously and ahead of
-     * this subscriber, so once the layout that follows the first item's
-     * readiness reaches here the result for it is in place.
+     * Pagination resolves when the navigator restores the navigation onto a
+     * new layout, synchronously and ahead of this subscriber, so once the
+     * layout that follows the first item's readiness reaches here the result
+     * for it is in place.
      */
     let layoutsWithOnlyTheFirstItemReady = 0
     reader.spine.layout$.subscribe(() => {
@@ -211,13 +217,13 @@ describe("pagination settlement", () => {
 
     /**
      * A spread shows two items, and the second one is still loading. A result
-     * that settled now would anchor the entry to a spread whose right page has
-     * no content yet.
+     * that settled now would become the reading position while the right page
+     * has no content yet.
      */
     expect(reader.pagination.state.begin.spineItemIndex).toBe(0)
     expect(reader.pagination.state.end.spineItemIndex).toBe(1)
     expect(reader.pagination.state.isSettled).toBe(false)
-    expect(reader.navigation.getNavigation().paginationBeginCfi).toBeUndefined()
+    expect(readingPositions).toEqual([])
 
     secondItem.release()
 
@@ -228,9 +234,7 @@ describe("pagination settlement", () => {
     expect([state.begin.spineItemIndex, state.end.spineItemIndex]).toEqual([
       0, 1,
     ])
-    expect(reader.navigation.getNavigation().paginationBeginCfi).toBe(
-      state.begin.cfi,
-    )
+    expect(readingPositions).toEqual([state.begin.cfi])
     expect(settledWithSecondItemNotReady).toEqual([])
   })
 
@@ -627,6 +631,68 @@ describe("pagination settlement", () => {
     await waitFor(100)
 
     expect(settledItems.filter((index) => index !== 1)).toEqual([])
+  })
+
+  it("settles once over a new layout, even when the restoration moves the page", async () => {
+    const reader = createTestReader()
+
+    mountTestReader(reader)
+    reader.navigation.goToSpineItem({ indexOrId: 1, animation: false })
+    await settledOn(reader, 1)
+
+    // skip the replayed current result
+    const settlement: boolean[] = []
+    reader.pagination.state$.pipe(skip(1)).subscribe((state) => {
+      if (settlement.at(-1) !== state.isSettled)
+        settlement.push(state.isSettled)
+    })
+
+    /**
+     * The restoration moves the navigation to where item 1 now starts. One
+     * result over the new layout is enough: resolving again for the layout
+     * itself would withdraw and re-grant settlement over the same page.
+     */
+    setTestViewport({ width: 300, height: 600 })
+    reader.layout()
+
+    await settledOn(reader, 1)
+    await waitFor(100)
+
+    expect(settlement).toEqual([false, true])
+  })
+
+  it("settles once when the user lets go of a pan, even where the pan started", async () => {
+    const reader = createTestReader()
+
+    mountTestReader(reader)
+    await settledOn(reader, 0)
+
+    // skip the replayed current result
+    const settlement: boolean[] = []
+    reader.pagination.state$.pipe(skip(1)).subscribe((state) => {
+      if (settlement.at(-1) !== state.isSettled)
+        settlement.push(state.isSettled)
+    })
+
+    /**
+     * A pan holds the navigator locked, and its navigations wait for the user
+     * to let go. The navigator then snaps, as a restoration of the pan's last
+     * navigation, which reaches pagination even when it lands where the pan
+     * left off. The pan's own result is still waiting for a free viewport by
+     * then, so the snap replaces it rather than following it.
+     */
+    const unlock = reader.navigation.lock()
+    reader.navigation.navigate({
+      position: reader.navigation.getNavigation().position,
+      animation: false,
+    })
+    await waitFor(50)
+    unlock()
+
+    await settledOn(reader, 0)
+    await waitFor(100)
+
+    expect(settlement).toEqual([false, true])
   })
 
   it("never settles on a visible range read before the layout became current", async () => {

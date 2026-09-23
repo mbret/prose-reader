@@ -8,11 +8,11 @@ import {
 } from "../../../utils/pagination"
 
 /**
- * Restoring a page after a resize needs a cfi, and the navigation entry can
- * carry two: `cfi`, the target a `goToCfi` asked for, and
- * `paginationBeginCfi`, the anchor pagination writes onto the entry once its
- * result settles. A page reached by turning pages asked for a position only,
- * so the anchor is the one it has. These tests exercise that path.
+ * Restoring a page after a resize needs a cfi. A navigation that asked for one
+ * restores to it; one that did not, such as a page reached by turning pages,
+ * restores to its anchor, the first visible position of its first settled
+ * result. That anchor is also the reading position, the value to save and
+ * reopen the book at. These tests exercise that path.
  */
 
 const url = "http://localhost:3333/tests/navigation/restoration/epub/index.html"
@@ -33,6 +33,13 @@ const readPosition = async (page: Page) => {
 
       const { begin } = pagination
       const navigation = reader.navigation.getNavigation()
+      let readingPosition: string | undefined
+      // Replays the current one, synchronously.
+      reader.navigation.readingPosition$
+        .subscribe((cfi) => {
+          readingPosition = cfi
+        })
+        .unsubscribe()
 
       return {
         cfi: begin.cfi,
@@ -40,7 +47,7 @@ const readPosition = async (page: Page) => {
         pageIndex: begin.pageIndexInSpineItem,
         spineItemIndex: begin.spineItemIndex,
         navigationCfi: navigation.cfi,
-        anchor: navigation.paginationBeginCfi,
+        readingPosition,
       }
     },
     undefined,
@@ -91,8 +98,9 @@ const turnToThirdPageOfLongChapter = async (page: Page) => {
   expect(position.spineItemIndex).toBe(chapterIndex)
   expect(position.pageIndex).toBe(2)
   expect(position.isRootCfi).toBe(false)
-  // Restoration reads `cfi` before the anchor. It must be absent here, or the
-  // resize below could restore through it and prove nothing about the anchor.
+  // Restoration reads the navigation's own `cfi` before the anchor. It must be
+  // absent here, or a resize could restore through it and prove nothing about
+  // the anchor.
   expect(position.navigationCfi).toBeUndefined()
 
   return position
@@ -123,24 +131,24 @@ test.describe("Given a page reached by turning pages", () => {
     await waitForReader(page)
   })
 
-  test("the settled result anchors the navigation, and a resize restores to it", async ({
+  test("the settled result is the reading position, and a resize restores to it", async ({
     page,
   }) => {
     const position = await turnToThirdPageOfLongChapter(page)
 
-    expect(position.anchor).toBe(position.cfi)
+    expect(position.readingPosition).toBe(position.cfi)
 
     await resizeAndExpectAnchorVisible(page, narrowSize, position.cfi)
   })
 
-  test("navigating to the same page again re-anchors it, and a resize restores to it", async ({
+  test("navigating to the same page again anchors the new navigation, and a resize restores to it", async ({
     page,
   }) => {
     const position = await turnToThirdPageOfLongChapter(page)
 
-    // A navigation to the position already shown is a fresh entry. It starts
-    // without an anchor, and restoration reads the anchor off the current
-    // entry, so it needs one of its own even though nothing moved.
+    // A navigation to the position already shown is a new one. It starts
+    // without an anchor, and restoration only reads the current navigation's
+    // anchor, so it needs one of its own even though nothing moved.
     await navigateAndSettle(page, () =>
       page.evaluate(() => {
         // @ts-expect-error window.reader is set by this scenario's index.tsx
@@ -155,7 +163,7 @@ test.describe("Given a page reached by turning pages", () => {
     const renavigated = await readPosition(page)
 
     expect(renavigated.cfi).toBe(position.cfi)
-    expect(renavigated.anchor).toBe(position.cfi)
+    expect(renavigated.readingPosition).toBe(position.cfi)
 
     await resizeAndExpectAnchorVisible(page, narrowSize, position.cfi)
   })
@@ -184,5 +192,35 @@ test.describe("Given a page reached by turning pages", () => {
 
     expect(restored.pageIndex).toBe(position.pageIndex)
     expect(restored.cfi).toBe(position.cfi)
+    expect(restored.readingPosition).toBe(position.cfi)
+  })
+
+  test("the reading position saved at another size reopens the book on the same page", async ({
+    page,
+  }) => {
+    const position = await turnToThirdPageOfLongChapter(page)
+
+    await resizeAndExpectAnchorVisible(page, narrowSize, position.cfi)
+
+    /**
+     * At the narrower size the page holding the anchor starts earlier, so the
+     * visible range moved while the reader did not. Saving the visible range
+     * would reopen the book on the page before at the original size, one page
+     * further back at every save; the reading position stays put.
+     */
+    const narrow = await readPosition(page)
+
+    expect(narrow.cfi).not.toBe(position.cfi)
+    expect(narrow.readingPosition).toBe(position.cfi)
+
+    await page.setViewportSize(initialSize)
+    await page.goto(`${url}?cfi=${encodeURIComponent(position.cfi)}`)
+    await waitForReader(page)
+
+    const reopened = await readPosition(page)
+
+    expect(reopened.spineItemIndex).toBe(position.spineItemIndex)
+    expect(reopened.pageIndex).toBe(position.pageIndex)
+    expect(reopened.readingPosition).toBe(position.cfi)
   })
 })

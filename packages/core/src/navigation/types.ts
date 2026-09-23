@@ -40,12 +40,6 @@ export type NavigationConsolidation = {
   spineItemIsReady?: boolean
   spineItemIsUsingVerticalWriting?: boolean
   /**
-   * The first visible node of the page this entry's navigation settled on,
-   * written once per entry by pagination. Restoration falls back to it when
-   * the entry has no `cfi` of its own.
-   */
-  paginationBeginCfi?: string
-  /**
    * Useful for restoration to anchor back at an accurate
    * position in the item. If the item changed its content
    * we cannot assume it's accurate and will need more info.
@@ -79,7 +73,7 @@ export type InternalNavigationEntry = {
   position: SpinePosition | UnboundSpinePosition
   id: symbol
   meta: {
-    triggeredBy: `user` | `restoration` | `pagination`
+    triggeredBy: `user` | `restoration`
   }
   /**
    * What *this entry* asked for — before the navigator clamped or
@@ -91,9 +85,6 @@ export type InternalNavigationEntry = {
    * - Restoration entries: the resolved `position` itself, because the
    *   entry's "request" *is* the resolved snap-back — there is no separate
    *   intent to preserve.
-   * - Pagination entries: whatever the entry they anchor asked for. They
-   *   record a cfi, not a navigation, and leaving the request untouched is
-   *   what keeps them out of `navigation$`.
    *
    * Consumers needing the user's latest raw intent (e.g. boundary
    * detection for a pan past start/end whose clamping was deferred
@@ -115,6 +106,16 @@ export type InternalNavigationEntry = {
   spineItem?: string | number
   cfi?: string
 } & NavigationConsolidation
+
+/**
+ * The first visible position of the first result that settled for a
+ * navigation, by the navigation's id. Restoration returns to it when the
+ * navigation did not name a cfi of its own.
+ */
+export type NavigationAnchor = {
+  id: symbol
+  cfi: string
+}
 
 /**
  * A navigation surface describes the viewport rectangle that gives meaning to

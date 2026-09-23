@@ -4,8 +4,8 @@ import { resizeAndSettle, waitForReader } from "../../../utils/pagination"
 
 /**
  * A spread shows two items at once, and its result only settles once both are
- * ready. The anchor is the begin item's first node, and a resize out of and
- * back into a spread has to come back to the same two items.
+ * ready. A navigation to a cfi keeps that cfi as its reading position, and a
+ * resize out of and back into a spread has to come back to the same two items.
  */
 
 const url =
@@ -29,6 +29,13 @@ const readVisibleRange = async (page: Page) => {
 
       const isReady = (index: number | undefined) =>
         reader.spineItemsManager.get(index)?.value.isReady ?? false
+      let readingPosition: string | undefined
+      // Replays the current one, synchronously.
+      reader.navigation.readingPosition$
+        .subscribe((cfi) => {
+          readingPosition = cfi
+        })
+        .unsubscribe()
 
       return {
         items: [pagination.begin.spineItemIndex, pagination.end.spineItemIndex],
@@ -37,7 +44,7 @@ const readVisibleRange = async (page: Page) => {
           isReady(pagination.end.spineItemIndex),
         ],
         beginCfi: pagination.begin.cfi,
-        anchor: reader.navigation.getNavigation().paginationBeginCfi,
+        readingPosition,
       }
     },
     undefined,
@@ -51,18 +58,20 @@ const readVisibleRange = async (page: Page) => {
 }
 
 test.describe("Given a spread reached by cfi", () => {
-  test("settles with both items ready, anchors the entry, and comes back after a resize", async ({
+  test("settles with both items ready, keeps the cfi as the reading position, and comes back after a resize", async ({
     page,
   }) => {
+    const cfi = "epubcfi(/6/4!/2/4/2)"
+
     await page.setViewportSize(landscape)
-    await page.goto(`${url}?cfi=${encodeURIComponent("epubcfi(/6/4!/2/4/2)")}`)
+    await page.goto(`${url}?cfi=${encodeURIComponent(cfi)}`)
     await waitForReader(page)
 
     const spread = await readVisibleRange(page)
 
     expect(spread.items).toEqual([1, 2])
     expect(spread.ready).toEqual([true, true])
-    expect(spread.anchor).toBe(spread.beginCfi)
+    expect(spread.readingPosition).toBe(cfi)
 
     await resizeAndSettle(page, portrait)
 
@@ -77,5 +86,6 @@ test.describe("Given a spread reached by cfi", () => {
 
     expect(restored.items).toEqual(spread.items)
     expect(restored.ready).toEqual([true, true])
+    expect(restored.readingPosition).toBe(cfi)
   })
 })

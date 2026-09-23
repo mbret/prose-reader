@@ -151,8 +151,18 @@ export const createNavigator = ({
      */
     isLocked$: userInteractionLock.isLocked$,
     navigationResolver: navigationResolver,
+    /**
+     * Every navigation as it happens, restorations included, even one that
+     * lands where the navigation already was.
+     */
     navigation$: internalNavigator.navigation$,
     position$,
+    /**
+     * Where the reader is in the book, to save and reopen at with the `cfi`
+     * option. It only moves when the reader navigates: a resize or a relayout
+     * reflows the page around it without changing it. Replays the current one.
+     */
+    readingPosition$: internalNavigator.readingPosition$,
   }
 }
 

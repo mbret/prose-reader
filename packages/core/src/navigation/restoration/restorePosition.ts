@@ -197,6 +197,7 @@ const restoreNavigationForScrollingPageTurnMode = ({
 
 export const restorePosition = ({
   navigation,
+  anchorCfi,
   spineItemsManager,
   settings,
   spineLocator,
@@ -208,6 +209,8 @@ export const restorePosition = ({
   settings: ReaderSettingsManager
   navigationResolver: NavigationResolver
   navigation: InternalNavigationEntry
+  /** The anchor of this navigation, once one of its results settled. */
+  anchorCfi: string | undefined
   spineItemsManager: SpineItemsManager
   spineItemLocator: SpineItemLocator
   context: Context
@@ -229,6 +232,7 @@ export const restorePosition = ({
 
   return restoreNavigationForControlledPageTurnMode({
     navigation,
+    anchorCfi,
     spineLocator,
     navigationResolver,
     spineItemsManager,

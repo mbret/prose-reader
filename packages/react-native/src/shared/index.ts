@@ -1,7 +1,7 @@
 import type {
   ContextState,
   createReader,
-  EnhancerPaginationInto,
+  EnhancerPaginationInfo,
   Manifest,
 } from "@prose-reader/core"
 import type { Bridge, BridgeStore } from "@webview-bridge/react-native"
@@ -10,8 +10,8 @@ type ReaderOptions = Parameters<typeof createReader>[0]
 type RnContextState = Omit<ContextState, "rootElement">
 
 export interface BridgeState extends Bridge {
-  pagination: EnhancerPaginationInto | undefined
-  setPagination: (pagination: EnhancerPaginationInto) => Promise<void>
+  pagination: EnhancerPaginationInfo | undefined
+  setPagination: (pagination: EnhancerPaginationInfo) => Promise<void>
   context: RnContextState | undefined
   setContext: (context: RnContextState) => Promise<void>
 }
