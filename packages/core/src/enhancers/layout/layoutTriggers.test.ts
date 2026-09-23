@@ -1,0 +1,152 @@
+// @vitest-environment jsdom
+import { firstValueFrom, timeout } from "rxjs"
+import { afterEach, describe, expect, it, vi } from "vitest"
+import {
+  createTestReader,
+  installReaderTestEnvironment,
+  mountTestReader,
+  notifyResize,
+  resizeObservers,
+  setTestViewport,
+  settledOn,
+} from "../../tests/readerHarness"
+
+installReaderTestEnvironment()
+
+/** The container observer waits this long for a resize to stop. */
+const RESIZE_DEBOUNCE = 100
+
+/** Counts every layout the reader runs from now on. */
+const countLayouts = (reader: ReturnType<typeof createTestReader>) => {
+  let layouts = 0
+
+  reader.viewport.layout$.subscribe(() => {
+    layouts += 1
+  })
+
+  return () => layouts
+}
+
+const mountedAndSettled = async () => {
+  const reader = createTestReader()
+
+  mountTestReader(reader)
+  await settledOn(reader)
+
+  return reader
+}
+
+afterEach(() => {
+  vi.useRealTimers()
+})
+
+describe("Given a reader being mounted", () => {
+  it("measures the viewport once", async () => {
+    const reader = createTestReader()
+    const layouts = countLayouts(reader)
+
+    mountTestReader(reader)
+    await settledOn(reader)
+
+    expect(layouts()).toBe(1)
+  })
+})
+
+describe("Given a mounted reader", () => {
+  it("keeps watching the container with the same observer when a setting changes", async () => {
+    const reader = await mountedAndSettled()
+
+    expect(resizeObservers()).toEqual({ created: 1, watching: 1 })
+
+    reader.settings.update({ pageTurnAnimation: "none" })
+
+    expect(resizeObservers()).toEqual({ created: 1, watching: 1 })
+  })
+
+  it("stops watching the container when layoutAutoResize is off, and watches again when it is back on", async () => {
+    const reader = await mountedAndSettled()
+
+    reader.settings.update({ layoutAutoResize: false })
+
+    expect(resizeObservers().watching).toBe(0)
+
+    reader.settings.update({ layoutAutoResize: "container" })
+
+    expect(resizeObservers().watching).toBe(1)
+  })
+
+  it("does not lay out again when the container reports the size it was laid out at", async () => {
+    const reader = await mountedAndSettled()
+    const layouts = countLayouts(reader)
+
+    vi.useFakeTimers()
+    // a browser delivers this first observation right after mount
+    notifyResize()
+    vi.advanceTimersByTime(RESIZE_DEBOUNCE * 2)
+
+    expect(layouts()).toBe(0)
+  })
+
+  it("lays out once the container has settled on a new size", async () => {
+    const reader = await mountedAndSettled()
+    const layouts = countLayouts(reader)
+
+    vi.useFakeTimers()
+    setTestViewport({ width: 120, height: 200 })
+    notifyResize()
+    notifyResize()
+    vi.advanceTimersByTime(RESIZE_DEBOUNCE * 2)
+
+    expect(layouts()).toBe(1)
+    expect(reader.viewport.value.width).toBe(120)
+  })
+
+  it("does not lay out for a resize reported just before layoutAutoResize is turned off", async () => {
+    const reader = await mountedAndSettled()
+    const layouts = countLayouts(reader)
+
+    vi.useFakeTimers()
+    setTestViewport({ width: 120, height: 200 })
+    notifyResize()
+    reader.settings.update({ layoutAutoResize: false })
+    vi.advanceTimersByTime(RESIZE_DEBOUNCE * 2)
+
+    expect(layouts()).toBe(0)
+  })
+})
+
+describe("Given a setting that changes how the items are placed", () => {
+  /** Where the second item starts, once the reader has laid out again. */
+  const secondItemAfterLayout = async (
+    reader: ReturnType<typeof createTestReader>,
+  ) => {
+    await firstValueFrom(reader.layout$.pipe(timeout(2000)))
+
+    const { left, top } = reader.spine.getSpineItemSpineLayoutInfo(1)
+
+    return { left, top }
+  }
+
+  it("lays out once when pageTurnDirection changes, and stacks the items", async () => {
+    const reader = await mountedAndSettled()
+    const layouts = countLayouts(reader)
+
+    expect(reader.spine.getSpineItemSpineLayoutInfo(1).left).toBe(100)
+
+    reader.settings.update({ pageTurnDirection: "vertical" })
+
+    expect(layouts()).toBe(1)
+    expect(await secondItemAfterLayout(reader)).toEqual({ left: 0, top: 200 })
+  })
+
+  it("lays out once when pageTurnMode changes, and stacks the items", async () => {
+    const reader = await mountedAndSettled()
+    const layouts = countLayouts(reader)
+
+    // scrolling is vertical only, so this also changes the direction
+    reader.settings.update({ pageTurnMode: "scrollable" })
+
+    expect(layouts()).toBe(1)
+    expect(await secondItemAfterLayout(reader)).toEqual({ left: 0, top: 200 })
+  })
+})

@@ -1,5 +1,5 @@
 import { detectMimeTypeFromName } from "@prose-reader/shared"
-import { merge, type Observable, type ObservedValueOf } from "rxjs"
+import { EMPTY, merge, type Observable, type ObservedValueOf } from "rxjs"
 import {
   debounceTime,
   filter,
@@ -226,17 +226,31 @@ export const layoutEnhancer =
     //   })
     // })
 
-    const layoutOnContainerResize$ = settingsManager.values$.pipe(
-      filter(({ layoutAutoResize }) => layoutAutoResize === "container"),
-      switchMap(() => reader.context.watch(`rootElement`)),
-      filter(isDefined),
-      switchMap((element) => observeResize(element)),
-      debounceTime(100),
-      filter(isDefined),
-      tap(() => {
-        reader?.layout()
-      }),
-    )
+    /**
+     * Lays out once the container has held a new size for a moment. The
+     * observer lives as long as `layoutAutoResize` is on, not as long as the
+     * settings object: a new observer reports the size it starts with, which
+     * would lay out again at the same size. A report that leaves the viewport
+     * at the size it was laid out at is dropped for the same reason.
+     */
+    const layoutOnContainerResize$ = settingsManager
+      .watch("layoutAutoResize")
+      .pipe(
+        switchMap((layoutAutoResize) =>
+          layoutAutoResize === "container"
+            ? reader.context.watch(`rootElement`).pipe(
+                filter(isDefined),
+                switchMap((element) =>
+                  observeResize(element).pipe(debounceTime(100)),
+                ),
+              )
+            : EMPTY,
+        ),
+        filter(() => reader.viewport.hasResizedSinceLayout()),
+        tap(() => {
+          reader.layout()
+        }),
+      )
 
     const movingSafePan$ = createMovingSafePan$(reader)
 

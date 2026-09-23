@@ -1,4 +1,4 @@
-import { merge, Subject, takeUntil, tap } from "rxjs"
+import { Subject, takeUntil, tap } from "rxjs"
 import {
   CSS_VAR_ABSOLUTE_VIEWPORT_HEIGHT,
   CSS_VAR_ABSOLUTE_VIEWPORT_WIDTH,
@@ -66,15 +66,7 @@ export class Viewport extends ReactiveEntity<State> {
         }),
       )
 
-    const updateLayout$ = this.context.watch("rootElement").pipe(
-      tap(() => {
-        this.layout()
-      }),
-    )
-
-    merge(updatePageSize$, updateLayout$)
-      .pipe(takeUntil(this.destroy$))
-      .subscribe()
+    updatePageSize$.pipe(takeUntil(this.destroy$)).subscribe()
   }
 
   protected calculatePageSize(layout: { width: number; height: number }) {
@@ -86,6 +78,24 @@ export class Viewport extends ReactiveEntity<State> {
     }
 
     return pageSize
+  }
+
+  private measure() {
+    return {
+      width: this.value.element.clientWidth,
+      height: this.value.element.clientHeight,
+    }
+  }
+
+  /**
+   * Whether the element no longer has the size of the last layout, so that
+   * laying out again would change anything. It measures the element, which
+   * costs a style and layout pass when the DOM is dirty.
+   */
+  public hasResizedSinceLayout() {
+    const { width, height } = this.measure()
+
+    return width !== this.value.width || height !== this.value.height
   }
 
   private syncAbsoluteViewportCssVariables(layout: {
@@ -125,10 +135,7 @@ export class Viewport extends ReactiveEntity<State> {
    * stay one-way and must not trigger a full reader layout by itself.
    */
   public layout() {
-    const layout = {
-      width: this.value.element.clientWidth,
-      height: this.value.element.clientHeight,
-    }
+    const layout = this.measure()
 
     this.syncAbsoluteViewportCssVariables(layout)
 
