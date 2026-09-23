@@ -1,6 +1,6 @@
 {
   "name": "@prose-reader/enhancer-search",
-  "version": "6.0.0",
+  "version": "7.0.0",
   "type": "module",
   "main": "./dist/index.cjs",
   "module": "./dist/index.js",
