@@ -1,3 +1,4 @@
+import type { PositionTarget } from "@prose-reader/shared/positions"
 import type { Observable } from "rxjs"
 import type { SpinePosition, UnboundSpinePosition } from "../spine/types"
 import type {
@@ -13,6 +14,7 @@ export type NavigationVisibleArea = {
 }
 
 export type UserNavigationEntry = {
+  target?: PositionTarget
   position?: SpinePosition | UnboundSpinePosition
   spineItem?: number | string
   url?: string | URL
@@ -69,7 +71,7 @@ export type NavigationConsolidation = {
 
 /**
  * Priority of info taken for restoration:
- * - URL
+ * - pending position target (converted once the item is ready)
  * - complete cfi
  * - incomplete cfi
  * - spine item position
@@ -111,8 +113,10 @@ export type InternalNavigationEntry = {
   requestedVisibleArea?: NavigationVisibleArea
   type: `api` | `scroll`
   animation?: boolean | `turn` | `snap`
-  url?: string | URL
+  /** Unconsumed external target. Cleared when its canonical CFI is available. */
+  target?: PositionTarget
   spineItem?: string | number
+  /** Canonical anchor; external format values are never stored here. */
   cfi?: string
 } & NavigationConsolidation
 

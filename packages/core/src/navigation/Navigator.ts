@@ -10,6 +10,7 @@ import {
 import type { CfiManager } from "../cfi"
 import type { Context } from "../context/Context"
 import type { HookManager } from "../hooks/HookManager"
+import type { PositionRegistry } from "../positions/PositionRegistry"
 import { Report } from "../report"
 import type { ReaderSettingsManager } from "../settings/ReaderSettingsManager"
 import type { Spine } from "../spine/Spine"
@@ -30,7 +31,9 @@ export const createNavigator = ({
   settings,
   viewport,
   cfi,
+  positions,
 }: {
+  positions?: PositionRegistry
   cfi: CfiManager
   spineItemsManager: SpineItemsManager
   context: Context
@@ -44,6 +47,7 @@ export const createNavigator = ({
   const userInteractionLock = new Locker()
   const cfiManager = cfi
   const navigationResolver = createNavigationResolver({
+    positions,
     cfi: cfiManager,
     context,
     settings,

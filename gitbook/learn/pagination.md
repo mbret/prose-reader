@@ -27,13 +27,18 @@ EnhancerPaginationInfo
 ```
 
 The current result, read synchronously. Until a book has been laid out it is an
-unsettled result with empty edges: no `cfi`, no `spineItemIndex`, no page index.
+unsettled result with empty edges: no cfi, no `spineItemIndex`, no page index.
 
 ## Types
 
 A pagination result describes the two edges of what is visible. Both edges are
 the same shape, so they are the same type rather than two sets of prefixed
-fields: read `pagination.begin.cfi` rather than `pagination.beginCfi`.
+fields: read `pagination.begin.positions` rather than `pagination.beginPositions`.
+
+An edge's `positions` holds every representation of the page's start, keyed by
+position format. The `cfi` is the canonical position and always a key; any
+other format registered on `reader.positions` appears only when it produced a
+value for that page. See [Position formats](../core-api/position-formats.md).
 
 The result the reader exposes is the core result enriched by the pagination
 enhancer, which every reader created with `createReader` includes. Both are
@@ -44,8 +49,13 @@ exported from `@prose-reader/core`.
 The core result: the two edges and whether their positions have resolved.
 
 ```typescript
-type PaginationEdge = {
+type Positions = {
   cfi: string | undefined
+  [format: string]: string | undefined
+}
+
+type PaginationEdge = {
+  positions: Positions
   spineItemIndex: number | undefined
   pageIndexInSpineItem: number | undefined
   numberOfPagesInSpineItem: number
@@ -55,14 +65,14 @@ type PaginationInfo =
   | { isSettled: false; begin: PaginationEdge; end: PaginationEdge }
   | {
       isSettled: true
-      begin: PaginationEdge & { cfi: string }
-      end: PaginationEdge & { cfi: string }
+      begin: PaginationEdge & { positions: Positions & { cfi: string } }
+      end: PaginationEdge & { positions: Positions & { cfi: string } }
     }
 ```
 
 `PaginationInfo` is a discriminated union. Settlement is the only thing the two
 variants differ in, and it is expressed on the edges: a settled result's edges
-have resolved positions, so their `cfi` is typed as present.
+have resolved positions, so their `positions.cfi` is typed as present.
 
 ### `type EnhancerPaginationInfo`
 
@@ -113,8 +123,8 @@ type EnhancerPaginationInfo = ExtraPaginationInfo &
       }
     | {
         isSettled: true
-        begin: EnhancerPaginationEdge & { cfi: string }
-        end: EnhancerPaginationEdge & { cfi: string }
+        begin: EnhancerPaginationEdge & { positions: Positions & { cfi: string } }
+        end: EnhancerPaginationEdge & { positions: Positions & { cfi: string } }
       }
   )
 ```
@@ -126,34 +136,38 @@ pagination. It is on [`reader.navigation.state$`](navigation.md)
 ## Saving reading progress
 
 A pagination result describes a moment that may still be resolving. While a
-document loads, or during a navigation or a layout, an edge's `cfi` can describe
-the start of an item rather than the page actually being read. Saving those
-overwrites real progress with a placeholder.
+document loads, or during a navigation or a layout, an edge's positions can
+describe the start of an item rather than the page actually being read. Saving
+those overwrites real progress with a placeholder.
 
 `isSettled` tells the two apart. A settled result describes the visible pages of
 the current layout over content that is ready, and it is the only variant whose
-edges have their `cfi` typed as present — so TypeScript makes you establish
-settlement before reading one:
+edges have their `positions.cfi` typed as present — so TypeScript makes you
+establish settlement before reading one:
 
 ```typescript
 reader.pagination.state$.subscribe((state) => {
   if (!state.isSettled) return
 
-  localStorage.setItem("cfi", state.begin.cfi)
+  localStorage.setItem("cfi", state.begin.positions.cfi)
 })
 ```
 
-Pass the saved `cfi` when you create the reader the next time to open the book
-where it was left:
+Pass the saved cfi as the initial `position` when you create the reader the
+next time to open the book where it was left:
 
 ```typescript
+const savedCfi = localStorage.getItem("cfi")
 const reader = createReader({
   manifest,
-  cfi: localStorage.getItem("cfi") ?? undefined,
+  position: savedCfi ? { format: "cfi", value: savedCfi } : undefined,
 })
 
 reader.mount(document.getElementById("reader")!)
 ```
+
+To save another representation alongside the cfi, such as KOReader's XPointer,
+register its format; see [Position formats](../core-api/position-formats.md).
 
 Settlement ends as soon as a navigation starts, a layout starts, or a visible
 item stops being ready, and returns once a replacement result has resolved over

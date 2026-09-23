@@ -24,7 +24,8 @@ describe("navigation consolidation with pagination", () => {
 
       anchors.push({
         cfi: entry.paginationBeginCfi,
-        fromSettledResult: isSettled && begin.cfi === entry.paginationBeginCfi,
+        fromSettledResult:
+          isSettled && begin.positions.cfi === entry.paginationBeginCfi,
       })
     })
 
@@ -130,7 +131,7 @@ describe("navigation consolidation with pagination", () => {
     const anchor =
       reader.navigation.internalNavigator.navigation.paginationBeginCfi
 
-    expect(anchor).toBe(settled.begin.cfi)
+    expect(anchor).toBe(settled.begin.positions.cfi)
 
     const item = reader.spineItemsManager.get(1)
 

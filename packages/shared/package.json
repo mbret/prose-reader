@@ -12,6 +12,9 @@
     ".": {
       "import": "./dist/index.js",
       "require": "./dist/index.cjs"
+    },
+    "./positions": {
+      "types": "./dist/positions.d.ts"
     }
   },
   "types": "./dist/index.d.ts",

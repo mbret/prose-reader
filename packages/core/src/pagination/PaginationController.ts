@@ -16,6 +16,7 @@ import {
 } from "rxjs"
 import type { CfiManager } from "../cfi"
 import type { Context } from "../context/Context"
+import type { PositionRegistry } from "../positions/PositionRegistry"
 import type { PageEntry } from "../spine/Pages"
 import type { Spine } from "../spine/Spine"
 import type { SpineItemsManager } from "../spine/SpineItemsManager"
@@ -48,6 +49,7 @@ export class PaginationController extends DestroyableClass {
     protected spine: Spine,
     protected isNavigationLocked$: Observable<boolean>,
     protected cfi: CfiManager,
+    protected positions: PositionRegistry,
   ) {
     super()
 
@@ -199,9 +201,10 @@ export class PaginationController extends DestroyableClass {
   }
 
   /**
-   * The previous cfi is kept while it still describes this edge: it exists, it
-   * is not a root target, and the item has not changed. Otherwise the item
-   * start stands in until {@link resolvePositions} resolves the real page.
+   * The previous positions are kept while they still describe this edge: their
+   * cfi exists, it is not a root target, and the item has not changed.
+   * Otherwise the item start stands in until {@link resolvePositions} resolves
+   * the real page.
    */
   private resolveEdgeMetrics(
     spineItem: SpineItem,
@@ -209,15 +212,16 @@ export class PaginationController extends DestroyableClass {
     pageIndexInSpineItem: number,
     previous: PaginationEdge,
   ): PaginationEdge {
-    const canCarryOverCfi =
-      previous.cfi !== undefined &&
-      !this.cfi.isRootCfi(previous.cfi) &&
+    const { cfi } = previous.positions
+    const canCarryOverPositions =
+      cfi !== undefined &&
+      !this.cfi.isRootCfi(cfi) &&
       previous.spineItemIndex === spineItemIndex
 
     return {
-      cfi: canCarryOverCfi
-        ? previous.cfi
-        : this.cfi.generateRootCfi(spineItem.item),
+      positions: canCarryOverPositions
+        ? previous.positions
+        : { cfi: this.cfi.generateRootCfi(spineItem.item) },
       spineItemIndex,
       pageIndexInSpineItem,
       numberOfPagesInSpineItem: spineItem.numberOfPages,
@@ -233,6 +237,11 @@ export class PaginationController extends DestroyableClass {
    * is current and the visible items are ready. An item that is loaded and
    * laid out may legitimately resolve to its root cfi; an unloaded one is not
    * settled merely because a root cfi can be generated for it.
+   *
+   * Readiness is also what keeps a pending position target from settling: a
+   * target stays pending exactly while its item is not ready (see
+   * `getNavigationForTarget`), so a settled result never describes the item
+   * start standing in for a target not yet resolved.
    */
   private resolvePositions({
     metrics,
@@ -306,21 +315,33 @@ export class PaginationController extends DestroyableClass {
     )
 
     return {
-      edge: { ...edge, cfi: this.resolveCfi(spineItem, pageEntry) },
+      edge: {
+        ...edge,
+        positions: this.resolvePagePositions(spineItem, pageEntry),
+      },
       spineItem,
     }
   }
 
   /**
-   * The cfi of a page, falling back to the item itself when the page has no
-   * resolvable first visible node.
+   * Every registered format's representation of a page's first visible node,
+   * falling back to the item's root cfi alone when the page has no resolvable
+   * first visible node or its document is not ready to be read.
    */
-  private resolveCfi(spineItem: SpineItem, pageEntry: PageEntry | undefined) {
-    return pageEntry?.firstVisibleNode
-      ? this.cfi.generateCfiForSpineItemPage({
-          spineItem: spineItem.item,
-          pageNode: pageEntry.firstVisibleNode,
-        })
-      : this.cfi.generateRootCfi(spineItem.item)
+  private resolvePagePositions(
+    spineItem: SpineItem,
+    pageEntry: PageEntry | undefined,
+  ): SettledPaginationEdge<PaginationEdge>["positions"] {
+    const node = pageEntry?.firstVisibleNode
+    const document = spineItem.renderer.getDocumentFrame()?.contentDocument
+    const positions =
+      node && document && spineItem.value.isReady
+        ? this.positions.generate(node, { document, spineItem: spineItem.item })
+        : undefined
+
+    return {
+      ...positions,
+      cfi: positions?.cfi ?? this.cfi.generateRootCfi(spineItem.item),
+    }
   }
 }

@@ -44,7 +44,7 @@ export const getOrGuessDirection = ({
   //   }
   // }
 
-  if (navigation.url !== undefined || navigation.cfi !== undefined) {
+  if (navigation.target !== undefined || navigation.cfi !== undefined) {
     return "anchor"
   }
 

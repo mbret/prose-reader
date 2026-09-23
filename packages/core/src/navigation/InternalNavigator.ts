@@ -26,13 +26,12 @@ import { DestroyableClass } from "../utils/DestroyableClass"
 import type { Viewport } from "../viewport/Viewport"
 import { consolidateWithPagination } from "./consolidation/consolidateWithPagination"
 import { mapUserNavigationToInternal } from "./consolidation/mapUserNavigationToInternal"
-import { withCfiPosition } from "./consolidation/withCfiPosition"
 import { withDirection } from "./consolidation/withDirection"
 import { withFallbackPosition } from "./consolidation/withFallbackPosition"
 import { withSpineItem } from "./consolidation/withSpineItem"
 import { withSpineItemLayoutInfo } from "./consolidation/withSpineItemLayoutInfo"
 import { withSpineItemPosition } from "./consolidation/withSpineItemPosition"
-import { withUrlInfo } from "./consolidation/withUrlInfo"
+import { withTargetPosition } from "./consolidation/withTargetPosition"
 import { Locker } from "./Locker"
 import type { createNavigationResolver } from "./resolvers/NavigationResolver"
 import { withRestoredPosition } from "./restoration/withRestoredPosition"
@@ -126,20 +125,7 @@ export class InternalNavigator extends DestroyableClass {
           navigationResolver,
           getNavigationVisibleArea,
         }),
-        /**
-         * Url lookup is heavier so we start with it to fill
-         * as much information as needed to reduce later lookup
-         */
-        withUrlInfo({
-          navigationResolver,
-        }),
-        /**
-         * Cfi lookup is heavier so we start with it to fill
-         * as much information as needed to reduce later lookup
-         */
-        withCfiPosition({
-          navigationResolver,
-        }),
+        withTargetPosition({ navigationResolver }),
         withDirection({ context, settings }),
         withSpineItem({
           context,
@@ -170,7 +156,7 @@ export class InternalNavigator extends DestroyableClass {
         switchMap(([params, isUserLocked]) => {
           const shouldNotAlterPosition =
             params.navigation.cfi ||
-            params.navigation.url ||
+            params.navigation.target ||
             settings.values.computedPageTurnMode === "scrollable" ||
             isUserLocked
 

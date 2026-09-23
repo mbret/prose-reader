@@ -10,7 +10,7 @@ export const usePersistCurrentPagination = () => {
       reader?.pagination.state$.subscribe((state) => {
         if (!state.isSettled) return
 
-        localStorage.setItem(`cfi`, state.begin.cfi)
+        localStorage.setItem(`cfi`, state.begin.positions.cfi)
       }),
     [reader],
   )

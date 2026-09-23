@@ -1,4 +1,5 @@
 import type { Manifest } from "@prose-reader/shared"
+import type { DomPosition } from "@prose-reader/shared/positions"
 import type { HookManager } from "../hooks/HookManager"
 import type { PageEntry } from "../spine/Pages"
 import type { SpineItemsManager } from "../spine/SpineItemsManager"
@@ -82,6 +83,15 @@ export class CfiManager {
       spineItem,
     })
   }
+
+  public generateCfiFromDomPosition = (
+    position: DomPosition,
+    spineItem: Manifest["spineItems"][number],
+  ) =>
+    this.generateCfiForSpineItemPage({
+      spineItem,
+      pageNode: { ...position, offset: position.offset ?? 0 },
+    })
 
   public generateCfiFromRange = (
     range: Range,

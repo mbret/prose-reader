@@ -66,7 +66,7 @@ const createManifest = (spineItems: Manifest["spineItems"] = []): Manifest => ({
 const createPaginationEdge = (
   spineItemIndex: number | undefined,
 ): PaginationEdge => ({
-  cfi: undefined,
+  positions: { cfi: undefined },
   spineItemIndex,
   pageIndexInSpineItem: undefined,
   numberOfPagesInSpineItem: 0,

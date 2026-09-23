@@ -53,6 +53,7 @@
   * [renderHeadless()](core-api/reader/renderheadless.md)
 * [.viewport](core-api/.viewport.md)
 * [.navigation](core-api/.navigation.md)
+* [Position formats](core-api/position-formats.md)
 * [.zoom](core-api/.zoom.md)
 * [utilities](core-api/utilities.md)
 

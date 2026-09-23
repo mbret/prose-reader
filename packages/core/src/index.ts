@@ -1,4 +1,10 @@
 export type { Manifest } from "@prose-reader/shared"
+export type {
+  DomPosition,
+  PositionFormat,
+  PositionFormatContext,
+  PositionTarget,
+} from "@prose-reader/shared/positions"
 
 import { createReaderWithEnhancers as createReader } from "./createReaderWithEnhancer"
 

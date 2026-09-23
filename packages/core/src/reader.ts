@@ -1,4 +1,5 @@
 import type { Manifest } from "@prose-reader/shared"
+import type { PositionTarget } from "@prose-reader/shared/positions"
 import { merge, type Observable, type ObservedValueOf, of, Subject } from "rxjs"
 import { distinctUntilChanged, map, skip, takeUntil, tap } from "rxjs/operators"
 import { CfiManager } from "./cfi"
@@ -14,6 +15,7 @@ import styles from "./index.scss?inline"
 import { createNavigator } from "./navigation/Navigator"
 import { Pagination } from "./pagination/Pagination"
 import { PaginationController } from "./pagination/PaginationController"
+import { createPositionRegistry } from "./positions/createPositionRegistry"
 import { Report } from "./report"
 import { ReaderSettingsManager } from "./settings/ReaderSettingsManager"
 import type { SettingsInterface } from "./settings/SettingsInterface"
@@ -36,7 +38,7 @@ export type CreateReaderOptions = Partial<CoreInputSettings> & {
    * Optional initial reading position. The reader will restore the position
    * once mounted. This is handled by the navigation enhancer.
    */
-  cfi?: string
+  position?: PositionTarget
   /**
    * The document the reader creates all of its DOM in. Defaults to the ambient
    * `globalThis.document`. Provide a foreign document (eg: an iframe's
@@ -59,7 +61,7 @@ type ReaderLayoutOptions = {
 export const createReader = ({
   manifest,
   // handled by the navigation enhancer, extracted so it does not leak into settings
-  cfi: _cfi,
+  position: _position,
   ownerDocument = globalThis.document,
   ...inputSettings
 }: CreateReaderOptions) => {
@@ -83,6 +85,7 @@ export const createReader = ({
     viewport,
   )
   const cfi = new CfiManager(hookManager, spineItemsManager)
+  const positions = createPositionRegistry(manifest, cfi)
   const spineItemLocator = createSpineItemLocator({
     context,
     settings: settingsManager,
@@ -98,6 +101,7 @@ export const createReader = ({
     viewport,
   )
   const navigator = createNavigator({
+    positions,
     cfi,
     context,
     spineItemsManager,
@@ -113,6 +117,7 @@ export const createReader = ({
     spine,
     navigator.isLocked$,
     cfi,
+    positions,
   )
 
   // bridge all navigation stream with reader so they can be shared across app
@@ -211,6 +216,11 @@ export const createReader = ({
 
   return {
     id,
+    positions: {
+      register: positions.register.bind(positions),
+      get: positions.get.bind(positions),
+      list: positions.list.bind(positions),
+    },
     context,
     spine,
     hookManager,

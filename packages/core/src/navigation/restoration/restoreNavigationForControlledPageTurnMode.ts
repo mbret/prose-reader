@@ -14,7 +14,6 @@ export const restoreNavigationForControlledPageTurnMode = ({
   navigationResolver,
   spineItemsManager,
   spine,
-  cfiManager,
 }: {
   navigation: InternalNavigationEntry
   spineLocator: SpineLocator
@@ -48,35 +47,6 @@ export const restoreNavigationForControlledPageTurnMode = ({
       const hasSpineItemGrewOrShrink =
         spineItemWidthDifference !== 0 || spineItemHeighDifference !== 0
 
-      /**
-       * Url navigation has higher priority together with CFI, we should
-       * restore from it first.
-       *
-       * If the layout did not change, we should not restore from cfi since
-       * we will have better accuracy from all other consolidation.
-       *
-       * Basically as long as the item itself did not change, we can recover from
-       * consolidation. In case the item changed, we should be careful and try to
-       * anchor back to cfi.
-       */
-      if (navigation.url !== undefined) {
-        if (
-          spineItemWidthDifference ||
-          spineItemHeighDifference ||
-          // when spine item is ready dimensions may have not changed but the position
-          // of dom elements may have!
-          (isReady && !navigation.spineItemIsReady)
-        ) {
-          const urlResult = navigationResolver.getNavigationForUrl(
-            navigation.url,
-          )
-
-          if (urlResult) {
-            return urlResult.position
-          }
-        }
-      }
-
       const cfi = navigation.cfi ?? navigation.paginationBeginCfi
 
       /**
@@ -88,7 +58,7 @@ export const restoreNavigationForControlledPageTurnMode = ({
        * consolidation. In case the item changed, we should be careful and try to
        * anchor back to cfi.
        */
-      if (cfi !== undefined && !cfiManager.isRootCfi(cfi)) {
+      if (cfi !== undefined) {
         if (
           spineItemWidthDifference ||
           spineItemHeighDifference ||

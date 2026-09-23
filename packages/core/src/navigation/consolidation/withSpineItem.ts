@@ -17,7 +17,6 @@ export const withSpineItem =
     spineItemsManager,
     navigationResolver,
     spineLocator,
-    cfi: cfiManager,
   }: {
     cfi: CfiManager
     context: Context
@@ -31,7 +30,6 @@ export const withSpineItem =
       const {
         position,
         spineItem,
-        cfi,
         directionFromLastNavigation: direction,
       } = navigation
       const { navigationSnapThreshold, computedPageTurnMode } = settings.values
@@ -56,16 +54,6 @@ export const withSpineItem =
         }
 
         return spineItemsManager.get(0)
-      }
-
-      /**
-       * - cfi given
-       * - we can grab safely the item
-       */
-      if (cfi) {
-        const existingSpineItem = cfiManager.getSpineItemFromCfi(cfi)
-
-        if (existingSpineItem) return existingSpineItem
       }
 
       /**
