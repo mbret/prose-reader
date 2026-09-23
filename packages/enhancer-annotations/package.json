@@ -1,6 +1,6 @@
 {
   "name": "@prose-reader/enhancer-annotations",
-  "version": "2.0.3",
+  "version": "3.0.0",
   "type": "module",
   "main": "./dist/index.cjs",
   "module": "./dist/index.js",
@@ -23,9 +23,9 @@
     "build": "tsc && vite build"
   },
   "peerDependencies": {
-    "@prose-reader/core": "^2.0.0"
+    "@prose-reader/core": "^3.0.0"
   },
   "devDependencies": {
-    "@prose-reader/core": "^2.0.3"
+    "@prose-reader/core": "^3.0.0"
   }
 }
