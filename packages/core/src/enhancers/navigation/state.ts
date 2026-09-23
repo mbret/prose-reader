@@ -4,50 +4,34 @@ import { isShallowEqual } from "../../utils/objects"
 
 export type State = ReturnType<typeof observeState>
 
-export const observeState = (reader: Reader) => {
-  return reader.pagination.state$.pipe(
+/**
+ * Which spine-item navigations have somewhere to go from what is visible.
+ *
+ * Reading direction is resolved with `context.isRTL()`, the same check the
+ * spine-item navigators use, so the two agree on which way left and right go
+ * (a manifest without a direction reads as ltr for both).
+ */
+export const observeState = (reader: Reader) =>
+  reader.pagination.state$.pipe(
     withLatestFrom(reader.settings.values$),
-    map(([paginationInfo, { computedPageTurnDirection }]) => {
-      const { spineItems, readingDirection } = reader.context.manifest
-      const numberOfSpineItems = spineItems.length ?? 0
-      const isAtAbsoluteBeginning = paginationInfo.begin.spineItemIndex === 0
-      const isAtAbsoluteEnd =
-        paginationInfo.end.spineItemIndex ===
-        Math.max(numberOfSpineItems - 1, 0)
-
-      const isAtEndSpineItem =
-        paginationInfo.end.spineItemIndex ===
-        Math.max(numberOfSpineItems - 1, 0)
-
-      const isAtBeginSpineItem = paginationInfo.begin.spineItemIndex === 0
-
-      const isAtBeginFirstPage = paginationInfo.begin.pageIndexInSpineItem === 0
-
-      const isAtEndLastPage =
-        paginationInfo.end.pageIndexInSpineItem ===
-        paginationInfo.end.numberOfPagesInSpineItem - 1
+    map(([{ begin, end }, { computedPageTurnDirection }]) => {
+      const lastSpineItemIndex = Math.max(
+        reader.context.manifest.spineItems.length - 1,
+        0,
+      )
+      const hasPreviousSpineItem = begin.spineItemIndex !== 0
+      const hasNextSpineItem = end.spineItemIndex !== lastSpineItemIndex
+      const isVertical = computedPageTurnDirection === "vertical"
+      const isRTL = reader.context.isRTL()
 
       return {
-        canTurnLeft:
-          computedPageTurnDirection === "vertical"
-            ? false
-            : !isAtBeginFirstPage,
-        canTurnRight:
-          computedPageTurnDirection === "vertical" ? false : !isAtEndLastPage,
-        canGoTopSpineItem:
-          computedPageTurnDirection === "vertical" && !isAtAbsoluteBeginning,
-        canGoBottomSpineItem:
-          computedPageTurnDirection === "vertical" && !isAtAbsoluteEnd,
+        canGoTopSpineItem: isVertical && hasPreviousSpineItem,
+        canGoBottomSpineItem: isVertical && hasNextSpineItem,
         canGoLeftSpineItem:
-          computedPageTurnDirection !== "vertical" &&
-          ((readingDirection === "ltr" && !isAtAbsoluteBeginning) ||
-            (readingDirection === "rtl" && !isAtEndSpineItem)),
+          !isVertical && (isRTL ? hasNextSpineItem : hasPreviousSpineItem),
         canGoRightSpineItem:
-          computedPageTurnDirection !== "vertical" &&
-          ((readingDirection === "ltr" && !isAtAbsoluteEnd) ||
-            (readingDirection === "rtl" && !isAtBeginSpineItem)),
+          !isVertical && (isRTL ? hasPreviousSpineItem : hasNextSpineItem),
       }
     }),
     distinctUntilChanged(isShallowEqual),
   )
-}
