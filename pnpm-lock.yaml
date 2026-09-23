@@ -596,9 +596,6 @@ importers:
       '@prose-reader/cfi':
         specifier: workspace:^
         version: link:../cfi
-      '@prose-reader/shared':
-        specifier: workspace:^
-        version: link:../shared
     devDependencies:
       jsdom:
         specifier: ^29.0.0

@@ -2,9 +2,11 @@
 
 A position format adapts an external string to a DOM position. Core loads the named spine item, resolves the target, and converts it to a canonical EPUB CFI. Registration is synchronous and should happen before `mount`.
 
+This example registers a KOReader XPointer format, written in [Writing a format](#writing-a-format) below:
+
 ```typescript
 import { createReader } from "@prose-reader/core"
-import { koreaderPositionFormat } from "@prose-reader/koreader"
+import { koreaderPositionFormat } from "./koreaderPositionFormat"
 
 const reader = createReader({
   manifest,
@@ -26,6 +28,8 @@ reader.navigation.goTo({ format: "koreader", value: anotherXPointer }, { animate
 ## Writing a format
 
 Import the DOM-specific types from `@prose-reader/shared/positions` (also re-exported by core). This type-only subpath keeps shared's root usable in Node-only projects without DOM libraries.
+
+A format is usually a thin adapter over a library that already understands the external value. Here, [`@prose-reader/koreader`](../koreader/README.md) parses, resolves and generates the XPointers:
 
 ```typescript
 import type { PositionFormat } from "@prose-reader/shared/positions"
