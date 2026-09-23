@@ -60,7 +60,7 @@ Use it to react to navigating as an event. For where the viewport is,
 
 
 ```typescript
-type NavigationState {
+type NavigationState = {
   /**
    * Spatial indicator whether you can turn
    * page to the left to reach a new spine item
