@@ -3,10 +3,14 @@
 ## Installation
 
 ```bash
-npm install @prose-reader/core @prose-reader/react-reader @chakra-ui/react @emotion/react rc-slider react-icons reactjrx
+npm install @prose-reader/react-reader @prose-reader/core @prose-reader/shared \
+  @prose-reader/cbz @prose-reader/enhancer-annotations @prose-reader/enhancer-audio \
+  @prose-reader/enhancer-gallery @prose-reader/enhancer-gestures \
+  @prose-reader/enhancer-refit @prose-reader/enhancer-search \
+  @chakra-ui/react @emotion/react rc-slider react-icons reactjrx rxjs screenfull
 ```
 
-This package only uses peerDependencies so don't hesitate to use the library for the rest of your app.
+This package only uses peerDependencies, all of them required, so don't hesitate to use the library for the rest of your app. `react` and `react-dom` (18 or 19) are your app's own.
 
 [https://github.com/mbret/reactjrx](https://github.com/mbret/reactjrx) is specifically very useful if you use `rxjs`.
 

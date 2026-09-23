@@ -1,5 +1,14 @@
 # Annotations
 
+## Getting Started
+
+```bash
+npm install @prose-reader/enhancer-annotations @prose-reader/core @prose-reader/shared rxjs
+```
+
+All three are peer dependencies: the enhancer runs against the reader your app
+creates, so it shares that reader's copies rather than bringing its own.
+
 ## Blank pages and annotations
 
 Sometimes you may end up with blank pages. Some of the scenarios that lead to a blank page are:

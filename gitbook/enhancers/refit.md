@@ -5,7 +5,7 @@ This enhancer gives you a convenient way to let the user refit the viewport for 
 ## Getting Started
 
 ```bash
-npm install @prose-reader/enhancer-refit
+npm install @prose-reader/enhancer-refit @prose-reader/core rxjs
 ```
 
 Connect the enhancer to your reader:
