@@ -23,11 +23,12 @@ config.watchFolders = [repositoryRoot]
  * Resolve every module from this app's `node_modules` and nowhere else.
  *
  * Metro's default is to walk up from the file doing the importing, and a linked
- * library lives at `../packages/*`, so its own `react-native` resolves to the
- * repository's copy — a different major (0.86 there, 0.79 here) whose source
- * Metro cannot even parse. Two copies of react-native in one bundle is the
- * failure this avoids; it also makes the app resolve the way a published
- * consumer does, which is what this demo is for.
+ * library lives at `../packages/*`, so what it imports — `react`,
+ * `expo-file-system`, and through them `react-native` — resolves to the copies
+ * pnpm installed for the workspace rather than this app's. Those are separate
+ * installs whatever their versions, and two copies of React or react-native in
+ * one bundle is the failure this avoids; it also makes the app resolve the way
+ * a published consumer does, which is what this demo is for.
  *
  * The cost is that everything the libraries import at runtime has to be a
  * dependency of this app, peer dependencies included. That is the same contract

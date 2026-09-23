@@ -120,7 +120,7 @@ export class Viewport extends ReactiveEntity<State> {
    *
    * This is the lighter sub-layout used when the viewport's visual mapping may
    * have changed while spine geometry is still valid (for example after a CSS
-   * transform/scale). `reader.layout()` calls this before `spine.layout()`
+   * transform/scale). A layout requested through the spine calls this first,
    * because spine/page layout depends on the viewport size. This method should
    * stay one-way and must not trigger a full reader layout by itself.
    */

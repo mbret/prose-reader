@@ -1,5 +1,5 @@
 import { useAssets } from "expo-asset"
-import { readAsStringAsync } from "expo-file-system"
+import { File } from "expo-file-system"
 import { useEffect, useState } from "react"
 
 export function useWebviewHtmlAsset() {
@@ -13,7 +13,9 @@ export function useWebviewHtmlAsset() {
       const asset = assets?.[0]
 
       if (asset?.localUri) {
-        const fileContents = await readAsStringAsync(asset.localUri)
+        // The `readAsStringAsync` exported by `expo-file-system` is a stub
+        // that throws; reading goes through `File` instead.
+        const fileContents = await new File(asset.localUri).text()
         setHtml(fileContents)
       }
     })()

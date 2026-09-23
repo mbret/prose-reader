@@ -1,14 +1,6 @@
 import type { Manifest } from "@prose-reader/shared"
 import { merge, type Observable, type ObservedValueOf, of, Subject } from "rxjs"
-import {
-  distinctUntilChanged,
-  filter,
-  map,
-  share,
-  skip,
-  takeUntil,
-  tap,
-} from "rxjs/operators"
+import { distinctUntilChanged, map, skip, takeUntil, tap } from "rxjs/operators"
 import { CfiManager } from "./cfi"
 import {
   HTML_ATTRIBUTE_DATA_READER_ID,
@@ -97,14 +89,6 @@ export const createReader = ({
     viewport,
   })
   const pagination = new Pagination(context, spineItemsManager)
-  /**
-   * The layout requests the reader acts on. The root element is only set at
-   * mount, so before that there is nothing to lay out and none are.
-   */
-  const layoutRequest$ = layoutSubject.pipe(
-    filter(() => isDefined(context.value.rootElement)),
-    share(),
-  )
   const spine = new Spine(
     context,
     pagination,
@@ -112,7 +96,6 @@ export const createReader = ({
     spineItemLocator,
     settingsManager,
     viewport,
-    layoutRequest$,
   )
   const navigator = createNavigator({
     cfi,
@@ -183,14 +166,11 @@ export const createReader = ({
       tap(() => layout()),
     )
 
-  /**
-   * The spine hears of each request before this runs, since it subscribed
-   * when it was built, so the viewport notifying synchronously below cannot
-   * let anything settle on the layout being replaced.
-   */
-  const layout$ = layoutRequest$.pipe(
+  const layout$ = layoutSubject.pipe(
     tap((options) => {
-      viewport.layout()
+      // rootElement is only set at mount; skip layout until then.
+      if (!context.value.rootElement) return
+
       spine.layout(options)
     }),
     takeUntil(destroy$),

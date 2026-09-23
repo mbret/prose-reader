@@ -13,6 +13,22 @@ It ships one entry per side of that boundary:
 
 A runnable example of both sides is in the [demo](https://github.com/mbret/prose-reader/tree/master/prose-react-native-demo).
 
+## Installation
+
+```shell
+npm install @prose-reader/react-native @prose-reader/core @prose-reader/streamer \
+  @prose-reader/archive-reader @prose-reader/shared rxjs \
+  @webview-bridge/react-native @webview-bridge/web
+npx expo install expo-file-system react-native-webview
+```
+
+The package only uses peer dependencies, all of them required, so your app
+declares each one and holds its single copy. `npx expo install` picks the
+`expo-file-system` and `react-native-webview` versions your Expo SDK expects.
+The package targets SDK 57: its `expo-file-system` peer is `^57.0.0`, and an
+`expo-file-system` major is the SDK it ships with. `react` 19 is your app's
+own.
+
 ## Web side
 
 Two calls: create the bridge, then hand it a factory that builds the reader.

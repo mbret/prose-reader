@@ -1,11 +1,9 @@
-import { BehaviorSubject, merge, type Observable } from "rxjs"
+import { BehaviorSubject, merge } from "rxjs"
 import {
   distinctUntilChanged,
   filter,
   map,
-  shareReplay,
   skip,
-  startWith,
   takeUntil,
   tap,
 } from "rxjs/operators"
@@ -37,20 +35,23 @@ export class Spine extends DestroyableClass {
   public pages: Pages
   public element$ = this.elementSubject.asObservable()
 
+  protected isLayoutCurrentSubject = new BehaviorSubject(true)
+
   /**
    * Whether the pages describe the latest layout requested. A request makes
-   * them stale at once, whether it came through `reader.layout()` or from an
-   * item loading or unloading. A reader request counts from the moment it is
-   * made, before the reader measures the viewport for it, since the viewport
-   * notifies synchronously and whatever it notifies may navigate. A request
-   * also cancels everything still running for older ones, the pass and the
-   * page computation both, so the next pages published are the ones it asked
-   * for, and they make the layout current again.
+   * them stale the moment it is announced, before anything is done for it,
+   * whether it came through `reader.layout()` or from an item loading or
+   * unloading. A request also cancels everything still running for older
+   * ones, the pass and the page computation both, so the next pages published
+   * are the ones it asked for, and they make the layout current again, before
+   * anything else hears of them.
    *
    * Item flags cannot tell this: a pass clears an item's dirty flag as soon as
    * it lays that item out, long before the pages are recomputed.
    */
-  public readonly isLayoutCurrent$: Observable<boolean>
+  public readonly isLayoutCurrent$ = this.isLayoutCurrentSubject.pipe(
+    distinctUntilChanged(),
+  )
 
   constructor(
     protected context: Context,
@@ -59,8 +60,6 @@ export class Spine extends DestroyableClass {
     public spineItemLocator: ReturnType<typeof createSpineItemLocationResolver>,
     protected settings: ReaderSettingsManager,
     protected viewport: Viewport,
-    /** The reader's layout requests, as they are made. */
-    layoutRequest$: Observable<unknown>,
   ) {
     super()
 
@@ -101,23 +100,18 @@ export class Spine extends DestroyableClass {
       this.viewport,
     )
 
-    /**
-     * Pages publish their state before anything else hears of a new layout,
-     * so the layout is current again by the time `layout$` resolves anything
-     * over it.
-     */
-    this.isLayoutCurrent$ = merge(
-      layoutRequest$.pipe(map(() => false)),
-      this.spineLayout.requested$.pipe(map(() => false)),
+    merge(
+      this.spineLayout.lifecycle$.pipe(
+        filter((stage) => stage === "requested"),
+        map(() => false),
+      ),
       this.pages.state$.pipe(
         skip(1),
         map(() => true),
       ),
-    ).pipe(
-      startWith(true),
-      distinctUntilChanged(),
-      shareReplay({ bufferSize: 1, refCount: false }),
     )
+      .pipe(takeUntil(this.destroy$))
+      .subscribe(this.isLayoutCurrentSubject)
 
     const spineElementUpdate$ = context.watch(`rootElement`).pipe(
       filter(isDefined),
@@ -142,13 +136,18 @@ export class Spine extends DestroyableClass {
       }),
     )
 
-    merge(attachSpineItems$, spineElementUpdate$, this.isLayoutCurrent$)
+    merge(attachSpineItems$, spineElementUpdate$)
       .pipe(takeUntil(this.destroy$))
       .subscribe()
   }
 
   public get element() {
     return this.elementSubject.getValue()
+  }
+
+  /** {@link isLayoutCurrent$} now. */
+  public get isLayoutCurrent() {
+    return this.isLayoutCurrentSubject.getValue()
   }
 
   public layout(options?: SpineLayoutOptions) {

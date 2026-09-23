@@ -17,32 +17,27 @@ This is an [Expo](https://expo.dev) project created with [`create-expo-app`](htt
    npm install
    ```
 
-3. Start the app
+3. Build the app and launch it on a simulator, an emulator or a device
 
    ```bash
-   npm start
+   npm run ios
+   # or
+   npm run android
    ```
+
+   The demo uses a native module Expo Go does not ship (`react-native-zip-archive`), so it runs as a [development build](https://docs.expo.dev/develop/development-builds/introduction/) rather than in Expo Go. Once the app is installed, `npm start` is enough to serve it the JavaScript.
 
 The reader runs inside a WebView whose page is built from the vite app in `web/`, into `web/dist/index.html`. That page is not committed: `npm start` builds it before starting Metro, and so do `npm run start:all`, `npm run ios`, `npm run android` and `npm run bundle`. `npm run start:all` also rebuilds it whenever its sources in `web/` change. Running `npx expo start` directly skips that build, and Metro fails with "Unable to resolve" until the page exists.
 
-In the output, you'll find options to open the app in a
-
-- [development build](https://docs.expo.dev/develop/development-builds/introduction/)
-- [Android emulator](https://docs.expo.dev/workflow/android-studio-emulator/)
-- [iOS simulator](https://docs.expo.dev/workflow/ios-simulator/)
-- [Expo Go](https://expo.dev/go), a limited sandbox for trying out app development with Expo
-
 You can start developing by editing the files inside the **app** directory. This project uses [file-based routing](https://docs.expo.dev/router/introduction).
 
-## Get a fresh project
+## Native projects
 
-When you're ready, run:
+`ios/` and `android/` are not committed. [`expo prebuild`](https://docs.expo.dev/workflow/continuous-native-generation/) generates them from `app.json` and the installed packages, and `npm run ios` and `npm run android` run it when the folder is missing. A folder that already exists is built as it is, so after changing `app.json` or upgrading the Expo SDK, regenerate both:
 
 ```bash
-npm run reset-project
+npx expo prebuild --clean
 ```
-
-This command will move the starter code to the **app-example** directory and create a blank **app** directory where you can start developing.
 
 ## Learn more
 
