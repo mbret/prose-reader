@@ -15,3 +15,4 @@ jobs:
           pnpm run lint
           pnpm run check:agent-docs
           pnpm run check:internal-ranges
+          pnpm run check:expo-sdk

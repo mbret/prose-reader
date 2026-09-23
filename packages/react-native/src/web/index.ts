@@ -1,5 +1,6 @@
 import type { Manifest, Reader } from "@prose-reader/core"
 import { linkBridge } from "@webview-bridge/web"
+import { Subscription } from "rxjs"
 import type { ProseBridgeStore, ProsePostMessageSchema } from "../shared"
 
 // Annotated rather than inferred: `Reader` is a large enough type that
@@ -36,36 +37,45 @@ export const bridgeReader = ({
   bridge: ReturnType<typeof createReaderBridge>
   containerElement: HTMLElement
 }): ReaderBridgeController => {
-  let reader: Reader | undefined
+  let current: { reader: Reader; subscription: Subscription } | undefined
 
   bridge.addEventListener("load", (data) => {
-    reader?.destroy()
+    // Unsubscribe before destroying, so nothing the old reader emits while it
+    // shuts down reaches the native side. Not every reader stream completes
+    // on destroy (pagination does not), so the subscription is what ends.
+    current?.subscription.unsubscribe()
+    current?.reader.destroy()
+    current = undefined
 
-    const newReader = createReader(data.manifest)
+    const reader = createReader(data.manifest)
+    const subscription = new Subscription()
 
-    reader = newReader
+    subscription.add(
+      reader.pagination.state$.subscribe((state) => {
+        bridge.setPagination(state)
+      }),
+    )
 
-    // these subscriptions complete when the reader is destroyed
-    newReader.pagination.state$.subscribe((state) => {
-      bridge.setPagination(state)
-    })
+    subscription.add(
+      reader.context.subscribe(({ rootElement, ...rest }) => {
+        bridge.setContext(rest)
+      }),
+    )
 
-    newReader.context.subscribe(({ rootElement, ...rest }) => {
-      bridge.setContext(rest)
-    })
+    current = { reader, subscription }
 
-    newReader.mount(containerElement)
+    reader.mount(containerElement)
   })
 
   bridge.addEventListener("turnRight", () => {
-    reader?.navigation.turnRight()
+    current?.reader.navigation.turnRight()
   })
 
   bridge.addEventListener("turnLeft", () => {
-    reader?.navigation.turnLeft()
+    current?.reader.navigation.turnLeft()
   })
 
   return {
-    getReader: () => reader,
+    getReader: () => current?.reader,
   }
 }

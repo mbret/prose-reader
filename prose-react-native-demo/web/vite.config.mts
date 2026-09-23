@@ -51,15 +51,6 @@ export default defineConfig({
     // while Metro may be serving it.
     emptyOutDir: false,
   },
-  optimizeDeps: {
-    esbuildOptions: {
-      // Node.js global to browser globalThis
-      // fix sax on browser
-      define: {
-        global: "globalThis",
-      },
-    },
-  },
   plugins: [
     viteSingleFile({
       removeViteModuleLoader: true,

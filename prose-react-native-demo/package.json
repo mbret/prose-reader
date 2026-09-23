@@ -8,7 +8,7 @@
     "android": "npm run web:build && expo run:android",
     "ios": "npm run web:build && expo run:ios",
     "lint": "expo lint",
-    "tsc": "tsc --noEmit",
+    "typecheck": "tsc --noEmit",
     "web:dev": "vite web",
     "web:build": "vite build web",
     "web:preview": "vite preview web",

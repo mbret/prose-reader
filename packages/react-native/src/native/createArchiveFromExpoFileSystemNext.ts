@@ -1,63 +1,36 @@
 import {
   type Archive,
   blobFileAccessors,
-  createArchive,
+  createArchiveFromEntries,
 } from "@prose-reader/archive-reader"
-import { getUriBasename, sortByTitleComparator } from "@prose-reader/shared"
 import { Directory, type File } from "expo-file-system"
+
+const listDeep = (directory: Directory): (Directory | File)[] =>
+  directory
+    .list()
+    .flatMap((entry) =>
+      entry instanceof Directory ? [entry, ...listDeep(entry)] : [entry],
+    )
 
 export const createArchiveFromExpoFileSystemNext = async (
   directory: Directory,
   { orderByAlpha, name }: { orderByAlpha?: boolean; name?: string } = {},
-): Promise<Archive> => {
-  let files = directory.list()
+): Promise<Archive> =>
+  createArchiveFromEntries(
+    listDeep(directory),
+    (entry) => {
+      const uri = entry.uri.replace("file://", "") // @todo fix prose-reader
 
-  if (orderByAlpha) {
-    files = files.slice().sort((a, b) => sortByTitleComparator(a.name, b.name))
-  }
-
-  const listOneLevelRecords = (directory: Directory): (Directory | File)[] => {
-    return directory.list().reduce((acc: (Directory | File)[], file) => {
-      if (file instanceof Directory) {
-        return [...acc, ...listOneLevelRecords(file)]
-      }
-
-      return [...acc, file]
-    }, [])
-  }
-
-  const flatList = files.reduce((acc: (Directory | File)[], file) => {
-    if (file instanceof Directory) {
-      return [...acc, ...listOneLevelRecords(file)]
-    }
-
-    return [...acc, file]
-  }, [])
-
-  const archive = createArchive({
-    filename: name,
-    records: flatList.map((record) => {
-      if (record instanceof Directory) {
-        return {
-          dir: true,
-          basename: getUriBasename(record.name),
-          uri: record.uri.replace("file://", ""), // @todo fix prose-reader
-        }
+      if (entry instanceof Directory) {
+        return { dir: true, uri }
       }
 
       return {
         dir: false,
-        basename: getUriBasename(record.name),
-        uri: record.uri.replace("file://", ""), // @todo fix prose-reader
-        size: record.info().size ?? 0,
-        encodingFormat: record.type ?? undefined,
-        ...blobFileAccessors(
-          async () => new Blob([await record.arrayBuffer()]),
-        ),
+        uri,
+        size: entry.info().size ?? 0,
+        ...blobFileAccessors(async () => new Blob([await entry.arrayBuffer()])),
       }
-    }),
-    close: () => Promise.resolve(),
-  })
-
-  return archive
-}
+    },
+    { orderByAlpha, name, close: () => Promise.resolve() },
+  )
