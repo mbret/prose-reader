@@ -1,4 +1,5 @@
 import {
+  EMPTY,
   map,
   Observable,
   share,
@@ -168,9 +169,16 @@ export class Pages extends ReactiveEntity<PagesState> {
   ) {
     super({ pages: [] })
 
-    this.layout$ = spineLayout.layout$.pipe(
+    this.layout$ = spineLayout.lifecycle$.pipe(
       withLatestFrom(viewport),
-      switchMap(([, { pageSize }]) => {
+      switchMap(([stage, { pageSize }]) => {
+        /**
+         * Resolving first visible nodes runs across animation frames. A layout
+         * requested meanwhile makes the pages being computed describe a layout
+         * already being replaced, so the request switches away from them.
+         */
+        if (stage === "requested") return EMPTY
+
         const pages = spineItemsManager.items.reduce<UnresolvedPageEntry[]>(
           (acc, spineItem, itemIndex) => {
             for (
@@ -221,14 +229,7 @@ export class Pages extends ReactiveEntity<PagesState> {
           [],
         )
 
-        /**
-         * Resolving first visible nodes runs across animation frames. A layout
-         * requested meanwhile makes these pages describe a layout already
-         * being replaced, so they are abandoned rather than published.
-         */
-        return resolvePagesFirstVisibleNodeInFrames$(pages).pipe(
-          takeUntil(spineLayout.requested$),
-        )
+        return resolvePagesFirstVisibleNodeInFrames$(pages)
       }),
       map((pages) => {
         Report.info(`Pages layout`, pages)
