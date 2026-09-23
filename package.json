@@ -30,7 +30,7 @@
     "@vitest/coverage-v8": "^4.1.11",
     "conventional-changelog-conventionalcommits": "^7.0.2",
     "husky": "^9.1.7",
-    "lerna": "^9.0.7",
+    "lerna": "^10.0.1",
     "lint-staged": "^17.0.5",
     "rollup-plugin-node-externals": "^9.0.0",
     "typescript": "^6.0.0",
