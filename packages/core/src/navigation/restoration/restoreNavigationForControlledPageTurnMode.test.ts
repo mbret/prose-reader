@@ -1,4 +1,4 @@
-import { firstValueFrom, lastValueFrom, NEVER } from "rxjs"
+import { firstValueFrom, lastValueFrom } from "rxjs"
 import { describe, expect, it, vi } from "vitest"
 import { CfiManager } from "../../cfi"
 import { Context } from "../../context/Context"
@@ -53,8 +53,6 @@ describe(`Given a backward navigation to a new item`, () => {
           spineItemLocator,
           settings,
           viewport,
-          // No reader drives these layouts.
-          NEVER,
         )
         const navigationResolver = createNavigationResolver({
           cfi: cfiManager,
