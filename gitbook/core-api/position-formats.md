@@ -23,7 +23,7 @@ reader.mount(container)
 reader.navigation.goTo({ format: "koreader", value: anotherXPointer }, { animate: false })
 ```
 
-`reader.positions.get(name)` returns a registered format or `undefined`. `list()` returns a snapshot of the formats. `register(format)` returns an idempotent unregister function. Names must be nonempty and unique; duplicate registration throws. The built-in `cfi` and `url` formats cannot be replaced or unregistered. Registering or unregistering after mount affects the next pagination update.
+`reader.positions.get(name)` returns a registered format or `undefined`. `list()` returns a snapshot of the formats. `register(format)` returns an idempotent unregister function. Names must be nonempty and unique: registering the format already registered under its name again is a no-op that returns the same unregister function, while another format under a registered name throws. The built-in `cfi` and `url` formats cannot be replaced or unregistered. Registering or unregistering after mount affects the next pagination update.
 
 ## Writing a format
 
@@ -63,7 +63,7 @@ type PositionFormat = {
 `spineItemIndexOf` returns a zero-based manifest spine index without loading a document. Return `undefined` for values the format does not recognize. Text offsets use UTF-16 code units; element offsets describe a child boundary.
 
 1. `resolve` receives the loaded document of the item named by `spineItemIndexOf`. Functions must be synchronous and pure; a later request or reload may call them again. Once a request is converted, its restoration uses CFI and does not call that format again.
-2. Returning `undefined` from `resolve` means the named item's start. A renderer without a DOM document also falls back to item start.
+2. A target stays pending while its item is not ready, and is consumed once it is. Returning `undefined` from `resolve` means the named item's start. An item rendered without a DOM document (an image, an audio track) also falls back to its start, without calling `resolve`.
 3. `generate` receives the same page-start visible node and offset used for the CFI, in its loaded document. Returning `undefined` omits that key. Pages without a visible DOM node carry only a root CFI.
 4. Register synchronously during enhancer construction, before `mount`. An unknown format or invalid spine index warns and falls back to the first spine item.
 5. Formats receive only the manifest item and document. Core handles readiness, navigation locks, and relayout.

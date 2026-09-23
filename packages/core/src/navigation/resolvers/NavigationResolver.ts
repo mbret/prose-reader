@@ -21,7 +21,6 @@ import { clampRectInSpine, getBoundaryForRectInSpine } from "./clampRectInSpine"
 import { getAdjustedPositionForSpread } from "./getAdjustedPositionForSpread"
 import { getNavigationForPosition } from "./getNavigationForPosition"
 import { getNavigationForSpineItemPage } from "./getNavigationForSpineItemPage"
-import { getNavigationForUrl } from "./getNavigationForUrl"
 import { getNavigationFromSpineItemPosition } from "./getNavigationFromSpineItemPosition"
 
 export const NAMESPACE = `spineNavigator`
@@ -80,15 +79,33 @@ export const createNavigationResolver = ({
   const getNavigationForCfi = (value: string): SpinePosition | undefined => {
     const spineItem = cfiManager.getSpineItemFromCfi(value)
     const document = spineItem?.renderer.getDocumentFrame()?.contentDocument
+
     if (!spineItem?.value.isReady || !document) return undefined
+
     const position = positions
       .get("cfi")
       ?.resolve(value, { spineItem: spineItem.item, document })
+
     return position
       ? getNavigationForDomPosition(spineItem, position)
       : undefined
   }
 
+  /**
+   * Where a target leads, and whether it is still pending.
+   *
+   * A target stays pending exactly while its item is not ready, and is
+   * consumed into a canonical cfi once it is: the value is resolved against
+   * the item's document, and the item start stands in when it does not
+   * resolve. Settlement relies on that: an item that is not ready cannot
+   * settle, so no result settles while a target is pending.
+   *
+   * A ready item always has its document when its renderer has one at all,
+   * since readiness cannot outlive the document. A ready item without one is
+   * rendered without a DOM (an image, an audio track), so there is nothing to
+   * resolve the value against and waiting would never end: it falls back to
+   * the item start too.
+   */
   const getNavigationForTarget = (
     target: PositionTarget,
   ): {
@@ -101,11 +118,13 @@ export const createNavigationResolver = ({
     const index = format?.spineItemIndexOf(target.value)
     const spineItem =
       index === undefined ? undefined : spineItemsManager.get(index)
+
     if (!format || !spineItem) {
       Report.warn(
         NAMESPACE,
         `Unknown position format or invalid target: ${target.format}`,
       )
+
       return {
         spineItem: 0,
         position: getNavigationForSpineIndexOrId(0),
@@ -113,7 +132,9 @@ export const createNavigationResolver = ({
         cfi: undefined,
       }
     }
+
     const start = getNavigationForSpineIndexOrId(spineItem)
+
     // CFI already is canonical, including virtual-spine values handled by the hooks.
     if (target.format === "cfi") {
       return {
@@ -123,7 +144,7 @@ export const createNavigationResolver = ({
         target: undefined,
       }
     }
-    const document = spineItem.renderer.getDocumentFrame()?.contentDocument
+
     if (!spineItem.value.isReady) {
       return {
         spineItem: spineItem.index,
@@ -132,9 +153,12 @@ export const createNavigationResolver = ({
         cfi: undefined,
       }
     }
+
+    const document = spineItem.renderer.getDocumentFrame()?.contentDocument
     const domPosition = document
       ? format.resolve(target.value, { spineItem: spineItem.item, document })
       : undefined
+
     return {
       spineItem: spineItem.index,
       position: domPosition
@@ -235,16 +259,6 @@ export const createNavigationResolver = ({
   }
 
   return {
-    getNavigationForUrl: (url: string | URL) =>
-      getNavigationForUrl({
-        context,
-        spineItemsManager,
-        spineLocator: locator,
-        url,
-        pageSizeWidth: viewport.pageSize.width,
-        visibleAreaRectWidth: viewport.absoluteViewport.width,
-        spine,
-      }),
     getNavigationForSpineItemPage: (
       params: Omit<
         Parameters<typeof getNavigationForSpineItemPage>[0],

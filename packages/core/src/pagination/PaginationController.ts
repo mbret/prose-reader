@@ -237,6 +237,11 @@ export class PaginationController extends DestroyableClass {
    * is current and the visible items are ready. An item that is loaded and
    * laid out may legitimately resolve to its root cfi; an unloaded one is not
    * settled merely because a root cfi can be generated for it.
+   *
+   * Readiness is also what keeps a pending position target from settling: a
+   * target stays pending exactly while its item is not ready (see
+   * `getNavigationForTarget`), so a settled result never describes the item
+   * start standing in for a target not yet resolved.
    */
   private resolvePositions({
     metrics,

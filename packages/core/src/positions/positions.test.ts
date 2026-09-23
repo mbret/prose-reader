@@ -118,11 +118,11 @@ describe("position formats", () => {
     expect(reader.navigation.getNavigation().spineItem).toBe(0)
   })
 
-  it("rejects duplicate registry names and unregisters idempotently", () => {
+  it("rejects another format under a registered name and unregisters idempotently", () => {
     const { reader, unregister } = setup()
     const format = reader.positions.get("test")
     if (!format) throw new Error("Expected test format")
-    expect(() => reader.positions.register(format)).toThrow()
+    expect(() => reader.positions.register({ ...format })).toThrow()
     expect(() =>
       reader.positions.register({ ...format, name: "cfi" }),
     ).toThrow()
@@ -137,6 +137,23 @@ describe("position formats", () => {
       "url",
       "test",
     ])
+  })
+
+  it("treats registering the registered format again as a no-op", () => {
+    const { reader, unregister } = setup()
+    const format = reader.positions.get("test")
+    if (!format) throw new Error("Expected test format")
+    expect(reader.positions.register(format)).toBe(unregister)
+    unregister()
+    expect(reader.positions.get("test")).toBeUndefined()
+  })
+
+  it("keeps the built-in formats registered", () => {
+    const { reader } = setup()
+    const cfi = reader.positions.get("cfi")
+    if (!cfi) throw new Error("Expected cfi format")
+    reader.positions.register(cfi)()
+    expect(reader.positions.get("cfi")).toBe(cfi)
   })
 
   it("restores from CFI after conversion without calling the adapter again", async () => {
@@ -177,6 +194,26 @@ describe("position formats", () => {
       spineItem: 1,
       position: { x: 100, y: 0 },
     })
+  })
+
+  it("falls back to the item start once a ready item turns out to have no document", async () => {
+    const { reader, load, settled, resolve } = setup()
+    const item = reader.spineItemsManager.get(1)
+    if (!item) throw new Error("Expected item")
+    // A renderer without a DOM (an image, an audio track) is ready without one.
+    vi.mocked(item.renderer.getDocumentFrame).mockReturnValue(undefined)
+    reader.navigation.goTo(target, { animate: false })
+    expect(reader.navigation.getNavigation().target).toEqual(target)
+    load(1)
+    await settled()
+    const navigation = reader.navigation.getNavigation()
+    expect(resolve).not.toHaveBeenCalled()
+    expect(navigation).toMatchObject({
+      target: undefined,
+      spineItem: 1,
+      position: { x: 100, y: 0 },
+    })
+    expect(reader.cfi.isRootCfi(navigation.cfi ?? "")).toBe(true)
   })
 
   it("warns and falls back to the first item for an unknown format", async () => {

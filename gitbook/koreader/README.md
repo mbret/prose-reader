@@ -31,7 +31,7 @@ const cfi = xPointerToCfi("/body/DocFragment[14]/body/div/p[3]/text().42", getSp
 // settled pagination has the cfi of the page actually being read.
 const pagination = reader.pagination.state
 const xpointer = pagination.isSettled
-  ? cfiToXPointer(pagination.begin.cfi, getSpineItem)
+  ? cfiToXPointer(pagination.begin.positions.cfi, getSpineItem)
   : undefined
 // => "/body/DocFragment[14]/body/div/p[3]/text().42"
 ```
