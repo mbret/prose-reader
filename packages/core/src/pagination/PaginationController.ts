@@ -68,16 +68,18 @@ export class PaginationController extends DestroyableClass {
      * viewport measurement included, nothing can settle on the layout it
      * replaces. Currency therefore never changes under a pending result
      * without cancelling it, which is why it is read once, at the trigger.
+     *
+     * It is read for a completed layout too, not assumed. Listeners hear of
+     * new pages one after another, and one that requests a layout on hearing
+     * of them makes the layout stale before a later listener, this one, is
+     * told it landed.
      */
     merge(
       spine.isLayoutCurrent$.pipe(
         filter((isLayoutCurrent) => !isLayoutCurrent),
         map((): Trigger => ({ resolves: false })),
       ),
-      spine.layout$.pipe(
-        map((): Trigger => ({ resolves: true, isLayoutCurrent: true })),
-      ),
-      this.context.bridgeEvent.navigation$.pipe(
+      merge(this.context.bridgeEvent.navigation$, spine.layout$).pipe(
         withLatestFrom(spine.isLayoutCurrent$),
         map(
           ([, isLayoutCurrent]): Trigger => ({

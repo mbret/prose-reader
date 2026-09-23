@@ -568,4 +568,39 @@ describe("pagination settlement", () => {
 
     expect(next.begin.spineItemIndex).toBe(0)
   })
+
+  it("does not settle on a layout replaced while its pages are being published", async () => {
+    const reader = createTestReader()
+
+    mountTestReader(reader)
+    await settledOn(reader, 0)
+
+    let isLayoutCurrent = true
+    reader.spine.isLayoutCurrent$.subscribe((value) => {
+      isLayoutCurrent = value
+    })
+    const settledWhileStale: PaginationInfo[] = []
+    reader.pagination.state$.subscribe((state) => {
+      if (state.isSettled && !isLayoutCurrent) settledWhileStale.push(state)
+    })
+
+    /**
+     * Publishing new pages notifies its listeners one after another. One that
+     * requests a layout, synchronously, replaces the layout being published
+     * before the later listeners have heard of it, pagination included.
+     */
+    let requestedWhilePublishing = false
+    reader.spine.pages.state$.pipe(skip(1), first()).subscribe(() => {
+      reader.layout()
+      requestedWhilePublishing = true
+    })
+
+    reader.layout()
+    await vi.waitFor(() => expect(requestedWhilePublishing).toBe(true))
+
+    const next = await settledOn(reader, 0)
+
+    expect(next.begin.spineItemIndex).toBe(0)
+    expect(settledWhileStale).toEqual([])
+  })
 })
