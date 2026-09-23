@@ -8,6 +8,7 @@ import {
   mergeMap,
   type Observable,
   of,
+  skip,
   switchMap,
   take,
   takeUntil,
@@ -39,14 +40,6 @@ type ResolvedEdges = {
   end: SettledPaginationEdge<PaginationEdge>
 }
 
-/**
- * A layout requested only withdraws; a completed layout or a navigation
- * resolves, and says whether the layout the result lands on is current.
- */
-type Trigger =
-  | { resolves: false }
-  | { resolves: true; isLayoutCurrent: boolean }
-
 export class PaginationController extends DestroyableClass {
   constructor(
     protected context: Context,
@@ -59,44 +52,37 @@ export class PaginationController extends DestroyableClass {
     super()
 
     /**
-     * A trigger always drops settlement first, so no entry point can forget
-     * to, and a newer trigger cancels whatever is still pending, so a
-     * superseded result can never reach the reader.
+     * A navigation or a completed layout resolves a new result. A change of
+     * layout currency, either way, only withdraws, and cancels whatever was
+     * pending: it was resolved over the layout being replaced.
      *
-     * A layout request is one of them. It makes whatever was resolved stale,
-     * and since the spine announces it before doing anything for it, the
-     * viewport measurement included, nothing can settle on the layout it
-     * replaces. Currency therefore never changes under a pending result
-     * without cancelling it, which is why it is read once, at the trigger.
+     * The layout is current once its pages publish, but a result waits for the
+     * completed layout, because the navigator restores the navigation onto
+     * every layout that lands, and until it has, the viewport still shows the
+     * position as it was on the layout replaced. The navigator hears of a
+     * completed layout before pagination does since it is built first, which
+     * the restoration tests depend on.
      *
-     * It is read for a completed layout too, not assumed. Listeners hear of
-     * new pages one after another, and one that requests a layout on hearing
-     * of them makes the layout stale before a later listener, this one, is
-     * told it landed.
+     * Every trigger drops settlement first, so no entry point can forget to,
+     * and cancels whatever the previous one left pending, so a superseded
+     * result never reaches the reader. Since the layout cannot become stale
+     * or current without cancelling a pending result, a result that finds it
+     * current when it settles found it current throughout.
      */
     merge(
-      spine.isLayoutCurrent$.pipe(
-        filter((isLayoutCurrent) => !isLayoutCurrent),
-        map((): Trigger => ({ resolves: false })),
-      ),
       merge(this.context.bridgeEvent.navigation$, spine.layout$).pipe(
-        withLatestFrom(spine.isLayoutCurrent$),
-        map(
-          ([, isLayoutCurrent]): Trigger => ({
-            resolves: true,
-            isLayoutCurrent,
-          }),
-        ),
+        map(() => this.resolve$()),
+      ),
+      spine.isLayoutCurrent$.pipe(
+        // Changes only: the current value is replayed on subscription.
+        skip(1),
+        map(() => EMPTY),
       ),
     )
       .pipe(
-        switchMap((trigger) => {
-          const withdrawn = of(withoutSettlement(this.pagination.value))
-
-          return trigger.resolves
-            ? concat(withdrawn, this.resolve$(trigger.isLayoutCurrent))
-            : withdrawn
-        }),
+        switchMap((work$) =>
+          concat(of(withoutSettlement(this.pagination.value)), work$),
+        ),
         takeUntil(this.destroy$),
       )
       .subscribe((result) => {
@@ -108,7 +94,7 @@ export class PaginationController extends DestroyableClass {
    * Resolves a result in two steps: cheap metrics once the navigator is free,
    * then positions once the viewport is free.
    */
-  private resolve$(isLayoutCurrent: boolean): Observable<PaginationInfo> {
+  private resolve$(): Observable<PaginationInfo> {
     /**
      * @important
      *
@@ -149,7 +135,7 @@ export class PaginationController extends DestroyableClass {
             switchMap(() =>
               this.resolvePositions({
                 metrics: provisional,
-                maySettle: metrics !== undefined && isLayoutCurrent,
+                visibleRangeIsKnown: metrics !== undefined,
               }),
             ),
           ),
@@ -243,17 +229,17 @@ export class PaginationController extends DestroyableClass {
    * the reader happens to hold by the time the viewport frees up. A newer
    * trigger cancels this one, so the result is for the latest request.
    *
-   * It may settle only if the visible range is known, the layout was current
-   * when it was triggered, and the visible items are ready. An item that is
-   * loaded and laid out may legitimately resolve to its root cfi; an unloaded
-   * one is not settled merely because a root cfi can be generated for it.
+   * It settles only if the visible range is known and, right now, the layout
+   * is current and the visible items are ready. An item that is loaded and
+   * laid out may legitimately resolve to its root cfi; an unloaded one is not
+   * settled merely because a root cfi can be generated for it.
    */
   private resolvePositions({
     metrics,
-    maySettle,
+    visibleRangeIsKnown,
   }: {
     metrics: PaginationInfo
-    maySettle: boolean
+    visibleRangeIsKnown: boolean
   }): Observable<PaginationInfo> {
     const begin = this.resolveEdgePositions(metrics.begin)
     const end = this.resolveEdgePositions(metrics.end)
@@ -263,18 +249,19 @@ export class PaginationController extends DestroyableClass {
     const resolved: ResolvedEdges = { begin: begin.edge, end: end.edge }
     const items = [...new Set([begin.spineItem, end.spineItem])]
 
-    if (!maySettle || !items.every((item) => item.value.isReady)) {
-      return of({ isSettled: false, ...resolved })
-    }
+    const settles =
+      visibleRangeIsKnown &&
+      this.spine.isLayoutCurrent &&
+      items.every((item) => item.value.isReady)
+
+    if (!settles) return of({ isSettled: false, ...resolved })
 
     return this.settledUntilReadinessDrops(resolved, items)
   }
 
   /**
-   * Settled until a visible item stops being ready, an unload for one.
-   * Nothing else can end it without also cancelling it: a layout request is a
-   * trigger of its own, and an item is only ready again after a layout, whose
-   * request cancelled this result first.
+   * Settled until a visible item stops being ready, an unload for one. The
+   * layout becoming stale is a trigger of its own, which cancels this result.
    */
   private settledUntilReadinessDrops(
     resolved: ResolvedEdges,

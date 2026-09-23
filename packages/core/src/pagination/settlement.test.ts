@@ -575,19 +575,17 @@ describe("pagination settlement", () => {
     mountTestReader(reader)
     await settledOn(reader, 0)
 
-    let isLayoutCurrent = true
-    reader.spine.isLayoutCurrent$.subscribe((value) => {
-      isLayoutCurrent = value
-    })
     const settledWhileStale: PaginationInfo[] = []
     reader.pagination.state$.subscribe((state) => {
-      if (state.isSettled && !isLayoutCurrent) settledWhileStale.push(state)
+      if (state.isSettled && !reader.spine.isLayoutCurrent) {
+        settledWhileStale.push(state)
+      }
     })
 
     /**
      * Publishing new pages notifies its listeners one after another. One that
      * requests a layout, synchronously, replaces the layout being published
-     * before the later listeners have heard of it, pagination included.
+     * before the later listeners have heard of it.
      */
     let requestedWhilePublishing = false
     reader.spine.pages.state$.pipe(skip(1), first()).subscribe(() => {
@@ -602,5 +600,76 @@ describe("pagination settlement", () => {
 
     expect(next.begin.spineItemIndex).toBe(0)
     expect(settledWhileStale).toEqual([])
+  })
+
+  it("settles on the navigation restored onto a new layout, not on where it was before", async () => {
+    const reader = createTestReader()
+
+    mountTestReader(reader)
+    reader.navigation.goToSpineItem({ indexOrId: 1, animation: false })
+    await settledOn(reader, 1)
+
+    // skip the replayed current result
+    const settledItems: (number | undefined)[] = []
+    reader.pagination.state$.pipe(skip(1)).subscribe((state) => {
+      if (state.isSettled) settledItems.push(state.begin.spineItemIndex)
+    })
+
+    /**
+     * Wider pages move item 1 further along the spine. Until the navigator
+     * restores the navigation onto the new layout, its position is where item
+     * 1 used to start, which the new layout gives to item 0.
+     */
+    setTestViewport({ width: 300, height: 600 })
+    reader.layout()
+
+    await settledOn(reader, 1)
+    await waitFor(100)
+
+    expect(settledItems.filter((index) => index !== 1)).toEqual([])
+  })
+
+  it("never settles on a visible range read before the layout became current", async () => {
+    const reader = createTestReader()
+
+    mountTestReader(reader)
+    await settledOn(reader, 0)
+
+    // What a settled result says is visible, the current layout shows there.
+    const settledOnAnotherRange: string[] = []
+    reader.pagination.state$.subscribe((state) => {
+      if (!state.isSettled) return
+
+      const visible = reader.spine.locator.getVisibleSpineItemsFromPosition({
+        position: reader.navigation.getNavigation().position,
+        // the threshold pagination resolves with
+        threshold: { type: "percentage", value: 0.5 },
+      })
+      const range = `${state.begin.spineItemIndex}-${state.end.spineItemIndex}`
+
+      if (range !== `${visible?.beginIndex}-${visible?.endIndex}`) {
+        settledOnAnotherRange.push(range)
+      }
+    })
+
+    /**
+     * A busy viewport leaves a result resolved during the layout waiting, its
+     * visible range already read. Freeing the viewport the moment the new
+     * pages publish, before later listeners have heard of them, would let it
+     * resolve its positions over the new layout.
+     */
+    const releaseViewport = reader.navigation.internalNavigator.locker.lock()
+    reader.spine.pages.state$.pipe(skip(1), first()).subscribe(() => {
+      releaseViewport()
+    })
+
+    setTestViewport({ width: 60, height: 200 })
+    reader.layout()
+    reader.navigation.goToSpineItem({ indexOrId: 1, animation: false })
+
+    const next = await settledOn(reader, 1)
+
+    expect(next.begin.spineItemIndex).toBe(1)
+    expect(settledOnAnotherRange).toEqual([])
   })
 })
