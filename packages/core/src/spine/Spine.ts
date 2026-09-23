@@ -1,8 +1,11 @@
-import { BehaviorSubject, combineLatest, merge, type Observable } from "rxjs"
+import { BehaviorSubject, merge, type Observable } from "rxjs"
 import {
   distinctUntilChanged,
   filter,
   map,
+  shareReplay,
+  skip,
+  startWith,
   takeUntil,
   tap,
 } from "rxjs/operators"
@@ -37,12 +40,13 @@ export class Spine extends DestroyableClass {
   /**
    * Whether the pages describe the latest layout requested. A request makes
    * them stale at once, whether it came through `reader.layout()` or from an
-   * item loading or unloading, and they are current again only once pages
-   * computed from a pass started after it are published.
+   * item loading or unloading. It also cancels everything still running for
+   * older requests, the pass and the page computation both, so the next pages
+   * published are the ones it asked for, and they make the layout current
+   * again.
    *
    * Item flags cannot tell this: a pass clears an item's dirty flag as soon as
-   * it lays that item out, long before the pages are recomputed, and a pass
-   * still finishing for an older request clears flags a newer one set.
+   * it lays that item out, long before the pages are recomputed.
    */
   public readonly isLayoutCurrent$: Observable<boolean>
 
@@ -93,15 +97,21 @@ export class Spine extends DestroyableClass {
       this.viewport,
     )
 
-    this.isLayoutCurrent$ = combineLatest([
-      this.spineLayout.latestRequest$,
-      this.pages.watch("layoutRequest"),
-    ]).pipe(
-      map(
-        ([latestRequest, describedRequest]) =>
-          latestRequest === describedRequest,
+    /**
+     * Pages publish their state before anything else hears of a new layout,
+     * so the layout is current again by the time `layout$` resolves anything
+     * over it.
+     */
+    this.isLayoutCurrent$ = merge(
+      this.spineLayout.requested$.pipe(map(() => false)),
+      this.pages.state$.pipe(
+        skip(1),
+        map(() => true),
       ),
+    ).pipe(
+      startWith(true),
       distinctUntilChanged(),
+      shareReplay({ bufferSize: 1, refCount: false }),
     )
 
     const spineElementUpdate$ = context.watch(`rootElement`).pipe(
@@ -127,7 +137,7 @@ export class Spine extends DestroyableClass {
       }),
     )
 
-    merge(attachSpineItems$, spineElementUpdate$)
+    merge(attachSpineItems$, spineElementUpdate$, this.isLayoutCurrent$)
       .pipe(takeUntil(this.destroy$))
       .subscribe()
   }

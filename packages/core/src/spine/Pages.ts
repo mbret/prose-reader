@@ -48,11 +48,6 @@ export type PageEntry = {
 
 export type PagesState = {
   pages: PageEntry[]
-  /**
-   * The layout request these pages were computed for, as numbered by
-   * {@link SpineLayout.latestRequest$}. 0 before the first layout.
-   */
-  layoutRequest: number
 }
 
 type UnresolvedPageEntry = Omit<PageEntry, "firstVisibleNode"> & {
@@ -171,11 +166,11 @@ export class Pages extends ReactiveEntity<PagesState> {
     public readonly locator: SpineLocator,
     public readonly viewport: Viewport,
   ) {
-    super({ pages: [], layoutRequest: 0 })
+    super({ pages: [] })
 
     this.layout$ = spineLayout.layout$.pipe(
       withLatestFrom(viewport),
-      switchMap(([layoutRequest, { pageSize }]) => {
+      switchMap(([, { pageSize }]) => {
         const pages = spineItemsManager.items.reduce<UnresolvedPageEntry[]>(
           (acc, spineItem, itemIndex) => {
             for (
@@ -226,13 +221,18 @@ export class Pages extends ReactiveEntity<PagesState> {
           [],
         )
 
+        /**
+         * Resolving first visible nodes runs across animation frames. A layout
+         * requested meanwhile makes these pages describe a layout already
+         * being replaced, so they are abandoned rather than published.
+         */
         return resolvePagesFirstVisibleNodeInFrames$(pages).pipe(
-          map((resolvedPages) => ({ pages: resolvedPages, layoutRequest })),
+          takeUntil(spineLayout.requested$),
         )
       }),
-      map((state) => {
-        Report.info(`Pages layout`, state.pages)
-        return state
+      map((pages) => {
+        Report.info(`Pages layout`, pages)
+        return { pages }
       }),
       share(),
     )

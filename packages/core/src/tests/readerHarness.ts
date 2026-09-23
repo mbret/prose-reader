@@ -90,13 +90,17 @@ export const holdItem = (href: string) => {
 /**
  * Lets a test stop the spine's layout pass at one item: while held, that item's
  * layout does not complete, so the pass has laid out the items before it and
- * waits. Layouts run normally until `hold` is called.
+ * waits. Layouts run normally until `hold` is called. `layoutsStarted` counts
+ * the layouts of that item, which tells a test a pass has reached it.
  */
 export const holdItemLayout = (href: string) => {
   const isHeld = new BehaviorSubject(false)
+  let layoutsStarted = 0
 
   class HeldLayoutRenderer extends DefaultRenderer {
     onLayout() {
+      layoutsStarted += 1
+
       return isHeld.pipe(
         first((held) => !held),
         map(() => undefined),
@@ -113,6 +117,7 @@ export const holdItemLayout = (href: string) => {
           : new DefaultRenderer(props),
     hold: () => isHeld.next(true),
     release: () => isHeld.next(false),
+    layoutsStarted: () => layoutsStarted,
   }
 }
 

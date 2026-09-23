@@ -417,7 +417,7 @@ describe("pagination settlement", () => {
     expect(next.begin.spineItemIndex).toBe(0)
   })
 
-  it("does not settle on pages from a pass that a newer layout request replaces", async () => {
+  it("does not settle on a pass that a newer layout request replaces", async () => {
     const laterItem = holdItemLayout("/page_1.jpg")
     const reader = createTestReader({ getRenderer: laterItem.getRenderer })
 
@@ -429,8 +429,6 @@ describe("pagination settlement", () => {
 
     if (!visibleItem || !nextItem) throw new Error("an item is missing")
 
-    const pagesBefore = reader.spine.pages.value.layoutRequest
-
     // A first pass starts and waits on the next item.
     laterItem.hold()
     reader.layout()
@@ -439,30 +437,63 @@ describe("pagination settlement", () => {
       expect(nextItem.value.isDirty).toBe(true)
     })
 
+    const layoutsBeforeSecondRequest = laterItem.layoutsStarted()
+
     /**
-     * A second request arrives while the first pass is still running. Item
-     * layout is debounced, so the first pass completes and its pages are
-     * published before the second pass starts, which is held on the same item.
+     * A second request arrives while the first pass is still running, and the
+     * first pass could then finish: its held item is released at once. Only
+     * the second pass may produce the layout the reader settles on, and it is
+     * held on the same item. The item's dirty flag cannot say when that pass
+     * gets there: the item finishes the layout it was released from and
+     * clears the flag whether or not its pass still exists.
      */
     reader.layout()
     laterItem.release()
     laterItem.hold()
     await vi.waitFor(() =>
-      expect(reader.spine.pages.value.layoutRequest).toBeGreaterThan(
-        pagesBefore,
+      expect(laterItem.layoutsStarted()).toBeGreaterThan(
+        layoutsBeforeSecondRequest,
       ),
     )
 
     reader.navigation.goToSpineItem({ indexOrId: 0, animation: false })
 
-    /**
-     * Pages were just published, so "has a layout finished since the last
-     * request" would say yes. They describe the first request, and the second
-     * is about to replace them.
-     */
     expect(reader.pagination.state.isSettled).toBe(false)
 
     laterItem.release()
+
+    const next = await settledOn(reader, 0)
+
+    expect(next.begin.spineItemIndex).toBe(0)
+  })
+
+  it("does not settle on pages still being computed when a newer layout is requested", async () => {
+    const reader = createTestReader()
+
+    mountTestReader(reader)
+    await settledOn(reader, 0)
+
+    /**
+     * The moment a pass completes, its pages start resolving across animation
+     * frames. A request made right then replaces the layout those pages
+     * describe, before they exist.
+     */
+    let replaced = false
+    reader.spine.pages.spineLayout.layout$.pipe(first()).subscribe(() => {
+      reader.layout()
+      replaced = true
+    })
+    reader.layout()
+    await vi.waitFor(() => expect(replaced).toBe(true))
+
+    // Long enough for the first pass's pages to have been published, had
+    // they not been abandoned.
+    await new Promise((resolve) => requestAnimationFrame(resolve))
+    await new Promise((resolve) => requestAnimationFrame(resolve))
+
+    reader.navigation.goToSpineItem({ indexOrId: 0, animation: false })
+
+    expect(reader.pagination.state.isSettled).toBe(false)
 
     const next = await settledOn(reader, 0)
 
