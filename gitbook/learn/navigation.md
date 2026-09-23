@@ -13,7 +13,7 @@ These represent methods such as `goToItem`, `goToPage`, `goToUrl`, etc. They are
 
 
 ```typescript
-type NavigationState {
+type NavigationState = {
   /**
    * Spatial indicator whether you can turn
    * page to the left to reach a new spine item
