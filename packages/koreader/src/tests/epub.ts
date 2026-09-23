@@ -5,6 +5,15 @@ import { parseSvgDocument, parseXhtml } from "./dom"
 
 export const FIXTURES_DIR = join(__dirname, "fixtures")
 
+/**
+ * Timeout for a test whose work grows with a whole book, or with every book.
+ * Such a test takes up to 2 s alone, but CI runs every package's suite and the
+ * Playwright suite at once on a 3-core runner, where it has taken nearly 6 s:
+ * past vitest's 5 s default, which is sized for unit tests. 30 s is five times
+ * the slowest run seen there.
+ */
+export const WHOLE_BOOK_TIMEOUT = 30_000
+
 export type FixtureSpineItem = {
   index: number
   id: string

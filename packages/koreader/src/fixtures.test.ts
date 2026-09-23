@@ -17,6 +17,7 @@ import {
   type Oracle,
   openFixtureBook,
   readOracle,
+  WHOLE_BOOK_TIMEOUT,
 } from "./tests/epub"
 import type { DomPosition } from "./types"
 
@@ -78,7 +79,9 @@ describe.each(FIXTURES)("crengine ground truth: %s", (name) => {
     })
   })
 
-  it("resolves every sampled word to the text crengine reads there, and writes crengine's own pointers back", () => {
+  it("resolves every sampled word to the text crengine reads there, and writes crengine's own pointers back", {
+    timeout: WHOLE_BOOK_TIMEOUT,
+  }, () => {
     const book = bookOf(name)
     const oracle = oracleOf(name)
     const pull: string[] = []
@@ -190,7 +193,9 @@ const positionsOf = (text: Text): number[] => {
 }
 
 describe.each(FIXTURES)("whole-book round trips: %s", (name) => {
-  it("takes every text position to a pointer and back to the same node", () => {
+  it("takes every text position to a pointer and back to the same node", {
+    timeout: WHOLE_BOOK_TIMEOUT,
+  }, () => {
     const book = bookOf(name)
     let positions = 0
     let dropped = 0
@@ -256,7 +261,9 @@ describe.each(FIXTURES)("whole-book round trips: %s", (name) => {
     expect(positions).toBeGreaterThan(0)
   })
 
-  it("takes every element to a pointer and back", () => {
+  it("takes every element to a pointer and back", {
+    timeout: WHOLE_BOOK_TIMEOUT,
+  }, () => {
     const book = bookOf(name)
     let elements = 0
     let unpointed = 0
@@ -499,7 +506,9 @@ const NAIVE_CONSUMERS = {
 }
 
 describe("interop with naive consumers", () => {
-  it("emits the classic shape every third party parses", () => {
+  it("emits the classic shape every third party parses", {
+    timeout: WHOLE_BOOK_TIMEOUT,
+  }, () => {
     let pointers = 0
 
     for (const name of FIXTURES) {

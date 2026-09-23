@@ -10,6 +10,7 @@ import {
   isKnownDeviation,
   normalizeText,
   openFixtureBook,
+  WHOLE_BOOK_TIMEOUT,
 } from "./tests/epub"
 
 /**
@@ -155,7 +156,9 @@ describe.each(FIXTURES)(
   (name) => {
     const answers = join(FIXTURES_DIR, `${name}.crengine-check.json`)
 
-    it("resolves every emitted pointer to the same text", async () => {
+    it("resolves every emitted pointer to the same text", {
+      timeout: WHOLE_BOOK_TIMEOUT,
+    }, async () => {
       const pairs = await pairsOf(name)
 
       if (emitDir) {
