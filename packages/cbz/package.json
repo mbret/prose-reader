@@ -1,6 +1,6 @@
 {
   "name": "@prose-reader/cbz",
-  "version": "3.0.0",
+  "version": "4.0.0",
   "type": "module",
   "files": [
     "/dist"
@@ -26,20 +26,20 @@
     "test": "vitest run"
   },
   "devDependencies": {
-    "@prose-reader/archive-reader": "^3.0.0",
-    "@prose-reader/cfi": "^3.0.0",
-    "@prose-reader/core": "^3.0.0",
-    "@prose-reader/shared": "^3.0.0",
-    "@prose-reader/streamer": "^3.0.0",
+    "@prose-reader/archive-reader": "^4.0.0",
+    "@prose-reader/cfi": "^4.0.0",
+    "@prose-reader/core": "^4.0.0",
+    "@prose-reader/shared": "^4.0.0",
+    "@prose-reader/streamer": "^4.0.0",
     "jsdom": "^29.0.0",
     "typescript": "*",
     "vite": "^8"
   },
   "peerDependencies": {
-    "@prose-reader/archive-reader": "^3.0.0",
-    "@prose-reader/cfi": "^3.0.0",
-    "@prose-reader/core": "^3.0.0",
-    "@prose-reader/shared": "^3.0.0",
-    "@prose-reader/streamer": "^3.0.0"
+    "@prose-reader/archive-reader": "^4.0.0",
+    "@prose-reader/cfi": "^4.0.0",
+    "@prose-reader/core": "^4.0.0",
+    "@prose-reader/shared": "^4.0.0",
+    "@prose-reader/streamer": "^4.0.0"
   }
 }
