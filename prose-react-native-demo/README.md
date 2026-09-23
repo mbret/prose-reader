@@ -33,7 +33,7 @@ You can start developing by editing the files inside the **app** directory. This
 
 ## Native projects
 
-`ios/` and `android/` are [`expo prebuild`](https://docs.expo.dev/workflow/continuous-native-generation/) output, generated from `app.json` and the installed packages. `npm run ios` and `npm run android` build them as they are and never regenerate them, so after changing `app.json` or upgrading the Expo SDK, regenerate both and commit the result:
+`ios/` and `android/` are not committed. [`expo prebuild`](https://docs.expo.dev/workflow/continuous-native-generation/) generates them from `app.json` and the installed packages, and `npm run ios` and `npm run android` run it when the folder is missing. A folder that already exists is built as it is, so after changing `app.json` or upgrading the Expo SDK, regenerate both:
 
 ```bash
 npx expo prebuild --clean
