@@ -4,35 +4,49 @@ on:
   workflow_call:
 
 jobs:
-  test:
-    runs-on: macos-latest
+  # The vitest suites run in happy-dom or jsdom, with no layout engine, so
+  # nothing in them depends on the platform. Kept off the browser runners,
+  # they neither wait for a macOS runner nor compete with the browsers for
+  # its three cores.
+  unit:
+    runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v6
-      - uses: pnpm/action-setup@v6
-      - uses: actions/setup-node@v6
+      - uses: ./.github/actions/setup
         with:
-          node-version: 25
-          cache: 'pnpm'
+          build: libs
+      - name: Test
+        run: pnpm exec lerna run test --ignore prose-reader-tests
 
-      - name: Install dependencies
-        run: pnpm install --frozen-lockfile
-
-      - uses: actions/cache@v5
-        id: nx-cache
+  # macOS: the committed screenshot baselines are rendered there (-darwin).
+  # Sharded, since one runner took over five minutes for the suite. Every
+  # shard occupies one of the few macOS runners an account gets at once,
+  # which is what bounds the count.
+  browser:
+    runs-on: macos-latest
+    strategy:
+      # a failure in one shard says nothing about the others: let them report
+      fail-fast: false
+      matrix:
+        shard: [1, 2, 3]
+    steps:
+      - uses: actions/checkout@v6
+      - uses: ./.github/actions/setup
         with:
-          path: |
-            .nx
-          key: ${{ runner.os }}-nx-${{ hashFiles('pnpm-lock.yaml') }}
+          build: libs
 
-      - name: Build
+      # Keyed on the Playwright version, which pins the browser builds, so an
+      # unrelated lockfile change does not download them again.
+      - name: Read the Playwright version
+        id: playwright
         run: |
-          pnpm exec lerna run build --stream --scope @prose-reader/*
+          version=$(pnpm --filter prose-reader-tests exec playwright --version)
+          echo "version=${version#Version }" >> "$GITHUB_OUTPUT"
 
       - uses: actions/cache@v5
-        id: playwright-cache
         with:
           path: ~/Library/Caches/ms-playwright
-          key: ${{ runner.os }}-playwright-${{ hashFiles('pnpm-lock.yaml') }}
+          key: ${{ runner.os }}-playwright-${{ steps.playwright.outputs.version }}
 
       - name: Install Playwright Browsers
         # On a cache hit the browsers are already present; install still runs to
@@ -41,12 +55,14 @@ jobs:
         run: pnpm --filter prose-reader-tests exec playwright install --with-deps
 
       - name: Test
-        run: |
-          pnpm test
+        run: pnpm --filter prose-reader-tests test --shard=${{ matrix.shard }}/${{ strategy.job-total }}
 
       - uses: actions/upload-artifact@v7
         if: ${{ !cancelled() }}
         with:
-          name: playwright-report
+          name: playwright-report-${{ matrix.shard }}
           path: apps/tests/test-results/
           retention-days: 15
+          # Playwright only writes here for a failed or retried test, so a
+          # green shard has nothing to upload and nothing to warn about
+          if-no-files-found: ignore

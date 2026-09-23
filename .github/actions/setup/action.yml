@@ -1,0 +1,61 @@
+name: setup
+description: >
+  The pinned Node and pnpm, the workspace installed, and optionally built on
+  top of the nx cache of earlier runs.
+
+inputs:
+  build:
+    description: >
+      What to build once installed: `libs` for the @prose-reader/* packages,
+      `all` for every project, empty for nothing.
+    default: ''
+  registry-url:
+    description: Passed to setup-node, for the job that publishes.
+    default: ''
+
+runs:
+  using: composite
+  steps:
+    # before setup-node, whose pnpm cache needs pnpm on the PATH; the
+    # version comes from `packageManager` in the root package.json
+    - uses: pnpm/action-setup@v6
+
+    - uses: actions/setup-node@v6
+      with:
+        node-version-file: .nvmrc
+        cache: pnpm
+        registry-url: ${{ inputs.registry-url }}
+
+    - name: Install dependencies
+      shell: bash
+      run: pnpm install --frozen-lockfile
+
+    # Saved under the commit and restored from the latest earlier one, so a
+    # push rebuilds only the projects whose inputs changed since then. Keyed
+    # on the lockfile alone, the cache was written once per lockfile and never
+    # again, and drifted further from the code with every commit. A replayed
+    # build is only as sound as its hash: nx.json counts the lockfile and the
+    # root config every package builds with among the build inputs.
+    - if: inputs.build != ''
+      uses: actions/cache@v5
+      with:
+        path: .nx
+        key: nx-${{ runner.os }}-${{ inputs.build }}-${{ github.sha }}
+        restore-keys: nx-${{ runner.os }}-${{ inputs.build }}-
+
+    - if: inputs.build != ''
+      name: Build
+      shell: bash
+      env:
+        BUILD: ${{ inputs.build }}
+        # Each run adds the outputs it rebuilt to what it restored, so without
+        # a cap the cache only grows. Nx evicts the least recently used
+        # entries past it; one full build is about 100MB, the front app most
+        # of it.
+        NX_MAX_CACHE_SIZE: 250MB
+      run: |
+        case "$BUILD" in
+          libs) pnpm run build:lib ;;
+          all) pnpm run build ;;
+          *) echo "::error::unknown build '$BUILD', expected libs or all"; exit 1 ;;
+        esac

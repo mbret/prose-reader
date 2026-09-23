@@ -5,16 +5,11 @@ on:
 
 jobs:
   ts:
-    runs-on: macos-latest
+    runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v6
-      - uses: pnpm/action-setup@v6
-      - uses: actions/setup-node@v6
+      - uses: ./.github/actions/setup
         with:
-          node-version: 25
-          cache: 'pnpm'
+          build: all
       - name: Check
-        run: |
-          pnpm install --frozen-lockfile
-          pnpm run build
-          pnpm run tsc
+        run: pnpm run tsc

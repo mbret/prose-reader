@@ -92,17 +92,18 @@ pnpm install
 pnpm exec lerna run build --stream --scope "@prose-reader/*"
 ```
 
-`nvm install`/`nvm use` read `.nvmrc` from the repo root, and CI reads `packageManager`, so both follow whatever is pinned — no version numbers to keep in sync. Regenerate `pnpm-lock.yaml` only with that pinned pnpm: another major can rewrite the lockfile's format.
+`nvm install`/`nvm use` read `.nvmrc` from the repo root, and CI reads the same `.nvmrc` and `packageManager`, so both follow whatever is pinned — no version numbers to keep in sync. Regenerate `pnpm-lock.yaml` only with that pinned pnpm: another major can rewrite the lockfile's format.
 
 pnpm gives each package only what its own manifest declares. Declare a dependency in the package that imports it: anything the published code or its types import in `dependencies` or `peerDependencies`, a test-only import in `devDependencies`. Build tooling shared by every package (vite, vitest, the dts and externals plugins) is declared once at the root. The React Native demo is the exception to the workspace: it is not a member, and installs with npm from its own lockfile, the way an app consuming the libraries would.
 
 ## Browser tests
 
 `apps/tests` (`prose-reader-tests`) is a Playwright suite, and the root
-`pnpm test` runs it alongside the vitest suites, so CI runs every spec in it on
-Chromium, Firefox, WebKit and two mobile profiles. It needs the browser builds
-its Playwright version pins. Install them once per environment, the way CI
-does before `pnpm test`:
+`pnpm test` runs it alongside the vitest suites. CI runs the two apart: the
+vitest suites on Linux, and every spec of this one, split across shards, on
+macOS, where its screenshot baselines are rendered, on Chromium, Firefox,
+WebKit and two mobile profiles. It needs the browser builds its Playwright
+version pins. Install them once per environment, the way CI does:
 
 ```sh
 pnpm --filter prose-reader-tests exec playwright install --with-deps
