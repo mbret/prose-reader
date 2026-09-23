@@ -148,6 +148,59 @@ export const updateSettingsAndSettle = (
   )
 
 /**
+ * Resolves once the reader has handled every container resize the browser has
+ * reported, so it cannot start a layout for one after this returns. The
+ * layouts it started may still be laying out items; wait on pagination for
+ * those. A ResizeObserver reports in the rendering step after a size changes,
+ * so each check first lets two frames render, which delivers any report
+ * already due, then waits for the reader to finish with it. It ends on a check
+ * that finds nothing pending.
+ */
+export const waitForResizesHandled = (page: Page) =>
+  page.evaluate(async () => {
+    // @ts-expect-error window.reader is set by the scenario's index.tsx
+    const reader = window.reader as Reader
+
+    const twoFrames = () =>
+      new Promise<void>((resolve) =>
+        requestAnimationFrame(() => requestAnimationFrame(() => resolve())),
+      )
+
+    /** The current value, which the stream replays on subscribe. */
+    const isPending = () => {
+      let pending = false
+
+      reader.isContainerResizePending$
+        .subscribe((value) => {
+          pending = value
+        })
+        .unsubscribe()
+
+      return pending
+    }
+
+    const whenHandled = () =>
+      new Promise<void>((resolve) => {
+        const subscription = reader.isContainerResizePending$.subscribe(
+          (pending) => {
+            if (pending) return
+
+            resolve()
+            queueMicrotask(() => subscription.unsubscribe())
+          },
+        )
+      })
+
+    for (;;) {
+      await twoFrames()
+
+      if (!isPending()) return
+
+      await whenHandled()
+    }
+  })
+
+/**
  * Whether the exact position a cfi points to is inside the window, so a
  * restored page is judged by where the anchored character ended up rather
  * than by whichever element happens to contain it.

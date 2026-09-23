@@ -45,6 +45,8 @@ By default (`layoutAutoResize: "container"`) the reader lays itself out again on
 * Make sure the container itself changes size, for example by sizing it relative to the window rather than with a fixed width and height.
 * If you set `layoutAutoResize` to `false`, the reader no longer watches the container, and you need to call `layout()` yourself after changing its size.
 
+To know when the reader has caught up with a resize, watch [`isContainerResizePending$`](../core-api/reader/iscontainerresizependingusd.md).
+
 ## I have a vertical reading book but the first page is using slide turn
 
 Vertical writing books do not support slide turn animation yet however we cannot prevent sliding until we detect the book being vertical. Some vertical books do not indicate whether they are vertical or not in the first cover page nor in the manifest. To prevent this problem you can:

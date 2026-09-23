@@ -1,10 +1,14 @@
 import { detectMimeTypeFromName } from "@prose-reader/shared"
-import { EMPTY, merge, type Observable, type ObservedValueOf } from "rxjs"
+import { merge, type Observable, type ObservedValueOf, of } from "rxjs"
 import {
   debounceTime,
+  distinctUntilChanged,
   filter,
+  map,
+  share,
   shareReplay,
   skip,
+  startWith,
   switchMap,
   takeUntil,
   tap,
@@ -37,6 +41,14 @@ import { updateSpreadMode } from "./updateSpreadMode"
 export type LayoutEnhancerOutput = {
   layout$: Observable<ObservedValueOf<Pages>>
   layoutInfo$: Observable<ObservedValueOf<Pages>>
+  /**
+   * True from the moment the container reports a new size until the reader
+   * has started a layout for it, which measures the viewport at that size, or
+   * found it has nothing to lay out. The items are laid out after that, and
+   * pagination settles once they are. Always false while `layoutAutoResize`
+   * is off.
+   */
+  isContainerResizePending$: Observable<boolean>
   coordinates: ReturnType<typeof createCoordinatesApi>
 }
 
@@ -227,29 +239,46 @@ export const layoutEnhancer =
     // })
 
     /**
-     * Lays out once the container has held a new size for a moment. The
-     * observer lives as long as `layoutAutoResize` is on, not as long as the
-     * settings object: a new observer reports the size it starts with, which
-     * would lay out again at the same size. A report that leaves the viewport
-     * at the size it was laid out at is dropped for the same reason.
+     * Whether the container has reported a size the reader has not handled
+     * yet. A report waits until the container has held its size for a moment,
+     * then either starts a layout or, when the viewport is still the size it
+     * was laid out at, is dropped. Laying out and this state come from the
+     * one observer, so neither can run ahead of the other.
+     *
+     * The observer lives as long as `layoutAutoResize` is on, not as long as
+     * the settings object: a new observer reports the size it starts with,
+     * which would lay out again at the same size.
      */
-    const layoutOnContainerResize$ = settingsManager
+    const isContainerResizePending$ = settingsManager
       .watch("layoutAutoResize")
       .pipe(
         switchMap((layoutAutoResize) =>
           layoutAutoResize === "container"
             ? reader.context.watch(`rootElement`).pipe(
                 filter(isDefined),
-                switchMap((element) =>
-                  observeResize(element).pipe(debounceTime(100)),
-                ),
+                switchMap((element) => {
+                  const reported$ = observeResize(element).pipe(share())
+                  const handled$ = reported$.pipe(
+                    debounceTime(100),
+                    tap(() => {
+                      if (reader.viewport.hasResizedSinceLayout()) {
+                        reader.layout()
+                      }
+                    }),
+                  )
+
+                  return merge(
+                    reported$.pipe(map(() => true)),
+                    handled$.pipe(map(() => false)),
+                  )
+                }),
+                startWith(false),
               )
-            : EMPTY,
+            : of(false),
         ),
-        filter(() => reader.viewport.hasResizedSinceLayout()),
-        tap(() => {
-          reader.layout()
-        }),
+        distinctUntilChanged(),
+        takeUntil(reader.$.destroy$),
+        shareReplay({ bufferSize: 1, refCount: true }),
       )
 
     const movingSafePan$ = createMovingSafePan$(reader)
@@ -278,7 +307,7 @@ export const layoutEnhancer =
     merge(
       revealItemOnReady$,
       movingSafePan$,
-      layoutOnContainerResize$,
+      isContainerResizePending$,
       layoutInfo$,
       flagSpineItems$,
       updateSpreadMode$,
@@ -296,6 +325,7 @@ export const layoutEnhancer =
       settings: settingsManager,
       layout$: reader.spine.layout$,
       layoutInfo$,
+      isContainerResizePending$,
       coordinates: createCoordinatesApi(reader),
     } as unknown as Output
   }

@@ -49,6 +49,7 @@
 * [Introduction](core-api/introduction.md)
 * [reader](core-api/reader/README.md)
   * [links$](core-api/reader/linksusd.md)
+  * [isContainerResizePending$](core-api/reader/iscontainerresizependingusd.md)
   * [locateResource()](core-api/reader/locateresource.md)
   * [renderHeadless()](core-api/reader/renderheadless.md)
 * [.viewport](core-api/.viewport.md)

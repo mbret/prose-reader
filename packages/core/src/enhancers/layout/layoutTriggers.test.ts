@@ -87,6 +87,39 @@ describe("Given a mounted reader", () => {
     expect(layouts()).toBe(0)
   })
 
+  it("reports a resize as pending until it is handled, whether or not it lays out", async () => {
+    const reader = await mountedAndSettled()
+    const layouts = countLayouts(reader)
+    const pending: boolean[] = []
+
+    reader.isContainerResizePending$.subscribe((value) => pending.push(value))
+
+    vi.useFakeTimers()
+    notifyResize()
+    vi.advanceTimersByTime(RESIZE_DEBOUNCE * 2)
+
+    setTestViewport({ width: 120, height: 200 })
+    notifyResize()
+
+    expect(layouts()).toBe(0)
+
+    vi.advanceTimersByTime(RESIZE_DEBOUNCE * 2)
+
+    expect(layouts()).toBe(1)
+    expect(pending).toEqual([false, true, false, true, false])
+  })
+
+  it("is not pending once layoutAutoResize is turned off during a resize", async () => {
+    const reader = await mountedAndSettled()
+    const pending: boolean[] = []
+
+    reader.isContainerResizePending$.subscribe((value) => pending.push(value))
+    notifyResize()
+    reader.settings.update({ layoutAutoResize: false })
+
+    expect(pending).toEqual([false, true, false])
+  })
+
   it("lays out once the container has settled on a new size", async () => {
     const reader = await mountedAndSettled()
     const layouts = countLayouts(reader)
