@@ -31,6 +31,14 @@ The reader runs inside a WebView whose page is built from the vite app in `web/`
 
 You can start developing by editing the files inside the **app** directory. This project uses [file-based routing](https://docs.expo.dev/router/introduction).
 
+## Native projects
+
+`ios/` and `android/` are [`expo prebuild`](https://docs.expo.dev/workflow/continuous-native-generation/) output, generated from `app.json` and the installed packages. `npm run ios` and `npm run android` build them as they are and never regenerate them, so after changing `app.json` or upgrading the Expo SDK, regenerate both and commit the result:
+
+```bash
+npx expo prebuild --clean
+```
+
 ## Learn more
 
 To learn more about developing your project with Expo, look at the following resources:
