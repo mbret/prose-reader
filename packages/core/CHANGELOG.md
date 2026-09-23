@@ -3,6 +3,22 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## [6.0.0](https://github.com/mbret/prose-reader/compare/v5.0.0...v6.0.0) (2026-09-23)
+
+
+### ⚠ BREAKING CHANGES
+
+* **pagination:** `EnhancerPaginationInto` is renamed `EnhancerPaginationInfo`.
+`ChapterInfo` is now recursive: the toc has no depth limit, and the builder
+already produced chains deeper than the four hand-unrolled levels the type
+described, through casts.
+
+### Documentation
+
+* **pagination:** document the pagination surface that exists ([#391](https://github.com/mbret/prose-reader/issues/391)) ([46a0e14](https://github.com/mbret/prose-reader/commit/46a0e14adc646ab7e813d0a7550383bd8cd19e89)), closes [#390](https://github.com/mbret/prose-reader/issues/390)
+
+
+
 ## [5.0.0](https://github.com/mbret/prose-reader/compare/v4.0.2...v5.0.0) (2026-09-23)
 
 **Note:** Version bump only for package @prose-reader/core
