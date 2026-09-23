@@ -44,5 +44,5 @@ runners. An image compares only against the same browser build on the same
 platform, which is why the suite installs its own browsers rather than using
 whatever a machine has. No CI job rewrites them. To change a baseline, run the
 spec with `--update-snapshots` on macOS with the pinned browsers and commit the
-result, or take the `-actual` image from the `playwright-report` artifact CI
-uploads when a comparison fails.
+result, or take the `-actual` image from the `playwright-report-<shard>`
+artifact CI uploads from the shard where a comparison failed.

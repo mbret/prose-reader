@@ -186,27 +186,9 @@ export const isPossibleTocItemCandidateForHref = (
 
 export const buildChapterInfoFromChain = (
   chain: TocPathEntry[],
-): ChapterInfo | undefined => {
-  const [head, ...tail] = chain
-  if (!head) return undefined
-
-  const chapterInfo: ChapterInfo = {
-    title: head.title,
-    path: head.path,
-  }
-
-  let cursor = chapterInfo as ChapterInfo
-
-  for (const item of tail) {
-    const subChapter = {
-      title: item.title,
-      path: item.path,
-    }
-
-    ;(cursor as ChapterInfo).subChapter =
-      subChapter as ChapterInfo["subChapter"]
-    cursor = subChapter as ChapterInfo
-  }
-
-  return chapterInfo
-}
+): ChapterInfo | undefined =>
+  chain.reduceRight<ChapterInfo | undefined>(
+    (subChapter, { title, path }) =>
+      subChapter ? { title, path, subChapter } : { title, path },
+    undefined,
+  )

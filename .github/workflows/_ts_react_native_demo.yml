@@ -5,28 +5,17 @@ on:
 
 jobs:
   ts_react_native_demo:
-    runs-on: macos-latest
+    # ubuntu: Metro bundles for iOS and Android alike without Xcode or an
+    # Android SDK, so nothing here needs macOS
+    runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v6
-      - uses: pnpm/action-setup@v6
-      - uses: actions/setup-node@v6
-        with:
-          node-version: 25
-          cache: 'pnpm'
-
-      - uses: actions/cache@v5
-        id: nx-cache
-        with:
-          path: |
-            .nx
-          key: ${{ runner.os }}-nx-${{ hashFiles('pnpm-lock.yaml') }}
 
       # The demo consumes @prose-reader/* through file: links that resolve to
       # each package's dist/, which is gitignored — build the libs first.
-      - name: Build libs
-        run: |
-          pnpm install --frozen-lockfile
-          pnpm exec lerna run build --stream --scope @prose-reader/*
+      - uses: ./.github/actions/setup
+        with:
+          build: libs
 
       # The demo is not a workspace member: it installs with npm from its own
       # lockfile, the way an app consuming the libraries would. setup-node caches

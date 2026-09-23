@@ -26,7 +26,6 @@ export type ExtraPaginationInfo = {
    */
   numberOfTotalPages: number | undefined
   isUsingSpread: boolean
-  // numberOfSpineItems: number | undefined
 }
 
 /**

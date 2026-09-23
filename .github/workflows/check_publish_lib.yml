@@ -6,28 +6,6 @@ on:
       - "master"
 
 jobs:
-  build:
-    runs-on: macos-latest
-    steps:
-      - uses: actions/checkout@v6
-      - uses: pnpm/action-setup@v6
-      - uses: actions/setup-node@v6
-        with:
-          node-version: 25
-          cache: 'pnpm'
-  
-      - uses: actions/cache@v5
-        id: nx-cache
-        with:
-          path: |
-            .nx
-          key: ${{ runner.os }}-nx-${{ hashFiles('pnpm-lock.yaml') }}
-
-      - name: Prepare
-        run: |
-          pnpm install --frozen-lockfile
-          pnpm exec lerna run build --stream --scope @prose-reader/*
-
   lint:
     uses: ./.github/workflows/_lint.yml
 
@@ -44,8 +22,8 @@ jobs:
     uses: ./.github/workflows/_docker.yml
 
   publish:
-    needs: [lint, ts, ts_react_native_demo, tests, docker, build]
-    runs-on: macos-latest
+    needs: [lint, ts, ts_react_native_demo, tests, docker]
+    runs-on: ubuntu-latest
 
     steps:
       - uses: actions/checkout@v6
@@ -54,24 +32,10 @@ jobs:
           # real history and tags, not the default shallow clone.
           fetch-depth: 0
 
-      - uses: pnpm/action-setup@v6
-      - uses: actions/setup-node@v6
+      - uses: ./.github/actions/setup
         with:
-          node-version: 25
-          cache: 'pnpm'
+          build: libs
           registry-url: "https://registry.npmjs.org"
-
-      - uses: actions/cache@v5
-        id: nx-cache
-        with:
-          path: |
-            .nx
-          key: ${{ runner.os }}-nx-${{ hashFiles('pnpm-lock.yaml') }}
-
-      - name: Prepare
-        run: |
-          pnpm install --frozen-lockfile
-          pnpm exec lerna run build --stream --scope @prose-reader/*
 
       # The bump comes from the commit messages rather than being hardcoded, so
       # a breaking change cannot ship as a minor. Every merge still publishes:
