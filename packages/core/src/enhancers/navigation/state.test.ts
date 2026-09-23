@@ -16,13 +16,15 @@ import {
 import { Viewport } from "../../viewport/Viewport"
 import { observeState } from "./state"
 
+type TestBook = {
+  readingDirection: Manifest["readingDirection"]
+  pageTurnDirection?: CoreInputSettings["pageTurnDirection"]
+}
+
 const createTestReader = ({
   readingDirection,
   pageTurnDirection,
-}: {
-  readingDirection: Manifest["readingDirection"]
-  pageTurnDirection?: CoreInputSettings["pageTurnDirection"]
-}) => {
+}: TestBook) => {
   const context = new Context(
     createTestManifest({
       readingDirection,
@@ -53,10 +55,7 @@ const createTestReader = ({
   return { reader, pagination }
 }
 
-const stateWhileShowing = (
-  book: Parameters<typeof createTestReader>[0],
-  spineItemIndex: number,
-) => {
+const stateWhileShowing = (book: TestBook, spineItemIndex: number) => {
   const { reader, pagination } = createTestReader(book)
 
   pagination.update({
@@ -70,7 +69,7 @@ const stateWhileShowing = (
 
 describe("observeState", () => {
   describe("Given a horizontal ltr book", () => {
-    const book = { readingDirection: "ltr" } as const
+    const book: TestBook = { readingDirection: "ltr" }
 
     it("can go both ways from a middle spine item", async () => {
       expect(await stateWhileShowing(book, 1)).toEqual({
@@ -97,7 +96,7 @@ describe("observeState", () => {
   })
 
   describe("Given a horizontal rtl book", () => {
-    const book = { readingDirection: "rtl" } as const
+    const book: TestBook = { readingDirection: "rtl" }
 
     it("goes left to the next spine item, so cannot go right from the first", async () => {
       expect(await stateWhileShowing(book, 0)).toMatchObject({
@@ -119,7 +118,7 @@ describe("observeState", () => {
    * has to as well, or it disables navigations that would work.
    */
   describe("Given a manifest without a reading direction", () => {
-    const book = { readingDirection: undefined }
+    const book: TestBook = { readingDirection: undefined }
 
     it("agrees with the navigators and reads it as ltr", async () => {
       expect(await stateWhileShowing(book, 0)).toMatchObject({
@@ -130,10 +129,10 @@ describe("observeState", () => {
   })
 
   describe("Given a vertical book", () => {
-    const book = {
+    const book: TestBook = {
       readingDirection: "ltr",
       pageTurnDirection: "vertical",
-    } as const
+    }
 
     it("only moves top and bottom", async () => {
       expect(await stateWhileShowing(book, 0)).toEqual({
