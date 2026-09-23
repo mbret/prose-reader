@@ -16,7 +16,8 @@
       "{workspaceRoot}/config/**/*",
       "{workspaceRoot}/tsconfig.web.json",
       "{workspaceRoot}/tsconfig.node.json",
-      "{workspaceRoot}/pnpm-lock.yaml"
+      "{workspaceRoot}/pnpm-lock.yaml",
+      { "runtime": "node -v" }
     ],
     "production": ["default"]
   }
