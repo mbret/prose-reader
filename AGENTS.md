@@ -245,6 +245,31 @@ what matters happens between stable states and some of it only in a browser, so
 the suite is never finished. Keeping it honest is a standing part of every
 change, not a task that was done once.
 
+## Nothing in the library exists only for a test
+
+Everything in the source is API. A test may use whatever the library exposes,
+but it does not get to add to it: an export, a method, a stream, an option or a
+flag that exists so a spec can observe something does not belong in the source.
+
+When a test needs something the library does not expose:
+
+- **Check the layer.** A timing or ordering property of our own code, such as
+  whether a debounced report ends in a layout, can usually be proved in the
+  unit layer, where the test holds the boundary and the clock. It needs no
+  signal from a browser.
+- **Build it in the test helpers** from what the library already exposes.
+- **Add it to the library only if it makes sense there on its own terms.** It
+  has to be shaped and named like the surface around it, and be something a
+  consumer could reasonably use. It does not need a consumer today; it needs to
+  fit.
+- **Otherwise stop and raise it with the maintainer** before adding anything.
+  This is not a decision to make alone.
+
+`isContainerResizePending$` was added once so a browser spec could prove that a
+layout did not happen. Nothing else used it, it was awkward to use correctly,
+and the unit tests already proved what it was for. It was dropped before it was
+released.
+
 # Documentation
 
 The `gitbook/` folder is user-facing documentation that must stay in sync with the code. After any change that alters the public surface or its documented behavior, check whether the docs need updating in the same change — do not defer it.
