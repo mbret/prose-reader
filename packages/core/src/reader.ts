@@ -159,8 +159,16 @@ export const createReader = ({
     layout({ immediate: true })
   }
 
-  const layoutOnSpreadModeChange$ = settingsManager
-    .watch([`computedSpreadMode`])
+  /**
+   * The settings that change where the items go or how they are sized. One
+   * update that changes several of them lays out once.
+   */
+  const layoutOnSettingsChange$ = settingsManager
+    .watch([
+      `computedSpreadMode`,
+      `computedPageTurnDirection`,
+      `computedPageTurnMode`,
+    ])
     .pipe(
       skip(1),
       tap(() => layout()),
@@ -176,7 +184,7 @@ export const createReader = ({
     takeUntil(destroy$),
   )
 
-  const subs = merge(layout$, layoutOnSpreadModeChange$).subscribe()
+  const subs = merge(layout$, layoutOnSettingsChange$).subscribe()
 
   /**
    * Free up resources, and dispose the whole reader.
