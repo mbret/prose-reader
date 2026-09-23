@@ -11,6 +11,7 @@ import { parseXPointer } from "./parse"
 import { resolveXPointer } from "./resolve"
 import { rangeText } from "./tests/dom"
 import {
+  FIXTURES,
   type FixtureBook,
   isKnownDeviation,
   normalizeText,
@@ -20,21 +21,6 @@ import {
   WHOLE_BOOK_TIMEOUT,
 } from "./tests/epub"
 import type { DomPosition } from "./types"
-
-/**
- * Every fixture EPUB and the pointers KOReader's crengine produced for it,
- * captured with tools/xpointer-oracle.lua from a KOReader v2026.07 Linux
- * build (crengine DOM 20240114, data/epub.css, "web" block rendering).
- */
-const FIXTURES = [
-  "synthetic",
-  "accessible-epub-3",
-  "alice-pg11",
-  "frankenstein-pg84",
-  "cc-shared-culture",
-  "haruko",
-  "mathematics",
-]
 
 const books = new Map<string, FixtureBook>()
 const oracles = new Map<string, Oracle>()
