@@ -1,5 +1,6 @@
 import { useReaderState } from "@prose-reader/react-native"
-import { SafeAreaView, StyleSheet, Text } from "react-native"
+import { StyleSheet, Text } from "react-native"
+import { SafeAreaView } from "react-native-safe-area-context"
 
 export const TopMenu = () => {
   const manifest = useReaderState((state) => state.context?.manifest)
