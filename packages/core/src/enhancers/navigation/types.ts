@@ -19,6 +19,7 @@ export type NavigationEnhancerOutput = {
     turnRightOrBottom: ManualNavigator["turnRightOrBottom"]
     turnLeft: ManualNavigator["turnLeft"]
     turnRight: ManualNavigator["turnRight"]
+    goTo: ManualNavigator["goTo"]
     goToCfi: ManualNavigator["goToCfi"]
     goToSpineItem: ManualNavigator["goToSpineItem"]
     goToLeftSpineItem: ManualNavigator["goToLeftSpineItem"]

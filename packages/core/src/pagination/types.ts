@@ -1,20 +1,30 @@
 /**
+ * Every representation of one position, keyed by the name of the position
+ * format that produced it. The cfi is the canonical anchor, so it is always a
+ * key; any other registered format appears only when it produced a value.
+ */
+export type Positions = {
+  cfi: string | undefined
+  [format: string]: string | undefined
+}
+
+/**
  * One edge of the visible range. The two edges are the same thing, so they
  * are the same type rather than two sets of `begin`/`end` prefixed fields.
  */
 export type PaginationEdge = {
-  cfi: string | undefined
+  positions: Positions
   spineItemIndex: number | undefined
   pageIndexInSpineItem: number | undefined
   numberOfPagesInSpineItem: number
 }
 
 /**
- * An edge whose cfi describes the page actually visible, rather than standing
- * in with the start of its item.
+ * An edge whose positions describe the page actually visible, rather than
+ * standing in with the start of its item.
  */
 export type SettledPaginationEdge<TEdge extends PaginationEdge> = TEdge & {
-  cfi: string
+  positions: Positions & { cfi: string }
 }
 
 /**

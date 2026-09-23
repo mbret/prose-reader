@@ -40,7 +40,7 @@ export const consolidateWithPagination = (
     map(
       ([pagination, navigation]): InternalNavigationEntry => ({
         ...navigation,
-        paginationBeginCfi: pagination.begin.cfi,
+        paginationBeginCfi: pagination.begin.positions.cfi,
         meta: { triggeredBy: "pagination" },
       }),
     ),

@@ -23,6 +23,14 @@ export const mapUserNavigationToInternal =
   }> => {
     return stream.pipe(
       map(([userNavigation, previousNavigation]) => {
+        const { cfi, url, ...entry } = userNavigation
+        const target =
+          entry.target ??
+          (cfi !== undefined
+            ? { format: "cfi", value: cfi }
+            : url !== undefined
+              ? { format: "url", value: String(url) }
+              : undefined)
         const requestedPosition = userNavigation.position
         const visibleArea = requestedPosition
           ? getNavigationVisibleArea()
@@ -46,7 +54,8 @@ export const mapUserNavigationToInternal =
           // existing id to stay deduplicated.
           id: Symbol("user"),
           animation: "turn",
-          ...userNavigation,
+          ...entry,
+          target,
           requestedPosition,
           requestedVisibleArea: visibleArea,
           // Clamp the full viewport rectangle, not just the top-left point:

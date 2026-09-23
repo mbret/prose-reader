@@ -1,3 +1,4 @@
+import type { PositionTarget } from "@prose-reader/shared/positions"
 import type { UserNavigationEntry } from "../../../navigation/types"
 import type { Reader } from "../../../reader"
 import { SpinePosition } from "../../../spine/types"
@@ -65,11 +66,15 @@ export class ManualNavigator {
     return this.turnWith(getNavigationForLeftOrTopPage)
   }
 
-  goToCfi(cfi: string, options: { animate: boolean } = { animate: true }) {
+  goTo(target: PositionTarget, options: { animate?: boolean } = {}) {
     return this.reader.navigation.navigate({
-      animation: options.animate ? "turn" : false,
-      cfi,
+      target,
+      animation: options.animate === false ? false : "turn",
     })
+  }
+
+  goToCfi(cfi: string, options: { animate?: boolean } = {}) {
+    return this.goTo({ format: "cfi", value: cfi }, options)
   }
 
   goToSpineItem({
@@ -117,10 +122,7 @@ export class ManualNavigator {
   }
 
   goToUrl(url: string | URL) {
-    this.reader.navigation.navigate({
-      url,
-      animation: false,
-    })
+    return this.goTo({ format: "url", value: String(url) }, { animate: false })
   }
 
   goToRightSpineItem() {

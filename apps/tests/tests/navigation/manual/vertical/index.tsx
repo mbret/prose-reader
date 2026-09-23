@@ -31,7 +31,7 @@ async function run() {
 
   const reader = createReader({
     manifest,
-    cfi,
+    position: cfi ? { format: "cfi", value: cfi } : undefined,
     pageTurnAnimation: "none",
     pageTurnDirection: "vertical",
     layoutLayerTransition: false,

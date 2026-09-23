@@ -1,4 +1,4 @@
-import { map, type Observable, switchMap } from "rxjs"
+import { map, type Observable, of, switchMap } from "rxjs"
 import type { CfiManager } from "../../cfi"
 import type { Context } from "../../context/Context"
 import type { ReaderSettingsManager } from "../../settings/ReaderSettingsManager"
@@ -28,9 +28,19 @@ export const withRestoredPosition =
   <N extends Navigation>(stream: Observable<N>): Observable<N> =>
     stream.pipe(
       switchMap((params) => {
+        const conversion = params.navigation.target
+          ? navigationResolver.getNavigationForTarget(params.navigation.target)
+          : undefined
+        const navigation = conversion
+          ? { ...params.navigation, ...conversion }
+          : params.navigation
+        // A newly resolved target must land on its node before geometric restoration resumes.
+        if (conversion && !conversion.target) {
+          return of({ ...params, navigation })
+        }
         return restorePosition({
           spineLocator: spine.locator,
-          navigation: params.navigation,
+          navigation,
           navigationResolver,
           settings,
           spineItemsManager: spine.spineItemsManager,
@@ -42,7 +52,7 @@ export const withRestoredPosition =
           map((restoredPosition) => ({
             ...params,
             navigation: {
-              ...params.navigation,
+              ...navigation,
               position: restoredPosition,
             },
           })),

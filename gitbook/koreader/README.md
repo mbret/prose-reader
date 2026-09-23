@@ -11,32 +11,28 @@ npm install @prose-reader/koreader
 ## Usage
 
 ```typescript
-import { cfiToXPointer, xPointerToCfi } from "@prose-reader/koreader"
+import { createReader } from "@prose-reader/core"
+import { koreaderPositionFormat } from "@prose-reader/koreader"
 
-// The pointer names its own spine item (DocFragment[N] is spine item N - 1):
-// hand out that item's document, parsed as XHTML the way prose renders it.
-const getSpineItem = (spineItemIndex: number) => {
-  const item = reader.spineItemsManager.get(spineItemIndex)
-  const frame = item?.renderer.getDocumentFrame()
-  const document = frame instanceof HTMLIFrameElement ? frame.contentDocument : undefined
+const reader = createReader({
+  manifest,
+  position: { format: "koreader", value: savedXPointer },
+})
+reader.positions.register(koreaderPositionFormat)
+reader.pagination.state$.subscribe((state) => {
+  if (!state.isSettled) return
 
-  return document ? { document, id: item?.item.id } : undefined
-}
+  const { positions } = state.begin
+  savePositions({ cfi: positions.cfi, xpointer: positions["koreader"] })
+})
+reader.mount(container)
 
-// A position pulled from a kosync server, into a prose CFI
-const cfi = xPointerToCfi("/body/DocFragment[14]/body/div/p[3]/text().42", getSpineItem)
-// => "epubcfi(/6/28[chap05]!/4/2/6/1:42)"
-
-// prose's current position, into what the server and e-readers expect. Only a
-// settled pagination has the cfi of the page actually being read.
-const pagination = reader.pagination.state
-const xpointer = pagination.isSettled
-  ? cfiToXPointer(pagination.begin.cfi, getSpineItem)
-  : undefined
-// => "/body/DocFragment[14]/body/div/p[3]/text().42"
+reader.navigation.goTo({ format: "koreader", value: remoteXPointer })
 ```
 
-`getSpineItem` receives the index the pointer or CFI names and must answer with that item's document; passing whichever document is on screen is how other readers ended up a chapter away from the real position. The `id` is the `<itemref>` idref and becomes the CFI's id assertion, so the CFIs match the ones prose generates itself.
+Core loads the correct item, converts the target to its canonical CFI, and restores it through relayout. Pagination generates both representations from the same page-start node. Register the format before mounting and save only settled snapshots. See [Position formats](../core-api/position-formats.md) for the adapter contract.
+
+For consumers outside prose, `xPointerToCfi(pointer, getSpineItem)` and `cfiToXPointer(cfi, getSpineItem)` remain available. The lookup receives the zero-based spine index and returns `{ document, id? }` for that item, or `undefined`. The `id` is the item's manifest id and becomes its CFI assertion.
 
 The lower layer is available when the CFI is not what you need:
 
@@ -66,6 +62,7 @@ serializeXPointer(parsed) === "/body/DocFragment[14]/body/div/p[3]/text().42"
 
 | Function | What it does |
 | --- | --- |
+| `koreaderPositionFormat` | Register with `reader.positions.register` to navigate and report KOReader positions automatically. |
 | `parseXPointer(input)` | `ParsedXPointer` or `undefined`. Accepts every shape crengine has written (see below) and the bare `/body/DocFragment[N]` third parties write for the start of an item. |
 | `serializeXPointer(parsed)` | The string back, in the classic shape: the prefix normalised to `/body/DocFragment[N]/body`, the steps with the indexes the structure carries. |
 | `resolveXPointer(pointer, document)` | The `DomPosition` a pointer names in a spine item document, or `undefined` when crengine would fail too. |

@@ -53,9 +53,10 @@ export const useCreateReader = (
 
     const query = new URLSearchParams(window.location.search)
 
+    const savedCfi = localStorage.getItem(`cfi`)
     const readerOptions: Parameters<typeof createAppReader>[0] = {
       manifest,
-      cfi: localStorage.getItem(`cfi`) || undefined,
+      position: savedCfi ? { format: "cfi", value: savedCfi } : undefined,
       pageTurnAnimation: `slide`,
       pageTurnDirection: query.has("vertical") ? `vertical` : `horizontal`,
       pageTurnMode: query.has("free") ? `scrollable` : `controlled`,

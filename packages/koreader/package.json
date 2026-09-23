@@ -28,7 +28,8 @@
     "tsc": "tsc"
   },
   "dependencies": {
-    "@prose-reader/cfi": "workspace:^"
+    "@prose-reader/cfi": "workspace:^",
+    "@prose-reader/shared": "workspace:^"
   },
   "devDependencies": {
     "jsdom": "^29.0.0",

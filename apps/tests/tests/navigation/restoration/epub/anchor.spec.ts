@@ -35,8 +35,8 @@ const readPosition = async (page: Page) => {
       const navigation = reader.navigation.getNavigation()
 
       return {
-        cfi: begin.cfi,
-        isRootCfi: reader.cfi.isRootCfi(begin.cfi),
+        cfi: begin.positions.cfi,
+        isRootCfi: reader.cfi.isRootCfi(begin.positions.cfi),
         pageIndex: begin.pageIndexInSpineItem,
         spineItemIndex: begin.spineItemIndex,
         navigationCfi: navigation.cfi,

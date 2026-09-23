@@ -36,7 +36,7 @@ const readVisibleRange = async (page: Page) => {
           isReady(pagination.begin.spineItemIndex),
           isReady(pagination.end.spineItemIndex),
         ],
-        beginCfi: pagination.begin.cfi,
+        beginCfi: pagination.begin.positions.cfi,
         anchor: reader.navigation.getNavigation().paginationBeginCfi,
       }
     },

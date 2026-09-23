@@ -34,7 +34,7 @@ describe("pagination settlement", () => {
      * root cfi; what settlement rules out is a root cfi standing in for content
      * that has not loaded.
      */
-    expect(reader.cfi.parseCfi(state.begin.cfi).itemIndex).toBe(0)
+    expect(reader.cfi.parseCfi(state.begin.positions.cfi).itemIndex).toBe(0)
   })
 
   it("never settles while the visible content is not ready", async () => {
@@ -229,7 +229,7 @@ describe("pagination settlement", () => {
       0, 1,
     ])
     expect(reader.navigation.getNavigation().paginationBeginCfi).toBe(
-      state.begin.cfi,
+      state.begin.positions.cfi,
     )
     expect(settledWithSecondItemNotReady).toEqual([])
   })

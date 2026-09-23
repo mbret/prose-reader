@@ -28,6 +28,24 @@ describe("isSamePaginationResult", () => {
     ).toBe(false)
   })
 
+  it("tells two results apart on one of an edge's positions", () => {
+    const withPositions = (koreader: string) => ({
+      ...buildResult(),
+      begin: {
+        ...createEmptyPaginationEdge(),
+        spineItemIndex: 0,
+        positions: { cfi: "epubcfi(/6/2!/4/2)", koreader },
+      },
+    })
+
+    expect(isSamePaginationResult(withPositions("a"), withPositions("a"))).toBe(
+      true,
+    )
+    expect(isSamePaginationResult(withPositions("a"), withPositions("b"))).toBe(
+      false,
+    )
+  })
+
   it("tells two results apart on what they carry besides their edges", () => {
     expect(
       isSamePaginationResult(buildResult(), {

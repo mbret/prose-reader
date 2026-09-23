@@ -47,8 +47,8 @@ export const navigationEnhancer =
       reader.mount(containerElement)
 
       // restore the initial position once the reader is mounted
-      if (options.cfi) {
-        manualNavigator.goToCfi(options.cfi, { animate: false })
+      if (options.position) {
+        manualNavigator.goTo(options.position, { animate: false })
       }
     }
 
@@ -75,6 +75,7 @@ export const navigationEnhancer =
           manualNavigator.turnRightOrBottom.bind(manualNavigator),
         turnLeft: manualNavigator.turnLeft.bind(manualNavigator),
         turnRight: manualNavigator.turnRight.bind(manualNavigator),
+        goTo: manualNavigator.goTo.bind(manualNavigator),
         goToCfi: manualNavigator.goToCfi.bind(manualNavigator),
         goToUrl: manualNavigator.goToUrl.bind(manualNavigator),
         goToSpineItem: manualNavigator.goToSpineItem.bind(manualNavigator),

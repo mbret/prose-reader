@@ -24,7 +24,7 @@ async function run() {
 
   const reader = createReaderWithEnhancers({
     manifest,
-    cfi,
+    position: cfi ? { format: "cfi", value: cfi } : undefined,
     pageTurnAnimation: "none",
     pageTurnMode: "scrollable",
     layoutLayerTransition: false,
