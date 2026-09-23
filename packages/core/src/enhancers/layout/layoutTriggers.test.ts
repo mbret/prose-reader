@@ -1,5 +1,5 @@
 // @vitest-environment jsdom
-import { firstValueFrom, timeout } from "rxjs"
+import { filter, firstValueFrom, timeout } from "rxjs"
 import { afterEach, describe, expect, it, vi } from "vitest"
 import {
   createTestReader,
@@ -28,8 +28,33 @@ const countLayouts = (reader: ReturnType<typeof createTestReader>) => {
   return () => layouts
 }
 
-const mountedAndSettled = async () => {
-  const reader = createTestReader()
+/** Where the second item starts, once the reader has laid out again. */
+const secondItemAfterLayout = async (
+  reader: ReturnType<typeof createTestReader>,
+) => {
+  await firstValueFrom(reader.layout$.pipe(timeout(2000)))
+
+  const { left, top } = reader.spine.getSpineItemSpineLayoutInfo(1)
+
+  return { left, top }
+}
+
+/** The first settled result that shows the first two items side by side. */
+const settledOnSpread = async (reader: ReturnType<typeof createTestReader>) => {
+  const spread = await firstValueFrom(
+    reader.pagination.state$.pipe(
+      filter((state) => state.isSettled && state.end.spineItemIndex === 1),
+      timeout(2000),
+    ),
+  )
+
+  return [spread.begin.spineItemIndex, spread.end.spineItemIndex]
+}
+
+const mountedAndSettled = async (
+  options: Parameters<typeof createTestReader>[0] = {},
+) => {
+  const reader = createTestReader(options)
 
   mountTestReader(reader)
   await settledOn(reader)
@@ -54,6 +79,18 @@ describe("Given a reader being mounted", () => {
 })
 
 describe("Given a mounted reader", () => {
+  it("lays out once for a resize that turns the spread on, and shows the spread", async () => {
+    const reader = await mountedAndSettled()
+    const layouts = countLayouts(reader)
+
+    setTestViewport({ width: 400, height: 200 })
+    reader.layout()
+
+    expect(layouts()).toBe(1)
+    expect(reader.viewport.value.isSpread).toBe(true)
+    expect(await settledOnSpread(reader)).toEqual([0, 1])
+  })
+
   it("keeps watching the container with the same observer when a setting changes", async () => {
     const reader = await mountedAndSettled()
 
@@ -116,6 +153,61 @@ describe("Given a mounted reader", () => {
   })
 })
 
+describe("Given the spreadMode setting", () => {
+  it("shows the spread from the first layout when the reader is created with always, in portrait", async () => {
+    const reader = createTestReader({ spreadMode: "always" })
+    const layouts = countLayouts(reader)
+
+    mountTestReader(reader)
+
+    const { begin, end } = await settledOn(reader)
+
+    expect(layouts()).toBe(1)
+    expect(reader.viewport.value.isSpread).toBe(true)
+    expect([begin.spineItemIndex, end.spineItemIndex]).toEqual([0, 1])
+  })
+
+  it("lays out once when it changes, and shows the spread it asks for", async () => {
+    const reader = await mountedAndSettled()
+    const layouts = countLayouts(reader)
+
+    expect(reader.viewport.value.isSpread).toBe(false)
+
+    reader.settings.update({ spreadMode: "always" })
+
+    expect(layouts()).toBe(1)
+    expect(reader.viewport.value.isSpread).toBe(true)
+    expect(await settledOnSpread(reader)).toEqual([0, 1])
+  })
+
+  it("keeps one page at a time in landscape when it is never", async () => {
+    const reader = await mountedAndSettled({ spreadMode: "never" })
+    const layouts = countLayouts(reader)
+
+    setTestViewport({ width: 400, height: 200 })
+    reader.layout()
+
+    expect(layouts()).toBe(1)
+    expect(reader.viewport.value.isSpread).toBe(false)
+    expect(await secondItemAfterLayout(reader)).toEqual({ left: 400, top: 0 })
+  })
+
+  it("reads back as it was given, whatever the viewport shows", async () => {
+    const reader = await mountedAndSettled()
+
+    setTestViewport({ width: 400, height: 200 })
+    reader.layout()
+
+    expect(reader.viewport.value.isSpread).toBe(true)
+    expect(reader.settings.values.spreadMode).toBe("auto")
+
+    reader.settings.update({ spreadMode: "never" })
+
+    expect(reader.viewport.value.isSpread).toBe(false)
+    expect(reader.settings.values.spreadMode).toBe("never")
+  })
+})
+
 describe("Given a zoomed reader", () => {
   it("still lays out for a resize the container reported before the zoom changed", async () => {
     const reader = createZoomableTestReader()
@@ -126,7 +218,7 @@ describe("Given a zoomed reader", () => {
     expect(reader.spine.getSpineItemSpineLayoutInfo(1).left).toBe(100)
 
     vi.useFakeTimers()
-    // still portrait, so no spread setting changes and lays out on its own
+    // still portrait, so the pages stay single
     setTestViewport({ width: 120, height: 200 })
     notifyResize()
     // zooming transforms the viewport while the resize waits to be handled
@@ -140,17 +232,6 @@ describe("Given a zoomed reader", () => {
 })
 
 describe("Given a setting that changes how the items are placed", () => {
-  /** Where the second item starts, once the reader has laid out again. */
-  const secondItemAfterLayout = async (
-    reader: ReturnType<typeof createTestReader>,
-  ) => {
-    await firstValueFrom(reader.layout$.pipe(timeout(2000)))
-
-    const { left, top } = reader.spine.getSpineItemSpineLayoutInfo(1)
-
-    return { left, top }
-  }
-
   it("lays out once when pageTurnDirection changes, and stacks the items", async () => {
     const reader = await mountedAndSettled()
     const layouts = countLayouts(reader)

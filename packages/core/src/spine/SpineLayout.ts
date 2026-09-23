@@ -273,7 +273,7 @@ export class SpineLayout extends DestroyableClass {
     isScreenStartItem: boolean,
     isRTL: boolean,
   ): "left" | "right" | "none" {
-    if (!this.settings.values.computedSpreadMode) return "none"
+    if (!this.viewport.value.isSpread) return "none"
 
     if (isScreenStartItem) {
       return isRTL ? "right" : "left"

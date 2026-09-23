@@ -4,7 +4,7 @@ import type { Manifest } from "@prose-reader/shared"
 import { describe, expect, it } from "vitest"
 import {
   getSpreadRotationHintTargetKey,
-  wouldRotationUseComputedSpreadMode,
+  wouldRotationUseSpreadMode,
 } from "./SpreadRotationHint"
 
 const createSpineItem = (
@@ -45,13 +45,15 @@ describe(`SpreadRotationHint`, () => {
     const manifest = createManifest([createSpineItem(`page`, 0)])
 
     expect(
-      wouldRotationUseComputedSpreadMode({
+      wouldRotationUseSpreadMode({
+        spreadMode: `auto`,
         manifest,
         viewport: { height: 800, width: 400 },
       }),
     ).toBe(true)
     expect(
-      wouldRotationUseComputedSpreadMode({
+      wouldRotationUseSpreadMode({
+        spreadMode: `auto`,
         manifest: createManifest(manifest.spineItems, {
           renditionSpread: `none`,
         }),
@@ -59,7 +61,8 @@ describe(`SpreadRotationHint`, () => {
       }),
     ).toBe(false)
     expect(
-      wouldRotationUseComputedSpreadMode({
+      wouldRotationUseSpreadMode({
+        spreadMode: `auto`,
         manifest: createManifest(manifest.spineItems, {
           renditionFlow: `scrolled-continuous`,
         }),
@@ -78,7 +81,8 @@ describe(`SpreadRotationHint`, () => {
       getSpreadRotationHintTargetKey({
         manifest,
         pagination: createPagination(0),
-        computedSpreadMode: false,
+        spreadMode: `auto`,
+        isSpread: false,
         viewportState: `free`,
         viewport: { height: 800, width: 400 },
         isPanorama: true,
@@ -89,7 +93,8 @@ describe(`SpreadRotationHint`, () => {
       getSpreadRotationHintTargetKey({
         manifest,
         pagination: createPagination(0),
-        computedSpreadMode: true,
+        spreadMode: `auto`,
+        isSpread: true,
         viewportState: `free`,
         viewport: { height: 800, width: 400 },
         isPanorama: true,
@@ -102,7 +107,8 @@ describe(`SpreadRotationHint`, () => {
           renditionSpread: `none`,
         }),
         pagination: createPagination(0),
-        computedSpreadMode: false,
+        spreadMode: `auto`,
+        isSpread: false,
         viewportState: `free`,
         viewport: { height: 800, width: 400 },
         isPanorama: true,
@@ -113,7 +119,8 @@ describe(`SpreadRotationHint`, () => {
       getSpreadRotationHintTargetKey({
         manifest,
         pagination: createPagination(0),
-        computedSpreadMode: false,
+        spreadMode: `auto`,
+        isSpread: false,
         viewportState: `free`,
         viewport: { height: 800, width: 400 },
         isPanorama: false,
@@ -124,8 +131,28 @@ describe(`SpreadRotationHint`, () => {
       getSpreadRotationHintTargetKey({
         manifest,
         pagination: createPagination(0),
-        computedSpreadMode: false,
+        spreadMode: `auto`,
+        isSpread: false,
         viewportState: `busy`,
+        viewport: { height: 800, width: 400 },
+        isPanorama: true,
+      }),
+    ).toBeUndefined()
+  })
+
+  it(`does not hint at a rotation when the spreadMode setting keeps spreads off`, () => {
+    const manifest = createManifest([
+      createSpineItem(`left`, 0),
+      createSpineItem(`right`, 1),
+    ])
+
+    expect(
+      getSpreadRotationHintTargetKey({
+        manifest,
+        pagination: createPagination(0),
+        spreadMode: `never`,
+        isSpread: false,
+        viewportState: `free`,
         viewport: { height: 800, width: 400 },
         isPanorama: true,
       }),

@@ -40,7 +40,7 @@ const createSpreadModeTestEnvironment = ({
   const context = new Context(
     createPrePaginatedManifest(readingDirection, items),
   )
-  const settings = new ReaderSettingsManager({ spreadMode: true }, context)
+  const settings = new ReaderSettingsManager({ spreadMode: "always" }, context)
   const hookManager = new HookManager()
   const viewport = new Viewport(context, settings)
   const spineItemsManager = new SpineItemsManager(

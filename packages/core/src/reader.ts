@@ -164,11 +164,7 @@ export const createReader = ({
    * update that changes several of them lays out once.
    */
   const layoutOnSettingsChange$ = settingsManager
-    .watch([
-      `computedSpreadMode`,
-      `computedPageTurnDirection`,
-      `computedPageTurnMode`,
-    ])
+    .watch([`spreadMode`, `computedPageTurnDirection`, `computedPageTurnMode`])
     .pipe(
       skip(1),
       tap(() => layout()),

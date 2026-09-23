@@ -1,5 +1,8 @@
 import { Box, Presence } from "@chakra-ui/react"
-import { shouldUseComputedSpreadModeForViewport } from "@prose-reader/core"
+import {
+  type CoreInputSettings,
+  shouldUseSpreadModeForViewport,
+} from "@prose-reader/core"
 import { isShallowEqual, type Manifest } from "@prose-reader/shared"
 import { memo } from "react"
 import { MdScreenRotation } from "react-icons/md"
@@ -49,16 +52,19 @@ type HintPagination = {
 
 type ReaderWithSpreadHintStreams = NonNullable<ReturnType<typeof useReader>>
 
-export const wouldRotationUseComputedSpreadMode = ({
+export const wouldRotationUseSpreadMode = ({
   manifest,
+  spreadMode,
   viewport,
 }: {
   manifest: Manifest
+  spreadMode: CoreInputSettings["spreadMode"]
   viewport: ViewportDimensions
 }) => {
   if (viewport.width === viewport.height) return false
 
-  return shouldUseComputedSpreadModeForViewport({
+  return shouldUseSpreadModeForViewport({
+    spreadMode,
     manifest,
     viewport: {
       height: viewport.width,
@@ -70,21 +76,25 @@ export const wouldRotationUseComputedSpreadMode = ({
 export const getSpreadRotationHintTargetKey = ({
   manifest,
   pagination,
-  computedSpreadMode,
+  spreadMode,
+  isSpread,
   viewportState,
   viewport,
   isPanorama,
 }: {
   manifest: Manifest
   pagination: HintPagination
-  computedSpreadMode: boolean
+  /** The `spreadMode` setting. */
+  spreadMode: CoreInputSettings["spreadMode"]
+  /** Whether the viewport shows a spread now. */
+  isSpread: boolean
   viewportState: ViewportState
   viewport: ViewportDimensions
   isPanorama: boolean
 }) => {
   if (viewportState !== `free`) return undefined
-  if (computedSpreadMode) return undefined
-  if (!wouldRotationUseComputedSpreadMode({ manifest, viewport })) {
+  if (isSpread) return undefined
+  if (!wouldRotationUseSpreadMode({ manifest, spreadMode, viewport })) {
     return undefined
   }
 
@@ -151,18 +161,18 @@ const observeSpreadRotationHintTargetKey = (
 
   return combineLatest([
     pagination$,
-    reader.settings.watch([`computedSpreadMode`]),
     reader.viewportState$,
-    reader.viewport.watch([`width`, `height`]),
+    reader.viewport.watch([`width`, `height`, `isSpread`]),
+    reader.settings.watch([`spreadMode`]),
     beginSpineItem$,
   ]).pipe(
     debounceTime(HINT_TARGET_DEBOUNCE_MS),
     map(
       ([
         pagination,
-        settings,
         viewportState,
-        viewport,
+        { isSpread, ...viewport },
+        { spreadMode },
         { spineItem, isReady },
       ]) => {
         const manifest = reader.context.manifest
@@ -175,7 +185,8 @@ const observeSpreadRotationHintTargetKey = (
         return getSpreadRotationHintTargetKey({
           manifest,
           pagination,
-          computedSpreadMode: settings.computedSpreadMode ?? false,
+          spreadMode,
+          isSpread,
           viewportState,
           viewport,
           isPanorama,

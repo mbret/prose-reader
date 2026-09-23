@@ -1,4 +1,4 @@
-import { Subject, takeUntil, tap } from "rxjs"
+import { Subject } from "rxjs"
 import {
   CSS_VAR_ABSOLUTE_VIEWPORT_HEIGHT,
   CSS_VAR_ABSOLUTE_VIEWPORT_WIDTH,
@@ -11,10 +11,18 @@ import {
   setStylePropertyIfChanged,
 } from "../utils/dom"
 import { ReactiveEntity } from "../utils/ReactiveEntity"
+import { shouldUseSpreadModeForViewport } from "./spreadMode"
 import { AbsoluteViewport, RelativeViewport } from "./types"
 
 type State = {
   element: HTMLElement
+  /**
+   * Whether two pages share the viewport: the `spreadMode` setting, resolved
+   * against the viewport's size and the book. It is decided in the same
+   * measurement as the size and never changes outside of a layout, so it is
+   * what the reader shows.
+   */
+  isSpread: boolean
   /**
    * Anything that can change the page size should trigger a layout and thus
    * force a recalculation of the page size.
@@ -49,6 +57,7 @@ export class Viewport extends ReactiveEntity<State> {
 
     super({
       element,
+      isSpread: false,
       pageSize: {
         width: 1,
         height: 1,
@@ -56,29 +65,6 @@ export class Viewport extends ReactiveEntity<State> {
       width: 1,
       height: 1,
     })
-
-    const updatePageSize$ = this.settingsManager
-      .watch(["computedSpreadMode"])
-      .pipe(
-        tap(() => {
-          this.mergeCompare({
-            pageSize: this.calculatePageSize(this.value),
-          })
-        }),
-      )
-
-    updatePageSize$.pipe(takeUntil(this.destroy$)).subscribe()
-  }
-
-  protected calculatePageSize(layout: { width: number; height: number }) {
-    const { computedSpreadMode } = this.settingsManager.values
-
-    const pageSize = {
-      width: computedSpreadMode ? layout.width / 2 : layout.width,
-      height: layout.height,
-    }
-
-    return pageSize
   }
 
   private measure() {
@@ -127,20 +113,30 @@ export class Viewport extends ReactiveEntity<State> {
   }
 
   /**
-   * Measures the viewport for a reader layout. The spine's layout pass calls
-   * this first, since everything it lays out depends on the viewport's size.
-   * Nothing else should: the size recorded here has to stay the one the items
-   * were laid out for, which is how a resize is told apart from a report of
-   * the same size. It is one-way and never requests a reader layout itself.
+   * Measures the viewport for a reader layout, and decides from that size and
+   * the `spreadMode` setting whether it shows a spread. The spine's layout pass
+   * calls this first, since everything it lays out depends on the viewport's
+   * size. Nothing else should: the size recorded here has to stay the one the
+   * items were laid out for, which is how a resize is told apart from a report
+   * of the same size. It is one-way and never requests a reader layout itself.
    */
   public layout() {
-    const layout = this.measure()
+    const size = this.measure()
+    const isSpread = shouldUseSpreadModeForViewport({
+      spreadMode: this.settingsManager.values.spreadMode,
+      manifest: this.context.manifest,
+      viewport: size,
+    })
 
-    this.syncAbsoluteViewportCssVariables(layout)
+    this.syncAbsoluteViewportCssVariables(size)
 
     this.mergeCompare({
-      pageSize: this.calculatePageSize(layout),
-      ...layout,
+      ...size,
+      isSpread,
+      pageSize: {
+        width: isSpread ? size.width / 2 : size.width,
+        height: size.height,
+      },
     })
     this.layoutSubject.next()
   }

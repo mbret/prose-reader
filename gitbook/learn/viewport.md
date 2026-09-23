@@ -29,6 +29,45 @@ A relatively simple manipulation of the viewport can be to change its size and m
 
 <div align="center"><figure><img src="../.gitbook/assets/localhost_9000_reader_aHR0cDovL2xvY2FsaG9zdDo5MDAwL2VwdWJzL3JlbmRpdGlvbi1mbG93LXdlYnRvb24uZXB1Yg==_free&#x26;vertical(iPhone SE) (3).png" alt="" width="188"><figcaption></figcaption></figure> <figure><img src="../.gitbook/assets/localhost_9000_reader_aHR0cDovL2xvY2FsaG9zdDo5MDAwL2VwdWJzL3JlbmRpdGlvbi1mbG93LXdlYnRvb24uZXB1Yg==_free&#x26;vertical(iPhone SE) (2) (1).png" alt="" width="188"><figcaption></figcaption></figure></div>
 
+## Spread mode
+
+A spread shows two pages side by side. The `spreadMode` setting says when you want one:
+
+* `auto` (the default): from the viewport's size and the book's `rendition:spread`. In landscape (wider than tall), pages pair into spreads unless the book asks for `none` or `portrait`. In portrait, pages pair only when the book asks for `portrait`.
+* `always`: in every orientation.
+* `never`: one page at a time.
+
+The setting only decides within what the book allows. A book whose `rendition:spread` is `none` is never shown in a spread, since the EPUB specification forbids it, and neither is a book whose `rendition:flow` is `scrolled-continuous`.
+
+```typescript
+const reader = createReader({ manifest, spreadMode: "never" })
+
+reader.settings.update({ spreadMode: "always" }) // lays the book out again
+```
+
+The viewport resolves the setting in every layout, in the same measurement as the size and the page size, so what it shows only changes during a layout. The setting reads back as you gave it. What the reader actually shows is in the viewport's state:
+
+```typescript
+reader.settings.values.spreadMode // "auto", "always" or "never", as you set it
+reader.viewport.value.isSpread // true while two pages share the viewport
+
+reader.viewport.watch("isSpread").subscribe((isSpread) => {
+  // emits the current value, then again whenever a layout changes it
+})
+```
+
+To know what a viewport of another size would do, for example after the device rotates, use `shouldUseSpreadModeForViewport`. It is the same rule the viewport applies:
+
+```typescript
+import { shouldUseSpreadModeForViewport } from "@prose-reader/core"
+
+const rotatedWouldSpread = shouldUseSpreadModeForViewport({
+  spreadMode: reader.settings.values.spreadMode,
+  manifest: reader.context.manifest,
+  viewport: { width: window.innerHeight, height: window.innerWidth },
+})
+```
+
 ## Absolute vs Relative viewport
 
 The absolute viewport represents the dimensions given when creating the reader and is the dimension used internally for pagination, navigation and all the calculations. The relative viewport represents the viewing area after transformations are applied.

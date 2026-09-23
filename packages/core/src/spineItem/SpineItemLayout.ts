@@ -151,7 +151,7 @@ export class SpineItemLayout extends DestroyableClass {
     const manifest = this.context.manifest
     const isGloballyPrePaginated = isFullyPrePaginated(manifest)
 
-    if (this.settings.values.computedSpreadMode) {
+    if (this.viewport.value.isSpread) {
       /**
        * for now every reflowable content that has reflow siblings takes the entire screen by default
        * this simplify many things and I am not sure the specs allow one reflow
