@@ -40,7 +40,7 @@ jobs:
         working-directory: prose-react-native-demo
         run: |
           npm ci
-          npm run tsc
+          npm run typecheck
 
       # Typechecking never resolves a module the way Metro does, so the demo
       # spent a long time unable to bundle at all without anything failing.
