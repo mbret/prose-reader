@@ -175,6 +175,42 @@ const isAbortError = (error: unknown): boolean =>
   error instanceof Error &&
   (error.name === "AbortError" || error.name === "TimeoutError")
 
+// Each lookup fans out to external providers, so an unbounded client can
+// exhaust the process's connections and those providers' quotas. A small
+// per-IP fixed window is enough to blunt that without a new dependency.
+const RATE_LIMIT_WINDOW_MS = 60_000
+const RATE_LIMIT_MAX_REQUESTS = 30
+const requestCounts = new Map<string, { count: number; resetAt: number }>()
+
+const metadataRateLimiter = (
+  request: Request,
+  response: Response,
+  next: NextFunction,
+): void => {
+  const key = request.ip ?? "unknown"
+  const now = Date.now()
+  const entry = requestCounts.get(key)
+
+  if (entry === undefined || now > entry.resetAt) {
+    requestCounts.set(key, {
+      count: 1,
+      resetAt: now + RATE_LIMIT_WINDOW_MS,
+    })
+    next()
+
+    return
+  }
+
+  if (entry.count >= RATE_LIMIT_MAX_REQUESTS) {
+    response.status(429).json({ error: "Too many requests, slow down" })
+
+    return
+  }
+
+  entry.count += 1
+  next()
+}
+
 /**
  * An HTTP surface over `fetchMetadata`: the package does the work, this parses
  * requests and maps failures onto status codes.
@@ -246,11 +282,11 @@ export const createApp = (options: CreateAppOptions): Express => {
     }
   }
 
-  app.get("/metadata", (request, response, next) =>
+  app.get("/metadata", metadataRateLimiter, (request, response, next) =>
     lookup(metadataInputFromQuery(request.query), request, response, next),
   )
 
-  app.post("/metadata", (request, response, next) => {
+  app.post("/metadata", metadataRateLimiter, (request, response, next) => {
     const input = parseMetadataInput(request.body)
 
     if (input === undefined) {
