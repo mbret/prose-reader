@@ -63,3 +63,6 @@ jobs:
           name: playwright-report-${{ matrix.shard }}
           path: apps/tests/test-results/
           retention-days: 15
+          # Playwright only writes here for a failed or retried test, so a
+          # green shard has nothing to upload and nothing to warn about
+          if-no-files-found: ignore
