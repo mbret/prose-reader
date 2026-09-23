@@ -6,10 +6,10 @@ the native side (see [introduction.md](introduction.md "mention") for why).
 
 It ships one entry per side of that boundary:
 
-| entry                             | runs in                             | used with                        |
-| --------------------------------- | ----------------------------------- | -------------------------------- |
-| `@prose-reader/react-native/web`  | your web assets, inside the webview | `@prose-reader/core`             |
-| `@prose-reader/react-native`      | your React Native app               | `react`, `expo-file-system`      |
+| entry                             | runs in                             | used with                                              |
+| --------------------------------- | ----------------------------------- | ------------------------------------------------------ |
+| `@prose-reader/react-native/web`  | your web assets, inside the webview | `@prose-reader/core`                                   |
+| `@prose-reader/react-native`      | your React Native app               | `react`, `expo-file-system`, `react-native-webview`    |
 
 A runnable example of both sides is in the [demo](https://github.com/mbret/prose-reader/tree/master/prose-react-native-demo).
 

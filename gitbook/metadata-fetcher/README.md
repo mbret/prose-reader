@@ -396,7 +396,7 @@ Only the mapped fields are requested (`fields=`), which is the difference betwee
 
 A Docker image wraps this package in a small HTTP API, so metadata lookups don't have to happen inside your JavaScript app — and so you can try a provider against a real catalog with curl:
 
-For repository development, copy `apps/metadata-fetcher-api/.env.example` to `apps/metadata-fetcher-api/.env`, set `GOOGLE_BOOKS_API_KEY`, then run `npm run start:metadata-fetcher` from the repository root. Compose loads that file automatically and it remains ignored by Git.
+For repository development, copy `apps/metadata-fetcher-api/.env.example` to `apps/metadata-fetcher-api/.env`, set `GOOGLE_BOOKS_API_KEY`, then run `pnpm run start:metadata-fetcher` from the repository root. Compose loads that file automatically and it remains ignored by Git.
 
 ```bash
 docker run -p 6382:6382 \
@@ -417,7 +417,7 @@ The image is published with every release, tagged with the version and `latest`,
 
 Both metadata routes answer with the `FetchedMetadata` entity verbatim. The options above (`limit`, `minScore`, `includeRaw`, plus a `providers` filter) are query parameters, and the deployment defaults are environment variables.
 
-For development, `npm run start:metadata-fetcher` starts the same image with the source bind-mounted: editing the express app restarts it, editing this package rebuilds it and the API picks it up. It also serves a playground at `/` — enter metadata manually or choose an EPUB/CBZ/ZIP file, then inspect each candidate, its score and the signals behind it. In both cases the playground posts the canonical `FetchMetadataInput` JSON to `/metadata`, so the browser's network inspector shows the exact input an SDK consumer would provide. Uploaded files have no application-level size limit: archive-reader resolves them in memory and discards them before that compact input is posted, with no disk or browser storage. The playground is development-only: the production image sets `NODE_ENV=production`, and the route is then never registered.
+For development, `pnpm run start:metadata-fetcher` starts the same image with the source bind-mounted: editing the express app restarts it, editing this package rebuilds it and the API picks it up. It also serves a playground at `/` — enter metadata manually or choose an EPUB/CBZ/ZIP file, then inspect each candidate, its score and the signals behind it. In both cases the playground posts the canonical `FetchMetadataInput` JSON to `/metadata`, so the browser's network inspector shows the exact input an SDK consumer would provide. Uploaded files have no application-level size limit: archive-reader resolves them in memory and discards them before that compact input is posted, with no disk or browser storage. The playground is development-only: the production image sets `NODE_ENV=production`, and the route is then never registered.
 
 See [the app's README](https://github.com/mbret/prose-reader/tree/master/apps/metadata-fetcher-api) for the full reference.
 

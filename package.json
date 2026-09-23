@@ -5,6 +5,7 @@
   "main": "index.js",
   "author": "Maxime Bret <bret.maxime@gmail.com>",
   "license": "MIT",
+  "packageManager": "pnpm@12.5.1",
   "scripts": {
     "start": "lerna run start --stream",
     "start:lib": "lerna run start --stream --scope @prose-reader/* --concurrency 15",
@@ -13,54 +14,29 @@
     "stop:metadata-fetcher": "docker compose -f apps/metadata-fetcher-api/docker-compose.yml down",
     "build": "lerna run build --stream",
     "build:lib": "lerna run build --stream --scope @prose-reader/*",
-    "check:react-reader-enhancers": "npm run check:enhancers --workspace @prose-reader/react-reader",
+    "check:react-reader-enhancers": "pnpm --filter @prose-reader/react-reader run check:enhancers",
     "tsc": "lerna run tsc --parallel && tsc -p tsconfig.configs.json",
-    "format": "npx @biomejs/biome format .",
-    "lint": "npx @biomejs/biome lint .",
+    "format": "biome format .",
+    "lint": "biome lint .",
     "check:agent-docs": "node scripts/check-agent-docs.mjs",
     "test": "lerna run test --parallel",
-    "publish-packages": "npm test && npm run build && lerna publish minor --yes",
     "prepare": "husky",
-    "version": "node scripts/sync-internal-ranges.mjs",
     "check:internal-ranges": "node scripts/check-internal-ranges.mjs"
-  },
-  "workspaces": [
-    "apps/*",
-    "packages/*"
-  ],
-  "overrides": {
-    "axios": "^1.20.0",
-    "brace-expansion@5.0.6": "^5.0.12",
-    "js-yaml": "^4.3.2",
-    "pacote": "^21.5.1",
-    "smol-toml": "^1.9.0",
-    "tar": "^7.5.22"
   },
   "devDependencies": {
     "@biomejs/biome": "^2.0.6",
     "@rolldown/plugin-babel": "^0.2.3",
     "@types/node": "^25.9.1",
-    "@vitejs/plugin-react": "^6.0.2",
     "@vitest/coverage-v8": "^4.1.11",
     "conventional-changelog-conventionalcommits": "^7.0.2",
     "husky": "^9.1.7",
     "lerna": "^9.0.7",
     "lint-staged": "^17.0.5",
     "rollup-plugin-node-externals": "^9.0.0",
-    "rxjs": "*",
-    "semver": "^7.8.5",
+    "typescript": "^6.0.0",
     "vite": "^8",
     "vite-plugin-dts": "^5.1.1",
-    "vite-plugin-pwa": "^1.0.0",
-    "vite-plugin-svgr": "^5.2.0",
-    "vitest": "^4.1.11",
-    "workbox-build": "^7.0.0",
-    "workbox-window": "^7.0.0"
-  },
-  "dependencies": {
-    "@rollup/plugin-replace": "^6.0.1",
-    "reactjrx": "^1.126.0",
-    "typescript": "^6.0.0"
+    "vitest": "^4.1.11"
   },
   "lint-staged": {
     "*": [

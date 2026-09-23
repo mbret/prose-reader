@@ -11,7 +11,7 @@ It exists for two reasons — it is the development harness for the fetcher and 
 cp apps/metadata-fetcher-api/.env.example apps/metadata-fetcher-api/.env
 
 # edit .env and set GOOGLE_BOOKS_API_KEY, then build and start the stack
-npm run start:metadata-fetcher
+pnpm run start:metadata-fetcher
 
 curl "http://localhost:6382/metadata?title=Dune&author=Frank+Herbert"
 ```
@@ -24,19 +24,19 @@ The playground shows what came back — each candidate with its score, whether i
 
 The playground is **development only**. It is served when `NODE_ENV` is anything but `production`, which the production image sets — so a hosted deployment has no HTML surface at all: `/` is a plain JSON 404 there, because the route is never registered rather than hidden behind a check. There is no flag to turn it back on.
 
-Stop it with `npm run stop:metadata-fetcher`.
+Stop it with `pnpm run stop:metadata-fetcher`.
 
 Both the app's source and the library's are bind-mounted into the container, and node runs both as TypeScript — so **editing either restarts the server** (`node --watch`), with no build, no watcher and nothing to run on the host. Editing `playground.html` needs not even a restart: it is read from disk per request, so a refresh is enough.
 
 ### Without Docker
 
 ```bash
-npm run dev --workspace prose-reader-metadata-fetcher-api
+pnpm --filter prose-reader-metadata-fetcher-api run dev
 ```
 
 ### No build, anywhere in development
 
-Node runs TypeScript directly (type stripping), and that goes for both libraries too: `@prose-reader/archive-reader` and `@prose-reader/metadata-fetcher` declare `prose-source` export conditions pointing at their source entry points, so `node --conditions=prose-source` — what `npm run dev` and the compose service both run — loads their TypeScript instead of `dist`. This includes archive-reader's zip.js creator used by playground uploads.
+Node runs TypeScript directly (type stripping), and that goes for both libraries too: `@prose-reader/archive-reader` and `@prose-reader/metadata-fetcher` declare `prose-source` export conditions pointing at their source entry points, so `node --conditions=prose-source` — what `pnpm run dev` and the compose service both run — loads their TypeScript instead of `dist`. This includes archive-reader's zip.js creator used by playground uploads.
 
 The same condition is set for the typechecker (`customConditions` in `tsconfig.json`) and for the tests (`resolve.conditions` in `vitest.config.ts`), so running, typechecking and testing all agree and none of them needs the package built.
 
@@ -116,7 +116,7 @@ Both answer with the `FetchedMetadata` entity verbatim — ranked `matches` with
 
 ## Configuration
 
-For local Docker development, put these values in `apps/metadata-fetcher-api/.env` (start from `.env.example`). Shell environment variables can still override the file. `npm run dev --workspace prose-reader-metadata-fetcher-api`, which runs outside Compose, reads only the shell environment.
+For local Docker development, put these values in `apps/metadata-fetcher-api/.env` (start from `.env.example`). Shell environment variables can still override the file. `pnpm --filter prose-reader-metadata-fetcher-api run dev`, which runs outside Compose, reads only the shell environment.
 
 | Variable | Default | |
 | --- | --- | --- |

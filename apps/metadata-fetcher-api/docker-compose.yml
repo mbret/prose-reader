@@ -1,6 +1,6 @@
 # Development stack, started from the repository root with
 #
-#   npm run start:metadata-fetcher
+#   pnpm run start:metadata-fetcher
 #
 # Compose automatically reads this project's `.env` file next to this file.
 # Start from `.env.example`; `.env` itself is ignored by Git.
@@ -18,7 +18,7 @@ services:
       target: development
     image: prose-reader/metadata-fetcher-api:development
     working_dir: /repo/apps/metadata-fetcher-api
-    # node as PID 1 rather than `npm run dev`, so SIGTERM reaches it directly
+    # node as PID 1 rather than `pnpm run dev`, so SIGTERM reaches it directly
     # and `docker compose down` doesn't wait out the kill timer.
     # `--watch` restarts on any imported file — the library's source included,
     # since `--conditions=prose-source` resolves it to TypeScript.

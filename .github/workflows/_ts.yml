@@ -8,12 +8,13 @@ jobs:
     runs-on: macos-latest
     steps:
       - uses: actions/checkout@v6
+      - uses: pnpm/action-setup@v6
       - uses: actions/setup-node@v6
         with:
           node-version: 25
-          cache: 'npm'
+          cache: 'pnpm'
       - name: Check
         run: |
-          npm ci
-          npm run build
-          npm run tsc
+          pnpm install --frozen-lockfile
+          pnpm run build
+          pnpm run tsc

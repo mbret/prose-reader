@@ -1,39 +1,39 @@
 /**
- * The rules that keep a release from leaving a package behind.
+ * The rules that keep internal `@prose-reader/*` references both linked here and
+ * installable once published.
  *
- * Lerna builds its project graph from `dependencies`, `optionalDependencies`
- * and `devDependencies`. A `peerDependencies` entry produces no edge at all, so
- * a package whose only tie to a sibling is a peer range is invisible to the
- * release — a change to `core` versioned five packages and silently left `cbz`,
- * `enhancer-pdf`, `enhancer-refit`, `enhancer-annotations`, `react-native` and
- * `react-reader` published against a core they no longer matched.
+ * Every reference uses the workspace protocol. A plain range is resolved like
+ * any other: pnpm fetches a published copy and installs it beside the one in
+ * this checkout, and nothing fails. That is how 2.0.0 detached every app from
+ * the workspace. A `workspace:` range can only ever mean the checkout, and pnpm
+ * refuses to install rather than fetch when it cannot be satisfied.
  *
- * So an internal peer range is always paired with a devDependency on the same
- * sibling. The devDependency is honest on its own terms — these packages import
- * the sibling and only resolve it today because npm hoists the workspace — and
- * it is what gives lerna the edge, after which lerna versions the pair together
- * and maintains that range itself.
+ * A published package uses `workspace:^`, which lerna turns into `^<version>`
+ * at publish time, the version the sibling has when the release is cut. That
+ * is also what gives lerna its graph edges, peers included, so nothing has to
+ * be kept in step by hand and a release crossing a major has nothing to raise.
+ * `workspace:*` would publish an exact pin instead, and a consumer's copies of
+ * the siblings could never deduplicate. A private app is never published, so it
+ * uses `workspace:*`.
  *
- * The peer range is then free to mean what a peer range normally means: the
- * oldest sibling this package works with. It has to admit the version in this
- * checkout, because `npm install --package-lock-only` — which lerna runs inside
- * `version` — fails with ERESOLVE otherwise and takes the publish with it.
- *
- * A private app is not published, so the copy it means is always the one in
- * this checkout: it declares `*` and cannot drift at all.
+ * A sibling appears in one dependency field of a package, never two. Lerna
+ * rewrites the protocol only in the first field naming the sibling —
+ * dependencies, then optional, dev and peer dependencies — so a peer range with
+ * a devDependency beside it is published as the literal `workspace:^`, which no
+ * consumer can install. A peer range on a sibling needs no devDependency: pnpm
+ * links workspace peers for the package's own build and tests.
  */
 import { existsSync, readdirSync, readFileSync } from "node:fs"
 import { dirname, join } from "node:path"
 import { fileURLToPath } from "node:url"
-import semver from "semver"
 
 const SCOPE = "@prose-reader/"
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), "..")
 const RANGE_FIELDS = [
   "dependencies",
+  "optionalDependencies",
   "devDependencies",
   "peerDependencies",
-  "optionalDependencies",
 ]
 
 const manifests = ["packages", "apps"].flatMap((directory) =>
@@ -43,53 +43,35 @@ const manifests = ["packages", "apps"].flatMap((directory) =>
     .filter((path) => existsSync(join(ROOT, path))),
 )
 
-const packages = manifests.map((path) => ({
-  path,
-  pkg: JSON.parse(readFileSync(join(ROOT, path), "utf8")),
-}))
+const problems = manifests.flatMap((path) => {
+  const pkg = JSON.parse(readFileSync(join(ROOT, path), "utf8"))
+  const expected = pkg.private === true ? "workspace:*" : "workspace:^"
+  const fieldsNaming = new Map()
 
-const versions = new Map(
-  packages
-    .filter(({ pkg }) => pkg.name?.startsWith(SCOPE) && pkg.private !== true)
-    .map(({ pkg }) => [pkg.name, pkg.version]),
-)
+  const ranges = RANGE_FIELDS.flatMap((field) =>
+    Object.entries(pkg[field] ?? {})
+      .filter(([name]) => name.startsWith(SCOPE))
+      .flatMap(([name, range]) => {
+        fieldsNaming.set(name, [...(fieldsNaming.get(name) ?? []), field])
+        return range === expected
+          ? []
+          : [
+              `${path}: ${field}.${name} is "${range}" — ${pkg.private === true ? "a private package" : "a published package"} declares "${expected}"`,
+            ]
+      }),
+  )
 
-const problems = packages.flatMap(({ path, pkg }) => {
-  if (pkg.private === true) {
-    return RANGE_FIELDS.flatMap((field) =>
-      Object.entries(pkg[field] ?? {})
-        .filter(([name, range]) => name.startsWith(SCOPE) && range !== "*")
-        .map(
-          ([name, range]) =>
-            `${path}: ${field}.${name} is "${range}" — a private package declares "*", so it always means the copy in this checkout`,
-        ),
-    )
-  }
+  const duplicates =
+    pkg.private === true
+      ? []
+      : [...fieldsNaming]
+          .filter(([, fields]) => fields.length > 1)
+          .map(
+            ([name, fields]) =>
+              `${path}: ${name} is in ${fields.join(" and ")} — lerna rewrites only the first, so the ${fields.at(-1)} entry would be published as "workspace:^"`,
+          )
 
-  return Object.entries(pkg.peerDependencies ?? {}).flatMap(([name, range]) => {
-    if (!name.startsWith(SCOPE)) return []
-
-    const version = versions.get(name)
-
-    if (!version) {
-      return [`${path}: peers ${name}, which this repository does not publish`]
-    }
-
-    const linked = pkg.dependencies?.[name] ?? pkg.devDependencies?.[name]
-
-    return [
-      ...(linked
-        ? []
-        : [
-            `${path}: peers ${name} without depending on it, so lerna's graph has no edge and a ${name} release will not version this package`,
-          ]),
-      ...(semver.satisfies(version, range)
-        ? []
-        : [
-            `${path}: peers ${name}@${range}, which the ${version} in this checkout does not satisfy — the release's lockfile refresh will fail with ERESOLVE`,
-          ]),
-    ]
-  })
+  return [...ranges, ...duplicates]
 })
 
 if (problems.length) {
@@ -102,5 +84,5 @@ if (problems.length) {
 }
 
 console.log(
-  `Checked ${packages.length} manifests, every internal range is sound.`,
+  `Checked ${manifests.length} manifests, every internal range is sound.`,
 )

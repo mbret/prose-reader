@@ -11,14 +11,19 @@ ARG NODE_VERSION=25-alpine
 
 # ---------------------------------------------------------------------------
 # deps — manifests only, so editing source doesn't invalidate the slow install
-# layer. npm resolves the root `workspaces` globs against what is present, so
-# four workspaces out of sixteen is enough.
+# layer. pnpm resolves the `pnpm-workspace.yaml` globs against what is present
+# and installs only those projects from the lockfile, so four workspaces out of
+# twenty is enough.
 # ---------------------------------------------------------------------------
 FROM node:${NODE_VERSION} AS deps
 
 WORKDIR /repo
 
-COPY package.json package-lock.json lerna.json nx.json ./
+# pnpm at exactly the version the repository pins in `packageManager`
+COPY package.json ./
+RUN npm install --global "$(node -p "require('./package.json').packageManager")"
+
+COPY pnpm-lock.yaml pnpm-workspace.yaml lerna.json nx.json ./
 COPY tsconfig.node.json tsconfig.web.json ./
 COPY config config
 COPY packages/shared/package.json packages/shared/
@@ -27,7 +32,7 @@ COPY packages/metadata-fetcher/package.json packages/metadata-fetcher/
 COPY apps/metadata-fetcher-api/package.json apps/metadata-fetcher-api/
 
 # --ignore-scripts: the root `prepare` runs husky, which needs a .git
-RUN npm ci --ignore-scripts --no-audit --no-fund
+RUN pnpm install --frozen-lockfile --ignore-scripts
 
 FROM deps AS sources
 
@@ -45,14 +50,14 @@ COPY apps/metadata-fetcher-api apps/metadata-fetcher-api
 # ---------------------------------------------------------------------------
 FROM sources AS development
 
-RUN npx lerna run build --scope @prose-reader/shared
+RUN pnpm exec lerna run build --scope @prose-reader/shared
 
 ENV NODE_ENV=development
 WORKDIR /repo/apps/metadata-fetcher-api
 
 EXPOSE 6382
 
-CMD ["npm", "run", "dev"]
+CMD ["pnpm", "run", "dev"]
 
 # ---------------------------------------------------------------------------
 # build — the library as consumers get it. Production runs the built entry, not
@@ -60,7 +65,7 @@ CMD ["npm", "run", "dev"]
 # ---------------------------------------------------------------------------
 FROM sources AS build
 
-RUN npx lerna run build --scope @prose-reader/metadata-fetcher
+RUN pnpm exec lerna run build --scope @prose-reader/metadata-fetcher
 
 # ---------------------------------------------------------------------------
 # production — dev dependencies pruned, unprivileged, healthchecked. Node runs
@@ -68,7 +73,9 @@ RUN npx lerna run build --scope @prose-reader/metadata-fetcher
 # ---------------------------------------------------------------------------
 FROM build AS prune
 
-RUN npm prune --omit=dev --ignore-scripts
+# Reinstalling with --prod removes what only development needed; --offline
+# because everything production keeps is already in this stage's store.
+RUN pnpm install --prod --frozen-lockfile --offline --ignore-scripts
 
 FROM node:${NODE_VERSION} AS production
 

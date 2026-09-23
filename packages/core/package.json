@@ -27,8 +27,8 @@
     "tsc": "tsc"
   },
   "dependencies": {
-    "@prose-reader/cfi": "^4.0.0",
-    "@prose-reader/shared": "^4.0.0"
+    "@prose-reader/cfi": "workspace:^",
+    "@prose-reader/shared": "workspace:^"
   },
   "peerDependencies": {
     "rxjs": "*"

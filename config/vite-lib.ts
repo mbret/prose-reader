@@ -1,5 +1,6 @@
 import { resolve } from "node:path"
 import externals from "rollup-plugin-node-externals"
+import ts from "typescript"
 import {
   type ConfigEnv,
   type LibraryFormats,
@@ -42,12 +43,28 @@ const TEST_FILES = ["src/**/*.test.ts", "src/**/*.test.tsx", "src/tests/**/*"]
  * The declaration build every package shares. Options merge over the
  * defaults, so a package adds `staticImport` or a `tsconfigPath` without
  * restating what is excluded.
+ *
+ * A declaration error fails the build. The plugin only logs one and writes
+ * the rest, so a symbol whose type cannot be emitted simply goes missing from
+ * `dist` — react-native once shipped a `useCreateReader` consumers saw as
+ * `any`, with the build green. `tsc --noEmit` cannot catch that class: errors
+ * like TS2883 only exist when declarations are emitted.
  */
 export const dtsPlugin = (options: DtsOptions = {}) =>
   dts({
     entryRoot: "src",
     include: ["src/**/*"],
     exclude: TEST_FILES,
+    afterDiagnostic: (diagnostics) => {
+      const errors = diagnostics.filter(
+        (diagnostic) => diagnostic.category === ts.DiagnosticCategory.Error,
+      )
+      if (errors.length > 0) {
+        throw new Error(
+          `${errors.length} declaration error(s); dist would be missing the declarations they belong to`,
+        )
+      }
+    },
     ...options,
   })
 

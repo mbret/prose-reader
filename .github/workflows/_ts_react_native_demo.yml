@@ -8,24 +8,33 @@ jobs:
     runs-on: macos-latest
     steps:
       - uses: actions/checkout@v6
+      - uses: pnpm/action-setup@v6
       - uses: actions/setup-node@v6
         with:
           node-version: 25
-          cache: 'npm'
+          cache: 'pnpm'
 
       - uses: actions/cache@v5
         id: nx-cache
         with:
           path: |
             .nx
-          key: ${{ runner.os }}-nx-${{ hashFiles('**/package-lock.json') }}
+          key: ${{ runner.os }}-nx-${{ hashFiles('pnpm-lock.yaml') }}
 
       # The demo consumes @prose-reader/* through file: links that resolve to
       # each package's dist/, which is gitignored — build the libs first.
       - name: Build libs
         run: |
-          npm ci
-          npx lerna run build --stream --scope @prose-reader/*
+          pnpm install --frozen-lockfile
+          pnpm exec lerna run build --stream --scope @prose-reader/*
+
+      # The demo is not a workspace member: it installs with npm from its own
+      # lockfile, the way an app consuming the libraries would. setup-node caches
+      # one package manager, so npm's cache is kept here.
+      - uses: actions/cache@v5
+        with:
+          path: ~/.npm
+          key: ${{ runner.os }}-demo-npm-${{ hashFiles('prose-react-native-demo/package-lock.json') }}
 
       - name: Typecheck demo
         working-directory: prose-react-native-demo

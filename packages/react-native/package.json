@@ -34,21 +34,20 @@
     "test": "vitest run --coverage"
   },
   "devDependencies": {
-    "@prose-reader/archive-reader": "^4.0.0",
-    "@prose-reader/core": "^4.0.0",
-    "@prose-reader/shared": "^4.0.0",
-    "@prose-reader/streamer": "^4.0.0",
-    "@webview-bridge/react-native": "^1.7.7"
+    "@types/react": "^19.0.2",
+    "@webview-bridge/react-native": "^1.7.7",
+    "expo": "^57.0.6"
   },
   "peerDependencies": {
-    "@prose-reader/archive-reader": "^4.0.0",
-    "@prose-reader/core": "^4.0.0",
-    "@prose-reader/shared": "^4.0.0",
-    "@prose-reader/streamer": "^4.0.0",
+    "@prose-reader/archive-reader": "workspace:^",
+    "@prose-reader/core": "workspace:^",
+    "@prose-reader/shared": "workspace:^",
+    "@prose-reader/streamer": "workspace:^",
     "@webview-bridge/react-native": "^1.7.7",
     "@webview-bridge/web": "^1.7.7",
     "expo-file-system": "^56.0.7",
     "react": "19.x",
+    "react-native-webview": "*",
     "rxjs": "*"
   }
 }

@@ -15,9 +15,9 @@ download the reading engine.
 The packages must be built (or watched) first, from the repository root:
 
 ```bash
-npm install
-npm run build:lib   # or `npm run start:lib` to watch them
-npm run start:front
+pnpm install
+pnpm run build:lib   # or `pnpm run start:lib` to watch them
+pnpm run start:front
 ```
 
 The app is then served on http://localhost:9000, the demo on

@@ -8,39 +8,41 @@ jobs:
     runs-on: macos-latest
     steps:
       - uses: actions/checkout@v6
+      - uses: pnpm/action-setup@v6
       - uses: actions/setup-node@v6
         with:
           node-version: 25
-          cache: 'npm'
+          cache: 'pnpm'
 
       - name: Install dependencies
-        run: npm ci
+        run: pnpm install --frozen-lockfile
 
       - uses: actions/cache@v5
         id: nx-cache
         with:
           path: |
             .nx
-          key: ${{ runner.os }}-nx-${{ hashFiles('**/package-lock.json') }}
+          key: ${{ runner.os }}-nx-${{ hashFiles('pnpm-lock.yaml') }}
 
       - name: Build
         run: |
-          npx lerna run build --stream --scope @prose-reader/*
+          pnpm exec lerna run build --stream --scope @prose-reader/*
 
       - uses: actions/cache@v5
         id: playwright-cache
         with:
           path: ~/Library/Caches/ms-playwright
-          key: ${{ runner.os }}-playwright-${{ hashFiles('**/package-lock.json') }}
+          key: ${{ runner.os }}-playwright-${{ hashFiles('pnpm-lock.yaml') }}
 
       - name: Install Playwright Browsers
         # On a cache hit the browsers are already present; install still runs to
-        # verify/refresh them but skips the multi-hundred-MB download.
-        run: npx playwright install --with-deps
+        # verify/refresh them but skips the multi-hundred-MB download. Playwright
+        # is the test app's dependency, not the root's, so run it from there.
+        run: pnpm --filter prose-reader-tests exec playwright install --with-deps
 
       - name: Test
         run: |
-          npm test
+          pnpm test
 
       - uses: actions/upload-artifact@v7
         if: ${{ !cancelled() }}

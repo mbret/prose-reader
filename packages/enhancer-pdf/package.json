@@ -23,13 +23,11 @@
     "build": "tsc && vite build"
   },
   "devDependencies": {
-    "@prose-reader/archive-reader": "^4.0.0",
-    "@prose-reader/core": "^4.0.0",
     "pdfjs-dist": "^6.2.108"
   },
   "peerDependencies": {
-    "@prose-reader/archive-reader": "^4.0.0",
-    "@prose-reader/core": "^4.0.0",
+    "@prose-reader/archive-reader": "workspace:^",
+    "@prose-reader/core": "workspace:^",
     "pdfjs-dist": ">=6.2.108 <7",
     "rxjs": "*"
   }

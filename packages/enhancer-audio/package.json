@@ -24,7 +24,8 @@
     "test": "vitest run --coverage"
   },
   "dependencies": {
-    "@prose-reader/core": "^4.0.0"
+    "@prose-reader/core": "workspace:^",
+    "@prose-reader/shared": "workspace:^"
   },
   "peerDependencies": {
     "rxjs": "*"

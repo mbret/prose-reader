@@ -32,7 +32,7 @@ cp <prose-reader>/packages/koreader/tools/*.lua .
 
 # 2. crengine's verdict on the pointers this package emits: the test suite
 #    writes the pairs from the repository, then crengine checks them from here
-(cd <prose-reader>/packages/koreader && XPOINTER_CHECK_EMIT_DIR=/tmp/pairs npx vitest run src/crengineCheck.test.ts)
+(cd <prose-reader>/packages/koreader && XPOINTER_CHECK_EMIT_DIR=/tmp/pairs pnpm exec vitest run src/crengineCheck.test.ts)
 ./luajit xpointer-check.lua <fixtures>/synthetic.epub /tmp/pairs/synthetic.pairs.json <fixtures>/synthetic.crengine-check.json
 ```
 

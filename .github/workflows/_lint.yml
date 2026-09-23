@@ -8,14 +8,17 @@ jobs:
     runs-on: macos-latest
     steps:
       - uses: actions/checkout@v6
+      # before setup-node, whose pnpm cache needs pnpm on the PATH; the
+      # version comes from `packageManager` in the root package.json
+      - uses: pnpm/action-setup@v6
       - uses: actions/setup-node@v6
         with:
           node-version: 25
-          cache: 'npm'
+          cache: 'pnpm'
       - name: Check
         run: |
-          npm ci
-          npm run format
-          npm run lint
-          npm run check:agent-docs
-          npm run check:internal-ranges
+          pnpm install --frozen-lockfile
+          pnpm run format
+          pnpm run lint
+          pnpm run check:agent-docs
+          pnpm run check:internal-ranges
