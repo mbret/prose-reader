@@ -88,7 +88,8 @@ const turnRightFromTheWebSide = (controller: ReaderBridgeController) => {
 
 {% hint style="info" %}
 `getReader()` returns `undefined` before the native side sends its first `load`,
-and again while a reader is being replaced. Reach for it only when the bridge
+again while a reader is being replaced, and after a `load` whose reader failed
+to build: the previous reader is destroyed either way. Reach for it only when the bridge
 has no equivalent; a method missing from the bridge is worth
 [raising an issue](https://github.com/mbret/prose-reader/issues) over.
 {% endhint %}
