@@ -5,19 +5,12 @@ on:
 
 jobs:
   lint:
-    runs-on: macos-latest
+    runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v6
-      # before setup-node, whose pnpm cache needs pnpm on the PATH; the
-      # version comes from `packageManager` in the root package.json
-      - uses: pnpm/action-setup@v6
-      - uses: actions/setup-node@v6
-        with:
-          node-version: 25
-          cache: 'pnpm'
+      - uses: ./.github/actions/setup
       - name: Check
         run: |
-          pnpm install --frozen-lockfile
           pnpm run format
           pnpm run lint
           pnpm run check:agent-docs

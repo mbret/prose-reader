@@ -8,6 +8,13 @@ on:
     branches-ignore:
       - 'master'
 
+# A new push to a branch supersedes the run still going for the previous one:
+# cancel it rather than let it hold runners, the macOS ones especially, that
+# the new run is queued behind.
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
   lint:
     uses: ./.github/workflows/_lint.yml

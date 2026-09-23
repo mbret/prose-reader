@@ -2,6 +2,7 @@
   "targetDefaults": {
     "build": {
       "dependsOn": ["^build"],
+      "inputs": ["default", "^default"],
       "outputs": ["{projectRoot}/dist"],
       "cache": true
     },
@@ -11,7 +12,12 @@
   },
   "namedInputs": {
     "default": ["{projectRoot}/**/*", "sharedGlobals"],
-    "sharedGlobals": [],
+    "sharedGlobals": [
+      "{workspaceRoot}/config/**/*",
+      "{workspaceRoot}/tsconfig.web.json",
+      "{workspaceRoot}/tsconfig.node.json",
+      "{workspaceRoot}/pnpm-lock.yaml"
+    ],
     "production": ["default"]
   }
 }
