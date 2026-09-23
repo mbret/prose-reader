@@ -18,6 +18,11 @@ expo-env.d.ts
 *.key
 *.mobileprovision
 
+# Native projects: `expo prebuild` generates them from app.json, and
+# `npm run ios` / `npm run android` run it when the folder is missing
+/ios
+/android
+
 # Metro
 .metro-health-check*
 
@@ -35,5 +40,3 @@ yarn-error.*
 
 # typescript
 *.tsbuildinfo
-
-app-example
