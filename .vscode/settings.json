@@ -3,7 +3,7 @@
   "files.exclude": {
     "**/dist": false,
     "**/build": true,
-    "prose-react-native-demo/assets/index.html": true
+    "prose-react-native-demo/web/dist/index.html": true
   },
   "editor.codeActionsOnSave": {
     "source.fixAll.biome": "explicit"

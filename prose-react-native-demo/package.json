@@ -3,17 +3,17 @@
   "main": "expo-router/entry",
   "version": "1.0.0",
   "scripts": {
-    "start": "expo start",
-    "start:all": "concurrently \"expo start\" \"vite build web --watch\"",
+    "start": "npm run web:build && expo start",
+    "start:all": "npm run web:build && concurrently \"expo start\" \"vite build web --watch\"",
     "reset-project": "node ./scripts/reset-project.js",
     "android": "npm run web:build && expo run:android",
     "ios": "npm run web:build && expo run:ios",
     "lint": "expo lint",
     "tsc": "tsc --noEmit",
     "web:dev": "vite web",
-    "web:build": "tsc && vite build web",
+    "web:build": "vite build web",
     "web:preview": "vite preview web",
-    "bundle": "expo export --platform ios && expo export --platform android"
+    "bundle": "npm run web:build && expo export --platform ios && expo export --platform android"
   },
   "overrides": {
     "ajv@8.11.0": "^8.20.0",

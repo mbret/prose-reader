@@ -17,7 +17,6 @@
       "!**/CfiHandler.ts",
       "!**/playwright-report",
       "!**/Pods",
-      "!**/prose-react-native-demo/assets/index.html",
       "!**/packages/koreader/src/tests/fixtures"
     ]
   },

@@ -4,7 +4,9 @@ import { useEffect, useState } from "react"
 
 export function useWebviewHtmlAsset() {
   const [html, setHtml] = useState<string | undefined>()
-  const [assets] = useAssets([require("@/assets/index.html")])
+  // Built from `web/` by `npm run web:build`, which every script that starts
+  // Metro runs first. It is not committed: resolving it fails until built.
+  const [assets] = useAssets([require("@/web/dist/index.html")])
 
   useEffect(() => {
     ;(async () => {
