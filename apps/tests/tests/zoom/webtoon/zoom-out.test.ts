@@ -1,7 +1,7 @@
 import { expect, test } from "@playwright/test"
 import type { Reader } from "@prose-reader/core"
 import { getScrollNavigationMetadata, waitForSpineItemReady } from "../../utils"
-import { navigateAndSettle } from "../../utils/pagination"
+import { waitForSettled } from "../../utils/pagination"
 
 const scales = [0.2, 0.5, 1]
 const height = 1294
@@ -48,18 +48,17 @@ test.describe("Given a scroll mid page", () => {
 
           // Scaling re-centers the scroll position with a navigation, and
           // lays out again.
-          await navigateAndSettle(page, () =>
-            page.evaluate(
-              ([_scale = 1]) => {
-                // @ts-expect-error
-                const reader = window.reader as Reader
+          await page.evaluate(
+            ([_scale = 1]) => {
+              // @ts-expect-error
+              const reader = window.reader as Reader
 
-                reader.zoom.enter()
-                reader.zoom.scaleAt(_scale)
-              },
-              [scale],
-            ),
+              reader.zoom.enter()
+              reader.zoom.scaleAt(_scale)
+            },
+            [scale],
           )
+          await waitForSettled(page)
 
           // zoomed out centered both x/y
           await expect
@@ -69,14 +68,13 @@ test.describe("Given a scroll mid page", () => {
             )
             .toBe((scrollTop + height / 2) * scale - height / 2)
 
-          await navigateAndSettle(page, () =>
-            page.evaluate(() => {
-              // @ts-expect-error
-              const reader = window.reader as Reader
+          await page.evaluate(() => {
+            // @ts-expect-error
+            const reader = window.reader as Reader
 
-              reader.zoom.exit()
-            }),
-          )
+            reader.zoom.exit()
+          })
+          await waitForSettled(page)
 
           await expect
             .poll(async () => {
