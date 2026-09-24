@@ -3,6 +3,28 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## [9.0.0](https://github.com/mbret/prose-reader/compare/v8.0.1...v9.0.0) (2026-09-24)
+
+
+### ⚠ BREAKING CHANGES
+
+* **react-native:** `bridgeReader`'s `createReader` factory receives
+`{ manifest, cfi }` instead of the manifest, and `load` from
+`useCreateReader` takes `{ manifest, cfi? }` instead of the manifest.
+* **react-native:** `pagination`, `context` and `readingPosition` in the bridge
+state are `null`, not `undefined`, until the reader of the book last loaded
+reports them. The web side reports through `report(load, state)` instead of
+`setPagination` and `setContext`.
+
+Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
+Claude-Session: https://claude.ai/code/session_016xgXrGA781dXRQAH1vuHxd
+
+### Features
+
+* **react-native:** relay the reading position to native, and let load reopen at one ([#422](https://github.com/mbret/prose-reader/issues/422)) ([13fb0f9](https://github.com/mbret/prose-reader/commit/13fb0f90c63af9121cbcb2b7ce49fece9de6bd28)), closes [#415](https://github.com/mbret/prose-reader/issues/415)
+
+
+
 ## [8.0.1](https://github.com/mbret/prose-reader/compare/v8.0.0...v8.0.1) (2026-09-24)
 
 **Note:** Version bump only for package @prose-reader/root
