@@ -1,4 +1,5 @@
 import { expect, type Page, test } from "@playwright/test"
+import type { Reader } from "@prose-reader/core"
 import {
   navigateToSpineItem,
   turnLeft,
@@ -9,17 +10,24 @@ import {
 const URL = "http://localhost:3333/tests/navigation/boundary/index.html"
 const LAST_SPINE_INDEX = 11 // sample.cbz has 12 single-page spine items
 
-/**
- * Turning back and forward at the end of the book reports no boundary. That is
- * proved in core's `boundaryTurns.test.ts`, where the test holds the clock,
- * since a browser spec can only guess how long to wait for nothing to happen.
- */
-
 const marker = (page: Page) => page.locator("#boundary-marker")
 
 // Window to give settled navigation time to either fire a boundary event
 // or not, before asserting on `data-count`.
 const SETTLE_DELAY_MS = 250
+
+/**
+ * The page the reader has settled on, or `undefined` while it is still getting
+ * there. Polled after a turn, it waits for that turn's own page, which a result
+ * settled before the turn cannot satisfy.
+ */
+const settledPage = (page: Page) =>
+  page.evaluate(() => {
+    // @ts-expect-error window.reader is set by this scenario's index.tsx
+    const { isSettled, begin } = (window.reader as Reader).pagination.state
+
+    return isSettled ? begin.spineItemIndex : undefined
+  })
 
 const setup = async (page: Page) => {
   await page.setViewportSize({ width: 400, height: 600 })
@@ -58,6 +66,44 @@ test.describe("Given the user is on the last page (end of book)", () => {
 
     await expect(marker(page)).toHaveAttribute("data-count", "1")
     await expect(marker(page)).toHaveAttribute("data-last", "end")
+  })
+
+  /**
+   * The end boundary means the user asked to go past the last page, not that
+   * they arrived on it. The test above cannot tell the two apart: turning right
+   * on the last page also lands on the last page.
+   *
+   * Turning right from the page before asks for the exact position where the
+   * last page starts, which is also the furthest the reader can go, so the
+   * reader has to count that position as inside the book. Both come from real
+   * layout here, where the unit test only has round numbers.
+   */
+  test("turning away and back onto it does not fire the end boundary", async ({
+    page,
+  }) => {
+    await setup(page)
+
+    await navigateToSpineItem({ page, index: LAST_SPINE_INDEX })
+    await expect.poll(() => settledPage(page)).toBe(LAST_SPINE_INDEX)
+
+    await page.evaluate(() => {
+      const el = document.getElementById("boundary-marker")
+      if (!el) return
+      el.dataset.count = "0"
+      el.dataset.last = ""
+    })
+
+    // away from the end, which must not read as the start either
+    await turnLeft({ page })
+    await expect.poll(() => settledPage(page)).toBe(LAST_SPINE_INDEX - 1)
+
+    // back onto the last page, without going past it
+    await turnRight({ page })
+    await expect.poll(() => settledPage(page)).toBe(LAST_SPINE_INDEX)
+
+    // A turn is judged for a boundary as it settles, in the same step that
+    // lets its page settle, so both turns have been judged by now.
+    await expect(marker(page)).toHaveAttribute("data-count", "0")
   })
 })
 

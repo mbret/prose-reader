@@ -45,7 +45,13 @@ const onLastPage = async () => {
 }
 
 describe("Given a reader on the last page", () => {
-  it("does not report a boundary for turning back and forward again", async () => {
+  /**
+   * Arriving on the last page is not going past it. Turning right from the
+   * page before asks for exactly where the last page starts, which is also the
+   * furthest the reader can go, so that position has to count as inside the
+   * book.
+   */
+  it("does not report a boundary for turning away and back onto the last page", async () => {
     const { reader, boundaries, settle } = await onLastPage()
 
     reader.navigation.turnLeft()
