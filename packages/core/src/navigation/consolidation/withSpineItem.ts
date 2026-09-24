@@ -1,6 +1,4 @@
 import { map, type Observable } from "rxjs"
-import type { CfiManager } from "../../cfi"
-import type { Context } from "../../context/Context"
 import type { ReaderSettingsManager } from "../../settings/ReaderSettingsManager"
 import type { SpineLocator } from "../../spine/locator/SpineLocator"
 import type { SpineItemsManager } from "../../spine/SpineItemsManager"
@@ -17,10 +15,7 @@ export const withSpineItem =
     spineItemsManager,
     navigationResolver,
     spineLocator,
-    cfi: cfiManager,
   }: {
-    cfi: CfiManager
-    context: Context
     settings: ReaderSettingsManager
     spineItemsManager: SpineItemsManager
     navigationResolver: NavigationResolver
@@ -29,7 +24,6 @@ export const withSpineItem =
   <N extends Navigation>(stream: Observable<N>): Observable<N> => {
     const getSpineItem = (navigation: InternalNavigationInput) => {
       const {
-        target,
         position,
         spineItem,
         directionFromLastNavigation: direction,
@@ -56,16 +50,6 @@ export const withSpineItem =
         }
 
         return spineItemsManager.get(0)
-      }
-
-      /**
-       * - cfi given
-       * - we can grab safely the item
-       */
-      if (target.type === "cfi" && target.value) {
-        const existingSpineItem = cfiManager.getSpineItemFromCfi(target.value)
-
-        if (existingSpineItem) return existingSpineItem
       }
 
       /**
@@ -99,9 +83,7 @@ export const withSpineItem =
           }) ?? {}
 
         const farthestSpineItemIndex =
-          (direction === "forward" || direction === "anchor"
-            ? endIndex
-            : beginIndex) ?? beginIndex
+          (direction === "forward" ? endIndex : beginIndex) ?? beginIndex
 
         const farthestSpineItem = spineItemsManager.get(farthestSpineItemIndex)
 
@@ -116,9 +98,7 @@ export const withSpineItem =
           }) ?? {}
 
         const farthestVisiblePageIndex =
-          (direction === "forward" || direction === "anchor"
-            ? endPageIndex
-            : beginPageIndex) ?? 0
+          (direction === "forward" ? endPageIndex : beginPageIndex) ?? 0
 
         const navigationForPosition =
           navigationResolver.getNavigationForSpineItemPage({
@@ -134,7 +114,7 @@ export const withSpineItem =
           })
 
         const finalSpineItemIndex =
-          direction === "forward" || direction === "anchor"
+          direction === "forward"
             ? visibleSpineItemsFromNavigablePosition?.beginIndex
             : visibleSpineItemsFromNavigablePosition?.endIndex
 

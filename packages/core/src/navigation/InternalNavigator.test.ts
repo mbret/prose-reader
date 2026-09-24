@@ -262,6 +262,35 @@ describe(`Given loaded book`, () => {
     )
   })
 
+  describe("Given a navigation to an empty cfi", () => {
+    it("goes to the first item, like any target naming nothing, and keeps navigating", async () => {
+      const { navigator, spineItemsManager, spine } = createNavigatorContext(2)
+      const navigations: InternalNavigationEntry[] = []
+
+      mockSpineItemsLayout(100, spine, spineItemsManager)
+
+      const sub = navigator.internalNavigator.navigationSubject
+        .pipe(skip(1))
+        .subscribe((navigation) => {
+          navigations.push(navigation)
+        })
+
+      navigator.navigate({ target: { type: "cfi", value: "" } })
+      await waitFor(50)
+
+      navigator.navigate({ target: { type: "spineItem", value: 1 } })
+      await waitFor(50)
+
+      sub.unsubscribe()
+
+      expect(
+        navigations
+          .filter(({ meta }) => meta.triggeredBy === "user")
+          .map(({ spineItem }) => spineItem),
+      ).toEqual([0, 1])
+    })
+  })
+
   describe("Given two consecutive user navigations resolving to the same position in scrollable mode", () => {
     // Regression: with the thumbnail/zoom toggle in scrollable mode, the
     // second call resolved to the same spine position as the first but

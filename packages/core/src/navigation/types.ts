@@ -15,7 +15,7 @@ export type NavigationVisibleArea = {
 /**
  * Each type of target a navigation can ask for, and the value it carries.
  */
-type NavigationTargetValues = {
+export type NavigationTargetValues = {
   /** A position in the spine. */
   position: SpinePosition | UnboundSpinePosition
   /** The start of a spine item, by index or id. */
@@ -26,26 +26,24 @@ type NavigationTargetValues = {
   url: string | URL
 }
 
+export type NavigationTargetType = keyof NavigationTargetValues
+
 /**
  * What a navigation asks for: exactly one target, of one type.
  */
-export type NavigationTarget = {
-  [Type in keyof NavigationTargetValues]: {
-    type: Type
-    value: NavigationTargetValues[Type]
+export type NavigationTarget<
+  Type extends NavigationTargetType = NavigationTargetType,
+> = {
+  [T in Type]: {
+    type: T
+    value: NavigationTargetValues[T]
   }
-}[keyof NavigationTargetValues]
+}[Type]
 
 export type UserNavigationEntry = {
   target: NavigationTarget
   animation?: boolean | "turn" | "snap"
   type?: "api" | "scroll"
-  /**
-   * Useful to be specified when navigating with pan
-   * and where a couple of px can go backward for the
-   * last navigation (finger release)
-   */
-  direction?: "left" | "right" | "top" | "bottom"
 }
 
 export type NavigationModeControllerNavigationEntry = {
@@ -71,30 +69,29 @@ export type NavigationConsolidation = {
    * Whether we should anchor from bottom or top of the item.
    * Works with `positionInSpineItem`
    *
-   * @forward : Used when the user navigate to position only. We will
-   * try to restore position starting from beginning of item.
+   * @forward : We will try to restore position starting from beginning of
+   * item. A target that names a place (an item, a cfi, a url) is always
+   * forward.
    *
-   * @backward : Used when the user navigate to position only. We will
-   * try to restore position starting from end of item.
-   *
-   * @anchor : similar to forward but more specific on the intent
+   * @backward : We will try to restore position starting from end of item.
+   * Only a position target can be backward, guessed from the previous
+   * navigation.
    */
-  directionFromLastNavigation?: "forward" | "backward" | "anchor"
+  directionFromLastNavigation?: "forward" | "backward"
 }
 
 /**
  * Priority of info taken for restoration:
- * - URL
- * - complete cfi
- * - incomplete cfi
+ * - url target
+ * - anchor
  * - spine item position
  * - spine item (fallback)
  */
 export type InternalNavigationEntry = {
   /**
-   * What the navigation asked for, as it asked for it. Consolidation resolves
-   * it into `spineItem` and `position` without changing it, and restorations
-   * carry it over.
+   * What the navigation asked for, as it asked for it. The target's resolver
+   * turns it into what it tells of `spineItem`, `position` and `anchor`,
+   * without changing it, and restorations carry it over.
    */
   target: NavigationTarget
   position: SpinePosition | UnboundSpinePosition
@@ -133,8 +130,9 @@ export type InternalNavigationEntry = {
   spineItem?: string | number
   /**
    * Where this navigation takes the reader in the text, the value restoration
-   * returns to. Computed by `withAnchor` for every entry, restorations
-   * included; `undefined` until the page it goes to is laid out.
+   * returns to. Named by the target when it is a cfi, otherwise found by
+   * `withAnchor` for every entry, restorations included; `undefined` until
+   * the page it goes to is laid out.
    */
   anchor?: string
 } & NavigationConsolidation
