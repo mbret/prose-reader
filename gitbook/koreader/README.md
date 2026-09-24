@@ -27,13 +27,11 @@ const getSpineItem = (spineItemIndex: number) => {
 const cfi = xPointerToCfi("/body/DocFragment[14]/body/div/p[3]/text().42", getSpineItem)
 // => "epubcfi(/6/28[chap05]!/4/2/6/1:42)"
 
-// prose's current position, into what the server and e-readers expect. Only a
-// settled pagination has the cfi of the page actually being read.
-const pagination = reader.pagination.state
-const xpointer = pagination.isSettled
-  ? cfiToXPointer(pagination.begin.cfi, getSpineItem)
-  : undefined
-// => "/body/DocFragment[14]/body/div/p[3]/text().42"
+// prose's reading position, into what the server and e-readers expect
+reader.navigation.readingPosition$.subscribe((cfi) => {
+  const xpointer = cfiToXPointer(cfi, getSpineItem)
+  // => "/body/DocFragment[14]/body/div/p[3]/text().42"
+})
 ```
 
 `getSpineItem` receives the index the pointer or CFI names and must answer with that item's document; passing whichever document is on screen is how other readers ended up a chapter away from the real position. The `id` is the `<itemref>` idref and becomes the CFI's id assertion, so the CFIs match the ones prose generates itself.

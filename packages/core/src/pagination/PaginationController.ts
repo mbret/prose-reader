@@ -16,6 +16,7 @@ import {
 } from "rxjs"
 import type { CfiManager } from "../cfi"
 import type { Context } from "../context/Context"
+import { PAGE_VISIBILITY_THRESHOLD } from "../spine/Pages"
 import type { Spine } from "../spine/Spine"
 import type { SpineItemsManager } from "../spine/SpineItemsManager"
 import type { SpinePosition, UnboundSpinePosition } from "../spine/types"
@@ -28,11 +29,6 @@ import type {
   PaginationInfo,
   SettledPaginationEdge,
 } from "./types"
-
-const VISIBILITY_THRESHOLD: { type: "percentage"; value: number } = {
-  type: "percentage",
-  value: 0.5,
-}
 
 type ResolvedEdges = {
   begin: SettledPaginationEdge<PaginationEdge>
@@ -51,16 +47,13 @@ export class PaginationController extends DestroyableClass {
     super()
 
     /**
-     * A navigation or a completed layout resolves a new result. A change of
+     * A navigation resolves a new result. That includes the navigator
+     * restoring the current navigation onto every layout that lands, which it
+     * does even when the position stays the same: until it has, the viewport
+     * still shows the position as it was on the layout replaced, so the
+     * restoration is what resolves a result over a new layout. A change of
      * layout currency, either way, only withdraws, and cancels whatever was
      * pending: it was resolved over the layout being replaced.
-     *
-     * The layout is current once its pages publish, but a result waits for the
-     * completed layout, because the navigator restores the navigation onto
-     * every layout that lands, and until it has, the viewport still shows the
-     * position as it was on the layout replaced. The navigator hears of a
-     * completed layout before pagination does since it is built first, which
-     * the restoration tests depend on.
      *
      * Every trigger drops settlement first, so no entry point can forget to,
      * and cancels whatever the previous one left pending, so a superseded
@@ -69,9 +62,7 @@ export class PaginationController extends DestroyableClass {
      * current when it settles found it current throughout.
      */
     merge(
-      merge(this.context.bridgeEvent.navigation$, spine.layout$).pipe(
-        map(() => this.resolve$()),
-      ),
+      this.context.bridgeEvent.navigation$.pipe(map(() => this.resolve$())),
       spine.isLayoutCurrent$.pipe(
         // Changes only: the current value is replayed on subscription.
         skip(1),
@@ -150,7 +141,7 @@ export class PaginationController extends DestroyableClass {
     return this.spine.locator.getVisiblePagesFromViewportPosition({
       spineItem,
       position,
-      threshold: VISIBILITY_THRESHOLD,
+      threshold: PAGE_VISIBILITY_THRESHOLD,
     })
   }
 
@@ -167,7 +158,7 @@ export class PaginationController extends DestroyableClass {
     const { beginIndex, endIndex } =
       this.spine.locator.getVisibleSpineItemsFromPosition({
         position,
-        threshold: VISIBILITY_THRESHOLD,
+        threshold: PAGE_VISIBILITY_THRESHOLD,
       }) ?? {}
 
     const beginSpineItem = this.spineItemsManager.get(beginIndex)

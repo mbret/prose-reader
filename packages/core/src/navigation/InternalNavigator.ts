@@ -21,11 +21,12 @@ import type { Context } from "../context/Context"
 import { Report } from "../report"
 import type { ReaderSettingsManager } from "../settings/ReaderSettingsManager"
 import type { Spine } from "../spine/Spine"
-import { SpinePosition, type UnboundSpinePosition } from "../spine/types"
+import { SpinePosition } from "../spine/types"
 import { DestroyableClass } from "../utils/DestroyableClass"
+import { isDefined } from "../utils/isDefined"
 import type { Viewport } from "../viewport/Viewport"
-import { consolidateWithPagination } from "./consolidation/consolidateWithPagination"
 import { mapUserNavigationToInternal } from "./consolidation/mapUserNavigationToInternal"
+import { withAnchor } from "./consolidation/withAnchor"
 import { withCfiPosition } from "./consolidation/withCfiPosition"
 import { withDirection } from "./consolidation/withDirection"
 import { withFallbackPosition } from "./consolidation/withFallbackPosition"
@@ -38,31 +39,13 @@ import type { createNavigationResolver } from "./resolvers/NavigationResolver"
 import { withRestoredPosition } from "./restoration/withRestoredPosition"
 import type {
   InternalNavigationEntry,
-  Navigation,
   NavigationModeController,
-  NavigationVisibleArea,
   UserNavigationEntry,
 } from "./types"
 
 const NAMESPACE = `navigation/InternalNavigator`
 
 const report = Report.namespace(NAMESPACE)
-
-const isSamePosition = (
-  a: SpinePosition | UnboundSpinePosition | undefined,
-  b: SpinePosition | UnboundSpinePosition | undefined,
-) => a === b || (!!a && !!b && a.x === b.x && a.y === b.y)
-
-const isSameVisibleArea = (
-  a: NavigationVisibleArea | undefined,
-  b: NavigationVisibleArea | undefined,
-) => a === b || (!!a && !!b && a.width === b.width && a.height === b.height)
-
-const isSameNavigation = (a: Navigation, b: Navigation) =>
-  a.id === b.id &&
-  isSamePosition(a.position, b.position) &&
-  isSamePosition(a.requestedPosition, b.requestedPosition) &&
-  isSameVisibleArea(a.requestedVisibleArea, b.requestedVisibleArea)
 
 export class InternalNavigator extends DestroyableClass {
   /**
@@ -84,6 +67,14 @@ export class InternalNavigator extends DestroyableClass {
     id: Symbol("init"),
   })
 
+  /**
+   * Every navigation as it happens: a user's, or a restoration re-applying the
+   * current one onto a new layout or once the user lets go. A restoration is
+   * emitted even when it lands where the navigation already was, because what
+   * it tells is that the navigation holds on the new layout, and the same
+   * position can show other content once the layout changed. For where the
+   * reader is, `position$` only emits when the position changes.
+   */
   public navigation$ = this.navigationSubject.pipe(
     map(({ position, id, requestedPosition, requestedVisibleArea, meta }) => ({
       position,
@@ -92,8 +83,25 @@ export class InternalNavigator extends DestroyableClass {
       requestedVisibleArea,
       triggeredBy: meta.triggeredBy,
     })),
-    distinctUntilChanged(isSameNavigation),
     shareReplay(1),
+  )
+
+  /**
+   * Where the reader is in the book, to save and reopen at: the current
+   * navigation's anchor, which `withAnchor` computes with every entry. Until
+   * the page a navigation goes to is laid out it has none, and this is the
+   * start of the item the navigation goes to, the only place a cfi can name
+   * in content that is not laid out. It only moves when the reader navigates,
+   * and once when such a navigation finds its page: a relayout reflows the
+   * page around it without changing it.
+   */
+  public readonly readingPosition$ = this.navigationSubject.pipe(
+    map(
+      (navigation) =>
+        navigation.anchor ?? navigation.cfi ?? this.getItemStart(navigation),
+    ),
+    filter(isDefined),
+    distinctUntilChanged(),
   )
 
   public locker = new Locker()
@@ -192,6 +200,7 @@ export class InternalNavigator extends DestroyableClass {
           settings,
           navigationResolver,
         }),
+        withAnchor({ spine, cfi: cfiManager }),
         map((params) => params.navigation),
         share(),
       )
@@ -309,20 +318,12 @@ export class InternalNavigator extends DestroyableClass {
         settings,
         navigationResolver,
       }),
+      withAnchor({ spine, cfi: cfiManager }),
       map(({ navigation }) => navigation),
       share(),
     )
 
-    const navigationUpdateOnPaginationUpdate$ = consolidateWithPagination(
-      context,
-      this.navigationSubject,
-    )
-
-    const navigationUpdate$ = merge(
-      navigationRestored$,
-      navigationFromUser$,
-      navigationUpdateOnPaginationUpdate$,
-    )
+    const navigationUpdate$ = merge(navigationRestored$, navigationFromUser$)
 
     const notifyNavigationUpdate = (
       stream: Observable<[InternalNavigationEntry, InternalNavigationEntry]>,
@@ -347,8 +348,6 @@ export class InternalNavigator extends DestroyableClass {
       stream.pipe(
         tap(([currentNavigation]) => {
           const isScrollFromUser = currentNavigation.type === `scroll`
-          const isPaginationUpdate =
-            currentNavigation.meta.triggeredBy === "pagination"
           const isRestoration =
             currentNavigation.meta.triggeredBy === "restoration"
 
@@ -356,7 +355,7 @@ export class InternalNavigator extends DestroyableClass {
           // spine position can map to a different DOM scroll target after
           // a scale change, layout reflow, or external scroll drift. Only
           // the controller owns surface state — let it dedup.
-          if ((isScrollFromUser && !isRestoration) || isPaginationUpdate) return
+          if (isScrollFromUser && !isRestoration) return
 
           const navigation = {
             position: currentNavigation.position,
@@ -367,20 +366,25 @@ export class InternalNavigator extends DestroyableClass {
         }),
       )
 
-    navigationUpdate$
-      .pipe(
-        withLatestFrom(this.navigationSubject),
-        /**
-         * @important
-         *
-         * We need to start navigation before notifying navigation change, this
-         * keeps navigationState sync and avoids a "free" ping in between.
-         */
-        navigateActiveModeController,
-        notifyNavigationUpdate,
-        takeUntil(this.destroy$),
-      )
-      .subscribe()
+    const notifiedNavigationUpdate$ = navigationUpdate$.pipe(
+      withLatestFrom(this.navigationSubject),
+      /**
+       * @important
+       *
+       * We need to start navigation before notifying navigation change, this
+       * keeps navigationState sync and avoids a "free" ping in between.
+       */
+      navigateActiveModeController,
+      notifyNavigationUpdate,
+    )
+
+    notifiedNavigationUpdate$.pipe(takeUntil(this.destroy$)).subscribe()
+  }
+
+  protected getItemStart(navigation: InternalNavigationEntry) {
+    const spineItem = this.spine.spineItemsManager.get(navigation.spineItem)
+
+    return spineItem && this.cfiManager.generateRootCfi(spineItem.item)
   }
 
   get navigation() {

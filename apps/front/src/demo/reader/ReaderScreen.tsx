@@ -20,7 +20,7 @@ import { isQuickMenuOpenSignal, useResetStateOnUnMount } from "./states"
 import { isClientStreamedBook } from "./streaming"
 import { useCreateReader } from "./useCreateReader"
 import { useManifest } from "./useManifest"
-import { usePersistCurrentPagination } from "./usePersistCurrentPage"
+import { usePersistReadingPosition } from "./usePersistReadingPosition"
 import { useReader } from "./useReader"
 
 export const ReaderScreen = memo(() => {
@@ -51,9 +51,9 @@ export const ReaderScreen = memo(() => {
 
   useDocumentTitle(manifest?.title ?? `Reader - prose reader demo`)
 
-  useCreateReader(manifest, readerContainerRef)
+  useCreateReader(manifest, readerContainerRef, epubKey)
   useUpdateReaderSettings({ localSettings })
-  usePersistCurrentPagination()
+  usePersistReadingPosition(epubKey)
   useResetStateOnUnMount()
   usePersistAnnotations(annotationsSignal, epubKey)
   useBookBoundariesReachedToast()

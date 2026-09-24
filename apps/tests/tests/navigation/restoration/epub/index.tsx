@@ -30,10 +30,14 @@ async function run() {
 
   const query = new URLSearchParams(window.location.search)
   const cfi = query.get("cfi") || undefined
+  const preload = query.get("preload")
 
   const reader = createReader({
     manifest,
     cfi,
+    ...(preload !== null && {
+      numberOfAdjacentSpineItemToPreLoad: Number(preload),
+    }),
     pageTurnAnimation: "none",
     layoutLayerTransition: false,
     getResource: (item) => {

@@ -77,10 +77,11 @@ export const restoreNavigationForControlledPageTurnMode = ({
         }
       }
 
-      const cfi = navigation.cfi ?? navigation.paginationBeginCfi
+      const cfi = navigation.anchor
 
       /**
-       * Restoration from cfi.
+       * Restoration from the anchor: the cfi the navigation named, or the text
+       * at the page it went to.
        * If the layout did not change, we should not restore from cfi since
        * we will have better accuracy from all other consolidation.
        *

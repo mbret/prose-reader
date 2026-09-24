@@ -15,6 +15,7 @@ import { SIGNAL_RESET } from "reactjrx"
 import { of } from "rxjs"
 import { getFileKeyFromUrl } from "../streamer/utils.shared"
 import { webStreamer } from "../streamer/webStreamer"
+import { getReadingPositionKey } from "./usePersistReadingPosition"
 import { readerSignal } from "./useReader"
 
 export type ReaderInstance = ReturnType<typeof createAppReader>
@@ -45,6 +46,7 @@ export const createAppReader = refitEnhancer(
 export const useCreateReader = (
   manifest: Manifest | undefined,
   containerRef: RefObject<HTMLElement | null>,
+  bookKey: string,
 ) => {
   useEffect(() => {
     const containerElement = containerRef.current
@@ -55,7 +57,7 @@ export const useCreateReader = (
 
     const readerOptions: Parameters<typeof createAppReader>[0] = {
       manifest,
-      cfi: localStorage.getItem(`cfi`) || undefined,
+      cfi: localStorage.getItem(getReadingPositionKey(bookKey)) || undefined,
       pageTurnAnimation: `slide`,
       pageTurnDirection: query.has("vertical") ? `vertical` : `horizontal`,
       pageTurnMode: query.has("free") ? `scrollable` : `controlled`,
@@ -93,5 +95,5 @@ export const useCreateReader = (
 
       webStreamer.prune()
     }
-  }, [manifest, containerRef])
+  }, [manifest, containerRef, bookKey])
 }
