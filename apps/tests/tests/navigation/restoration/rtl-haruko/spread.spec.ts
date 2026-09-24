@@ -1,6 +1,6 @@
 import { expect, type Page, test } from "@playwright/test"
 import type { Reader } from "@prose-reader/core"
-import { resizeAndSettle, waitForReader } from "../../../utils/pagination"
+import { resizeAndSettle, waitForSettled } from "../../../utils/pagination"
 
 /**
  * A spread shows two items at once, and its result only settles once both are
@@ -65,7 +65,7 @@ test.describe("Given a spread reached by cfi", () => {
 
     await page.setViewportSize(landscape)
     await page.goto(`${url}?cfi=${encodeURIComponent(cfi)}`)
-    await waitForReader(page)
+    await waitForSettled(page)
 
     const spread = await readVisibleRange(page)
 
