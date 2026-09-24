@@ -481,13 +481,10 @@ const openChapterAtRootCfi = async (page: Page) => {
   expect(chapterStart).not.toBe(cfi)
 
   const readRecorded = await recordReadingPositions(page)
-  let atOnce: Awaited<ReturnType<typeof navigateAndReadAtOnce>> | undefined
+  const atOnce = await navigateAndReadAtOnce(page, { cfi, into: chapterIndex })
+  await waitForSettled(page)
 
-  await navigateAndSettle(page, async () => {
-    atOnce = await navigateAndReadAtOnce(page, { cfi, into: chapterIndex })
-  })
-
-  expect(atOnce?.wasReady).toBe(false)
+  expect(atOnce.wasReady).toBe(false)
 
   return {
     chapterIndex,
@@ -502,7 +499,7 @@ test.describe("Given a chapter opened at a cfi naming only the chapter", () => {
   test.beforeEach(async ({ page }) => {
     await page.setViewportSize(initialSize)
     await page.goto(url)
-    await waitForReader(page)
+    await waitForSettled(page)
   })
 
   test("the reading position is the chapter start as the reader names it, while the chapter loads", async ({
@@ -510,7 +507,7 @@ test.describe("Given a chapter opened at a cfi naming only the chapter", () => {
   }) => {
     const { atOnce, chapterStart } = await openChapterAtRootCfi(page)
 
-    expect(atOnce?.cfi).toBe(chapterStart)
+    expect(atOnce.cfi).toBe(chapterStart)
   })
 
   test("the reading position is the chapter's first page once it loads, not the chapter", async ({
@@ -523,7 +520,7 @@ test.describe("Given a chapter opened at a cfi naming only the chapter", () => {
     expect(settled.spineItemIndex).toBe(chapterIndex)
     expect(settled.isRootCfi).toBe(false)
     expect(settled.readingPosition).toBe(settled.cfi)
-    expect(recorded.map(({ cfi }) => cfi)).toEqual([atOnce?.cfi, settled.cfi])
+    expect(recorded.map(({ cfi }) => cfi)).toEqual([atOnce.cfi, settled.cfi])
   })
 })
 
