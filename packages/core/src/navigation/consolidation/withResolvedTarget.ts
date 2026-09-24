@@ -22,7 +22,8 @@ const resolveTarget = <Type extends NavigationTargetType>(
 ) => resolvers[target.type](target.value, context)
 
 /**
- * The only consolidation step that reads the navigation's target.
+ * What the navigation's target tells of where it goes. With `withTargetAnchor`,
+ * the only steps that read the target.
  */
 export const withResolvedTarget =
   ({ resolvers }: { resolvers: NavigationTargetResolvers }) =>
@@ -41,4 +42,27 @@ export const withResolvedTarget =
           isExact,
         }
       }),
+    )
+
+/**
+ * A navigation without an anchor resolves its target again for one: a target
+ * naming a place in an item that had not loaded finds it once the item has.
+ */
+export const withTargetAnchor =
+  ({ resolvers }: { resolvers: NavigationTargetResolvers }) =>
+  <N extends { navigation: InternalNavigationEntry }>(stream: Observable<N>) =>
+    stream.pipe(
+      map((params) =>
+        params.navigation.anchor !== undefined
+          ? params
+          : {
+              ...params,
+              navigation: {
+                ...params.navigation,
+                anchor: resolveTarget(resolvers, params.navigation.target, {
+                  previousNavigation: params.navigation,
+                }).anchor,
+              },
+            },
+      ),
     )

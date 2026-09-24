@@ -359,6 +359,67 @@ const reader = createAppReader({
 
 Regarding this part, you are free to use a different strategy, especially if it feels cleaner to you. As long as your enhancer is correctly typed for end user, you are free to change the way you deal with dependencies.
 
+### Adding a navigation target
+
+An enhancer can teach `navigate` a target of its own. It widens `navigate` to
+take it, translates it into a target core knows, and hands every other target
+to the `navigate` it received. The type flows through the enhancers like any
+other output, so only a reader built with the enhancer takes the new target.
+
+A place that can only be found in a spine item's document, such as an element
+by id or a text offset, translates into a `node` target. Core calls `find` once
+the document is loaded, and until then goes to the item's start. Core's own url
+support is built this way: its url enhancer turns
+`{ type: "url", value: "…/ch02.xhtml#notes" }` into a `node` target that finds
+`#notes` in `ch02.xhtml`.
+
+```typescript
+import type {
+  NavigationTargetOf,
+  UserNavigationEntry,
+} from "@prose-reader/core"
+
+type NoteTarget = { type: "note"; value: string }
+
+export const notesEnhancer =
+  <InheritOptions, InheritOutput extends Reader>(
+    next: (options: InheritOptions) => InheritOutput,
+  ) =>
+  (options: InheritOptions) => {
+    const reader = next(options)
+    // What the inherited `navigate` accepts, which TS cannot follow through
+    // the generic reader.
+    const navigateInherited = reader.navigation.navigate as (
+      to: UserNavigationEntry<NavigationTargetOf<InheritOutput>>,
+    ) => void
+
+    const navigate = (
+      to: UserNavigationEntry<NavigationTargetOf<InheritOutput> | NoteTarget>,
+    ) => {
+      const { target } = to
+
+      if (target.type !== "note") return navigateInherited({ ...to, target })
+
+      reader.navigation.navigate({
+        ...to,
+        target: {
+          type: "node",
+          value: {
+            spineItem: "notes",
+            find: (document) => {
+              const node = document.getElementById(target.value)
+
+              return node ? { node } : undefined
+            },
+          },
+        },
+      })
+    }
+
+    return { ...reader, navigation: { ...reader.navigation, navigate } }
+  }
+```
+
 ### Custom CSS in enhancers
 
 To learn how to efficiently handle CSS with your enhancers, you can visit the [style-and-css.md](style-and-css.md "mention") section.

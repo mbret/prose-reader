@@ -27,7 +27,10 @@ import type { Viewport } from "../viewport/Viewport"
 import { mapUserNavigationToInternal } from "./consolidation/mapUserNavigationToInternal"
 import { withAnchor } from "./consolidation/withAnchor"
 import { withFallbackPosition } from "./consolidation/withFallbackPosition"
-import { withResolvedTarget } from "./consolidation/withResolvedTarget"
+import {
+  withResolvedTarget,
+  withTargetAnchor,
+} from "./consolidation/withResolvedTarget"
 import { withSnappedPosition } from "./consolidation/withSnappedPosition"
 import { withSpineItem } from "./consolidation/withSpineItem"
 import { withSpineItemLayoutInfo } from "./consolidation/withSpineItemLayoutInfo"
@@ -128,6 +131,7 @@ export class InternalNavigator extends DestroyableClass {
       navigationResolver,
       cfi: cfiManager,
       settings,
+      spineItemsManager: spine.spineItemsManager,
       getNavigationVisibleArea,
     })
 
@@ -251,6 +255,7 @@ export class InternalNavigator extends DestroyableClass {
       navigationUpdateFromLayout$,
       navigationUpdateFollowingUserUnlock$,
     ).pipe(
+      withTargetAnchor({ resolvers: targetResolvers }),
       withRestoredPosition({
         navigationResolver,
         settings,

@@ -22,8 +22,21 @@ export type NavigationTargetValues = {
   spineItem: number | string
   /** A cfi. */
   cfi: string
-  /** The url of a spine item, optionally with an element id as its fragment. */
-  url: string | URL
+  /**
+   * A place in a spine item's document, which `find` looks for once the
+   * document is there. Until then the navigation goes to the start of the
+   * item, and each restoration tries again.
+   */
+  node: {
+    spineItem: number | string
+    find: (document: Document) => NodePosition | undefined
+  }
+}
+
+/** A node, and an offset in it when it is text. */
+export type NodePosition = {
+  node: Node
+  offset?: number
 }
 
 export type NavigationTargetType = keyof NavigationTargetValues
@@ -40,11 +53,21 @@ export type NavigationTarget<
   }
 }[Type]
 
-export type UserNavigationEntry = {
-  target: NavigationTarget
+export type UserNavigationEntry<Target = NavigationTarget> = {
+  target: Target
   animation?: boolean | "turn" | "snap"
   type?: "api" | "scroll"
 }
+
+/**
+ * The targets a reader's `navigate` accepts: the ones of core, and those the
+ * enhancers it was built with add.
+ */
+export type NavigationTargetOf<Reader> = Reader extends {
+  navigation: { navigate: (to: UserNavigationEntry<infer Target>) => void }
+}
+  ? Target
+  : never
 
 export type NavigationModeControllerNavigationEntry = {
   position: SpinePosition | UnboundSpinePosition
@@ -82,7 +105,6 @@ export type NavigationConsolidation = {
 
 /**
  * Priority of info taken for restoration:
- * - url target
  * - anchor
  * - spine item position
  * - spine item (fallback)
@@ -101,7 +123,7 @@ export type InternalNavigationEntry = {
   }
   /**
    * What *this entry* asked for — before the navigator clamped or
-   * otherwise resolved it. `undefined` for `cfi` / `url` / `spineItem`
+   * otherwise resolved it. `undefined` for `cfi` / `node` / `spineItem`
    * navigations (no position component to compare).
    *
    * Each entry's `requestedPosition` reflects only that entry's intent:

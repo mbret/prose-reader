@@ -23,6 +23,10 @@ export type { EnhancerLayoutInputSettings } from "./enhancers/layout/types"
 export * from "./enhancers/navigation/types"
 export * from "./enhancers/pagination"
 export * from "./enhancers/types/enhancer"
+export type {
+  UrlNavigationEnhancerOutput,
+  UrlNavigationTarget,
+} from "./enhancers/urlNavigation/enhancer"
 export * from "./enhancers/zoom/types"
 export * from "./features/Features"
 export * from "./hooks"

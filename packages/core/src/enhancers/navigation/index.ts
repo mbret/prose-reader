@@ -1,12 +1,10 @@
-import { merge, takeUntil, tap } from "rxjs"
-import type { HtmlEnhancerOutput } from "../html/enhancer"
+import { takeUntil, tap } from "rxjs"
 import type {
   EnhancerOptions,
   EnhancerOutput,
   RootEnhancer,
 } from "../types/enhancer"
 import { outOfSpineBoundary } from "./boundary"
-import { handleLinksNavigation } from "./links"
 import { ManualNavigator } from "./navigators/manualNavigator"
 import { PanNavigator } from "./navigators/panNavigator"
 import { UserScrollNavigation } from "./navigators/UserScrollNavigation"
@@ -17,7 +15,7 @@ import type { NavigationEnhancerOutput } from "./types"
 export const navigationEnhancer =
   <
     InheritOptions extends EnhancerOptions<RootEnhancer>,
-    InheritOutput extends EnhancerOutput<RootEnhancer> & HtmlEnhancerOutput,
+    InheritOutput extends EnhancerOutput<RootEnhancer>,
   >(
     next: (options: InheritOptions) => InheritOutput,
   ) =>
@@ -32,16 +30,13 @@ export const navigationEnhancer =
       reader.navigation.lock,
     )
 
-    const linksNavigation$ = handleLinksNavigation(reader, manualNavigator)
     const navigateOnUserScroll$ = userScrollNavigation.navigation$.pipe(
       tap((navigation) => {
         reader.navigation.navigate(navigation)
       }),
     )
 
-    merge(linksNavigation$, navigateOnUserScroll$)
-      .pipe(takeUntil(reader.$.destroy$))
-      .subscribe()
+    navigateOnUserScroll$.pipe(takeUntil(reader.$.destroy$)).subscribe()
 
     const mount = (containerElement: HTMLElement) => {
       reader.mount(containerElement)
@@ -76,7 +71,6 @@ export const navigationEnhancer =
         turnLeft: manualNavigator.turnLeft.bind(manualNavigator),
         turnRight: manualNavigator.turnRight.bind(manualNavigator),
         goToCfi: manualNavigator.goToCfi.bind(manualNavigator),
-        goToUrl: manualNavigator.goToUrl.bind(manualNavigator),
         goToSpineItem: manualNavigator.goToSpineItem.bind(manualNavigator),
         goToNextSpineItem:
           manualNavigator.goToNextSpineItem.bind(manualNavigator),

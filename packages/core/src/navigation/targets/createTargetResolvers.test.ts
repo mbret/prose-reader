@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest"
 import type { CfiManager } from "../../cfi"
 import type { ReaderSettingsManager } from "../../settings/ReaderSettingsManager"
+import type { SpineItemsManager } from "../../spine/SpineItemsManager"
 import { SpinePosition } from "../../spine/types"
 import type { NavigationResolver } from "../resolvers/NavigationResolver"
 import type { InternalNavigationEntry, NavigationTarget } from "../types"
@@ -10,18 +11,34 @@ import type { TargetResolution } from "./types"
 const itemStart = "epubcfi(/6/2[0]!)"
 const text = "epubcfi(/6/2[0]!/4/8/1:0)"
 
-const createResolvers = () => {
+/** The item's document, holding the element a node target looks for. */
+const document = new DOMParser().parseFromString(
+  `<html><body><p id="note">A note</p></body></html>`,
+  "text/html",
+)
+
+const createResolvers = ({ isLoaded = true }: { isLoaded?: boolean } = {}) => {
   const navigationResolver = {
     clampPositionInSpine: (position: SpinePosition) => position,
     getNavigationForCfi: () => new SpinePosition({ x: 0, y: 0 }),
-    getNavigationForUrl: () => ({
-      position: new SpinePosition({ x: 0, y: 0 }),
-      spineItemId: "0",
-    }),
   }
+  const item = { index: 0, href: "0.xhtml" }
   const cfi = {
     isRootCfi: (value: string) => value.endsWith("!)"),
     getSpineItemFromCfi: () => ({ index: 0 }),
+    generateRootCfi: () => itemStart,
+    generateCfiForSpineItemPage: ({
+      pageNode,
+    }: {
+      pageNode: { node: Node }
+    }) => (pageNode.node === document.getElementById("note") ? text : "other"),
+  }
+  const spineItemsManager = {
+    get: () => ({
+      item,
+      value: { isLoaded },
+      renderer: { getDocumentFrame: () => ({ contentDocument: document }) },
+    }),
   }
   const settings = { values: { computedPageTurnDirection: "horizontal" } }
 
@@ -31,6 +48,7 @@ const createResolvers = () => {
     navigationResolver: navigationResolver as unknown as NavigationResolver,
     cfi: cfi as unknown as CfiManager,
     settings: settings as unknown as ReaderSettingsManager,
+    spineItemsManager: spineItemsManager as unknown as SpineItemsManager,
     getNavigationVisibleArea: () => ({ width: 100, height: 100 }),
   })
 }
@@ -40,8 +58,11 @@ const previousNavigation = {
   // A navigation entry carries far more; the resolvers read only these.
 } as InternalNavigationEntry
 
-const resolve = (target: NavigationTarget): TargetResolution => {
-  const resolvers = createResolvers()
+const resolve = (
+  target: NavigationTarget,
+  options?: Parameters<typeof createResolvers>[0],
+): TargetResolution => {
+  const resolvers = createResolvers(options)
   const context = { previousNavigation }
 
   switch (target.type) {
@@ -51,9 +72,21 @@ const resolve = (target: NavigationTarget): TargetResolution => {
       return resolvers.spineItem(target.value, context)
     case "cfi":
       return resolvers.cfi(target.value, context)
-    case "url":
-      return resolvers.url(target.value, context)
+    case "node":
+      return resolvers.node(target.value, context)
   }
+}
+
+const note: NavigationTarget = {
+  type: "node",
+  value: {
+    spineItem: 0,
+    find: (document) => {
+      const node = document.getElementById("note")
+
+      return node ? { node } : undefined
+    },
+  },
 }
 
 describe("target resolvers", () => {
@@ -66,9 +99,20 @@ describe("target resolvers", () => {
     expect(resolve({ type: "cfi", value: itemStart }).anchor).toBeUndefined()
   })
 
+  it("anchor a node navigation at the cfi of what it finds", () => {
+    expect(resolve(note).anchor).toBe(text)
+  })
+
+  it("leave a node its item has not loaded without an anchor, for restorations to look again", () => {
+    expect(resolve(note, { isLoaded: false })).toMatchObject({
+      spineItem: 0,
+      anchor: undefined,
+    })
+  })
+
   it.each<[string, NavigationTarget, boolean]>([
     ["a cfi", { type: "cfi", value: text }, true],
-    ["a url", { type: "url", value: "https://book/0.xhtml#note" }, true],
+    ["a node", note, true],
     [
       "a position",
       { type: "position", value: new SpinePosition({ x: 10, y: 0 }) },

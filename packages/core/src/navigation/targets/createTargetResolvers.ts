@@ -1,5 +1,6 @@
 import type { CfiManager } from "../../cfi"
 import type { ReaderSettingsManager } from "../../settings/ReaderSettingsManager"
+import type { SpineItemsManager } from "../../spine/SpineItemsManager"
 import type { NavigationResolver } from "../resolvers/NavigationResolver"
 import type { NavigationVisibleArea } from "../types"
 import { guessDirection } from "./guessDirection"
@@ -9,68 +10,85 @@ export const createTargetResolvers = ({
   navigationResolver,
   cfi,
   settings,
+  spineItemsManager,
   getNavigationVisibleArea,
 }: {
   navigationResolver: NavigationResolver
   cfi: CfiManager
   settings: ReaderSettingsManager
+  spineItemsManager: SpineItemsManager
   getNavigationVisibleArea: () => NavigationVisibleArea
-}): NavigationTargetResolvers => ({
-  position: (requestedPosition, { previousNavigation }) => {
-    const requestedVisibleArea = getNavigationVisibleArea()
-    // Clamp the full viewport rectangle, not just the top-left point:
-    // a point-only clamp lets the viewport spill past the end by
-    // `~viewportSize` and the stored position diverges from where the
-    // DOM scroll actually lands in scrollable mode.
-    const position = navigationResolver.clampPositionInSpine(
-      requestedPosition,
-      requestedVisibleArea,
-    )
+}): NavigationTargetResolvers => {
+  const resolvers: NavigationTargetResolvers = {
+    position: (requestedPosition, { previousNavigation }) => {
+      const requestedVisibleArea = getNavigationVisibleArea()
+      // Clamp the full viewport rectangle, not just the top-left point:
+      // a point-only clamp lets the viewport spill past the end by
+      // `~viewportSize` and the stored position diverges from where the
+      // DOM scroll actually lands in scrollable mode.
+      const position = navigationResolver.clampPositionInSpine(
+        requestedPosition,
+        requestedVisibleArea,
+      )
 
-    return {
-      position,
-      requestedPosition,
-      requestedVisibleArea,
-      directionFromLastNavigation: guessDirection({
+      return {
         position,
-        previousNavigation,
-        settings,
-      }),
+        requestedPosition,
+        requestedVisibleArea,
+        directionFromLastNavigation: guessDirection({
+          position,
+          previousNavigation,
+          settings,
+        }),
+        isExact: false,
+      }
+    },
+
+    spineItem: (spineItem) => ({
+      spineItem,
+      directionFromLastNavigation: "forward",
       isExact: false,
-    }
-  },
+    }),
 
-  spineItem: (spineItem) => ({
-    spineItem,
-    directionFromLastNavigation: "forward",
-    isExact: false,
-  }),
+    cfi: (value) => {
+      if (!value)
+        return { directionFromLastNavigation: "forward", isExact: false }
 
-  cfi: (value) => {
-    if (!value)
-      return { directionFromLastNavigation: "forward", isExact: false }
+      return {
+        spineItem: cfi.getSpineItemFromCfi(value)?.index,
+        position: navigationResolver.getNavigationForCfi(value),
+        // A cfi naming only an item is anchored at the page it lands on.
+        anchor: cfi.isRootCfi(value) ? undefined : value,
+        directionFromLastNavigation: "forward",
+        isExact: true,
+      }
+    },
 
-    return {
-      spineItem: cfi.getSpineItemFromCfi(value)?.index,
-      position: navigationResolver.getNavigationForCfi(value),
-      // A cfi naming only an item is anchored at the page it lands on.
-      anchor: cfi.isRootCfi(value) ? undefined : value,
-      directionFromLastNavigation: "forward",
-      isExact: true,
-    }
-  },
+    node: ({ spineItem, find }, context) => {
+      const item = spineItemsManager.get(spineItem)
 
-  url: (value) => {
-    if (!value)
-      return { directionFromLastNavigation: "forward", isExact: false }
+      if (!item)
+        return { directionFromLastNavigation: "forward", isExact: false }
 
-    const result = navigationResolver.getNavigationForUrl(value)
+      const document = item.value.isLoaded
+        ? item.renderer.getDocumentFrame()?.contentDocument
+        : undefined
+      const found = document ? find(document) : undefined
 
-    return {
-      spineItem: result?.spineItemId,
-      position: result?.position,
-      directionFromLastNavigation: "forward",
-      isExact: true,
-    }
-  },
-})
+      // Found, it is the cfi of what it found. Until then it is the item start,
+      // which names no text, so the navigation has no anchor and restorations
+      // look again.
+      return resolvers.cfi(
+        found
+          ? cfi.generateCfiForSpineItemPage({
+              spineItem: item.item,
+              pageNode: { node: found.node, offset: found.offset ?? 0 },
+            })
+          : cfi.generateRootCfi(item.item),
+        context,
+      )
+    },
+  }
+
+  return resolvers
+}
