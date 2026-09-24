@@ -32,7 +32,6 @@ import { fixReflowable } from "./fixReflowable"
 import { flagSpineItems } from "./flagSpineItems"
 import { SettingsManager } from "./SettingsManager"
 import type { EnhancerLayoutInputSettings, OutputSettings } from "./types"
-import { updateSpreadMode } from "./updateSpreadMode"
 
 export type LayoutEnhancerOutput = {
   layout$: Observable<ObservedValueOf<Pages>>
@@ -271,8 +270,6 @@ export const layoutEnhancer =
 
     const flagSpineItems$ = flagSpineItems(reader)
 
-    const updateSpreadMode$ = updateSpreadMode(reader)
-
     const placeholderPages$ = createPlaceholderPages(reader)
 
     merge(
@@ -281,7 +278,6 @@ export const layoutEnhancer =
       layoutOnContainerResize$,
       layoutInfo$,
       flagSpineItems$,
-      updateSpreadMode$,
       placeholderPages$,
     )
       .pipe(takeUntil(reader.$.destroy$))

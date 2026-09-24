@@ -67,7 +67,7 @@ export const getNavigationForLeftOrTopPage = ({
     return navigationResolver.getAdjustedPositionForSpread(navigation)
   }
 
-  if (settings.values.computedSpreadMode) {
+  if (viewport.value.isSpread) {
     // in case of spread the entire screen is taken as one real page for vertical content
     // in order to move out from it we add an extra page width.
     // using `getNavigationForLeftSinglePage` again would keep x as it is and wrongly move y

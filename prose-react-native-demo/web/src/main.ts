@@ -51,7 +51,7 @@ bridgeReader({
        * Regular reader creation options.
        * Works the same as web counterpart.
        */
-      spreadMode: false,
+      spreadMode: "never",
       numberOfAdjacentSpineItemToPreLoad: 3,
     }),
   bridge,

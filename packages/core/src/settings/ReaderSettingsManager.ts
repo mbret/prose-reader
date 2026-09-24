@@ -1,7 +1,6 @@
 import { takeUntil, tap } from "rxjs"
 import type { Context } from "../context/Context"
 import { Report } from "../report"
-import { computeSpreadMode } from "./computeSpreadMode"
 import type { SettingsInterface } from "./SettingsInterface"
 import { SettingsManager } from "./SettingsManager"
 import type {
@@ -43,10 +42,6 @@ export class ReaderSettingsManager
       computedPageTurnAnimation: settings.pageTurnAnimation,
       computedPageTurnMode: settings.pageTurnMode,
       computedPageTurnAnimationDuration: 0,
-      computedSpreadMode: computeSpreadMode({
-        spreadMode: settings.spreadMode,
-        manifest,
-      }),
     }
 
     // We force scroll mode for some books
@@ -93,7 +88,7 @@ export class ReaderSettingsManager
 
   getDefaultSettings() {
     return {
-      spreadMode: false,
+      spreadMode: `auto` as const,
       pageTurnAnimation: `slide`,
       pageTurnDirection: `horizontal` as const,
       pageTurnAnimationDuration: undefined,

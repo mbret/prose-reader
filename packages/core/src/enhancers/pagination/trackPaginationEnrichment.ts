@@ -242,10 +242,7 @@ export const trackPaginationEnrichment = (
     shareReplay({ bufferSize: 1, refCount: true }),
   )
 
-  const isUsingSpread$ = reader.settings.watch(["computedSpreadMode"]).pipe(
-    map((settings) => settings.computedSpreadMode ?? false),
-    distinctUntilChanged(),
-  )
+  const isUsingSpread$ = reader.viewport.watch("isSpread")
 
   const totals$ = pagesState$.pipe(
     map((pagesState) =>

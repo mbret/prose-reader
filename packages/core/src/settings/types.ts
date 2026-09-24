@@ -6,7 +6,19 @@ import type {
 } from "../spineItem/renderer/DocumentRenderer"
 
 export type CoreInputSettings = {
-  spreadMode: boolean
+  /**
+   * Whether two pages share the viewport.
+   * - `auto`: when the viewport's orientation and the book's `rendition:spread`
+   *   call for it.
+   * - `always`: in every orientation.
+   * - `never`: one page at a time.
+   *
+   * The viewport resolves it at each layout, within what the book allows: a
+   * book whose `rendition:spread` is `none`, or whose `rendition:flow` is
+   * `scrolled-continuous`, is never shown in a spread. What the reader shows is
+   * `reader.viewport.value.isSpread`.
+   */
+  spreadMode: `auto` | `always` | `never`
   pageTurnAnimation: `none` | `fade` | `slide`
   pageTurnAnimationDuration: undefined | number
   pageTurnDirection: `vertical` | `horizontal`
@@ -73,7 +85,6 @@ export type CoreInputSettings = {
  * we will overwrite it and force it to vertical (granted we only support vertical).
  */
 export type ComputedCoreSettings = {
-  computedSpreadMode: boolean
   /**
    * controlled: viewport will move in a controlled way, moving from one page to another with calculated coordinate
    * scrollable: viewport will use a simple css overflow mecanism and let the user scroll through content
