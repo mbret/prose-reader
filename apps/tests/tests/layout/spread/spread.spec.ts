@@ -1,5 +1,5 @@
 import { expect, type Page, test } from "@playwright/test"
-import { locateSpineItems } from "../../utils"
+import { locateSpineItems, navigateToSpineItem } from "../../utils"
 import {
   resizeAndSettle,
   updateSettingsAndSettle,
@@ -21,9 +21,8 @@ const portrait = { width: 400, height: 671 }
 
 /**
  * The share of the window's width the second page takes on screen: a half
- * when it is shown in a spread, all of it on its own. The first page opens the
- * book alone, beside a blank page, so it spans the window either way; the
- * second shares a spread with the third.
+ * when it is shown in a spread, all of it on its own. A page off screen still
+ * has a width, so it first asserts that the page is in the window.
  */
 const secondPageShareOfWidth = async (page: Page) => {
   const [secondPage] = await locateSpineItems({
@@ -31,7 +30,13 @@ const secondPageShareOfWidth = async (page: Page) => {
     indexes: [1],
     isReady: false,
   })
-  const box = await secondPage?.boundingBox()
+
+  if (!secondPage) throw new Error("the second page is missing")
+
+  // not 1: Mobile Safari measures a sub-pixel of the page outside the window
+  await expect(secondPage).toBeInViewport({ ratio: 0.99 })
+
+  const box = await secondPage.boundingBox()
   const window = page.viewportSize()
 
   if (!box || !window) throw new Error("the second page has no size on screen")
@@ -39,9 +44,19 @@ const secondPageShareOfWidth = async (page: Page) => {
   return Math.round((box.width / window.width) * 100) / 100
 }
 
-const openAt = async (page: Page, size: { width: number; height: number }) => {
+/**
+ * Opens the book at `size`, on its second page. The first page opens the book
+ * alone, beside a blank page, so it spans the window either way; the second
+ * shares a spread with the third, or is shown on its own.
+ */
+const openOnSecondPage = async (
+  page: Page,
+  size: { width: number; height: number },
+) => {
   await page.setViewportSize(size)
   await page.goto(url)
+  await waitForSettled(page)
+  await navigateToSpineItem({ page, index: 1 })
   await waitForSettled(page)
 }
 
@@ -49,7 +64,7 @@ test.describe("Given a reader resized across the spread threshold", () => {
   test("shows a spread in landscape and one page at a time in portrait", async ({
     page,
   }) => {
-    await openAt(page, landscape)
+    await openOnSecondPage(page, landscape)
 
     expect(await secondPageShareOfWidth(page)).toBe(0.5)
 
@@ -65,7 +80,7 @@ test.describe("Given a reader resized across the spread threshold", () => {
 
 test.describe("Given the spreadMode setting", () => {
   test("never shows the pages one at a time in landscape", async ({ page }) => {
-    await openAt(page, landscape)
+    await openOnSecondPage(page, landscape)
 
     expect(await secondPageShareOfWidth(page)).toBe(0.5)
 
@@ -75,7 +90,7 @@ test.describe("Given the spreadMode setting", () => {
   })
 
   test("always shows a spread in portrait", async ({ page }) => {
-    await openAt(page, portrait)
+    await openOnSecondPage(page, portrait)
 
     expect(await secondPageShareOfWidth(page)).toBe(1)
 
