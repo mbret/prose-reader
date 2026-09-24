@@ -169,19 +169,25 @@ export class Viewport extends ReactiveEntity<State> {
     return this.value.pageSize
   }
 
+  /**
+   * The scale the viewport is rendered at, from its rendered width over its
+   * layout width, both as they are now. The width recorded at the last layout
+   * would count a resize that has not been laid out yet as part of the scale.
+   */
   public get scaleFactor() {
-    const absoluteViewport = this.absoluteViewport
+    const { element } = this.value
+    const layoutWidth = element.clientWidth
 
-    if (!absoluteViewport.width) return 1
+    if (!layoutWidth) return 1
 
-    const viewportRect = this.value.element.getBoundingClientRect()
+    const viewportRect = element.getBoundingClientRect()
     // Fall back to no-zoom (`1`) when the rendered rect is unavailable
     // (detached element, `display: none`, jsdom). A 0-width rect would
     // otherwise yield a 0 scale and propagate `Infinity` through every
     // consumer that divides by `scaleFactor` (e.g. spine-coord clamping).
-    const measuredWidth = viewportRect?.width || absoluteViewport.width
+    const measuredWidth = viewportRect?.width || layoutWidth
 
-    return measuredWidth / absoluteViewport.width
+    return measuredWidth / layoutWidth
   }
 
   /**
