@@ -27,9 +27,9 @@ const { fakeBridges } = vi.hoisted(() => {
       addEventListener: (event: string, listener: (data: unknown) => void) => {
         listeners.set(event, [...(listeners.get(event) ?? []), listener])
       },
-      setPagination: vi.fn(async (_pagination: unknown) => {}),
-      setContext: vi.fn(async (_context: unknown) => {}),
-      setReadingPosition: vi.fn(async (_readingPosition: unknown) => {}),
+      report: vi.fn(
+        async (_load: number, _state: Record<string, unknown>) => {},
+      ),
       emit: (event: string, data?: unknown) => {
         for (const listener of listeners.get(event) ?? []) {
           listener(data)
@@ -144,14 +144,26 @@ const linkNativeSide = () => {
 
   if (!native) throw new Error("createReaderBridge did not link a bridge")
 
-  const load = (options?: Omit<ReaderLoadOptions, "manifest">) =>
-    native.emit("load", { manifest, ...options })
+  let loads = 0
 
-  return { bridge, native, load }
+  /** Sends a book the way the native side's `load` does, numbering each. */
+  const load = (options?: Omit<ReaderLoadOptions, "manifest">) =>
+    native.emit("load", {
+      load: ++loads,
+      options: { manifest, ...options },
+    })
+
+  /** Every value reported for `key`, with the load it was tagged with. */
+  const reported = (key: string) =>
+    native.report.mock.calls
+      .filter(([, state]) => key in state)
+      .map(([load, state]) => [load, state[key]])
+
+  return { bridge, native, load, reported }
 }
 
 const setup = () => {
-  const { bridge, native, load } = linkNativeSide()
+  const { bridge, native, load, reported } = linkNativeSide()
   const readers: Reader[] = []
   const loadOptions: ReaderLoadOptions[] = []
   let failNextReader = false
@@ -184,7 +196,15 @@ const setup = () => {
     failNextReader = true
   }
 
-  return { controller, native, load, reader, loadOptions, failNextLoad }
+  return {
+    controller,
+    native,
+    load,
+    reported,
+    reader,
+    loadOptions,
+    failNextLoad,
+  }
 }
 
 describe("Given a bridged webview", () => {
@@ -206,36 +226,38 @@ describe("Given a bridged webview", () => {
     })
 
     it("reports the reader's context to the native side, without its root element", () => {
-      const { native, load } = setup()
+      const { load, reported } = setup()
 
       load()
 
-      expect(native.setContext).toHaveBeenCalled()
+      expect(reported("context")).not.toHaveLength(0)
 
-      for (const [context] of native.setContext.mock.calls) {
+      for (const [, context] of reported("context")) {
         expect(context).toMatchObject({ manifest })
         expect(context).not.toHaveProperty("rootElement")
       }
     })
 
     it("reports the reader's pagination to the native side", () => {
-      const { native, load, reader } = setup()
+      const { load, reported, reader } = setup()
 
       load()
 
-      expect(native.setPagination).toHaveBeenLastCalledWith(
+      expect(reported("pagination").at(-1)).toEqual([
+        1,
         reader(0).pagination.state,
-      )
+      ])
     })
 
     it("reports the reader's reading position to the native side", () => {
-      const { native, load, reader } = setup()
+      const { load, reported, reader } = setup()
 
       load()
 
-      expect(native.setReadingPosition).toHaveBeenLastCalledWith(
+      expect(reported("readingPosition").at(-1)).toEqual([
+        1,
         currentReadingPosition(reader(0)),
-      )
+      ])
     })
   })
 
@@ -254,11 +276,11 @@ describe("Given a bridged webview", () => {
      * receives is one it may save, so it must not receive that one.
      */
     it("reports that cfi as the first reading position, never the start of the book before it", () => {
-      const { native, load } = setup()
+      const { load, reported } = setup()
 
       load({ cfi: secondChapterCfi })
 
-      expect(native.setReadingPosition.mock.calls).toEqual([[secondChapterCfi]])
+      expect(reported("readingPosition")).toEqual([[1, secondChapterCfi]])
     })
 
     it("turns the reader's pages on the native side's commands", () => {
@@ -295,8 +317,22 @@ describe("Given a bridged webview", () => {
       }
     })
 
+    it("tags every report of the new reader with the new load", () => {
+      const { native, load } = setup()
+
+      load()
+      native.report.mockClear()
+      load()
+
+      expect(native.report).toHaveBeenCalled()
+
+      for (const [reportedLoad] of native.report.mock.calls) {
+        expect(reportedLoad).toBe(2)
+      }
+    })
+
     it("stops listening to the previous reader, even if its state never completes", () => {
-      const { bridge, native, load } = linkNativeSide()
+      const { bridge, load, reported } = linkNativeSide()
       const pagination = new Subject<Record<string, unknown>>()
       const context = new Subject<Record<string, unknown>>()
       const readingPosition = new Subject<string>()
@@ -337,9 +373,10 @@ describe("Given a bridged webview", () => {
 
       readingPosition.next(secondChapterCfi)
 
-      expect(native.setReadingPosition).not.toHaveBeenCalledWith(
+      expect(reported("readingPosition")).not.toContainEqual([
+        expect.anything(),
         secondChapterCfi,
-      )
+      ])
     })
 
     it("turns the pages of the new reader only", () => {

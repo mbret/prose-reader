@@ -3,6 +3,7 @@ import { useCallback, useEffect, useState } from "react"
 import type {
   BridgeMethods,
   ProsePostMessageSchema,
+  ReaderLoadMessage,
   ReaderLoadOptions,
 } from "../shared"
 import { useProseBridge } from "./useProseBridge"
@@ -12,7 +13,7 @@ export const appPostMessageSchema = postMessageSchema<ProsePostMessageSchema>({
     // The schema hands every message over as `unknown`. The only sender is
     // `load` below, which is typed, so this types the message rather than
     // checking it.
-    validate: (data) => data as ReaderLoadOptions,
+    validate: (data) => data as ReaderLoadMessage,
   },
   turnRight: {
     validate: () => {},
@@ -30,7 +31,7 @@ export const useCreateReader = (options: BridgeMethods) => {
     | undefined
   >(undefined)
 
-  const appBridge = useProseBridge(options)
+  const { appBridge, startLoad } = useProseBridge(options)
   const postMessage = webviewBridge?.postMessage
 
   useEffect(() => {
@@ -47,9 +48,11 @@ export const useCreateReader = (options: BridgeMethods) => {
 
   const load = useCallback(
     (loadOptions: ReaderLoadOptions) => {
-      postMessage?.("load", loadOptions)
+      if (!postMessage) return
+
+      postMessage("load", { load: startLoad(), options: loadOptions })
     },
-    [postMessage],
+    [postMessage, startLoad],
   )
 
   if (!webviewBridge) return null

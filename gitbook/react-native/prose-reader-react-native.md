@@ -158,8 +158,10 @@ const BottomMenu = () => {
 * `useReader()` — commands sent to the reader in the webview: `turnLeft`,
   `turnRight`
 * `useReaderState(selector)` — the state the web side pushes back, selected the
-  same way as any bridge store: `pagination`, `context` and `readingPosition`,
-  each `undefined` until the reader reports for the first time
+  same way as any bridge store: `pagination`, `context` and `readingPosition`
+  of the book last loaded, each `null` until its reader reports it. `load`
+  clears them: from the moment it is called they are `null` again, and nothing
+  the previous book's reader reports afterwards lands
 
 The bridge is maintained by hand and is not a 1:1 mapping of the prose API, so
 it is expected to lag behind it — see
@@ -217,11 +219,11 @@ const SaveReadingPosition = ({ bookId }: { bookId: string }) => {
 
 `storage` stands for wherever your app keeps data. The first position the
 reader reports is the one it opens at, the `cfi` sent with `load` or the start
-of the book, so every value can be saved as it comes. Render one `Reader` per
-book, keyed by it (`<Reader key={bookId} … />`). The bridge state belongs to the
-last book loaded, and after a `load` of another book it keeps the previous
-book's values until the new reader reports: a `Reader` of its own gives each
-book its own bridge, so a position is never saved under another book.
+of the book, so every value can be saved as it comes. `load` clears the state
+the moment it is called, and nothing the previous book's reader reports lands
+after it: every `readingPosition` is one of the book last passed to `load`, so
+save it under that book, as `SaveReadingPosition` does with the `bookId` the
+`Reader` loaded.
 
 ## Serving the book
 

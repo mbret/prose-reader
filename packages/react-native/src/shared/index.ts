@@ -16,13 +16,26 @@ type RnContextState = Omit<ContextState, "rootElement">
  */
 export type ReaderLoadOptions = Pick<ReaderOptions, "manifest" | "cfi">
 
-export interface BridgeState extends Bridge {
-  pagination: EnhancerPaginationInfo | undefined
-  setPagination: (pagination: EnhancerPaginationInfo) => Promise<void>
-  context: RnContextState | undefined
-  setContext: (context: RnContextState) => Promise<void>
-  readingPosition: string | undefined
-  setReadingPosition: (readingPosition: string) => Promise<void>
+/**
+ * What the web side reports of the reader of the book last loaded. Each value
+ * is `null` until that reader has reported it: `null` rather than `undefined`
+ * because the bridge store drops `undefined` values, so a `load` could not
+ * clear the previous book's otherwise.
+ */
+export type ReaderState = {
+  pagination: EnhancerPaginationInfo | null
+  context: RnContextState | null
+  readingPosition: string | null
+}
+
+export interface BridgeState extends Bridge, ReaderState {
+  /**
+   * Called by the web side with part of its reader's state, and the `load`
+   * that reader was created for. A report for any `load` but the latest is
+   * dropped: the previous reader's can still be crossing the bridge when the
+   * next `load` starts.
+   */
+  report: (load: number, state: Partial<ReaderState>) => Promise<void>
 }
 
 export type BridgeMethods = {
@@ -36,9 +49,18 @@ export type BridgeMethods = {
 
 export type ProseBridgeStore = BridgeStore<BridgeMethods & BridgeState>
 
+/**
+ * A `load` as it crosses the bridge: the options of the reader to create, and
+ * which load it is, for the web side to tag that reader's reports with.
+ */
+export type ReaderLoadMessage = {
+  load: number
+  options: ReaderLoadOptions
+}
+
 export type ProsePostMessageSchema = {
   load: {
-    validate: (data: unknown) => ReaderLoadOptions
+    validate: (data: unknown) => ReaderLoadMessage
   }
   turnRight: {
     validate: () => void

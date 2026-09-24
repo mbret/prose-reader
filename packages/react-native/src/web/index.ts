@@ -1,10 +1,11 @@
 import type { Reader } from "@prose-reader/core"
 import { linkBridge } from "@webview-bridge/web"
-import { Subscription } from "rxjs"
+import { map, merge, Subscription } from "rxjs"
 import type {
   ProseBridgeStore,
   ProsePostMessageSchema,
   ReaderLoadOptions,
+  ReaderState,
 } from "../shared"
 
 // Annotated rather than inferred: `Reader` is a large enough type that
@@ -44,7 +45,7 @@ export const bridgeReader = ({
 }): ReaderBridgeController => {
   let current: { reader: Reader; subscription: Subscription } | undefined
 
-  bridge.addEventListener("load", ({ manifest, cfi }) => {
+  bridge.addEventListener("load", ({ load, options: { manifest, cfi } }) => {
     // Unsubscribe before destroying, so nothing the old reader emits while it
     // shuts down reaches the native side. Not every reader stream completes
     // on destroy (pagination does not), so the subscription is what ends.
@@ -66,21 +67,25 @@ export const bridgeReader = ({
      * the native side receives, and saves. Every stream here replays its
      * current value, so nothing the mounted reader holds is missed.
      */
-    subscription.add(
-      reader.pagination.state$.subscribe((state) => {
-        bridge.setPagination(state)
-      }),
+    const state$ = merge(
+      reader.pagination.state$.pipe(
+        map((pagination): Partial<ReaderState> => ({ pagination })),
+      ),
+      reader.context.pipe(
+        map(
+          ({ rootElement, ...context }): Partial<ReaderState> => ({
+            context,
+          }),
+        ),
+      ),
+      reader.navigation.readingPosition$.pipe(
+        map((readingPosition): Partial<ReaderState> => ({ readingPosition })),
+      ),
     )
 
     subscription.add(
-      reader.context.subscribe(({ rootElement, ...rest }) => {
-        bridge.setContext(rest)
-      }),
-    )
-
-    subscription.add(
-      reader.navigation.readingPosition$.subscribe((readingPosition) => {
-        bridge.setReadingPosition(readingPosition)
+      state$.subscribe((state) => {
+        bridge.report(load, state)
       }),
     )
   })
