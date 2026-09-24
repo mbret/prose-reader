@@ -130,7 +130,10 @@ describe("observeBookBoundaryReached", () => {
       )
 
       navigator.navigate({
-        position: new SpinePosition({ x: 9999, y: 0 }),
+        target: {
+          type: "position",
+          value: new SpinePosition({ x: 9999, y: 0 }),
+        },
         animation: false,
       })
 
@@ -152,7 +155,10 @@ describe("observeBookBoundaryReached", () => {
       )
 
       navigator.navigate({
-        position: new SpinePosition({ x: 9999, y: 0 }),
+        target: {
+          type: "position",
+          value: new SpinePosition({ x: 9999, y: 0 }),
+        },
         animation: false,
       })
 
@@ -176,7 +182,10 @@ describe("observeBookBoundaryReached", () => {
       }).subscribe((e) => events.push(e))
 
       navigator.navigate({
-        position: new SpinePosition({ x: 9999, y: 0 }),
+        target: {
+          type: "position",
+          value: new SpinePosition({ x: 9999, y: 0 }),
+        },
         animation: false,
       })
 
@@ -199,7 +208,10 @@ describe("observeBookBoundaryReached", () => {
       }).subscribe((e) => events.push(e))
 
       navigator.navigate({
-        position: new SpinePosition({ x: 9999, y: 0 }),
+        target: {
+          type: "position",
+          value: new SpinePosition({ x: 9999, y: 0 }),
+        },
         animation: false,
       })
 
@@ -226,7 +238,10 @@ describe("observeBookBoundaryReached", () => {
       )
 
       navigator.navigate({
-        position: new SpinePosition({ x: -10, y: 0 }),
+        target: {
+          type: "position",
+          value: new SpinePosition({ x: -10, y: 0 }),
+        },
         animation: false,
       })
 
@@ -257,7 +272,10 @@ describe("observeBookBoundaryReached", () => {
 
       // Overshoot end while loading — wait starts.
       navigator.navigate({
-        position: new SpinePosition({ x: 9999, y: 0 }),
+        target: {
+          type: "position",
+          value: new SpinePosition({ x: 9999, y: 0 }),
+        },
         animation: false,
       })
       await waitFor(20)
@@ -265,7 +283,7 @@ describe("observeBookBoundaryReached", () => {
 
       // User navigates back in-bounds before readiness arrives.
       navigator.navigate({
-        position: new SpinePosition({ x: 0, y: 0 }),
+        target: { type: "position", value: new SpinePosition({ x: 0, y: 0 }) },
         animation: false,
       })
       await waitFor(20)

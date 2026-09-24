@@ -88,10 +88,13 @@ describe(`Given unloaded book`, () => {
         })
 
       navigator.navigate({
-        position: new SpinePosition({
-          x: -10,
-          y: -20,
-        }),
+        target: {
+          type: "position",
+          value: new SpinePosition({
+            x: -10,
+            y: -20,
+          }),
+        },
       })
 
       await waitFor(100)
@@ -121,7 +124,7 @@ describe(`Given unloaded book`, () => {
         })
 
       navigator.navigate({
-        spineItem: -1,
+        target: { type: "spineItem", value: -1 },
       })
 
       await waitFor(100)
@@ -155,7 +158,7 @@ describe(`Given loaded book`, () => {
         })
 
       navigator.navigate({
-        spineItem: -1,
+        target: { type: "spineItem", value: -1 },
       })
 
       await waitFor(100)
@@ -192,7 +195,7 @@ describe(`Given loaded book`, () => {
         })
 
       navigator.navigate({
-        spineItem: 2,
+        target: { type: "spineItem", value: 2 },
       })
 
       await waitFor(100)
@@ -238,7 +241,10 @@ describe(`Given loaded book`, () => {
           })
 
         navigator.navigate({
-          position: new SpinePosition({ x: 9999, y: 0 }),
+          target: {
+            type: "position",
+            value: new SpinePosition({ x: 9999, y: 0 }),
+          },
         })
 
         await waitFor(100)
@@ -279,11 +285,15 @@ describe(`Given loaded book`, () => {
         "navigate",
       )
 
-      navigator.navigate({ position: new SpinePosition({ x: 0, y: 50 }) })
+      navigator.navigate({
+        target: { type: "position", value: new SpinePosition({ x: 0, y: 50 }) },
+      })
 
       await waitFor(50)
 
-      navigator.navigate({ position: new SpinePosition({ x: 0, y: 50 }) })
+      navigator.navigate({
+        target: { type: "position", value: new SpinePosition({ x: 0, y: 50 }) },
+      })
 
       await waitFor(50)
 

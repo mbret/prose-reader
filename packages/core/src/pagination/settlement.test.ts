@@ -675,7 +675,10 @@ describe("pagination settlement", () => {
      */
     const unlock = reader.navigation.lock()
     reader.navigation.navigate({
-      position: reader.navigation.getNavigation().position,
+      target: {
+        type: "position",
+        value: reader.navigation.getNavigation().position,
+      },
       animation: false,
     })
     await waitFor(50)

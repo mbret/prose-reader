@@ -44,7 +44,7 @@ export const getOrGuessDirection = ({
   //   }
   // }
 
-  if (navigation.url !== undefined || navigation.cfi !== undefined) {
+  if (navigation.target.type === "url" || navigation.target.type === "cfi") {
     return "anchor"
   }
 
@@ -62,7 +62,7 @@ export const getOrGuessDirection = ({
    * idea the user want to be restored from the end of spine item whereas
    * he should be redirected to the begining of spine item.
    */
-  if (navigation.spineItem) {
+  if (navigation.target.type === "spineItem") {
     return "forward"
   }
 

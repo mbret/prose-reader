@@ -29,9 +29,9 @@ export const withSpineItem =
   <N extends Navigation>(stream: Observable<N>): Observable<N> => {
     const getSpineItem = (navigation: InternalNavigationInput) => {
       const {
+        target,
         position,
         spineItem,
-        cfi,
         directionFromLastNavigation: direction,
       } = navigation
       const { navigationSnapThreshold, computedPageTurnMode } = settings.values
@@ -62,8 +62,8 @@ export const withSpineItem =
        * - cfi given
        * - we can grab safely the item
        */
-      if (cfi) {
-        const existingSpineItem = cfiManager.getSpineItemFromCfi(cfi)
+      if (target.type === "cfi" && target.value) {
+        const existingSpineItem = cfiManager.getSpineItemFromCfi(target.value)
 
         if (existingSpineItem) return existingSpineItem
       }
