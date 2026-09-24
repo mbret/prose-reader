@@ -203,7 +203,7 @@ export class AudioController extends ReactiveEntity<AudioEnhancerState> {
       tap(({ selectionIntent, state, isReselectionWhileLoading }) => {
         if (selectionIntent.options.navigate !== false) {
           this.reader.navigation.navigate({
-            spineItem: selectionIntent.trackId,
+            target: { type: "spineItem", value: selectionIntent.trackId },
             animation: `turn`,
           })
         }

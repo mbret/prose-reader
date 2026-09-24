@@ -65,6 +65,7 @@ const anchorOf = (
   firstValueFrom(
     of({
       navigation: {
+        target: { type: "position", value: { x: 0, y: 0 } },
         position: { x: 0, y: 0 },
         spineItem: 0,
         ...navigation,
@@ -75,9 +76,12 @@ const anchorOf = (
 
 describe("withAnchor", () => {
   it("is the cfi a navigation named", async () => {
-    expect(await anchorOf({ cfi: textElsewhere }, createSpine())).toBe(
-      textElsewhere,
-    )
+    expect(
+      await anchorOf(
+        { target: { type: "cfi", value: textElsewhere } },
+        createSpine(),
+      ),
+    ).toBe(textElsewhere)
   })
 
   it("is the first character of the page at the navigation's position", async () => {
@@ -101,7 +105,12 @@ describe("withAnchor", () => {
 
   it("is not an item a named cfi names, but the page it lands on", async () => {
     // A book reopened at a saved item start lands on the item's first page.
-    expect(await anchorOf({ cfi: itemStart }, createSpine())).toBe(pageText)
+    expect(
+      await anchorOf(
+        { target: { type: "cfi", value: itemStart } },
+        createSpine(),
+      ),
+    ).toBe(pageText)
   })
 
   it("keeps a position in the text for the rest of the navigation", async () => {

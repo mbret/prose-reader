@@ -12,11 +12,32 @@ export type NavigationVisibleArea = {
   height: number
 }
 
+/**
+ * Each type of target a navigation can ask for, and the value it carries.
+ */
+type NavigationTargetValues = {
+  /** A position in the spine. */
+  position: SpinePosition | UnboundSpinePosition
+  /** The start of a spine item, by index or id. */
+  spineItem: number | string
+  /** A cfi. */
+  cfi: string
+  /** The url of a spine item, optionally with an element id as its fragment. */
+  url: string | URL
+}
+
+/**
+ * What a navigation asks for: exactly one target, of one type.
+ */
+export type NavigationTarget = {
+  [Type in keyof NavigationTargetValues]: {
+    type: Type
+    value: NavigationTargetValues[Type]
+  }
+}[keyof NavigationTargetValues]
+
 export type UserNavigationEntry = {
-  position?: SpinePosition | UnboundSpinePosition
-  spineItem?: number | string
-  url?: string | URL
-  cfi?: string
+  target: NavigationTarget
   animation?: boolean | "turn" | "snap"
   type?: "api" | "scroll"
   /**
@@ -70,6 +91,12 @@ export type NavigationConsolidation = {
  * - spine item (fallback)
  */
 export type InternalNavigationEntry = {
+  /**
+   * What the navigation asked for, as it asked for it. Consolidation resolves
+   * it into `spineItem` and `position` without changing it, and restorations
+   * carry it over.
+   */
+  target: NavigationTarget
   position: SpinePosition | UnboundSpinePosition
   id: symbol
   meta: {
@@ -102,9 +129,8 @@ export type InternalNavigationEntry = {
   requestedVisibleArea?: NavigationVisibleArea
   type: `api` | `scroll`
   animation?: boolean | `turn` | `snap`
-  url?: string | URL
+  /** The spine item the navigation resolved to. */
   spineItem?: string | number
-  cfi?: string
   /**
    * Where this navigation takes the reader in the text, the value restoration
    * returns to. Computed by `withAnchor` for every entry, restorations
