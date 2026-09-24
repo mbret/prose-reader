@@ -3,7 +3,7 @@ import { describe, expect, it } from "vitest"
 import type { CfiManager } from "../../cfi"
 import type { Spine } from "../../spine/Spine"
 import type { InternalNavigationEntry } from "../types"
-import { withReadingPosition } from "./withReadingPosition"
+import { withAnchor } from "./withAnchor"
 
 const itemStart = "epubcfi(/6/2[0]!)"
 const pageText = "epubcfi(/6/2[0]!/4/2/1:0)"
@@ -58,7 +58,7 @@ const createSpine = ({
   }
 }
 
-const readingPositionOf = (
+const anchorOf = (
   navigation: Partial<InternalNavigationEntry>,
   context: ReturnType<typeof createSpine>,
 ) =>
@@ -70,18 +70,18 @@ const readingPositionOf = (
         ...navigation,
         // A navigation entry carries far more; the step reads only these.
       } as InternalNavigationEntry,
-    }).pipe(withReadingPosition(context)),
-  ).then(({ navigation }) => navigation.readingPosition)
+    }).pipe(withAnchor(context)),
+  ).then(({ navigation }) => navigation.anchor)
 
-describe("withReadingPosition", () => {
+describe("withAnchor", () => {
   it("is the cfi a navigation named", async () => {
-    expect(await readingPositionOf({ cfi: textElsewhere }, createSpine())).toBe(
+    expect(await anchorOf({ cfi: textElsewhere }, createSpine())).toBe(
       textElsewhere,
     )
   })
 
   it("is the first character of the page at the navigation's position", async () => {
-    expect(await readingPositionOf({}, createSpine())).toBe(pageText)
+    expect(await anchorOf({}, createSpine())).toBe(pageText)
   })
 
   it("has none while a layout is pending, rather than a page of the one being replaced", async () => {
@@ -91,21 +91,17 @@ describe("withReadingPosition", () => {
      * follow the new one: the page they give for a position holds other text.
      */
     expect(
-      await readingPositionOf({}, createSpine({ isLayoutCurrent: false })),
+      await anchorOf({}, createSpine({ isLayoutCurrent: false })),
     ).toBeUndefined()
   })
 
   it("has none while the item is not ready", async () => {
-    expect(
-      await readingPositionOf({}, createSpine({ isReady: false })),
-    ).toBeUndefined()
+    expect(await anchorOf({}, createSpine({ isReady: false }))).toBeUndefined()
   })
 
   it("is not an item a named cfi names, but the page it lands on", async () => {
     // A book reopened at a saved item start lands on the item's first page.
-    expect(await readingPositionOf({ cfi: itemStart }, createSpine())).toBe(
-      pageText,
-    )
+    expect(await anchorOf({ cfi: itemStart }, createSpine())).toBe(pageText)
   })
 
   it("keeps a position in the text for the rest of the navigation", async () => {
@@ -114,12 +110,9 @@ describe("withReadingPosition", () => {
      * page's own first character would restore to the page before at the
      * next relayout.
      */
-    expect(
-      await readingPositionOf(
-        { readingPosition: textElsewhere },
-        createSpine(),
-      ),
-    ).toBe(textElsewhere)
+    expect(await anchorOf({ anchor: textElsewhere }, createSpine())).toBe(
+      textElsewhere,
+    )
   })
 
   it("keeps a position found on a page without text, rather than finding it again", async () => {
@@ -128,8 +121,6 @@ describe("withReadingPosition", () => {
      * its item. Finding it again at every restoration would follow the
      * spread: after a rotation the page shown first can be the other one.
      */
-    expect(
-      await readingPositionOf({ readingPosition: itemStart }, createSpine()),
-    ).toBe(itemStart)
+    expect(await anchorOf({ anchor: itemStart }, createSpine())).toBe(itemStart)
   })
 })

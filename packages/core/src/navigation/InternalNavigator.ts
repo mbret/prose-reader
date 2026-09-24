@@ -26,10 +26,10 @@ import { DestroyableClass } from "../utils/DestroyableClass"
 import { isDefined } from "../utils/isDefined"
 import type { Viewport } from "../viewport/Viewport"
 import { mapUserNavigationToInternal } from "./consolidation/mapUserNavigationToInternal"
+import { withAnchor } from "./consolidation/withAnchor"
 import { withCfiPosition } from "./consolidation/withCfiPosition"
 import { withDirection } from "./consolidation/withDirection"
 import { withFallbackPosition } from "./consolidation/withFallbackPosition"
-import { withReadingPosition } from "./consolidation/withReadingPosition"
 import { withSpineItem } from "./consolidation/withSpineItem"
 import { withSpineItemLayoutInfo } from "./consolidation/withSpineItemLayoutInfo"
 import { withSpineItemPosition } from "./consolidation/withSpineItemPosition"
@@ -88,8 +88,8 @@ export class InternalNavigator extends DestroyableClass {
 
   /**
    * Where the reader is in the book, to save and reopen at: the current
-   * navigation's reading position, which `withReadingPosition` computes with
-   * every entry. Until the page a navigation goes to is laid out, it is the
+   * navigation's anchor, which `withAnchor` computes with every entry. Until
+   * the page a navigation goes to is laid out it has none, and this is the
    * start of the item the navigation goes to, the only place a cfi can name
    * in content that is not laid out. It only moves when the reader navigates,
    * and once when such a navigation finds its page: a relayout reflows the
@@ -98,9 +98,7 @@ export class InternalNavigator extends DestroyableClass {
   public readonly readingPosition$ = this.navigationSubject.pipe(
     map(
       (navigation) =>
-        navigation.readingPosition ??
-        navigation.cfi ??
-        this.getItemStart(navigation),
+        navigation.anchor ?? navigation.cfi ?? this.getItemStart(navigation),
     ),
     filter(isDefined),
     distinctUntilChanged(),
@@ -202,7 +200,7 @@ export class InternalNavigator extends DestroyableClass {
           settings,
           navigationResolver,
         }),
-        withReadingPosition({ spine, cfi: cfiManager }),
+        withAnchor({ spine, cfi: cfiManager }),
         map((params) => params.navigation),
         share(),
       )
@@ -320,7 +318,7 @@ export class InternalNavigator extends DestroyableClass {
         settings,
         navigationResolver,
       }),
-      withReadingPosition({ spine, cfi: cfiManager }),
+      withAnchor({ spine, cfi: cfiManager }),
       map(({ navigation }) => navigation),
       share(),
     )

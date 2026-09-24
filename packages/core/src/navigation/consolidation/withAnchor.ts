@@ -9,9 +9,9 @@ type Navigation = {
 }
 
 /**
- * Where the navigation takes the reader in the text, as a cfi: what
- * restoration returns to after a relayout, and what an app saves to reopen the
- * book there.
+ * The navigation's anchor: where it takes the reader in the text, as a cfi.
+ * Restoration returns to it after a relayout, and the reader exposes it as its
+ * reading position.
  *
  * - A cfi the navigation named is kept as it is, unless it names only an item.
  * - Otherwise it is the first character of the page that shows first at the
@@ -26,7 +26,7 @@ type Navigation = {
  * restore to the page before at the next relayout, and every resize would walk
  * the reader back.
  */
-export const withReadingPosition =
+export const withAnchor =
   ({ spine, cfi }: { spine: Spine; cfi: CfiManager }) =>
   <N extends Navigation>(stream: Observable<N>): Observable<N> => {
     const getPageCfi = ({ position }: N["navigation"]) => {
@@ -66,9 +66,8 @@ export const withReadingPosition =
       return page && cfi.generateCfiForPage(spineItem.item, page)
     }
 
-    const getReadingPosition = (navigation: N["navigation"]) => {
-      if (navigation.readingPosition !== undefined)
-        return navigation.readingPosition
+    const getAnchor = (navigation: N["navigation"]) => {
+      if (navigation.anchor !== undefined) return navigation.anchor
 
       if (navigation.cfi !== undefined && !cfi.isRootCfi(navigation.cfi))
         return navigation.cfi
@@ -85,7 +84,7 @@ export const withReadingPosition =
             ...rest,
             navigation: {
               ...navigation,
-              readingPosition: getReadingPosition(navigation),
+              anchor: getAnchor(navigation),
             },
           }) as N,
       ),
