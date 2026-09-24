@@ -14,6 +14,10 @@ export const useProseBridge = (options: BridgeMethods) => {
       setContext: async (context) => {
         set({ context })
       },
+      readingPosition: undefined,
+      setReadingPosition: async (readingPosition) => {
+        set({ readingPosition })
+      },
       /**
        * For a given spine item, provide the resource to the webview.
        */

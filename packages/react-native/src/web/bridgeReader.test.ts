@@ -11,6 +11,7 @@ import {
   it,
   vi,
 } from "vitest"
+import type { ReaderLoadOptions } from "../shared"
 import { bridgeReader, createReaderBridge } from "."
 
 /**
@@ -28,6 +29,7 @@ const { fakeBridges } = vi.hoisted(() => {
       },
       setPagination: vi.fn(async (_pagination: unknown) => {}),
       setContext: vi.fn(async (_context: unknown) => {}),
+      setReadingPosition: vi.fn(async (_readingPosition: unknown) => {}),
       emit: (event: string, data?: unknown) => {
         for (const listener of listeners.get(event) ?? []) {
           listener(data)
@@ -70,9 +72,21 @@ const manifest: Manifest = {
       renditionLayout: "pre-paginated",
       index: 0,
     },
+    {
+      href: "/chapter_2/page_1.jpg",
+      id: "2",
+      pageSpreadLeft: true,
+      pageSpreadRight: true,
+      progressionWeight: 0,
+      renditionLayout: "pre-paginated",
+      index: 1,
+    },
   ],
   title: "",
 }
+
+/** The start of the second spine item, somewhere other than the book's start. */
+const secondChapterCfi = "epubcfi(/6/4[2]!)"
 
 beforeAll(() => {
   // jsdom has no layout engine, so neither observer exists there
@@ -106,11 +120,23 @@ afterEach(() => {
   container.remove()
 })
 
-const createTestReader = (manifest: Manifest) =>
+const createTestReader = (options: ReaderLoadOptions) =>
   createReader({
+    ...options,
     getResource: () => of(new Response("", { status: 200 })),
-    manifest,
   })
+
+const currentReadingPosition = (reader: Reader) => {
+  let readingPosition: string | undefined
+
+  reader.navigation.readingPosition$
+    .subscribe((value) => {
+      readingPosition = value
+    })
+    .unsubscribe()
+
+  return readingPosition
+}
 
 const linkNativeSide = () => {
   const bridge = createReaderBridge()
@@ -118,7 +144,8 @@ const linkNativeSide = () => {
 
   if (!native) throw new Error("createReaderBridge did not link a bridge")
 
-  const load = () => native.emit("load", { manifest })
+  const load = (options?: Omit<ReaderLoadOptions, "manifest">) =>
+    native.emit("load", { manifest, ...options })
 
   return { bridge, native, load }
 }
@@ -126,15 +153,18 @@ const linkNativeSide = () => {
 const setup = () => {
   const { bridge, native, load } = linkNativeSide()
   const readers: Reader[] = []
+  const loadOptions: ReaderLoadOptions[] = []
   let failNextReader = false
 
   const controller = bridgeReader({
     bridge,
     containerElement: container,
-    createReader: (manifest) => {
+    createReader: (options) => {
+      loadOptions.push(options)
+
       if (failNextReader) throw new Error("invalid book")
 
-      const reader = createTestReader(manifest)
+      const reader = createTestReader(options)
 
       readers.push(reader)
 
@@ -154,7 +184,7 @@ const setup = () => {
     failNextReader = true
   }
 
-  return { controller, native, load, reader, failNextLoad }
+  return { controller, native, load, reader, loadOptions, failNextLoad }
 }
 
 describe("Given a bridged webview", () => {
@@ -198,6 +228,39 @@ describe("Given a bridged webview", () => {
       )
     })
 
+    it("reports the reader's reading position to the native side", () => {
+      const { native, load, reader } = setup()
+
+      load()
+
+      expect(native.setReadingPosition).toHaveBeenLastCalledWith(
+        currentReadingPosition(reader(0)),
+      )
+    })
+  })
+
+  describe("when the native side sends a book with a cfi to open at", () => {
+    it("hands the book and the cfi to the factory", () => {
+      const { load, loadOptions } = setup()
+
+      load({ cfi: secondChapterCfi })
+
+      expect(loadOptions).toEqual([{ manifest, cfi: secondChapterCfi }])
+    })
+
+    /**
+     * The reader only goes to its cfi once mounted, and until then its
+     * reading position is the start of the book. Any value the native side
+     * receives is one it may save, so it must not receive that one.
+     */
+    it("reports that cfi as the first reading position, never the start of the book before it", () => {
+      const { native, load } = setup()
+
+      load({ cfi: secondChapterCfi })
+
+      expect(native.setReadingPosition.mock.calls).toEqual([[secondChapterCfi]])
+    })
+
     it("turns the reader's pages on the native side's commands", () => {
       const { native, load, reader } = setup()
 
@@ -233,17 +296,22 @@ describe("Given a bridged webview", () => {
     })
 
     it("stops listening to the previous reader, even if its state never completes", () => {
-      const { bridge, load } = linkNativeSide()
+      const { bridge, native, load } = linkNativeSide()
       const pagination = new Subject<Record<string, unknown>>()
       const context = new Subject<Record<string, unknown>>()
+      const readingPosition = new Subject<string>()
       // Only the members bridgeReader touches. A destroyed core reader does
-      // not complete its pagination stream, and neither stream completes
-      // here, so only unsubscribing can release them.
+      // not complete its pagination stream, and none of these streams
+      // completes here, so only unsubscribing can release them.
       const previous = {
         context,
         destroy: () => {},
         mount: () => {},
-        navigation: { turnLeft: () => {}, turnRight: () => {} },
+        navigation: {
+          readingPosition$: readingPosition,
+          turnLeft: () => {},
+          turnRight: () => {},
+        },
         pagination: { state$: pagination },
       } as unknown as Reader
       let loads = 0
@@ -251,19 +319,27 @@ describe("Given a bridged webview", () => {
       bridgeReader({
         bridge,
         containerElement: container,
-        createReader: (manifest) =>
-          loads++ === 0 ? previous : createTestReader(manifest),
+        createReader: (options) =>
+          loads++ === 0 ? previous : createTestReader(options),
       })
 
       load()
 
       expect(pagination.observed).toBe(true)
       expect(context.observed).toBe(true)
+      expect(readingPosition.observed).toBe(true)
 
       load()
 
       expect(pagination.observed).toBe(false)
       expect(context.observed).toBe(false)
+      expect(readingPosition.observed).toBe(false)
+
+      readingPosition.next(secondChapterCfi)
+
+      expect(native.setReadingPosition).not.toHaveBeenCalledWith(
+        secondChapterCfi,
+      )
     })
 
     it("turns the pages of the new reader only", () => {
