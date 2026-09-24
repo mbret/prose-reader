@@ -5,6 +5,8 @@ import type { EnhancerOutput, RootEnhancer } from "../types/enhancer"
 import type { ChapterInfo } from "./chapters"
 import type { ResourcesLocator } from "./ResourcesLocator"
 
+export type { ChapterInfo }
+
 /**
  * An edge of the visible range with what the enhancer adds to it, so the
  * enriched result keeps the same two-edge shape as the one it enriches.
@@ -16,7 +18,7 @@ export type EnhancerPaginationEdge = PaginationEdge & {
 }
 
 export type ExtraPaginationInfo = {
-  percentageEstimateOfBook: number | undefined
+  percentageEstimateOfBook: number
   /**
    * @warning
    * This value is only correct for pre-paginated books and or
@@ -24,7 +26,7 @@ export type ExtraPaginationInfo = {
    * items get loaded unloaded when navigating through the book, meaning
    * we cannot measure the number of pages accurately.
    */
-  numberOfTotalPages: number | undefined
+  numberOfTotalPages: number
   isUsingSpread: boolean
 }
 
