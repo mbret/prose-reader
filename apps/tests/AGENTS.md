@@ -39,12 +39,6 @@ counts, so assert the preconditions a scenario relies on — which item, which
 page, that a cfi is not a root cfi — rather than assuming them, and a failure
 then names the step that went wrong.
 
-Assert what ends up on screen, not how the reader got there. How many layouts
-it ran, or when, does not show on screen, and a browser spec can only count
-them against a guess of when the counting is over. Prove those in the unit
-layer, where the test holds the clock: `layoutTriggers.test.ts` holds the
-layout counts.
-
 ## Snapshots
 
 A `*-snapshots` folder holds one image per browser project, suffixed with the
