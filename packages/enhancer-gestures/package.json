@@ -32,7 +32,7 @@
     "rxjs": "*"
   },
   "peerDependencies": {
-    "gesturx": "1.x",
+    "gesturx": "^1.11.1",
     "rxjs": "7.x"
   },
   "gitHead": "4601e14dcacf50b2295cb343582a7ef2c7e1eedc"
