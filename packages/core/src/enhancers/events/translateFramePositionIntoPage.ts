@@ -15,8 +15,6 @@ export const translateFramePositionIntoPage = ({
     clientY: number
   }
   frameElement: HTMLIFrameElement
-  pageWidth: number
-  pageHeight: number
 }) => {
   // Get the frame's current transform scale
   const frameRect = frameElement.getBoundingClientRect()
