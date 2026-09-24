@@ -69,7 +69,10 @@ describe("reading position", () => {
     const { height } = reader.spine.getSpineItemSpineLayoutInfo(0)
 
     reader.navigation.navigate({
-      position: new SpinePosition({ x: 0, y: height * 0.9 }),
+      target: {
+        type: "position",
+        value: new SpinePosition({ x: 0, y: height * 0.9 }),
+      },
       animation: false,
     })
 

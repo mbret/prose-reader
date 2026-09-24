@@ -111,6 +111,6 @@ export const applyScaleToViewportForScroll = (
   )
 
   reader.navigation.navigate({
-    position: spinePosition,
+    target: { type: "position", value: spinePosition },
   })
 }
