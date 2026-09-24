@@ -13,7 +13,8 @@ type Navigation = {
  * Restoration returns to it after a relayout, and the reader exposes it as its
  * reading position.
  *
- * - A cfi the navigation named is kept as it is, unless it names only an item.
+ * - A target that names a place in the text, a cfi, comes with it: its
+ *   resolver sets it, and this step keeps it.
  * - Otherwise it is the first character of the page that shows first at the
  *   navigation's position, the begin edge of what is visible, as soon as that
  *   page is laid out.
@@ -66,16 +67,8 @@ export const withAnchor =
       return page && cfi.generateCfiForPage(spineItem.item, page)
     }
 
-    const getAnchor = (navigation: N["navigation"]) => {
-      if (navigation.anchor !== undefined) return navigation.anchor
-
-      const { target } = navigation
-
-      if (target.type === "cfi" && !cfi.isRootCfi(target.value))
-        return target.value
-
-      return getPageCfi(navigation)
-    }
+    const getAnchor = (navigation: N["navigation"]) =>
+      navigation.anchor ?? getPageCfi(navigation)
 
     return stream.pipe(
       map(

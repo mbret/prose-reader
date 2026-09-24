@@ -45,8 +45,6 @@ const createSpine = ({
     },
   }
   const cfi = {
-    isRootCfi: (value: string) => value.endsWith("!)"),
-    generateRootCfi: () => itemStart,
     generateCfiForPage: () => pageText,
   }
 
@@ -75,15 +73,6 @@ const anchorOf = (
   ).then(({ navigation }) => navigation.anchor)
 
 describe("withAnchor", () => {
-  it("is the cfi a navigation named", async () => {
-    expect(
-      await anchorOf(
-        { target: { type: "cfi", value: textElsewhere } },
-        createSpine(),
-      ),
-    ).toBe(textElsewhere)
-  })
-
   it("is the first character of the page at the navigation's position", async () => {
     expect(await anchorOf({}, createSpine())).toBe(pageText)
   })
@@ -101,16 +90,6 @@ describe("withAnchor", () => {
 
   it("has none while the item is not ready", async () => {
     expect(await anchorOf({}, createSpine({ isReady: false }))).toBeUndefined()
-  })
-
-  it("is not an item a named cfi names, but the page it lands on", async () => {
-    // A book reopened at a saved item start lands on the item's first page.
-    expect(
-      await anchorOf(
-        { target: { type: "cfi", value: itemStart } },
-        createSpine(),
-      ),
-    ).toBe(pageText)
   })
 
   it("keeps a position in the text for the rest of the navigation", async () => {

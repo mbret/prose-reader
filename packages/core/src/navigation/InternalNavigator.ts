@@ -4,7 +4,6 @@ import {
   filter,
   finalize,
   first,
-  identity,
   map,
   merge,
   type Observable,
@@ -27,16 +26,16 @@ import { isDefined } from "../utils/isDefined"
 import type { Viewport } from "../viewport/Viewport"
 import { mapUserNavigationToInternal } from "./consolidation/mapUserNavigationToInternal"
 import { withAnchor } from "./consolidation/withAnchor"
-import { withCfiPosition } from "./consolidation/withCfiPosition"
-import { withDirection } from "./consolidation/withDirection"
 import { withFallbackPosition } from "./consolidation/withFallbackPosition"
+import { withResolvedTarget } from "./consolidation/withResolvedTarget"
+import { withSnappedPosition } from "./consolidation/withSnappedPosition"
 import { withSpineItem } from "./consolidation/withSpineItem"
 import { withSpineItemLayoutInfo } from "./consolidation/withSpineItemLayoutInfo"
 import { withSpineItemPosition } from "./consolidation/withSpineItemPosition"
-import { withUrlInfo } from "./consolidation/withUrlInfo"
 import { Locker } from "./Locker"
 import type { createNavigationResolver } from "./resolvers/NavigationResolver"
 import { withRestoredPosition } from "./restoration/withRestoredPosition"
+import { createTargetResolvers } from "./targets/createTargetResolvers"
 import type {
   InternalNavigationEntry,
   NavigationModeController,
@@ -89,22 +88,15 @@ export class InternalNavigator extends DestroyableClass {
 
   /**
    * Where the reader is in the book, to save and reopen at: the current
-   * navigation's anchor, which `withAnchor` computes with every entry. Until
-   * the page a navigation goes to is laid out it has none, and this is the
-   * start of the item the navigation goes to, the only place a cfi can name
-   * in content that is not laid out. It only moves when the reader navigates,
-   * and once when such a navigation finds its page: a relayout reflows the
-   * page around it without changing it.
+   * navigation's anchor, which a cfi target names and `withAnchor` otherwise
+   * finds. Until the page a navigation goes to is laid out it has none, and
+   * this is the start of the item the navigation goes to, the only place a
+   * cfi can name in content that is not laid out. It only moves when the
+   * reader navigates, and once when such a navigation finds its page: a
+   * relayout reflows the page around it without changing it.
    */
   public readonly readingPosition$ = this.navigationSubject.pipe(
-    map(
-      (navigation) =>
-        navigation.anchor ??
-        (navigation.target.type === "cfi"
-          ? navigation.target.value
-          : undefined) ??
-        this.getItemStart(navigation),
-    ),
+    map((navigation) => navigation.anchor ?? this.getItemStart(navigation)),
     filter(isDefined),
     distinctUntilChanged(),
   )
@@ -132,31 +124,33 @@ export class InternalNavigator extends DestroyableClass {
     const getNavigationVisibleArea = () =>
       getActiveNavigationModeController().getNavigationVisibleArea()
 
+    const targetResolvers = createTargetResolvers({
+      navigationResolver,
+      cfi: cfiManager,
+      settings,
+      getNavigationVisibleArea,
+    })
+
+    /**
+     * A user navigation, in order:
+     * 1. The entry as asked for.
+     * 2. What its target tells of where it goes. No other step reads the
+     *    target.
+     * 3. The item it goes to, from its position when the target named none.
+     * 4. Where the target went in that item, which the snap works from.
+     * 5. The item's layout, for restorations to tell what changed since.
+     * 6. Its position kept within the spine, or the item start when the
+     *    target gave none.
+     * 7. The page it snaps to, unless the target gave an exact position.
+     * 8. Where it landed in its item.
+     * 9. Its anchor.
+     */
     const navigationFromUser$ = userNavigation$
       .pipe(
         withLatestFrom(this.navigationSubject),
-        mapUserNavigationToInternal({
-          navigationResolver,
-          getNavigationVisibleArea,
-        }),
-        /**
-         * Url lookup is heavier so we start with it to fill
-         * as much information as needed to reduce later lookup
-         */
-        withUrlInfo({
-          navigationResolver,
-        }),
-        /**
-         * Cfi lookup is heavier so we start with it to fill
-         * as much information as needed to reduce later lookup
-         */
-        withCfiPosition({
-          navigationResolver,
-        }),
-        withDirection({ context, settings }),
+        mapUserNavigationToInternal,
+        withResolvedTarget({ resolvers: targetResolvers }),
         withSpineItem({
-          context,
-          cfi: cfiManager,
           navigationResolver,
           settings,
           spineItemsManager: spine.spineItemsManager,
@@ -179,26 +173,11 @@ export class InternalNavigator extends DestroyableClass {
           settings,
           viewport,
         }),
-        withLatestFrom(isUserInteractionLocked$),
-        switchMap(([params, isUserLocked]) => {
-          const { target } = params.navigation
-          const shouldNotAlterPosition =
-            ((target.type === "cfi" || target.type === "url") &&
-              !!target.value) ||
-            settings.values.computedPageTurnMode === "scrollable" ||
-            isUserLocked
-
-          return of(params).pipe(
-            shouldNotAlterPosition
-              ? identity
-              : withRestoredPosition({
-                  navigationResolver,
-                  settings,
-                  spine,
-                  context,
-                  cfiManager,
-                }),
-          )
+        withSnappedPosition({
+          navigationResolver,
+          settings,
+          spine,
+          isUserInteractionLocked$,
         }),
         withSpineItemPosition({
           spineItemsManager: spine.spineItemsManager,
@@ -280,6 +259,16 @@ export class InternalNavigator extends DestroyableClass {
       }),
     )
 
+    /**
+     * A restoration re-applies the current navigation, in order:
+     * 1. The position it returns to: from its url target, its anchor or its
+     *    place in its item in controlled mode, from its place in its item in
+     *    scrollable mode.
+     * 2. The item, when the navigation has none yet.
+     * 3. The item's layout.
+     * 4. Where it landed in its item.
+     * 5. Its anchor, when it has none yet.
+     */
     const navigationRestored$ = merge(
       navigationUpdateFromLayout$,
       navigationUpdateFollowingUserUnlock$,
@@ -308,8 +297,6 @@ export class InternalNavigator extends DestroyableClass {
        * yet.
        */
       withSpineItem({
-        context,
-        cfi: cfiManager,
         navigationResolver,
         settings,
         spineItemsManager: spine.spineItemsManager,

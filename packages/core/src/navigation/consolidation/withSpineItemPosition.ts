@@ -60,8 +60,7 @@ export const withSpineItemPosition =
           }) ?? {}
 
         const farthestPageIndex =
-          (navigation.directionFromLastNavigation === "forward" ||
-          navigation.directionFromLastNavigation === "anchor"
+          (navigation.directionFromLastNavigation === "forward"
             ? endPageIndex
             : beginPageIndex) ?? 0
 
@@ -80,8 +79,7 @@ export const withSpineItemPosition =
           })
 
         const beginPageIndexForDirection =
-          (navigation.directionFromLastNavigation === "forward" ||
-          navigation.directionFromLastNavigation === "anchor"
+          (navigation.directionFromLastNavigation === "forward"
             ? visiblePagesAtNavigablePosition?.beginPageIndex
             : visiblePagesAtNavigablePosition?.endPageIndex) ?? 0
 
