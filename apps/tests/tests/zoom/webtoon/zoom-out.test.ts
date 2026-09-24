@@ -58,15 +58,17 @@ test.describe("Given a scroll mid page", () => {
             },
             [scale],
           )
+
           await waitForSettled(page)
 
+          const zoomedInScrollMetadata = await getScrollNavigationMetadata({
+            page,
+          })
+
           // zoomed out centered both x/y
-          await expect
-            .poll(
-              async () =>
-                (await getScrollNavigationMetadata({ page })).scrollTop,
-            )
-            .toBe((scrollTop + height / 2) * scale - height / 2)
+          expect(zoomedInScrollMetadata.scrollTop).toBe(
+            (scrollTop + height / 2) * scale - height / 2,
+          )
 
           await page.evaluate(() => {
             // @ts-expect-error
@@ -74,19 +76,18 @@ test.describe("Given a scroll mid page", () => {
 
             reader.zoom.exit()
           })
+
           await waitForSettled(page)
 
-          await expect
-            .poll(async () => {
-              const { scrollLeft, scrollTop } =
-                await getScrollNavigationMetadata({ page })
+          const {
+            scrollLeft: zoomedOutScrollLeft,
+            scrollTop: zoomedOutScrollTop,
+          } = await getScrollNavigationMetadata({
+            page,
+          })
 
-              return { scrollLeft, scrollTop }
-            })
-            .toEqual({
-              scrollLeft: previousScrollMetadata.scrollLeft,
-              scrollTop: previousScrollMetadata.scrollTop,
-            })
+          expect(zoomedOutScrollLeft).toBe(previousScrollMetadata.scrollLeft)
+          expect(zoomedOutScrollTop).toBe(previousScrollMetadata.scrollTop)
         })
       })
     })
