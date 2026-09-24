@@ -166,7 +166,7 @@ type EnhancerPaginationInfo = ExtraPaginationInfo &
 ```
 
 Whether you can turn a page or reach another spine item is not part of
-pagination. It is on [`reader.navigation.state$`](navigation.md)
+pagination. It is on [`reader.navigation.state$`](../core-api/.navigation.md)
 (`canGoLeftSpineItem`, `canGoRightSpineItem`, and so on).
 
 ## Settlement

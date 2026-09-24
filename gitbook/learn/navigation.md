@@ -1,24 +1,29 @@
 # Navigation
 
-Navigation is not a simple task and can be done in many ways depending on the use case. This is why we have two categories of navigation; **spatial** and **direct.**
+Navigation is not a simple task and can be done in many ways depending on the
+use case. This is why there are two kinds of navigation, **spatial** and
+**direct**. The [`.navigation` reference](../core-api/.navigation.md) lists
+every method and stream with its signature; this page is about using them.
 
 ## Spatial navigation
 
-Often useful when you want to navigate based on buttons or gesture. For example a swipe to the left triggers a `turnLeft`, to the right a `turnRight`. It's easier to call these spatial methods because it correlates directly with what the user is expecting and is especially useful for UX elements.&#x20;
+Useful when you navigate from buttons or gestures: a swipe to the left calls
+`turnLeft()`, to the right `turnRight()`. Spatial methods follow the screen,
+not the reading direction, so they match what the user sees: in a right-to-left
+book, `turnLeft()` goes forward. The same goes for spine items with
+`goToLeftSpineItem()` and `goToRightSpineItem()`.
 
 ## Direct navigation
 
-These represent methods such as `goToItem`, `goToPage`, `goToUrl`, etc. They are not directional nor spatial and are used when you know exactly where you want to go. They are usually used for navigating by bookmarks, table of contents, links and other.
+`goToCfi()`, `goToUrl()`, `goToSpineItem()`, `goToPageOfSpineItem()` and
+`goToAbsolutePageIndex()` are not directional. Use them when you know exactly
+where to go: a bookmark, a table of contents entry, a link.
 
 ## Reading position
 
-```typescript
-reader.navigation.readingPosition$: Observable<string>
-```
-
-Where the reader is in the book, as a cfi: the value to save, and to pass back
-as the `cfi` option to reopen the book there. It replays the current one on
-subscription, and emits nothing until the first navigation has a position.
+`reader.navigation.readingPosition$` is where the reader is in the book, as a
+cfi: the value to save, and to pass back as the `cfi` option to reopen the book
+there.
 
 It only moves when the reader navigates. A resize, a rotation, a font size
 change or a chapter loading nearby lays the book out again and reflows the page
@@ -55,7 +60,7 @@ reader.navigation.readingPosition$.subscribe((cfi) => {
 })
 ```
 
-## `navigation.navigation$` and `navigation.position$`
+## Reacting to navigations
 
 `navigation$` emits every navigation as it happens, with its `triggeredBy`:
 
@@ -66,76 +71,30 @@ reader.navigation.readingPosition$.subscribe((cfi) => {
   holds on the new layout, where the same position can show other content.
 
 Use it to react to navigating as an event. For where the viewport is,
-`position$` emits the position only when it changes.
+`position$` emits the position only when it changes, and for what to save,
+`readingPosition$`.
 
-## `navigation.lock()`
+## Pans and locks
 
-```typescript
-() => () => void
-```
-
-Holds the navigation for a gesture that moves the page itself, a pan for
-example, and returns the function that releases it. While it is held the
-reader does not move the page on its own: the restoration of a layout that
-lands meanwhile waits for the release, and so does the snap of a navigation
-made while it is held. Locks add up: the navigation is held until every one
-of them is released, and calling a release twice releases it once.
-
-## `navigation.isLocked$`
+A gesture that moves the page itself, a pan, has to keep the reader from moving
+it at the same time. `panNavigator` holds a lock for the pans it drives, from
+`start()` to `stop()`, and the reader holds one while the user scrolls. For a
+gesture of your own, take a `lock()` when it starts and release it when it
+ends:
 
 ```typescript
-Observable<boolean>
+const release = reader.navigation.lock()
+
+// …the user drags the page…
+
+release()
 ```
 
-`true` while a `lock()` is held. It turns `false` as soon as the lock is
-released, before the restoration that follows and any animation still running;
-use `navigationState$` to know when those are done too.
+While it is held, the reader does not move the page on its own: the restoration
+of a layout that lands meanwhile waits for the release, and so does the snap of
+a navigation made while it is held. Locks add up, so the navigation is held
+until every one of them is released; a release called twice releases it once.
 
-## `navigation.state$`
-
-```typescript
-Observable<NavigationState>
-```
-
-Emits as soon as you subscribe to it.
-
-```typescript
-type NavigationState = {
-  /**
-   * Spatial indicator whether you can turn
-   * page to the left to reach a new spine item
-   */
-  canGoLeftSpineItem: boolean
-  /**
-   * Spatial indicator whether you can turn
-   * page to the right to reach a new spine item
-   */
-  canGoRightSpineItem: boolean
-  /**
-   * Spatial indicator whether you can turn
-   * page to the top to reach a new spine item
-   */
-  canGoTopSpineItem: boolean
-  /**
-   * Spatial indicator whether you can turn
-   * page to the bottom to reach a new spine item
-   */
-  canGoBottomSpineItem: boolean
-}
-```
-
-## `navigation.goToNextSpineItem()`
-
-Navigate to the next available spine item.
-
-## `navigation.goToPreviousSpineItem()`
-
-Navigate to the previous available spine item.
-
-## `navigation.goToLeftSpineItem()`
-
-Navigate to the next spine item available at the left.  It will never navigate if the pages turn vertically.
-
-## `navigation.goToRightSpineItem()`
-
-Navigate to the next spine item available at the right. It will never navigate if the pages turn vertically.
+`isLocked$` turns `false` as soon as the last lock is released, before the
+restoration that follows and before any animation still running. To know when
+the reader is done moving, watch `navigationState$` for `"free"` instead.
