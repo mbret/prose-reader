@@ -5,6 +5,19 @@ on:
     branches:
       - "master"
 
+# One run at a time, queued in push order. A run waiting its turn is only ever
+# replaced by the run of a newer merge, which tests and releases the older
+# one's changes with its own: GitHub cancels the pending run when another
+# queues in the group. The group spans the whole run, not the publish jobs
+# alone. A job joins its group when its needs finish, in whatever order the
+# checks happen to finish, so an older merge's release could replace a newer
+# one's and leave that merge unreleased. Never cancelled in progress: a run
+# stopped between lerna's push and its npm publish would leave a release
+# tagged on master and missing from npm.
+concurrency:
+  group: ${{ github.workflow }}
+  cancel-in-progress: false
+
 jobs:
   lint:
     uses: ./.github/workflows/_lint.yml
@@ -21,25 +34,19 @@ jobs:
   docker:
     uses: ./.github/workflows/_docker.yml
 
-  # One job from the npm release through the image, so one release runs at a
-  # time end to end. A release waiting its turn is only ever replaced by a
-  # newer one: GitHub cancels a pending job when another queues in the same
-  # group, and the newer merge's run carries the older one's changes.
-  release:
+  publish:
     needs: [lint, ts, ts_react_native_demo, tests, docker]
-    # ubuntu, unlike the browser tests: GitHub's macOS runners ship no docker
-    # daemon
     runs-on: ubuntu-latest
-    concurrency:
-      group: release
-      cancel-in-progress: false
+    outputs:
+      outcome: ${{ steps.publish.outputs.outcome }}
+      version: ${{ steps.publish.outputs.version }}
+      sha: ${{ steps.publish.outputs.sha }}
 
     steps:
-      # The commit this run tested, the only one it may release. Reading the
-      # bump from the commits since the last release tag needs real history and
-      # tags, not the default shallow clone.
       - uses: actions/checkout@v6
         with:
+          # Reading the bump from the commits since the last release tag needs
+          # real history and tags, not the default shallow clone.
           fetch-depth: 0
 
       - uses: ./.github/actions/setup
@@ -47,51 +54,108 @@ jobs:
           build: libs
           registry-url: "https://registry.npmjs.org"
 
-      # Releases the tested commit, or leaves it to a newer merge's run, and
-      # says which; `scripts/release.mjs` explains the rules. The bump comes from
-      # the commit messages rather than being hardcoded, so a breaking change
-      # cannot ship as a minor. A merge that changes a published package always
-      # releases: lerna's conventionalcommits preset starts at patch and only
-      # escalates, so `chore`, `docs` and an unparseable subject still cut a
-      # release, `feat` gives a minor, and `feat!:` or a `BREAKING CHANGE:`
-      # footer gives a major. Changelogs come along with it.
-      - name: Release
-        id: release
+      # The bump comes from the commit messages rather than being hardcoded, so
+      # a breaking change cannot ship as a minor. A merge that changes a
+      # published package always releases: lerna's conventionalcommits preset
+      # starts at patch and only escalates, so `chore`, `docs` and an
+      # unparseable subject still cut a release, `feat` gives a minor, and
+      # `feat!:` / a `BREAKING CHANGE:` footer gives a major. Changelogs come
+      # along with it.
+      #
+      # lerna exits 0 whether it released or not, so the step names the
+      # outcome and fails on any it cannot name, which is how a skipped release
+      # used to report green (#376):
+      # - released: lerna tagged HEAD, the release commit it pushed.
+      # - superseded: master has moved past this merge. lerna releases only
+      #   from master's tip, so it stopped at EBEHIND, and the run that moved
+      #   master releases this merge's changes: the newer merge's, queued
+      #   behind this one, or this run's own earlier attempt.
+      # - unchanged: no published package changed since the last release.
+      # A merge landing while lerna pushes gets the push refused whole, before
+      # anything reaches npm: the job fails, and the queued run releases both.
+      - name: Publish
+        id: publish
+        # named, for pipefail: the default bash reports tee's status, not lerna's
+        shell: bash
         run: |
           git config --global user.email "bret.maxime@gmail.com"
           git config --global user.name "Maxime Bret"
-          node scripts/release.mjs
+          pnpm exec lerna publish --conventional-commits --no-private --yes 2>&1 | tee "$RUNNER_TEMP/lerna.log"
+
+          echo "sha=$(git rev-parse HEAD)" >> "$GITHUB_OUTPUT"
+          if tag=$(git describe --exact-match --match 'v*' HEAD 2>/dev/null); then
+            echo "::notice title=Released ${tag}::Released ${tag} from ${GITHUB_SHA::9}"
+            echo "outcome=released" >> "$GITHUB_OUTPUT"
+            echo "version=${tag#v}" >> "$GITHUB_OUTPUT"
+          elif [ -n "$(git rev-list HEAD..origin/master)" ]; then
+            echo "::notice title=Release superseded::master has moved past ${GITHUB_SHA::9}, and the run that moved it releases its changes"
+            echo "outcome=superseded" >> "$GITHUB_OUTPUT"
+          elif grep -q "No changed packages to publish" "$RUNNER_TEMP/lerna.log"; then
+            echo "::notice title=Nothing to release::No published package changed since the last release"
+            echo "outcome=unchanged" >> "$GITHUB_OUTPUT"
+          else
+            echo "::error title=Release skipped::lerna publish exited 0 without releasing, for a reason this step does not know"
+            exit 1
+          fi
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_ACCESS_TOKEN }}
 
-      # The metadata fetcher ships as a container too, so a library app can run
-      # lookups without depending on the npm package. Built from what this run
-      # released, or from the commit it tested when no package changed, and
-      # never by a run a newer merge superseded.
-      #
+  # The metadata fetcher ships as a container too, so a library app can run
+  # lookups without depending on the npm package. Built from the commit the
+  # publish ended on: the release commit when it released, the merge itself
+  # when no package changed, and nothing when it was superseded, since the
+  # newer run builds the image. A failed image is retried with "Re-run failed
+  # jobs", which reuses the publish job's outputs. Re-running the whole run
+  # finds the release already on master and stops as superseded.
+  publish_docker:
+    needs: [publish]
+    if: needs.publish.outputs.outcome != 'superseded'
+    # ubuntu, unlike the rest: GitHub's macOS runners ship no docker daemon
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          ref: ${{ needs.publish.outputs.sha }}
+
+      # A release is tagged with its version too, so a deployment can pin one
+      # and roll back to it. `latest` moves only while this commit is master's
+      # tip, so an image built after a newer merge landed, or retried after one
+      # shipped, never moves it back.
+      - name: Choose the tags
+        id: tags
+        env:
+          OUTCOME: ${{ needs.publish.outputs.outcome }}
+          VERSION: ${{ needs.publish.outputs.version }}
+          SHA: ${{ needs.publish.outputs.sha }}
+        run: |
+          image=mbret/prose-metadata-fetcher-api
+          tags=""
+          if [ "$OUTCOME" = released ]; then
+            tags="$image:$VERSION"
+          fi
+          if [ "$(git ls-remote origin refs/heads/master | cut -f1)" = "$SHA" ]; then
+            tags="$tags,$image:latest"
+          fi
+          echo "list=${tags#,}" >> "$GITHUB_OUTPUT"
+
       # arm64 as well as amd64: the point of the image is that someone can run
       # a metadata service without a toolchain, and that includes Apple silicon
       # and ARM hosts. It is emulated, so it leans on the layer cache — drop
       # the platform if release time ever matters more.
       - name: Set up QEMU
-        if: steps.release.outputs.outcome != 'superseded'
         uses: docker/setup-qemu-action@v3
       - name: Set up Docker Buildx
-        if: steps.release.outputs.outcome != 'superseded'
         uses: docker/setup-buildx-action@v3
 
       - name: Login to DockerHub
-        if: steps.release.outputs.outcome != 'superseded'
         uses: docker/login-action@v3
         with:
           username: ${{ vars.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
 
-      # A release is tagged with its version too, so a deployment can pin one
-      # and roll back to it; that tag is written once and never again. A merge
-      # that released no package moves `latest` alone.
       - name: Build and push metadata fetcher API
-        if: steps.release.outputs.outcome != 'superseded'
+        if: steps.tags.outputs.list != ''
         uses: docker/build-push-action@v6
         with:
           context: ./
@@ -99,8 +163,6 @@ jobs:
           target: production
           platforms: linux/amd64,linux/arm64
           push: true
-          tags: |
-            ${{ steps.release.outputs.outcome == 'released' && format('mbret/prose-metadata-fetcher-api:{0}', steps.release.outputs.version) || '' }}
-            mbret/prose-metadata-fetcher-api:latest
+          tags: ${{ steps.tags.outputs.list }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
