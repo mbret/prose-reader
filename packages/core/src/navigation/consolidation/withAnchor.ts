@@ -6,6 +6,8 @@ import type { InternalNavigationEntry, InternalNavigationInput } from "../types"
 
 type Navigation = {
   navigation: InternalNavigationInput | InternalNavigationEntry
+  /** Its target waits for a document to be loaded. */
+  isPending?: boolean
 }
 
 /**
@@ -21,6 +23,9 @@ type Navigation = {
  * - Until then the navigation has none, and restoration works from its
  *   position. The first restoration that lands on a layout with the page
  *   finds it.
+ * - While the target waits for its document it has none either: the page at
+ *   its position can belong to another item, and would stop the target from
+ *   being resolved again.
  *
  * Once found it is kept for the rest of the navigation. Restorations land on
  * the page holding it; taking that page's own first character instead would
@@ -67,8 +72,10 @@ export const withAnchor =
       return page && cfi.generateCfiForPage(spineItem.item, page)
     }
 
-    const getAnchor = (navigation: N["navigation"]) =>
-      navigation.anchor ?? getPageCfi(navigation)
+    const getAnchor = (
+      navigation: N["navigation"],
+      isPending: N["isPending"],
+    ) => navigation.anchor ?? (isPending ? undefined : getPageCfi(navigation))
 
     return stream.pipe(
       map(
@@ -79,7 +86,7 @@ export const withAnchor =
             ...rest,
             navigation: {
               ...navigation,
-              anchor: getAnchor(navigation),
+              anchor: getAnchor(navigation, rest.isPending),
             },
           }) as N,
       ),

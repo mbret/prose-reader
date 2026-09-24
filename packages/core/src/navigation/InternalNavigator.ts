@@ -263,7 +263,7 @@ export class InternalNavigator extends DestroyableClass {
         spine,
         cfiManager,
       }),
-      map(({ navigation }) => {
+      map(({ navigation, ...rest }) => {
         const updated: InternalNavigationEntry = {
           ...navigation,
           meta: {
@@ -272,7 +272,7 @@ export class InternalNavigator extends DestroyableClass {
           requestedPosition: navigation.position,
         }
 
-        return { navigation: updated }
+        return { ...rest, navigation: updated }
       }),
       /**
        * The spine item may be undefined after a restoration.

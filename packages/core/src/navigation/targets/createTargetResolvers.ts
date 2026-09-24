@@ -75,18 +75,20 @@ export const createTargetResolvers = ({
         : undefined
       const selected = document ? select(document) : undefined
 
-      // Selected, it is the cfi of what was selected. Until then it is the item
-      // start, which names no text, so the navigation has no anchor and
-      // restorations try again.
-      return resolvers.cfi(
-        selected
-          ? cfi.generateCfiForSpineItemPage({
-              spineItem: item.item,
-              pageNode: { node: selected.node, offset: selected.offset ?? 0 },
-            })
-          : cfi.generateRootCfi(item.item),
-        context,
-      )
+      // Selected, it is the cfi of what was selected. Otherwise it is the item
+      // start, which names no text.
+      return {
+        ...resolvers.cfi(
+          selected
+            ? cfi.generateCfiForSpineItemPage({
+                spineItem: item.item,
+                pageNode: { node: selected.node, offset: selected.offset ?? 0 },
+              })
+            : cfi.generateRootCfi(item.item),
+          context,
+        ),
+        isPending: !document,
+      }
     },
   }
 

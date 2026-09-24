@@ -103,10 +103,24 @@ describe("target resolvers", () => {
     expect(resolve(note).anchor).toBe(text)
   })
 
-  it("leave a selector its item has not loaded without an anchor, for restorations to try again", () => {
+  it("leave a selector its item has not loaded pending, without an anchor, for restorations to try again", () => {
     expect(resolve(note, { isLoaded: false })).toMatchObject({
       spineItem: 0,
       anchor: undefined,
+      isPending: true,
+    })
+  })
+
+  it("no longer wait for a document a selector did not select anything in", () => {
+    const missing: NavigationTarget = {
+      type: "selector",
+      value: { spineItem: 0, select: () => undefined },
+    }
+
+    // The item start then anchors at the page it lands on, like a root cfi.
+    expect(resolve(missing)).toMatchObject({
+      anchor: undefined,
+      isPending: false,
     })
   })
 

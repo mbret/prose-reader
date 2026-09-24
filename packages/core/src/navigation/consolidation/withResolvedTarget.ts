@@ -31,7 +31,7 @@ export const withResolvedTarget =
   <N extends Navigation>(stream: Observable<N>) =>
     stream.pipe(
       map((params) => {
-        const { isExact, ...resolution } = resolveTarget(
+        const { isExact, isPending, ...resolution } = resolveTarget(
           resolvers,
           params.navigation.target,
           { previousNavigation: params.previousNavigation },
@@ -41,6 +41,7 @@ export const withResolvedTarget =
           ...params,
           navigation: { ...params.navigation, ...resolution },
           isExact,
+          isPending,
         }
       }),
     )
@@ -53,17 +54,19 @@ export const withAnchorFromTarget =
   ({ resolvers }: { resolvers: NavigationTargetResolvers }) =>
   <N extends { navigation: InternalNavigationEntry }>(stream: Observable<N>) =>
     stream.pipe(
-      map((params) =>
-        params.navigation.anchor !== undefined
-          ? params
-          : {
-              ...params,
-              navigation: {
-                ...params.navigation,
-                anchor: resolveTarget(resolvers, params.navigation.target, {
-                  previousNavigation: params.navigation,
-                }).anchor,
-              },
-            },
-      ),
+      map((params) => {
+        if (params.navigation.anchor !== undefined) return params
+
+        const { anchor, isPending } = resolveTarget(
+          resolvers,
+          params.navigation.target,
+          { previousNavigation: params.navigation },
+        )
+
+        return {
+          ...params,
+          navigation: { ...params.navigation, anchor },
+          isPending,
+        }
+      }),
     )
