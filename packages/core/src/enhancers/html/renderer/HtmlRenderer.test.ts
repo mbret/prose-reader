@@ -46,11 +46,8 @@ const readObjectUrl = async (url: string | null | undefined) =>
   url ? resolveObjectURL(url)?.text() : undefined
 
 /**
- * A real renderer loading a document from `resources`, the way a book's
- * archive serves them. The document and its stylesheets reach the frame
- * through blob urls, which happy-dom fetches through its interceptor: the
- * document is served right away, and each stylesheet is held until the test
- * loads or fails it, so a test decides when the browser reports on each.
+ * Serves the frame's blob urls through happy-dom's fetch interceptor, holding
+ * each stylesheet until the test loads or fails it.
  */
 const createHarness = ({
   documentHref,
@@ -172,11 +169,7 @@ const createHarness = ({
   }
 }
 
-/**
- * happy-dom has no `document.fonts`, which every browser has and the renderer
- * waits on once the assets are in. Nothing here lays text out, so the fonts
- * are always ready.
- */
+/** happy-dom has no `document.fonts`, which the renderer waits on. */
 beforeAll(() => {
   Object.defineProperty(HappyDOMDocument.prototype, `fonts`, {
     configurable: true,
@@ -207,11 +200,6 @@ const setup = (params: Parameters<typeof createHarness>[0]) => {
 
 describe(`HtmlRenderer`, () => {
   describe(`given a document with links the browser never fetches`, () => {
-    /**
-     * An EPUB 3 book may attach PLS pronunciation lexicons to a document. A
-     * browser does not fetch a `pronunciation` link, so no `load` or `error`
-     * ever comes for one.
-     */
     const head = `
       <link rel="stylesheet" href="css/epub.css" />
       <link rel="pronunciation" href="lexicon/en.pls" type="application/pls+xml" hreflang="en" />
@@ -319,7 +307,7 @@ describe(`HtmlRenderer`, () => {
     })
 
     it(`loads without one that never reports, once it stops waiting for it`, async () => {
-      // rxjs schedules its delays with intervals.
+      // rxjs schedules delays with intervals
       vi.useFakeTimers({
         toFake: [`setTimeout`, `clearTimeout`, `setInterval`, `clearInterval`],
       })
@@ -338,6 +326,30 @@ describe(`HtmlRenderer`, () => {
       expect(renderer.value.state).toBe(`loading`)
 
       await vi.advanceTimersByTimeAsync(1_000)
+
+      await waitForLoaded()
+    })
+
+    it(`waits for one whose relation is written in another case`, async () => {
+      const { load, waitForLoaded, renderer, getDocument } = setup({
+        documentHref: `file://EPUB/chapter.xhtml`,
+        resources,
+      })
+
+      load(documentWith(`<link rel="StyleSheet" href="css/a.css" />`))
+
+      // happy-dom does not fetch it, so the test reports in its place
+      const link = await vi.waitFor(() => {
+        const link = getDocument()?.querySelector(`link`)
+
+        expect(link?.getAttribute(`href`)).toMatch(/^blob:/)
+
+        return link
+      })
+
+      expect(renderer.value.state).toBe(`loading`)
+
+      link?.dispatchEvent(new Event(`load`))
 
       await waitForLoaded()
     })
@@ -406,6 +418,16 @@ describe(`HtmlRenderer`, () => {
         `a file href nested in a folder`,
         `file://EPUB/Text/chapter.xhtml`,
         `file://EPUB/Text/images/a.png`,
+      ],
+      [
+        `a file href at the root of the archive`,
+        `file://chapter.xhtml`,
+        `file://images/a.png`,
+      ],
+      [
+        `an item listed by its bare path in the archive, as a non-epub archive lists them`,
+        `file://Text/chapter.xhtml`,
+        `Text/images/a.png`,
       ],
       [
         `an http href`,

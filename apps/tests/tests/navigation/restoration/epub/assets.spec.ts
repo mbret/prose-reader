@@ -4,11 +4,8 @@ import { waitForSpineItemReady } from "../../../utils"
 import { navigateAndSettle, waitForReader } from "../../../utils/pagination"
 
 /**
- * `ch03s03.xhtml` attaches PLS pronunciation lexicons for text-to-speech,
- * which is valid EPUB 3. A browser never fetches a `pronunciation` link, so
- * no `load` or `error` ever comes for one, and the chapter must open without
- * waiting on it. Its stylesheet declares the book's fonts, which the reader
- * points at the archive once the stylesheet has loaded.
+ * `ch03s03.xhtml` links PLS pronunciation lexicons, which a browser never
+ * fetches, so they must not hold the chapter.
  */
 
 const url = "http://localhost:3333/tests/navigation/restoration/epub/index.html"

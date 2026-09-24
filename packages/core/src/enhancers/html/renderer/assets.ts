@@ -25,53 +25,43 @@ import type { ReaderSettingsManager } from "../../../settings/ReaderSettingsMana
 import { ResourceHandler } from "../../../spineItem/resources/ResourceHandler"
 import { getElementsWithAssets, revokeDocumentBlobs } from "../../../utils/dom"
 
-/**
- * A stylesheet is served from a blob already in memory, so it loads in
- * moments. This only bounds a browser that never reports on one, so that a
- * single link cannot keep the document loading forever.
- */
+/** Bounds a browser that never reports on a stylesheet. */
 const STYLESHEET_LOAD_TIMEOUT_MS = 5_000
 
-/** The `url()` tokens of a css rule, quoted or not. */
 const CSS_URL = /url\(\s*(['"]?)(.*?)\1\s*\)/g
 
 type DocumentView = Window & typeof globalThis
 
 /**
- * Resolves `path` the way the browser would for a resource loaded from
- * `base`: the document's href for its elements, the stylesheet's href for
- * its rules. Both are loaded from blobs, against which no relative
- * reference resolves, so we resolve against their manifest href instead.
- *
- * @important Firefox handles file protocol weirdly and will not
- * go up one directory when using "../". We temporarily replace to http://
- * to keep our behavior.
+ * Archive hrefs are `file://` or bare paths, and neither resolves a relative
+ * reference (`file://` reads the first folder as a host), so they resolve
+ * under this root instead.
  */
-const joinPath = (base: string, path: string) => {
-  // Temporarily replace file:// with http:// for consistent URL handling
-  const isFileProtocol = base.startsWith("file://")
-  const tempBase = isFileProtocol ? base.replace("file://", "http://") : base
-  const result = new URL(path, tempBase).toString()
+const ARCHIVE_ROOT = `http://archive.invalid/`
 
-  // Convert back to file:// if needed
-  return isFileProtocol ? result.replace("http://", "file://") : result
+const toResourceUrl = (href: string) => {
+  try {
+    return new URL(href.replace(/^file:\/\//, ``), ARCHIVE_ROOT)
+  } catch {
+    return undefined
+  }
 }
 
-/**
- * The content of the manifest item at `url`, when it is served as a
- * response. An item served as a url, or a url the manifest does not have,
- * gives nothing and the reference is left as is.
- */
+/** Gives nothing for a url missing from the manifest or served as a url. */
 const createAssetFetcher = (
   manifest: Manifest,
   settings: ReaderSettingsManager,
 ) => {
-  const itemsByHref = new Map(
-    manifest.items.map((item) => [item.href.toLowerCase(), item]),
-  )
+  const itemsByUrl = new Map<string, Manifest["items"][number]>()
 
-  return (url: string): Observable<Blob> => {
-    const item = itemsByHref.get(url.toLowerCase())
+  for (const item of manifest.items) {
+    const key = toResourceUrl(item.href)?.href.toLowerCase()
+
+    if (key && !itemsByUrl.has(key)) itemsByUrl.set(key, item)
+  }
+
+  return (url: URL): Observable<Blob> => {
+    const item = itemsByUrl.get(url.href.toLowerCase())
 
     if (!item) return EMPTY
 
@@ -86,16 +76,8 @@ const createAssetFetcher = (
 type FetchAsset = ReturnType<typeof createAssetFetcher>
 
 /**
- * Whether the browser fetches this link once its href is set, and so reports
- * on it with `load` or `error`. It only does for the relations it processes,
- * and a stylesheet is the only one the document waits for: its styles have to
- * apply before layout, and its font faces can only be rewritten once it is
- * parsed. Any other link, such as an EPUB 3 pronunciation lexicon
- * (`rel="pronunciation"`), is never fetched and no event ever comes.
- *
- * A stylesheet is not fetched either when it is disabled or typed as anything
- * but css.
- *
+ * The browser only fetches, and reports `load` or `error` for, the links it
+ * processes. Waiting on any other (eg: `rel="pronunciation"`) never ends.
  * @see https://html.spec.whatwg.org/multipage/links.html#link-type-stylesheet
  */
 const isFetchedStylesheet = (
@@ -105,9 +87,11 @@ const isFetchedStylesheet = (
   if (!(element instanceof view.HTMLLinkElement)) return false
 
   const mimeType = element.type.split(";")[0]?.trim().toLowerCase()
+  // link types are case-insensitive, the token list is not
+  const relations = Array.from(element.relList, (token) => token.toLowerCase())
 
   return (
-    element.relList.contains("stylesheet") &&
+    relations.includes("stylesheet") &&
     !element.hasAttribute("disabled") &&
     (!mimeType || mimeType === "text/css")
   )
@@ -120,27 +104,15 @@ const waitForStylesheet = (link: HTMLLinkElement) =>
       mergeMap(() => throwError(() => new Error(`the stylesheet failed`))),
     ),
   ).pipe(
-    timeout({
-      first: STYLESHEET_LOAD_TIMEOUT_MS,
-      with: () =>
-        throwError(
-          () =>
-            new Error(
-              `the stylesheet did not load within ${STYLESHEET_LOAD_TIMEOUT_MS}ms`,
-            ),
-        ),
-    }),
+    timeout({ first: STYLESHEET_LOAD_TIMEOUT_MS }),
     first(),
     map(() => link.sheet),
   )
 
 /**
- * A font face's `url()` resolves against its stylesheet, which is a blob, so
- * each one is swapped for a blob of the manifest item it names. The rule is
- * replaced rather than edited, which Firefox does not allow.
- *
- * Object urls are only created once every font of a rule is in, so an
- * unsubscription midway leaves none behind that unload would not revoke.
+ * Rules are replaced rather than edited, which Firefox does not allow. Object
+ * urls are only created once all of a rule's fonts are in, so none leak when
+ * unsubscribed midway.
  */
 const rewriteFontFaces = ({
   sheet,
@@ -149,7 +121,7 @@ const rewriteFontFaces = ({
   fetchAsset,
 }: {
   sheet: CSSStyleSheet
-  sheetUrl: string
+  sheetUrl: URL
   view: DocumentView
   fetchAsset: FetchAsset
 }): Observable<never> =>
@@ -165,7 +137,7 @@ const rewriteFontFaces = ({
       )
 
       const fonts = references.map((reference) =>
-        defer(() => fetchAsset(joinPath(sheetUrl, reference))).pipe(
+        defer(() => fetchAsset(new URL(reference, sheetUrl))).pipe(
           catchError((error) => {
             Report.warn(`Could not load font ${reference}`, error)
 
@@ -197,13 +169,7 @@ const rewriteFontFaces = ({
     return merge(...rewrites).pipe(ignoreElements())
   })
 
-/**
- * Points the element at a blob of the manifest item it references, and for a
- * stylesheet, waits for it to apply and rewrites its font faces.
- *
- * It never errors: a missing or broken asset is reported and the document
- * loads without it, the way a browser renders a page whose image is missing.
- */
+/** Never errors: a failed asset is reported and the document loads without it. */
 const loadElementAsset = ({
   element,
   documentUrl,
@@ -211,7 +177,7 @@ const loadElementAsset = ({
   fetchAsset,
 }: {
   element: Element
-  documentUrl: string
+  documentUrl: URL
   view: DocumentView
   fetchAsset: FetchAsset
 }): Observable<never> => {
@@ -221,7 +187,7 @@ const loadElementAsset = ({
   if (!attribute || !reference) return EMPTY
 
   return defer(() => {
-    const url = joinPath(documentUrl, reference)
+    const url = new URL(reference, documentUrl)
 
     return fetchAsset(url).pipe(
       switchMap((blob) => {
@@ -229,8 +195,7 @@ const loadElementAsset = ({
 
         if (!isFetchedStylesheet(element, view)) return EMPTY
 
-        // `load` and `error` are dispatched from a task, so listening right
-        // after the swap cannot miss them.
+        // `load` is dispatched from a task, after this subscribes
         return waitForStylesheet(element).pipe(
           switchMap((sheet) =>
             sheet
@@ -264,15 +229,16 @@ export const loadAssets =
       switchMap((frameElement) => {
         const document = frameElement.contentDocument
         const view = document?.defaultView
+        const documentUrl = toResourceUrl(item.href)
 
-        if (!document || !view) return of(frameElement)
+        if (!document || !view || !documentUrl) return of(frameElement)
 
         const fetchAsset = createAssetFetcher(context.manifest, settings)
 
         const assetLoads = getElementsWithAssets(document).map((element) =>
           loadElementAsset({
             element,
-            documentUrl: item.href,
+            documentUrl,
             view,
             fetchAsset,
           }),
