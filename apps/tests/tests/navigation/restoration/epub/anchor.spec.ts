@@ -44,6 +44,7 @@ const readPosition = async (page: Page) => {
         cfi: begin.cfi,
         isRootCfi: reader.cfi.isRootCfi(begin.cfi),
         pageIndex: begin.pageIndexInSpineItem,
+        numberOfPages: begin.numberOfPagesInSpineItem,
         spineItemIndex: begin.spineItemIndex,
         navigationCfi: navigation.cfi,
         readingPosition,
@@ -118,20 +119,20 @@ const getLongChapterIndex = (page: Page) => getChapterIndex(page, "ch02.xhtml")
  */
 const navigateAndReadAtOnce = (
   page: Page,
-  navigation: { turnRight: true } | { spineItem: number },
+  navigation: { turn: "left" | "right"; into: number } | { spineItem: number },
 ) =>
   page.evaluate((navigation) => {
     // @ts-expect-error window.reader is set by this scenario's index.tsx
     const reader = window.reader as Reader
     const target =
-      "spineItem" in navigation
-        ? navigation.spineItem
-        : reader.navigation.getNavigation().spineItem
+      "spineItem" in navigation ? navigation.spineItem : navigation.into
     const wasReady =
       reader.spineItemsManager.get(target)?.value.isReady ?? false
 
     if ("spineItem" in navigation) {
       reader.navigation.goToSpineItem({ indexOrId: navigation.spineItem })
+    } else if (navigation.turn === "left") {
+      reader.navigation.turnLeft()
     } else {
       reader.navigation.turnRight()
     }
@@ -233,7 +234,10 @@ test.describe("Given a page reached by turning pages", () => {
     let atOnce: Awaited<ReturnType<typeof navigateAndReadAtOnce>> | undefined
 
     await navigateAndSettle(page, async () => {
-      atOnce = await navigateAndReadAtOnce(page, { turnRight: true })
+      atOnce = await navigateAndReadAtOnce(page, {
+        turn: "right",
+        into: chapterIndex,
+      })
     })
 
     const turned = await readPosition(page)
@@ -449,5 +453,60 @@ test.describe("Given a page reached by turning pages", () => {
     expect(reopened.spineItemIndex).toBe(position.spineItemIndex)
     expect(reopened.pageIndex).toBe(position.pageIndex)
     expect(reopened.readingPosition).toBe(position.cfi)
+  })
+})
+
+test.describe("Given chapters that are not preloaded", () => {
+  test.beforeEach(async ({ page }) => {
+    await page.setViewportSize(initialSize)
+    // Only visible chapters load, so the one before is never loaded yet.
+    await page.goto(`${url}?preload=0`)
+    await waitForReader(page)
+  })
+
+  test("a turn back into a previous chapter is its start at once, and its last page once it loads", async ({
+    page,
+  }) => {
+    const previousIndex = await getLongChapterIndex(page)
+
+    await navigateAndSettle(page, () =>
+      page.evaluate((indexOrId) => {
+        // @ts-expect-error window.reader is set by this scenario's index.tsx
+        const reader = window.reader as Reader
+
+        reader.navigation.goToSpineItem({ indexOrId })
+      }, previousIndex + 1),
+    )
+
+    const readRecorded = await recordReadingPositions(page)
+    let atOnce: Awaited<ReturnType<typeof navigateAndReadAtOnce>> | undefined
+
+    await navigateAndSettle(page, async () => {
+      atOnce = await navigateAndReadAtOnce(page, {
+        turn: "left",
+        into: previousIndex,
+      })
+    })
+
+    const settled = await readPosition(page)
+
+    /**
+     * Turning back lands on the previous chapter's last page. Until that
+     * chapter is loaded no text of it can be named, so the reading position
+     * is its start; once it has loaded, it is the last page's first
+     * character.
+     */
+    expect(atOnce?.wasReady).toBe(false)
+    expect(atOnce?.isRootCfi).toBe(true)
+    expect(atOnce?.itemIndex).toBe(previousIndex)
+    expect(settled.spineItemIndex).toBe(previousIndex)
+    expect(settled.numberOfPages).toBeGreaterThan(1)
+    expect(settled.pageIndex).toBe(settled.numberOfPages - 1)
+    expect(settled.isRootCfi).toBe(false)
+    expect(settled.readingPosition).toBe(settled.cfi)
+    expect(await readRecorded()).toEqual([
+      { cfi: atOnce?.cfi, isRootCfi: true, itemIndex: previousIndex },
+      { cfi: settled.cfi, isRootCfi: false, itemIndex: previousIndex },
+    ])
   })
 })
