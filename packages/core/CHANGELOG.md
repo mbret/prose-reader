@@ -3,6 +3,42 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## [12.0.0](https://github.com/mbret/prose-reader/compare/v11.0.0...v12.0.0) (2026-09-24)
+
+
+### ⚠ BREAKING CHANGES
+
+* **navigation:** UserNavigationEntry.direction is removed, and
+InternalNavigationEntry.directionFromLastNavigation no longer includes
+"anchor".
+
+Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
+Claude-Session: https://claude.ai/code/session_01YNJfUFaQbVhXaYd5pGyGfK
+
+* refactor(navigation): drop comments that restate the pipeline
+
+Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
+Claude-Session: https://claude.ai/code/session_01YNJfUFaQbVhXaYd5pGyGfK
+
+* test(navigation): pin the reading position of a chapter opened at its root cfi
+
+While the chapter loads it is the chapter start as the reader names it, not
+the cfi as given; once loaded it is the first page, not the chapter.
+
+Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
+Claude-Session: https://claude.ai/code/session_01YNJfUFaQbVhXaYd5pGyGfK
+
+### Bug Fixes
+
+* **core:** keep a forwarded pointer event's button, pointer and modifier keys ([aed8733](https://github.com/mbret/prose-reader/commit/aed873386471eef52a57d4a80ee90a9c9de035e5)), closes [#240](https://github.com/mbret/prose-reader/issues/240) [#240](https://github.com/mbret/prose-reader/issues/240)
+
+
+### Code Refactoring
+
+* **navigation:** resolve targets in one step, in a fixed consolidation order ([#436](https://github.com/mbret/prose-reader/issues/436)) ([912b9a3](https://github.com/mbret/prose-reader/commit/912b9a3966cde3ed5835d9a2ca736785308f73cf))
+
+
+
 ## [11.0.0](https://github.com/mbret/prose-reader/compare/v10.0.0...v11.0.0) (2026-09-24)
 
 

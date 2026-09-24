@@ -3,6 +3,14 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## [12.0.0](https://github.com/mbret/prose-reader/compare/v11.0.0...v12.0.0) (2026-09-24)
+
+**Note:** Version bump only for package @prose-reader/enhancer-refit
+
+
+
+
+
 ## [11.0.0](https://github.com/mbret/prose-reader/compare/v10.0.0...v11.0.0) (2026-09-24)
 
 **Note:** Version bump only for package @prose-reader/enhancer-refit
