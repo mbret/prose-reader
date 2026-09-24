@@ -57,6 +57,7 @@ export class InternalNavigator extends DestroyableClass {
    */
   public navigationSubject = new BehaviorSubject<InternalNavigationEntry>({
     animation: false,
+    target: { type: "position", value: new SpinePosition({ x: 0, y: 0 }) },
     position: new SpinePosition({ x: 0, y: 0 }),
     meta: {
       triggeredBy: "user",
@@ -98,7 +99,11 @@ export class InternalNavigator extends DestroyableClass {
   public readonly readingPosition$ = this.navigationSubject.pipe(
     map(
       (navigation) =>
-        navigation.anchor ?? navigation.cfi ?? this.getItemStart(navigation),
+        navigation.anchor ??
+        (navigation.target.type === "cfi"
+          ? navigation.target.value
+          : undefined) ??
+        this.getItemStart(navigation),
     ),
     filter(isDefined),
     distinctUntilChanged(),
@@ -176,9 +181,10 @@ export class InternalNavigator extends DestroyableClass {
         }),
         withLatestFrom(isUserInteractionLocked$),
         switchMap(([params, isUserLocked]) => {
+          const { target } = params.navigation
           const shouldNotAlterPosition =
-            params.navigation.cfi ||
-            params.navigation.url ||
+            ((target.type === "cfi" || target.type === "url") &&
+              !!target.value) ||
             settings.values.computedPageTurnMode === "scrollable" ||
             isUserLocked
 

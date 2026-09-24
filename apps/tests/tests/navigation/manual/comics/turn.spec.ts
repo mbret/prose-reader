@@ -60,7 +60,12 @@ offsets.forEach((offset) => {
 
       await navigateTo({
         page,
-        navigation: { position: { x: offset, y: 0 } as SpinePosition },
+        navigation: {
+          target: {
+            type: "position",
+            value: { x: offset, y: 0 } as SpinePosition,
+          },
+        },
       })
 
       await expectSpineItemsInViewport({

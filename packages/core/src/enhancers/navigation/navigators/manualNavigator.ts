@@ -53,7 +53,7 @@ export class ManualNavigator {
     })
 
     return this.reader.navigation.navigate({
-      position,
+      target: { type: "position", value: position },
     })
   }
 
@@ -68,7 +68,7 @@ export class ManualNavigator {
   goToCfi(cfi: string, options: { animate: boolean } = { animate: true }) {
     return this.reader.navigation.navigate({
       animation: options.animate ? "turn" : false,
-      cfi,
+      target: { type: "cfi", value: cfi },
     })
   }
 
@@ -91,7 +91,7 @@ export class ManualNavigator {
     }
 
     this.reader.navigation.navigate({
-      spineItem: spineItem.index,
+      target: { type: "spineItem", value: spineItem.index },
       ...rest,
     })
   }
@@ -118,7 +118,7 @@ export class ManualNavigator {
 
   goToUrl(url: string | URL) {
     this.reader.navigation.navigate({
-      url,
+      target: { type: "url", value: url },
       animation: false,
     })
   }
@@ -221,7 +221,7 @@ export class ManualNavigator {
     })
 
     this.reader.navigation.navigate({
-      position,
+      target: { type: "position", value: position },
       ...rest,
     })
   }
@@ -249,7 +249,7 @@ export class ManualNavigator {
         )
 
       return this.reader.navigation.navigate({
-        position,
+        target: { type: "position", value: position },
         ...rest,
       })
     }
