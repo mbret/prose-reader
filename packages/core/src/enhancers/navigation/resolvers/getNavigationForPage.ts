@@ -10,7 +10,11 @@ import type { SpineItemsManager } from "../../../spine/SpineItemsManager"
 import { type SpinePosition, UnboundSpinePosition } from "../../../spine/types"
 import type { SpineItem } from "../../../spineItem/SpineItem"
 import type { Viewport } from "../../../viewport/Viewport"
-import { getNavigationForLeftSinglePage } from "./getNavigationForLeftSinglePage"
+import { getNavigationForSinglePage } from "./getNavigationForSinglePage"
+import {
+  getPageNavigationDirectionSign,
+  type PageNavigationDirection,
+} from "./pageNavigationDirection"
 
 /**
  * Very naive approach for spread. It could be optimized but by using this approach
@@ -19,7 +23,7 @@ import { getNavigationForLeftSinglePage } from "./getNavigationForLeftSinglePage
  * @important
  * Special case for vertical content, read content
  */
-export const getNavigationForLeftOrTopPage = ({
+export const getNavigationForPage = ({
   position,
   spineItem,
   context,
@@ -29,6 +33,7 @@ export const getNavigationForLeftOrTopPage = ({
   computedPageTurnDirection,
   viewport,
   settings,
+  direction,
 }: {
   position: SpinePosition | UnboundSpinePosition
   spineItem: SpineItem
@@ -42,24 +47,28 @@ export const getNavigationForLeftOrTopPage = ({
     CoreInputSettings,
     CoreInputSettings & ComputedCoreSettings
   >
+  direction: PageNavigationDirection
 }): SpinePosition | UnboundSpinePosition => {
+  const sign = getPageNavigationDirectionSign(direction)
+
   if (
     settings.values.computedPageTurnMode === "scrollable" &&
     computedPageTurnDirection === "vertical"
   ) {
     return new UnboundSpinePosition({
       x: position.x,
-      y: position.y - viewport.pageSize.height,
+      y: position.y + sign * viewport.pageSize.height,
     })
   }
 
-  const navigation = getNavigationForLeftSinglePage({
+  const navigation = getNavigationForSinglePage({
     position,
     viewport,
     navigationResolver,
     computedPageTurnDirection,
     spineItemsManager,
     spineLocator,
+    direction,
   })
 
   // when we move withing vertical content, because only y moves, we don't need two navigation
@@ -70,19 +79,16 @@ export const getNavigationForLeftOrTopPage = ({
   if (settings.values.computedSpreadMode) {
     // in case of spread the entire screen is taken as one real page for vertical content
     // in order to move out from it we add an extra page width.
-    // using `getNavigationForLeftSinglePage` again would keep x as it is and wrongly move y
+    // using `getNavigationForSinglePage` again would keep x as it is and wrongly move y
     // for the next item in case it's also a vertical content
     if (spineItem?.isUsingVerticalWriting() && position.x !== navigation.x) {
       return navigationResolver.getAdjustedPositionForSpread(
-        context.isRTL()
-          ? new UnboundSpinePosition({
-              x: navigation.x + viewport.pageSize.width,
-              y: navigation.y,
-            })
-          : new UnboundSpinePosition({
-              x: navigation.x - viewport.pageSize.width,
-              y: navigation.y,
-            }),
+        new UnboundSpinePosition({
+          x:
+            navigation.x +
+            (context.isRTL() ? -sign : sign) * viewport.pageSize.width,
+          y: navigation.y,
+        }),
       )
     }
 
@@ -97,13 +103,14 @@ export const getNavigationForLeftOrTopPage = ({
       return navigationResolver.getAdjustedPositionForSpread(navigation)
     }
 
-    const doubleNavigation = getNavigationForLeftSinglePage({
+    const doubleNavigation = getNavigationForSinglePage({
       position: navigation,
       viewport,
       navigationResolver,
       computedPageTurnDirection,
       spineItemsManager,
       spineLocator,
+      direction,
     })
 
     return navigationResolver.getAdjustedPositionForSpread(doubleNavigation)
