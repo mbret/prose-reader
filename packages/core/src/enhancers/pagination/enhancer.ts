@@ -68,11 +68,15 @@ export const paginationEnhancer =
   ) =>
   (options: InheritOptions): PaginationOutput => {
     const reader = next(options)
+    /**
+     * Stands in until the first enrichment, which waits for a layout: none of
+     * what the enhancer adds is known before it.
+     */
     const unenrichedEdge = (edge: PaginationEdge): EnhancerPaginationEdge => ({
       ...edge,
       chapterInfo: undefined,
       spineItemReadingDirection: undefined,
-      absolutePageIndex: 0,
+      absolutePageIndex: undefined,
     })
 
     const unenrichedPagination: EnhancerPaginationInfo = {

@@ -56,6 +56,52 @@ afterEach(() => {
   document.getElementById("test-container")?.remove()
 })
 
+describe("Given a book that has not been laid out yet", () => {
+  /**
+   * The core already places the edges on an estimate by then, the start of
+   * the first item. What the enhancer adds waits for a layout.
+   */
+  it(`should not claim a page, a chapter or a direction on either edge`, () => {
+    const reader = paginationEnhancer(
+      layoutEnhancer(themeEnhancer(createReader)),
+    )({
+      getResource: () => of(new Response("", { status: 200 })),
+      manifest: {
+        ...BASE_MANIFEST,
+        spineItems: [
+          {
+            href: "/chapter_1/page_1.jpg",
+            id: "1",
+            pageSpreadLeft: true,
+            pageSpreadRight: true,
+            progressionWeight: 0,
+            renditionLayout: "pre-paginated",
+            index: 0,
+          },
+        ],
+      },
+    })
+
+    const { state } = reader.pagination
+
+    expect(state).toMatchObject({
+      isSettled: false,
+      numberOfTotalPages: 0,
+      percentageEstimateOfBook: 0,
+    })
+
+    for (const edge of [state.begin, state.end]) {
+      expect(edge).toMatchObject({
+        absolutePageIndex: undefined,
+        chapterInfo: undefined,
+        spineItemReadingDirection: undefined,
+      })
+    }
+
+    reader.destroy()
+  })
+})
+
 describe("Given a book with one chapter", () => {
   describe(`when we navigate to first page`, () => {
     it(`should return first chapter`, async () => {
