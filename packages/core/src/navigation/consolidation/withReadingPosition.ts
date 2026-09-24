@@ -13,40 +13,48 @@ type Navigation = {
  * restoration returns to after a relayout, and what an app saves to reopen the
  * book there.
  *
- * - A cfi the navigation named is kept as it is.
- * - Otherwise it is the first character of the page at the navigation's
- *   position, as soon as that page is laid out.
- * - Until then it is the start of the item, the only place a cfi can name in
- *   content that is not laid out. A restoration of the same navigation refines
- *   it once the layout it lands on has the page.
+ * - A cfi the navigation named is kept as it is, unless it names only an item.
+ * - Otherwise it is the first character of the page that shows first at the
+ *   navigation's position, the begin edge of what is visible, as soon as that
+ *   page is laid out.
+ * - Until then the navigation has none, and restoration works from its
+ *   position. The first restoration that lands on a layout with the page
+ *   finds it.
  *
- * A position in the text, once found, is kept for the rest of the navigation.
- * Restorations land on the page holding it; taking that page's own first
- * character instead would restore to the page before at the next relayout,
- * and every resize would walk the reader back.
+ * Once found it is kept for the rest of the navigation. Restorations land on
+ * the page holding it; taking that page's own first character instead would
+ * restore to the page before at the next relayout, and every resize would walk
+ * the reader back.
  */
 export const withReadingPosition =
   ({ spine, cfi }: { spine: Spine; cfi: CfiManager }) =>
   <N extends Navigation>(stream: Observable<N>): Observable<N> => {
-    const getPageCfi = (navigation: N["navigation"]) => {
-      const spineItem = spine.spineItemsManager.get(navigation.spineItem)
+    const getPageCfi = ({ position }: N["navigation"]) => {
+      if (!position) return undefined
+
+      /**
+       * The item that shows first, as pagination picks its begin edge. The
+       * navigation's own item can be a sliver at the top of a scrolled
+       * viewport, with no page of it visible enough to count.
+       */
+      const { beginIndex } =
+        spine.locator.getVisibleSpineItemsFromPosition({
+          position,
+          threshold: PAGE_VISIBILITY_THRESHOLD,
+        }) ?? {}
+      const spineItem = spine.spineItemsManager.get(beginIndex)
 
       /**
        * Pages describe the latest layout only while it is current, and a page
        * has a first visible node only once its item is ready.
        */
-      if (
-        !spineItem ||
-        !navigation.position ||
-        !spine.isLayoutCurrent ||
-        !spineItem.value.isReady
-      )
+      if (!spineItem || !spine.isLayoutCurrent || !spineItem.value.isReady)
         return undefined
 
       const { beginPageIndex } =
         spine.locator.getVisiblePagesFromViewportPosition({
           spineItem,
-          position: navigation.position,
+          position,
           threshold: PAGE_VISIBILITY_THRESHOLD,
         }) ?? {}
 
@@ -58,18 +66,14 @@ export const withReadingPosition =
       return page && cfi.generateCfiForPage(spineItem.item, page)
     }
 
-    const getItemStart = (navigation: N["navigation"]) => {
-      const spineItem = spine.spineItemsManager.get(navigation.spineItem)
-
-      return spineItem && cfi.generateRootCfi(spineItem.item)
-    }
-
     const getReadingPosition = (navigation: N["navigation"]) => {
-      const known = navigation.readingPosition ?? navigation.cfi
+      if (navigation.readingPosition !== undefined)
+        return navigation.readingPosition
 
-      if (known !== undefined && !cfi.isRootCfi(known)) return known
+      if (navigation.cfi !== undefined && !cfi.isRootCfi(navigation.cfi))
+        return navigation.cfi
 
-      return getPageCfi(navigation) ?? known ?? getItemStart(navigation)
+      return getPageCfi(navigation)
     }
 
     return stream.pipe(

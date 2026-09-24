@@ -89,12 +89,19 @@ export class InternalNavigator extends DestroyableClass {
   /**
    * Where the reader is in the book, to save and reopen at: the current
    * navigation's reading position, which `withReadingPosition` computes with
-   * every entry. It only moves when the reader navigates, and once when a
-   * navigation into content still loading finds its page: a relayout reflows
-   * the page around it without changing it.
+   * every entry. Until the page a navigation goes to is laid out, it is the
+   * start of the item the navigation goes to, the only place a cfi can name
+   * in content that is not laid out. It only moves when the reader navigates,
+   * and once when such a navigation finds its page: a relayout reflows the
+   * page around it without changing it.
    */
   public readonly readingPosition$ = this.navigationSubject.pipe(
-    map(({ readingPosition }) => readingPosition),
+    map(
+      (navigation) =>
+        navigation.readingPosition ??
+        navigation.cfi ??
+        this.getItemStart(navigation),
+    ),
     filter(isDefined),
     distinctUntilChanged(),
   )
@@ -374,6 +381,12 @@ export class InternalNavigator extends DestroyableClass {
     )
 
     notifiedNavigationUpdate$.pipe(takeUntil(this.destroy$)).subscribe()
+  }
+
+  protected getItemStart(navigation: InternalNavigationEntry) {
+    const spineItem = this.spine.spineItemsManager.get(navigation.spineItem)
+
+    return spineItem && this.cfiManager.generateRootCfi(spineItem.item)
   }
 
   get navigation() {

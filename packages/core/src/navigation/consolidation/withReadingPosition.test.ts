@@ -29,6 +29,10 @@ const createSpine = ({
       get: () => ({ item, value: { isReady } }),
     },
     locator: {
+      getVisibleSpineItemsFromPosition: () => ({
+        beginIndex: 0,
+        endIndex: 0,
+      }),
       getVisiblePagesFromViewportPosition: () => ({
         beginPageIndex: 0,
         endPageIndex: 0,
@@ -80,7 +84,7 @@ describe("withReadingPosition", () => {
     expect(await readingPositionOf({}, createSpine())).toBe(pageText)
   })
 
-  it("is the item start while a layout is pending, not a page of the one being replaced", async () => {
+  it("has none while a layout is pending, rather than a page of the one being replaced", async () => {
     /**
      * Pages are published a few frames after a layout pass. Until then they
      * still describe the layout being replaced, while positions already
@@ -88,12 +92,19 @@ describe("withReadingPosition", () => {
      */
     expect(
       await readingPositionOf({}, createSpine({ isLayoutCurrent: false })),
-    ).toBe(itemStart)
+    ).toBeUndefined()
   })
 
-  it("is the item start while the item is not ready", async () => {
-    expect(await readingPositionOf({}, createSpine({ isReady: false }))).toBe(
-      itemStart,
+  it("has none while the item is not ready", async () => {
+    expect(
+      await readingPositionOf({}, createSpine({ isReady: false })),
+    ).toBeUndefined()
+  })
+
+  it("is not an item a named cfi names, but the page it lands on", async () => {
+    // A book reopened at a saved item start lands on the item's first page.
+    expect(await readingPositionOf({ cfi: itemStart }, createSpine())).toBe(
+      pageText,
     )
   })
 
@@ -111,9 +122,14 @@ describe("withReadingPosition", () => {
     ).toBe(textElsewhere)
   })
 
-  it("refines an item start once the page is laid out", async () => {
+  it("keeps a position found on a page without text, rather than finding it again", async () => {
+    /**
+     * A pre-paginated page has no first visible character, so its position is
+     * its item. Finding it again at every restoration would follow the
+     * spread: after a rotation the page shown first can be the other one.
+     */
     expect(
       await readingPositionOf({ readingPosition: itemStart }, createSpine()),
-    ).toBe(pageText)
+    ).toBe(itemStart)
   })
 })

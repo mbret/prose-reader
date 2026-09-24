@@ -107,8 +107,8 @@ export type InternalNavigationEntry = {
   cfi?: string
   /**
    * Where this navigation takes the reader in the text, the value restoration
-   * returns to and the reader exposes as its reading position. Computed by
-   * `withReadingPosition` for every entry, restorations included.
+   * returns to. Computed by `withReadingPosition` for every entry,
+   * restorations included; `undefined` until the page it goes to is laid out.
    */
   readingPosition?: string
 } & NavigationConsolidation

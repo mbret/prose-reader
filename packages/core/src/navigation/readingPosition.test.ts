@@ -1,6 +1,7 @@
 // @vitest-environment jsdom
 import { firstValueFrom } from "rxjs"
-import { describe, expect, it, vi } from "vitest"
+import { describe, expect, it, onTestFinished, vi } from "vitest"
+import { SpinePosition } from "../spine/types"
 import {
   createTestReader,
   holdItem,
@@ -38,6 +39,45 @@ describe("reading position", () => {
     expect(settled.begin.cfi).toBe(atOnce)
     expect(await firstValueFrom(reader.navigation.readingPosition$)).toBe(
       atOnce,
+    )
+  })
+
+  it("is the page that shows first, not the item a scroll barely left", async () => {
+    // jsdom has no element scrolling; the scroll navigation controller only
+    // needs the offsets it writes to be kept.
+    Object.defineProperty(HTMLElement.prototype, "scrollTo", {
+      configurable: true,
+      value(this: HTMLElement, options?: ScrollToOptions) {
+        this.scrollLeft = options?.left ?? 0
+        this.scrollTop = options?.top ?? 0
+      },
+    })
+    onTestFinished(() => {
+      Reflect.deleteProperty(HTMLElement.prototype, "scrollTo")
+    })
+
+    const reader = createTestReader({ pageTurnMode: "scrollable" })
+
+    mountTestReader(reader)
+    await settledOn(reader, 0)
+
+    /**
+     * Items are stacked one viewport tall. Nine tenths down the first, only a
+     * sliver of it is left at the top: the navigation's item is still the
+     * first, while the page that shows is the second's.
+     */
+    const { height } = reader.spine.getSpineItemSpineLayoutInfo(0)
+
+    reader.navigation.navigate({
+      position: new SpinePosition({ x: 0, y: height * 0.9 }),
+      animation: false,
+    })
+
+    const settled = await settledOn(reader, 1)
+
+    expect(reader.navigation.getNavigation().spineItem).toBe(0)
+    expect(await firstValueFrom(reader.navigation.readingPosition$)).toBe(
+      settled.begin.cfi,
     )
   })
 
