@@ -3,6 +3,21 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## [8.0.0](https://github.com/mbret/prose-reader/compare/v7.0.4...v8.0.0) (2026-09-24)
+
+
+### ⚠ BREAKING CHANGES
+
+* **navigation:** `paginationBeginCfi` is removed from navigation entries and
+`"pagination"` from `triggeredBy`; `navigation$` emits every restoration;
+`EnhancerPaginationInto` is renamed `EnhancerPaginationInfo`.
+
+### Code Refactoring
+
+* **navigation:** derive the reading position and resolve pagination on navigations only ([#392](https://github.com/mbret/prose-reader/issues/392)) ([5f34d62](https://github.com/mbret/prose-reader/commit/5f34d624bbc63ad28dbf4d23f4edc07699ba2485)), closes [#390](https://github.com/mbret/prose-reader/issues/390)
+
+
+
 ## [7.0.4](https://github.com/mbret/prose-reader/compare/v7.0.3...v7.0.4) (2026-09-24)
 
 
