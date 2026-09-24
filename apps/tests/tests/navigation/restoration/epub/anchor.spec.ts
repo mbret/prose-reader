@@ -46,7 +46,10 @@ const readPosition = async (page: Page) => {
         pageIndex: begin.pageIndexInSpineItem,
         numberOfPages: begin.numberOfPagesInSpineItem,
         spineItemIndex: begin.spineItemIndex,
-        navigationCfi: navigation.cfi,
+        navigationCfi:
+          navigation.target.type === "cfi"
+            ? navigation.target.value
+            : undefined,
         readingPosition,
       }
     },
@@ -386,7 +389,10 @@ test.describe("Given a page reached by turning pages", () => {
         const reader = window.reader as Reader
 
         reader.navigation.navigate({
-          position: reader.navigation.getNavigation().position,
+          target: {
+            type: "position",
+            value: reader.navigation.getNavigation().position,
+          },
         })
       }),
     )

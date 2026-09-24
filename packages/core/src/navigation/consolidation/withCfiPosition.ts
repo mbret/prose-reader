@@ -11,10 +11,10 @@ export const withCfiPosition =
   <N extends Navigation>(stream: Observable<N>): Observable<N> => {
     return stream.pipe(
       map((params) => {
-        if (params.navigation.cfi) {
-          const position = navigationResolver.getNavigationForCfi(
-            params.navigation.cfi,
-          )
+        const { target } = params.navigation
+
+        if (target.type === "cfi" && target.value) {
+          const position = navigationResolver.getNavigationForCfi(target.value)
 
           if (position) {
             return {

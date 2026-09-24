@@ -11,10 +11,10 @@ export const withUrlInfo =
   <N extends Navigation>(stream: Observable<N>): Observable<N> => {
     return stream.pipe(
       map((params) => {
-        if (params.navigation.url) {
-          const result = navigationResolver.getNavigationForUrl(
-            params.navigation.url,
-          )
+        const { target } = params.navigation
+
+        if (target.type === "url" && target.value) {
+          const result = navigationResolver.getNavigationForUrl(target.value)
 
           if (result) {
             return {
