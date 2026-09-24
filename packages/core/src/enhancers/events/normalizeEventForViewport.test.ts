@@ -54,7 +54,7 @@ const mountFrame = ({ isSpineItem }: { isSpineItem: boolean }) => {
     return event
   }
 
-  return { paragraph, locator, press }
+  return { frameWindow, paragraph, locator, press }
 }
 
 afterEach(() => {
@@ -76,6 +76,52 @@ describe("Given a pointer event in a spine item's frame", () => {
       clientY: 30 + FRAME_TOP,
     })
     expect(forwarded.target).toBe(paragraph)
+  })
+
+  it("forwards the same input: pointer, buttons, pressure and modifier keys", () => {
+    const { frameWindow, paragraph, locator } = mountFrame({
+      isSpineItem: true,
+    })
+    const input = {
+      pointerId: 7,
+      pointerType: "pen",
+      isPrimary: true,
+      button: 2,
+      buttons: 2,
+      width: 3,
+      height: 4,
+      pressure: 0.5,
+      tangentialPressure: 0.25,
+      tiltX: 10,
+      tiltY: -10,
+      twist: 45,
+      altKey: true,
+      ctrlKey: true,
+      metaKey: true,
+      shiftKey: true,
+      screenX: 11,
+      screenY: 12,
+      movementX: 1,
+      movementY: 2,
+      detail: 1,
+    }
+    const event = new PointerEvent("pointerdown", {
+      ...input,
+      view: frameWindow,
+    })
+
+    paragraph.dispatchEvent(event)
+
+    const forwarded = normalizeEventForViewport(event, locator)
+
+    expect(
+      Object.fromEntries(
+        Object.keys(input).map((key) => [
+          key,
+          forwarded[key as keyof typeof input],
+        ]),
+      ),
+    ).toEqual(input)
   })
 })
 
