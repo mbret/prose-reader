@@ -3,6 +3,19 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## [11.0.0](https://github.com/mbret/prose-reader/compare/v10.0.0...v11.0.0) (2026-09-24)
+
+
+### ⚠ BREAKING CHANGES
+
+* **navigation:** ask for one typed target per navigation (#434)
+
+### Code Refactoring
+
+* **navigation:** ask for one typed target per navigation ([#434](https://github.com/mbret/prose-reader/issues/434)) ([62b9d52](https://github.com/mbret/prose-reader/commit/62b9d5220546533c4d2eb29037d74533c6d4c033))
+
+
+
 ## [10.0.0](https://github.com/mbret/prose-reader/compare/v9.0.0...v10.0.0) (2026-09-24)
 
 
