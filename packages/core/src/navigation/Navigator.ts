@@ -139,31 +139,15 @@ export const createNavigator = ({
     controlledNavigationController,
     navigationState$,
     navigate,
-    /**
-     * Prevent further navigation until the lock is released.
-     * Useful if you want to start navigation by panning for example.
-     */
+    /** Holds the navigation for a pan, and returns its release. */
     lock: () => userInteractionLock.lock(),
-    /**
-     * `true` while a `lock()` is held. Releases as soon as the user lets
-     * go — does NOT include in-flight viewport animation or the
-     * unlock-driven restoration cycle (use `navigationState$` for that).
-     */
+    /** Whether a `lock()` is held. */
     isLocked$: userInteractionLock.isLocked$,
     navigationResolver: navigationResolver,
-    /**
-     * Every navigation as it happens, restorations included, even one that
-     * lands where the navigation already was.
-     */
+    /** Every navigation as it happens, restorations included. */
     navigation$: internalNavigator.navigation$,
     position$,
-    /**
-     * Where the reader is in the book, to save and reopen at with the `cfi`
-     * option. It only moves when the reader navigates: a resize or a relayout
-     * reflows the page around it without changing it. Every value is the
-     * closest known position of the latest navigation, so save each as it
-     * comes. Replays the current one.
-     */
+    /** Where the reader is in the book: the cfi to save and reopen at. */
     readingPosition$: internalNavigator.readingPosition$,
   }
 }

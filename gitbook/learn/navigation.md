@@ -68,7 +68,36 @@ reader.navigation.readingPosition$.subscribe((cfi) => {
 Use it to react to navigating as an event. For where the viewport is,
 `position$` emits the position only when it changes.
 
+## `navigation.lock()`
 
+```typescript
+() => () => void
+```
+
+Holds the navigation for a gesture that moves the page itself, a pan for
+example, and returns the function that releases it. While it is held the
+reader does not move the page on its own: the restoration of a layout that
+lands meanwhile waits for the release, and so does the snap of a navigation
+made while it is held. Locks add up: the navigation is held until every one
+of them is released, and calling a release twice releases it once.
+
+## `navigation.isLocked$`
+
+```typescript
+Observable<boolean>
+```
+
+`true` while a `lock()` is held. It turns `false` as soon as the lock is
+released, before the restoration that follows and any animation still running;
+use `navigationState$` to know when those are done too.
+
+## `navigation.state$`
+
+```typescript
+Observable<NavigationState>
+```
+
+Emits as soon as you subscribe to it.
 
 ```typescript
 type NavigationState = {
@@ -94,14 +123,6 @@ type NavigationState = {
   canGoBottomSpineItem: boolean
 }
 ```
-
-## `navigation.state$`
-
-```typescript
-Observable<NavigationState>
-```
-
-Emits as soon as you subscribe to it.
 
 ## `navigation.goToNextSpineItem()`
 
