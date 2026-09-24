@@ -1,7 +1,8 @@
 // @vitest-environment jsdom
-import { firstValueFrom, timeout } from "rxjs"
+import { firstValueFrom, skip, timeout } from "rxjs"
 import { afterEach, describe, expect, it, vi } from "vitest"
 import {
+  createPrePaginatedManifest,
   createTestReader,
   createZoomableTestReader,
   installReaderTestEnvironment,
@@ -172,5 +173,59 @@ describe("Given a setting that changes how the items are placed", () => {
 
     expect(layouts()).toBe(1)
     expect(await secondItemAfterLayout(reader)).toEqual({ left: 0, top: 200 })
+  })
+})
+
+describe("Given a spread whose first page is on the right, with no item preloaded", () => {
+  /**
+   * Turning to the next spread loads its two items and unloads the first one,
+   * and each of those lays the spine out again. The loader looks at what to
+   * load after every layout, so a layout that led it to load or unload once
+   * more would repeat forever.
+   */
+  it("stops laying out once the next spread has settled", async () => {
+    vi.useFakeTimers()
+    // landscape, so the pages pair into spreads
+    setTestViewport({ width: 200, height: 100 })
+
+    const reader = createTestReader({
+      manifest: createPrePaginatedManifest({
+        pageSpreads: ["right", "left", "right", "left"],
+      }),
+      numberOfAdjacentSpineItemToPreLoad: 0,
+    })
+
+    mountTestReader(reader)
+    await vi.runAllTimersAsync()
+
+    // the first spread is a blank left page and the first item
+    expect(reader.pagination.state).toMatchObject({
+      isSettled: true,
+      begin: { spineItemIndex: 0 },
+      end: { spineItemIndex: 0 },
+    })
+
+    const settlement: boolean[] = []
+    // skip the replayed current result
+    reader.pagination.state$
+      .pipe(skip(1))
+      .subscribe((state) => settlement.push(state.isSettled))
+
+    reader.navigation.turnRight()
+
+    /**
+     * Runs every timer the reader has scheduled, and every one those schedule,
+     * until none is left. A reader that keeps laying out never runs out, and
+     * this gives up on it as an infinite loop.
+     */
+    await vi.runAllTimersAsync()
+
+    expect(reader.pagination.state).toMatchObject({
+      isSettled: true,
+      begin: { spineItemIndex: 1 },
+      end: { spineItemIndex: 2 },
+    })
+    // A layout requested after the result settled would have withdrawn it.
+    expect(settlement.slice(settlement.indexOf(true))).toEqual([true])
   })
 })

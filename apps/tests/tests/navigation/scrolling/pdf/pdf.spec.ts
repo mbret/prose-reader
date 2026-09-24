@@ -1,6 +1,7 @@
 import { expect, test } from "@playwright/test"
 import type { Reader } from "@prose-reader/core"
 import { waitForSpineItemReady } from "../../../utils"
+import { navigateAndSettle } from "../../../utils/pagination"
 
 test("should navigate to second page and back to first page", async ({
   page,
@@ -16,21 +17,21 @@ test("should navigate to second page and back to first page", async ({
 
   await waitForSpineItemReady(page, [0])
 
-  await page.evaluate(() => {
-    // biome-ignore lint/suspicious/noExplicitAny: TODO
-    ;((window as any).reader as Reader).navigation.goToNextSpineItem()
-  })
-
-  await page.waitForTimeout(100)
+  await navigateAndSettle(page, () =>
+    page.evaluate(() => {
+      // biome-ignore lint/suspicious/noExplicitAny: TODO
+      ;((window as any).reader as Reader).navigation.goToNextSpineItem()
+    }),
+  )
 
   await expect(page).toHaveScreenshot({ maxDiffPixelRatio: 0.01 })
 
-  await page.evaluate(() => {
-    // biome-ignore lint/suspicious/noExplicitAny: TODO
-    ;((window as any).reader as Reader).navigation.goToTopSpineItem()
-  })
-
-  await page.waitForTimeout(100)
+  await navigateAndSettle(page, () =>
+    page.evaluate(() => {
+      // biome-ignore lint/suspicious/noExplicitAny: TODO
+      ;((window as any).reader as Reader).navigation.goToTopSpineItem()
+    }),
+  )
 
   await expect(page).toHaveScreenshot({ maxDiffPixelRatio: 0.01 })
 })

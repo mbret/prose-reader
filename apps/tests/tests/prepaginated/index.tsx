@@ -53,11 +53,6 @@ async function run() {
 
   // @ts-expect-error
   window.reader = reader
-
-  reader.layout$.subscribe(() => {
-    // @ts-expect-error
-    window.layoutNumber = (window.layoutNumber ?? 0) + 1
-  })
 }
 
 run()

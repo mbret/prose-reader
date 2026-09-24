@@ -1,6 +1,7 @@
 import { expect, test } from "@playwright/test"
 import type { Reader } from "@prose-reader/core"
 import { getScrollNavigationMetadata, waitForSpineItemReady } from "../../utils"
+import { navigateAndSettle } from "../../utils/pagination"
 
 const scales = [0.2, 0.5, 1]
 const height = 1294
@@ -45,46 +46,49 @@ test.describe("Given a scroll mid page", () => {
 
           expect(previousScrollMetadata.scrollTop).toBe(scrollTop)
 
-          await page.evaluate(
-            ([_scale = 1]) => {
+          // Scaling re-centers the scroll position with a navigation, and
+          // lays out again.
+          await navigateAndSettle(page, () =>
+            page.evaluate(
+              ([_scale = 1]) => {
+                // @ts-expect-error
+                const reader = window.reader as Reader
+
+                reader.zoom.enter()
+                reader.zoom.scaleAt(_scale)
+              },
+              [scale],
+            ),
+          )
+
+          // zoomed out centered both x/y
+          await expect
+            .poll(
+              async () =>
+                (await getScrollNavigationMetadata({ page })).scrollTop,
+            )
+            .toBe((scrollTop + height / 2) * scale - height / 2)
+
+          await navigateAndSettle(page, () =>
+            page.evaluate(() => {
               // @ts-expect-error
               const reader = window.reader as Reader
 
-              reader.zoom.enter()
-              reader.zoom.scaleAt(_scale)
-            },
-            [scale],
+              reader.zoom.exit()
+            }),
           )
 
-          await new Promise((resolve) => setTimeout(resolve, 500))
+          await expect
+            .poll(async () => {
+              const { scrollLeft, scrollTop } =
+                await getScrollNavigationMetadata({ page })
 
-          const zoomedInScrollMetadata = await getScrollNavigationMetadata({
-            page,
-          })
-
-          // zoomed out centered both x/y
-          expect(zoomedInScrollMetadata.scrollTop).toBe(
-            (scrollTop + height / 2) * scale - height / 2,
-          )
-
-          await page.evaluate(() => {
-            // @ts-expect-error
-            const reader = window.reader as Reader
-
-            reader.zoom.exit()
-          })
-
-          await new Promise((resolve) => setTimeout(resolve, 500))
-
-          const {
-            scrollLeft: zoomedOutScrollLeft,
-            scrollTop: zoomedOutScrollTop,
-          } = await getScrollNavigationMetadata({
-            page,
-          })
-
-          expect(zoomedOutScrollLeft).toBe(previousScrollMetadata.scrollLeft)
-          expect(zoomedOutScrollTop).toBe(previousScrollMetadata.scrollTop)
+              return { scrollLeft, scrollTop }
+            })
+            .toEqual({
+              scrollLeft: previousScrollMetadata.scrollLeft,
+              scrollTop: previousScrollMetadata.scrollTop,
+            })
         })
       })
     })
