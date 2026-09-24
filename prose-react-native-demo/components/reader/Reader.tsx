@@ -35,7 +35,7 @@ export const Reader = ({
         .then(async (response) => {
           const manifest = await response.json()
 
-          reader.load(manifest)
+          reader.load({ manifest })
         })
     }
   }, [isWebViewLoaded, reader, unzippedFileDirectory, epubFileName])

@@ -22,11 +22,13 @@ const bridge = createReaderBridge()
  */
 bridgeReader({
   /**
-   * Create the prose reader, the same way as you would do in web.
+   * Create the prose reader, the same way as you would do in web. `options`
+   * is what the native side sent with `load`: the manifest, and the cfi to
+   * open at.
    */
-  createReader: (manifest) =>
+  createReader: (options) =>
     createReader({
-      manifest,
+      ...options,
       /**
        * In this project example we want to serve resources directly from the RN side.
        * We will intercept resource requests and call the RN side to get the resource as string.

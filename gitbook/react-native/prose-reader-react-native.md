@@ -47,13 +47,14 @@ const controller = bridgeReader({
   bridge,
   containerElement: document.getElementById("reader"),
   /**
-   * Invoked for every `load` event coming from the native side. A reader
-   * renders a single book: a subsequent `load` destroys the previous reader
-   * and creates a fresh one from the new manifest.
+   * Invoked for every `load` event coming from the native side, with what it
+   * sent: the manifest, and the cfi to open at. A reader renders a single
+   * book: a subsequent `load` destroys the previous reader and creates a
+   * fresh one.
    */
-  createReader: (manifest) =>
+  createReader: (options) =>
     createReader({
-      manifest,
+      ...options,
       /**
        * Here resources are served by the native side. Streaming over http or
        * straight from a CDN works exactly as it does on the web — the
@@ -71,8 +72,9 @@ const controller = bridgeReader({
 })
 ```
 
-From there the bridge relays navigation commands in and pagination and context
-state out, so the native side drives the reader without touching prose directly.
+From there the bridge relays navigation commands in, and pagination, context and
+the reading position out, so the native side drives the reader without touching
+prose directly.
 
 `bridgeReader` returns a `ReaderBridgeController`, which is the escape hatch for
 the cases the bridge does not cover — anything you want to do with the full
@@ -99,7 +101,8 @@ has no equivalent; a method missing from the bridge is worth
 `useCreateReader` builds the bridge and the `WebView` bound to it. It returns
 `null` until that bridge is ready, then `{ ReaderWebView, load, appBridge,
 webviewBridge }`. Pass the whole thing to `ReaderProvider` so the hooks below
-can reach it.
+can reach it. `load` sends the book to the webview: its `manifest`, and the
+`cfi` to open it at, if any, the two reader options the factory above receives.
 
 ```tsx
 import { ReaderProvider, useCreateReader } from "@prose-reader/react-native"
@@ -122,7 +125,7 @@ const Reader = ({ html }: { html: string }) => {
         javaScriptEnabled
         onLoadEnd={() => {
           // The webview is up: send it the book.
-          reader.load(manifest)
+          reader.load({ manifest })
         }}
       />
       <BottomMenu />
@@ -155,12 +158,72 @@ const BottomMenu = () => {
 * `useReader()` — commands sent to the reader in the webview: `turnLeft`,
   `turnRight`
 * `useReaderState(selector)` — the state the web side pushes back, selected the
-  same way as any bridge store: `pagination` and `context`, each `undefined`
-  until the reader reports for the first time
+  same way as any bridge store: `pagination`, `context` and `readingPosition`
+  of the book last loaded, each `null` until its reader reports it. `load`
+  clears them: from the moment it is called they are `null` again, and nothing
+  the previous book's reader reports afterwards lands
 
 The bridge is maintained by hand and is not a 1:1 mapping of the prose API, so
 it is expected to lag behind it — see
 [introduction.md](introduction.md "mention").
+
+## Saving the reading position
+
+To reopen a book where the reader left it, save `readingPosition` and send it
+back with the next `load`. Save it rather than pagination's `begin.cfi`, which
+moves every time the book is laid out again, on a rotation for example: the
+[reading position section of the navigation guide](../learn/navigation.md#reading-position)
+explains why, and when the reading position changes.
+
+```tsx
+import { useEffect } from "react"
+import {
+  ReaderProvider,
+  useCreateReader,
+  useReaderState,
+} from "@prose-reader/react-native"
+
+const Reader = ({ bookId, html }: { bookId: string; html: string }) => {
+  const reader = useCreateReader({ getResource })
+
+  if (!reader) return null
+
+  return (
+    <ReaderProvider reader={reader}>
+      <reader.ReaderWebView
+        source={{ html }}
+        originWhitelist={["*"]}
+        javaScriptEnabled
+        onLoadEnd={async () => {
+          // `undefined` the first time: the book opens at its start.
+          const cfi = await storage.getReadingPosition(bookId)
+
+          reader.load({ manifest, cfi })
+        }}
+      />
+      <SaveReadingPosition bookId={bookId} />
+    </ReaderProvider>
+  )
+}
+
+const SaveReadingPosition = ({ bookId }: { bookId: string }) => {
+  const readingPosition = useReaderState((state) => state.readingPosition)
+
+  useEffect(() => {
+    if (readingPosition) storage.setReadingPosition(bookId, readingPosition)
+  }, [bookId, readingPosition])
+
+  return null
+}
+```
+
+`storage` stands for wherever your app keeps data. The first position the
+reader reports is the one it opens at, the `cfi` sent with `load` or the start
+of the book, so every value can be saved as it comes. `load` clears the state
+the moment it is called, and nothing the previous book's reader reports lands
+after it: every `readingPosition` is one of the book last passed to `load`, so
+save it under that book, as `SaveReadingPosition` does with the `bookId` the
+`Reader` loaded.
 
 ## Serving the book
 

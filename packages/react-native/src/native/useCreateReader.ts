@@ -1,15 +1,19 @@
-import type { Manifest } from "@prose-reader/streamer"
 import { createWebView, postMessageSchema } from "@webview-bridge/react-native"
 import { useCallback, useEffect, useState } from "react"
-import type { BridgeMethods, ProsePostMessageSchema } from "../shared"
+import type {
+  BridgeMethods,
+  ProsePostMessageSchema,
+  ReaderLoadMessage,
+  ReaderLoadOptions,
+} from "../shared"
 import { useProseBridge } from "./useProseBridge"
 
 export const appPostMessageSchema = postMessageSchema<ProsePostMessageSchema>({
   load: {
-    validate: (data) =>
-      data as {
-        manifest: Manifest
-      },
+    // The schema hands every message over as `unknown`. The only sender is
+    // `load` below, which is typed, so this types the message rather than
+    // checking it.
+    validate: (data) => data as ReaderLoadMessage,
   },
   turnRight: {
     validate: () => {},
@@ -27,7 +31,7 @@ export const useCreateReader = (options: BridgeMethods) => {
     | undefined
   >(undefined)
 
-  const appBridge = useProseBridge(options)
+  const { appBridge, startLoad } = useProseBridge(options)
   const postMessage = webviewBridge?.postMessage
 
   useEffect(() => {
@@ -43,10 +47,12 @@ export const useCreateReader = (options: BridgeMethods) => {
   }, [appBridge])
 
   const load = useCallback(
-    (manifest: Manifest) => {
-      postMessage?.("load", { manifest })
+    (loadOptions: ReaderLoadOptions) => {
+      if (!postMessage) return
+
+      postMessage("load", { load: startLoad(), options: loadOptions })
     },
-    [postMessage],
+    [postMessage, startLoad],
   )
 
   if (!webviewBridge) return null
