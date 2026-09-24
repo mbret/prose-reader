@@ -1,18 +1,5 @@
 import { Report } from "../report"
 
-const pointerEvents: string[] = [
-  `pointercancel` as const,
-  `pointerdown` as const,
-  `pointerenter` as const,
-  `pointerleave` as const,
-  `pointermove` as const,
-  `pointerout` as const,
-  `pointerover` as const,
-  `pointerup` as const,
-  // `touchstart` as const,
-  // `touchend` as const,
-]
-
 export function setAttributeIfChanged(
   element: Element,
   name: string,
@@ -257,85 +244,6 @@ export const getRangeFromNode = (node: Node, offset: number) => {
   }
 
   return undefined
-}
-
-export const isPointerEvent = (event: Event): event is PointerEvent => {
-  if (
-    (event as PointerEvent)?.target &&
-    (event?.target as Element)?.ownerDocument?.defaultView
-  ) {
-    const eventView = (event?.target as Element)?.ownerDocument
-      ?.defaultView as Window & typeof globalThis
-
-    if (eventView.PointerEvent && event instanceof eventView.PointerEvent) {
-      return true
-    }
-  }
-
-  if ((event as PointerEvent)?.view?.window) {
-    const eventView = (event as PointerEvent)?.view as Window &
-      typeof globalThis
-
-    if (eventView.PointerEvent && event instanceof eventView.PointerEvent) {
-      return true
-    }
-  }
-
-  if (pointerEvents.includes(event.type)) {
-    return true
-  }
-
-  return false
-}
-
-export const isMouseEvent = (event: Event): event is MouseEvent => {
-  if (isPointerEvent(event)) return false
-
-  if (
-    (event as MouseEvent)?.target &&
-    (event?.target as Element)?.ownerDocument?.defaultView
-  ) {
-    const eventView = (event?.target as Element)?.ownerDocument
-      ?.defaultView as Window & typeof globalThis
-
-    if (eventView.MouseEvent) {
-      return event instanceof eventView.MouseEvent
-    }
-  }
-
-  if ((event as MouseEvent)?.view?.window) {
-    const eventView = (event as MouseEvent)?.view as Window & typeof globalThis
-
-    if (eventView.MouseEvent) {
-      return event instanceof eventView.MouseEvent
-    }
-  }
-
-  return false
-}
-
-export const isTouchEvent = (event: Event): event is TouchEvent => {
-  if (
-    (event as TouchEvent)?.target &&
-    (event?.target as Element)?.ownerDocument?.defaultView
-  ) {
-    const eventView = (event?.target as Element)?.ownerDocument
-      ?.defaultView as Window & typeof globalThis
-
-    if (eventView.TouchEvent) {
-      return event instanceof eventView.TouchEvent
-    }
-  }
-
-  if ((event as TouchEvent)?.view?.window) {
-    const eventView = (event as TouchEvent)?.view as Window & typeof globalThis
-
-    if (eventView.TouchEvent) {
-      return event instanceof eventView.TouchEvent
-    }
-  }
-
-  return false
 }
 
 export const noopElement = () => document.createElement("div")
