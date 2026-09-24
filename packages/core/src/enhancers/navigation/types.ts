@@ -1,11 +1,22 @@
 import type { Observable } from "rxjs"
+import type {
+  NavigationTarget,
+  UserNavigationEntry,
+} from "../../navigation/types"
 import type { outOfSpineBoundary } from "./boundary"
 import type { ManualNavigator } from "./navigators/manualNavigator"
 import type { PanNavigator } from "./navigators/panNavigator"
 import type { observeState } from "./state"
 
+/** The url of a spine item, optionally with an element id as its fragment. */
+export type UrlNavigationTarget = { type: "url"; value: string | URL }
+
 export type NavigationEnhancerOutput = {
   navigation: {
+    navigate: (
+      to: UserNavigationEntry<NavigationTarget | UrlNavigationTarget>,
+    ) => void
+    goToUrl: (url: string | URL) => void
     state$: ReturnType<typeof observeState>
     outOfSpineBoundary$: ReturnType<typeof outOfSpineBoundary>
     throttleLock: <T>(params: {

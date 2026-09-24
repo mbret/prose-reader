@@ -10,7 +10,6 @@ import { navigationEnhancer } from "./enhancers/navigation"
 import { paginationEnhancer } from "./enhancers/pagination/enhancer"
 import { selectionEnhancer } from "./enhancers/selection/selectionEnhancer"
 import { themeEnhancer } from "./enhancers/theme"
-import { urlNavigationEnhancer } from "./enhancers/urlNavigation/enhancer"
 import { utilsEnhancer } from "./enhancers/utils"
 import { webkitEnhancer } from "./enhancers/webkit"
 import { zoomEnhancer } from "./enhancers/zoom"
@@ -24,18 +23,16 @@ export const createReaderWithEnhancers = //__
           accessibilityEnhancer(
             utilsEnhancer(
               zoomEnhancer(
-                urlNavigationEnhancer(
-                  navigationEnhancer(
-                    htmlEnhancer(
-                      mediaEnhancer(
-                        chromeEnhancer(
-                          eventsEnhancer(
-                            paginationEnhancer(
-                              layoutEnhancer(
-                                themeEnhancer(
-                                  // __
-                                  createInternalReader,
-                                ),
+                navigationEnhancer(
+                  htmlEnhancer(
+                    mediaEnhancer(
+                      chromeEnhancer(
+                        eventsEnhancer(
+                          paginationEnhancer(
+                            layoutEnhancer(
+                              themeEnhancer(
+                                // __
+                                createInternalReader,
                               ),
                             ),
                           ),

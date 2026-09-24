@@ -369,7 +369,7 @@ other output, so only a reader built with the enhancer takes the new target.
 A place that can only be found in a spine item's document, such as an element
 by id or a text offset, translates into a `node` target. Core calls `find` once
 the document is loaded, and until then goes to the item's start. Core's own url
-support is built this way: its url enhancer turns
+support is built this way: its navigation enhancer turns
 `{ type: "url", value: "…/ch02.xhtml#notes" }` into a `node` target that finds
 `#notes` in `ch02.xhtml`.
 

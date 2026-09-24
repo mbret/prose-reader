@@ -84,7 +84,7 @@ describe("getUrlNavigationTarget", () => {
 })
 
 describe("the url target", () => {
-  it("is accepted by a reader built with the url enhancer, and only then", () => {
+  it("is accepted by the reader createReader returns, not by core alone", () => {
     const url = { type: "url", value: "http://book/ch01.xhtml" } as const
 
     // Only checked by the compiler.

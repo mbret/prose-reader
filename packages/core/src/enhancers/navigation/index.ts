@@ -1,21 +1,29 @@
-import { takeUntil, tap } from "rxjs"
+import { merge, takeUntil, tap } from "rxjs"
+import type {
+  NavigationTarget,
+  UserNavigationEntry,
+} from "../../navigation/types"
+import type { HtmlEnhancerOutput } from "../html/enhancer"
 import type {
   EnhancerOptions,
   EnhancerOutput,
   RootEnhancer,
 } from "../types/enhancer"
 import { outOfSpineBoundary } from "./boundary"
+import { getUrlNavigationTarget } from "./getUrlNavigationTarget"
+import { handleLinksNavigation } from "./links"
 import { ManualNavigator } from "./navigators/manualNavigator"
 import { PanNavigator } from "./navigators/panNavigator"
 import { UserScrollNavigation } from "./navigators/UserScrollNavigation"
+import { navigationReport } from "./report"
 import { observeState } from "./state"
 import { throttleLock } from "./throttleLock"
-import type { NavigationEnhancerOutput } from "./types"
+import type { NavigationEnhancerOutput, UrlNavigationTarget } from "./types"
 
 export const navigationEnhancer =
   <
     InheritOptions extends EnhancerOptions<RootEnhancer>,
-    InheritOutput extends EnhancerOutput<RootEnhancer>,
+    InheritOutput extends EnhancerOutput<RootEnhancer> & HtmlEnhancerOutput,
   >(
     next: (options: InheritOptions) => InheritOutput,
   ) =>
@@ -36,7 +44,38 @@ export const navigationEnhancer =
       }),
     )
 
-    navigateOnUserScroll$.pipe(takeUntil(reader.$.destroy$)).subscribe()
+    merge(handleLinksNavigation(reader), navigateOnUserScroll$)
+      .pipe(takeUntil(reader.$.destroy$))
+      .subscribe()
+
+    /**
+     * Core's targets, and urls, which it does not know: a url is translated
+     * into a `node` target, which finds its element once its document is
+     * loaded.
+     */
+    const navigate = (
+      to: UserNavigationEntry<NavigationTarget | UrlNavigationTarget>,
+    ) => {
+      const { target } = to
+
+      if (target.type !== "url")
+        return reader.navigation.navigate({ ...to, target })
+
+      const nodeTarget = getUrlNavigationTarget(
+        target.value,
+        reader.context.manifest,
+      )
+
+      if (!nodeTarget) {
+        navigationReport.warn(
+          `Ignore navigation to ${target.value}, outside the book`,
+        )
+
+        return
+      }
+
+      reader.navigation.navigate({ ...to, target: nodeTarget })
+    }
 
     const mount = (containerElement: HTMLElement) => {
       reader.mount(containerElement)
@@ -58,6 +97,9 @@ export const navigationEnhancer =
       destroy,
       navigation: {
         ...reader.navigation,
+        navigate,
+        goToUrl: (url) =>
+          navigate({ target: { type: "url", value: url }, animation: false }),
         state$,
         outOfSpineBoundary$,
         throttleLock: ({ duration, trigger }) =>
