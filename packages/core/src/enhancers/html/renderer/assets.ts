@@ -1,19 +1,48 @@
-import { getParentPath, type Manifest } from "@prose-reader/shared"
+import type { Manifest } from "@prose-reader/shared"
 import {
-  combineLatest,
+  catchError,
+  defaultIfEmpty,
+  defer,
+  EMPTY,
+  endWith,
+  first,
+  forkJoin,
   from,
+  fromEvent,
+  ignoreElements,
   map,
+  merge,
   mergeMap,
-  Observable,
+  type Observable,
   of,
   switchMap,
+  throwError,
+  timeout,
 } from "rxjs"
 import type { Context } from "../../../context/Context"
+import { Report } from "../../../report"
 import type { ReaderSettingsManager } from "../../../settings/ReaderSettingsManager"
 import { ResourceHandler } from "../../../spineItem/resources/ResourceHandler"
 import { getElementsWithAssets, revokeDocumentBlobs } from "../../../utils/dom"
 
 /**
+ * A stylesheet is served from a blob already in memory, so it loads in
+ * moments. This only bounds a browser that never reports on one, so that a
+ * single link cannot keep the document loading forever.
+ */
+const STYLESHEET_LOAD_TIMEOUT_MS = 5_000
+
+/** The `url()` tokens of a css rule, quoted or not. */
+const CSS_URL = /url\(\s*(['"]?)(.*?)\1\s*\)/g
+
+type DocumentView = Window & typeof globalThis
+
+/**
+ * Resolves `path` the way the browser would for a resource loaded from
+ * `base`: the document's href for its elements, the stylesheet's href for
+ * its rules. Both are loaded from blobs, against which no relative
+ * reference resolves, so we resolve against their manifest href instead.
+ *
  * @important Firefox handles file protocol weirdly and will not
  * go up one directory when using "../". We temporarily replace to http://
  * to keep our behavior.
@@ -28,176 +57,194 @@ const joinPath = (base: string, path: string) => {
   return isFileProtocol ? result.replace("http://", "file://") : result
 }
 
-const loadFontFaces = async (
-  document: Document | null | undefined,
-  element: HTMLLinkElement,
-  spineItemUriParentPath: string,
-  context: Context,
+/**
+ * The content of the manifest item at `url`, when it is served as a
+ * response. An item served as a url, or a url the manifest does not have,
+ * gives nothing and the reference is left as is.
+ */
+const createAssetFetcher = (
+  manifest: Manifest,
   settings: ReaderSettingsManager,
-): Promise<void> => {
-  if (!document?.defaultView) return
+) => {
+  const itemsByHref = new Map(
+    manifest.items.map((item) => [item.href.toLowerCase(), item]),
+  )
 
-  const sheet = element.sheet
+  return (url: string): Observable<Blob> => {
+    const item = itemsByHref.get(url.toLowerCase())
 
-  if (!sheet) return
+    if (!item) return EMPTY
 
-  try {
-    const rules = Array.from(sheet.cssRules || [])
-
-    for (let i = 0; i < rules.length; i++) {
-      const rule = rules[i]
-      if (
-        document.defaultView &&
-        rule instanceof document.defaultView.CSSFontFaceRule
-      ) {
-        const src = rule.style.getPropertyValue("src")
-        const matches = src.match(/url\(['"]?([^'"]+)['"]?\)/g)
-
-        if (matches) {
-          // Split the src value into individual sources
-          const srcParts = src.split(",").map((part) => part.trim())
-
-          const newSrcParts = await Promise.all(
-            srcParts.map(async (part) => {
-              // If it's a local() source, preserve it as-is
-              if (part.startsWith("local(")) {
-                return part
-              }
-
-              // Extract URL and format parts
-              const urlMatch = part.match(/url\(['"]?([^'"]+)['"]?\)/)
-              if (!urlMatch) return part
-
-              const originalSrc = urlMatch[1] ?? ``
-
-              // Find the font resource in the manifest
-              const foundItem = context.manifest.items.find(({ href }) => {
-                return `${joinPath(spineItemUriParentPath, originalSrc).toLowerCase()}`.endsWith(
-                  `${href.toLowerCase()}`,
-                )
-              })
-
-              if (foundItem) {
-                const resourceHandler = new ResourceHandler(foundItem, settings)
-
-                try {
-                  const resource = await resourceHandler.getResource()
-
-                  if (resource instanceof Response) {
-                    const blob = await resource.blob()
-                    const blobUrl =
-                      document.defaultView?.URL.createObjectURL(blob)
-
-                    // Reconstruct the source with the new blob URL and preserve format/tech
-                    const newPart = part.replace(
-                      urlMatch[0],
-                      `url("${blobUrl}")`,
-                    )
-
-                    return newPart
-                  }
-                } catch (e) {
-                  console.error("Error loading font:", e)
-                }
-              }
-              return part
-            }),
-          )
-
-          // Instead of modifying the existing rule, create a new one
-          // firefox will not allow to modify the existing rule
-          // Get the complete rule text and replace the entire src declaration
-          const newRule = rule.cssText.replace(
-            /src:\s*[^;]+;/,
-            `src: ${newSrcParts.join(", ")};`,
-          )
-
-          // Delete the old rule and insert the new one
-          sheet.deleteRule(i)
-          sheet.insertRule(newRule, i)
-        }
-      }
-    }
-  } catch (e) {
-    console.error("Could not access stylesheet rules:", e)
+    return from(new ResourceHandler(item, settings).getResource()).pipe(
+      mergeMap((resource) =>
+        resource instanceof Response ? from(resource.blob()) : EMPTY,
+      ),
+    )
   }
 }
 
-const loadElementSrc = (
-  _document: Document | null | undefined,
+type FetchAsset = ReturnType<typeof createAssetFetcher>
+
+/**
+ * Whether the browser fetches this link once its href is set, and so reports
+ * on it with `load` or `error`. It only does for the relations it processes,
+ * and a stylesheet is the only one the document waits for: its styles have to
+ * apply before layout, and its font faces can only be rewritten once it is
+ * parsed. Any other link, such as an EPUB 3 pronunciation lexicon
+ * (`rel="pronunciation"`), is never fetched and no event ever comes.
+ *
+ * A stylesheet is not fetched either when it is disabled or typed as anything
+ * but css.
+ *
+ * @see https://html.spec.whatwg.org/multipage/links.html#link-type-stylesheet
+ */
+const isFetchedStylesheet = (
   element: Element,
-  spineItemUriParentPath: string,
-  context: Context,
-  settings: ReaderSettingsManager,
-) => {
-  const originalSrc =
-    element.getAttribute("src") || element.getAttribute("href")
+  view: DocumentView,
+): element is HTMLLinkElement => {
+  if (!(element instanceof view.HTMLLinkElement)) return false
 
-  if (!originalSrc) return of(null)
+  const mimeType = element.type.split(";")[0]?.trim().toLowerCase()
 
-  // EPUB/image.png needs to match frame relative src /image.png
-  const foundItem = context.manifest.items.find(({ href }) => {
-    // this will remove things like "../.." and have a normal relative path
-    return `${joinPath(spineItemUriParentPath, originalSrc).toLowerCase()}`.endsWith(
-      `${href.toLowerCase()}`,
+  return (
+    element.relList.contains("stylesheet") &&
+    !element.hasAttribute("disabled") &&
+    (!mimeType || mimeType === "text/css")
+  )
+}
+
+const waitForStylesheet = (link: HTMLLinkElement) =>
+  merge(
+    fromEvent(link, "load"),
+    fromEvent(link, "error").pipe(
+      mergeMap(() => throwError(() => new Error(`the stylesheet failed`))),
+    ),
+  ).pipe(
+    timeout({
+      first: STYLESHEET_LOAD_TIMEOUT_MS,
+      with: () =>
+        throwError(
+          () =>
+            new Error(
+              `the stylesheet did not load within ${STYLESHEET_LOAD_TIMEOUT_MS}ms`,
+            ),
+        ),
+    }),
+    first(),
+    map(() => link.sheet),
+  )
+
+/**
+ * A font face's `url()` resolves against its stylesheet, which is a blob, so
+ * each one is swapped for a blob of the manifest item it names. The rule is
+ * replaced rather than edited, which Firefox does not allow.
+ *
+ * Object urls are only created once every font of a rule is in, so an
+ * unsubscription midway leaves none behind that unload would not revoke.
+ */
+const rewriteFontFaces = ({
+  sheet,
+  sheetUrl,
+  view,
+  fetchAsset,
+}: {
+  sheet: CSSStyleSheet
+  sheetUrl: string
+  view: DocumentView
+  fetchAsset: FetchAsset
+}): Observable<never> =>
+  defer(() => {
+    const fontFaces = Array.from(sheet.cssRules).filter(
+      (rule) => rule instanceof view.CSSFontFaceRule,
     )
+
+    const rewrites = fontFaces.map((rule) => {
+      const references = Array.from(
+        rule.cssText.matchAll(CSS_URL),
+        ([, , reference = ``]) => reference,
+      )
+
+      const fonts = references.map((reference) =>
+        defer(() => fetchAsset(joinPath(sheetUrl, reference))).pipe(
+          catchError((error) => {
+            Report.warn(`Could not load font ${reference}`, error)
+
+            return EMPTY
+          }),
+          defaultIfEmpty(undefined),
+        ),
+      )
+
+      return forkJoin(fonts).pipe(
+        map((blobs) => {
+          const index = Array.from(sheet.cssRules).indexOf(rule)
+
+          if (index === -1 || blobs.every((blob) => !blob)) return
+
+          let tokenIndex = 0
+          const cssText = rule.cssText.replace(CSS_URL, (token) => {
+            const blob = blobs[tokenIndex++]
+
+            return blob ? `url("${view.URL.createObjectURL(blob)}")` : token
+          })
+
+          sheet.deleteRule(index)
+          sheet.insertRule(cssText, index)
+        }),
+      )
+    })
+
+    return merge(...rewrites).pipe(ignoreElements())
   })
 
-  if (!foundItem) return of(null)
+/**
+ * Points the element at a blob of the manifest item it references, and for a
+ * stylesheet, waits for it to apply and rewrites its font faces.
+ *
+ * It never errors: a missing or broken asset is reported and the document
+ * loads without it, the way a browser renders a page whose image is missing.
+ */
+const loadElementAsset = ({
+  element,
+  documentUrl,
+  view,
+  fetchAsset,
+}: {
+  element: Element
+  documentUrl: string
+  view: DocumentView
+  fetchAsset: FetchAsset
+}): Observable<never> => {
+  const attribute = ["src", "href"].find((name) => element.getAttribute(name))
+  const reference = attribute && element.getAttribute(attribute)
 
-  const resourceHandler = new ResourceHandler(foundItem, settings)
+  if (!attribute || !reference) return EMPTY
 
-  /**
-   * For each resources, if it's a response and not a URL, we should convert it to a blob
-   * because it will not be accessible otherwise.
-   */
-  return from(resourceHandler.getResource()).pipe(
-    mergeMap((resource) =>
-      resource instanceof Response ? from(resource.blob()) : of(undefined),
-    ),
-    mergeMap((blob) => {
-      if (!blob) {
-        return of(null)
-      }
+  return defer(() => {
+    const url = joinPath(documentUrl, reference)
 
-      const blobUrl = _document?.defaultView?.URL.createObjectURL(blob) ?? ``
+    return fetchAsset(url).pipe(
+      switchMap((blob) => {
+        element.setAttribute(attribute, view.URL.createObjectURL(blob))
 
-      if (element.hasAttribute("src")) {
-        element.setAttribute("src", blobUrl)
-      } else if (element.hasAttribute("href")) {
-        element.setAttribute("href", blobUrl)
+        if (!isFetchedStylesheet(element, view)) return EMPTY
 
-        if (
-          _document?.defaultView &&
-          element instanceof _document.defaultView.HTMLLinkElement
-        ) {
-          return new Observable<void>((observer) => {
-            element.onload = async () => {
-              try {
-                // Now that the stylesheet is loaded, replace font URLs
-                // we cannot do that before because the stylesheet is not loaded
-                // and we would not have access to it.
-                if (element.sheet) {
-                  await loadFontFaces(
-                    _document,
-                    element,
-                    spineItemUriParentPath,
-                    context,
-                    settings,
-                  )
-                }
-                observer.next()
-                observer.complete()
-              } catch (error) {
-                observer.error(error)
-              }
-            }
-            element.onerror = observer.error
-          })
-        }
-      }
+        // `load` and `error` are dispatched from a task, so listening right
+        // after the swap cannot miss them.
+        return waitForStylesheet(element).pipe(
+          switchMap((sheet) =>
+            sheet
+              ? rewriteFontFaces({ sheet, sheetUrl: url, view, fetchAsset })
+              : EMPTY,
+          ),
+        )
+      }),
+    )
+  }).pipe(
+    catchError((error) => {
+      Report.warn(`Could not load asset ${reference}`, error)
 
-      return of(null)
+      return EMPTY
     }),
   )
 }
@@ -215,27 +262,23 @@ export const loadAssets =
   (stream: Observable<HTMLIFrameElement>) =>
     stream.pipe(
       switchMap((frameElement) => {
-        const elementsWithAsset = getElementsWithAssets(
-          frameElement.contentDocument,
-        )
+        const document = frameElement.contentDocument
+        const view = document?.defaultView
 
-        const spineItemUriParentPath = getParentPath(item.href)
+        if (!document || !view) return of(frameElement)
 
-        const assetsLoads = elementsWithAsset.map((element) =>
-          loadElementSrc(
-            frameElement.contentDocument,
+        const fetchAsset = createAssetFetcher(context.manifest, settings)
+
+        const assetLoads = getElementsWithAssets(document).map((element) =>
+          loadElementAsset({
             element,
-            spineItemUriParentPath,
-            context,
-            settings,
-          ),
+            documentUrl: item.href,
+            view,
+            fetchAsset,
+          }),
         )
 
-        if (assetsLoads.length === 0) {
-          return of(frameElement)
-        }
-
-        return combineLatest(assetsLoads).pipe(map(() => frameElement))
+        return merge(...assetLoads).pipe(endWith(frameElement))
       }),
     )
 
