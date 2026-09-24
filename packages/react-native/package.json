@@ -39,7 +39,7 @@
     "jsdom": "^29.0.0",
     "react": "19.2.3",
     "react-dom": "19.2.3",
-    "react-native": "0.86.3",
+    "react-native": "0.87.1",
     "react-native-webview": "13.16.1"
   },
   "peerDependencies": {
