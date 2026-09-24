@@ -3,6 +3,7 @@ import { firstValueFrom, timeout } from "rxjs"
 import { afterEach, describe, expect, it, vi } from "vitest"
 import {
   createTestReader,
+  createZoomableTestReader,
   installReaderTestEnvironment,
   mountTestReader,
   notifyResize,
@@ -112,6 +113,29 @@ describe("Given a mounted reader", () => {
     vi.advanceTimersByTime(RESIZE_DEBOUNCE * 2)
 
     expect(layouts()).toBe(0)
+  })
+})
+
+describe("Given a zoomed reader", () => {
+  it("still lays out for a resize the container reported before the zoom changed", async () => {
+    const reader = createZoomableTestReader()
+
+    mountTestReader(reader)
+    await settledOn(reader)
+
+    expect(reader.spine.getSpineItemSpineLayoutInfo(1).left).toBe(100)
+
+    vi.useFakeTimers()
+    // still portrait, so no spread setting changes and lays out on its own
+    setTestViewport({ width: 120, height: 200 })
+    notifyResize()
+    // zooming transforms the viewport while the resize waits to be handled
+    reader.zoom.enter()
+    reader.zoom.scaleAt(2)
+    await vi.advanceTimersByTimeAsync(RESIZE_DEBOUNCE * 2)
+
+    // the items were laid out for the new size
+    expect(reader.spine.getSpineItemSpineLayoutInfo(1).left).toBe(120)
   })
 })
 

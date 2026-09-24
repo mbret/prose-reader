@@ -17,6 +17,7 @@ import { layoutEnhancer } from "../enhancers/layout/layoutEnhancer"
 import { navigationEnhancer } from "../enhancers/navigation"
 import { paginationEnhancer } from "../enhancers/pagination/enhancer"
 import { themeEnhancer } from "../enhancers/theme"
+import { zoomEnhancer } from "../enhancers/zoom"
 import { type CreateReaderOptions, createReader } from "../reader"
 import { DefaultRenderer } from "../spineItem/renderer/DefaultRenderer"
 import type { DocumentRendererParams } from "../spineItem/renderer/DocumentRenderer"
@@ -191,6 +192,21 @@ export const createEnhancedTestReader = (options: TestReaderOptions = {}) =>
     navigationEnhancer(
       htmlEnhancer(
         paginationEnhancer(layoutEnhancer(themeEnhancer(createReader))),
+      ),
+    )({
+      getRenderer: () => (props) => new DefaultRenderer(props),
+      getResource: resolvedResource,
+      ...options,
+      manifest: createPrePaginatedManifest(),
+    }),
+  )
+
+/** A reader with the zoom enhancer, which transforms the viewport. */
+export const createZoomableTestReader = (options: TestReaderOptions = {}) =>
+  track(
+    zoomEnhancer(
+      navigationEnhancer(
+        htmlEnhancer(layoutEnhancer(themeEnhancer(createReader))),
       ),
     )({
       getRenderer: () => (props) => new DefaultRenderer(props),
