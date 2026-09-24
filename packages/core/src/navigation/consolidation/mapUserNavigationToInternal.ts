@@ -23,7 +23,9 @@ export const mapUserNavigationToInternal =
   }> => {
     return stream.pipe(
       map(([userNavigation, previousNavigation]) => {
-        const requestedPosition = userNavigation.position
+        const { target } = userNavigation
+        const requestedPosition =
+          target.type === "position" ? target.value : undefined
         const visibleArea = requestedPosition
           ? getNavigationVisibleArea()
           : undefined
@@ -47,6 +49,9 @@ export const mapUserNavigationToInternal =
           id: Symbol("user"),
           animation: "turn",
           ...userNavigation,
+          // A target naming its item is already resolved to it; the other
+          // types are resolved by the consolidation steps.
+          spineItem: target.type === "spineItem" ? target.value : undefined,
           requestedPosition,
           requestedVisibleArea: visibleArea,
           // Clamp the full viewport rectangle, not just the top-left point:

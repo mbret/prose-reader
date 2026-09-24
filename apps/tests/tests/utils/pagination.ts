@@ -1,8 +1,13 @@
 import type { Page } from "@playwright/test"
 import type { Reader } from "@prose-reader/core"
 
-/** The reader exists and has settled on its first page. */
-export const waitForReader = (page: Page) =>
+/**
+ * The reader exists and its current result has settled. A navigation
+ * withdraws the current result before the call that starts it returns, which
+ * core's `settlement.test.ts` holds pagination to, so awaited on the line
+ * after one, this waits for that navigation's own result.
+ */
+export const waitForSettled = (page: Page) =>
   page.waitForFunction(() => {
     // @ts-expect-error window.reader is set by this scenario's index.tsx
     const reader = window.reader as Reader | undefined
@@ -10,17 +15,21 @@ export const waitForReader = (page: Page) =>
     return reader?.pagination.state.isSettled === true
   })
 
-type Trigger = "user navigation" | "window resize" | "settings update"
+type Trigger = "window resize" | "settings update"
 
 /**
  * Runs `action` and resolves once the result the reader computes for it has
- * settled. The wait is tied to the action rather than to time or to the next
+ * settled. Unlike a navigation, a resize reaches the reader after the call
+ * that makes it has returned, so the result already on screen is still
+ * settled on the line after it, and `waitForSettled` would accept it.
+ *
+ * The wait is tied to the action rather than to time or to the next
  * settlement: nothing is accepted until the reader reports the trigger the
- * action produces (the user entry on the navigation stream, or the viewport
- * layout that follows the window's resize event or the settings update), and
- * then only the first settled result after that. A result that settles
- * between arming and the action, or for an item loading in the background,
- * cannot satisfy it. A timeout says which of the two never came.
+ * action produces (the viewport layout that follows the window's resize event
+ * or the settings update), and then only the first settled result after that.
+ * A result that settles between arming and the action, or for an item loading
+ * in the background, cannot satisfy it. A timeout says which of the two never
+ * came.
  */
 const settleAfter = async (
   page: Page,
@@ -79,13 +88,7 @@ const settleAfter = async (
         )
       }
 
-      if (trigger === "user navigation") {
-        once(
-          reader.navigation.navigation$,
-          (navigation) => navigation.triggeredBy === "user",
-          settled,
-        )
-      } else if (trigger === "settings update") {
+      if (trigger === "settings update") {
         // A layout the update requires measures the viewport first.
         once(reader.viewport.layout$, () => true, settled)
       } else {
@@ -108,12 +111,6 @@ const settleAfter = async (
       window.__settled as Promise<void>,
   )
 }
-
-/** Runs a navigation and resolves once the result computed for it settles. */
-export const navigateAndSettle = (
-  page: Page,
-  navigate: () => Promise<unknown>,
-) => settleAfter(page, "user navigation", navigate)
 
 /**
  * Resizes the window and resolves once the reader has laid out for the new

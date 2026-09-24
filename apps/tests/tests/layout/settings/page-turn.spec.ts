@@ -1,6 +1,6 @@
 import { expect, type Page, test } from "@playwright/test"
 import { locateSpineItems } from "../../utils"
-import { updateSettingsAndSettle, waitForReader } from "../../utils/pagination"
+import { updateSettingsAndSettle, waitForSettled } from "../../utils/pagination"
 
 const boxesOfTheFirstTwoPages = async (page: Page) => {
   const items = await locateSpineItems({
@@ -41,7 +41,7 @@ test.describe("Given a book whose pages sit side by side", () => {
         await page.goto(
           `http://localhost:3333/tests/layout/settings/index.html`,
         )
-        await waitForReader(page)
+        await waitForSettled(page)
 
         const before = await boxesOfTheFirstTwoPages(page)
 

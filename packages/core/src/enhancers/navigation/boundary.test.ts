@@ -112,7 +112,7 @@ describe("outOfSpineBoundary", () => {
       const { events, unsubscribe } = collectBoundaries(reader)
 
       navigator.navigate({
-        position: new SpinePosition({ x: 0, y: 0 }),
+        target: { type: "position", value: new SpinePosition({ x: 0, y: 0 }) },
         animation: false,
       })
 
@@ -127,7 +127,10 @@ describe("outOfSpineBoundary", () => {
       const { events, unsubscribe } = collectBoundaries(reader)
 
       navigator.navigate({
-        position: new SpinePosition({ x: 9999, y: 0 }),
+        target: {
+          type: "position",
+          value: new SpinePosition({ x: 9999, y: 0 }),
+        },
         animation: false,
       })
 
@@ -142,7 +145,10 @@ describe("outOfSpineBoundary", () => {
       const { events, unsubscribe } = collectBoundaries(reader)
 
       navigator.navigate({
-        position: new SpinePosition({ x: 200, y: 0 }),
+        target: {
+          type: "position",
+          value: new SpinePosition({ x: 200, y: 0 }),
+        },
         animation: false,
       })
 
@@ -166,7 +172,10 @@ describe("outOfSpineBoundary", () => {
       const { events, unsubscribe } = collectBoundaries(reader)
 
       navigator.navigate({
-        position: new SpinePosition({ x: 150, y: 0 }),
+        target: {
+          type: "position",
+          value: new SpinePosition({ x: 150, y: 0 }),
+        },
         animation: false,
       })
 
@@ -181,7 +190,10 @@ describe("outOfSpineBoundary", () => {
       const { events, unsubscribe } = collectBoundaries(reader)
 
       navigator.navigate({
-        position: new SpinePosition({ x: 100, y: 0 }),
+        target: {
+          type: "position",
+          value: new SpinePosition({ x: 100, y: 0 }),
+        },
         animation: false,
       })
 
@@ -210,7 +222,7 @@ describe("outOfSpineBoundary", () => {
       const { events, unsubscribe } = collectBoundaries(reader)
 
       navigator.navigate({
-        position: new SpinePosition({ x: 50, y: 0 }),
+        target: { type: "position", value: new SpinePosition({ x: 50, y: 0 }) },
         animation: false,
       })
 
@@ -239,7 +251,7 @@ describe("outOfSpineBoundary", () => {
       const releaseLock = navigator.lock()
 
       navigator.navigate({
-        position: new SpinePosition({ x: 50, y: 0 }),
+        target: { type: "position", value: new SpinePosition({ x: 50, y: 0 }) },
         animation: false,
       })
 
@@ -270,7 +282,10 @@ describe("outOfSpineBoundary", () => {
       const { events, unsubscribe } = collectBoundaries(reader)
 
       navigator.navigate({
-        position: new SpinePosition({ x: -10, y: 0 }),
+        target: {
+          type: "position",
+          value: new SpinePosition({ x: -10, y: 0 }),
+        },
         animation: false,
       })
 
@@ -285,7 +300,10 @@ describe("outOfSpineBoundary", () => {
       const { events, unsubscribe } = collectBoundaries(reader)
 
       navigator.navigate({
-        position: new SpinePosition({ x: 0, y: -10 }),
+        target: {
+          type: "position",
+          value: new SpinePosition({ x: 0, y: -10 }),
+        },
         animation: false,
       })
 
@@ -300,7 +318,7 @@ describe("outOfSpineBoundary", () => {
       const { events, unsubscribe } = collectBoundaries(reader)
 
       navigator.navigate({
-        cfi: "epubcfi(/6/2!/4/2/1:0)",
+        target: { type: "cfi", value: "epubcfi(/6/2!/4/2/1:0)" },
         animation: false,
       })
 
@@ -315,7 +333,7 @@ describe("outOfSpineBoundary", () => {
       const { events, unsubscribe } = collectBoundaries(reader)
 
       navigator.navigate({
-        position: new SpinePosition({ x: 0, y: 0 }),
+        target: { type: "position", value: new SpinePosition({ x: 0, y: 0 }) },
         animation: false,
       })
       await waitFor(50)
@@ -347,7 +365,10 @@ describe("outOfSpineBoundary", () => {
       const releaseLock = navigator.lock()
 
       navigator.navigate({
-        position: new SpinePosition({ x: 9999, y: 0 }),
+        target: {
+          type: "position",
+          value: new SpinePosition({ x: 9999, y: 0 }),
+        },
         animation: false,
       })
 
@@ -374,7 +395,10 @@ describe("outOfSpineBoundary", () => {
       const releaseLock = navigator.lock()
 
       navigator.navigate({
-        position: new SpinePosition({ x: -10, y: 0 }),
+        target: {
+          type: "position",
+          value: new SpinePosition({ x: -10, y: 0 }),
+        },
         animation: false,
       })
 
@@ -402,7 +426,10 @@ describe("outOfSpineBoundary", () => {
 
       const releaseLock = navigator.lock()
       navigator.navigate({
-        position: new SpinePosition({ x: 9999, y: 0 }),
+        target: {
+          type: "position",
+          value: new SpinePosition({ x: 9999, y: 0 }),
+        },
         animation: false,
       })
       await waitFor(50)
@@ -427,7 +454,10 @@ describe("outOfSpineBoundary", () => {
       const { events, unsubscribe } = collectBoundaries(reader)
 
       navigator.navigate({
-        position: new SpinePosition({ x: 0, y: 9999 }),
+        target: {
+          type: "position",
+          value: new SpinePosition({ x: 0, y: 9999 }),
+        },
         animation: false,
       })
 
@@ -498,7 +528,10 @@ describe("outOfSpineBoundary", () => {
       const { events, unsubscribe } = collectBoundaries(reader)
 
       navigator.navigate({
-        position: new UnboundSpinePosition({ x: lastItemLeft - 1, y: 0 }),
+        target: {
+          type: "position",
+          value: new UnboundSpinePosition({ x: lastItemLeft - 1, y: 0 }),
+        },
         animation: false,
       })
 
@@ -527,7 +560,10 @@ describe("outOfSpineBoundary", () => {
       const { events, unsubscribe } = collectBoundaries(reader)
 
       navigator.navigate({
-        position: new SpinePosition({ x: lastItemLeft, y: 0 }),
+        target: {
+          type: "position",
+          value: new SpinePosition({ x: lastItemLeft, y: 0 }),
+        },
         animation: false,
       })
 
@@ -546,7 +582,10 @@ describe("outOfSpineBoundary", () => {
       const { events, unsubscribe } = collectBoundaries(reader)
 
       navigator.navigate({
-        position: new UnboundSpinePosition({ x: 10, y: 0 }),
+        target: {
+          type: "position",
+          value: new UnboundSpinePosition({ x: 10, y: 0 }),
+        },
         animation: false,
       })
 
@@ -589,13 +628,16 @@ describe("outOfSpineBoundary", () => {
       const { events, unsubscribe } = collectBoundaries(reader)
 
       navigator.navigate({
-        position: new SpinePosition({ x: -100, y: 0 }),
+        target: {
+          type: "position",
+          value: new SpinePosition({ x: -100, y: 0 }),
+        },
         animation: false,
       })
       await waitFor(50)
 
       navigator.navigate({
-        position: new SpinePosition({ x: 0, y: 0 }),
+        target: { type: "position", value: new SpinePosition({ x: 0, y: 0 }) },
         animation: false,
       })
       await waitFor(50)
@@ -603,7 +645,10 @@ describe("outOfSpineBoundary", () => {
       expect(events).toEqual([])
 
       navigator.navigate({
-        position: new UnboundSpinePosition({ x: 100, y: 0 }),
+        target: {
+          type: "position",
+          value: new UnboundSpinePosition({ x: 100, y: 0 }),
+        },
         animation: false,
       })
       await waitFor(50)

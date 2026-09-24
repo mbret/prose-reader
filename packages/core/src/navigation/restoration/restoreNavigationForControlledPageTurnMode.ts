@@ -59,7 +59,7 @@ export const restoreNavigationForControlledPageTurnMode = ({
        * consolidation. In case the item changed, we should be careful and try to
        * anchor back to cfi.
        */
-      if (navigation.url !== undefined) {
+      if (navigation.target.type === "url") {
         if (
           spineItemWidthDifference ||
           spineItemHeighDifference ||
@@ -68,7 +68,7 @@ export const restoreNavigationForControlledPageTurnMode = ({
           (isReady && !navigation.spineItemIsReady)
         ) {
           const urlResult = navigationResolver.getNavigationForUrl(
-            navigation.url,
+            navigation.target.value,
           )
 
           if (urlResult) {
