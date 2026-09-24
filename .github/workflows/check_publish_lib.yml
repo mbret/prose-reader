@@ -12,7 +12,7 @@ on:
 # alone. A job joins its group when its needs finish, in whatever order the
 # checks happen to finish, so an older merge's release could replace a newer
 # one's and leave that merge unreleased. Never cancelled in progress: a run
-# stopped between lerna's push and its npm publish would leave a release
+# stopped between the release's push and its npm publish would leave a release
 # tagged on master and missing from npm.
 concurrency:
   group: ${{ github.workflow }}
@@ -62,17 +62,25 @@ jobs:
       # `feat!:` / a `BREAKING CHANGE:` footer gives a major. Changelogs come
       # along with it.
       #
-      # lerna exits 0 whether it released or not, so the step names the
+      # A release is versioned and tagged here, pushed by the step itself, and
+      # published only once the push is in. `lerna publish` pushes for itself,
+      # and when its atomic push is refused it retries without `--atomic`: a
+      # merge landing mid-release then pushed the tag without the release
+      # commit, and every later release failed on that tag. The step's push is
+      # atomic with no retry, so a refused one leaves nothing behind.
+      #
+      # lerna exits 0 whether it versioned or not, so the step names the
       # outcome and fails on any it cannot name, which is how a skipped release
       # used to report green (#376):
-      # - released: lerna tagged HEAD, the release commit it pushed.
-      # - superseded: master has moved past this merge. lerna releases only
-      #   from master's tip, so it stopped at EBEHIND, and the run that moved
-      #   master releases this merge's changes: the newer merge's, queued
-      #   behind this one, or this run's own earlier attempt.
+      # - superseded: master has moved past this merge, before the release or
+      #   during it, and the run that moved master releases this merge's
+      #   changes: the newer merge's, queued behind this one, or this run's own
+      #   earlier attempt.
       # - unchanged: no published package changed since the last release.
-      # A merge landing while lerna pushes gets the push refused whole, before
-      # anything reaches npm: the job fails, and the queued run releases both.
+      # - released: the release commit and its tag are on master, and the
+      #   packages on npm. If npm refuses them after the push, the job fails
+      #   with the release on master, published by hand with
+      #   `lerna publish from-git` at that commit.
       - name: Publish
         id: publish
         # named, for pipefail: the default bash reports tee's status, not lerna's
@@ -80,23 +88,51 @@ jobs:
         run: |
           git config --global user.email "bret.maxime@gmail.com"
           git config --global user.name "Maxime Bret"
-          pnpm exec lerna publish --conventional-commits --no-private --yes 2>&1 | tee "$RUNNER_TEMP/lerna.log"
 
-          echo "sha=$(git rev-parse HEAD)" >> "$GITHUB_OUTPUT"
-          if tag=$(git describe --exact-match --match 'v*' HEAD 2>/dev/null); then
-            echo "::notice title=Released ${tag}::Released ${tag} from ${GITHUB_SHA::9}"
-            echo "outcome=released" >> "$GITHUB_OUTPUT"
-            echo "version=${tag#v}" >> "$GITHUB_OUTPUT"
-          elif [ -n "$(git rev-list HEAD..origin/master)" ]; then
+          # lerna checks this only when it pushes, which it no longer does
+          superseded() {
+            git fetch --quiet origin master
+            [ -n "$(git rev-list "${GITHUB_SHA}..origin/master")" ]
+          }
+
+          if superseded; then
             echo "::notice title=Release superseded::master has moved past ${GITHUB_SHA::9}, and the run that moved it releases its changes"
             echo "outcome=superseded" >> "$GITHUB_OUTPUT"
-          elif grep -q "No changed packages to publish" "$RUNNER_TEMP/lerna.log"; then
-            echo "::notice title=Nothing to release::No published package changed since the last release"
-            echo "outcome=unchanged" >> "$GITHUB_OUTPUT"
-          else
-            echo "::error title=Release skipped::lerna publish exited 0 without releasing, for a reason this step does not know"
+            exit 0
+          fi
+
+          pnpm exec lerna version --conventional-commits --no-private --no-push --yes 2>&1 | tee "$RUNNER_TEMP/lerna.log"
+
+          if ! tag=$(git describe --exact-match --match 'v*' HEAD 2>/dev/null); then
+            if grep -q "No changed packages to version" "$RUNNER_TEMP/lerna.log"; then
+              echo "::notice title=Nothing to release::No published package changed since the last release"
+              echo "outcome=unchanged" >> "$GITHUB_OUTPUT"
+              echo "sha=${GITHUB_SHA}" >> "$GITHUB_OUTPUT"
+              exit 0
+            fi
+
+            echo "::error title=Release skipped::lerna version exited 0 without tagging a release, for a reason this step does not know"
             exit 1
           fi
+
+          # The release commit and its tag land together or not at all.
+          if ! git push --atomic --no-verify origin HEAD:refs/heads/master "refs/tags/${tag}"; then
+            if superseded; then
+              echo "::notice title=Release superseded::A merge landed while ${tag} was being made, and its run releases this one's changes"
+              echo "outcome=superseded" >> "$GITHUB_OUTPUT"
+              exit 0
+            fi
+
+            echo "::error title=Release not pushed::${tag} could not be pushed, and master has not moved"
+            exit 1
+          fi
+
+          pnpm exec lerna publish from-git --yes 2>&1 | tee -a "$RUNNER_TEMP/lerna.log"
+
+          echo "::notice title=Released ${tag}::Released ${tag} from ${GITHUB_SHA::9}"
+          echo "outcome=released" >> "$GITHUB_OUTPUT"
+          echo "version=${tag#v}" >> "$GITHUB_OUTPUT"
+          echo "sha=$(git rev-parse HEAD)" >> "$GITHUB_OUTPUT"
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_ACCESS_TOKEN }}
 
