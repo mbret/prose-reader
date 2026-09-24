@@ -1,7 +1,7 @@
 import { expect, test } from "@playwright/test"
 import type { Reader } from "@prose-reader/core"
 import { waitForSpineItemReady } from "../utils"
-import { navigateAndSettle, waitForReader } from "../utils/pagination"
+import { waitForSettled } from "../utils/pagination"
 
 test.describe("Given a prepaginated book with first page on spread right", () => {
   test.describe("and numberOfAdjacentSpineItemToPreLoad as 0", () => {
@@ -40,9 +40,10 @@ test.describe("Given a prepaginated book with first page on spread right", () =>
 
       await page.goto("http://localhost:3333/tests/prepaginated/index.html")
 
-      await waitForReader(page)
+      await waitForSettled(page)
 
-      await navigateAndSettle(page, () => page.keyboard.press("ArrowRight"))
+      await page.keyboard.press("ArrowRight")
+      await waitForSettled(page)
 
       const visibleItems = await page.evaluate(() => {
         // @ts-expect-error window.reader is set by this scenario's index.tsx
