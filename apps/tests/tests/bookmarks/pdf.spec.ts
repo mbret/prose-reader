@@ -1,5 +1,6 @@
 import { expect, test } from "@playwright/test"
 import { waitForSpineItemReady } from "../utils"
+import { waitForSettled } from "../utils/pagination"
 
 const BOOKMARK_ACTIVE_COLOR = "rgb(0, 128, 0)"
 const BOOKMARK_INACTIVE_COLOR = "rgb(255, 0, 0)"
@@ -15,12 +16,14 @@ test("should be able to mark bookmarks on pdf (no nodes)", async ({ page }) => {
 
   await waitForSpineItemReady(page, [0, 1])
 
-  await page.keyboard.press("ArrowRight")
-
-  await page.waitForTimeout(200)
-
   const markButton = page.locator(BOOKMARK_BUTTON_ID)
 
+  await page.keyboard.press("ArrowRight")
+  await waitForSettled(page)
+
+  // The button marks the page it shows, so it has to have caught up with the
+  // navigation before it is clicked.
+  await expect(markButton).toHaveText("Page 1")
   // red
   await expect(markButton).toHaveCSS(
     "background-color",
@@ -29,15 +32,13 @@ test("should be able to mark bookmarks on pdf (no nodes)", async ({ page }) => {
 
   await markButton.click()
 
-  await page.waitForTimeout(200)
-
   // green
   await expect(markButton).toHaveCSS("background-color", BOOKMARK_ACTIVE_COLOR)
 
   await page.keyboard.press("ArrowLeft")
+  await waitForSettled(page)
 
-  await page.waitForTimeout(200)
-
+  await expect(markButton).toHaveText("Page 0")
   // red
   await expect(markButton).toHaveCSS(
     "background-color",

@@ -1,6 +1,7 @@
 import { expect, test } from "@playwright/test"
 import type { Reader } from "@prose-reader/core"
 import { getScrollNavigationMetadata, waitForSpineItemReady } from "../../utils"
+import { waitForSettled } from "../../utils/pagination"
 
 const scales = [0.2, 0.5, 1]
 const height = 1294
@@ -45,6 +46,8 @@ test.describe("Given a scroll mid page", () => {
 
           expect(previousScrollMetadata.scrollTop).toBe(scrollTop)
 
+          // Scaling re-centers the scroll position with a navigation, and
+          // lays out again.
           await page.evaluate(
             ([_scale = 1]) => {
               // @ts-expect-error
@@ -56,7 +59,7 @@ test.describe("Given a scroll mid page", () => {
             [scale],
           )
 
-          await new Promise((resolve) => setTimeout(resolve, 500))
+          await waitForSettled(page)
 
           const zoomedInScrollMetadata = await getScrollNavigationMetadata({
             page,
@@ -74,7 +77,7 @@ test.describe("Given a scroll mid page", () => {
             reader.zoom.exit()
           })
 
-          await new Promise((resolve) => setTimeout(resolve, 500))
+          await waitForSettled(page)
 
           const {
             scrollLeft: zoomedOutScrollLeft,

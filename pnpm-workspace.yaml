@@ -11,6 +11,14 @@ allowBuilds:
   '@parcel/watcher': false
   nx: false
 
+# pnpm refuses versions published less than a day ago (minimumReleaseAge).
+# gesturx comes from the same author as prose and is released by its own CI,
+# so a release prose needs can be taken as soon as it is out. Entries name an
+# exact version, so each one is let through deliberately, and one does
+# nothing once its version is a day old.
+minimumReleaseAgeExclude:
+  - gesturx@1.11.1
+
 # lerna and nx pin their dependencies to exact versions, so an in-range update
 # cannot move them; each override stays inside the major its consumer asked
 # for. `brace-expansion` is keyed to nx's exact pin because three majors of it

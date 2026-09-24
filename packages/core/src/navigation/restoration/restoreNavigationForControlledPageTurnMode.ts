@@ -5,6 +5,7 @@ import type { Spine } from "../../spine/Spine"
 import type { SpineItemsManager } from "../../spine/SpineItemsManager"
 import { SpinePosition } from "../../spine/types"
 import { SpineItemPosition } from "../../spineItem/types"
+import { snapToPage } from "../consolidation/withSnappedPosition"
 import type { NavigationResolver } from "../resolvers/NavigationResolver"
 import type { InternalNavigationEntry } from "../types"
 
@@ -123,47 +124,12 @@ export const restoreNavigationForControlledPageTurnMode = ({
         })
       }
 
-      /**
-       * - position in spine item known
-       * - dimensions of item known
-       * - we can retrieve the desired page index
-       * - we get navigation for same page on current item
-       */
-      if (
-        navigation.positionInSpineItem &&
-        navigation.spineItemHeight &&
-        navigation.spineItemWidth
-      ) {
-        const pageIndex =
-          spineLocator.spineItemLocator.getSpineItemPageIndexFromPosition({
-            itemWidth: navigation.spineItemWidth,
-            itemHeight: navigation.spineItemHeight,
-            isUsingVerticalWriting:
-              !!navigation.spineItemIsUsingVerticalWriting,
-            position: navigation.positionInSpineItem,
-          })
-
-        return navigationResolver.getNavigationForSpineItemPage({
-          pageIndex,
-          spineItemId: spineItem,
-        })
-      }
-
-      /**
-       * - position is within spine item
-       * - position is somewhat trustable
-       * - we will retrieve the closest valid navigation
-       */
-      if (isPositionWithinSpineItem) {
-        return navigationResolver.getNavigationForPosition(navigation.position)
-      }
-
-      /**
-       * - position is not within spine item
-       * - position is not trustable
-       * - fallback to default navigation for spine item
-       */
-      return navigationResolver.getNavigationForSpineIndexOrId(spineItem)
+      return snapToPage({
+        navigation,
+        spineItem,
+        spineLocator,
+        navigationResolver,
+      })
     }),
   )
 }
