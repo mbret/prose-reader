@@ -1,6 +1,6 @@
 import { expect, type Page, test } from "@playwright/test"
 import type { Reader } from "@prose-reader/core"
-import { resizeAndSettle, waitForSettled } from "../../../utils/pagination"
+import { waitForSettled } from "../../../utils/pagination"
 
 /**
  * A spread shows two items at once, and its result only settles once both are
@@ -73,14 +73,16 @@ test.describe("Given a spread reached by cfi", () => {
     expect(spread.ready).toEqual([true, true])
     expect(spread.readingPosition).toBe(cfi)
 
-    await resizeAndSettle(page, portrait)
+    await page.setViewportSize(portrait)
+    await waitForSettled(page)
 
     const single = await readVisibleRange(page)
 
     expect(single.items[0]).toBe(single.items[1])
     expect(spread.items).toContain(single.items[0])
 
-    await resizeAndSettle(page, landscape)
+    await page.setViewportSize(landscape)
+    await waitForSettled(page)
 
     const restored = await readVisibleRange(page)
 

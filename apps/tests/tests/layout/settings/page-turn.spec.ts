@@ -1,6 +1,6 @@
 import { expect, type Page, test } from "@playwright/test"
 import { locateSpineItems } from "../../utils"
-import { updateSettingsAndSettle, waitForSettled } from "../../utils/pagination"
+import { updateSettings, waitForSettled } from "../../utils/pagination"
 
 const boxesOfTheFirstTwoPages = async (page: Page) => {
   const items = await locateSpineItems({
@@ -19,7 +19,7 @@ const boxesOfTheFirstTwoPages = async (page: Page) => {
 
 const settingsThatStackThePages: {
   change: string
-  settings: Parameters<typeof updateSettingsAndSettle>[1]
+  settings: Parameters<typeof updateSettings>[1]
 }[] = [
   {
     change: "the page turn direction becomes vertical",
@@ -48,7 +48,8 @@ test.describe("Given a book whose pages sit side by side", () => {
         expect(before.second.x).toBeCloseTo(before.first.x + before.first.width)
         expect(before.second.y).toBeCloseTo(before.first.y)
 
-        await updateSettingsAndSettle(page, settings)
+        await updateSettings(page, settings)
+        await waitForSettled(page)
 
         const after = await boxesOfTheFirstTwoPages(page)
 

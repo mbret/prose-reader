@@ -1,11 +1,7 @@
 import { expect, type Page, test } from "@playwright/test"
 import type { Reader } from "@prose-reader/core"
 import { locateSpineItems } from "../../utils"
-import {
-  resizeAndSettle,
-  updateSettingsAndSettle,
-  waitForSettled,
-} from "../../utils/pagination"
+import { updateSettings, waitForSettled } from "../../utils/pagination"
 
 /**
  * The book is a pre-paginated manga, which shows a spread in landscape and
@@ -56,15 +52,6 @@ const secondPageShareOfWidth = async (page: Page) => {
   return Math.round((box.width / window.width) * 100) / 100
 }
 
-/** The layouts `change` ran, read once its result settled. */
-const layoutsFor = async (page: Page, change: () => Promise<unknown>) => {
-  const before = await countLayouts(page)
-
-  await change()
-
-  return (await countLayouts(page)) - before
-}
-
 const openAt = async (page: Page, size: { width: number; height: number }) => {
   await page.setViewportSize(size)
   await page.goto(url)
@@ -78,14 +65,20 @@ test.describe("Given a reader resized across the spread threshold", () => {
     expect(await isSpread(page)).toBe(true)
     expect.soft(await countLayouts(page)).toBe(1)
 
-    expect
-      .soft(await layoutsFor(page, () => resizeAndSettle(page, portrait)))
-      .toBe(1)
+    const layoutsBeforePortrait = await countLayouts(page)
+
+    await page.setViewportSize(portrait)
+    await waitForSettled(page)
+
+    expect.soft((await countLayouts(page)) - layoutsBeforePortrait).toBe(1)
     expect(await isSpread(page)).toBe(false)
 
-    expect
-      .soft(await layoutsFor(page, () => resizeAndSettle(page, landscape)))
-      .toBe(1)
+    const layoutsBeforeLandscape = await countLayouts(page)
+
+    await page.setViewportSize(landscape)
+    await waitForSettled(page)
+
+    expect.soft((await countLayouts(page)) - layoutsBeforeLandscape).toBe(1)
     expect(await isSpread(page)).toBe(true)
   })
 })
@@ -98,13 +91,12 @@ test.describe("Given the spreadMode setting", () => {
 
     expect(await secondPageShareOfWidth(page)).toBe(0.5)
 
-    expect
-      .soft(
-        await layoutsFor(page, () =>
-          updateSettingsAndSettle(page, { spreadMode: "never" }),
-        ),
-      )
-      .toBe(1)
+    const layoutsBefore = await countLayouts(page)
+
+    await updateSettings(page, { spreadMode: "never" })
+    await waitForSettled(page)
+
+    expect.soft((await countLayouts(page)) - layoutsBefore).toBe(1)
     expect(await isSpread(page)).toBe(false)
     expect(await secondPageShareOfWidth(page)).toBe(1)
   })
@@ -116,13 +108,12 @@ test.describe("Given the spreadMode setting", () => {
 
     expect(await secondPageShareOfWidth(page)).toBe(1)
 
-    expect
-      .soft(
-        await layoutsFor(page, () =>
-          updateSettingsAndSettle(page, { spreadMode: "always" }),
-        ),
-      )
-      .toBe(1)
+    const layoutsBefore = await countLayouts(page)
+
+    await updateSettings(page, { spreadMode: "always" })
+    await waitForSettled(page)
+
+    expect.soft((await countLayouts(page)) - layoutsBefore).toBe(1)
     expect(await isSpread(page)).toBe(true)
     expect(await secondPageShareOfWidth(page)).toBe(0.5)
   })

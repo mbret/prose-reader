@@ -1,10 +1,6 @@
 import { expect, type Page, test } from "@playwright/test"
 import type { Reader } from "@prose-reader/core"
-import {
-  isCfiPositionVisible,
-  resizeAndSettle,
-  waitForSettled,
-} from "../../../utils/pagination"
+import { isCfiPositionVisible, waitForSettled } from "../../../utils/pagination"
 
 /**
  * Restoring a page after a resize needs a cfi. A navigation that asked for one
@@ -201,7 +197,8 @@ const resizeAndExpectAnchorVisible = async (
   size: { width: number; height: number },
   cfi: string,
 ) => {
-  await resizeAndSettle(page, size)
+  await page.setViewportSize(size)
+  await waitForSettled(page)
 
   // Restoration is a navigation of its own, so give it a moment to land.
   await expect
