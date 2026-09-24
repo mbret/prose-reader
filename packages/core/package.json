@@ -1,6 +1,6 @@
 {
   "name": "@prose-reader/core",
-  "version": "7.0.1",
+  "version": "7.0.2",
   "type": "module",
   "main": "./dist/index.cjs",
   "module": "./dist/index.js",

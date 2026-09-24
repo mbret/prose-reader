@@ -36,6 +36,7 @@ type State = {
 
 export class Viewport extends ReactiveEntity<State> {
   private layoutSubject = new Subject<void>()
+  /** Emits after the viewport is measured for a layout. */
   public readonly layout$ = this.layoutSubject.asObservable()
 
   constructor(
@@ -126,13 +127,11 @@ export class Viewport extends ReactiveEntity<State> {
   }
 
   /**
-   * Re-measure the viewport and notify viewport-geometry dependents.
-   *
-   * This is the lighter sub-layout used when the viewport's visual mapping may
-   * have changed while spine geometry is still valid (for example after a CSS
-   * transform/scale). A layout requested through the spine calls this first,
-   * because spine/page layout depends on the viewport size. This method should
-   * stay one-way and must not trigger a full reader layout by itself.
+   * Measures the viewport for a reader layout. The spine's layout pass calls
+   * this first, since everything it lays out depends on the viewport's size.
+   * Nothing else should: the size recorded here has to stay the one the items
+   * were laid out for, which is how a resize is told apart from a report of
+   * the same size. It is one-way and never requests a reader layout itself.
    */
   public layout() {
     const layout = this.measure()
@@ -157,19 +156,25 @@ export class Viewport extends ReactiveEntity<State> {
     return this.value.pageSize
   }
 
+  /**
+   * The scale the viewport is rendered at, from its rendered width over its
+   * layout width, both as they are now. The width recorded at the last layout
+   * would count a resize that has not been laid out yet as part of the scale.
+   */
   public get scaleFactor() {
-    const absoluteViewport = this.absoluteViewport
+    const { element } = this.value
+    const layoutWidth = element.clientWidth
 
-    if (!absoluteViewport.width) return 1
+    if (!layoutWidth) return 1
 
-    const viewportRect = this.value.element.getBoundingClientRect()
+    const viewportRect = element.getBoundingClientRect()
     // Fall back to no-zoom (`1`) when the rendered rect is unavailable
     // (detached element, `display: none`, jsdom). A 0-width rect would
     // otherwise yield a 0 scale and propagate `Infinity` through every
     // consumer that divides by `scaleFactor` (e.g. spine-coord clamping).
-    const measuredWidth = viewportRect?.width || absoluteViewport.width
+    const measuredWidth = viewportRect?.width || layoutWidth
 
-    return measuredWidth / absoluteViewport.width
+    return measuredWidth / layoutWidth
   }
 
   /**
