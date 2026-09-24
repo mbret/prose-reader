@@ -26,6 +26,11 @@ export type NavigationTargetValues = {
    * A place in a spine item's document, which `select` finds once the
    * document is there. Until then the navigation goes to the start of the
    * item, and each restoration tries again.
+   *
+   * `select` runs synchronously inside the navigation, and may be called
+   * several times, or not at all when the reader navigates elsewhere first.
+   * Keep it quick and free of side effects, and do not modify the document.
+   * One that throws selects nothing.
    */
   selector: {
     spineItem: number | string

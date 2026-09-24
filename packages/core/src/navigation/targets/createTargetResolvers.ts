@@ -1,10 +1,27 @@
 import type { CfiManager } from "../../cfi"
+import { Report } from "../../report"
 import type { ReaderSettingsManager } from "../../settings/ReaderSettingsManager"
 import type { SpineItemsManager } from "../../spine/SpineItemsManager"
 import type { NavigationResolver } from "../resolvers/NavigationResolver"
-import type { NavigationVisibleArea } from "../types"
+import type { NavigationTargetValues, NavigationVisibleArea } from "../types"
 import { guessDirection } from "./guessDirection"
 import type { NavigationTargetResolvers } from "./types"
+
+const report = Report.namespace(`navigation/targets`)
+
+/** A selector is the enhancer's or the app's code: one bug must not stop navigation. */
+const trySelect = (
+  select: NavigationTargetValues["selector"]["select"],
+  document: Document,
+) => {
+  try {
+    return select(document)
+  } catch (error) {
+    report.error(`A selector threw, and selects nothing`, error)
+
+    return undefined
+  }
+}
 
 export const createTargetResolvers = ({
   navigationResolver,
@@ -73,7 +90,7 @@ export const createTargetResolvers = ({
       const document = item.value.isLoaded
         ? item.renderer.getDocumentFrame()?.contentDocument
         : undefined
-      const selected = document ? select(document) : undefined
+      const selected = document ? trySelect(select, document) : undefined
 
       // Selected, it is the cfi of what was selected. Otherwise it is the item
       // start, which names no text.

@@ -111,6 +111,24 @@ describe("target resolvers", () => {
     })
   })
 
+  it("take a selector that throws as selecting nothing, rather than failing the navigation", () => {
+    const throwing: NavigationTarget = {
+      type: "selector",
+      value: {
+        spineItem: 0,
+        select: () => {
+          throw new Error("a bug in the selector")
+        },
+      },
+    }
+
+    expect(resolve(throwing)).toMatchObject({
+      spineItem: 0,
+      anchor: undefined,
+      isPending: false,
+    })
+  })
+
   it("no longer wait for a document a selector did not select anything in", () => {
     const missing: NavigationTarget = {
       type: "selector",
