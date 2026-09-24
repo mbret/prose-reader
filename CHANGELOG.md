@@ -3,6 +3,39 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## [10.0.0](https://github.com/mbret/prose-reader/compare/v9.0.0...v10.0.0) (2026-09-24)
+
+
+### ⚠ BREAKING CHANGES
+
+* **layout:** the `spreadMode` setting is now `"auto" | "always" |
+"never"`, defaulting to `"auto"`, instead of a boolean. `"always"` still shows
+no spread for a book whose `rendition:spread` is `none`, which the EPUB
+specification forbids, or whose `rendition:flow` is `scrolled-continuous`. The
+`computedSpreadMode` computed setting is removed: read what the reader shows
+from `reader.viewport.value.isSpread`, or follow it with
+`reader.viewport.watch("isSpread")`. `shouldEnableSpreadModeForViewport` and
+`shouldUseComputedSpreadModeForViewport` are replaced by
+`shouldUseSpreadModeForViewport`, which takes the setting. react-reader's
+`wouldRotationUseComputedSpreadMode` is renamed
+`wouldRotationUseSpreadMode` and takes the setting too.
+
+
+Claude-Session: https://claude.ai/code/session_01DBqLS9PKYZf3fPBLPYkezW
+
+Co-authored-by: Claude <noreply@anthropic.com>
+
+### Features
+
+* **metadata-fetcher-api:** cap concurrent lookups, leave rate limiting to the deployment ([#425](https://github.com/mbret/prose-reader/issues/425)) ([a0d78ea](https://github.com/mbret/prose-reader/commit/a0d78ea7200ee66cf08b65e1d2f5e9ae412ea255))
+
+
+### Bug Fixes
+
+* **layout:** decide spread mode in the viewport's layout, so a resize that switches it lays out once ([#398](https://github.com/mbret/prose-reader/issues/398)) ([260c332](https://github.com/mbret/prose-reader/commit/260c33205f9ef066515b8044856bd88bf325bcff))
+
+
+
 ## [9.0.0](https://github.com/mbret/prose-reader/compare/v8.0.1...v9.0.0) (2026-09-24)
 
 
