@@ -28,17 +28,25 @@ import { createTestManifest } from "./utils"
  * in-between states a fixture cannot reproduce.
  */
 
-/** Two pre-paginated items, one page each, so what is visible is unambiguous. */
-const createPrePaginatedManifest = (): Manifest =>
+/**
+ * Pre-paginated items, one page each, so what is visible is unambiguous. An
+ * item goes on either side of a spread unless `pageSpreads` places it, one
+ * entry per item. Two items by default.
+ */
+export const createPrePaginatedManifest = ({
+  pageSpreads = [undefined, undefined],
+}: {
+  pageSpreads?: ("left" | "right" | undefined)[]
+} = {}): Manifest =>
   createTestManifest({
     renditionLayout: "pre-paginated",
     renditionSpread: "auto",
-    spineItems: [0, 1].map((index) => ({
+    spineItems: pageSpreads.map((pageSpread, index) => ({
       href: `/page_${index}.jpg`,
       id: `${index}`,
-      pageSpreadLeft: true,
-      pageSpreadRight: true,
-      progressionWeight: 0.5,
+      pageSpreadLeft: pageSpread === "right" ? undefined : true,
+      pageSpreadRight: pageSpread === "left" ? undefined : true,
+      progressionWeight: 1 / pageSpreads.length,
       renditionLayout: "pre-paginated",
       index,
     })),
@@ -170,8 +178,8 @@ export const holdItemLayout = (href: string) => {
   }
 }
 
-/** Settings a test may override, on top of the pre-paginated manifest. */
-type TestReaderOptions = Omit<CreateReaderOptions, "manifest">
+/** Settings a test may override, the pre-paginated manifest included. */
+type TestReaderOptions = Partial<CreateReaderOptions>
 
 /** A reader without the pagination enhancer: `pagination` is the core result. */
 export const createTestReader = (options: TestReaderOptions = {}) =>
@@ -181,8 +189,8 @@ export const createTestReader = (options: TestReaderOptions = {}) =>
     )({
       getRenderer: () => (props) => new DefaultRenderer(props),
       getResource: resolvedResource,
-      ...options,
       manifest: createPrePaginatedManifest(),
+      ...options,
     }),
   )
 
@@ -196,8 +204,8 @@ export const createEnhancedTestReader = (options: TestReaderOptions = {}) =>
     )({
       getRenderer: () => (props) => new DefaultRenderer(props),
       getResource: resolvedResource,
-      ...options,
       manifest: createPrePaginatedManifest(),
+      ...options,
     }),
   )
 
@@ -211,8 +219,8 @@ export const createZoomableTestReader = (options: TestReaderOptions = {}) =>
     )({
       getRenderer: () => (props) => new DefaultRenderer(props),
       getResource: resolvedResource,
-      ...options,
       manifest: createPrePaginatedManifest(),
+      ...options,
     }),
   )
 
