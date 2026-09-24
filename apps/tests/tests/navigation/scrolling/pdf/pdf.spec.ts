@@ -1,6 +1,7 @@
 import { expect, test } from "@playwright/test"
 import type { Reader } from "@prose-reader/core"
 import { waitForSpineItemReady } from "../../../utils"
+import { waitForSettled } from "../../../utils/pagination"
 
 test("should navigate to second page and back to first page", async ({
   page,
@@ -20,8 +21,7 @@ test("should navigate to second page and back to first page", async ({
     // biome-ignore lint/suspicious/noExplicitAny: TODO
     ;((window as any).reader as Reader).navigation.goToNextSpineItem()
   })
-
-  await page.waitForTimeout(100)
+  await waitForSettled(page)
 
   await expect(page).toHaveScreenshot({ maxDiffPixelRatio: 0.01 })
 
@@ -29,8 +29,7 @@ test("should navigate to second page and back to first page", async ({
     // biome-ignore lint/suspicious/noExplicitAny: TODO
     ;((window as any).reader as Reader).navigation.goToTopSpineItem()
   })
-
-  await page.waitForTimeout(100)
+  await waitForSettled(page)
 
   await expect(page).toHaveScreenshot({ maxDiffPixelRatio: 0.01 })
 })
