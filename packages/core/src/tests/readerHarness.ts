@@ -49,6 +49,54 @@ const createdReaders: { destroy: () => void }[] = []
 const defaultViewport = { width: 100, height: 200 }
 let viewport = { ...defaultViewport }
 
+/**
+ * jsdom has no ResizeObserver. This one never reports on its own: a test calls
+ * `notifyResize` where a browser would deliver an observation, so what the
+ * reader does with one is under the test's control.
+ */
+const watchingResizeObservers = new Set<TestResizeObserver>()
+let createdResizeObservers = 0
+
+class TestResizeObserver {
+  private readonly targets = new Set<Element>()
+
+  constructor(private readonly callback: ResizeObserverCallback) {
+    createdResizeObservers += 1
+  }
+
+  observe(target: Element) {
+    this.targets.add(target)
+    watchingResizeObservers.add(this)
+  }
+
+  unobserve(target: Element) {
+    this.targets.delete(target)
+
+    if (this.targets.size === 0) watchingResizeObservers.delete(this)
+  }
+
+  disconnect() {
+    this.targets.clear()
+    watchingResizeObservers.delete(this)
+  }
+
+  notify() {
+    // No entries: the reader measures the viewport itself when it lays out.
+    this.callback([], this)
+  }
+}
+
+/** How many observers were ever created, and how many are observing now. */
+export const resizeObservers = () => ({
+  created: createdResizeObservers,
+  watching: watchingResizeObservers.size,
+})
+
+/** Delivers an observation to every observer that is observing something. */
+export const notifyResize = () => {
+  for (const observer of [...watchingResizeObservers]) observer.notify()
+}
+
 const track = <TReader extends { destroy: () => void }>(reader: TReader) => {
   createdReaders.push(reader)
 
@@ -160,14 +208,7 @@ export const installReaderTestEnvironment = () => {
   window.__PROSE_READER_DEBUG = false
 
   beforeAll(() => {
-    vi.stubGlobal(
-      "ResizeObserver",
-      class {
-        observe() {}
-        unobserve() {}
-        disconnect() {}
-      },
-    )
+    vi.stubGlobal("ResizeObserver", TestResizeObserver)
     Object.defineProperty(HTMLElement.prototype, "clientWidth", {
       configurable: true,
       get: () => viewport.width,
@@ -190,6 +231,8 @@ export const installReaderTestEnvironment = () => {
     for (const reader of createdReaders.splice(0)) reader.destroy()
     document.getElementById("test-container")?.remove()
     viewport = { ...defaultViewport }
+    watchingResizeObservers.clear()
+    createdResizeObservers = 0
   })
 }
 

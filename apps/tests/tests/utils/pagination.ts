@@ -10,16 +10,17 @@ export const waitForReader = (page: Page) =>
     return reader?.pagination.state.isSettled === true
   })
 
-type Trigger = "user navigation" | "window resize"
+type Trigger = "user navigation" | "window resize" | "settings update"
 
 /**
  * Runs `action` and resolves once the result the reader computes for it has
  * settled. The wait is tied to the action rather than to time or to the next
  * settlement: nothing is accepted until the reader reports the trigger the
  * action produces (the user entry on the navigation stream, or the viewport
- * layout that follows the window's resize event), and then only the first
- * settled result after that. A result that settles between arming and the
- * action, or for an item loading in the background, cannot satisfy it.
+ * layout that follows the window's resize event or the settings update), and
+ * then only the first settled result after that. A result that settles
+ * between arming and the action, or for an item loading in the background,
+ * cannot satisfy it. A timeout says which of the two never came.
  */
 const settleAfter = async (
   page: Page,
@@ -54,16 +55,20 @@ const settleAfter = async (
 
     // @ts-expect-error scratch slot for the pending wait
     window.__settled = new Promise<void>((resolve, reject) => {
+      let hasReacted = false
       const timer = setTimeout(
         () =>
           reject(
             new Error(
-              `no settled pagination result within 10s of the ${trigger}`,
+              hasReacted
+                ? `no settled pagination result within 10s of the ${trigger}`
+                : `the reader did not react to the ${trigger} within 10s`,
             ),
           ),
         10_000,
       )
-      const settled = () =>
+      const settled = () => {
+        hasReacted = true
         once(
           reader.pagination.state$,
           (state) => state.isSettled,
@@ -72,6 +77,7 @@ const settleAfter = async (
             resolve()
           },
         )
+      }
 
       if (trigger === "user navigation") {
         once(
@@ -79,6 +85,9 @@ const settleAfter = async (
           (navigation) => navigation.triggeredBy === "user",
           settled,
         )
+      } else if (trigger === "settings update") {
+        // A layout the update requires measures the viewport first.
+        once(reader.viewport.layout$, () => true, settled)
       } else {
         // The container observer is debounced, so the viewport layout is the
         // first thing the reader does for the new size.
@@ -115,6 +124,28 @@ export const resizeAndSettle = (
   page: Page,
   size: { width: number; height: number },
 ) => settleAfter(page, "window resize", () => page.setViewportSize(size))
+
+/**
+ * Updates the settings and resolves once the reader has laid out for them and
+ * its result has settled. It rejects when the update does not lay out, so use
+ * it only for settings that change where the pages go or how they are sized.
+ */
+export const updateSettingsAndSettle = (
+  page: Page,
+  // functions cannot be sent into the page
+  settings: Omit<
+    Parameters<Reader["settings"]["update"]>[0],
+    "getResource" | "getRenderer"
+  >,
+) =>
+  settleAfter(page, "settings update", () =>
+    page.evaluate((settings) => {
+      // @ts-expect-error window.reader is set by this scenario's index.tsx
+      const reader = window.reader as Reader
+
+      reader.settings.update(settings)
+    }, settings),
+  )
 
 /**
  * Whether the exact position a cfi points to is inside the window, so a

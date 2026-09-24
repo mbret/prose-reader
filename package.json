@@ -21,7 +21,8 @@
     "check:agent-docs": "node scripts/check-agent-docs.mjs",
     "test": "lerna run test --parallel",
     "prepare": "husky",
-    "check:internal-ranges": "node scripts/check-internal-ranges.mjs"
+    "check:internal-ranges": "node scripts/check-internal-ranges.mjs",
+    "check:expo-sdk": "CI=1 EXPO_OFFLINE=1 pnpm --filter @prose-reader/react-native exec expo install --check"
   },
   "devDependencies": {
     "@biomejs/biome": "^2.0.6",

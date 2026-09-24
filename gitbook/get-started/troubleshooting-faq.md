@@ -40,10 +40,10 @@ If your fix cannot be done on the streamer or just feels easier to implement on 
 
 ## My book does not resize with my screen
 
-By default the reader is static and does not resize itself. To prevent this you can:
+By default (`layoutAutoResize: "container"`) the reader lays itself out again once the container it is mounted into has held a new size for 100 ms. It follows the container, not the window, so:
 
-* Set the setting `layoutAutoResize` when creating the reader instance
-* Resize the reader yourself by using `layout()`
+* Make sure the container itself changes size, for example by sizing it relative to the window rather than with a fixed width and height.
+* If you set `layoutAutoResize` to `false`, the reader no longer watches the container, and you need to call `layout()` yourself after changing its size.
 
 ## I have a vertical reading book but the first page is using slide turn
 

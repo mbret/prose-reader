@@ -24,8 +24,11 @@ way the failure points at the wrong place. Wait on something the reader says
 instead: a readiness attribute on an element, a state the reader exposes, an
 event it emits. Tie the wait to the action it follows, so it cannot be
 satisfied by a state that was already there. If the signal a spec needs does
-not exist, add it to the reader or to the shared helpers rather than sleeping
-past the gap.
+not exist, do not sleep past the gap. Build it in the shared helpers from what
+the reader already exposes, or prove the property in the unit layer instead.
+Adding a signal to the reader is a change to the library like any other, and
+the root `AGENTS.md`, *Nothing in the library exists only for a test*, says
+when that is acceptable.
 
 ## Assertions
 

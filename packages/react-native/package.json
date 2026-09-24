@@ -1,6 +1,6 @@
 {
   "name": "@prose-reader/react-native",
-  "version": "6.0.0",
+  "version": "7.0.1",
   "type": "module",
   "main": "./dist/native/index.cjs",
   "module": "./dist/native/index.js",
@@ -35,7 +35,12 @@
   },
   "devDependencies": {
     "@types/react": "^19.0.2",
-    "expo": "^57.0.24"
+    "expo": "^57.0.24",
+    "jsdom": "^29.0.0",
+    "react": "19.2.3",
+    "react-dom": "19.2.3",
+    "react-native": "0.86.3",
+    "react-native-webview": "13.16.1"
   },
   "peerDependencies": {
     "@prose-reader/archive-reader": "workspace:^",

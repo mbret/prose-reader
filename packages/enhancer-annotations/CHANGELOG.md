@@ -3,6 +3,22 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## [7.0.1](https://github.com/mbret/prose-reader/compare/v7.0.0...v7.0.1) (2026-09-23)
+
+**Note:** Version bump only for package @prose-reader/enhancer-annotations
+
+
+
+
+
+## [7.0.0](https://github.com/mbret/prose-reader/compare/v6.0.0...v7.0.0) (2026-09-23)
+
+**Note:** Version bump only for package @prose-reader/enhancer-annotations
+
+
+
+
+
 ## [6.0.0](https://github.com/mbret/prose-reader/compare/v5.0.0...v6.0.0) (2026-09-23)
 
 **Note:** Version bump only for package @prose-reader/enhancer-annotations
