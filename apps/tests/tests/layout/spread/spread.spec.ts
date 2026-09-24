@@ -4,7 +4,7 @@ import { locateSpineItems } from "../../utils"
 import {
   resizeAndSettle,
   updateSettingsAndSettle,
-  waitForReader,
+  waitForSettled,
 } from "../../utils/pagination"
 
 /**
@@ -68,7 +68,7 @@ const layoutsFor = async (page: Page, change: () => Promise<unknown>) => {
 const openAt = async (page: Page, size: { width: number; height: number }) => {
   await page.setViewportSize(size)
   await page.goto(url)
-  await waitForReader(page)
+  await waitForSettled(page)
 }
 
 test.describe("Given a reader resized across the spread threshold", () => {

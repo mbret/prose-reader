@@ -2,9 +2,8 @@ import { expect, type Page, test } from "@playwright/test"
 import type { Reader } from "@prose-reader/core"
 import {
   isCfiPositionVisible,
-  navigateAndSettle,
   resizeAndSettle,
-  waitForReader,
+  waitForSettled,
 } from "../../../utils/pagination"
 
 /**
@@ -161,24 +160,22 @@ const navigateAndReadAtOnce = (
 const turnToThirdPageOfLongChapter = async (page: Page) => {
   const chapterIndex = await getLongChapterIndex(page)
 
-  await navigateAndSettle(page, () =>
-    page.evaluate((indexOrId) => {
+  await page.evaluate((indexOrId) => {
+    // @ts-expect-error window.reader is set by this scenario's index.tsx
+    const reader = window.reader as Reader
+
+    reader.navigation.goToSpineItem({ indexOrId })
+  }, chapterIndex)
+  await waitForSettled(page)
+
+  for (let turn = 0; turn < 2; turn++) {
+    await page.evaluate(() => {
       // @ts-expect-error window.reader is set by this scenario's index.tsx
       const reader = window.reader as Reader
 
-      reader.navigation.goToSpineItem({ indexOrId })
-    }, chapterIndex),
-  )
-
-  for (let turn = 0; turn < 2; turn++) {
-    await navigateAndSettle(page, () =>
-      page.evaluate(() => {
-        // @ts-expect-error window.reader is set by this scenario's index.tsx
-        const reader = window.reader as Reader
-
-        reader.navigation.turnRight()
-      }),
-    )
+      reader.navigation.turnRight()
+    })
+    await waitForSettled(page)
   }
 
   const position = await readPosition(page)
@@ -216,7 +213,7 @@ test.describe("Given a page reached by turning pages", () => {
   test.beforeEach(async ({ page }) => {
     await page.setViewportSize(initialSize)
     await page.goto(url)
-    await waitForReader(page)
+    await waitForSettled(page)
   })
 
   test("a page turn is the reading position from the moment it happens", async ({
@@ -224,24 +221,20 @@ test.describe("Given a page reached by turning pages", () => {
   }) => {
     const chapterIndex = await getLongChapterIndex(page)
 
-    await navigateAndSettle(page, () =>
-      page.evaluate((indexOrId) => {
-        // @ts-expect-error window.reader is set by this scenario's index.tsx
-        const reader = window.reader as Reader
+    await page.evaluate((indexOrId) => {
+      // @ts-expect-error window.reader is set by this scenario's index.tsx
+      const reader = window.reader as Reader
 
-        reader.navigation.goToSpineItem({ indexOrId })
-      }, chapterIndex),
-    )
+      reader.navigation.goToSpineItem({ indexOrId })
+    }, chapterIndex)
+    await waitForSettled(page)
 
     const readRecorded = await recordReadingPositions(page)
-    let atOnce: Awaited<ReturnType<typeof navigateAndReadAtOnce>> | undefined
-
-    await navigateAndSettle(page, async () => {
-      atOnce = await navigateAndReadAtOnce(page, {
-        turn: "right",
-        into: chapterIndex,
-      })
+    const atOnce = await navigateAndReadAtOnce(page, {
+      turn: "right",
+      into: chapterIndex,
     })
+    await waitForSettled(page)
 
     const turned = await readPosition(page)
 
@@ -250,10 +243,10 @@ test.describe("Given a page reached by turning pages", () => {
      * turn happens: the reading position is its first character straight
      * away, the one pagination settles on afterwards, and nothing else.
      */
-    expect(atOnce?.wasReady).toBe(true)
+    expect(atOnce.wasReady).toBe(true)
     expect(turned.pageIndex).toBe(1)
-    expect(atOnce?.isRootCfi).toBe(false)
-    expect(atOnce?.cfi).toBe(turned.cfi)
+    expect(atOnce.isRootCfi).toBe(false)
+    expect(atOnce.cfi).toBe(turned.cfi)
     expect(await readRecorded()).toEqual([
       { cfi: turned.cfi, isRootCfi: false, itemIndex: chapterIndex },
     ])
@@ -264,11 +257,10 @@ test.describe("Given a page reached by turning pages", () => {
   }) => {
     const chapterIndex = await getChapterIndex(page, "ch03.xhtml")
     const readRecorded = await recordReadingPositions(page)
-    let atOnce: Awaited<ReturnType<typeof navigateAndReadAtOnce>> | undefined
-
-    await navigateAndSettle(page, async () => {
-      atOnce = await navigateAndReadAtOnce(page, { spineItem: chapterIndex })
+    const atOnce = await navigateAndReadAtOnce(page, {
+      spineItem: chapterIndex,
     })
+    await waitForSettled(page)
 
     const settled = await readPosition(page)
 
@@ -278,13 +270,13 @@ test.describe("Given a page reached by turning pages", () => {
      * has loaded, the reading position becomes its first page's first
      * character, and stays there.
      */
-    expect(atOnce?.wasReady).toBe(false)
-    expect(atOnce?.isRootCfi).toBe(true)
-    expect(atOnce?.itemIndex).toBe(chapterIndex)
+    expect(atOnce.wasReady).toBe(false)
+    expect(atOnce.isRootCfi).toBe(true)
+    expect(atOnce.itemIndex).toBe(chapterIndex)
     expect(settled.spineItemIndex).toBe(chapterIndex)
     expect(settled.isRootCfi).toBe(false)
     expect(await readRecorded()).toEqual([
-      { cfi: atOnce?.cfi, isRootCfi: true, itemIndex: chapterIndex },
+      { cfi: atOnce.cfi, isRootCfi: true, itemIndex: chapterIndex },
       { cfi: settled.cfi, isRootCfi: false, itemIndex: chapterIndex },
     ])
   })
@@ -383,19 +375,18 @@ test.describe("Given a page reached by turning pages", () => {
     // A navigation to the position already shown is a new one. It starts
     // without an anchor, and restoration only reads the current navigation's
     // anchor, so it needs one of its own even though nothing moved.
-    await navigateAndSettle(page, () =>
-      page.evaluate(() => {
-        // @ts-expect-error window.reader is set by this scenario's index.tsx
-        const reader = window.reader as Reader
+    await page.evaluate(() => {
+      // @ts-expect-error window.reader is set by this scenario's index.tsx
+      const reader = window.reader as Reader
 
-        reader.navigation.navigate({
-          target: {
-            type: "position",
-            value: reader.navigation.getNavigation().position,
-          },
-        })
-      }),
-    )
+      reader.navigation.navigate({
+        target: {
+          type: "position",
+          value: reader.navigation.getNavigation().position,
+        },
+      })
+    })
+    await waitForSettled(page)
 
     const renavigated = await readPosition(page)
 
@@ -452,7 +443,7 @@ test.describe("Given a page reached by turning pages", () => {
 
     await page.setViewportSize(initialSize)
     await page.goto(`${url}?cfi=${encodeURIComponent(position.cfi)}`)
-    await waitForReader(page)
+    await waitForSettled(page)
 
     const reopened = await readPosition(page)
 
@@ -467,7 +458,7 @@ test.describe("Given chapters that are not preloaded", () => {
     await page.setViewportSize(initialSize)
     // Only visible chapters load, so the one before is never loaded yet.
     await page.goto(`${url}?preload=0`)
-    await waitForReader(page)
+    await waitForSettled(page)
   })
 
   test("a turn back into a previous chapter is its start at once, and its last page once it loads", async ({
@@ -475,24 +466,20 @@ test.describe("Given chapters that are not preloaded", () => {
   }) => {
     const previousIndex = await getLongChapterIndex(page)
 
-    await navigateAndSettle(page, () =>
-      page.evaluate((indexOrId) => {
-        // @ts-expect-error window.reader is set by this scenario's index.tsx
-        const reader = window.reader as Reader
+    await page.evaluate((indexOrId) => {
+      // @ts-expect-error window.reader is set by this scenario's index.tsx
+      const reader = window.reader as Reader
 
-        reader.navigation.goToSpineItem({ indexOrId })
-      }, previousIndex + 1),
-    )
+      reader.navigation.goToSpineItem({ indexOrId })
+    }, previousIndex + 1)
+    await waitForSettled(page)
 
     const readRecorded = await recordReadingPositions(page)
-    let atOnce: Awaited<ReturnType<typeof navigateAndReadAtOnce>> | undefined
-
-    await navigateAndSettle(page, async () => {
-      atOnce = await navigateAndReadAtOnce(page, {
-        turn: "left",
-        into: previousIndex,
-      })
+    const atOnce = await navigateAndReadAtOnce(page, {
+      turn: "left",
+      into: previousIndex,
     })
+    await waitForSettled(page)
 
     const settled = await readPosition(page)
 
@@ -502,16 +489,16 @@ test.describe("Given chapters that are not preloaded", () => {
      * is its start; once it has loaded, it is the last page's first
      * character.
      */
-    expect(atOnce?.wasReady).toBe(false)
-    expect(atOnce?.isRootCfi).toBe(true)
-    expect(atOnce?.itemIndex).toBe(previousIndex)
+    expect(atOnce.wasReady).toBe(false)
+    expect(atOnce.isRootCfi).toBe(true)
+    expect(atOnce.itemIndex).toBe(previousIndex)
     expect(settled.spineItemIndex).toBe(previousIndex)
     expect(settled.numberOfPages).toBeGreaterThan(1)
     expect(settled.pageIndex).toBe(settled.numberOfPages - 1)
     expect(settled.isRootCfi).toBe(false)
     expect(settled.readingPosition).toBe(settled.cfi)
     expect(await readRecorded()).toEqual([
-      { cfi: atOnce?.cfi, isRootCfi: true, itemIndex: previousIndex },
+      { cfi: atOnce.cfi, isRootCfi: true, itemIndex: previousIndex },
       { cfi: settled.cfi, isRootCfi: false, itemIndex: previousIndex },
     ])
   })
