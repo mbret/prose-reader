@@ -18,6 +18,11 @@ jobs:
       - name: Test
         run: pnpm exec lerna run test --ignore prose-reader-tests
 
+      # The repository's own scripts, the release decisions among them, which
+      # are tested against real git repositories rather than on a release.
+      - name: Test scripts
+        run: pnpm run test:scripts
+
   # macOS: the committed screenshot baselines are rendered there (-darwin).
   # Sharded, since one runner took over five minutes for the suite. Every
   # shard occupies one of the few macOS runners an account gets at once,

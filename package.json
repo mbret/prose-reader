@@ -20,6 +20,7 @@
     "lint": "biome lint .",
     "check:agent-docs": "node scripts/check-agent-docs.mjs",
     "test": "lerna run test --parallel",
+    "test:scripts": "node --test scripts/*.test.mjs",
     "prepare": "husky",
     "check:internal-ranges": "node scripts/check-internal-ranges.mjs",
     "check:expo-sdk": "CI=1 EXPO_OFFLINE=1 pnpm --filter @prose-reader/react-native exec expo install --check"
