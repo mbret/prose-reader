@@ -122,7 +122,10 @@ const getLongChapterIndex = (page: Page) => getChapterIndex(page, "ch02.xhtml")
  */
 const navigateAndReadAtOnce = (
   page: Page,
-  navigation: { turn: "left" | "right"; into: number } | { spineItem: number },
+  navigation:
+    | { turn: "left" | "right"; into: number }
+    | { cfi: string; into: number }
+    | { spineItem: number },
 ) =>
   page.evaluate((navigation) => {
     // @ts-expect-error window.reader is set by this scenario's index.tsx
@@ -134,6 +137,8 @@ const navigateAndReadAtOnce = (
 
     if ("spineItem" in navigation) {
       reader.navigation.goToSpineItem({ indexOrId: navigation.spineItem })
+    } else if ("cfi" in navigation) {
+      reader.navigation.goToCfi(navigation.cfi)
     } else if (navigation.turn === "left") {
       reader.navigation.turnLeft()
     } else {
@@ -459,6 +464,75 @@ test.describe("Given a page reached by turning pages", () => {
     expect(reopened.spineItemIndex).toBe(position.spineItemIndex)
     expect(reopened.pageIndex).toBe(position.pageIndex)
     expect(reopened.readingPosition).toBe(position.cfi)
+  })
+})
+
+/**
+ * Opens a chapter that is not loaded yet at a cfi naming only the chapter,
+ * written as another tool can write it: without the id assertion the reader
+ * adds. Reads the reading position at once, then once the chapter settles.
+ */
+const openChapterAtRootCfi = async (page: Page) => {
+  const chapterIndex = await getChapterIndex(page, "ch03.xhtml")
+  const { cfi, chapterStart } = await page.evaluate((index) => {
+    // @ts-expect-error window.reader is set by this scenario's index.tsx
+    const reader = window.reader as Reader
+    const item = reader.context.manifest.spineItems[index]
+
+    if (!item) throw new Error("no chapter")
+
+    return {
+      cfi: `epubcfi(/6/${(index + 1) * 2}!)`,
+      chapterStart: reader.cfi.generateRootCfi(item),
+    }
+  }, chapterIndex)
+
+  expect(chapterStart).not.toBe(cfi)
+
+  const readRecorded = await recordReadingPositions(page)
+  let atOnce: Awaited<ReturnType<typeof navigateAndReadAtOnce>> | undefined
+
+  await navigateAndSettle(page, async () => {
+    atOnce = await navigateAndReadAtOnce(page, { cfi, into: chapterIndex })
+  })
+
+  expect(atOnce?.wasReady).toBe(false)
+
+  return {
+    chapterIndex,
+    chapterStart,
+    atOnce,
+    settled: await readPosition(page),
+    recorded: await readRecorded(),
+  }
+}
+
+test.describe("Given a chapter opened at a cfi naming only the chapter", () => {
+  test.beforeEach(async ({ page }) => {
+    await page.setViewportSize(initialSize)
+    await page.goto(url)
+    await waitForReader(page)
+  })
+
+  test("the reading position is the chapter start as the reader names it, while the chapter loads", async ({
+    page,
+  }) => {
+    const { atOnce, chapterStart } = await openChapterAtRootCfi(page)
+
+    expect(atOnce?.cfi).toBe(chapterStart)
+  })
+
+  test("the reading position is the chapter's first page once it loads, not the chapter", async ({
+    page,
+  }) => {
+    const { atOnce, settled, recorded, chapterIndex } =
+      await openChapterAtRootCfi(page)
+
+    // A cfi naming only the chapter names no text to reopen at.
+    expect(settled.spineItemIndex).toBe(chapterIndex)
+    expect(settled.isRootCfi).toBe(false)
+    expect(settled.readingPosition).toBe(settled.cfi)
+    expect(recorded.map(({ cfi }) => cfi)).toEqual([atOnce?.cfi, settled.cfi])
   })
 })
 
