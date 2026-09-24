@@ -10,6 +10,7 @@ describe("configFromEnv", () => {
       limit: 5,
       minScore: 0.5,
       requestTimeoutMs: 10_000,
+      maxConcurrentLookups: 32,
     })
     expect(config.providers.map((provider) => provider.id)).toEqual([
       "projectGutenberg",
@@ -24,12 +25,14 @@ describe("configFromEnv", () => {
         METADATA_LIMIT: "10",
         METADATA_MIN_SCORE: "0.8",
         REQUEST_TIMEOUT_MS: "2000",
+        MAX_CONCURRENT_LOOKUPS: "4",
       }),
     ).toMatchObject({
       port: 8080,
       limit: 10,
       minScore: 0.8,
       requestTimeoutMs: 2000,
+      maxConcurrentLookups: 4,
     })
   })
 
@@ -61,6 +64,13 @@ describe("configFromEnv", () => {
     expect(() => configFromEnv({ METADATA_LIMIT: "2.5" })).toThrow(/an integer/)
     expect(() => configFromEnv({ METADATA_MIN_SCORE: "2" })).toThrow(
       /METADATA_MIN_SCORE/,
+    )
+    // no capacity at all would refuse every lookup, which is not a service
+    expect(() => configFromEnv({ MAX_CONCURRENT_LOOKUPS: "0" })).toThrow(
+      /Invalid MAX_CONCURRENT_LOOKUPS/,
+    )
+    expect(() => configFromEnv({ MAX_CONCURRENT_LOOKUPS: "1.5" })).toThrow(
+      /an integer/,
     )
     expect(() =>
       configFromEnv({ PROJECT_GUTENBERG_BASE_URL: "not-a-url" }),

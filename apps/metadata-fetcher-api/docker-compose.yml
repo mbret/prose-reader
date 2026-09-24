@@ -39,9 +39,12 @@ services:
       GOOGLE_BOOKS_BASE_URL: ${GOOGLE_BOOKS_BASE_URL:-}
       # Open Library asks clients to identify themselves (see the README)
       OPEN_LIBRARY_USER_AGENT: ${OPEN_LIBRARY_USER_AGENT:-prose-reader-metadata-fetcher-api (development)}
-      METADATA_LIMIT: ${METADATA_LIMIT:-5}
-      METADATA_MIN_SCORE: ${METADATA_MIN_SCORE:-0.5}
-      REQUEST_TIMEOUT_MS: ${REQUEST_TIMEOUT_MS:-10000}
+      # blank falls back to the service's own default, which lives only in
+      # `config.ts`
+      METADATA_LIMIT: ${METADATA_LIMIT:-}
+      METADATA_MIN_SCORE: ${METADATA_MIN_SCORE:-}
+      REQUEST_TIMEOUT_MS: ${REQUEST_TIMEOUT_MS:-}
+      MAX_CONCURRENT_LOOKUPS: ${MAX_CONCURRENT_LOOKUPS:-}
     volumes:
       - ../../apps/metadata-fetcher-api/src:/repo/apps/metadata-fetcher-api/src:ro
       - ../../packages/archive-reader/src:/repo/packages/archive-reader/src:ro

@@ -4,29 +4,15 @@ import {
   createProjectGutenbergProvider,
   type MetadataProvider,
 } from "@prose-reader/metadata-fetcher"
+import type { CreateAppOptions } from "./createApp.ts"
 
 /**
  * Everything the API needs to serve, already validated. `createApp` takes it
  * as an argument and never reads `process.env` itself, which is what makes it
  * testable with stub providers and a one-millisecond timeout.
  */
-export type ApiConfig = {
+export type ApiConfig = CreateAppOptions & {
   readonly port: number
-  readonly providers: ReadonlyArray<MetadataProvider>
-  readonly limit: number
-  readonly minScore: number
-  /**
-   * Budget for one lookup, across every provider: a catalog that hangs must
-   * not hold a connection forever. Exceeded, the fetch aborts and the request
-   * answers `504`.
-   */
-  readonly requestTimeoutMs: number
-  /**
-   * Serve the development playground at `/`. Tied to `NODE_ENV` rather than a
-   * switch of its own: the production image already sets it, so a hosted
-   * deployment cannot forget to turn the page off, nor turn it back on.
-   */
-  readonly playground: boolean
 }
 
 /**
@@ -124,5 +110,12 @@ export const configFromEnv = (env: NodeJS.ProcessEnv): ApiConfig => ({
     min: 1,
     integer: true,
   }),
+  maxConcurrentLookups: readNumber(env, "MAX_CONCURRENT_LOOKUPS", 32, {
+    min: 1,
+    integer: true,
+  }),
+  // tied to `NODE_ENV` rather than a switch of its own: the production image
+  // already sets it, so a hosted deployment cannot forget to turn the page
+  // off, nor turn it back on
   playground: env.NODE_ENV !== "production",
 })
