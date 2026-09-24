@@ -55,6 +55,16 @@ type UnresolvedPageEntry = Omit<PageEntry, "firstVisibleNode"> & {
   spineItem: SpineItem
 }
 
+/**
+ * How much of a page has to be in view for it to count as visible: the begin
+ * edge of what is visible, and the page a navigation lands on.
+ */
+export const PAGE_VISIBILITY_THRESHOLD: { type: "percentage"; value: number } =
+  {
+    type: "percentage",
+    value: 0.5,
+  }
+
 // Chunk heavy first-visible-node lookups to keep frame time predictable.
 const FIRST_VISIBLE_NODE_PAGES_PER_FRAME = 10
 

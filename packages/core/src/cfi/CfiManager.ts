@@ -83,6 +83,22 @@ export class CfiManager {
     })
   }
 
+  /**
+   * The cfi of a page's first visible character, or of its item when the page
+   * has no resolvable first visible node.
+   */
+  public generateCfiForPage = (
+    spineItem: Manifest["spineItems"][number],
+    page: PageEntry,
+  ) => {
+    return page.firstVisibleNode
+      ? this.generateCfiForSpineItemPage({
+          spineItem,
+          pageNode: page.firstVisibleNode,
+        })
+      : this.generateRootCfi(spineItem)
+  }
+
   public generateCfiFromRange = (
     range: Range,
     item: Manifest[`spineItems`][number],

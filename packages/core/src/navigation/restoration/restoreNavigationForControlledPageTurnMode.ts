@@ -11,15 +11,12 @@ import type { InternalNavigationEntry } from "../types"
 export const restoreNavigationForControlledPageTurnMode = ({
   spineLocator,
   navigation,
-  anchorCfi,
   navigationResolver,
   spineItemsManager,
   spine,
   cfiManager,
 }: {
   navigation: InternalNavigationEntry
-  /** The anchor of this navigation, once one of its results settled. */
-  anchorCfi: string | undefined
   spineLocator: SpineLocator
   navigationResolver: NavigationResolver
   spineItemsManager: SpineItemsManager
@@ -80,10 +77,11 @@ export const restoreNavigationForControlledPageTurnMode = ({
         }
       }
 
-      const cfi = navigation.cfi ?? anchorCfi
+      const cfi = navigation.readingPosition
 
       /**
-       * Restoration from cfi.
+       * Restoration from the reading position: the cfi the navigation named,
+       * or the text at the page it went to.
        * If the layout did not change, we should not restore from cfi since
        * we will have better accuracy from all other consolidation.
        *

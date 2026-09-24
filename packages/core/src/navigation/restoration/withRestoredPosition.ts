@@ -1,10 +1,10 @@
-import { map, type Observable, switchMap, withLatestFrom } from "rxjs"
+import { map, type Observable, switchMap } from "rxjs"
 import type { CfiManager } from "../../cfi"
 import type { Context } from "../../context/Context"
 import type { ReaderSettingsManager } from "../../settings/ReaderSettingsManager"
 import type { Spine } from "../../spine/Spine"
 import type { NavigationResolver } from "../resolvers/NavigationResolver"
-import type { InternalNavigationEntry, NavigationAnchor } from "../types"
+import type { InternalNavigationEntry } from "../types"
 import { restorePosition } from "./restorePosition"
 
 type Navigation = {
@@ -18,26 +18,19 @@ export const withRestoredPosition =
     context,
     spine,
     cfiManager,
-    anchor$,
   }: {
     navigationResolver: NavigationResolver
     settings: ReaderSettingsManager
     context: Context
     spine: Spine
     cfiManager: CfiManager
-    /** The latest navigation anchor, which replays the current one. */
-    anchor$: Observable<NavigationAnchor | undefined>
   }) =>
   <N extends Navigation>(stream: Observable<N>): Observable<N> =>
     stream.pipe(
-      withLatestFrom(anchor$),
-      switchMap(([params, anchor]) => {
+      switchMap((params) => {
         return restorePosition({
           spineLocator: spine.locator,
           navigation: params.navigation,
-          // Only this navigation's own anchor: another's is another page.
-          anchorCfi:
-            anchor?.id === params.navigation.id ? anchor.cfi : undefined,
           navigationResolver,
           settings,
           spineItemsManager: spine.spineItemsManager,

@@ -199,5 +199,6 @@ keep working on estimates while a result is pending.
 It describes the current visible position, not the loading state of the whole
 book: a settled result does not mean every item has been loaded.
 
-The reading position never takes a provisional position, so it needs no such
-check.
+The reading position needs no such check: every value it takes is the closest
+known position of the reader's latest navigation, as the
+[navigation page](navigation.md#reading-position) explains.

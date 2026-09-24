@@ -11,7 +11,6 @@ import {
   of,
   share,
   shareReplay,
-  startWith,
   switchMap,
   takeUntil,
   tap,
@@ -19,17 +18,18 @@ import {
 } from "rxjs"
 import type { CfiManager } from "../cfi"
 import type { Context } from "../context/Context"
-import type { PaginationInfo } from "../pagination/types"
 import { Report } from "../report"
 import type { ReaderSettingsManager } from "../settings/ReaderSettingsManager"
 import type { Spine } from "../spine/Spine"
 import { SpinePosition } from "../spine/types"
 import { DestroyableClass } from "../utils/DestroyableClass"
+import { isDefined } from "../utils/isDefined"
 import type { Viewport } from "../viewport/Viewport"
 import { mapUserNavigationToInternal } from "./consolidation/mapUserNavigationToInternal"
 import { withCfiPosition } from "./consolidation/withCfiPosition"
 import { withDirection } from "./consolidation/withDirection"
 import { withFallbackPosition } from "./consolidation/withFallbackPosition"
+import { withReadingPosition } from "./consolidation/withReadingPosition"
 import { withSpineItem } from "./consolidation/withSpineItem"
 import { withSpineItemLayoutInfo } from "./consolidation/withSpineItemLayoutInfo"
 import { withSpineItemPosition } from "./consolidation/withSpineItemPosition"
@@ -39,7 +39,6 @@ import type { createNavigationResolver } from "./resolvers/NavigationResolver"
 import { withRestoredPosition } from "./restoration/withRestoredPosition"
 import type {
   InternalNavigationEntry,
-  NavigationAnchor,
   NavigationModeController,
   UserNavigationEntry,
 } from "./types"
@@ -47,11 +46,6 @@ import type {
 const NAMESPACE = `navigation/InternalNavigator`
 
 const report = Report.namespace(NAMESPACE)
-
-const isSettled = (
-  pagination: PaginationInfo,
-): pagination is Extract<PaginationInfo, { isSettled: true }> =>
-  pagination.isSettled
 
 export class InternalNavigator extends DestroyableClass {
   /**
@@ -93,23 +87,17 @@ export class InternalNavigator extends DestroyableClass {
   )
 
   /**
-   * Each navigation's anchor: the first visible position of the first result
-   * that settled for it. A restoration keeps its navigation, so the page it
-   * lands on does not move the anchor. Anchoring on the restored page's own
-   * first character would restore to the page before it at the next relayout,
-   * and every resize would walk the reader backwards.
+   * Where the reader is in the book, to save and reopen at: the current
+   * navigation's reading position, which `withReadingPosition` computes with
+   * every entry. It only moves when the reader navigates, and once when a
+   * navigation into content still loading finds its page: a relayout reflows
+   * the page around it without changing it.
    */
-  protected anchor$: Observable<NavigationAnchor | undefined>
-
-  /**
-   * Where the reader is in the book, to save and reopen at. It is the cfi the
-   * current navigation asked for when it named one, and otherwise its anchor,
-   * so it only moves when the reader navigates: a relayout reflows the page
-   * around it without changing it. Until a navigation without a cfi settles,
-   * the previous one stands, so a precise position is never traded for a
-   * placeholder.
-   */
-  public readonly readingPosition$: Observable<string>
+  public readonly readingPosition$ = this.navigationSubject.pipe(
+    map(({ readingPosition }) => readingPosition),
+    filter(isDefined),
+    distinctUntilChanged(),
+  )
 
   public locker = new Locker()
 
@@ -130,41 +118,6 @@ export class InternalNavigator extends DestroyableClass {
     protected isUserInteractionLocked$: Observable<boolean>,
   ) {
     super()
-
-    this.anchor$ = context.bridgeEvent.pagination$.pipe(
-      filter(isSettled),
-      /**
-       * The navigation current now, not the latest this stream heard of: a
-       * result can settle synchronously inside its navigation's own
-       * notification, before later listeners have heard of that navigation.
-       * Pagination cancels a pending result on every navigation, so one that
-       * settles belongs to the current navigation.
-       */
-      map((pagination) => ({
-        id: this.navigation.id,
-        cfi: pagination.begin.cfi,
-      })),
-      distinctUntilChanged((previous, anchor) => previous.id === anchor.id),
-      startWith(undefined),
-      shareReplay({ bufferSize: 1, refCount: false }),
-    )
-
-    this.readingPosition$ = this.navigationSubject.pipe(
-      distinctUntilChanged(
-        (previous, navigation) => previous.id === navigation.id,
-      ),
-      switchMap(({ id, cfi }) =>
-        cfi !== undefined
-          ? of(cfi)
-          : this.anchor$.pipe(
-              filter((anchor) => anchor?.id === id),
-              map((anchor) => anchor?.cfi),
-              filter((anchorCfi) => anchorCfi !== undefined),
-            ),
-      ),
-      distinctUntilChanged(),
-      shareReplay({ bufferSize: 1, refCount: false }),
-    )
 
     const getNavigationVisibleArea = () =>
       getActiveNavigationModeController().getNavigationVisibleArea()
@@ -233,7 +186,6 @@ export class InternalNavigator extends DestroyableClass {
                   spine,
                   context,
                   cfiManager,
-                  anchor$: this.anchor$,
                 }),
           )
         }),
@@ -243,6 +195,7 @@ export class InternalNavigator extends DestroyableClass {
           settings,
           navigationResolver,
         }),
+        withReadingPosition({ spine, cfi: cfiManager }),
         map((params) => params.navigation),
         share(),
       )
@@ -326,7 +279,6 @@ export class InternalNavigator extends DestroyableClass {
         context,
         spine,
         cfiManager,
-        anchor$: this.anchor$,
       }),
       map(({ navigation }) => {
         const updated: InternalNavigationEntry = {
@@ -361,6 +313,7 @@ export class InternalNavigator extends DestroyableClass {
         settings,
         navigationResolver,
       }),
+      withReadingPosition({ spine, cfi: cfiManager }),
       map(({ navigation }) => navigation),
       share(),
     )
@@ -420,11 +373,7 @@ export class InternalNavigator extends DestroyableClass {
       notifyNavigationUpdate,
     )
 
-    // The anchors and the reading position are kept whether or not anything
-    // listens, so they are known the moment they are asked for.
-    merge(this.anchor$, this.readingPosition$, notifiedNavigationUpdate$)
-      .pipe(takeUntil(this.destroy$))
-      .subscribe()
+    notifiedNavigationUpdate$.pipe(takeUntil(this.destroy$)).subscribe()
   }
 
   get navigation() {

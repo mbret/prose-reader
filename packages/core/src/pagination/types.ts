@@ -27,8 +27,8 @@ export type SettledPaginationEdge<TEdge extends PaginationEdge> = TEdge & {
  * are typed as present, and establishing settlement is what gives a consumer
  * access to them. It describes how the current layout cuts the pages, so it
  * moves when the book is laid out again; to save progress, use the
- * navigator's `readingPosition$`, which does not. Page metrics stay on both, so navigation controls keep working on
- * estimates while a range is pending.
+ * navigator's `readingPosition$`, which does not. Page metrics stay on both,
+ * so navigation controls keep working on estimates while a range is pending.
  *
  * It is generic over the edge so the enhancer's enriched edge discriminates
  * the same way, rather than restating the union one layer up.

@@ -160,7 +160,9 @@ export const createNavigator = ({
     /**
      * Where the reader is in the book, to save and reopen at with the `cfi`
      * option. It only moves when the reader navigates: a resize or a relayout
-     * reflows the page around it without changing it. Replays the current one.
+     * reflows the page around it without changing it. Every value is the
+     * closest known position of the latest navigation, so save each as it
+     * comes. Replays the current one.
      */
     readingPosition$: internalNavigator.readingPosition$,
   }

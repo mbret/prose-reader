@@ -1,5 +1,5 @@
 // @vitest-environment jsdom
-import { filter, firstValueFrom } from "rxjs"
+import { firstValueFrom } from "rxjs"
 import { describe, expect, it, vi } from "vitest"
 import {
   createTestReader,
@@ -14,51 +14,31 @@ import { waitFor } from "../tests/utils"
 installReaderTestEnvironment()
 
 describe("reading position", () => {
-  it("only ever is a settled position", async () => {
+  it("is the page a navigation goes to, from the moment it happens", async () => {
     const reader = createTestReader()
-    const positions: { cfi: string; isSettledResult: boolean }[] = []
-
-    reader.navigation.readingPosition$.subscribe((cfi) => {
-      const { isSettled, begin } = reader.pagination.state
-
-      positions.push({ cfi, isSettledResult: isSettled && begin.cfi === cfi })
-    })
 
     mountTestReader(reader)
     await settledOn(reader, 0)
 
-    reader.navigation.goToSpineItem({ indexOrId: 1, animation: false })
-    await settledOn(reader, 1)
-
     /**
-     * A provisional result stands in with the item start, so saving one would
-     * reopen the book at the top of the item.
+     * The turn keeps the viewport busy, so pagination is still resolving
+     * while the navigation has already happened. The reading position does
+     * not wait for it: the page a navigation goes to is known as soon as it
+     * is laid out.
      */
-    expect(positions.filter(({ isSettledResult }) => !isSettledResult)).toEqual(
-      [],
+    reader.navigation.goToSpineItem({ indexOrId: 1, animation: "turn" })
+
+    const atOnce = await firstValueFrom(reader.navigation.readingPosition$)
+
+    expect(reader.pagination.state.isSettled).toBe(false)
+    expect(reader.cfi.parseCfi(atOnce).itemIndex).toBe(1)
+
+    const settled = await settledOn(reader, 1)
+
+    expect(settled.begin.cfi).toBe(atOnce)
+    expect(await firstValueFrom(reader.navigation.readingPosition$)).toBe(
+      atOnce,
     )
-    expect(
-      positions.map(({ cfi }) => reader.cfi.parseCfi(cfi).itemIndex),
-    ).toEqual([0, 1])
-  })
-
-  it("is the position of the navigation the result was computed for", async () => {
-    const reader = createTestReader()
-
-    mountTestReader(reader)
-    await settledOn(reader, 0)
-
-    reader.navigation.goToSpineItem({ indexOrId: 1, animation: false })
-    await settledOn(reader, 1)
-
-    /**
-     * When the new page is already ready, its result settles synchronously,
-     * inside the navigation's own notification. The position has to be the
-     * new navigation's and not the one it replaced.
-     */
-    const position = await firstValueFrom(reader.navigation.readingPosition$)
-
-    expect(reader.cfi.parseCfi(position).itemIndex).toBe(1)
   })
 
   it("does not move when a relayout reflows the page around it", async () => {
@@ -132,23 +112,28 @@ describe("reading position", () => {
     expect(positions.at(-1)).toBe(cfi)
   })
 
-  it("keeps the previous position until a navigation without a cfi settles", async () => {
+  it("is at the item navigated to at once, while its page is still loading", async () => {
     const secondItem = holdItem("/page_1.jpg")
     const reader = createTestReader({ getRenderer: secondItem.getRenderer })
 
     mountTestReader(reader)
-    const first = await settledOn(reader, 0)
+    await settledOn(reader, 0)
 
     reader.navigation.goToSpineItem({ indexOrId: 1, animation: false })
     await waitFor(100)
 
     /**
-     * Item 1 is still loading, so only a placeholder exists for it. Saving
-     * that would trade a precise position for the top of an item.
+     * Item 1 is still loading, so its page is not known yet. The reader has
+     * left item 0 all the same: reopening there would be in the wrong item,
+     * where item 1's start is at worst the wrong page of the right one.
      */
+    const item = reader.spineItemsManager.get(1)
+
+    if (!item) throw new Error("item 1 is missing")
+
     expect(reader.pagination.state.isSettled).toBe(false)
     expect(await firstValueFrom(reader.navigation.readingPosition$)).toBe(
-      first.begin.cfi,
+      reader.cfi.generateRootCfi(item.item),
     )
 
     secondItem.release()
@@ -186,37 +171,5 @@ describe("reading position", () => {
     await settledOn(reader, 1)
 
     expect(positions).toEqual([settled.begin.cfi])
-  })
-
-  it("never takes the page of a navigation superseded while its result was pending", async () => {
-    const reader = createTestReader()
-
-    mountTestReader(reader)
-    await settledOn(reader, 0)
-
-    const items: number[] = []
-    reader.navigation.readingPosition$.subscribe((cfi) => {
-      items.push(reader.cfi.parseCfi(cfi).itemIndex)
-    })
-
-    // The turn keeps the viewport busy, so the positions pass for item 1 is
-    // still pending when the next navigation supersedes it.
-    reader.navigation.goToSpineItem({ indexOrId: 1, animation: "turn" })
-    reader.navigation.goToSpineItem({ indexOrId: 0, animation: "turn" })
-
-    await settledOn(reader, 0)
-    await firstValueFrom(
-      reader.navigation.navigationState$.pipe(
-        filter((state) => state === "free"),
-      ),
-    )
-
-    /**
-     * A superseded resolution must be cancelled, not merely outrun: had it
-     * completed, the page it was computed for would have become the position
-     * of whichever navigation was current by then.
-     */
-    expect(items).not.toContain(1)
-    expect(items.at(-1)).toBe(0)
   })
 })

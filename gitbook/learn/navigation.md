@@ -24,19 +24,30 @@ It only moves when the reader navigates. A resize, a rotation, a font size
 change or a chapter loading nearby lays the book out again and reflows the page
 around the reading position, but never changes it. The
 [pagination page](pagination.md#pagination-or-reading-position) explains why
-that makes it the value to save rather than pagination's `begin.cfi`.
+that makes it the value to save rather than pagination's `begin.cfi`. It is
+also what the reader returns to itself after such a relayout, so a book
+reopened at a saved reading position shows the same text as one that was
+resized.
 
-What it is depends on the navigation:
+It is set the moment a navigation happens:
 
 - **A navigation to a cfi**, with `goToCfi` or by opening the book with the
-  `cfi` option: that cfi, from the moment the navigation starts. It names the
-  exact place asked for, so it is kept as it is, even once the page holding it
-  shows.
+  `cfi` option: that cfi. It names the exact place asked for, so it is kept as
+  it is, even once the page holding it shows.
 - **Any other navigation**, turning pages, scrolling, `goToSpineItem` or
-  `goToUrl`: the first visible position of the page the navigation lands on,
-  once that page has settled. Until then the previous reading position stands,
-  so a precise position is never replaced by a placeholder for a page still
-  loading.
+  `goToUrl`: the first character of the page it goes to. It does not wait for
+  the page turn to end or for pagination to settle; the page is known as soon
+  as its chapter is laid out.
+- **A navigation into a chapter that is not loaded yet**: that chapter's start,
+  the only place a cfi can name in a document that is not loaded. Once the
+  chapter has loaded, it becomes the first character of the page the
+  navigation lands on, and stays there.
+
+Save every value as it comes. The one case where a value is far from the reader
+is a turn back into a previous chapter that is not loaded yet: until it loads,
+the reading position is that chapter's start rather than its last page.
+Adjacent chapters are preloaded by default
+(`numberOfAdjacentSpineItemToPreLoad`), so this only shows when they are not.
 
 ```typescript
 reader.navigation.readingPosition$.subscribe((cfi) => {

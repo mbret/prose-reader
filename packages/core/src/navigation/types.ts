@@ -105,17 +105,13 @@ export type InternalNavigationEntry = {
   url?: string | URL
   spineItem?: string | number
   cfi?: string
+  /**
+   * Where this navigation takes the reader in the text, the value restoration
+   * returns to and the reader exposes as its reading position. Computed by
+   * `withReadingPosition` for every entry, restorations included.
+   */
+  readingPosition?: string
 } & NavigationConsolidation
-
-/**
- * The first visible position of the first result that settled for a
- * navigation, by the navigation's id. Restoration returns to it when the
- * navigation did not name a cfi of its own.
- */
-export type NavigationAnchor = {
-  id: symbol
-  cfi: string
-}
 
 /**
  * A navigation surface describes the viewport rectangle that gives meaning to

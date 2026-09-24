@@ -194,11 +194,6 @@ describe("pagination settlement", () => {
         settledWithSecondItemNotReady.push(state.end.spineItemIndex ?? -1)
       }
     })
-    const readingPositions: string[] = []
-    reader.navigation.readingPosition$.subscribe((cfi) => {
-      readingPositions.push(cfi)
-    })
-
     /**
      * Pagination resolves when the navigator restores the navigation onto a
      * new layout, synchronously and ahead of this subscriber, so once the
@@ -217,13 +212,11 @@ describe("pagination settlement", () => {
 
     /**
      * A spread shows two items, and the second one is still loading. A result
-     * that settled now would become the reading position while the right page
-     * has no content yet.
+     * that settled now would describe a right page with no content yet.
      */
     expect(reader.pagination.state.begin.spineItemIndex).toBe(0)
     expect(reader.pagination.state.end.spineItemIndex).toBe(1)
     expect(reader.pagination.state.isSettled).toBe(false)
-    expect(readingPositions).toEqual([])
 
     secondItem.release()
 
@@ -234,7 +227,6 @@ describe("pagination settlement", () => {
     expect([state.begin.spineItemIndex, state.end.spineItemIndex]).toEqual([
       0, 1,
     ])
-    expect(readingPositions).toEqual([state.begin.cfi])
     expect(settledWithSecondItemNotReady).toEqual([])
   })
 

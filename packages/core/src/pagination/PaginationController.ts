@@ -16,7 +16,7 @@ import {
 } from "rxjs"
 import type { CfiManager } from "../cfi"
 import type { Context } from "../context/Context"
-import type { PageEntry } from "../spine/Pages"
+import { PAGE_VISIBILITY_THRESHOLD } from "../spine/Pages"
 import type { Spine } from "../spine/Spine"
 import type { SpineItemsManager } from "../spine/SpineItemsManager"
 import type { SpinePosition, UnboundSpinePosition } from "../spine/types"
@@ -29,11 +29,6 @@ import type {
   PaginationInfo,
   SettledPaginationEdge,
 } from "./types"
-
-const VISIBILITY_THRESHOLD: { type: "percentage"; value: number } = {
-  type: "percentage",
-  value: 0.5,
-}
 
 type ResolvedEdges = {
   begin: SettledPaginationEdge<PaginationEdge>
@@ -146,7 +141,7 @@ export class PaginationController extends DestroyableClass {
     return this.spine.locator.getVisiblePagesFromViewportPosition({
       spineItem,
       position,
-      threshold: VISIBILITY_THRESHOLD,
+      threshold: PAGE_VISIBILITY_THRESHOLD,
     })
   }
 
@@ -163,7 +158,7 @@ export class PaginationController extends DestroyableClass {
     const { beginIndex, endIndex } =
       this.spine.locator.getVisibleSpineItemsFromPosition({
         position,
-        threshold: VISIBILITY_THRESHOLD,
+        threshold: PAGE_VISIBILITY_THRESHOLD,
       }) ?? {}
 
     const beginSpineItem = this.spineItemsManager.get(beginIndex)
@@ -299,23 +294,10 @@ export class PaginationController extends DestroyableClass {
       spineItem,
       pageIndexInSpineItem,
     )
-
-    return {
-      edge: { ...edge, cfi: this.resolveCfi(spineItem, pageEntry) },
-      spineItem,
-    }
-  }
-
-  /**
-   * The cfi of a page, falling back to the item itself when the page has no
-   * resolvable first visible node.
-   */
-  private resolveCfi(spineItem: SpineItem, pageEntry: PageEntry | undefined) {
-    return pageEntry?.firstVisibleNode
-      ? this.cfi.generateCfiForSpineItemPage({
-          spineItem: spineItem.item,
-          pageNode: pageEntry.firstVisibleNode,
-        })
+    const cfi = pageEntry
+      ? this.cfi.generateCfiForPage(spineItem.item, pageEntry)
       : this.cfi.generateRootCfi(spineItem.item)
+
+    return { edge: { ...edge, cfi }, spineItem }
   }
 }
