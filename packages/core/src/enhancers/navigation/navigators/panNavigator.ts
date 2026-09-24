@@ -102,7 +102,7 @@ export class PanNavigator extends ReactiveEntity<{
     })
 
     this.reader.navigation.navigate({
-      position: navigation,
+      target: { type: "position", value: navigation },
       animation: false,
     })
   }

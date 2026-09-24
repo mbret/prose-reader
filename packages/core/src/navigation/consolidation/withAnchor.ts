@@ -69,8 +69,10 @@ export const withAnchor =
     const getAnchor = (navigation: N["navigation"]) => {
       if (navigation.anchor !== undefined) return navigation.anchor
 
-      if (navigation.cfi !== undefined && !cfi.isRootCfi(navigation.cfi))
-        return navigation.cfi
+      const { target } = navigation
+
+      if (target.type === "cfi" && !cfi.isRootCfi(target.value))
+        return target.value
 
       return getPageCfi(navigation)
     }

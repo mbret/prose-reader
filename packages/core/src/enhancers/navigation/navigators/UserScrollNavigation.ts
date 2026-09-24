@@ -61,7 +61,7 @@ export class UserScrollNavigation extends DestroyableClass {
             this.navigationSubject.next({
               animation: false,
               type: "scroll",
-              position: spinePosition,
+              target: { type: "position", value: spinePosition },
             })
           }),
           finalize(() => {
