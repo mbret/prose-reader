@@ -17,7 +17,23 @@ export type CreateAppOptions = {
   readonly providers: ReadonlyArray<MetadataProvider>
   readonly limit: number
   readonly minScore: number
+  /**
+   * Budget for one lookup, across every provider: a catalog that hangs must
+   * not hold a connection forever. Exceeded, the fetch aborts and the request
+   * answers `504`.
+   */
   readonly requestTimeoutMs: number
+  /**
+   * Lookups the app runs at once. Each one holds a connection to every
+   * provider it asks, so this bounds what the process spends, whoever the
+   * callers are. Beyond it a lookup answers `503` rather than queueing.
+   *
+   * It is capacity, not rate limiting: deciding how often a client may call
+   * belongs to the deployment's proxy or gateway, which knows who the client
+   * is and sees every replica.
+   */
+  readonly maxConcurrentLookups: number
+  /** Serve the development playground at `/`. */
   readonly playground: boolean
 }
 
@@ -179,7 +195,8 @@ const isAbortError = (error: unknown): boolean =>
  * An HTTP surface over `fetchMetadata`: the package does the work, this parses
  * requests and maps failures onto status codes.
  *
- * - `GET /health` — liveness, plus the providers this deployment exposes
+ * - `GET /health` — liveness, plus the providers this deployment exposes. Not
+ *   bound by `maxConcurrentLookups`: a busy app is still a live one
  * - `GET /metadata?title=…&author=…` — human-friendly, for curl
  * - `POST /metadata` — a `FetchMetadataInput` body, options on the query string
  *
@@ -187,6 +204,10 @@ const isAbortError = (error: unknown): boolean =>
  */
 export const createApp = (options: CreateAppOptions): Express => {
   const app = express()
+  let lookupsInFlight = 0
+  // the lookup budget: by then, every lookup running now has answered or
+  // been aborted, so a slot is free
+  const retryAfterSeconds = String(Math.ceil(options.requestTimeoutMs / 1000))
 
   app.disable("x-powered-by")
   app.use(express.json({ limit: BODY_LIMIT }))
@@ -223,7 +244,20 @@ export const createApp = (options: CreateAppOptions): Express => {
       return
     }
 
+    // checked after validation: a request that is wrong must be told so, not
+    // invited to retry something that can never succeed
+    if (lookupsInFlight >= options.maxConcurrentLookups) {
+      response
+        .status(503)
+        .set("Retry-After", retryAfterSeconds)
+        .json({ error: "Too many lookups in progress, retry later" })
+
+      return
+    }
+
     const { providers, limit, minScore, includeRaw } = parsed.value
+
+    lookupsInFlight += 1
 
     try {
       const fetched = await fetchMetadata(input, {
@@ -243,6 +277,8 @@ export const createApp = (options: CreateAppOptions): Express => {
       response.status(allFailed ? 502 : 200).json(fetched)
     } catch (error) {
       next(error)
+    } finally {
+      lookupsInFlight -= 1
     }
   }
 

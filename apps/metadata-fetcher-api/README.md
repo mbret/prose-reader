@@ -112,7 +112,10 @@ Both answer with the `FetchedMetadata` entity verbatim — ranked `matches` with
 | `400` | no search term, an invalid option, an unknown provider id, or a body that is not a JSON object |
 | `404` | unknown route |
 | `502` | every provider that could be asked failed — the body still names them and the status each answered with, so a `429` reads as "come back later" rather than "broken" |
+| `503` | `MAX_CONCURRENT_LOOKUPS` lookups are already running; `Retry-After` gives the lookup budget in seconds, by which every one of them has answered or been aborted |
 | `504` | the lookup outlived `REQUEST_TIMEOUT_MS` |
+
+A request that is malformed still answers `400` when the service is full: retrying it could never succeed. `/health` is never refused — a busy service is still a live one.
 
 ## Configuration
 
@@ -124,6 +127,7 @@ For local Docker development, put these values in `apps/metadata-fetcher-api/.en
 | `METADATA_LIMIT` | `5` | default `limit` |
 | `METADATA_MIN_SCORE` | `0.5` | default `minScore` |
 | `REQUEST_TIMEOUT_MS` | `10000` | budget for one lookup across every provider |
+| `MAX_CONCURRENT_LOOKUPS` | `32` | lookups the process runs at once; beyond it a lookup answers `503` rather than queueing. Each lookup holds a connection to every provider it asks, for up to `REQUEST_TIMEOUT_MS` |
 | `PROJECT_GUTENBERG_USER_AGENT` | — | optional identifying user agent for exact RDF lookups |
 | `PROJECT_GUTENBERG_BASE_URL` | `https://www.gutenberg.org` | absolute HTTP(S) origin; override to point at a mirror or a stub |
 | `GOOGLE_BOOKS_API_KEY` | — | enables the Google Books provider when set |
@@ -163,3 +167,9 @@ The build context is the repository root (this is a workspace app). Only the fou
 CI builds the same target on every pull request and smoke-tests it — it boots the container, checks `/health`, and asserts `/` answers `404`, so the "no playground when hosted" property is enforced rather than trusted.
 
 The service is stateless: no database, no cache, nothing on disk. Scale it by running more of it, and put your own cache in front if you expect repeat lookups — catalogs appreciate it.
+
+### Rate limiting is the deployment's
+
+The service does no per-client rate limiting, on purpose. Deciding who a client is (an IP, an API key, a tenant), which address is real, and how often each may call depends on your infrastructure and on your own provider quotas — the Google Books key and the Open Library user agent are yours. Only the proxy or gateway in front of the service sees the real client and every replica, so put the limit there.
+
+What the service does bound is its own capacity: `MAX_CONCURRENT_LOOKUPS` caps the lookups one process runs at once, whoever sends them. That protects the process and the catalogs behind it; it does not tell one client from another. Exposed directly on a public port, with nothing in front, it is the only limit there is.

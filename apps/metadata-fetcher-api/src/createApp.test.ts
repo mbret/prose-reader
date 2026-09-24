@@ -73,6 +73,45 @@ const hangingProvider: MetadataProvider = {
     }),
 }
 
+/**
+ * A catalog that holds its first lookup until released, so the slot that
+ * lookup takes stays occupied while the next request arrives, and answers
+ * every later one at once — a lookup the app should have refused then shows
+ * up as a `200` rather than as a hang.
+ */
+const createHeldProvider = () => {
+  let searches = 0
+  let notifyReached = () => {}
+  let answerHeld = () => {}
+  const reached = new Promise<void>((resolve) => {
+    notifyReached = resolve
+  })
+  const held = new Promise<[]>((resolve) => {
+    answerHeld = () => resolve([])
+  })
+
+  const provider: MetadataProvider = {
+    id: "held",
+    name: "Held Catalog",
+    search: () => {
+      searches += 1
+
+      if (searches > 1) return Promise.resolve([])
+
+      notifyReached()
+
+      return held
+    },
+  }
+
+  return {
+    provider,
+    /** Resolves once the first lookup is waiting on the catalog. */
+    reached,
+    release: () => answerHeld(),
+  }
+}
+
 const serve = (app: Express) => {
   const server = app.listen(0)
 
@@ -156,6 +195,7 @@ const defaults = {
   limit: 5,
   minScore: 0.5,
   requestTimeoutMs: 5_000,
+  maxConcurrentLookups: 8,
   playground: false,
 }
 
@@ -522,6 +562,89 @@ describe("metadata-fetcher-api failures", () => {
 
       expect(response.status).toBe(504)
       expect((await readError(response)).error).toContain("timed out")
+    } finally {
+      await api.close()
+    }
+  })
+})
+
+describe("metadata-fetcher-api capacity", () => {
+  it("refuses lookups beyond its capacity until a slot frees", async () => {
+    const catalog = createHeldProvider()
+    const api = serve(
+      createApp({
+        ...defaults,
+        providers: [catalog.provider],
+        maxConcurrentLookups: 1,
+      }),
+    )
+
+    try {
+      const running = api.get("/metadata?title=Dune")
+
+      await catalog.reached
+
+      const refused = await api.get("/metadata?title=Dune")
+
+      expect(refused.status).toBe(503)
+      // the lookup budget, in seconds: every running lookup is over by then
+      expect(refused.headers.get("retry-after")).toBe("5")
+      expect((await readError(refused)).error).toContain("Too many lookups")
+      // a busy app is still a live one
+      expect((await api.get("/health")).status).toBe(200)
+
+      catalog.release()
+
+      expect((await running).status).toBe(200)
+      expect((await api.get("/metadata?title=Dune")).status).toBe(200)
+    } finally {
+      catalog.release()
+      await api.close()
+    }
+  })
+
+  it("tells a malformed request what is wrong with it, even when full", async () => {
+    const catalog = createHeldProvider()
+    const api = serve(
+      createApp({
+        ...defaults,
+        providers: [catalog.provider],
+        maxConcurrentLookups: 1,
+      }),
+    )
+
+    try {
+      const running = api.get("/metadata?title=Dune")
+
+      await catalog.reached
+
+      // a 503 would invite a retry that can never succeed
+      const malformed = await api.get("/metadata")
+
+      expect(malformed.status).toBe(400)
+      expect((await readError(malformed)).error).toContain("No search term")
+
+      catalog.release()
+      await running
+    } finally {
+      catalog.release()
+      await api.close()
+    }
+  })
+
+  it("frees the slot of a lookup that timed out", async () => {
+    const api = serve(
+      createApp({
+        ...defaults,
+        providers: [hangingProvider],
+        requestTimeoutMs: 20,
+        maxConcurrentLookups: 1,
+      }),
+    )
+
+    try {
+      expect((await api.get("/metadata?title=Dune")).status).toBe(504)
+      expect((await api.get("/metadata?title=Dune")).status).toBe(504)
     } finally {
       await api.close()
     }
