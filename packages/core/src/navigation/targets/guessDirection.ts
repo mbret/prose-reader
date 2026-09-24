@@ -3,9 +3,7 @@ import type { SpinePosition, UnboundSpinePosition } from "../../spine/types"
 import type { InternalNavigationEntry } from "../types"
 
 /**
- * Which way a position target goes from the previous navigation. A target
- * naming a place goes forward to it, but a position only tells where it is,
- * so its direction can only be guessed.
+ * A target naming a place goes forward to it; a position can only be guessed.
  */
 export const guessDirection = ({
   position,

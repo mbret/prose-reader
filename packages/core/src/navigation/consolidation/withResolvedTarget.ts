@@ -22,10 +22,7 @@ const resolveTarget = <Type extends NavigationTargetType>(
 ) => resolvers[target.type](target.value, context)
 
 /**
- * The only step that reads the navigation's target: its resolver tells what
- * it can of where the navigation goes, and every step after it works the same
- * whatever the target was. Whether the resolved position is exact is only for
- * the steps of this navigation, so it is kept beside the entry, not in it.
+ * The only consolidation step that reads the navigation's target.
  */
 export const withResolvedTarget =
   ({ resolvers }: { resolvers: NavigationTargetResolvers }) =>

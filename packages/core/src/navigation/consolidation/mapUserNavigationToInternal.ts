@@ -5,10 +5,6 @@ import type {
   UserNavigationEntry,
 } from "../types"
 
-/**
- * The entry as the user asked for it, before anything is resolved from its
- * target.
- */
 export const mapUserNavigationToInternal = (
   stream: Observable<[UserNavigationEntry, InternalNavigationEntry]>,
 ): Observable<{

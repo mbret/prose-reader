@@ -131,20 +131,6 @@ export class InternalNavigator extends DestroyableClass {
       getNavigationVisibleArea,
     })
 
-    /**
-     * A user navigation, in order:
-     * 1. The entry as asked for.
-     * 2. What its target tells of where it goes. No other step reads the
-     *    target.
-     * 3. The item it goes to, from its position when the target named none.
-     * 4. Where the target went in that item, which the snap works from.
-     * 5. The item's layout, for restorations to tell what changed since.
-     * 6. Its position kept within the spine, or the item start when the
-     *    target gave none.
-     * 7. The page it snaps to, unless the target gave an exact position.
-     * 8. Where it landed in its item.
-     * 9. Its anchor.
-     */
     const navigationFromUser$ = userNavigation$
       .pipe(
         withLatestFrom(this.navigationSubject),
@@ -156,6 +142,8 @@ export class InternalNavigator extends DestroyableClass {
           spineItemsManager: spine.spineItemsManager,
           spineLocator: spine.locator,
         }),
+        // From the target's own position, before the fallback: the snap works
+        // from it.
         withSpineItemPosition({
           navigationResolver,
           settings,
@@ -259,16 +247,6 @@ export class InternalNavigator extends DestroyableClass {
       }),
     )
 
-    /**
-     * A restoration re-applies the current navigation, in order:
-     * 1. The position it returns to: from its url target, its anchor or its
-     *    place in its item in controlled mode, from its place in its item in
-     *    scrollable mode.
-     * 2. The item, when the navigation has none yet.
-     * 3. The item's layout.
-     * 4. Where it landed in its item.
-     * 5. Its anchor, when it has none yet.
-     */
     const navigationRestored$ = merge(
       navigationUpdateFromLayout$,
       navigationUpdateFollowingUserUnlock$,

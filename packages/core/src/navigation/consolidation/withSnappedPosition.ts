@@ -64,9 +64,8 @@ export const snapToPage = ({
 }
 
 /**
- * Snaps a user navigation to the page its position falls on, unless its
- * target gave an exact position. Scrollable mode has no page to snap to, and
- * while the user holds the viewport the position is theirs.
+ * Scrollable mode has no page to snap to, and while the user holds the
+ * viewport the position is theirs.
  */
 export const withSnappedPosition =
   ({
