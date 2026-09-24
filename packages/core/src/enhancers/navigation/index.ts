@@ -10,7 +10,7 @@ import type {
   RootEnhancer,
 } from "../types/enhancer"
 import { outOfSpineBoundary } from "./boundary"
-import { getUrlNavigationTarget } from "./getUrlNavigationTarget"
+import { getUrlSelector } from "./getUrlSelector"
 import { handleLinksNavigation } from "./links"
 import { ManualNavigator } from "./navigators/manualNavigator"
 import { PanNavigator } from "./navigators/panNavigator"
@@ -50,7 +50,7 @@ export const navigationEnhancer =
 
     /**
      * Core's targets, and urls, which it does not know: a url is translated
-     * into a `node` target, which finds its element once its document is
+     * into a selector, which selects its element once its document is
      * loaded.
      */
     const navigate = (
@@ -61,12 +61,9 @@ export const navigationEnhancer =
       if (target.type !== "url")
         return reader.navigation.navigate({ ...to, target })
 
-      const nodeTarget = getUrlNavigationTarget(
-        target.value,
-        reader.context.manifest,
-      )
+      const selector = getUrlSelector(target.value, reader.context.manifest)
 
-      if (!nodeTarget) {
+      if (!selector) {
         navigationReport.warn(
           `Ignore navigation to ${target.value}, outside the book`,
         )
@@ -74,7 +71,7 @@ export const navigationEnhancer =
         return
       }
 
-      reader.navigation.navigate({ ...to, target: nodeTarget })
+      reader.navigation.navigate({ ...to, target: selector })
     }
 
     const mount = (containerElement: HTMLElement) => {

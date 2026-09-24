@@ -28,8 +28,8 @@ import { mapUserNavigationToInternal } from "./consolidation/mapUserNavigationTo
 import { withAnchor } from "./consolidation/withAnchor"
 import { withFallbackPosition } from "./consolidation/withFallbackPosition"
 import {
+  withAnchorFromTarget,
   withResolvedTarget,
-  withTargetAnchor,
 } from "./consolidation/withResolvedTarget"
 import { withSnappedPosition } from "./consolidation/withSnappedPosition"
 import { withSpineItem } from "./consolidation/withSpineItem"
@@ -255,7 +255,7 @@ export class InternalNavigator extends DestroyableClass {
       navigationUpdateFromLayout$,
       navigationUpdateFollowingUserUnlock$,
     ).pipe(
-      withTargetAnchor({ resolvers: targetResolvers }),
+      withAnchorFromTarget({ resolvers: targetResolvers }),
       withRestoredPosition({
         navigationResolver,
         settings,

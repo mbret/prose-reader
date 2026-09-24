@@ -11,7 +11,7 @@ import type { TargetResolution } from "./types"
 const itemStart = "epubcfi(/6/2[0]!)"
 const text = "epubcfi(/6/2[0]!/4/8/1:0)"
 
-/** The item's document, holding the element a node target looks for. */
+/** The item's document, holding the element a selector selects. */
 const document = new DOMParser().parseFromString(
   `<html><body><p id="note">A note</p></body></html>`,
   "text/html",
@@ -72,16 +72,16 @@ const resolve = (
       return resolvers.spineItem(target.value, context)
     case "cfi":
       return resolvers.cfi(target.value, context)
-    case "node":
-      return resolvers.node(target.value, context)
+    case "selector":
+      return resolvers.selector(target.value, context)
   }
 }
 
 const note: NavigationTarget = {
-  type: "node",
+  type: "selector",
   value: {
     spineItem: 0,
-    find: (document) => {
+    select: (document) => {
       const node = document.getElementById("note")
 
       return node ? { node } : undefined
@@ -99,11 +99,11 @@ describe("target resolvers", () => {
     expect(resolve({ type: "cfi", value: itemStart }).anchor).toBeUndefined()
   })
 
-  it("anchor a node navigation at the cfi of what it finds", () => {
+  it("anchor a selector navigation at the cfi of what it selects", () => {
     expect(resolve(note).anchor).toBe(text)
   })
 
-  it("leave a node its item has not loaded without an anchor, for restorations to look again", () => {
+  it("leave a selector its item has not loaded without an anchor, for restorations to try again", () => {
     expect(resolve(note, { isLoaded: false })).toMatchObject({
       spineItem: 0,
       anchor: undefined,
@@ -112,7 +112,7 @@ describe("target resolvers", () => {
 
   it.each<[string, NavigationTarget, boolean]>([
     ["a cfi", { type: "cfi", value: text }, true],
-    ["a node", note, true],
+    ["a selector", note, true],
     [
       "a position",
       { type: "position", value: new SpinePosition({ x: 10, y: 0 }) },

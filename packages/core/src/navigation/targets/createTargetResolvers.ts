@@ -64,7 +64,7 @@ export const createTargetResolvers = ({
       }
     },
 
-    node: ({ spineItem, find }, context) => {
+    selector: ({ spineItem, select }, context) => {
       const item = spineItemsManager.get(spineItem)
 
       if (!item)
@@ -73,16 +73,16 @@ export const createTargetResolvers = ({
       const document = item.value.isLoaded
         ? item.renderer.getDocumentFrame()?.contentDocument
         : undefined
-      const found = document ? find(document) : undefined
+      const selected = document ? select(document) : undefined
 
-      // Found, it is the cfi of what it found. Until then it is the item start,
-      // which names no text, so the navigation has no anchor and restorations
-      // look again.
+      // Selected, it is the cfi of what was selected. Until then it is the item
+      // start, which names no text, so the navigation has no anchor and
+      // restorations try again.
       return resolvers.cfi(
-        found
+        selected
           ? cfi.generateCfiForSpineItemPage({
               spineItem: item.item,
-              pageNode: { node: found.node, offset: found.offset ?? 0 },
+              pageNode: { node: selected.node, offset: selected.offset ?? 0 },
             })
           : cfi.generateRootCfi(item.item),
         context,

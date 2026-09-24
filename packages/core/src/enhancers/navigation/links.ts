@@ -2,7 +2,7 @@ import { tap } from "rxjs"
 import type { Reader } from "../../reader"
 import { isHtmlTagElement } from "../../utils/dom"
 import type { HtmlEnhancerOutput } from "../html/enhancer"
-import { getUrlNavigationTarget } from "./getUrlNavigationTarget"
+import { getUrlSelector } from "./getUrlSelector"
 
 /** Follows the links between the book's documents. */
 export const handleLinksNavigation = (reader: Reader & HtmlEnhancerOutput) =>
@@ -24,12 +24,14 @@ export const handleLinksNavigation = (reader: Reader & HtmlEnhancerOutput) =>
 
       if (!href || !spineItem) return
 
-      const target = getUrlNavigationTarget(
+      const selector = getUrlSelector(
         href,
         reader.context.manifest,
         spineItem.item.href,
       )
 
-      if (target) reader.navigation.navigate({ target, animation: false })
+      if (selector) {
+        reader.navigation.navigate({ target: selector, animation: false })
+      }
     }),
   )

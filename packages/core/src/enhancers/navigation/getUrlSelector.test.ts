@@ -6,7 +6,7 @@ import type {
   UserNavigationEntry,
 } from "../../navigation/types"
 import type { createReader } from "../../reader"
-import { getUrlNavigationTarget } from "./getUrlNavigationTarget"
+import { getUrlSelector } from "./getUrlSelector"
 
 const manifestWith = (hrefs: string[]) => ({
   // Only the spine items' index and href are read.
@@ -19,7 +19,7 @@ const document = new DOMParser().parseFromString(
 )
 
 const resolve = (url: string, hrefs: string[], base?: string) => {
-  const target = getUrlNavigationTarget(
+  const selector = getUrlSelector(
     url,
     // The manifest's other fields are not read.
     manifestWith(hrefs) as unknown as Manifest,
@@ -27,21 +27,21 @@ const resolve = (url: string, hrefs: string[], base?: string) => {
   )
 
   return (
-    target && {
-      spineItem: target.value.spineItem,
-      found: target.value.find(document)?.node,
+    selector && {
+      spineItem: selector.value.spineItem,
+      selected: selector.value.select(document)?.node,
     }
   )
 }
 
-describe("getUrlNavigationTarget", () => {
+describe("getUrlSelector", () => {
   it("goes to the element a url's fragment names, in the item its path names", () => {
     expect(
       resolve("http://book/ch02.xhtml#note", [
         "http://book/ch01.xhtml",
         "http://book/ch02.xhtml",
       ]),
-    ).toEqual({ spineItem: 1, found: document.getElementById("note") })
+    ).toEqual({ spineItem: 1, selected: document.getElementById("note") })
   })
 
   it("finds the item of a file url, whose origin is opaque", () => {
@@ -51,7 +51,7 @@ describe("getUrlNavigationTarget", () => {
         "file://EPUB/ch01.xhtml",
         "file://EPUB/ch02.xhtml",
       ]),
-    ).toEqual({ spineItem: 1, found: document.getElementById("note") })
+    ).toEqual({ spineItem: 1, selected: document.getElementById("note") })
   })
 
   it("resolves a relative url against the document it is in", () => {
@@ -61,19 +61,19 @@ describe("getUrlNavigationTarget", () => {
         ["file://EPUB/toc.xhtml", "file://EPUB/ch02.xhtml"],
         "file://EPUB/toc.xhtml",
       ),
-    ).toEqual({ spineItem: 1, found: document.getElementById("note") })
+    ).toEqual({ spineItem: 1, selected: document.getElementById("note") })
   })
 
   it("finds an element whose id the url had to percent-encode", () => {
     expect(
       resolve("http://book/ch01.xhtml#café", ["http://book/ch01.xhtml"]),
-    ).toEqual({ spineItem: 0, found: document.getElementById("café") })
+    ).toEqual({ spineItem: 0, selected: document.getElementById("café") })
   })
 
   it("goes to the item start for a url without a fragment", () => {
     expect(
       resolve("http://book/ch01.xhtml", ["http://book/ch01.xhtml"]),
-    ).toEqual({ spineItem: 0, found: undefined })
+    ).toEqual({ spineItem: 0, selected: undefined })
   })
 
   it("goes nowhere for a url outside the book", () => {

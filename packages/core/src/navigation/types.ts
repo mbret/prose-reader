@@ -23,13 +23,13 @@ export type NavigationTargetValues = {
   /** A cfi. */
   cfi: string
   /**
-   * A place in a spine item's document, which `find` looks for once the
+   * A place in a spine item's document, which `select` finds once the
    * document is there. Until then the navigation goes to the start of the
    * item, and each restoration tries again.
    */
-  node: {
+  selector: {
     spineItem: number | string
-    find: (document: Document) => NodePosition | undefined
+    select: (document: Document) => NodePosition | undefined
   }
 }
 
@@ -123,7 +123,7 @@ export type InternalNavigationEntry = {
   }
   /**
    * What *this entry* asked for — before the navigator clamped or
-   * otherwise resolved it. `undefined` for `cfi` / `node` / `spineItem`
+   * otherwise resolved it. `undefined` for `cfi` / `selector` / `spineItem`
    * navigations (no position component to compare).
    *
    * Each entry's `requestedPosition` reflects only that entry's intent:

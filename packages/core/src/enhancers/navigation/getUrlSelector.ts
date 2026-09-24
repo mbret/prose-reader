@@ -35,15 +35,16 @@ const findElement = (document: Document, fragment: string) => {
 }
 
 /**
- * Where a url of the book goes: the spine item its path names, and there the
- * element its fragment names. `undefined` for a url outside the book. A
- * relative url is resolved against `base`, the href of the document it is in.
+ * The selector a url of the book translates to: the spine item its path
+ * names, and there the element its fragment names. `undefined` for a url
+ * outside the book. A relative url is resolved against `base`, the href of the
+ * document it is in.
  */
-export const getUrlNavigationTarget = (
+export const getUrlSelector = (
   url: string | URL,
   manifest: Manifest,
   base?: string,
-): NavigationTarget<"node"> | undefined => {
+): NavigationTarget<"selector"> | undefined => {
   const parsed = parseUrl(url, base)
 
   if (!parsed) return undefined
@@ -60,10 +61,10 @@ export const getUrlNavigationTarget = (
   const fragment = parsed.hash.slice(1)
 
   return {
-    type: "node",
+    type: "selector",
     value: {
       spineItem: item.index,
-      find: (document) => findElement(document, fragment),
+      select: (document) => findElement(document, fragment),
     },
   }
 }

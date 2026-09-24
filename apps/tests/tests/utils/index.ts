@@ -114,7 +114,7 @@ export const navigateTo = async ({
   navigation,
   page,
 }: {
-  // A node target holds a function, which cannot be sent into the page.
+  // A selector target holds a function, which cannot be sent into the page.
   navigation: UserNavigationEntry<
     NavigationTarget<"position" | "spineItem" | "cfi">
   >
