@@ -271,7 +271,7 @@ export class ZoomController extends ReactiveEntity<ZoomControllerState> {
       )
     }
 
-    this.reader.viewport.layout()
+    this.reader.viewport.notifyTransformChanged()
   }
 
   protected get isControlled() {

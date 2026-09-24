@@ -5,7 +5,7 @@ import { ZoomController } from "./ZoomController"
 const createControlledReader = () => {
   const viewportElement = document.createElement("div")
   const scrollElement = document.createElement("div")
-  const viewportLayout = vi.fn()
+  const notifyTransformChanged = vi.fn()
 
   const reader = {
     layout: vi.fn(),
@@ -22,7 +22,7 @@ const createControlledReader = () => {
       },
     },
     viewport: {
-      layout: viewportLayout,
+      notifyTransformChanged,
       value: {
         element: viewportElement,
       },
@@ -30,22 +30,22 @@ const createControlledReader = () => {
   }
 
   // Cast: ZoomController only touches this minimal Reader surface in these tests.
-  return { reader: reader as unknown as Reader, viewportLayout }
+  return { reader: reader as unknown as Reader, notifyTransformChanged }
 }
 
 describe("ZoomController", () => {
   describe("Given zoom changes the viewport transform", () => {
-    it("notifies viewport layout dependents", () => {
-      const { reader, viewportLayout } = createControlledReader()
+    it("notifies what depends on the viewport's geometry", () => {
+      const { reader, notifyTransformChanged } = createControlledReader()
       const controller = new ZoomController(reader)
 
       controller.enter()
-      viewportLayout.mockClear()
+      notifyTransformChanged.mockClear()
 
       controller.scaleAt(2)
       controller.destroy()
 
-      expect(viewportLayout).toHaveBeenCalledTimes(1)
+      expect(notifyTransformChanged).toHaveBeenCalledTimes(1)
     })
   })
 })

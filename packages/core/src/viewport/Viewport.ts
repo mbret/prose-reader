@@ -36,6 +36,10 @@ type State = {
 
 export class Viewport extends ReactiveEntity<State> {
   private layoutSubject = new Subject<void>()
+  /**
+   * Emits after the viewport is measured for a layout, and after its transform
+   * changes.
+   */
   public readonly layout$ = this.layoutSubject.asObservable()
 
   constructor(
@@ -126,13 +130,11 @@ export class Viewport extends ReactiveEntity<State> {
   }
 
   /**
-   * Re-measure the viewport and notify viewport-geometry dependents.
-   *
-   * This is the lighter sub-layout used when the viewport's visual mapping may
-   * have changed while spine geometry is still valid (for example after a CSS
-   * transform/scale). A layout requested through the spine calls this first,
-   * because spine/page layout depends on the viewport size. This method should
-   * stay one-way and must not trigger a full reader layout by itself.
+   * Measures the viewport for a reader layout. The spine's layout pass calls
+   * this first, since everything it lays out depends on the viewport's size.
+   * Nothing else should: the size recorded here has to stay the one the items
+   * were laid out for, which is how a resize is told apart from a report of
+   * the same size. It is one-way and never requests a reader layout itself.
    */
   public layout() {
     const layout = this.measure()
@@ -143,6 +145,16 @@ export class Viewport extends ReactiveEntity<State> {
       pageSize: this.calculatePageSize(layout),
       ...layout,
     })
+    this.layoutSubject.next()
+  }
+
+  /**
+   * Tells what depends on the viewport's geometry that its transform changed,
+   * after a zoom for example, so it may show more or less of the spine while
+   * its size stays the same. It measures nothing: the size only changes with a
+   * reader layout.
+   */
+  public notifyTransformChanged() {
     this.layoutSubject.next()
   }
 
