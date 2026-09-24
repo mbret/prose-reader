@@ -1,4 +1,5 @@
 import { expect, test } from "@playwright/test"
+import { resizeAndSettle } from "../../../utils/pagination"
 
 test.describe("Given a CFI", () => {
   test("should navigate correct second page", async ({ page }) => {
@@ -60,16 +61,12 @@ test.describe("Given CFI in the middle of book", () => {
       })
 
       // these sizes are chosen mostly because they are not even.
-      await page.setViewportSize({
+      await resizeAndSettle(page, {
         width: 375,
         height: 667,
       })
 
-      // it's hard to know exactly when layout + restoration is done and test it correctly.
-      // so we just wait 1 second which should be largely enough
-      await page.waitForTimeout(1000)
-
-      await textElement?.waitFor({ state: "visible" })
+      // Restoration is a navigation of its own, so the assertion polls.
       await expect(textElement).toBeInViewport({
         ratio: 1,
       })

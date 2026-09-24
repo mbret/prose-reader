@@ -268,8 +268,8 @@ importers:
         specifier: ^6.0.3
         version: 6.0.3
       gesturx:
-        specifier: ^1.8.4
-        version: 1.11.0(rxjs@7.8.2)
+        specifier: ^1.11.1
+        version: 1.11.1(rxjs@7.8.2)
       jszip:
         specifier: ^3.10.0
         version: 3.10.2
@@ -549,7 +549,7 @@ importers:
     devDependencies:
       gesturx:
         specifier: '*'
-        version: 1.11.0(rxjs@7.8.2)
+        version: 1.11.1(rxjs@7.8.2)
       rxjs:
         specifier: '*'
         version: 7.8.2
@@ -4396,8 +4396,8 @@ packages:
     resolution: {integrity: sha512-3hN7NaskYvMDLQY55gnW3NQ+mesEAepTqlg+VEbj7zzqEMBVNhzcGYYeqFo/TlYz6eQiFcp1HcsCZO+nGgS8zg==}
     engines: {node: '>=6.9.0'}
 
-  gesturx@1.11.0:
-    resolution: {integrity: sha512-dPFEnTYuY1/2+a0dd9mmast5x9+wcN3M/WO5ijZO43ejcscw05RqdjSIXmdSBZdBwQ/JYOtgZMwPoVel9scn1Q==}
+  gesturx@1.11.1:
+    resolution: {integrity: sha512-5QHHE5htkLJRUbbdbvdUH06Q0WTwmrRdM68vESVaZvJ06Ex4KBN0DjU4vGVZwflt9EVEm0O4ZacDbBDmopEXDQ==}
     peerDependencies:
       rxjs: 7.x
 
@@ -12032,7 +12032,7 @@ snapshots:
 
   gensync@1.0.0-beta.2: {}
 
-  gesturx@1.11.0(rxjs@7.8.2):
+  gesturx@1.11.1(rxjs@7.8.2):
     dependencies:
       rxjs: 7.8.2
 
