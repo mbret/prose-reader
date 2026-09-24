@@ -9,6 +9,12 @@ import {
 const URL = "http://localhost:3333/tests/navigation/boundary/index.html"
 const LAST_SPINE_INDEX = 11 // sample.cbz has 12 single-page spine items
 
+/**
+ * Turning back and forward at the end of the book reports no boundary. That is
+ * proved in core's `boundaryTurns.test.ts`, where the test holds the clock,
+ * since a browser spec can only guess how long to wait for nothing to happen.
+ */
+
 const marker = (page: Page) => page.locator("#boundary-marker")
 
 // Window to give settled navigation time to either fire a boundary event
@@ -52,35 +58,6 @@ test.describe("Given the user is on the last page (end of book)", () => {
 
     await expect(marker(page)).toHaveAttribute("data-count", "1")
     await expect(marker(page)).toHaveAttribute("data-last", "end")
-  })
-})
-
-test.describe("Given the user is at an edge and navigates back then forward", () => {
-  test("does not fire any boundary (both navigations are in-bounds)", async ({
-    page,
-  }) => {
-    await setup(page)
-
-    await navigateToSpineItem({ page, index: LAST_SPINE_INDEX })
-    await waitForSpineItemReady(page, [LAST_SPINE_INDEX])
-
-    await page.evaluate(() => {
-      const el = document.getElementById("boundary-marker")
-      if (!el) return
-      el.dataset.count = "0"
-      el.dataset.last = ""
-    })
-
-    await turnLeft({ page })
-    await waitForSpineItemReady(page, [LAST_SPINE_INDEX - 1])
-
-    await turnRight({ page })
-    await waitForSpineItemReady(page, [LAST_SPINE_INDEX])
-
-    await page.waitForTimeout(SETTLE_DELAY_MS)
-
-    await expect(marker(page)).toHaveAttribute("data-count", "0")
-    await expect(marker(page)).toHaveAttribute("data-last", "")
   })
 })
 
