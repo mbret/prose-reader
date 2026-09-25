@@ -25,9 +25,15 @@ type ContextState = {
    * the manifest as well but offer more convenience.
    */
   isFullyPrePaginated: boolean
+  /**
+   * Whether the book can be shown in a spread at all. It cannot when its
+   * `rendition:spread` is `none` or its `rendition:flow` is
+   * `scrolled-continuous`, and the `spreadMode` setting then changes nothing.
+   */
+  isSpreadAllowed: boolean
 }
 ```
 
 Read a value with `reader.context.value`, or follow it with `reader.context.watch(key)`, which emits the current value as soon as you subscribe and again whenever it changes.
 
-Whether two pages are shown side by side is not part of the context: the viewport decides it with its size. See [Spread mode](viewport.md#spread-mode).
+Whether two pages are shown side by side is not part of the context: the viewport decides it with its size, within what `isSpreadAllowed` permits. See [Spread mode](viewport.md#spread-mode).
