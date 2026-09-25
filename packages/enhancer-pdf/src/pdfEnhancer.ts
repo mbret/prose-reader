@@ -1,14 +1,17 @@
-import type { createReader, Reader } from "@prose-reader/core"
+import type { CreateReaderOptions, Reader } from "@prose-reader/core"
 import { from, map, mergeMap, of } from "rxjs"
 import { isPdfJsArchive } from "./createArchiveFromPdf"
 import { PdfRenderer } from "./renderer/PdfRenderer"
 import type { EnhancerOptions } from "./types"
 
-type CreateReader = typeof createReader
-type CreateReaderOptions = Parameters<CreateReader>[0]
-
 export const pdfEnhancer =
-  <InheritOptions extends CreateReaderOptions, InheritOutput extends Reader>(
+  <
+    InheritOptions extends Pick<
+      CreateReaderOptions,
+      "getRenderer" | "getResource"
+    >,
+    InheritOutput extends Reader,
+  >(
     next: (options: InheritOptions) => InheritOutput,
   ) =>
   (options: InheritOptions & EnhancerOptions): InheritOutput => {
