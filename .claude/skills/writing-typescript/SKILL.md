@@ -17,26 +17,69 @@ a browser test. This skill is about the code itself.
 ## Naming
 
 A name is read far more often than its definition: at a call site, in
-autocomplete, in a stack trace, without its comment or its file. Name for that
-reader.
+autocomplete, in a stack trace, in a diff, without its comment or its file.
+Name for that reader.
+
+Internal and user-facing names are held to different bars. Internally, a name
+has one job: describe itself to whoever maintains the code, reading it cold. A
+consumer meets a user-facing name through a namespace, a type and the docs, and
+writes it in their own code; that is the one place a name may give up some
+explicitness to stay readable.
+
+For every name:
+
+- **Keep the name true.** A name that claims something the code does not do,
+  such as `pending` for a value that is never cleared, is worse than a vague
+  one.
+- **Check a name where it is used.** Read the call site alone; if you have to
+  open the definition to understand it, rename it.
+
+### Internal names: self-describing, however long
+
+Everything a consumer cannot reach: locals, module helpers, internal streams
+and classes, private members, test helpers. Explicitness beats length and
+looks. A long name that says what the thing is and what it is for is right. A
+short, pretty one that leans on its surroundings is wrong, because the
+surroundings do not travel with it.
 
 - **Say what it is for, and in what context**, not only what it is.
   `getSelector` says what it returns; `xpointerToNavigationTarget` says what
   for. `xpointer$` gives a format; `readingPositionXPointer$` says what the
   value is.
+- **Do not shorten for looks.** No abbreviations, and no dropping a qualifier
+  because the file makes it look obvious: `isNavigatingToXPointer`, not
+  `navigating`; `getLoadedSpineItemDocument`, not `getDoc`.
 - **A name that needs its comment to be understood is the wrong name.**
   `isPending` needed a paragraph to explain it; `awaitsDocument` does not.
 - **Qualify generic words** such as `get`, `handle`, `data`, `item`, `value`,
-  `node`, `target` or `selector` in a file that does more than one thing.
-- **Public names (exports, reader API, options, streams, types) must make
-  sense without the docs.**
-- **Check a name where it is used.** Read the call site alone; if you have to
-  open the definition to understand it, rename it.
-- **Keep the name true.** A name that claims something the code does not do,
-  such as `pending` for a value that is never cleared, is worse than a vague
-  one.
-- **List the names a change introduces** (exports, options, streams, types) in
-  its PR description, so they are reviewed together, before the code.
+  `node`, `target` or `selector`. The file that makes one unambiguous today
+  will not stay that way.
+
+### User-facing names: explicit, until it gets convoluted
+
+Anything a consumer can reach: what a package's entry point exports, what the
+reader and its namespaces carry, options, streams, hook names, types, anything
+`gitbook/` documents. Start from the internal bar. Soften it only when the fully
+explicit name gets convoluted: it repeats its namespace, strings qualifiers
+together, or reads as a sentence. Then:
+
+- **Lean on the namespace.** In `reader.navigation.goToXPointer`, `navigation`
+  already says what it is for.
+- **Match the siblings.** `goToXPointer` sits next to `goToCfi` and
+  `goToSpineItem`. A consistent surface is easier to learn than a locally more
+  precise name.
+- **Let the doc comment carry what the name cannot.** A consumer reads a public
+  name with its doc comment, in the editor and in `gitbook/`. `goToXPointer`
+  never animates: that is in its doc comment, not in
+  `goToXPointerWithoutAnimation`.
+- **Soften, never blur.** Drop only what the context already says, never what a
+  consumer would have to guess. `readingPositionXPointer$` stays whole: on
+  `reader.navigation`, `xpointer$` would not say which place it names.
+- **The softening stops at the public name.** The code behind it keeps
+  internal names: `goToXPointer` is built from `xpointerToNavigationTarget`.
+- **List the user-facing names a change introduces** in its PR description, so
+  they are reviewed together, before the code. For a softened one, give the
+  explicit name you set aside; the maintainer decides.
 
 ## Prefer derived state over imperative updates
 
