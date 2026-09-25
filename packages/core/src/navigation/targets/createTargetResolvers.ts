@@ -57,19 +57,19 @@ export const createTargetResolvers = ({
           previousNavigation,
           settings,
         }),
-        isExact: false,
+        snapToPage: true,
       }
     },
 
     spineItem: (spineItem) => ({
       spineItem,
       directionFromLastNavigation: "forward",
-      isExact: false,
+      snapToPage: true,
     }),
 
     cfi: (value) => {
       if (!value)
-        return { directionFromLastNavigation: "forward", isExact: false }
+        return { directionFromLastNavigation: "forward", snapToPage: true }
 
       return {
         spineItem: cfi.getSpineItemFromCfi(value)?.index,
@@ -77,7 +77,7 @@ export const createTargetResolvers = ({
         // A cfi naming only an item is anchored at the page it lands on.
         anchor: cfi.isRootCfi(value) ? undefined : value,
         directionFromLastNavigation: "forward",
-        isExact: true,
+        snapToPage: false,
       }
     },
 
@@ -85,7 +85,7 @@ export const createTargetResolvers = ({
       const item = spineItemsManager.get(spineItem)
 
       if (!item)
-        return { directionFromLastNavigation: "forward", isExact: false }
+        return { directionFromLastNavigation: "forward", snapToPage: true }
 
       const document = item.value.isLoaded
         ? item.renderer.getDocumentFrame()?.contentDocument
@@ -104,7 +104,7 @@ export const createTargetResolvers = ({
             : cfi.generateRootCfi(item.item),
           context,
         ),
-        isPending: !document,
+        awaitsDocument: !document,
       }
     },
   }

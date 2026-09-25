@@ -79,14 +79,14 @@ export const withSnappedPosition =
     spine: Spine
     isUserInteractionLocked$: Observable<boolean>
   }) =>
-  <N extends { navigation: InternalNavigationEntry; isExact: boolean }>(
+  <N extends { navigation: InternalNavigationEntry; snapToPage: boolean }>(
     stream: Observable<N>,
   ) =>
     stream.pipe(
       withLatestFrom(isUserInteractionLocked$),
       map(([params, isUserLocked]) => {
         if (
-          params.isExact ||
+          !params.snapToPage ||
           settings.values.computedPageTurnMode === "scrollable" ||
           isUserLocked
         )

@@ -17,14 +17,8 @@ export type TargetResolution = {
   requestedVisibleArea?: NavigationVisibleArea
   anchor?: string
   directionFromLastNavigation: "forward" | "backward"
-  /** Otherwise `position` is snapped to the page it falls on. */
-  isExact: boolean
-  /**
-   * The target names a place in a document that is not loaded yet. Until it
-   * is, the navigation takes no anchor from the page it lands on, which can
-   * be another item's, so restorations keep resolving the target.
-   */
-  isPending?: boolean
+  snapToPage: boolean
+  awaitsDocument?: boolean
 }
 
 export type TargetResolverContext = {

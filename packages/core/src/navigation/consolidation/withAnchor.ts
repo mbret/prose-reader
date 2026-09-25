@@ -6,8 +6,7 @@ import type { InternalNavigationEntry, InternalNavigationInput } from "../types"
 
 type Navigation = {
   navigation: InternalNavigationInput | InternalNavigationEntry
-  /** Its target waits for a document to be loaded. */
-  isPending?: boolean
+  awaitsDocument?: boolean
 }
 
 /**
@@ -15,17 +14,17 @@ type Navigation = {
  * Restoration returns to it after a relayout, and the reader exposes it as its
  * reading position.
  *
- * - A target that names a place in the text, a cfi, comes with it: its
- *   resolver sets it, and this step keeps it.
+ * - A target that names a place in the text, a cfi or what a selector found,
+ *   comes with it: its resolver sets it, and this step keeps it.
  * - Otherwise it is the first character of the page that shows first at the
  *   navigation's position, the begin edge of what is visible, as soon as that
  *   page is laid out.
  * - Until then the navigation has none, and restoration works from its
  *   position. The first restoration that lands on a layout with the page
  *   finds it.
- * - While the target waits for its document it has none either: the page at
- *   its position can belong to another item, and would stop the target from
- *   being resolved again.
+ * - While the target awaits its document it has none either: the page at its
+ *   position can belong to another item, and would stop the target from being
+ *   resolved again.
  *
  * Once found it is kept for the rest of the navigation. Restorations land on
  * the page holding it; taking that page's own first character instead would
@@ -74,8 +73,9 @@ export const withAnchor =
 
     const getAnchor = (
       navigation: N["navigation"],
-      isPending: N["isPending"],
-    ) => navigation.anchor ?? (isPending ? undefined : getPageCfi(navigation))
+      awaitsDocument: N["awaitsDocument"],
+    ) =>
+      navigation.anchor ?? (awaitsDocument ? undefined : getPageCfi(navigation))
 
     return stream.pipe(
       map(
@@ -86,7 +86,7 @@ export const withAnchor =
             ...rest,
             navigation: {
               ...navigation,
-              anchor: getAnchor(navigation, rest.isPending),
+              anchor: getAnchor(navigation, rest.awaitsDocument),
             },
           }) as N,
       ),

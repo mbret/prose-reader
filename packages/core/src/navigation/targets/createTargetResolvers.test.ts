@@ -103,11 +103,11 @@ describe("target resolvers", () => {
     expect(resolve(note).anchor).toBe(text)
   })
 
-  it("leave a selector its item has not loaded pending, without an anchor, for restorations to try again", () => {
+  it("leave a selector awaiting the document of an item not loaded, without an anchor, for restorations to try again", () => {
     expect(resolve(note, { isLoaded: false })).toMatchObject({
       spineItem: 0,
       anchor: undefined,
-      isPending: true,
+      awaitsDocument: true,
     })
   })
 
@@ -125,7 +125,7 @@ describe("target resolvers", () => {
     expect(resolve(throwing)).toMatchObject({
       spineItem: 0,
       anchor: undefined,
-      isPending: false,
+      awaitsDocument: false,
     })
   })
 
@@ -138,23 +138,23 @@ describe("target resolvers", () => {
     // The item start then anchors at the page it lands on, like a root cfi.
     expect(resolve(missing)).toMatchObject({
       anchor: undefined,
-      isPending: false,
+      awaitsDocument: false,
     })
   })
 
   it.each<[string, NavigationTarget, boolean]>([
-    ["a cfi", { type: "cfi", value: text }, true],
-    ["a selector", note, true],
+    ["a cfi", { type: "cfi", value: text }, false],
+    ["a selector", note, false],
     [
       "a position",
       { type: "position", value: new SpinePosition({ x: 10, y: 0 }) },
-      false,
+      true,
     ],
-    ["a spine item", { type: "spineItem", value: 0 }, false],
+    ["a spine item", { type: "spineItem", value: 0 }, true],
   ])(
-    "tell whether %s goes exactly to its position, or to the page it falls on",
-    (_, target, isExact) => {
-      expect(resolve(target).isExact).toBe(isExact)
+    "tell whether %s snaps to the page it falls on, or goes exactly to its position",
+    (_, target, snapToPage) => {
+      expect(resolve(target).snapToPage).toBe(snapToPage)
     },
   )
 })

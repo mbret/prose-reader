@@ -59,11 +59,11 @@ const createSpine = ({
 const anchorOf = (
   navigation: Partial<InternalNavigationEntry>,
   context: ReturnType<typeof createSpine>,
-  { isPending = false }: { isPending?: boolean } = {},
+  { awaitsDocument = false }: { awaitsDocument?: boolean } = {},
 ) =>
   firstValueFrom(
     of({
-      isPending,
+      awaitsDocument,
       navigation: {
         target: { type: "position", value: { x: 0, y: 0 } },
         position: { x: 0, y: 0 },
@@ -101,7 +101,7 @@ describe("withAnchor", () => {
      * resolved once its own item loads.
      */
     expect(
-      await anchorOf({}, createSpine(), { isPending: true }),
+      await anchorOf({}, createSpine(), { awaitsDocument: true }),
     ).toBeUndefined()
   })
 
