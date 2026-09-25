@@ -1,10 +1,12 @@
 import { expect, type Page, test } from "@playwright/test"
 import {
+  expectSpineItemsInViewport,
   navigateToSpineItem,
   turnLeft,
   turnRight,
   waitForSpineItemReady,
 } from "../../utils"
+import { waitForSettled } from "../../utils/pagination"
 
 const URL = "http://localhost:3333/tests/navigation/boundary/index.html"
 const LAST_SPINE_INDEX = 11 // sample.cbz has 12 single-page spine items
@@ -53,16 +55,24 @@ test.describe("Given the user is on the last page (end of book)", () => {
     await expect(marker(page)).toHaveAttribute("data-count", "1")
     await expect(marker(page)).toHaveAttribute("data-last", "end")
   })
-})
 
-test.describe("Given the user is at an edge and navigates back then forward", () => {
-  test("does not fire any boundary (both navigations are in-bounds)", async ({
+  /**
+   * The end boundary means the user asked to go past the last page, not that
+   * they arrived on it. The test above cannot tell the two apart: turning right
+   * on the last page also lands on the last page.
+   *
+   * Turning right from the page before asks for the exact position where the
+   * last page starts, which is also the furthest the reader can go, so the
+   * reader has to count that position as inside the book. Both come from real
+   * layout here, where the unit test only has round numbers.
+   */
+  test("turning away and back onto it does not fire the end boundary", async ({
     page,
   }) => {
     await setup(page)
 
     await navigateToSpineItem({ page, index: LAST_SPINE_INDEX })
-    await waitForSpineItemReady(page, [LAST_SPINE_INDEX])
+    await waitForSettled(page)
 
     await page.evaluate(() => {
       const el = document.getElementById("boundary-marker")
@@ -71,16 +81,19 @@ test.describe("Given the user is at an edge and navigates back then forward", ()
       el.dataset.last = ""
     })
 
+    // away from the end, which must not read as the start either
     await turnLeft({ page })
-    await waitForSpineItemReady(page, [LAST_SPINE_INDEX - 1])
+    await waitForSettled(page)
+    await expectSpineItemsInViewport({ page, indexes: [LAST_SPINE_INDEX - 1] })
 
+    // back onto the last page, without going past it
     await turnRight({ page })
-    await waitForSpineItemReady(page, [LAST_SPINE_INDEX])
+    await waitForSettled(page)
+    await expectSpineItemsInViewport({ page, indexes: [LAST_SPINE_INDEX] })
 
-    await page.waitForTimeout(SETTLE_DELAY_MS)
-
+    // A turn is judged for a boundary as it settles, in the same step that
+    // lets its page settle, so both turns have been judged by now.
     await expect(marker(page)).toHaveAttribute("data-count", "0")
-    await expect(marker(page)).toHaveAttribute("data-last", "")
   })
 })
 
