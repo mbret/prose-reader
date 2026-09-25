@@ -1,11 +1,12 @@
 import { expect, type Page, test } from "@playwright/test"
-import type { Reader } from "@prose-reader/core"
 import {
+  expectSpineItemsInViewport,
   navigateToSpineItem,
   turnLeft,
   turnRight,
   waitForSpineItemReady,
 } from "../../utils"
+import { waitForSettled } from "../../utils/pagination"
 
 const URL = "http://localhost:3333/tests/navigation/boundary/index.html"
 const LAST_SPINE_INDEX = 11 // sample.cbz has 12 single-page spine items
@@ -18,19 +19,6 @@ const LAST_SPINE_INDEX = 11 // sample.cbz has 12 single-page spine items
  */
 
 const marker = (page: Page) => page.locator("#boundary-marker")
-
-/**
- * The page the reader has settled on, or `undefined` while it is still getting
- * there. Polled after a turn, it waits for that turn's own page, which a result
- * settled before the turn cannot satisfy.
- */
-const settledPage = (page: Page) =>
-  page.evaluate(() => {
-    // @ts-expect-error window.reader is set by this scenario's index.tsx
-    const { isSettled, begin } = (window.reader as Reader).pagination.state
-
-    return isSettled ? begin.spineItemIndex : undefined
-  })
 
 const setup = async (page: Page) => {
   await page.setViewportSize({ width: 400, height: 600 })
@@ -87,7 +75,7 @@ test.describe("Given the user is on the last page (end of book)", () => {
     await setup(page)
 
     await navigateToSpineItem({ page, index: LAST_SPINE_INDEX })
-    await expect.poll(() => settledPage(page)).toBe(LAST_SPINE_INDEX)
+    await waitForSettled(page)
 
     await page.evaluate(() => {
       const el = document.getElementById("boundary-marker")
@@ -98,11 +86,13 @@ test.describe("Given the user is on the last page (end of book)", () => {
 
     // away from the end, which must not read as the start either
     await turnLeft({ page })
-    await expect.poll(() => settledPage(page)).toBe(LAST_SPINE_INDEX - 1)
+    await waitForSettled(page)
+    await expectSpineItemsInViewport({ page, indexes: [LAST_SPINE_INDEX - 1] })
 
     // back onto the last page, without going past it
     await turnRight({ page })
-    await expect.poll(() => settledPage(page)).toBe(LAST_SPINE_INDEX)
+    await waitForSettled(page)
+    await expectSpineItemsInViewport({ page, indexes: [LAST_SPINE_INDEX] })
 
     // A turn is judged for a boundary as it settles, in the same step that
     // lets its page settle, so both turns have been judged by now.
