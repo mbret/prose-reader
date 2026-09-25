@@ -44,7 +44,7 @@ export type KoreaderEnhancerOutput<InheritTarget> = {
      * The reading position as an xpointer, the value a KOReader sync client
      * pushes. It only emits pointers as exact as the reading position.
      */
-    xpointer$: Observable<string>
+    readingPositionXPointer$: Observable<string>
   }
 }
 
@@ -85,7 +85,7 @@ export const koreaderEnhancer =
      * The pointer names its spine item, which is known at once, and a place
      * in its document, found once the document is loaded.
      */
-    const getXPointerSelector = (
+    const xpointerToNavigationTarget = (
       xpointer: string,
     ): NavigationTarget<"selector"> | undefined => {
       const parsed = parseXPointer(xpointer)
@@ -114,7 +114,7 @@ export const koreaderEnhancer =
       if (!isXPointerTarget(target))
         return reader.navigation.navigate({ ...to, target })
 
-      const selector = getXPointerSelector(target.value)
+      const selector = xpointerToNavigationTarget(target.value)
 
       if (!selector) {
         report.warn(`Ignore navigation to ${target.value}, not in the book`)
@@ -122,13 +122,13 @@ export const koreaderEnhancer =
         return
       }
 
-      // Before navigating, so `xpointer$` never reports what is shown while
-      // its chapter loads.
+      // Before navigating, so `readingPositionXPointer$` never reports what is
+      // shown while its chapter loads.
       lastXPointerNavigation.next({ xpointer: target.value, target: selector })
       reader.navigation.navigate({ ...to, target: selector })
     }
 
-    const getSpineItem = (spineItemIndex: number) => {
+    const getLoadedSpineItemDocument = (spineItemIndex: number) => {
       const spineItem = reader.spineItemsManager.get(spineItemIndex)
       const document = spineItem?.value.isLoaded
         ? spineItem.renderer.getDocumentFrame()?.contentDocument
@@ -144,9 +144,9 @@ export const koreaderEnhancer =
      * text once its document is loaded, rather than as the item start in the
      * meantime, which would overwrite a better position on a sync server.
      */
-    const toXPointer = (cfi: string): Observable<string> => {
+    const readingPositionToXPointer = (cfi: string): Observable<string> => {
       if (reader.cfi.isRootCfi(cfi)) {
-        const xpointer = cfiToXPointer(cfi, getSpineItem)
+        const xpointer = cfiToXPointer(cfi, getLoadedSpineItemDocument)
 
         return xpointer === undefined ? EMPTY : of(xpointer)
       }
@@ -158,12 +158,12 @@ export const koreaderEnhancer =
       return spineItem.watch("isLoaded").pipe(
         filter(Boolean),
         first(),
-        map(() => cfiToXPointer(cfi, getSpineItem)),
+        map(() => cfiToXPointer(cfi, getLoadedSpineItemDocument)),
         filter((xpointer) => xpointer !== undefined),
       )
     }
 
-    const xpointer$ = combineLatest([
+    const readingPositionXPointer$ = combineLatest([
       reader.navigation.readingPosition$,
       lastXPointerNavigation,
       // Every navigation, so one away from the xpointer is seen even when the
@@ -176,13 +176,15 @@ export const koreaderEnhancer =
          * position is the chapter start. The xpointer itself is the better
          * answer until the chapter gives the real one.
          */
-        const isOnItsWay =
+        const isNavigatingToXPointer =
           xpointerNavigation !== undefined &&
           reader.navigation.getNavigation().target ===
             xpointerNavigation.target &&
           reader.cfi.isRootCfi(cfi)
 
-        return isOnItsWay ? of(xpointerNavigation.xpointer) : toXPointer(cfi)
+        return isNavigatingToXPointer
+          ? of(xpointerNavigation.xpointer)
+          : readingPositionToXPointer(cfi)
       }),
       distinctUntilChanged(),
       takeUntil(reader.$.destroy$),
@@ -201,7 +203,7 @@ export const koreaderEnhancer =
             target: { type: "xpointer", value: xpointer },
             animation: false,
           }),
-        xpointer$,
+        readingPositionXPointer$,
       },
     }
   }

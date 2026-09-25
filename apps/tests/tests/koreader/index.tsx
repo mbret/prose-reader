@@ -51,7 +51,7 @@ async function run() {
   // see them.
   const xpointers: string[] = []
 
-  reader.koreader.xpointer$.subscribe((xpointer) => {
+  reader.koreader.readingPositionXPointer$.subscribe((xpointer) => {
     xpointers.push(xpointer)
   })
 

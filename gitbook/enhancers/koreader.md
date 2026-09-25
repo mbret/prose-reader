@@ -40,15 +40,15 @@ book is ignored. `goToXPointer` never animates.
 ## The reading position as an xpointer
 
 ```typescript
-reader.koreader.xpointer$.subscribe((xpointer) => {
+reader.koreader.readingPositionXPointer$.subscribe((xpointer) => {
   // push it to a KOReader sync server
 })
 ```
 
-`xpointer$` is `reader.navigation.readingPosition$` as an xpointer, for a
-sync client to push. It never emits a pointer less precise than the position
-the reader is on, since pushing one would overwrite a better position on the
-server:
+`readingPositionXPointer$` is `reader.navigation.readingPosition$` as an
+xpointer, for a sync client to push. It never emits a pointer less precise than
+the position the reader is on, since pushing one would overwrite a better
+position on the server:
 
 - A position in the text is emitted once its chapter's document is loaded,
   rather than as the chapter start in the meantime.
