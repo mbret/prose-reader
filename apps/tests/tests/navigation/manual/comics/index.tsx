@@ -27,11 +27,11 @@ async function run() {
   const manifest = await manifestResponse.json()
 
   const query = new URLSearchParams(window.location.search)
-  const cfi = query.get("cfi") || undefined
+  const cfi = query.get("cfi")
 
   const reader = createReader({
     manifest,
-    cfi,
+    target: cfi ? { type: "cfi", value: cfi } : undefined,
     pageTurnAnimation: "none",
     layoutLayerTransition: false,
     getResource: (item) => {

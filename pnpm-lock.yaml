@@ -380,9 +380,15 @@ importers:
       '@prose-reader/enhancer-gestures':
         specifier: workspace:*
         version: link:../../packages/enhancer-gestures
+      '@prose-reader/enhancer-koreader':
+        specifier: workspace:*
+        version: link:../../packages/enhancer-koreader
       '@prose-reader/enhancer-pdf':
         specifier: workspace:*
         version: link:../../packages/enhancer-pdf
+      '@prose-reader/koreader':
+        specifier: workspace:*
+        version: link:../../packages/koreader
       '@prose-reader/streamer':
         specifier: workspace:*
         version: link:../../packages/streamer
@@ -552,6 +558,21 @@ importers:
         version: 1.11.1(rxjs@7.8.2)
       rxjs:
         specifier: '*'
+        version: 7.8.2
+
+  packages/enhancer-koreader:
+    dependencies:
+      '@prose-reader/core':
+        specifier: workspace:^
+        version: link:../core
+      '@prose-reader/koreader':
+        specifier: workspace:^
+        version: link:../koreader
+      '@prose-reader/shared':
+        specifier: workspace:^
+        version: link:../shared
+      rxjs:
+        specifier: ^7.2.0
         version: 7.8.2
 
   packages/enhancer-pdf:

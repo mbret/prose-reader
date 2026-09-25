@@ -29,12 +29,12 @@ async function run() {
   const manifest = await manifestResponse.json()
 
   const query = new URLSearchParams(window.location.search)
-  const cfi = query.get("cfi") || undefined
+  const cfi = query.get("cfi")
   const preload = query.get("preload")
 
   const reader = createReader({
     manifest,
-    cfi,
+    target: cfi ? { type: "cfi", value: cfi } : undefined,
     ...(preload !== null && {
       numberOfAdjacentSpineItemToPreLoad: Number(preload),
     }),
@@ -45,11 +45,21 @@ async function run() {
     },
   })
 
+  // Every reading position from the reader's creation on, earlier than a spec
+  // can subscribe.
+  const readingPositions: string[] = []
+
+  reader.navigation.readingPosition$.subscribe((cfi) => {
+    readingPositions.push(cfi)
+  })
+
   // biome-ignore lint/style/noNonNullAssertion: TODO
   reader.mount(document.getElementById(`app`)!)
 
   // @ts-expect-error export for debug
   window.reader = reader
+  // @ts-expect-error export for the specs
+  window.readingPositions = readingPositions
 }
 
 run()

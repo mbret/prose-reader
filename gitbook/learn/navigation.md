@@ -22,8 +22,8 @@ where to go: a bookmark, a table of contents entry, a link.
 ## Reading position
 
 `reader.navigation.readingPosition$` is where the reader is in the book, as a
-cfi: the value to save, and to pass back as the `cfi` option to reopen the book
-there.
+cfi: the value to save, and to [open the book at](#opening-the-book-somewhere)
+the next time.
 
 It only moves when the reader navigates. A resize, a rotation, a font size
 change or a chapter loading nearby lays the book out again and reflows the page
@@ -36,8 +36,8 @@ resized.
 
 It is set the moment a navigation happens:
 
-- **A navigation to a cfi**, with `goToCfi` or by opening the book with the
-  `cfi` option: that cfi. It names the exact place asked for, so it is kept as
+- **A navigation to a cfi**, with `goToCfi` or by opening the book at one:
+  that cfi. It names the exact place asked for, so it is kept as
   it is, even once the page holding it shows. A url whose fragment names an
   element, with `goToUrl` or a link, is kept the same way: as the cfi of that
   element.
@@ -62,11 +62,30 @@ reader.navigation.readingPosition$.subscribe((cfi) => {
 })
 ```
 
+## Opening the book somewhere
+
+`createReader`'s `target` option is where the reader opens. It takes any
+target [`navigate`](../core-api/.navigation.md) does. Without it, the reader
+opens at the start of the book. The reader goes there once its chapters are
+first laid out, with every enhancer in place, so the reading position never
+passes through the start of the book on the way, and a saved position is never
+overwritten by the cover.
+
+```typescript
+const readingPosition = localStorage.getItem(`reading-position-${bookId}`)
+
+const reader = createReader({
+  manifest,
+  target: readingPosition ? { type: "cfi", value: readingPosition } : undefined,
+})
+```
+
 ## Reacting to navigations
 
 `navigation$` emits every navigation as it happens, with its `triggeredBy`:
 
-- `"user"`: a navigation you or a gesture asked for.
+- `"user"`: a navigation you or a gesture asked for, including the one to where
+  the reader opens.
 - `"restoration"`: the reader re-applying the current navigation, after the book
   was laid out again or when a pan ends. A restoration is emitted even when it
   lands where the navigation already was: what it tells is that the navigation

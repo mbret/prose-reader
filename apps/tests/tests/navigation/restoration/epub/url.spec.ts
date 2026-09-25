@@ -1,6 +1,7 @@
 import { expect, type Page, test } from "@playwright/test"
 import type { Reader } from "@prose-reader/core"
 import { resizeAndSettle, waitForSettled } from "../../../utils/pagination"
+import { isElementStartOnScreen } from "../../../utils/visibility"
 
 /**
  * A url names a spine item, and an element of it by its fragment. Going to one
@@ -53,29 +54,6 @@ const goToUrl = async (page: Page, value: string) => {
   }, value)
   await waitForSettled(page)
 }
-
-/** Whether the start of an element of a spine item is inside the window. */
-const isElementVisible = (page: Page, spineItemIndex: number, id: string) =>
-  page.evaluate(
-    ({ spineItemIndex, id }) => {
-      // @ts-expect-error window.reader is set by this scenario's index.tsx
-      const reader = window.reader as Reader
-      const frame = reader.spineItemsManager
-        .get(spineItemIndex)
-        ?.renderer.getDocumentFrame()
-      const element = frame?.contentDocument?.getElementById(id)
-
-      if (!frame || !element) return `no #${id} in a loaded document`
-
-      const rect = element.getBoundingClientRect()
-      const frameRect = frame.getBoundingClientRect()
-      const x = frameRect.left + rect.left
-      const y = frameRect.top + rect.top
-
-      return x >= 0 && x < window.innerWidth && y >= 0 && y < window.innerHeight
-    },
-    { spineItemIndex, id },
-  )
 
 /** The id of the element the reading position resolves to. */
 const getReadingPositionElementId = (page: Page) =>
@@ -149,12 +127,12 @@ test.describe("Given a url with a fragment", () => {
 
     await goToSpineItem(page, item.index)
 
-    expect(await isElementVisible(page, item.index, fragment)).toBe(false)
+    expect(await isElementStartOnScreen(page, item.index, fragment)).toBe(false)
 
     await goToUrl(page, `${item.href}#${fragment}`)
 
     await expect
-      .poll(() => isElementVisible(page, item.index, fragment))
+      .poll(() => isElementStartOnScreen(page, item.index, fragment))
       .toBe(true)
   })
 
@@ -172,7 +150,7 @@ test.describe("Given a url with a fragment", () => {
     await goToUrl(page, `${item.href}#${fragment}`)
 
     await expect
-      .poll(() => isElementVisible(page, item.index, fragment))
+      .poll(() => isElementStartOnScreen(page, item.index, fragment))
       .toBe(true)
   })
 
@@ -188,7 +166,7 @@ test.describe("Given a url with a fragment", () => {
     await goToUrl(page, `${item.href}#${fragment}`)
 
     await expect
-      .poll(() => isElementVisible(page, item.index, fragment))
+      .poll(() => isElementStartOnScreen(page, item.index, fragment))
       .toBe(true)
     // Like a cfi, the element is the place to reopen at.
     expect(await getReadingPositionElementId(page)).toBe(fragment)
@@ -206,14 +184,14 @@ test.describe("Given a url with a fragment", () => {
     await goToUrl(page, `${item.href}#${fragment}`)
 
     await expect
-      .poll(() => isElementVisible(page, item.index, fragment))
+      .poll(() => isElementStartOnScreen(page, item.index, fragment))
       .toBe(true)
 
     // Fewer, narrower pages: the element lands on another page index.
     await resizeAndSettle(page, narrowSize)
 
     await expect
-      .poll(() => isElementVisible(page, item.index, fragment), {
+      .poll(() => isElementStartOnScreen(page, item.index, fragment), {
         timeout: 10_000,
       })
       .toBe(true)
@@ -238,7 +216,7 @@ test.describe("Given a link to another chapter", () => {
     await waitForSettled(page)
 
     await expect
-      .poll(() => isElementVisible(page, item.index, fragment))
+      .poll(() => isElementStartOnScreen(page, item.index, fragment))
       .toBe(true)
   })
 
@@ -253,7 +231,7 @@ test.describe("Given a link to another chapter", () => {
     await waitForSettled(page)
 
     await expect
-      .poll(() => isElementVisible(page, item.index, fragment))
+      .poll(() => isElementStartOnScreen(page, item.index, fragment))
       .toBe(true)
   })
 })

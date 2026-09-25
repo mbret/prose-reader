@@ -20,7 +20,11 @@ import { ScrollNavigationController } from "./controllers/ScrollNavigationContro
 import { InternalNavigator } from "./InternalNavigator"
 import { Locker } from "./Locker"
 import { createNavigationResolver } from "./resolvers/NavigationResolver"
-import type { NavigationModeController, UserNavigationEntry } from "./types"
+import type {
+  NavigationModeController,
+  NavigationTarget,
+  UserNavigationEntry,
+} from "./types"
 
 export const createNavigator = ({
   spineItemsManager,
@@ -30,6 +34,7 @@ export const createNavigator = ({
   settings,
   viewport,
   cfi,
+  target,
 }: {
   cfi: CfiManager
   spineItemsManager: SpineItemsManager
@@ -38,6 +43,8 @@ export const createNavigator = ({
   spine: Spine
   settings: ReaderSettingsManager
   viewport: Viewport
+  /** Where the reader opens, the start of the book when omitted. */
+  target?: NavigationTarget
 }) => {
   const userExplicitNavigationSubject = new Subject<UserNavigationEntry>()
   const userNavigation$ = userExplicitNavigationSubject.asObservable()
@@ -95,6 +102,7 @@ export const createNavigator = ({
     viewport,
     cfiManager,
     userInteractionLock.isLocked$,
+    target,
   )
 
   const navigationState$ = combineLatest([

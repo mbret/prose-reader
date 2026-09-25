@@ -1,3 +1,4 @@
+import type { Manifest } from "@prose-reader/shared"
 import { merge, takeUntil, tap } from "rxjs"
 import type {
   NavigationTarget,
@@ -20,6 +21,20 @@ import { observeState } from "./state"
 import { throttleLock } from "./throttleLock"
 import type { NavigationEnhancerOutput, UrlNavigationTarget } from "./types"
 
+/** A url is translated into a selector, which finds its element once loaded. */
+const toSelector = (
+  { value }: UrlNavigationTarget,
+  manifest: Manifest,
+): NavigationTarget | undefined => {
+  const selector = getUrlSelector(value, manifest)
+
+  if (!selector) {
+    navigationReport.warn(`Ignore navigation to ${value}, outside the book`)
+  }
+
+  return selector
+}
+
 export const navigationEnhancer =
   <
     InheritOptions extends EnhancerOptions<RootEnhancer>,
@@ -27,8 +42,19 @@ export const navigationEnhancer =
   >(
     next: (options: InheritOptions) => InheritOutput,
   ) =>
-  (options: InheritOptions): InheritOutput & NavigationEnhancerOutput => {
-    const reader = next(options)
+  (
+    options: Omit<InheritOptions, "target"> & {
+      target?: NavigationTarget | UrlNavigationTarget
+    },
+  ): InheritOutput & NavigationEnhancerOutput => {
+    const { target, ...rest } = options
+    const reader = next({
+      ...rest,
+      target:
+        target?.type === "url" ? toSelector(target, options.manifest) : target,
+      // Only `target` changed, to one core takes; TS cannot rebuild the generic
+      // options from `Omit`.
+    } as InheritOptions)
     const state$ = observeState(reader)
     const outOfSpineBoundary$ = outOfSpineBoundary(reader)
     const manualNavigator = new ManualNavigator(reader)
@@ -57,17 +83,9 @@ export const navigationEnhancer =
       if (target.type !== "url")
         return reader.navigation.navigate({ ...to, target })
 
-      const selector = getUrlSelector(target.value, reader.context.manifest)
+      const selector = toSelector(target, reader.context.manifest)
 
-      if (!selector) {
-        navigationReport.warn(
-          `Ignore navigation to ${target.value}, outside the book`,
-        )
-
-        return
-      }
-
-      reader.navigation.navigate({ ...to, target: selector })
+      if (selector) reader.navigation.navigate({ ...to, target: selector })
     }
 
     const goToUrl = (url: string | URL) =>
@@ -77,15 +95,6 @@ export const navigationEnhancer =
       .pipe(takeUntil(reader.$.destroy$))
       .subscribe()
 
-    const mount = (containerElement: HTMLElement) => {
-      reader.mount(containerElement)
-
-      // restore the initial position once the reader is mounted
-      if (options.cfi) {
-        manualNavigator.goToCfi(options.cfi, { animate: false })
-      }
-    }
-
     const destroy = () => {
       userScrollNavigation.destroy()
       reader.destroy()
@@ -93,7 +102,6 @@ export const navigationEnhancer =
 
     return {
       ...reader,
-      mount,
       destroy,
       navigation: {
         ...reader.navigation,

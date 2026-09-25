@@ -1,10 +1,7 @@
 import { expect, type Page, test } from "@playwright/test"
 import type { Reader } from "@prose-reader/core"
-import {
-  isCfiPositionVisible,
-  resizeAndSettle,
-  waitForSettled,
-} from "../../../utils/pagination"
+import { resizeAndSettle, waitForSettled } from "../../../utils/pagination"
+import { isCfiPositionVisible } from "../../../utils/visibility"
 
 /**
  * Restoring a page after a resize needs a cfi. A navigation that asked for one
@@ -455,6 +452,23 @@ test.describe("Given a page reached by turning pages", () => {
     expect(reopened.spineItemIndex).toBe(position.spineItemIndex)
     expect(reopened.pageIndex).toBe(position.pageIndex)
     expect(reopened.readingPosition).toBe(position.cfi)
+  })
+
+  test("a book reopened at the reading position reports no other on the way, not even its start", async ({
+    page,
+  }) => {
+    const position = await turnToThirdPageOfLongChapter(page)
+
+    await page.goto(`${url}?cfi=${encodeURIComponent(position.cfi)}`)
+    await waitForSettled(page)
+
+    // Every value an app saving the reading position would have saved.
+    const saved = await page.evaluate(() => {
+      // @ts-expect-error window.readingPositions is set by this scenario's index.tsx
+      return window.readingPositions as string[]
+    })
+
+    expect(saved).toEqual([position.cfi])
   })
 })
 

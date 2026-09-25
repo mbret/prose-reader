@@ -35,7 +35,7 @@ export const bridgeReader = ({
 }: {
   /**
    * Factory invoked for every `load` event coming from the native side, with
-   * the options that event carries: the manifest, and the cfi to open at.
+   * the options that event carries: the manifest, and where to open it.
    * A reader renders a single book: a subsequent `load` destroys the
    * previous reader and creates a fresh one from the new options.
    */
@@ -45,7 +45,7 @@ export const bridgeReader = ({
 }): ReaderBridgeController => {
   let current: { reader: Reader; subscription: Subscription } | undefined
 
-  bridge.addEventListener("load", ({ load, options: { manifest, cfi } }) => {
+  bridge.addEventListener("load", ({ load, options: { manifest, target } }) => {
     // Unsubscribe before destroying, so nothing the old reader emits while it
     // shuts down reaches the native side. Not every reader stream completes
     // on destroy (pagination does not), so the subscription is what ends.
@@ -53,20 +53,13 @@ export const bridgeReader = ({
     current?.reader.destroy()
     current = undefined
 
-    const reader = createReader({ manifest, cfi })
+    const reader = createReader({ manifest, target })
     const subscription = new Subscription()
 
     current = { reader, subscription }
 
     reader.mount(containerElement)
 
-    /**
-     * Relayed once the reader is mounted. A reader opened at a cfi only goes
-     * there when mounted, and until then its reading position is the start
-     * of the book: subscribed any earlier, that start is the first position
-     * the native side receives, and saves. Every stream here replays its
-     * current value, so nothing the mounted reader holds is missed.
-     */
     const state$ = merge(
       reader.pagination.state$.pipe(
         map((pagination): Partial<ReaderState> => ({ pagination })),

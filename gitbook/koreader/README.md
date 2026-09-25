@@ -10,6 +10,11 @@ npm install @prose-reader/koreader
 
 ## Usage
 
+With a prose reader, the [KOReader enhancer](../enhancers/koreader.md) does
+this for you: it navigates to xpointers, even in chapters that are not loaded
+yet, and reports the reading position as one. The functions below are for
+everything else.
+
 ```typescript
 import { cfiToXPointer, xPointerToCfi } from "@prose-reader/koreader"
 
@@ -70,6 +75,7 @@ serializeXPointer(parsed) === "/body/DocFragment[14]/body/div/p[3]/text().42"
 | `generateXPointer(position, spineItemIndex)` | The pointer crengine itself writes for a DOM position, or `undefined` for positions crengine has no node for. |
 | `xPointerToCfi(pointer, getSpineItem)` | The CFI prose generates for that position, built with `@prose-reader/cfi`. |
 | `cfiToXPointer(cfi, getSpineItem)` | The pointer of a CFI's start; a root CFI (`epubcfi(/6/28[chap05]!)`) becomes the start of the item. |
+| `toCfiPosition(position)` | The position a CFI can point to for a `DomPosition`: a child index on an element becomes the start of that child. |
 
 ```typescript
 type DomPosition = {

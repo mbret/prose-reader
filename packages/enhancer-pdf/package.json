@@ -1,6 +1,6 @@
 {
   "name": "@prose-reader/enhancer-pdf",
-  "version": "13.0.2",
+  "version": "14.0.0",
   "type": "module",
   "main": "./dist/index.cjs",
   "module": "./dist/index.js",

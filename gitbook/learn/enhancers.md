@@ -374,31 +374,39 @@ Core's own url support is built this way: its navigation enhancer turns
 `#notes` in `ch02.xhtml`.
 
 ```typescript
-import type {
-  NavigationTargetOf,
-  UserNavigationEntry,
-} from "@prose-reader/core"
+import type { Reader, UserNavigationEntry } from "@prose-reader/core"
 
 type NoteTarget = { type: "note"; value: string }
 
-export const notesEnhancer =
-  <InheritOptions, InheritOutput extends Reader>(
-    next: (options: InheritOptions) => InheritOutput,
-  ) =>
-  (options: InheritOptions) => {
-    const reader = next(options)
-    // What the inherited `navigate` accepts, which TS cannot follow through
-    // the generic reader.
-    const navigateInherited = reader.navigation.navigate as (
-      to: UserNavigationEntry<NavigationTargetOf<InheritOutput>>,
-    ) => void
+type NotesEnhancerOutput<InheritTarget> = {
+  navigation: {
+    navigate: (to: UserNavigationEntry<InheritTarget | NoteTarget>) => void
+  }
+}
 
-    const navigate = (
-      to: UserNavigationEntry<NavigationTargetOf<InheritOutput> | NoteTarget>,
-    ) => {
+const isNoteTarget = (target: { type: string }): target is NoteTarget =>
+  target.type === "note"
+
+export const notesEnhancer =
+  <
+    InheritOptions,
+    InheritTarget extends { type: string },
+    InheritOutput extends Reader,
+  >(
+    next: (options: InheritOptions) => InheritOutput & {
+      navigation: { navigate: (to: UserNavigationEntry<InheritTarget>) => void }
+    },
+  ) =>
+  (
+    options: InheritOptions,
+  ): InheritOutput & NotesEnhancerOutput<InheritTarget> => {
+    const reader = next(options)
+
+    const navigate = (to: UserNavigationEntry<InheritTarget | NoteTarget>) => {
       const { target } = to
 
-      if (target.type !== "note") return navigateInherited({ ...to, target })
+      if (!isNoteTarget(target))
+        return reader.navigation.navigate({ ...to, target })
 
       reader.navigation.navigate({
         ...to,
@@ -419,6 +427,19 @@ export const notesEnhancer =
     return { ...reader, navigation: { ...reader.navigation, navigate } }
   }
 ```
+
+`InheritTarget` is read from the `navigate` of the reader `next` returns, so
+enhancers that add targets stack in any order: each `navigate` takes its own
+target and every target of the readers below it. The target is told apart with a
+type guard, because a `target.type !== "note"` check cannot narrow a union that
+contains `InheritTarget`. The explicit return type keeps TypeScript from
+serializing the whole reader when the enhancer is exported.
+
+To open the book at such a target, widen `createReader`'s `target` option the
+same way, and translate it before handing the options to `next`. The navigation
+enhancer does so for urls. Widened options no longer satisfy a constraint on the
+narrower ones, so an enhancer applied after yours should constrain its options
+only to what it reads, such as `Pick<CreateReaderOptions, "getRenderer">`.
 
 ### Custom CSS in enhancers
 

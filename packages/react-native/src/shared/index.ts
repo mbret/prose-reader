@@ -2,6 +2,7 @@ import type {
   ContextState,
   createReader,
   EnhancerPaginationInfo,
+  NavigationTarget,
 } from "@prose-reader/core"
 import type { Bridge, BridgeStore } from "@webview-bridge/react-native"
 
@@ -12,9 +13,11 @@ type RnContextState = Omit<ContextState, "rootElement">
  * What the native side decides about the reader a `load` creates: the book,
  * and where to open it. They are the reader options that cross the bridge,
  * named as the reader names them, so the web side's factory spreads them into
- * the rest.
+ * the rest. Only the targets that are plain data can cross it.
  */
-export type ReaderLoadOptions = Pick<ReaderOptions, "manifest" | "cfi">
+export type ReaderLoadOptions = Pick<ReaderOptions, "manifest"> & {
+  target?: NavigationTarget<"cfi" | "spineItem">
+}
 
 /**
  * What the web side reports of the reader of the book last loaded. Each value

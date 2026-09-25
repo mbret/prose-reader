@@ -12,6 +12,7 @@ import { Features } from "./features/Features"
 import { HookManager } from "./hooks/HookManager"
 import styles from "./index.scss?inline"
 import { createNavigator } from "./navigation/Navigator"
+import type { NavigationTarget } from "./navigation/types"
 import { Pagination } from "./pagination/Pagination"
 import { PaginationController } from "./pagination/PaginationController"
 import { Report } from "./report"
@@ -33,10 +34,11 @@ export type CreateReaderOptions = Partial<CoreInputSettings> & {
    */
   manifest: Manifest
   /**
-   * Optional initial reading position. The reader will restore the position
-   * once mounted. This is handled by the navigation enhancer.
+   * Where the reader opens, the start of the book when omitted. The reader
+   * goes there once its items are first laid out, so its reading position
+   * never passes through the start of the book on the way.
    */
-  cfi?: string
+  target?: NavigationTarget
   /**
    * The document the reader creates all of its DOM in. Defaults to the ambient
    * `globalThis.document`. Provide a foreign document (eg: an iframe's
@@ -58,8 +60,7 @@ type ReaderLayoutOptions = {
 
 export const createReader = ({
   manifest,
-  // handled by the navigation enhancer, extracted so it does not leak into settings
-  cfi: _cfi,
+  target,
   ownerDocument = globalThis.document,
   ...inputSettings
 }: CreateReaderOptions) => {
@@ -105,6 +106,7 @@ export const createReader = ({
     spine,
     settings: settingsManager,
     viewport,
+    target,
   })
   const paginationController = new PaginationController(
     context,

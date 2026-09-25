@@ -3,6 +3,41 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## [14.0.0](https://github.com/mbret/prose-reader/compare/v13.0.5...v14.0.0) (2026-09-25)
+
+
+### ⚠ BREAKING CHANGES
+
+* **core:** the `cfi` option of `createReader` is removed. Pass
+`target: { type: "cfi", value: cfi }` instead. `ReaderLoadOptions` of
+`@prose-reader/react-native` takes `target` in place of `cfi` the same way.
+
+Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
+Claude-Session: https://claude.ai/code/session_01YNJfUFaQbVhXaYd5pGyGfK
+
+### Features
+
+* **core:** open the reader at any navigation target ([370d3c2](https://github.com/mbret/prose-reader/commit/370d3c2a1cd5017f9b4fb38d70bf31ed44306e79))
+
+
+
+## [13.0.5](https://github.com/mbret/prose-reader/compare/v13.0.4...v13.0.5) (2026-09-25)
+
+
+### Bug Fixes
+
+* **core:** open at the initial cfi without reporting the start of the book ([fd1ea00](https://github.com/mbret/prose-reader/commit/fd1ea00a6d7e8384d1f73a0090ec8c1f26ac1ef9))
+
+
+
+## [13.0.4](https://github.com/mbret/prose-reader/compare/v13.0.3...v13.0.4) (2026-09-25)
+
+**Note:** Version bump only for package @prose-reader/core
+
+
+
+
+
 ## [13.0.2](https://github.com/mbret/prose-reader/compare/v13.0.1...v13.0.2) (2026-09-25)
 
 
