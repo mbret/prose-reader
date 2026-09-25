@@ -133,6 +133,25 @@ export const navigateTo = async ({
   )
 }
 
+export const updateSettings = async ({
+  page,
+  settings,
+}: {
+  page: Page
+  // functions cannot be sent into the page
+  settings: Omit<
+    Parameters<Reader["settings"]["update"]>[0],
+    "getResource" | "getRenderer"
+  >
+}) => {
+  await page.evaluate((settings) => {
+    // @ts-expect-error window.reader is set by the scenario's index.tsx
+    const reader = window.reader as Reader
+
+    reader.settings.update(settings)
+  }, settings)
+}
+
 export const getScrollNavigationMetadata = async ({ page }: { page: Page }) => {
   return await page.evaluate(() => {
     // @ts-expect-error
