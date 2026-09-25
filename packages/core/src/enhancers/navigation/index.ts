@@ -44,10 +44,6 @@ export const navigationEnhancer =
       }),
     )
 
-    merge(handleLinksNavigation(reader), navigateOnUserScroll$)
-      .pipe(takeUntil(reader.$.destroy$))
-      .subscribe()
-
     /**
      * Core's targets, and urls, which it does not know: a url is translated
      * into a selector, which selects its element once its document is
@@ -74,6 +70,13 @@ export const navigationEnhancer =
       reader.navigation.navigate({ ...to, target: selector })
     }
 
+    const goToUrl = (url: string | URL) =>
+      navigate({ target: { type: "url", value: url }, animation: false })
+
+    merge(handleLinksNavigation(reader, goToUrl), navigateOnUserScroll$)
+      .pipe(takeUntil(reader.$.destroy$))
+      .subscribe()
+
     const mount = (containerElement: HTMLElement) => {
       reader.mount(containerElement)
 
@@ -95,8 +98,7 @@ export const navigationEnhancer =
       navigation: {
         ...reader.navigation,
         navigate,
-        goToUrl: (url) =>
-          navigate({ target: { type: "url", value: url }, animation: false }),
+        goToUrl,
         state$,
         outOfSpineBoundary$,
         throttleLock: ({ duration, trigger }) =>

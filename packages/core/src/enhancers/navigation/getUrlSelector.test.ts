@@ -18,12 +18,11 @@ const document = new DOMParser().parseFromString(
   "text/html",
 )
 
-const resolve = (url: string, hrefs: string[], base?: string) => {
+const resolve = (url: string, hrefs: string[]) => {
   const selector = getUrlSelector(
     url,
     // The manifest's other fields are not read.
     manifestWith(hrefs) as unknown as Manifest,
-    base,
   )
 
   return (
@@ -51,16 +50,6 @@ describe("getUrlSelector", () => {
         "file://EPUB/ch01.xhtml",
         "file://EPUB/ch02.xhtml",
       ]),
-    ).toEqual({ spineItem: 1, selected: document.getElementById("note") })
-  })
-
-  it("resolves a relative url against the document it is in", () => {
-    expect(
-      resolve(
-        "ch02.xhtml#note",
-        ["file://EPUB/toc.xhtml", "file://EPUB/ch02.xhtml"],
-        "file://EPUB/toc.xhtml",
-      ),
     ).toEqual({ spineItem: 1, selected: document.getElementById("note") })
   })
 

@@ -1,9 +1,9 @@
 import type { Manifest } from "@prose-reader/shared"
 import type { NavigationTarget } from "../../navigation/types"
 
-const parseUrl = (url: string | URL, base?: string) => {
+const parseUrl = (url: string | URL) => {
   try {
-    return new URL(url, base)
+    return new URL(url)
   } catch {
     return undefined
   }
@@ -37,15 +37,13 @@ const findElement = (document: Document, fragment: string) => {
 /**
  * The selector a url of the book translates to: the spine item its path
  * names, and there the element its fragment names. `undefined` for a url
- * outside the book. A relative url is resolved against `base`, the href of the
- * document it is in.
+ * outside the book.
  */
 export const getUrlSelector = (
   url: string | URL,
   manifest: Manifest,
-  base?: string,
 ): NavigationTarget<"selector"> | undefined => {
-  const parsed = parseUrl(url, base)
+  const parsed = parseUrl(url)
 
   if (!parsed) return undefined
 
