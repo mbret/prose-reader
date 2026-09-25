@@ -572,7 +572,7 @@ importers:
         specifier: workspace:^
         version: link:../shared
       rxjs:
-        specifier: '*'
+        specifier: ^7.2.0
         version: 7.8.2
 
   packages/enhancer-pdf:
