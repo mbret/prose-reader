@@ -66,6 +66,7 @@
 * [Annotations](enhancers/annotations.md)
 * [Refit](enhancers/refit.md)
 * [Audio](enhancers/audio.md)
+* [KOReader](enhancers/koreader.md)
 * [CBZ & comics archives](enhancers/cbz-and-comics-archives.md)
 
 ## Archive Reader

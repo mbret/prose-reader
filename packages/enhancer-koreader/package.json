@@ -1,0 +1,36 @@
+{
+  "name": "@prose-reader/enhancer-koreader",
+  "version": "12.0.0",
+  "type": "module",
+  "license": "MIT",
+  "main": "./dist/index.cjs",
+  "module": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "files": [
+    "/dist"
+  ],
+  "publishConfig": {
+    "access": "public",
+    "registry": "https://registry.npmjs.org/"
+  },
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js",
+      "require": "./dist/index.cjs"
+    }
+  },
+  "scripts": {
+    "start": "vite build --watch --mode development",
+    "build": "tsc && vite build",
+    "tsc": "tsc"
+  },
+  "dependencies": {
+    "@prose-reader/koreader": "workspace:^",
+    "@prose-reader/shared": "workspace:^"
+  },
+  "peerDependencies": {
+    "@prose-reader/core": "workspace:^",
+    "rxjs": "*"
+  }
+}
