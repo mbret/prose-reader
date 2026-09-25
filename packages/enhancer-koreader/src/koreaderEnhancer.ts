@@ -1,5 +1,4 @@
 import type {
-  EnhancerOptions,
   EnhancerOutput,
   NavigationTarget,
   NavigationTargetOf,
@@ -62,10 +61,7 @@ type XPointerNavigation = {
  * position as one.
  */
 export const koreaderEnhancer =
-  <
-    InheritOptions extends EnhancerOptions<RootEnhancer>,
-    InheritOutput extends EnhancerOutput<RootEnhancer>,
-  >(
+  <InheritOptions, InheritOutput extends EnhancerOutput<RootEnhancer>>(
     next: (options: InheritOptions) => InheritOutput,
   ) =>
   (

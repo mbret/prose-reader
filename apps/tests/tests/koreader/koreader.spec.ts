@@ -213,7 +213,7 @@ test.describe("Given pages turned in a chapter", () => {
 })
 
 test.describe("Given a book reopened at a cfi inside a chapter not loaded yet", () => {
-  test("the reported xpointer is its place once the chapter loads, never the chapter start before", async ({
+  test("the only xpointer reported is its place, once the chapter loads", async ({
     page,
   }) => {
     await page.goto(url)
@@ -261,7 +261,9 @@ test.describe("Given a book reopened at a cfi inside a chapter not loaded yet", 
     const reported = await readXPointers(page)
     const latest = reported.slice(-1)[0] ?? ""
 
-    expect(reported).not.toContain(chapterStart(chapterIndex))
+    // Neither the start of the book nor the chapter's before it.
+    expect(reported).toEqual([latest])
+    expect(latest).not.toBe(chapterStart(chapterIndex))
     expect(await getXPointerCfi(page, latest)).toBeDefined()
     await expect
       .poll(async () => isCfiPositionVisible(page, cfi?.value ?? ""))

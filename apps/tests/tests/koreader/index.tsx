@@ -31,12 +31,12 @@ async function run() {
   const manifest = await manifestResponse.json()
 
   const query = new URLSearchParams(window.location.search)
-  const cfi = query.get("cfi") || undefined
+  const cfi = query.get("cfi")
   const preload = query.get("preload")
 
   const reader = koreaderEnhancer(createReader)({
     manifest,
-    cfi,
+    target: cfi ? { type: "cfi", value: cfi } : undefined,
     ...(preload !== null && {
       numberOfAdjacentSpineItemToPreLoad: Number(preload),
     }),
