@@ -3,6 +3,17 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## [13.0.3](https://github.com/mbret/prose-reader/compare/v13.0.2...v13.0.3) (2026-09-25)
+
+
+### Bug Fixes
+
+* **demo:** declare haruko-comic.zip right to left ([1f6b4e2](https://github.com/mbret/prose-reader/commit/1f6b4e2f66a340ed59377abf9c8054c78346b758))
+* **demo:** declare sample.cbz left to right ([c24b6f7](https://github.com/mbret/prose-reader/commit/c24b6f7543395af8a9bc2270400b9c5c2b80bc84)), closes [#449](https://github.com/mbret/prose-reader/issues/449)
+* **demo:** label sous-le-vent as French and the webtoons as reflowable ([bff329e](https://github.com/mbret/prose-reader/commit/bff329e3e0504bd912a9ca744b4c4461e6fd29f2))
+
+
+
 ## [13.0.2](https://github.com/mbret/prose-reader/compare/v13.0.1...v13.0.2) (2026-09-25)
 
 
