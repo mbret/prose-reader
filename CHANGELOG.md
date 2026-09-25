@@ -3,6 +3,32 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## [13.0.0](https://github.com/mbret/prose-reader/compare/v12.0.0...v13.0.0) (2026-09-25)
+
+
+### ⚠ BREAKING CHANGES
+
+* **navigation:** the core `NavigationTarget` no longer has `url`; the reader
+`createReader` returns still takes it, through the url enhancer. `node` is a
+new target type. After `goToUrl` to an element, the reading position is that
+element's cfi rather than the first character of its page. A url outside the
+book is ignored instead of going to the first item.
+
+Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
+Claude-Session: https://claude.ai/code/session_01YNJfUFaQbVhXaYd5pGyGfK
+
+### Bug Fixes
+
+* **navigation:** keep a selector waiting for its document without an anchor ([f6a33d4](https://github.com/mbret/prose-reader/commit/f6a33d463608f3b5090932214de0c725f28b6a4f))
+* **navigation:** state what a selector may assume, and survive one that throws ([7ac3133](https://github.com/mbret/prose-reader/commit/7ac3133d92248ff38ddf10cd99accef404506f74))
+
+
+### Code Refactoring
+
+* **navigation:** move url navigation into a core enhancer, on a generic node target ([e4b2a22](https://github.com/mbret/prose-reader/commit/e4b2a22155ad652989bfdd87926344da159971b9))
+
+
+
 ## [12.0.0](https://github.com/mbret/prose-reader/compare/v11.0.0...v12.0.0) (2026-09-24)
 
 
