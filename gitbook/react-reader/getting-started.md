@@ -67,9 +67,21 @@ const useReaderInstance = (
 }
 ```
 
-## Prose settings vs Reader settings
+## Settings
 
-Some settings are managed by the reader (eg: font size), as a result you should not specify them during the creation of your prose instance or they will be overwritten. Check the properties from the reader component to see what is available. Usually when the reader can change a setting of prose or its enhancers its setting should be managed through it. This is to avoid having multiple source of truth.
+The user changes some of the reader's settings from react-reader's menus. Each has a single source of truth, which decides how you set its initial value and how you keep the user's choice.
+
+**Settings react-reader manages** are props of the component: font size, with `fontSize`, `onFontSizeChange` and the font size scopes. react-reader writes them into the reader (`fontScale`), so don't give them to your reader when you create it: they would be overwritten. Keep the value in your app, save it from the change callback and pass it back as a prop.
+
+**Settings that stay the reader's own** have no prop, such as `spreadMode`. react-reader reads and writes `reader.settings` directly and keeps no copy. Give the initial value to your reader when you create it, and watch the setting to save the user's choice:
+
+```typescript
+const reader = createAppReader({ manifest, spreadMode: saved.spreadMode ?? "auto" })
+
+reader.settings.watch(["spreadMode"]).subscribe(({ spreadMode }) => {
+  save({ spreadMode })
+})
+```
 
 ## Toggling features
 
