@@ -10,7 +10,9 @@ import {
   of,
   share,
   shareReplay,
+  skipUntil,
   switchMap,
+  take,
   takeUntil,
   tap,
   withLatestFrom,
@@ -42,6 +44,7 @@ import { createTargetResolvers } from "./targets/createTargetResolvers"
 import type {
   InternalNavigationEntry,
   NavigationModeController,
+  NavigationTarget,
   UserNavigationEntry,
 } from "./types"
 
@@ -121,6 +124,11 @@ export class InternalNavigator extends DestroyableClass {
      * are deferred so they don't fight the user's direct manipulation.
      */
     protected isUserInteractionLocked$: Observable<boolean>,
+    /** Where the reader opens, the start of the book by default. */
+    initialTarget: NavigationTarget = {
+      type: "position",
+      value: new SpinePosition({ x: 0, y: 0 }),
+    },
   ) {
     super()
 
@@ -135,7 +143,23 @@ export class InternalNavigator extends DestroyableClass {
       getNavigationVisibleArea,
     })
 
-    const navigationFromUser$ = userNavigation$
+    /**
+     * The reader's first navigation, once its items are first laid out: its
+     * target resolves against the book's layout, once every enhancer has added
+     * its hooks. A navigation asked for before then replaces it.
+     */
+    const firstNavigation$ = spine.itemsLayout$.pipe(
+      take(1),
+      map(
+        (): UserNavigationEntry => ({
+          target: initialTarget,
+          animation: false,
+        }),
+      ),
+      takeUntil(userNavigation$),
+    )
+
+    const navigationFromUser$ = merge(firstNavigation$, userNavigation$)
       .pipe(
         withLatestFrom(this.navigationSubject),
         mapUserNavigationToInternal,
@@ -225,6 +249,8 @@ export class InternalNavigator extends DestroyableClass {
       navigationModeLayout$,
       spine.layout$,
     ).pipe(
+      // Nothing to restore before the first navigation.
+      skipUntil(navigationFromUser$),
       switchMap(() => {
         return of(null).pipe(
           switchMap(() =>

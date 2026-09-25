@@ -66,7 +66,8 @@ reader.navigation.readingPosition$.subscribe((cfi) => {
 
 `navigation$` emits every navigation as it happens, with its `triggeredBy`:
 
-- `"user"`: a navigation you or a gesture asked for.
+- `"user"`: a navigation you or a gesture asked for, including the one to where
+  the reader opens.
 - `"restoration"`: the reader re-applying the current navigation, after the book
   was laid out again or when a pan ends. A restoration is emitted even when it
   lands where the navigation already was: what it tells is that the navigation

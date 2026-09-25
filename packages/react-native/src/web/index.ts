@@ -60,13 +60,6 @@ export const bridgeReader = ({
 
     reader.mount(containerElement)
 
-    /**
-     * Relayed once the reader is mounted. A reader opened at a cfi only goes
-     * there when mounted, and until then its reading position is the start
-     * of the book: subscribed any earlier, that start is the first position
-     * the native side receives, and saves. Every stream here replays its
-     * current value, so nothing the mounted reader holds is missed.
-     */
     const state$ = merge(
       reader.pagination.state$.pipe(
         map((pagination): Partial<ReaderState> => ({ pagination })),

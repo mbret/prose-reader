@@ -77,15 +77,6 @@ export const navigationEnhancer =
       .pipe(takeUntil(reader.$.destroy$))
       .subscribe()
 
-    const mount = (containerElement: HTMLElement) => {
-      reader.mount(containerElement)
-
-      // restore the initial position once the reader is mounted
-      if (options.cfi) {
-        manualNavigator.goToCfi(options.cfi, { animate: false })
-      }
-    }
-
     const destroy = () => {
       userScrollNavigation.destroy()
       reader.destroy()
@@ -93,7 +84,6 @@ export const navigationEnhancer =
 
     return {
       ...reader,
-      mount,
       destroy,
       navigation: {
         ...reader.navigation,
