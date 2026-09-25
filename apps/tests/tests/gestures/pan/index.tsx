@@ -1,5 +1,6 @@
 import { createArchiveFromJszip } from "@prose-reader/archive-reader/archives/createArchiveFromJszip"
 import { createReader } from "@prose-reader/core"
+import { gesturesEnhancer } from "@prose-reader/enhancer-gestures"
 import { Streamer } from "@prose-reader/streamer"
 import { loadAsync } from "jszip"
 import { from } from "rxjs"
@@ -7,9 +8,7 @@ import { from } from "rxjs"
 async function createStreamer() {
   const streamer = new Streamer({
     getArchive: async () => {
-      const epubResponse = await fetch(
-        "http://localhost:3333/epubs/haruko-html-jpeg.epub",
-      )
+      const epubResponse = await fetch("http://localhost:3333/epubs/sample.cbz")
       const epubBlob = await epubResponse.blob()
       const epubJszip = await loadAsync(epubBlob)
       const archive = await createArchiveFromJszip(epubJszip)
@@ -28,7 +27,9 @@ async function run() {
   })
   const manifest = await manifestResponse.json()
 
-  const reader = createReader({
+  const createReaderWithEnhancers = gesturesEnhancer(createReader)
+
+  const reader = createReaderWithEnhancers({
     manifest,
     pageTurnAnimation: "none",
     layoutLayerTransition: false,
@@ -37,10 +38,10 @@ async function run() {
     },
   })
 
-  // biome-ignore lint/style/noNonNullAssertion: the page always has #app
+  // biome-ignore lint/style/noNonNullAssertion: TODO
   reader.mount(document.getElementById(`app`)!)
 
-  // @ts-expect-error export for the spec
+  // @ts-expect-error export for debug
   window.reader = reader
 }
 

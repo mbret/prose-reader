@@ -4,27 +4,27 @@ export const COMICS = [
   {
     link: `${DEMO_BASE_PATH}/reader/${btoa(`${window.location.origin}/epubs/haruko-comic.zip`)}`,
     name: "Manga, horizontal scrolling",
-    type: `FXL - LTR`,
+    type: `FXL - RTL`,
   },
   {
     link: `${DEMO_BASE_PATH}/reader/${btoa(`${window.location.origin}/epubs/haruko-comic.zip`)}?vertical`,
     name: "Manga, vertical scrolling",
-    type: `FXL - LTR`,
+    type: `FXL - RTL`,
   },
   {
     link: `${DEMO_BASE_PATH}/reader/${btoa(`${window.location.origin}/epubs/haruko-comic.zip`)}?free&vertical`,
     name: "Manga, vertical free scrolling",
-    type: `FXL - LTR`,
+    type: `FXL - RTL`,
   },
   {
     link: `${DEMO_BASE_PATH}/reader/${btoa(`${window.location.origin}/epubs/rendition-flow-webtoon-one-page.epub`)}?free&vertical`,
     name: "Webtoon (one big image), vertical free scrolling",
-    type: `FXL - LTR`,
+    type: `RFL - LTR`,
   },
   {
     link: `${DEMO_BASE_PATH}/reader/${btoa(`${window.location.origin}/epubs/rendition-flow-webtoon.epub`)}?free&vertical`,
     name: "Webtoon, vertical free scrolling",
-    type: `FXL - LTR`,
+    type: `RFL - LTR`,
   },
 ]
 
@@ -52,7 +52,7 @@ export const EPUBS = [
   },
   {
     name: `sous-le-vent.epub`,
-    type: `EN - LTR - FXL`,
+    type: `FR - LTR - FXL`,
     link: `${DEMO_BASE_PATH}/reader/${btoa(`${window.location.origin}/epubs/sous-le-vent.epub`)}`,
   },
   {
