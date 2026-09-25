@@ -270,3 +270,46 @@ test.describe("Given a book reopened at a cfi inside a chapter not loaded yet", 
       .toBe(true)
   })
 })
+
+test.describe("Given an xpointer into a chapter where its place cannot be found", () => {
+  test("once the chapter loads, the reported xpointer is where the reader is, not the one it could not find", async ({
+    page,
+  }) => {
+    // Only visible chapters load.
+    await page.goto(`${url}?preload=0`)
+    await waitForSettled(page)
+
+    const chapterIndex = await getChapterIndex(page)
+    // A path no element of the chapter has, as a stale pointer can.
+    const xpointer = `${chapterStart(chapterIndex)}/div[999]/p[3]/text().0`
+
+    await page.evaluate((xpointer) => {
+      // The page's window is untyped: this scenario's index.tsx sets these.
+      const { reader } = window as unknown as Scenario
+
+      reader.koreader.goToXPointer(xpointer)
+    }, xpointer)
+    await waitForSettled(page)
+
+    await expect
+      .poll(() =>
+        page.evaluate((chapterIndex) => {
+          // The page's window is untyped: this scenario's index.tsx sets these.
+          const { reader } = window as unknown as Scenario
+
+          return reader.spineItemsManager.get(chapterIndex)?.value.isLoaded
+        }, chapterIndex),
+      )
+      .toBe(true)
+
+    await expect
+      .poll(async () => (await readXPointers(page)).slice(-1)[0])
+      .not.toBe(xpointer)
+
+    const latest = (await readXPointers(page)).slice(-1)[0] ?? ""
+    const cfi = await getXPointerCfi(page, latest)
+
+    expect(cfi).toBeDefined()
+    expect(await isCfiPositionVisible(page, cfi ?? "")).toBe(true)
+  })
+})
