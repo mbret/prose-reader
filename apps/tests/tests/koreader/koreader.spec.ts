@@ -271,6 +271,50 @@ test.describe("Given a book reopened at a cfi inside a chapter not loaded yet", 
   })
 })
 
+test.describe("Given a book opened at an xpointer inside a chapter not loaded yet", () => {
+  test("it opens at its place, and the only xpointer reported is that one", async ({
+    page,
+  }) => {
+    await page.goto(url)
+    await waitForSettled(page)
+
+    const chapterIndex = await getChapterIndex(page)
+
+    await goToSpineItem(page, chapterIndex)
+
+    const xpointer = await getElementXPointer(page, chapterIndex, fragment)
+
+    // Only visible chapters load.
+    await page.goto(`${url}?preload=0&xpointer=${encodeURIComponent(xpointer)}`)
+    await waitForSettled(page)
+
+    await expect
+      .poll(() => isElementStartOnScreen(page, chapterIndex, fragment))
+      .toBe(true)
+
+    // Neither the start of the book nor the chapter's while it loads.
+    expect(await readXPointers(page)).toEqual([xpointer])
+  })
+})
+
+test.describe("Given a book opened at an xpointer outside it", () => {
+  test("it opens at the start of the book", async ({ page }) => {
+    await page.goto(
+      `${url}?xpointer=${encodeURIComponent("/body/DocFragment[999]/body")}`,
+    )
+    await waitForSettled(page)
+
+    const spineItem = await page.evaluate(() => {
+      // The page's window is untyped: this scenario's index.tsx sets these.
+      const { reader } = window as unknown as Scenario
+
+      return reader.navigation.getNavigation().spineItem
+    })
+
+    expect(spineItem).toBe(0)
+  })
+})
+
 test.describe("Given an xpointer into a chapter where its place cannot be found", () => {
   test("once the chapter loads, the reported xpointer is where the reader is, not the one it could not find", async ({
     page,

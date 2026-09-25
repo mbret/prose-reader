@@ -32,11 +32,16 @@ async function run() {
 
   const query = new URLSearchParams(window.location.search)
   const cfi = query.get("cfi")
+  const xpointer = query.get("xpointer")
   const preload = query.get("preload")
 
   const reader = koreaderEnhancer(createReader)({
     manifest,
-    target: cfi ? { type: "cfi", value: cfi } : undefined,
+    target: xpointer
+      ? { type: "xpointer", value: xpointer }
+      : cfi
+        ? { type: "cfi", value: cfi }
+        : undefined,
     ...(preload !== null && {
       numberOfAdjacentSpineItemToPreLoad: Number(preload),
     }),
