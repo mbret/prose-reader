@@ -38,15 +38,17 @@ It is set the moment a navigation happens:
 
 - **A navigation to a cfi**, with `goToCfi` or by opening the book with the
   `cfi` option: that cfi. It names the exact place asked for, so it is kept as
-  it is, even once the page holding it shows.
-- **Any other navigation**, turning pages, scrolling, `goToSpineItem` or
-  `goToUrl`: the first character of the page it goes to. It does not wait for
-  the page turn to end or for pagination to settle; the page is known as soon
-  as its chapter is laid out.
+  it is, even once the page holding it shows. A url whose fragment names an
+  element, with `goToUrl` or a link, is kept the same way: as the cfi of that
+  element.
+- **Any other navigation**, turning pages, scrolling, `goToSpineItem`, or a url
+  without a fragment: the first character of the page it goes to. It does not
+  wait for the page turn to end or for pagination to settle; the page is known
+  as soon as its chapter is laid out.
 - **A navigation into a chapter that is not loaded yet**: that chapter's start,
   the only place a cfi can name in a document that is not loaded. Once the
   chapter has loaded, it becomes the first character of the page the
-  navigation lands on, and stays there.
+  navigation lands on, or the element a url names, and stays there.
 
 Save every value as it comes. The one case where a value is far from the reader
 is a turn back into a previous chapter that is not loaded yet: until it loads,

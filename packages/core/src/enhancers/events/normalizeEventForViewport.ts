@@ -1,106 +1,68 @@
 import type { SpineLocator } from "../../spine/locator/SpineLocator"
-import {
-  isHtmlTagElement,
-  isMouseEvent,
-  isPointerEvent,
-  isTouchEvent,
-} from "../../utils/dom"
-import type { Viewport } from "../../viewport/Viewport"
+import { isHtmlTagElement } from "../../utils/dom"
 import { translateFramePositionIntoPage } from "./translateFramePositionIntoPage"
 
-export const normalizeEventForViewport = <
-  E extends MouseEvent | TouchEvent | PointerEvent,
->(
-  event: E,
-  iframeOriginalEvent: E,
+/**
+ * What a copy of a pointer event needs to describe the same input: the pointer,
+ * its buttons, how it pressed and which modifier keys were held. An event's
+ * fields are getters on its prototype, so spreading one copies none of them,
+ * and a right click would arrive as a left one.
+ *
+ * `bubbles`, `cancelable` and `composed` keep their defaults: the copy is for
+ * the listeners on the reader's root element, and does not travel on to the
+ * host document.
+ */
+const describeInput = (event: PointerEvent): PointerEventInit => ({
+  pointerId: event.pointerId,
+  pointerType: event.pointerType,
+  isPrimary: event.isPrimary,
+  button: event.button,
+  buttons: event.buttons,
+  width: event.width,
+  height: event.height,
+  pressure: event.pressure,
+  tangentialPressure: event.tangentialPressure,
+  tiltX: event.tiltX,
+  tiltY: event.tiltY,
+  twist: event.twist,
+  altKey: event.altKey,
+  ctrlKey: event.ctrlKey,
+  metaKey: event.metaKey,
+  shiftKey: event.shiftKey,
+  screenX: event.screenX,
+  screenY: event.screenY,
+  movementX: event.movementX,
+  movementY: event.movementY,
+  detail: event.detail,
+})
+
+/**
+ * A copy of a pointer event from a spine item's frame, for the reader's root
+ * element: the same input, at its position in the viewport, targeting the
+ * element it happened on in the frame. A new event is needed either way, since
+ * the original is still being dispatched in the frame.
+ */
+export const normalizeEventForViewport = (
+  event: PointerEvent,
   locator: SpineLocator,
-  viewport: Viewport,
 ) => {
-  const originalFrame = iframeOriginalEvent?.view?.frameElement
+  const frameElement = event.view?.frameElement
+  const { clientX, clientY } =
+    isHtmlTagElement(frameElement, "iframe") &&
+    locator.getSpineItemFromIframe(frameElement)
+      ? translateFramePositionIntoPage({ position: event, frameElement })
+      : event
 
-  if (!iframeOriginalEvent || !originalFrame) return event
+  const normalizedEvent = new PointerEvent(event.type, {
+    ...describeInput(event),
+    clientX,
+    clientY,
+  })
 
-  const spineItem = locator.getSpineItemFromIframe(originalFrame)
-  const frameElement = originalFrame
-  const { height: pageHeight, width: pageWidth } = viewport.pageSize
+  Object.defineProperty(normalizedEvent, `target`, {
+    value: event.target,
+    enumerable: true,
+  })
 
-  if (!spineItem || !isHtmlTagElement(frameElement, "iframe")) return event
-
-  if (isPointerEvent(event)) {
-    const { clientX, clientY } = translateFramePositionIntoPage({
-      position: event,
-      frameElement,
-      pageHeight,
-      pageWidth,
-    })
-
-    const newEvent = new PointerEvent(event.type, {
-      ...event,
-      pointerId: event.pointerId,
-      clientX,
-      clientY,
-    }) as E
-
-    Object.defineProperty(newEvent, `target`, {
-      value: iframeOriginalEvent.target,
-      enumerable: true,
-    })
-
-    return newEvent
-  }
-
-  if (isMouseEvent(event)) {
-    const { clientX, clientY } = translateFramePositionIntoPage({
-      position: event,
-      frameElement,
-      pageHeight,
-      pageWidth,
-    })
-
-    const newEvent = new MouseEvent(event.type, {
-      ...event,
-      clientX,
-      clientY,
-    }) as E
-
-    Object.defineProperty(newEvent, `target`, {
-      value: iframeOriginalEvent.target,
-      enumerable: true,
-    })
-
-    return newEvent
-  }
-
-  if (isTouchEvent(event)) {
-    const touches = Array.from(event.touches).map((touch) => {
-      const { clientX, clientY } = translateFramePositionIntoPage({
-        position: touch,
-        frameElement,
-        pageHeight,
-        pageWidth,
-      })
-
-      return new Touch({
-        identifier: touch.identifier,
-        target: touch.target,
-        clientX,
-        clientY,
-      })
-    })
-
-    const newEvent = new TouchEvent(event.type, {
-      touches,
-      changedTouches: touches,
-      targetTouches: touches,
-    }) as E
-
-    Object.defineProperty(newEvent, `target`, {
-      value: iframeOriginalEvent.target,
-      enumerable: true,
-    })
-
-    return newEvent
-  }
-
-  return event
+  return normalizedEvent
 }

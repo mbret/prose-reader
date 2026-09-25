@@ -116,13 +116,6 @@ export class ManualNavigator {
     this.goToSpineItem({ indexOrId: beginIndex - 1 })
   }
 
-  goToUrl(url: string | URL) {
-    this.reader.navigation.navigate({
-      target: { type: "url", value: url },
-      animation: false,
-    })
-  }
-
   goToRightSpineItem() {
     if (this.reader.settings.values.computedPageTurnDirection === "vertical") {
       navigationReport.warn(

@@ -3,6 +3,85 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## [13.0.2](https://github.com/mbret/prose-reader/compare/v13.0.1...v13.0.2) (2026-09-25)
+
+
+### Bug Fixes
+
+* **gestures:** make the drag listener the only thing stopping the browser's own drag ([a9e23d7](https://github.com/mbret/prose-reader/commit/a9e23d756c671bee2ea7fa08c2f296bb47485928))
+
+
+
+## [13.0.1](https://github.com/mbret/prose-reader/compare/v13.0.0...v13.0.1) (2026-09-25)
+
+**Note:** Version bump only for package @prose-reader/core
+
+
+
+
+
+## [13.0.0](https://github.com/mbret/prose-reader/compare/v12.0.0...v13.0.0) (2026-09-25)
+
+
+### ⚠ BREAKING CHANGES
+
+* **navigation:** the core `NavigationTarget` no longer has `url`; the reader
+`createReader` returns still takes it, through the url enhancer. `node` is a
+new target type. After `goToUrl` to an element, the reading position is that
+element's cfi rather than the first character of its page. A url outside the
+book is ignored instead of going to the first item.
+
+Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
+Claude-Session: https://claude.ai/code/session_01YNJfUFaQbVhXaYd5pGyGfK
+
+### Bug Fixes
+
+* **navigation:** keep a selector waiting for its document without an anchor ([f6a33d4](https://github.com/mbret/prose-reader/commit/f6a33d463608f3b5090932214de0c725f28b6a4f))
+* **navigation:** state what a selector may assume, and survive one that throws ([7ac3133](https://github.com/mbret/prose-reader/commit/7ac3133d92248ff38ddf10cd99accef404506f74))
+
+
+### Code Refactoring
+
+* **navigation:** move url navigation into a core enhancer, on a generic node target ([e4b2a22](https://github.com/mbret/prose-reader/commit/e4b2a22155ad652989bfdd87926344da159971b9))
+
+
+
+## [12.0.0](https://github.com/mbret/prose-reader/compare/v11.0.0...v12.0.0) (2026-09-24)
+
+
+### ⚠ BREAKING CHANGES
+
+* **navigation:** UserNavigationEntry.direction is removed, and
+InternalNavigationEntry.directionFromLastNavigation no longer includes
+"anchor".
+
+Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
+Claude-Session: https://claude.ai/code/session_01YNJfUFaQbVhXaYd5pGyGfK
+
+* refactor(navigation): drop comments that restate the pipeline
+
+Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
+Claude-Session: https://claude.ai/code/session_01YNJfUFaQbVhXaYd5pGyGfK
+
+* test(navigation): pin the reading position of a chapter opened at its root cfi
+
+While the chapter loads it is the chapter start as the reader names it, not
+the cfi as given; once loaded it is the first page, not the chapter.
+
+Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
+Claude-Session: https://claude.ai/code/session_01YNJfUFaQbVhXaYd5pGyGfK
+
+### Bug Fixes
+
+* **core:** keep a forwarded pointer event's button, pointer and modifier keys ([aed8733](https://github.com/mbret/prose-reader/commit/aed873386471eef52a57d4a80ee90a9c9de035e5)), closes [#240](https://github.com/mbret/prose-reader/issues/240) [#240](https://github.com/mbret/prose-reader/issues/240)
+
+
+### Code Refactoring
+
+* **navigation:** resolve targets in one step, in a fixed consolidation order ([#436](https://github.com/mbret/prose-reader/issues/436)) ([912b9a3](https://github.com/mbret/prose-reader/commit/912b9a3966cde3ed5835d9a2ca736785308f73cf))
+
+
+
 ## [11.0.0](https://github.com/mbret/prose-reader/compare/v10.0.0...v11.0.0) (2026-09-24)
 
 

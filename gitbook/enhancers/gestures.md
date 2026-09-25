@@ -40,6 +40,8 @@ In this situation the user is using the reader in only a certain part of the web
 * **Pan** to turn pages
 * **Tap** to turn pages
 
+Gestures start on a press of the primary button: a left click, a finger or a pen's tip. A right click, which opens the context menu, and a middle click start none: they tap, pan and swipe nothing, turn no page and are not reported on `gestures$`.
+
 ### Zooming (in/out)
 
 * **Pinch** to start zooming

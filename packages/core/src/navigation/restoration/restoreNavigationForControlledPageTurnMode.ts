@@ -5,7 +5,7 @@ import type { Spine } from "../../spine/Spine"
 import type { SpineItemsManager } from "../../spine/SpineItemsManager"
 import { SpinePosition } from "../../spine/types"
 import { SpineItemPosition } from "../../spineItem/types"
-import { snapToPage } from "../consolidation/withSnappedPosition"
+import { getSnappedPosition } from "../consolidation/withSnappedPosition"
 import type { NavigationResolver } from "../resolvers/NavigationResolver"
 import type { InternalNavigationEntry } from "../types"
 
@@ -49,40 +49,11 @@ export const restoreNavigationForControlledPageTurnMode = ({
       const hasSpineItemGrewOrShrink =
         spineItemWidthDifference !== 0 || spineItemHeighDifference !== 0
 
-      /**
-       * Url navigation has higher priority together with CFI, we should
-       * restore from it first.
-       *
-       * If the layout did not change, we should not restore from cfi since
-       * we will have better accuracy from all other consolidation.
-       *
-       * Basically as long as the item itself did not change, we can recover from
-       * consolidation. In case the item changed, we should be careful and try to
-       * anchor back to cfi.
-       */
-      if (navigation.target.type === "url") {
-        if (
-          spineItemWidthDifference ||
-          spineItemHeighDifference ||
-          // when spine item is ready dimensions may have not changed but the position
-          // of dom elements may have!
-          (isReady && !navigation.spineItemIsReady)
-        ) {
-          const urlResult = navigationResolver.getNavigationForUrl(
-            navigation.target.value,
-          )
-
-          if (urlResult) {
-            return urlResult.position
-          }
-        }
-      }
-
       const cfi = navigation.anchor
 
       /**
-       * Restoration from the anchor: the cfi the navigation named, or the text
-       * at the page it went to.
+       * Restoration from the anchor: the place the navigation's target named
+       * or found, or the text at the page it went to.
        * If the layout did not change, we should not restore from cfi since
        * we will have better accuracy from all other consolidation.
        *
@@ -124,7 +95,7 @@ export const restoreNavigationForControlledPageTurnMode = ({
         })
       }
 
-      return snapToPage({
+      return getSnappedPosition({
         navigation,
         spineItem,
         spineLocator,

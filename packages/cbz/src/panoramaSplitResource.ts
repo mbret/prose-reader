@@ -152,7 +152,6 @@ export const createPanoramaSplitXhtml = ({
         max-width: none;
         transform: translateX(-${crop.x}px);
         user-select: none;
-        -webkit-user-drag: none;
       }
     </style>
   </head>

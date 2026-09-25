@@ -59,9 +59,11 @@ const createSpine = ({
 const anchorOf = (
   navigation: Partial<InternalNavigationEntry>,
   context: ReturnType<typeof createSpine>,
+  { awaitsDocument = false }: { awaitsDocument?: boolean } = {},
 ) =>
   firstValueFrom(
     of({
+      awaitsDocument,
       navigation: {
         target: { type: "position", value: { x: 0, y: 0 } },
         position: { x: 0, y: 0 },
@@ -90,6 +92,17 @@ describe("withAnchor", () => {
 
   it("has none while the item is not ready", async () => {
     expect(await anchorOf({}, createSpine({ isReady: false }))).toBeUndefined()
+  })
+
+  it("has none while its target waits for a document, even with a page laid out at its position", async () => {
+    /**
+     * The page that shows first at the start of an item not loaded yet can be
+     * another item's. Taking its text would stop the target from being
+     * resolved once its own item loads.
+     */
+    expect(
+      await anchorOf({}, createSpine(), { awaitsDocument: true }),
+    ).toBeUndefined()
   })
 
   it("keeps a position in the text for the rest of the navigation", async () => {

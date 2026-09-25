@@ -1,4 +1,3 @@
-import { isPointerEvent } from "../../utils/dom"
 import type { EnhancerOutput, RootEnhancer } from "../types/enhancer"
 import { normalizeEventForViewport } from "./normalizeEventForViewport"
 
@@ -12,8 +11,6 @@ const pointerEvents = [
   `pointerover` as const,
   `pointerup` as const,
 ]
-
-const passthroughEvents = [...pointerEvents /*, ...mouseEvents*/]
 
 export const eventsEnhancer =
   <InheritOptions, InheritOutput extends EnhancerOutput<RootEnhancer>>(
@@ -34,32 +31,14 @@ export const eventsEnhancer =
       if (!frame || !item) return
 
       /**
-       * Register event listener for all mouse/pointer event in order to
-       * passthrough events to main document
+       * Pass the pointer events of the item's document through to the main
+       * document, so gestures and selection see them on the root element.
        */
-      const unregister = passthroughEvents.map((event) => {
-        const listener = (e: MouseEvent | PointerEvent | TouchEvent) => {
-          let convertedEvent = e
-          /**
-           * We have to create a new fake event since the original one is already dispatched
-           * on original frame.
-           *
-           * @see Failed to execute 'dispatchEvent' on 'EventTarget': The event is already being dispatched.
-           */
-          if (isPointerEvent(e)) {
-            convertedEvent = new PointerEvent(e.type, e)
-          }
-
-          if (convertedEvent !== e) {
-            const normalizedEvent = normalizeEventForViewport(
-              convertedEvent,
-              e,
-              reader.spine.locator,
-              reader.viewport,
-            )
-
-            reader.context.value.rootElement?.dispatchEvent(normalizedEvent)
-          }
+      const unregister = pointerEvents.map((event) => {
+        const listener = (e: PointerEvent) => {
+          reader.context.value.rootElement?.dispatchEvent(
+            normalizeEventForViewport(e, reader.spine.locator),
+          )
         }
 
         frame.contentDocument?.addEventListener(event, listener)

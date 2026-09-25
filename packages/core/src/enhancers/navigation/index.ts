@@ -1,4 +1,8 @@
 import { merge, takeUntil, tap } from "rxjs"
+import type {
+  NavigationTarget,
+  UserNavigationEntry,
+} from "../../navigation/types"
 import type { HtmlEnhancerOutput } from "../html/enhancer"
 import type {
   EnhancerOptions,
@@ -6,13 +10,15 @@ import type {
   RootEnhancer,
 } from "../types/enhancer"
 import { outOfSpineBoundary } from "./boundary"
+import { getUrlSelector } from "./getUrlSelector"
 import { handleLinksNavigation } from "./links"
 import { ManualNavigator } from "./navigators/manualNavigator"
 import { PanNavigator } from "./navigators/panNavigator"
 import { UserScrollNavigation } from "./navigators/UserScrollNavigation"
+import { navigationReport } from "./report"
 import { observeState } from "./state"
 import { throttleLock } from "./throttleLock"
-import type { NavigationEnhancerOutput } from "./types"
+import type { NavigationEnhancerOutput, UrlNavigationTarget } from "./types"
 
 export const navigationEnhancer =
   <
@@ -32,14 +38,42 @@ export const navigationEnhancer =
       reader.navigation.lock,
     )
 
-    const linksNavigation$ = handleLinksNavigation(reader, manualNavigator)
     const navigateOnUserScroll$ = userScrollNavigation.navigation$.pipe(
       tap((navigation) => {
         reader.navigation.navigate(navigation)
       }),
     )
 
-    merge(linksNavigation$, navigateOnUserScroll$)
+    /**
+     * Core's targets, and urls, which it does not know: a url is translated
+     * into a selector, which finds its element once its document is
+     * loaded.
+     */
+    const navigate = (
+      to: UserNavigationEntry<NavigationTarget | UrlNavigationTarget>,
+    ) => {
+      const { target } = to
+
+      if (target.type !== "url")
+        return reader.navigation.navigate({ ...to, target })
+
+      const selector = getUrlSelector(target.value, reader.context.manifest)
+
+      if (!selector) {
+        navigationReport.warn(
+          `Ignore navigation to ${target.value}, outside the book`,
+        )
+
+        return
+      }
+
+      reader.navigation.navigate({ ...to, target: selector })
+    }
+
+    const goToUrl = (url: string | URL) =>
+      navigate({ target: { type: "url", value: url }, animation: false })
+
+    merge(handleLinksNavigation(reader, goToUrl), navigateOnUserScroll$)
       .pipe(takeUntil(reader.$.destroy$))
       .subscribe()
 
@@ -63,6 +97,8 @@ export const navigationEnhancer =
       destroy,
       navigation: {
         ...reader.navigation,
+        navigate,
+        goToUrl,
         state$,
         outOfSpineBoundary$,
         throttleLock: ({ duration, trigger }) =>
@@ -76,7 +112,6 @@ export const navigationEnhancer =
         turnLeft: manualNavigator.turnLeft.bind(manualNavigator),
         turnRight: manualNavigator.turnRight.bind(manualNavigator),
         goToCfi: manualNavigator.goToCfi.bind(manualNavigator),
-        goToUrl: manualNavigator.goToUrl.bind(manualNavigator),
         goToSpineItem: manualNavigator.goToSpineItem.bind(manualNavigator),
         goToNextSpineItem:
           manualNavigator.goToNextSpineItem.bind(manualNavigator),
