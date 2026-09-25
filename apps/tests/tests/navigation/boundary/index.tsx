@@ -40,7 +40,9 @@ async function run() {
 
   // Hidden marker the spec asserts against. `data-count` is the total
   // number of boundary events; `data-last` is the most recent boundary
-  // value ("start" | "end" | "").
+  // value ("start" | "end" | ""). `data-gestures` lists the gestures the
+  // reader recognized, in order: "handled tap", "unhandled tap", or the
+  // gesture's type.
   // biome-ignore lint/style/noNonNullAssertion: marker is in index.html
   const marker = document.getElementById("boundary-marker")!
 
@@ -48,6 +50,16 @@ async function run() {
     const count = Number(marker.dataset.count ?? "0") + 1
     marker.dataset.count = String(count)
     marker.dataset.last = boundary
+  })
+
+  reader.gestures.gestures$.subscribe((gesture) => {
+    const name =
+      gesture.type === "tap"
+        ? `${gesture.handled ? "handled" : "unhandled"} tap`
+        : gesture.type
+    marker.dataset.gestures = [marker.dataset.gestures, name]
+      .filter(Boolean)
+      .join(", ")
   })
 
   // biome-ignore lint/style/noNonNullAssertion: TODO

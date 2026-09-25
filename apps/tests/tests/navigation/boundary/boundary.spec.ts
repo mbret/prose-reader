@@ -11,13 +11,6 @@ import { waitForSettled } from "../../utils/pagination"
 const URL = "http://localhost:3333/tests/navigation/boundary/index.html"
 const LAST_SPINE_INDEX = 11 // sample.cbz has 12 single-page spine items
 
-/**
- * A drag below the pan threshold fires no boundary. It issues no navigation,
- * so a browser spec has nothing to wait for before checking that nothing
- * happened, and it is proved in the gestures enhancer's `index.test.ts`, where
- * the test holds the clock.
- */
-
 const marker = (page: Page) => page.locator("#boundary-marker")
 
 const setup = async (page: Page) => {
@@ -36,6 +29,42 @@ test.describe("Given the user is on the first page (start of book)", () => {
 
     await expect(marker(page)).toHaveAttribute("data-count", "1")
     await expect(marker(page)).toHaveAttribute("data-last", "start")
+  })
+
+  /**
+   * The start boundary means the user tried to go before the first page. A
+   * finger rarely stays perfectly still, so a tap in the middle of the page
+   * (to bring up the reader's menu, say) usually moves a few pixels. That must
+   * stay a tap, not become an attempt to leave the book.
+   *
+   * Moving right on the first page pans towards a page before it, so a small
+   * move taken for a pan would fire the start boundary once it is released.
+   * Below the pan threshold, the gestures enhancer reports a tap instead, and
+   * in the middle of the page it is outside the page turn margins, so nothing
+   * navigates.
+   *
+   * The tap is reported when the pointer is released and ends the gesture, so
+   * the spec waits for it rather than for time to pass. In a browser, the drag
+   * lands on the page's frame and reaches the gestures through core's pointer
+   * forwarding, which the gestures enhancer's unit test does not go through.
+   * The browser's own drag of the page's image would cancel the pointer before
+   * it is released; the gestures enhancer stops that drag.
+   */
+  test("a drag too short to pan is an unhandled tap, and does not fire the start boundary", async ({
+    page,
+  }) => {
+    await setup(page)
+
+    // 5px, below the pan recognizer's `posThreshold` of 20, in the middle of
+    // the page, away from the page turn margins
+    await page.mouse.move(200, 300)
+    await page.mouse.down()
+    await page.mouse.move(205, 300, { steps: 2 })
+    await page.mouse.up()
+
+    await expect(marker(page)).toHaveAttribute("data-gestures", "unhandled tap")
+    await expectSpineItemsInViewport({ page, indexes: [0] })
+    await expect(marker(page)).toHaveAttribute("data-count", "0")
   })
 })
 
