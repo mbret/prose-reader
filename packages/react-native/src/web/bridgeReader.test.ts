@@ -271,9 +271,8 @@ describe("Given a bridged webview", () => {
     })
 
     /**
-     * The reader only goes to its cfi once mounted, and until then its
-     * reading position is the start of the book. Any value the native side
-     * receives is one it may save, so it must not receive that one.
+     * Any value the native side receives is one it may save, so the start of
+     * the book, where the reader is not, must never be one.
      */
     it("reports that cfi as the first reading position, never the start of the book before it", () => {
       const { load, reported } = setup()

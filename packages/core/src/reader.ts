@@ -33,8 +33,9 @@ export type CreateReaderOptions = Partial<CoreInputSettings> & {
    */
   manifest: Manifest
   /**
-   * Optional initial reading position. The reader will restore the position
-   * once mounted. This is handled by the navigation enhancer.
+   * The cfi the reader opens at, the start of the book when omitted. The
+   * reader goes there once its items are first laid out, so its reading
+   * position never passes through the start of the book on the way.
    */
   cfi?: string
   /**
@@ -58,8 +59,7 @@ type ReaderLayoutOptions = {
 
 export const createReader = ({
   manifest,
-  // handled by the navigation enhancer, extracted so it does not leak into settings
-  cfi: _cfi,
+  cfi: initialCfi,
   ownerDocument = globalThis.document,
   ...inputSettings
 }: CreateReaderOptions) => {
@@ -105,6 +105,7 @@ export const createReader = ({
     spine,
     settings: settingsManager,
     viewport,
+    target: initialCfi ? { type: "cfi", value: initialCfi } : undefined,
   })
   const paginationController = new PaginationController(
     context,

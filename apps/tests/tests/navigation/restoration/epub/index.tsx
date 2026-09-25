@@ -45,11 +45,21 @@ async function run() {
     },
   })
 
+  // Every reading position from the reader's creation on, earlier than a spec
+  // can subscribe.
+  const readingPositions: string[] = []
+
+  reader.navigation.readingPosition$.subscribe((cfi) => {
+    readingPositions.push(cfi)
+  })
+
   // biome-ignore lint/style/noNonNullAssertion: TODO
   reader.mount(document.getElementById(`app`)!)
 
   // @ts-expect-error export for debug
   window.reader = reader
+  // @ts-expect-error export for the specs
+  window.readingPositions = readingPositions
 }
 
 run()
