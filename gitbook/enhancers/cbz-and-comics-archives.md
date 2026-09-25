@@ -50,7 +50,9 @@ export const streamer = new ServiceWorkerStreamer({
 When a CBZ image filename looks like a two-page spread, the manifest hook can replace that single image spine item with two virtual XHTML spine items. For left-to-right books, the left crop is exposed before the right crop. For right-to-left books, the order is reversed so manga-style navigation remains correct.
 
 {% hint style="warning" %}
-`streamerHooks.manifest` includes `detectReadingDirectionManifest`, which runs before the split and defaults comic archives to **right-to-left** (manga order) when nothing earlier decided a direction. It only fills an *undecided* `readingDirection`, so anything resolved upstream wins: `ComicInfo.xml`'s reading direction (now resolved automatically by `@prose-reader/archive-reader`), a user setting, or a custom manifest hook placed before it. To force left-to-right on a comic that would otherwise default to RTL, set `readingDirection: "ltr"` before these hooks run.
+`streamerHooks.manifest` includes `detectReadingDirectionManifest`, which runs before the split and defaults a CBZ archive to **right-to-left** (manga order) when nothing earlier decided a direction. An archive is a CBZ, per `isCbzArchive`, when its `filename` ends in `.cbz` or its `encodingFormat` is `application/vnd.comicbook+zip` or `application/x-cbz`. Pass them when you create the archive: `createArchiveFromJszip` and the other container creators take them as their `name` and `encodingFormat` options. Any other archive, a comic in a `.zip` included, falls back to the streamer's `ltr`.
+
+The hook only fills an *undecided* `readingDirection`, so anything resolved upstream wins: the `Manga` field of `ComicInfo.xml`, which `@prose-reader/archive-reader` resolves (`YesAndRightToLeft` → `rtl`, `Yes` or `No` → `ltr`), or a custom manifest hook placed before it. To read a CBZ that declares nothing left to right, give it a `ComicInfo.xml` with `<Manga>No</Manga>`, or set `readingDirection: "ltr"` in a hook that runs before these.
 {% endhint %}
 
 For example, `p006-007.jpg` can produce:
