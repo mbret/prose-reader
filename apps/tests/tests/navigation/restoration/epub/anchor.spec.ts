@@ -1,10 +1,7 @@
 import { expect, type Page, test } from "@playwright/test"
 import type { Reader } from "@prose-reader/core"
-import {
-  isCfiPositionVisible,
-  resizeAndSettle,
-  waitForSettled,
-} from "../../../utils/pagination"
+import { resizeAndSettle, waitForSettled } from "../../../utils/pagination"
+import { isCfiPositionVisible } from "../../../utils/visibility"
 
 /**
  * Restoring a page after a resize needs a cfi. A navigation that asked for one

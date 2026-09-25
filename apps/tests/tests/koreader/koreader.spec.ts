@@ -2,11 +2,11 @@ import { expect, type Page, test } from "@playwright/test"
 import type { Reader } from "@prose-reader/core"
 import type { koreaderEnhancer } from "@prose-reader/enhancer-koreader"
 import type { generateXPointer, xPointerToCfi } from "@prose-reader/koreader"
+import { waitForSettled } from "../utils/pagination"
 import {
   isCfiPositionVisible,
-  isElementVisible,
-  waitForSettled,
-} from "../utils/pagination"
+  isElementStartOnScreen,
+} from "../utils/visibility"
 
 /**
  * A KOReader sync client pulls an xpointer, goes to it, and pushes the reading
@@ -147,7 +147,7 @@ const openAtXPointerInUnloadedChapter = async (page: Page) => {
   await waitForSettled(page)
 
   await expect
-    .poll(() => isElementVisible(page, chapterIndex, fragment))
+    .poll(() => isElementStartOnScreen(page, chapterIndex, fragment))
     .toBe(true)
 
   return {
