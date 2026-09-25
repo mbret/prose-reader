@@ -18,7 +18,7 @@ export type TargetResolution = {
   anchor?: string
   directionFromLastNavigation: "forward" | "backward"
   snapToPage: boolean
-  awaitsDocument?: boolean
+  awaitsDocument: boolean
 }
 
 export type TargetResolverContext = {

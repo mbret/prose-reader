@@ -5,7 +5,7 @@ import type { Spine } from "../../spine/Spine"
 import type { SpineItemsManager } from "../../spine/SpineItemsManager"
 import { SpinePosition } from "../../spine/types"
 import { SpineItemPosition } from "../../spineItem/types"
-import { snapToPage } from "../consolidation/withSnappedPosition"
+import { getSnappedPosition } from "../consolidation/withSnappedPosition"
 import type { NavigationResolver } from "../resolvers/NavigationResolver"
 import type { InternalNavigationEntry } from "../types"
 
@@ -95,7 +95,7 @@ export const restoreNavigationForControlledPageTurnMode = ({
         })
       }
 
-      return snapToPage({
+      return getSnappedPosition({
         navigation,
         spineItem,
         spineLocator,

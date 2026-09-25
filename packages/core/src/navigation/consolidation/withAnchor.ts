@@ -6,7 +6,7 @@ import type { InternalNavigationEntry, InternalNavigationInput } from "../types"
 
 type Navigation = {
   navigation: InternalNavigationInput | InternalNavigationEntry
-  awaitsDocument?: boolean
+  awaitsDocument: boolean
 }
 
 /**

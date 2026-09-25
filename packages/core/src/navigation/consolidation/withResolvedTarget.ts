@@ -55,7 +55,8 @@ export const withAnchorFromTarget =
   <N extends { navigation: InternalNavigationEntry }>(stream: Observable<N>) =>
     stream.pipe(
       map((params) => {
-        if (params.navigation.anchor !== undefined) return params
+        if (params.navigation.anchor !== undefined)
+          return { ...params, awaitsDocument: false }
 
         const { anchor, awaitsDocument } = resolveTarget(
           resolvers,

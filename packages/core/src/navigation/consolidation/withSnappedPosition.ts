@@ -10,7 +10,7 @@ import type { InternalNavigationEntry } from "../types"
 /**
  * The navigable position of the page a navigation is on.
  */
-export const snapToPage = ({
+export const getSnappedPosition = ({
   navigation,
   spineItem,
   spineLocator,
@@ -101,7 +101,7 @@ export const withSnappedPosition =
           navigation: {
             ...params.navigation,
             position: spineItem
-              ? snapToPage({
+              ? getSnappedPosition({
                   navigation: params.navigation,
                   spineItem,
                   spineLocator: spine.locator,
