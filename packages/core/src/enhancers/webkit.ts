@@ -1,8 +1,4 @@
-import type {
-  EnhancerOptions,
-  EnhancerOutput,
-  RootEnhancer,
-} from "./types/enhancer"
+import type { EnhancerOutput, RootEnhancer } from "./types/enhancer"
 
 /**
  * Ideally we want to target all webkit browser but afaik there are no reliable way to do it.
@@ -16,10 +12,7 @@ const IS_SAFARI =
  * All fixes relative to webkit
  */
 export const webkitEnhancer =
-  <
-    InheritOptions extends EnhancerOptions<RootEnhancer>,
-    InheritOutput extends EnhancerOutput<RootEnhancer>,
-  >(
+  <InheritOptions, InheritOutput extends EnhancerOutput<RootEnhancer>>(
     createReader: (options: InheritOptions) => InheritOutput,
   ) =>
   (options: InheritOptions): InheritOutput => {

@@ -8,11 +8,7 @@ import {
 import { pairwise, tap } from "rxjs/operators"
 import type { SettingsInterface } from "../../settings/SettingsInterface"
 import { upsertCSSToFrame } from "../../utils/frames"
-import type {
-  EnhancerOptions,
-  EnhancerOutput,
-  RootEnhancer,
-} from "../types/enhancer"
+import type { EnhancerOutput, RootEnhancer } from "../types/enhancer"
 import { SettingsManager } from "./SettingsManager"
 import type { EnhancerFontsInputSettings } from "./types"
 
@@ -31,7 +27,7 @@ type OutputOptions = Required<EnhancerFontsInputSettings>
  */
 export const fontsEnhancer =
   <
-    InheritOptions extends EnhancerOptions<RootEnhancer>,
+    InheritOptions,
     InheritOutput extends EnhancerOutput<RootEnhancer>,
     InheritSettings extends NonNullable<
       InheritOutput["settings"]["_inputSettings"]

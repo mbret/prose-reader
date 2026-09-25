@@ -420,6 +420,12 @@ export const notesEnhancer =
   }
 ```
 
+To open the book at such a target, widen `createReader`'s `target` option the
+same way, and translate it before handing the options to `next`. The navigation
+enhancer does so for urls. Widened options no longer satisfy a constraint on the
+narrower ones, so an enhancer applied after yours should constrain its options
+only to what it reads, such as `Pick<CreateReaderOptions, "getRenderer">`.
+
 ### Custom CSS in enhancers
 
 To learn how to efficiently handle CSS with your enhancers, you can visit the [style-and-css.md](style-and-css.md "mention") section.

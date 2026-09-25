@@ -23,8 +23,8 @@ const bridge = createReaderBridge()
 bridgeReader({
   /**
    * Create the prose reader, the same way as you would do in web. `options`
-   * is what the native side sent with `load`: the manifest, and the cfi to
-   * open at.
+   * is what the native side sent with `load`: the manifest, and where to
+   * open it.
    */
   createReader: (options) =>
     createReader({

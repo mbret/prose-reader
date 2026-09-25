@@ -1,6 +1,7 @@
 // @vitest-environment jsdom
 import { skip } from "rxjs"
 import { describe, expect, it, vi } from "vitest"
+import { SpinePosition } from "../spine/types"
 import {
   createTestReader,
   installReaderTestEnvironment,
@@ -11,7 +12,7 @@ import {
 installReaderTestEnvironment()
 
 describe("where the reader opens", () => {
-  it("is the start of the book without a cfi, as a navigation of its own", async () => {
+  it("is the start of the book without a target, as a navigation of its own", async () => {
     const reader = createTestReader()
 
     const navigations: string[] = []
@@ -31,9 +32,9 @@ describe("where the reader opens", () => {
     expect(navigations[0]).toBe("user")
   })
 
-  it("is its cfi, without its reading position passing through the start of the book", async () => {
+  it("is its target, without its reading position passing through the start of the book", async () => {
     const cfi = "epubcfi(/6/4[1]!/4/2)"
-    const reader = createTestReader({ cfi })
+    const reader = createTestReader({ target: { type: "cfi", value: cfi } })
 
     const positions: string[] = []
     reader.navigation.readingPosition$.subscribe((position) => {
@@ -46,15 +47,28 @@ describe("where the reader opens", () => {
     expect(positions).toEqual([cfi])
   })
 
+  it("is the place a position target names in the laid out book", async () => {
+    // Items are one viewport wide: the second starts where the first ends.
+    const reader = createTestReader({
+      target: { type: "position", value: new SpinePosition({ x: 100, y: 0 }) },
+    })
+
+    mountTestReader(reader)
+
+    const settled = await settledOn(reader)
+
+    expect(settled.begin.spineItemIndex).toBe(1)
+  })
+
   /**
    * An enhancer registers its hooks once the reader it enhances is created,
    * such as the cbz enhancer, which maps a cfi of the book onto the items it
    * splits it into.
    */
-  it("is its cfi as the enhancers resolve it", async () => {
+  it("is its target as the enhancers resolve it", async () => {
     const cfi = "epubcfi(/6/2[0]!/4/2)"
     const reader = createTestReader({
-      cfi,
+      target: { type: "cfi", value: cfi },
       numberOfAdjacentSpineItemToPreLoad: 0,
     })
 
