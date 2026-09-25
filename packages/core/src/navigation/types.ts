@@ -23,18 +23,18 @@ export type NavigationTargetValues = {
   /** A cfi. */
   cfi: string
   /**
-   * A place in a spine item's document, which `select` finds once the
+   * A place in a spine item's document, which `find` looks for once the
    * document is there. Until then the navigation goes to the start of the
    * item, and each restoration tries again.
    *
-   * `select` runs synchronously inside the navigation, and may be called
+   * `find` runs synchronously inside the navigation, and may be called
    * several times, or not at all when the reader navigates elsewhere first.
    * Keep it quick and free of side effects, and do not modify the document.
-   * One that throws selects nothing.
+   * One that throws finds nothing.
    */
   selector: {
     spineItem: number | string
-    select: (document: Document) => NodePosition | undefined
+    find: (document: Document) => NodePosition | undefined
   }
 }
 

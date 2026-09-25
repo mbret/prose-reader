@@ -11,7 +11,7 @@ import type { TargetResolution } from "./types"
 const itemStart = "epubcfi(/6/2[0]!)"
 const text = "epubcfi(/6/2[0]!/4/8/1:0)"
 
-/** The item's document, holding the element a selector selects. */
+/** The item's document, holding the element a selector finds. */
 const document = new DOMParser().parseFromString(
   `<html><body><p id="note">A note</p></body></html>`,
   "text/html",
@@ -81,7 +81,7 @@ const note: NavigationTarget = {
   type: "selector",
   value: {
     spineItem: 0,
-    select: (document) => {
+    find: (document) => {
       const node = document.getElementById("note")
 
       return node ? { node } : undefined
@@ -99,7 +99,7 @@ describe("target resolvers", () => {
     expect(resolve({ type: "cfi", value: itemStart }).anchor).toBeUndefined()
   })
 
-  it("anchor a selector navigation at the cfi of what it selects", () => {
+  it("anchor a selector navigation at the cfi of what it finds", () => {
     expect(resolve(note).anchor).toBe(text)
   })
 
@@ -111,12 +111,12 @@ describe("target resolvers", () => {
     })
   })
 
-  it("take a selector that throws as selecting nothing, rather than failing the navigation", () => {
+  it("take a selector that throws as finding nothing, rather than failing the navigation", () => {
     const throwing: NavigationTarget = {
       type: "selector",
       value: {
         spineItem: 0,
-        select: () => {
+        find: () => {
           throw new Error("a bug in the selector")
         },
       },
@@ -129,10 +129,10 @@ describe("target resolvers", () => {
     })
   })
 
-  it("no longer wait for a document a selector did not select anything in", () => {
+  it("no longer wait for a document a selector did not find anything in", () => {
     const missing: NavigationTarget = {
       type: "selector",
-      value: { spineItem: 0, select: () => undefined },
+      value: { spineItem: 0, find: () => undefined },
     }
 
     // The item start then anchors at the page it lands on, like a root cfi.

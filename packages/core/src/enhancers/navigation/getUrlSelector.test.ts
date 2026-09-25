@@ -28,7 +28,7 @@ const resolve = (url: string, hrefs: string[]) => {
   return (
     selector && {
       spineItem: selector.value.spineItem,
-      selected: selector.value.select(document)?.node,
+      found: selector.value.find(document)?.node,
     }
   )
 }
@@ -40,7 +40,7 @@ describe("getUrlSelector", () => {
         "http://book/ch01.xhtml",
         "http://book/ch02.xhtml",
       ]),
-    ).toEqual({ spineItem: 1, selected: document.getElementById("note") })
+    ).toEqual({ spineItem: 1, found: document.getElementById("note") })
   })
 
   it("finds the item of a file url, whose origin is opaque", () => {
@@ -50,19 +50,19 @@ describe("getUrlSelector", () => {
         "file://EPUB/ch01.xhtml",
         "file://EPUB/ch02.xhtml",
       ]),
-    ).toEqual({ spineItem: 1, selected: document.getElementById("note") })
+    ).toEqual({ spineItem: 1, found: document.getElementById("note") })
   })
 
   it("finds an element whose id the url had to percent-encode", () => {
     expect(
       resolve("http://book/ch01.xhtml#café", ["http://book/ch01.xhtml"]),
-    ).toEqual({ spineItem: 0, selected: document.getElementById("café") })
+    ).toEqual({ spineItem: 0, found: document.getElementById("café") })
   })
 
   it("goes to the item start for a url without a fragment", () => {
     expect(
       resolve("http://book/ch01.xhtml", ["http://book/ch01.xhtml"]),
-    ).toEqual({ spineItem: 0, selected: undefined })
+    ).toEqual({ spineItem: 0, found: undefined })
   })
 
   it("goes nowhere for a url outside the book", () => {

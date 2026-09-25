@@ -62,7 +62,7 @@ export const getUrlSelector = (
     type: "selector",
     value: {
       spineItem: item.index,
-      select: (document) => findElement(document, fragment),
+      find: (document) => findElement(document, fragment),
     },
   }
 }

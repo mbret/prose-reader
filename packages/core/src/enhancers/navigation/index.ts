@@ -46,7 +46,7 @@ export const navigationEnhancer =
 
     /**
      * Core's targets, and urls, which it does not know: a url is translated
-     * into a selector, which selects its element once its document is
+     * into a selector, which finds its element once its document is
      * loaded.
      */
     const navigate = (

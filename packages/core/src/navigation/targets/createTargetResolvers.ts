@@ -10,14 +10,14 @@ import type { NavigationTargetResolvers } from "./types"
 const report = Report.namespace(`navigation/targets`)
 
 /** A selector is the enhancer's or the app's code: one bug must not stop navigation. */
-const trySelect = (
-  select: NavigationTargetValues["selector"]["select"],
+const tryFind = (
+  find: NavigationTargetValues["selector"]["find"],
   document: Document,
 ) => {
   try {
-    return select(document)
+    return find(document)
   } catch (error) {
-    report.error(`A selector threw, and selects nothing`, error)
+    report.error(`A selector threw, and finds nothing`, error)
 
     return undefined
   }
@@ -81,7 +81,7 @@ export const createTargetResolvers = ({
       }
     },
 
-    selector: ({ spineItem, select }, context) => {
+    selector: ({ spineItem, find }, context) => {
       const item = spineItemsManager.get(spineItem)
 
       if (!item)
@@ -90,16 +90,16 @@ export const createTargetResolvers = ({
       const document = item.value.isLoaded
         ? item.renderer.getDocumentFrame()?.contentDocument
         : undefined
-      const selected = document ? trySelect(select, document) : undefined
+      const found = document ? tryFind(find, document) : undefined
 
-      // Selected, it is the cfi of what was selected. Otherwise it is the item
+      // Found, it is the cfi of what was found. Otherwise it is the item
       // start, which names no text.
       return {
         ...resolvers.cfi(
-          selected
+          found
             ? cfi.generateCfiForSpineItemPage({
                 spineItem: item.item,
-                pageNode: { node: selected.node, offset: selected.offset ?? 0 },
+                pageNode: { node: found.node, offset: found.offset ?? 0 },
               })
             : cfi.generateRootCfi(item.item),
           context,
