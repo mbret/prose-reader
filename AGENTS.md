@@ -9,6 +9,14 @@ guidance silently reaches some tools and not others. `pnpm run check:agent-docs`
 enforces the pairing and runs in CI; add both files when you add guidelines for
 a package.
 
+# Writing code
+
+The code-level guidelines live in the `writing-typescript` skill,
+`.claude/skills/writing-typescript/SKILL.md`: naming, deriving state rather than
+writing it, DOM reads and writes, and TypeScript `as`. Load it before writing,
+changing or reviewing code, in any package, app, test or script. A tool without
+skills reads that file directly.
+
 # Raising quality is the job
 
 prose is a library, not a product repository where features get added and
@@ -39,30 +47,6 @@ So:
 A smaller, simpler surface that is easier to consume beats a larger one that was
 easier to arrive at. Breaking the API to get there is expected — see *API
 design: breaking changes are not a constraint*.
-
-## Prefer derived state over imperative updates
-
-This is an rxjs codebase and the general principle holds: **if a value can be
-derived, derive it.** Do not assume imperative code is the way to go just
-because that is what is already there.
-
-A value several places write by hand is the recurring bug in this repository.
-Every writer has to remember the rules, one of them eventually does not, and the
-failure surfaces far from its cause. A value produced by a single stream cannot
-have that bug, because there is no second writer to forget anything.
-
-Treat these as smells to rework rather than extend:
-
-- the same field written from more than one place
-- a flag that whoever starts some work has to clear — sooner or later an entry
-  point will not clear it
-- state deposited into a mutable holder mid-stream and re-read downstream,
-  instead of flowing through the pipeline as a value
-- a `tap` that writes state where a `map` could produce it
-
-Imperative code is sometimes genuinely clearer, and readability counts: a `scan`
-nobody can follow is not an improvement. Derive where you can, and say why when
-you deliberately do not.
 
 ## Shape is not covered by tests
 
@@ -166,34 +150,6 @@ What is still expected of you:
 - update `gitbook/` for the new surface, per the Documentation section — not the old one, and no "previously this was…" notes
 - state the break plainly in your summary, including when it needs a semver major, so the release can be handled
 
-# Performance
-
-This library needs to be very careful with everything that impact performances (eg: reflow, heavy dom computation). Whenever possible we should use
-asynchronous lookup and mechanisms that defer, batch or are fast enough to not impact user experience while reading books.
-
-An example of common issue is `getBoundingClientRect`. Getting elements position is a common use case across prose-reader. Ideally it should always
-be in a very controlled way and with better performance alternative when possible (eg: `IntersectionObserver`)
-
-## Avoid redundant DOM writes
-
-When writing frontend code, avoid setting DOM attributes or properties to the same value they already have, especially in hot paths.
-
-Redundant DOM writes can still have costs: they may update internal attribute state, notify mutation observers, trigger custom element reactions, invalidate style/layout work, or cause unnecessary accessibility/rendering updates.
-
-### Applies to
-
-Be careful with repeated writes such as:
-
-```ts
-element.setAttribute(name, value);
-element.removeAttribute(name);
-element.className = nextClassName;
-element.textContent = nextText;
-input.value = nextValue;
-input.checked = nextChecked;
-element.hidden = nextHidden;
-```
-
 # Epub SPECS
 
 This library is built to support entirely and strictly the epub3 specs. You can access it at https://www.w3.org/TR/epub-33/. The spec and rules should always be enforced
@@ -279,11 +235,3 @@ The `gitbook/` folder is user-facing documentation that must stay in sync with t
 - When adding something that belongs to an existing documented list/table (creators, enhancers, hooks, settings…), add it to that list and add a short usage example next to the sibling examples.
 - If you add a new doc page, also register it in `gitbook/SUMMARY.md`.
 - If a change is purely internal (no public surface or documented behavior affected), no doc update is needed — but state that you checked.
-
-# TypeScript `as` usage
-
-- Avoid using TypeScript's `as` type assertions unless absolutely necessary.
-- Only use `as` when there is no safer or more idiomatic alternative (for example, when interfacing with third-party or legacy data you cannot control).
-- When you need to use `as`, always add a code comment explaining why it is required in that context.
-- Prefer type guards, runtime validation, and stricter data structures to ensure type safety and clarity instead of using type assertions.
-- Rationale: Overuse of `as` can hide bugs, undermine type safety, and reduce code maintainability and refactorability.
