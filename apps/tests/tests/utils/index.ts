@@ -1,5 +1,9 @@
 import { expect, type Page } from "@playwright/test"
-import type { Reader, UserNavigationEntry } from "@prose-reader/core"
+import type {
+  NavigationTarget,
+  Reader,
+  UserNavigationEntry,
+} from "@prose-reader/core"
 
 export async function waitForSpineItemReady(page: Page, indexes: number[]) {
   for (const index of indexes) {
@@ -110,7 +114,10 @@ export const navigateTo = async ({
   navigation,
   page,
 }: {
-  navigation: UserNavigationEntry
+  // A selector target holds a function, which cannot be sent into the page.
+  navigation: UserNavigationEntry<
+    NavigationTarget<"position" | "spineItem" | "cfi">
+  >
   page: Page
 }) => {
   await page.evaluate(

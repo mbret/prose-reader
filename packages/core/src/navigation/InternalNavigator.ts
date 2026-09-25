@@ -27,7 +27,10 @@ import type { Viewport } from "../viewport/Viewport"
 import { mapUserNavigationToInternal } from "./consolidation/mapUserNavigationToInternal"
 import { withAnchor } from "./consolidation/withAnchor"
 import { withFallbackPosition } from "./consolidation/withFallbackPosition"
-import { withResolvedTarget } from "./consolidation/withResolvedTarget"
+import {
+  withAnchorFromTarget,
+  withResolvedTarget,
+} from "./consolidation/withResolvedTarget"
 import { withSnappedPosition } from "./consolidation/withSnappedPosition"
 import { withSpineItem } from "./consolidation/withSpineItem"
 import { withSpineItemLayoutInfo } from "./consolidation/withSpineItemLayoutInfo"
@@ -128,6 +131,7 @@ export class InternalNavigator extends DestroyableClass {
       navigationResolver,
       cfi: cfiManager,
       settings,
+      spineItemsManager: spine.spineItemsManager,
       getNavigationVisibleArea,
     })
 
@@ -251,6 +255,7 @@ export class InternalNavigator extends DestroyableClass {
       navigationUpdateFromLayout$,
       navigationUpdateFollowingUserUnlock$,
     ).pipe(
+      withAnchorFromTarget({ resolvers: targetResolvers }),
       withRestoredPosition({
         navigationResolver,
         settings,
@@ -258,7 +263,7 @@ export class InternalNavigator extends DestroyableClass {
         spine,
         cfiManager,
       }),
-      map(({ navigation }) => {
+      map(({ navigation, ...rest }) => {
         const updated: InternalNavigationEntry = {
           ...navigation,
           meta: {
@@ -267,7 +272,7 @@ export class InternalNavigator extends DestroyableClass {
           requestedPosition: navigation.position,
         }
 
-        return { navigation: updated }
+        return { ...rest, navigation: updated }
       }),
       /**
        * The spine item may be undefined after a restoration.

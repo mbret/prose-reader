@@ -2,27 +2,43 @@ import { tap } from "rxjs"
 import type { Reader } from "../../reader"
 import { isHtmlTagElement } from "../../utils/dom"
 import type { HtmlEnhancerOutput } from "../html/enhancer"
-import type { ManualNavigator } from "./navigators/manualNavigator"
 
+const resolveHref = (href: string, base: string) => {
+  try {
+    return new URL(href, base)
+  } catch {
+    return undefined
+  }
+}
+
+/**
+ * Follows the links clicked in the book's documents, through `goToUrl` like
+ * any other url.
+ */
 export const handleLinksNavigation = (
   reader: Reader & HtmlEnhancerOutput,
-  manualNavigator: ManualNavigator,
-) => {
-  return reader.links$.pipe(
+  goToUrl: (url: URL) => void,
+) =>
+  reader.links$.pipe(
     tap((event) => {
-      if (!isHtmlTagElement(event.target, "a") || event.type !== "click") return
+      // The link listened to, rather than what was clicked inside it.
+      const link = event.currentTarget
 
-      const hrefUrl = new URL(event.target.href)
-      const hrefWithoutAnchor = `${hrefUrl.origin}${hrefUrl.pathname}`
+      if (!isHtmlTagElement(link, "a") || event.type !== "click") return
 
-      // internal link, we can handle
-      const hasExistingSpineItem = reader.context.manifest.spineItems.some(
-        (item) => item.href === hrefWithoutAnchor,
+      const href = link.getAttribute("href")
+      const spineItem = reader.spineItemsManager.items.find(
+        (item) =>
+          item.renderer.getDocumentFrame()?.contentDocument ===
+          link.ownerDocument,
       )
 
-      if (hasExistingSpineItem) {
-        manualNavigator.goToUrl(hrefUrl)
-      }
+      if (href === null || !spineItem) return
+
+      // A document loaded from a blob cannot resolve a relative href on its
+      // own, so it is resolved against its spine item's.
+      const url = resolveHref(href, spineItem.item.href)
+
+      if (url) goToUrl(url)
     }),
   )
-}

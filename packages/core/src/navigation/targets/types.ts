@@ -17,8 +17,8 @@ export type TargetResolution = {
   requestedVisibleArea?: NavigationVisibleArea
   anchor?: string
   directionFromLastNavigation: "forward" | "backward"
-  /** Otherwise `position` is snapped to the page it falls on. */
-  isExact: boolean
+  snapToPage: boolean
+  awaitsDocument: boolean
 }
 
 export type TargetResolverContext = {
