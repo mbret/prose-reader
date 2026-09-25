@@ -6,7 +6,7 @@
 npm install @prose-reader/core @prose-reader/streamer @prose-reader/archive-reader rxjs
 ```
 
-You don’t absolutely need `@prose-reader/streamer` and `@prose-reader/archive-reader` installed to run the reader, but they are very useful to standardize and feed books to the engine (`archive-reader` turns your source into an archive, `streamer` serves it).  `rxjs` is a peer-dependency of prose-reader and needs to be installed alongside.
+You don’t absolutely need `@prose-reader/streamer` and `@prose-reader/archive-reader` installed to run the reader, but they are very useful to standardize and feed books to the engine (`archive-reader` turns your source into an archive, `streamer` serves it).  `rxjs` is a peer-dependency of prose-reader and needs to be installed alongside, at 7.2 or any later 7.x (`^7.2.0`).
 
 ## Create your reader & load your book
 

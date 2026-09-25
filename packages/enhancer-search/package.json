@@ -28,7 +28,7 @@
     "@prose-reader/shared": "workspace:^"
   },
   "peerDependencies": {
-    "rxjs": "*"
+    "rxjs": "^7.2.0"
   },
   "gitHead": "4601e14dcacf50b2295cb343582a7ef2c7e1eedc"
 }

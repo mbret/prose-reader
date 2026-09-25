@@ -24,6 +24,6 @@
   },
   "peerDependencies": {
     "@prose-reader/core": "workspace:^",
-    "rxjs": "*"
+    "rxjs": "^7.2.0"
   }
 }
