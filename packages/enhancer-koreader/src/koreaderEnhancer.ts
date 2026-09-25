@@ -1,7 +1,6 @@
 import type {
   EnhancerOutput,
   NavigationTarget,
-  NavigationTargetOf,
   RootEnhancer,
   UserNavigationEntry,
 } from "@prose-reader/core"
@@ -32,12 +31,10 @@ const report = Report.namespace(`@prose-reader/enhancer-koreader`)
 /** A KOReader (crengine) xpointer, such as `/body/DocFragment[14]/body/div/p[3]/text().42`. */
 export type XPointerNavigationTarget = { type: "xpointer"; value: string }
 
-export type KoreaderEnhancerOutput<InheritOutput> = {
+export type KoreaderEnhancerOutput<InheritTarget> = {
   navigation: {
     navigate: (
-      to: UserNavigationEntry<
-        NavigationTargetOf<InheritOutput> | XPointerNavigationTarget
-      >,
+      to: UserNavigationEntry<InheritTarget | XPointerNavigationTarget>,
     ) => void
   }
   koreader: {
@@ -51,6 +48,10 @@ export type KoreaderEnhancerOutput<InheritOutput> = {
   }
 }
 
+const isXPointerTarget = (target: {
+  type: string
+}): target is XPointerNavigationTarget => target.type === "xpointer"
+
 type XPointerNavigation = {
   xpointer: string
   target: NavigationTarget<"selector">
@@ -61,19 +62,21 @@ type XPointerNavigation = {
  * position as one.
  */
 export const koreaderEnhancer =
-  <InheritOptions, InheritOutput extends EnhancerOutput<RootEnhancer>>(
-    next: (options: InheritOptions) => InheritOutput,
+  <
+    InheritOptions,
+    InheritTarget extends { type: string },
+    InheritOutput extends EnhancerOutput<RootEnhancer>,
+  >(
+    next: (options: InheritOptions) => InheritOutput & {
+      navigation: {
+        navigate: (to: UserNavigationEntry<InheritTarget>) => void
+      }
+    },
   ) =>
   (
     options: InheritOptions,
-  ): InheritOutput & KoreaderEnhancerOutput<InheritOutput> => {
+  ): InheritOutput & KoreaderEnhancerOutput<InheritTarget> => {
     const reader = next(options)
-    // The inherited `navigate` accepts every target this one does but
-    // `xpointer`, which is what `NavigationTargetOf` reads from it; TS cannot
-    // follow that through the generic reader.
-    const navigateInherited = reader.navigation.navigate as (
-      to: UserNavigationEntry<NavigationTargetOf<InheritOutput>>,
-    ) => void
     const lastXPointerNavigation = new BehaviorSubject<
       XPointerNavigation | undefined
     >(undefined)
@@ -82,7 +85,7 @@ export const koreaderEnhancer =
      * The pointer names its spine item, which is known at once, and a place
      * in its document, found once the document is loaded.
      */
-    const getSelector = (
+    const getXPointerSelector = (
       xpointer: string,
     ): NavigationTarget<"selector"> | undefined => {
       const parsed = parseXPointer(xpointer)
@@ -104,16 +107,14 @@ export const koreaderEnhancer =
     }
 
     const navigate = (
-      to: UserNavigationEntry<
-        NavigationTargetOf<InheritOutput> | XPointerNavigationTarget
-      >,
+      to: UserNavigationEntry<InheritTarget | XPointerNavigationTarget>,
     ) => {
       const { target } = to
 
-      if (target.type !== "xpointer")
-        return navigateInherited({ ...to, target })
+      if (!isXPointerTarget(target))
+        return reader.navigation.navigate({ ...to, target })
 
-      const selector = getSelector(target.value)
+      const selector = getXPointerSelector(target.value)
 
       if (!selector) {
         report.warn(`Ignore navigation to ${target.value}, not in the book`)
