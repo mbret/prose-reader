@@ -32,7 +32,7 @@ const readVisibleRange = async (page: Page) => {
       let readingPosition: string | undefined
       // Replays the current one, synchronously.
       reader.navigation.readingPosition$
-        .subscribe((cfi) => {
+        .subscribe(({ cfi }) => {
           readingPosition = cfi
         })
         .unsubscribe()

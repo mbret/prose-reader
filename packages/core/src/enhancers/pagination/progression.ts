@@ -1,5 +1,6 @@
 import type { Manifest } from "@prose-reader/shared"
 import { first, map, withLatestFrom } from "rxjs"
+import { getSpineItemProgression } from "../../manifest/progression"
 import type { Reader } from "../../reader"
 import type { SpineItem } from "../../spineItem/SpineItem"
 import type { LayoutEnhancerOutput } from "../layout/layoutEnhancer"
@@ -56,24 +57,14 @@ export const getPercentageEstimate = (
       const isGloballyPrePaginated =
         manifest.renditionLayout === `pre-paginated`
       const readingOrderLength = manifest.spineItems.length || 0
-      const estimateBeforeThisItem =
-        manifest.spineItems
-          .slice(0, currentSpineIndex)
-          .reduce((acc, item) => acc + (item.progressionWeight ?? 0), 0) || 0
+      const { start: estimateBeforeThisItem, weight: currentItemWeight } =
+        getSpineItemProgression(manifest, currentSpineIndex)
       const itemIndexNumber =
         reader.spineItemsManager.getSpineItemIndex(currentItem) ?? 0
-
-      const numberOfSpineItems = manifest.spineItems.length ?? 0
 
       const spineItemNumberOfPages =
         layout.pages.filter((page) => page.itemIndex === itemIndexNumber)
           .length ?? 0
-
-      const currentItemWeight =
-        manifest.spineItems[currentSpineIndex]?.progressionWeight ??
-        // if no progressionWeight is defined we "assume" the document weight to be
-        // relative to the total number of documents
-        (itemIndexNumber + 1) / numberOfSpineItems
 
       let progressWithinThisItem =
         (pageIndex + 1) * (currentItemWeight / spineItemNumberOfPages)

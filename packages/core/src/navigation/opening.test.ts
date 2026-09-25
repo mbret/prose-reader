@@ -8,6 +8,7 @@ import {
   mountTestReader,
   settledOn,
 } from "../tests/readerHarness"
+import type { ReadingPosition } from "./types"
 
 installReaderTestEnvironment()
 
@@ -36,7 +37,7 @@ describe("where the reader opens", () => {
     const cfi = "epubcfi(/6/4[1]!/4/2)"
     const reader = createTestReader({ target: { type: "cfi", value: cfi } })
 
-    const positions: string[] = []
+    const positions: ReadingPosition[] = []
     reader.navigation.readingPosition$.subscribe((position) => {
       positions.push(position)
     })
@@ -44,7 +45,8 @@ describe("where the reader opens", () => {
     mountTestReader(reader)
     await settledOn(reader, 1)
 
-    expect(positions).toEqual([cfi])
+    // The second of two items, each half the book.
+    expect(positions).toEqual([{ cfi, percentageEstimateOfBook: 0.5 }])
   })
 
   it("is the place a position target names in the laid out book", async () => {
@@ -76,7 +78,7 @@ describe("where the reader opens", () => {
       cfi.replace("/6/2[0]!", "/6/4[1]!"),
     )
 
-    const positions: string[] = []
+    const positions: ReadingPosition[] = []
     reader.navigation.readingPosition$.subscribe((position) => {
       positions.push(position)
     })
@@ -90,6 +92,6 @@ describe("where the reader opens", () => {
     const settled = await settledOn(reader)
 
     expect(settled.begin.spineItemIndex).toBe(1)
-    expect(positions).toEqual([cfi])
+    expect(positions).toEqual([{ cfi, percentageEstimateOfBook: 0.5 }])
   })
 })

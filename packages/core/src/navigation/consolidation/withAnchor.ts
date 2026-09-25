@@ -1,5 +1,7 @@
 import { map, type Observable } from "rxjs"
 import type { CfiManager } from "../../cfi"
+import type { Context } from "../../context/Context"
+import { getPageStartProgression } from "../../manifest/progression"
 import { PAGE_VISIBILITY_THRESHOLD } from "../../spine/Pages"
 import type { Spine } from "../../spine/Spine"
 import type { InternalNavigationEntry, InternalNavigationInput } from "../types"
@@ -10,9 +12,9 @@ type Navigation = {
 }
 
 /**
- * The navigation's anchor: where it takes the reader in the text, as a cfi.
- * Restoration returns to it after a relayout, and the reader exposes it as its
- * reading position.
+ * The navigation's anchor: where it takes the reader in the text, as a cfi,
+ * and how far into the book the page holding it starts. Restoration returns
+ * to it after a relayout, and the reader exposes it as its reading position.
  *
  * - A target that names a place in the text, a cfi or what a selector found,
  *   comes with it: its resolver sets it, and this step keeps it.
@@ -26,15 +28,26 @@ type Navigation = {
  *   position can belong to another item, and would stop the target from being
  *   resolved again.
  *
- * Once found it is kept for the rest of the navigation. Restorations land on
- * the page holding it; taking that page's own first character instead would
- * restore to the page before at the next relayout, and every resize would walk
- * the reader back.
+ * The progression is that same page's, so it is found with the anchor, or,
+ * for a target's anchor, once the page holding it is laid out.
+ *
+ * Once found both are kept for the rest of the navigation. Restorations land
+ * on the page holding the anchor; taking that page's own first character
+ * instead would restore to the page before at the next relayout, and every
+ * resize would walk the reader back.
  */
 export const withAnchor =
-  ({ spine, cfi }: { spine: Spine; cfi: CfiManager }) =>
+  ({
+    spine,
+    cfi,
+    context,
+  }: {
+    spine: Spine
+    cfi: CfiManager
+    context: Context
+  }) =>
   <N extends Navigation>(stream: Observable<N>): Observable<N> => {
-    const getPageCfi = ({ position }: N["navigation"]) => {
+    const getAnchorPage = ({ position }: N["navigation"]) => {
       if (!position) return undefined
 
       /**
@@ -68,25 +81,48 @@ export const withAnchor =
           ? undefined
           : spine.pages.fromSpineItemPageIndex(spineItem, beginPageIndex)
 
-      return page && cfi.generateCfiForPage(spineItem.item, page)
+      return page && { spineItem, page }
     }
 
     const getAnchor = (
       navigation: N["navigation"],
       awaitsDocument: N["awaitsDocument"],
-    ) =>
-      navigation.anchor ?? (awaitsDocument ? undefined : getPageCfi(navigation))
+    ) => {
+      const hasAnchorWithPageStartProgression =
+        navigation.anchor !== undefined &&
+        navigation.anchorPageStartProgression !== undefined
+      const anchorPage =
+        hasAnchorWithPageStartProgression || awaitsDocument
+          ? undefined
+          : getAnchorPage(navigation)
+
+      return {
+        anchor:
+          navigation.anchor ??
+          (anchorPage &&
+            cfi.generateCfiForPage(anchorPage.spineItem.item, anchorPage.page)),
+        anchorPageStartProgression:
+          navigation.anchorPageStartProgression ??
+          (anchorPage &&
+            getPageStartProgression({
+              manifest: context.manifest,
+              spineItemIndex: anchorPage.spineItem.index,
+              pageIndex: anchorPage.page.pageIndex,
+              numberOfPages: anchorPage.spineItem.numberOfPages,
+            })),
+      }
+    }
 
     return stream.pipe(
       map(
         ({ navigation, ...rest }) =>
-          // Only a field is added, so the caller's shape still holds, as for
+          // Only fields are added, so the caller's shape still holds, as for
           // the other consolidation steps.
           ({
             ...rest,
             navigation: {
               ...navigation,
-              anchor: getAnchor(navigation, rest.awaitsDocument),
+              ...getAnchor(navigation, rest.awaitsDocument),
             },
           }) as N,
       ),

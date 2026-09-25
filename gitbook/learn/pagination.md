@@ -33,16 +33,24 @@ page the reader turned to, at any size.
 Save the reading position, and open the book at it:
 
 ```typescript
-reader.navigation.readingPosition$.subscribe((cfi) => {
-  localStorage.setItem(`reading-position-${bookId}`, cfi)
+reader.navigation.readingPosition$.subscribe((readingPosition) => {
+  localStorage.setItem(
+    `reading-position-${bookId}`,
+    JSON.stringify(readingPosition),
+  )
 })
 
 // the next time this book is opened
-const readingPosition = localStorage.getItem(`reading-position-${bookId}`)
+const saved = localStorage.getItem(`reading-position-${bookId}`)
+const readingPosition: ReadingPosition | undefined = saved
+  ? JSON.parse(saved)
+  : undefined
 
 const reader = createReader({
   manifest,
-  target: readingPosition ? { type: "cfi", value: readingPosition } : undefined,
+  target: readingPosition
+    ? { type: "cfi", value: readingPosition.cfi }
+    : undefined,
 })
 
 reader.mount(document.getElementById("reader")!)
@@ -51,9 +59,11 @@ reader.mount(document.getElementById("reader")!)
 The [navigation page](navigation.md#reading-position) says exactly when the
 reading position changes.
 
-Anything else you save from pagination, a progress percentage for a library
-screen for example, has to come from a settled result, as explained in
-[Settlement](#settlement).
+The reading position carries its own `percentageEstimateOfBook`, the progress
+to save for a library screen: it moves with the position it describes, where
+pagination's moves with every relayout and lags each navigation until the new
+result settles. Anything else you save from pagination has to come from a
+settled result, as explained in [Settlement](#settlement).
 
 ## Reading the stream
 

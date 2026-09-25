@@ -1,3 +1,4 @@
+import { isShallowEqual } from "@prose-reader/shared"
 import {
   BehaviorSubject,
   distinctUntilChanged,
@@ -19,6 +20,7 @@ import {
 } from "rxjs"
 import type { CfiManager } from "../cfi"
 import type { Context } from "../context/Context"
+import { getSpineItemProgression } from "../manifest/progression"
 import { Report } from "../report"
 import type { ReaderSettingsManager } from "../settings/ReaderSettingsManager"
 import type { Spine } from "../spine/Spine"
@@ -45,6 +47,7 @@ import type {
   InternalNavigationEntry,
   NavigationModeController,
   NavigationTarget,
+  ReadingPosition,
   UserNavigationEntry,
 } from "./types"
 
@@ -95,17 +98,18 @@ export class InternalNavigator extends DestroyableClass {
   /**
    * Where the reader is in the book, to save and reopen at: the current
    * navigation's anchor, which a cfi target names and `withAnchor` otherwise
-   * finds. Until the page a navigation goes to is laid out it has none, and
-   * this is the start of the item the navigation goes to, the only place a
-   * cfi can name in content that is not laid out. It only moves when the
-   * reader navigates, and once when such a navigation finds its page: a
-   * relayout reflows the page around it without changing it.
+   * finds, with its progression. Until the page a navigation goes to is laid
+   * out it has neither, and this is the start of the item the navigation goes
+   * to, the only place a cfi can name in content that is not laid out. It only
+   * moves when the reader navigates, and once when such a navigation finds its
+   * page: a relayout reflows the page around it without changing it.
    */
-  public readonly readingPosition$ = this.navigationSubject.pipe(
-    map((navigation) => navigation.anchor ?? this.getItemStart(navigation)),
-    filter(isDefined),
-    distinctUntilChanged(),
-  )
+  public readonly readingPosition$: Observable<ReadingPosition> =
+    this.navigationSubject.pipe(
+      map((navigation) => this.getReadingPosition(navigation)),
+      filter(isDefined),
+      distinctUntilChanged(isShallowEqual),
+    )
 
   public locker = new Locker()
 
@@ -201,7 +205,7 @@ export class InternalNavigator extends DestroyableClass {
           settings,
           navigationResolver,
         }),
-        withAnchor({ spine, cfi: cfiManager }),
+        withAnchor({ spine, cfi: cfiManager, context }),
         map((params) => params.navigation),
         share(),
       )
@@ -320,7 +324,7 @@ export class InternalNavigator extends DestroyableClass {
         settings,
         navigationResolver,
       }),
-      withAnchor({ spine, cfi: cfiManager }),
+      withAnchor({ spine, cfi: cfiManager, context }),
       map(({ navigation }) => navigation),
       share(),
     )
@@ -383,10 +387,19 @@ export class InternalNavigator extends DestroyableClass {
     notifiedNavigationUpdate$.pipe(takeUntil(this.destroy$)).subscribe()
   }
 
-  protected getItemStart(navigation: InternalNavigationEntry) {
+  protected getReadingPosition(
+    navigation: InternalNavigationEntry,
+  ): ReadingPosition | undefined {
     const spineItem = this.spine.spineItemsManager.get(navigation.spineItem)
 
-    return spineItem && this.cfiManager.generateRootCfi(spineItem.item)
+    if (!spineItem) return undefined
+
+    return {
+      cfi: navigation.anchor ?? this.cfiManager.generateRootCfi(spineItem.item),
+      percentageEstimateOfBook:
+        navigation.anchorPageStartProgression ??
+        getSpineItemProgression(this.context.manifest, spineItem.index).start,
+    }
   }
 
   get navigation() {

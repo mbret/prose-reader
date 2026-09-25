@@ -33,7 +33,7 @@ const cfi = xPointerToCfi("/body/DocFragment[14]/body/div/p[3]/text().42", getSp
 // => "epubcfi(/6/28[chap05]!/4/2/6/1:42)"
 
 // prose's reading position, into what the server and e-readers expect
-reader.navigation.readingPosition$.subscribe((cfi) => {
+reader.navigation.readingPosition$.subscribe(({ cfi }) => {
   const xpointer = cfiToXPointer(cfi, getSpineItem)
   // => "/body/DocFragment[14]/body/div/p[3]/text().42"
 })

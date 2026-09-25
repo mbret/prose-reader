@@ -1,5 +1,5 @@
 import { createArchiveFromJszip } from "@prose-reader/archive-reader/archives/createArchiveFromJszip"
-import { createReader } from "@prose-reader/core"
+import { createReader, type ReadingPosition } from "@prose-reader/core"
 import { Streamer } from "@prose-reader/streamer"
 import { loadAsync } from "jszip"
 import { from } from "rxjs"
@@ -47,10 +47,10 @@ async function run() {
 
   // Every reading position from the reader's creation on, earlier than a spec
   // can subscribe.
-  const readingPositions: string[] = []
+  const readingPositions: ReadingPosition[] = []
 
-  reader.navigation.readingPosition$.subscribe((cfi) => {
-    readingPositions.push(cfi)
+  reader.navigation.readingPosition$.subscribe((readingPosition) => {
+    readingPositions.push(readingPosition)
   })
 
   // biome-ignore lint/style/noNonNullAssertion: TODO

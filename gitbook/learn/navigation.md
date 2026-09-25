@@ -21,9 +21,10 @@ where to go: a bookmark, a table of contents entry, a link.
 
 ## Reading position
 
-`reader.navigation.readingPosition$` is where the reader is in the book, as a
-cfi: the value to save, and to [open the book at](#opening-the-book-somewhere)
-the next time.
+`reader.navigation.readingPosition$` is where the reader is in the book: its
+`cfi`, the value to save and to [open the book at](#opening-the-book-somewhere)
+the next time, and its `percentageEstimateOfBook`, how far into the book that
+is, to save with it for a progress shown outside the reader.
 
 It only moves when the reader navigates. A resize, a rotation, a font size
 change or a chapter loading nearby lays the book out again and reflows the page
@@ -50,15 +51,27 @@ It is set the moment a navigation happens:
   chapter has loaded, it becomes the first character of the page the
   navigation lands on, or the element a url names, and stays there.
 
-Save every value as it comes. The one case where a value is far from the reader
-is a turn back into a previous chapter that is not loaded yet: until it loads,
-the reading position is that chapter's start rather than its last page.
-Adjacent chapters are preloaded by default
+Its `percentageEstimateOfBook` is where the page holding the `cfi` starts,
+estimated from the `progressionWeight` of each spine item in the manifest and
+the pages of its own. It moves with the `cfi`, never apart from it. When the
+reading position is a chapter's start, so is its progress; after a navigation
+to a cfi, the progress is that chapter's start until the page holding the cfi
+is laid out. Being where a page starts, it is short of `1` on the last page.
+Pagination's `percentageEstimateOfBook` measures how far the end of what is
+visible reaches instead, so the two differ by about the pages on screen.
+
+Save every value as it comes, both fields together. The one case where a value
+is far from the reader is a turn back into a previous chapter that is not
+loaded yet: until it loads, the reading position is that chapter's start
+rather than its last page. Adjacent chapters are preloaded by default
 (`numberOfAdjacentSpineItemToPreLoad`), so this only shows when they are not.
 
 ```typescript
-reader.navigation.readingPosition$.subscribe((cfi) => {
-  localStorage.setItem(`reading-position-${bookId}`, cfi)
+reader.navigation.readingPosition$.subscribe((readingPosition) => {
+  localStorage.setItem(
+    `reading-position-${bookId}`,
+    JSON.stringify(readingPosition),
+  )
 })
 ```
 
@@ -72,11 +85,16 @@ passes through the start of the book on the way, and a saved position is never
 overwritten by the cover.
 
 ```typescript
-const readingPosition = localStorage.getItem(`reading-position-${bookId}`)
+const saved = localStorage.getItem(`reading-position-${bookId}`)
+const readingPosition: ReadingPosition | undefined = saved
+  ? JSON.parse(saved)
+  : undefined
 
 const reader = createReader({
   manifest,
-  target: readingPosition ? { type: "cfi", value: readingPosition } : undefined,
+  target: readingPosition
+    ? { type: "cfi", value: readingPosition.cfi }
+    : undefined,
 })
 ```
 

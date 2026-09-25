@@ -4,6 +4,7 @@ import {
   type Manifest,
   type NavigationTarget,
   type Reader,
+  type ReadingPosition,
 } from "@prose-reader/core"
 import { of, Subject } from "rxjs"
 import {
@@ -132,7 +133,7 @@ const createTestReader = (options: ReaderLoadOptions) =>
   })
 
 const currentReadingPosition = (reader: Reader) => {
-  let readingPosition: string | undefined
+  let readingPosition: ReadingPosition | undefined
 
   reader.navigation.readingPosition$
     .subscribe((value) => {
@@ -289,7 +290,11 @@ describe("Given a bridged webview", () => {
 
       load({ target })
 
-      expect(reported("readingPosition")).toEqual([[1, secondChapterCfi]])
+      // Both chapters weigh nothing in this manifest, so neither is further
+      // into the book than the other.
+      expect(reported("readingPosition")).toEqual([
+        [1, { cfi: secondChapterCfi, percentageEstimateOfBook: 0 }],
+      ])
     })
 
     it("turns the reader's pages on the native side's commands", () => {
@@ -344,7 +349,7 @@ describe("Given a bridged webview", () => {
       const { bridge, load, reported } = linkNativeSide()
       const pagination = new Subject<Record<string, unknown>>()
       const context = new Subject<Record<string, unknown>>()
-      const readingPosition = new Subject<string>()
+      const readingPosition = new Subject<ReadingPosition>()
       // Only the members bridgeReader touches. A destroyed core reader does
       // not complete its pagination stream, and none of these streams
       // completes here, so only unsubscribing can release them.
@@ -380,11 +385,14 @@ describe("Given a bridged webview", () => {
       expect(context.observed).toBe(false)
       expect(readingPosition.observed).toBe(false)
 
-      readingPosition.next(secondChapterCfi)
+      readingPosition.next({
+        cfi: secondChapterCfi,
+        percentageEstimateOfBook: 0,
+      })
 
       expect(reported("readingPosition")).not.toContainEqual([
         expect.anything(),
-        secondChapterCfi,
+        expect.objectContaining({ cfi: secondChapterCfi }),
       ])
     })
 
