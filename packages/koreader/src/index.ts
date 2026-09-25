@@ -1,5 +1,6 @@
 export {
   cfiToXPointer,
+  toCfiPosition,
   type XPointerSpineItem,
   type XPointerSpineItemLookup,
   xPointerToCfi,

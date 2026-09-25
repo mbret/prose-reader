@@ -31,11 +31,12 @@ export type XPointerSpineItemLookup = (
 ) => XPointerSpineItem | undefined
 
 /**
- * A CFI cannot point between an element's children, so a child index point
- * becomes the start of that child, and the end of the children the end of the
- * last text child or the element itself.
+ * The position a CFI can point to for a DOM position. A CFI cannot point
+ * between an element's children, so a child index point becomes the start of
+ * that child, and the end of the children the end of the last text child or
+ * the element itself. Any other position is returned as it is.
  */
-const toCfiPosition = (position: DomPosition) => {
+export const toCfiPosition = (position: DomPosition): DomPosition => {
   const { node, offset } = position
 
   if (!isElement(node) || offset === undefined) return position
