@@ -12,6 +12,7 @@ import { registerPan } from "./gestures/pan"
 import { registerPinch } from "./gestures/pinch"
 import { registerSwipe } from "./gestures/swipe"
 import { registerTaps } from "./gestures/taps/registerTaps"
+import { preventNativeDrag } from "./preventNativeDrag"
 import { GesturesSettingsManager } from "./SettingsManager"
 import styles from "./style.css?inline"
 import type { EnhancerAPI, Hook, InputSettings } from "./types"
@@ -38,6 +39,8 @@ export const gesturesEnhancer =
     )
 
     const settingsManager = new GesturesSettingsManager(gestures, reader)
+
+    preventNativeDrag(reader)
 
     const hookManager = new HookManager<Hook>()
 
