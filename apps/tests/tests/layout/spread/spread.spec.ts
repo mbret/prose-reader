@@ -38,16 +38,24 @@ const secondPageShareOfWidth = async (page: Page) => {
 
   if (!secondPage) throw new Error("the second page is missing")
 
-  const box = await secondPage.boundingBox()
-  const window = page.viewportSize()
+  const secondPageBox = await secondPage.boundingBox()
+  const windowSize = page.viewportSize()
 
-  if (!box || !window) throw new Error("the second page has no size on screen")
+  if (!secondPageBox || !windowSize) {
+    throw new Error("the second page has no size on screen")
+  }
 
   // a pixel of slack: Mobile Safari measures a sub-pixel of the page outside
   // the window
-  if (box.x < -1 || box.x + box.width > window.width + 1) return "off screen"
+  const isEntirelyInWindow =
+    secondPageBox.x >= -1 &&
+    secondPageBox.y >= -1 &&
+    secondPageBox.x + secondPageBox.width <= windowSize.width + 1 &&
+    secondPageBox.y + secondPageBox.height <= windowSize.height + 1
 
-  return Math.round((box.width / window.width) * 100) / 100
+  if (!isEntirelyInWindow) return "off screen"
+
+  return Math.round((secondPageBox.width / windowSize.width) * 100) / 100
 }
 
 /**
