@@ -43,14 +43,12 @@ body {
   max-width: var(--column-width) px !important;
 } */
 
-/* prevent drag of image instead of touch on firefox */
+/*
+  No drag property here: Firefox has none, so an image stayed draggable there.
+  The gestures enhancer cancels the browser's own drag in every browser.
+*/
 img {
   user-select: none;
-  -webkit-user-drag: none;
-  /* biome-ignore lint/correctness/noUnknownProperty: Okay */
-  -khtml-user-drag: none;
-  -moz-user-drag: none;
-  -o-user-drag: none;
 
   /* prevent weird overflow or margin. Try `block` if `flex` has weird behavior */
   display: flex;
