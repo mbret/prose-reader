@@ -4,17 +4,17 @@ export const COMICS = [
   {
     link: `${DEMO_BASE_PATH}/reader/${btoa(`${window.location.origin}/epubs/haruko-comic.zip`)}`,
     name: "Manga, horizontal scrolling",
-    type: `FXL - LTR`,
+    type: `FXL - RTL`,
   },
   {
     link: `${DEMO_BASE_PATH}/reader/${btoa(`${window.location.origin}/epubs/haruko-comic.zip`)}?vertical`,
     name: "Manga, vertical scrolling",
-    type: `FXL - LTR`,
+    type: `FXL - RTL`,
   },
   {
     link: `${DEMO_BASE_PATH}/reader/${btoa(`${window.location.origin}/epubs/haruko-comic.zip`)}?free&vertical`,
     name: "Manga, vertical free scrolling",
-    type: `FXL - LTR`,
+    type: `FXL - RTL`,
   },
   {
     link: `${DEMO_BASE_PATH}/reader/${btoa(`${window.location.origin}/epubs/rendition-flow-webtoon-one-page.epub`)}?free&vertical`,
