@@ -42,8 +42,6 @@ In this situation the user is using the reader in only a certain part of the web
 
 Gestures start on a press of the primary button: a left click, a finger or a pen's tip. A right click, which opens the context menu, and a middle click start none: they tap, pan and swipe nothing, turn no page and are not reported on `gestures$`.
 
-Inside the book, the pointer belongs to the gestures. The browser's own drag of an image, a link or a text selection would cancel the pointer as soon as it moves, so the enhancer turns it off in the book's documents: a press on a comic page that moves pans or taps, and nothing can be dragged out of the book.
-
 ### Zooming (in/out)
 
 * **Pinch** to start zooming
