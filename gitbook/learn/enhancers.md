@@ -94,11 +94,10 @@ Let's say we want to show a confirm dialog to the user and if they confirm we na
 
 ```typescript
 type CreateReader = typeof createReader
-type CreateReaderOptions = Parameters<CreateReader>[0]
 type ReaderOutput = ReturnType<CreateReader>
 
 export const myEnhancer =
-  <InheritOptions extends CreateReaderOptions, InheritOutput extends ReaderOutput>(next: (options: InheritOptions) => InheritOutput) =>
+  <InheritOptions, InheritOutput extends ReaderOutput>(next: (options: InheritOptions) => InheritOutput) =>
   (options: InheritOptions): InheritOutput => {
     const reader = next(options)
 
@@ -132,11 +131,10 @@ Now let's add an option to our enhancer to let the user customize the confirm me
 
 ```typescript
 type CreateReader = typeof createReader
-type CreateReaderOptions = Parameters<CreateReader>[0]
 type ReaderOutput = ReturnType<CreateReader>
 
 export const myEnhancer =
-  <InheritOptions extends CreateReaderOptions, InheritOutput extends ReaderOutput>(next: (options: InheritOptions) => InheritOutput) =>
+  <InheritOptions, InheritOutput extends ReaderOutput>(next: (options: InheritOptions) => InheritOutput) =>
   (
     options: InheritOptions & {
       myEnhancer: {
@@ -193,13 +191,12 @@ Let's add a function to let user change the confirm message dynamically:
 
 ```typescript
 type CreateReader = typeof createReader
-type CreateReaderOptions = Parameters<CreateReader>[0]
 type ReaderOutput = ReturnType<CreateReader>
 
 export const myEnhancer =
   <
     NextReader extends ReaderOutput,
-    NextOptions extends CreateReaderOptions,
+    NextOptions,
     InheritOptions extends NextOptions & {
       myEnhancer: {
         confirmMessage: string
@@ -278,16 +275,11 @@ Due to the complexity we will need to decompose our types a bit more and use som
 
 ```typescript
 type CreateReader = typeof createReader
-type CreateReaderOptions = Parameters<CreateReader>[0]
 type ReaderOutput = ReturnType<CreateReader>
 
 export const dialogEnhancer =
   <
-    InheritOptions extends CreateReaderOptions & {
-      dialog: {
-        confirmMessage: string
-      }
-    },
+    InheritOptions,
     NextReader extends ReaderOutput,
     InheritOutput extends NextReader & {
       dialog: {
@@ -297,7 +289,13 @@ export const dialogEnhancer =
   >(
     next: (options: InheritOptions) => NextReader,
   ) =>
-  (options: InheritOptions): InheritOutput => {
+  (
+    options: InheritOptions & {
+      dialog: {
+        confirmMessage: string
+      }
+    },
+  ): InheritOutput => {
     const reader = next(options)
 
     const dialogConfirm = (message: string) => confirm(message)
