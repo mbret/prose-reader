@@ -48,7 +48,7 @@ const controller = bridgeReader({
   containerElement: document.getElementById("reader"),
   /**
    * Invoked for every `load` event coming from the native side, with what it
-   * sent: the manifest, and the cfi to open at. A reader renders a single
+   * sent: the manifest, and where to open it. A reader renders a single
    * book: a subsequent `load` destroys the previous reader and creates a
    * fresh one.
    */
@@ -102,7 +102,8 @@ has no equivalent; a method missing from the bridge is worth
 `null` until that bridge is ready, then `{ ReaderWebView, load, appBridge,
 webviewBridge }`. Pass the whole thing to `ReaderProvider` so the hooks below
 can reach it. `load` sends the book to the webview: its `manifest`, and the
-`cfi` to open it at, if any, the two reader options the factory above receives.
+`target` to open it at, if any, the two reader options the factory above
+receives. Only a `cfi` or a `spineItem` target can cross the bridge.
 
 ```tsx
 import { ReaderProvider, useCreateReader } from "@prose-reader/react-native"
@@ -198,7 +199,10 @@ const Reader = ({ bookId, html }: { bookId: string; html: string }) => {
           // `undefined` the first time: the book opens at its start.
           const cfi = await storage.getReadingPosition(bookId)
 
-          reader.load({ manifest, cfi })
+          reader.load({
+            manifest,
+            target: cfi ? { type: "cfi", value: cfi } : undefined,
+          })
         }}
       />
       <SaveReadingPosition bookId={bookId} />
@@ -218,8 +222,8 @@ const SaveReadingPosition = ({ bookId }: { bookId: string }) => {
 ```
 
 `storage` stands for wherever your app keeps data. The first position the
-reader reports is the one it opens at, the `cfi` sent with `load` or the start
-of the book, so every value can be saved as it comes. `load` clears the state
+reader reports is the one it opens at, the `target` sent with `load` or the
+start of the book, so every value can be saved as it comes. `load` clears the state
 the moment it is called, and nothing the previous book's reader reports lands
 after it: every `readingPosition` is one of the book last passed to `load`, so
 save it under that book, as `SaveReadingPosition` does with the `bookId` the

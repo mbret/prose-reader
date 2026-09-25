@@ -30,7 +30,7 @@ reopen the book in the first orientation, and it opens on the page holding
 back again. The reading position stays "Alice", so the book reopens on the
 page the reader turned to, at any size.
 
-Save the reading position, and reopen at it with the `cfi` option:
+Save the reading position, and open the book at it:
 
 ```typescript
 reader.navigation.readingPosition$.subscribe((cfi) => {
@@ -38,9 +38,11 @@ reader.navigation.readingPosition$.subscribe((cfi) => {
 })
 
 // the next time this book is opened
+const readingPosition = localStorage.getItem(`reading-position-${bookId}`)
+
 const reader = createReader({
   manifest,
-  cfi: localStorage.getItem(`reading-position-${bookId}`) ?? undefined,
+  target: readingPosition ? { type: "cfi", value: readingPosition } : undefined,
 })
 
 reader.mount(document.getElementById("reader")!)

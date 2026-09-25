@@ -1,5 +1,10 @@
 // @vitest-environment jsdom
-import { createReader, type Manifest, type Reader } from "@prose-reader/core"
+import {
+  createReader,
+  type Manifest,
+  type NavigationTarget,
+  type Reader,
+} from "@prose-reader/core"
 import { of, Subject } from "rxjs"
 import {
   afterAll,
@@ -262,12 +267,17 @@ describe("Given a bridged webview", () => {
   })
 
   describe("when the native side sends a book with a cfi to open at", () => {
+    const target: NavigationTarget<"cfi"> = {
+      type: "cfi",
+      value: secondChapterCfi,
+    }
+
     it("hands the book and the cfi to the factory", () => {
       const { load, loadOptions } = setup()
 
-      load({ cfi: secondChapterCfi })
+      load({ target })
 
-      expect(loadOptions).toEqual([{ manifest, cfi: secondChapterCfi }])
+      expect(loadOptions).toEqual([{ manifest, target }])
     })
 
     /**
@@ -277,7 +287,7 @@ describe("Given a bridged webview", () => {
     it("reports that cfi as the first reading position, never the start of the book before it", () => {
       const { load, reported } = setup()
 
-      load({ cfi: secondChapterCfi })
+      load({ target })
 
       expect(reported("readingPosition")).toEqual([[1, secondChapterCfi]])
     })
