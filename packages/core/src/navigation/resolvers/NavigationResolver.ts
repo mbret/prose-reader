@@ -15,7 +15,6 @@ import { clampRectInSpine, getBoundaryForRectInSpine } from "./clampRectInSpine"
 import { getAdjustedPositionForSpread } from "./getAdjustedPositionForSpread"
 import { getNavigationForPosition } from "./getNavigationForPosition"
 import { getNavigationForSpineItemPage } from "./getNavigationForSpineItemPage"
-import { getNavigationForUrl } from "./getNavigationForUrl"
 import { getNavigationFromSpineItemPosition } from "./getNavigationFromSpineItemPosition"
 
 export const NAMESPACE = `spineNavigator`
@@ -168,16 +167,6 @@ export const createNavigationResolver = ({
   }
 
   return {
-    getNavigationForUrl: (url: string | URL) =>
-      getNavigationForUrl({
-        context,
-        spineItemsManager,
-        spineLocator: locator,
-        url,
-        pageSizeWidth: viewport.pageSize.width,
-        visibleAreaRectWidth: viewport.absoluteViewport.width,
-        spine,
-      }),
     getNavigationForSpineItemPage: (
       params: Omit<
         Parameters<typeof getNavigationForSpineItemPage>[0],

@@ -3,6 +3,22 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## [13.0.0](https://github.com/mbret/prose-reader/compare/v12.0.0...v13.0.0) (2026-09-25)
+
+**Note:** Version bump only for package @prose-reader/metadata-fetcher
+
+
+
+
+
+## [12.0.0](https://github.com/mbret/prose-reader/compare/v11.0.0...v12.0.0) (2026-09-24)
+
+**Note:** Version bump only for package @prose-reader/metadata-fetcher
+
+
+
+
+
 ## [11.0.0](https://github.com/mbret/prose-reader/compare/v10.0.0...v11.0.0) (2026-09-24)
 
 **Note:** Version bump only for package @prose-reader/metadata-fetcher

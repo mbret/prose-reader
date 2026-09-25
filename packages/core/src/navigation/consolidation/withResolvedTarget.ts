@@ -22,14 +22,16 @@ const resolveTarget = <Type extends NavigationTargetType>(
 ) => resolvers[target.type](target.value, context)
 
 /**
- * The only consolidation step that reads the navigation's target.
+ * What the navigation's target tells of where it goes. With
+ * `withAnchorFromTarget`,
+ * the only steps that read the target.
  */
 export const withResolvedTarget =
   ({ resolvers }: { resolvers: NavigationTargetResolvers }) =>
   <N extends Navigation>(stream: Observable<N>) =>
     stream.pipe(
       map((params) => {
-        const { isExact, ...resolution } = resolveTarget(
+        const { snapToPage, awaitsDocument, ...resolution } = resolveTarget(
           resolvers,
           params.navigation.target,
           { previousNavigation: params.previousNavigation },
@@ -38,7 +40,34 @@ export const withResolvedTarget =
         return {
           ...params,
           navigation: { ...params.navigation, ...resolution },
-          isExact,
+          snapToPage,
+          awaitsDocument,
+        }
+      }),
+    )
+
+/**
+ * A navigation without an anchor resolves its target again for one: a target
+ * naming a place in an item that had not loaded finds it once the item has.
+ */
+export const withAnchorFromTarget =
+  ({ resolvers }: { resolvers: NavigationTargetResolvers }) =>
+  <N extends { navigation: InternalNavigationEntry }>(stream: Observable<N>) =>
+    stream.pipe(
+      map((params) => {
+        if (params.navigation.anchor !== undefined)
+          return { ...params, awaitsDocument: false }
+
+        const { anchor, awaitsDocument } = resolveTarget(
+          resolvers,
+          params.navigation.target,
+          { previousNavigation: params.navigation },
+        )
+
+        return {
+          ...params,
+          navigation: { ...params.navigation, anchor },
+          awaitsDocument,
         }
       }),
     )

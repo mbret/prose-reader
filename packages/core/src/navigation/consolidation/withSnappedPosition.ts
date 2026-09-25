@@ -10,7 +10,7 @@ import type { InternalNavigationEntry } from "../types"
 /**
  * The navigable position of the page a navigation is on.
  */
-export const snapToPage = ({
+export const getSnappedPosition = ({
   navigation,
   spineItem,
   spineLocator,
@@ -79,14 +79,14 @@ export const withSnappedPosition =
     spine: Spine
     isUserInteractionLocked$: Observable<boolean>
   }) =>
-  <N extends { navigation: InternalNavigationEntry; isExact: boolean }>(
+  <N extends { navigation: InternalNavigationEntry; snapToPage: boolean }>(
     stream: Observable<N>,
   ) =>
     stream.pipe(
       withLatestFrom(isUserInteractionLocked$),
       map(([params, isUserLocked]) => {
         if (
-          params.isExact ||
+          !params.snapToPage ||
           settings.values.computedPageTurnMode === "scrollable" ||
           isUserLocked
         )
@@ -101,7 +101,7 @@ export const withSnappedPosition =
           navigation: {
             ...params.navigation,
             position: spineItem
-              ? snapToPage({
+              ? getSnappedPosition({
                   navigation: params.navigation,
                   spineItem,
                   spineLocator: spine.locator,
