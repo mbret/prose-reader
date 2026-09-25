@@ -43,10 +43,6 @@ body {
   max-width: var(--column-width) px !important;
 } */
 
-/*
-  No drag property here: Firefox has none, so an image stayed draggable there.
-  The gestures enhancer cancels the browser's own drag in every browser.
-*/
 img {
   user-select: none;
 
