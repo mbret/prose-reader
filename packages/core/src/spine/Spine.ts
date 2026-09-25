@@ -165,6 +165,14 @@ export class Spine extends DestroyableClass {
     return this.pages.layout$
   }
 
+  /**
+   * Every pass that laid the items out: their sizes and places in the spine
+   * are known, their pages are not yet.
+   */
+  public get itemsLayout$() {
+    return this.spineLayout.layout$
+  }
+
   public destroy() {
     super.destroy()
 

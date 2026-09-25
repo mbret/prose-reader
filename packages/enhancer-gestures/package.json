@@ -1,6 +1,6 @@
 {
   "name": "@prose-reader/enhancer-gestures",
-  "version": "12.0.0",
+  "version": "13.0.5",
   "type": "module",
   "main": "./dist/index.cjs",
   "module": "./dist/index.js",

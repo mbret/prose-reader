@@ -92,6 +92,23 @@ describe("Given a mounted reader", () => {
     expect(await settledOnSpread(reader)).toEqual([0, 1])
   })
 
+  it("lays out once for a resize that turns the spread off, and shows one page at a time", async () => {
+    // landscape, so the reader opens on a spread
+    setTestViewport({ width: 400, height: 200 })
+
+    const reader = await mountedAndSettled()
+    const layouts = countLayouts(reader)
+
+    expect(reader.viewport.value.isSpread).toBe(true)
+
+    setTestViewport({ width: 100, height: 200 })
+    reader.layout()
+
+    expect(layouts()).toBe(1)
+    expect(reader.viewport.value.isSpread).toBe(false)
+    expect(await secondItemAfterLayout(reader)).toEqual({ left: 100, top: 0 })
+  })
+
   it("keeps watching the container with the same observer when a setting changes", async () => {
     const reader = await mountedAndSettled()
 
@@ -179,6 +196,22 @@ describe("Given the spreadMode setting", () => {
     expect(layouts()).toBe(1)
     expect(reader.viewport.value.isSpread).toBe(true)
     expect(await settledOnSpread(reader)).toEqual([0, 1])
+  })
+
+  it("lays out once when it becomes never over a spread, and shows one page at a time", async () => {
+    // landscape, so the reader opens on a spread
+    setTestViewport({ width: 400, height: 200 })
+
+    const reader = await mountedAndSettled()
+    const layouts = countLayouts(reader)
+
+    expect(reader.viewport.value.isSpread).toBe(true)
+
+    reader.settings.update({ spreadMode: "never" })
+
+    expect(layouts()).toBe(1)
+    expect(reader.viewport.value.isSpread).toBe(false)
+    expect(await secondItemAfterLayout(reader)).toEqual({ left: 400, top: 0 })
   })
 
   it("keeps one page at a time in landscape when it is never", async () => {

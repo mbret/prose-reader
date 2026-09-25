@@ -3,6 +3,78 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## [13.0.5](https://github.com/mbret/prose-reader/compare/v13.0.4...v13.0.5) (2026-09-25)
+
+
+### Bug Fixes
+
+* **core:** open at the initial cfi without reporting the start of the book ([fd1ea00](https://github.com/mbret/prose-reader/commit/fd1ea00a6d7e8384d1f73a0090ec8c1f26ac1ef9))
+
+
+
+## [13.0.4](https://github.com/mbret/prose-reader/compare/v13.0.3...v13.0.4) (2026-09-25)
+
+**Note:** Version bump only for package @prose-reader/root
+
+
+
+
+
+## [13.0.3](https://github.com/mbret/prose-reader/compare/v13.0.2...v13.0.3) (2026-09-25)
+
+
+### Bug Fixes
+
+* **demo:** declare haruko-comic.zip right to left ([1f6b4e2](https://github.com/mbret/prose-reader/commit/1f6b4e2f66a340ed59377abf9c8054c78346b758))
+* **demo:** declare sample.cbz left to right ([c24b6f7](https://github.com/mbret/prose-reader/commit/c24b6f7543395af8a9bc2270400b9c5c2b80bc84)), closes [#449](https://github.com/mbret/prose-reader/issues/449)
+* **demo:** label sous-le-vent as French and the webtoons as reflowable ([bff329e](https://github.com/mbret/prose-reader/commit/bff329e3e0504bd912a9ca744b4c4461e6fd29f2))
+
+
+
+## [13.0.2](https://github.com/mbret/prose-reader/compare/v13.0.1...v13.0.2) (2026-09-25)
+
+
+### Bug Fixes
+
+* **gestures:** make the drag listener the only thing stopping the browser's own drag ([a9e23d7](https://github.com/mbret/prose-reader/commit/a9e23d756c671bee2ea7fa08c2f296bb47485928))
+* **gestures:** stop the browser's own drag inside the book, so a moving press still pans or taps ([80fb239](https://github.com/mbret/prose-reader/commit/80fb239da1dd577a47c462018ad97447824bd390))
+
+
+
+## [13.0.1](https://github.com/mbret/prose-reader/compare/v13.0.0...v13.0.1) (2026-09-25)
+
+**Note:** Version bump only for package @prose-reader/root
+
+
+
+
+
+## [13.0.0](https://github.com/mbret/prose-reader/compare/v12.0.0...v13.0.0) (2026-09-25)
+
+
+### ⚠ BREAKING CHANGES
+
+* **navigation:** the core `NavigationTarget` no longer has `url`; the reader
+`createReader` returns still takes it, through the url enhancer. `node` is a
+new target type. After `goToUrl` to an element, the reading position is that
+element's cfi rather than the first character of its page. A url outside the
+book is ignored instead of going to the first item.
+
+Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
+Claude-Session: https://claude.ai/code/session_01YNJfUFaQbVhXaYd5pGyGfK
+
+### Bug Fixes
+
+* **navigation:** keep a selector waiting for its document without an anchor ([f6a33d4](https://github.com/mbret/prose-reader/commit/f6a33d463608f3b5090932214de0c725f28b6a4f))
+* **navigation:** state what a selector may assume, and survive one that throws ([7ac3133](https://github.com/mbret/prose-reader/commit/7ac3133d92248ff38ddf10cd99accef404506f74))
+
+
+### Code Refactoring
+
+* **navigation:** move url navigation into a core enhancer, on a generic node target ([e4b2a22](https://github.com/mbret/prose-reader/commit/e4b2a22155ad652989bfdd87926344da159971b9))
+
+
+
 ## [12.0.0](https://github.com/mbret/prose-reader/compare/v11.0.0...v12.0.0) (2026-09-24)
 
 

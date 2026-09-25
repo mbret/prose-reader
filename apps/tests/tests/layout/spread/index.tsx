@@ -37,16 +37,6 @@ async function run() {
     },
   })
 
-  // Counted from before mount, so the layouts mount runs are included.
-  let viewportLayouts = 0
-
-  reader.viewport.layout$.subscribe(() => {
-    viewportLayouts += 1
-  })
-
-  // @ts-expect-error read by the spec
-  window.viewportLayouts = () => viewportLayouts
-
   // biome-ignore lint/style/noNonNullAssertion: the page always has #app
   reader.mount(document.getElementById(`app`)!)
 

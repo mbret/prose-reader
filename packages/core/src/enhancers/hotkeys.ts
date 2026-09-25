@@ -1,15 +1,11 @@
 import { EMPTY, fromEvent, map, merge, switchMap, takeUntil } from "rxjs"
 import { isHtmlTagElement } from "../utils/dom"
 import type { NavigationEnhancerOutput } from "./navigation/types"
-import type {
-  EnhancerOptions,
-  EnhancerOutput,
-  RootEnhancer,
-} from "./types/enhancer"
+import type { EnhancerOutput, RootEnhancer } from "./types/enhancer"
 
 export const hotkeysEnhancer =
   <
-    InheritOptions extends EnhancerOptions<RootEnhancer>,
+    InheritOptions,
     InheritOutput extends EnhancerOutput<RootEnhancer> &
       NavigationEnhancerOutput,
   >(

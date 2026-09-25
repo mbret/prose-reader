@@ -20,11 +20,11 @@ async function run() {
   const createReaderWithEnhancers = pdfEnhancer(createReader)
 
   const query = new URLSearchParams(window.location.search)
-  const cfi = query.get("cfi") || undefined
+  const cfi = query.get("cfi")
 
   const reader = createReaderWithEnhancers({
     manifest,
-    cfi,
+    target: cfi ? { type: "cfi", value: cfi } : undefined,
     pageTurnAnimation: "none",
     pageTurnMode: "scrollable",
     layoutLayerTransition: false,
