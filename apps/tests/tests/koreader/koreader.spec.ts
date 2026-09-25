@@ -142,7 +142,7 @@ const openAtXPointerInUnloadedChapter = async (page: Page) => {
     // The page's window is untyped: this scenario's index.tsx sets these.
     const { reader } = window as unknown as Scenario
 
-    reader.koreader.goToXPointer(xpointer)
+    reader.navigation.goToXPointer(xpointer)
   }, xpointer)
   await waitForSettled(page)
 
@@ -287,7 +287,7 @@ test.describe("Given an xpointer into a chapter where its place cannot be found"
       // The page's window is untyped: this scenario's index.tsx sets these.
       const { reader } = window as unknown as Scenario
 
-      reader.koreader.goToXPointer(xpointer)
+      reader.navigation.goToXPointer(xpointer)
     }, xpointer)
     await waitForSettled(page)
 

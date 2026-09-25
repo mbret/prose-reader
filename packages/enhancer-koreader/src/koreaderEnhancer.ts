@@ -36,8 +36,6 @@ export type KoreaderEnhancerOutput<InheritTarget> = {
     navigate: (
       to: UserNavigationEntry<InheritTarget | XPointerNavigationTarget>,
     ) => void
-  }
-  koreader: {
     /** Goes to the place an xpointer names. Never animates. */
     goToXPointer: (xpointer: string) => void
     /**
@@ -196,8 +194,6 @@ export const koreaderEnhancer =
       navigation: {
         ...reader.navigation,
         navigate,
-      },
-      koreader: {
         goToXPointer: (xpointer) =>
           navigate({
             target: { type: "xpointer", value: xpointer },

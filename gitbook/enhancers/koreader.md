@@ -24,7 +24,7 @@ const reader = createAppReader({ manifest })
 ## Going to an xpointer
 
 ```typescript
-reader.koreader.goToXPointer("/body/DocFragment[14]/body/div/p[3]/text().42")
+reader.navigation.goToXPointer("/body/DocFragment[14]/body/div/p[3]/text().42")
 
 // or, like any other target
 reader.navigation.navigate({
@@ -40,7 +40,7 @@ book is ignored. `goToXPointer` never animates.
 ## The reading position as an xpointer
 
 ```typescript
-reader.koreader.readingPositionXPointer$.subscribe((xpointer) => {
+reader.navigation.readingPositionXPointer$.subscribe((xpointer) => {
   // push it to a KOReader sync server
 })
 ```
@@ -54,5 +54,8 @@ position on the server:
   rather than as the chapter start in the meantime.
 - While the reader is on its way to an xpointer whose chapter is loading, it
   emits that xpointer, not the chapter start shown in the meantime.
+- When an xpointer's place cannot be found once its chapter has loaded, a stale
+  one for instance, the reader goes to the chapter's first page, and that page
+  is what it emits.
 
 It replays the current pointer on subscription.
