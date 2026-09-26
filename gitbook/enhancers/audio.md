@@ -206,7 +206,7 @@ When a track finishes:
 
 #### Error Handling
 
-If playback fails, the state is updated with `hasError: true`. The enhancer retries playback once after the audio element signals `canplay` before flagging the error.
+If the audio element refuses to play a track, because its source cannot be decoded or the browser's autoplay policy blocks it, the state is updated with `hasError: true` and playback returns to paused (`isPlaying: false`). Nothing is retried automatically: the next `play()`, or selecting another track, clears the flag and tries again. A play request cut short by `pause()` or by switching tracks is not an error.
 
 #### Auto-Selection
 

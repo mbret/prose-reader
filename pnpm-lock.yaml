@@ -374,6 +374,9 @@ importers:
       '@prose-reader/enhancer-annotations':
         specifier: workspace:*
         version: link:../../packages/enhancer-annotations
+      '@prose-reader/enhancer-audio':
+        specifier: workspace:*
+        version: link:../../packages/enhancer-audio
       '@prose-reader/enhancer-gallery':
         specifier: workspace:*
         version: link:../../packages/enhancer-gallery

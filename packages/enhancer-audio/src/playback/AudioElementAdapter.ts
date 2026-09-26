@@ -1,13 +1,14 @@
 import {
+  catchError,
   defer,
+  EMPTY,
   from,
   fromEvent,
   map,
   merge,
   type Observable,
-  retry,
   share,
-  take,
+  throwError,
 } from "rxjs"
 
 export type AudioMetrics = {
@@ -15,9 +16,11 @@ export type AudioMetrics = {
   duration: number | undefined
 }
 
+const isPlayInterruptedByPauseOrLoad = (error: unknown) =>
+  error instanceof DOMException && error.name === `AbortError`
+
 export class AudioElementAdapter {
   readonly element: HTMLAudioElement
-  readonly canPlay$: Observable<Event>
   readonly ended$: Observable<Event>
   readonly isPlaying$: Observable<boolean>
   readonly metrics$: Observable<AudioMetrics>
@@ -26,7 +29,6 @@ export class AudioElementAdapter {
     this.element = document.createElement(`audio`)
     this.element.preload = `metadata`
 
-    this.canPlay$ = fromEvent(this.element, `canplay`).pipe(share())
     this.ended$ = fromEvent(this.element, `ended`).pipe(share())
 
     this.isPlaying$ = merge(
@@ -40,7 +42,7 @@ export class AudioElementAdapter {
       fromEvent(this.element, `seeked`),
       fromEvent(this.element, `loadedmetadata`),
       fromEvent(this.element, `durationchange`),
-      this.canPlay$,
+      fromEvent(this.element, `canplay`),
     ).pipe(
       map(() => ({
         currentTime: this.element.currentTime,
@@ -62,10 +64,10 @@ export class AudioElementAdapter {
 
   play$() {
     return defer(() => from(this.element.play())).pipe(
-      retry({
-        count: 1,
-        delay: () => this.canPlay$.pipe(take(1)),
-      }),
+      // The pause or load that interrupted the play owns what happens next.
+      catchError((error: unknown) =>
+        isPlayInterruptedByPauseOrLoad(error) ? EMPTY : throwError(() => error),
+      ),
     )
   }
 
