@@ -1,7 +1,7 @@
 import { map, type Observable } from "rxjs"
 import type { CfiManager } from "../../cfi"
 import type { Context } from "../../context/Context"
-import { getPageStartProgression } from "../../manifest/progression"
+import { getPageStartProgression } from "../../pagination/progression"
 import { PAGE_VISIBILITY_THRESHOLD } from "../../spine/Pages"
 import type { Spine } from "../../spine/Spine"
 import type { SpineItem } from "../../spineItem/SpineItem"

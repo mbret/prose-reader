@@ -20,7 +20,7 @@ import {
 } from "rxjs"
 import type { CfiManager } from "../cfi"
 import type { Context } from "../context/Context"
-import { getSpineItemProgression } from "../manifest/progression"
+import { getSpineItemProgression } from "../pagination/progression"
 import { Report } from "../report"
 import type { ReaderSettingsManager } from "../settings/ReaderSettingsManager"
 import type { Spine } from "../spine/Spine"

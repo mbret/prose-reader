@@ -1,6 +1,6 @@
 import type { Manifest } from "@prose-reader/shared"
 import { first, map, withLatestFrom } from "rxjs"
-import { getSpineItemProgression } from "../../manifest/progression"
+import { getSpineItemProgression } from "../../pagination/progression"
 import type { Reader } from "../../reader"
 import type { SpineItem } from "../../spineItem/SpineItem"
 import type { LayoutEnhancerOutput } from "../layout/layoutEnhancer"
