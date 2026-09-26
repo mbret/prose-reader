@@ -51,3 +51,52 @@ describe("Given a viewport laid out at a size", () => {
     expect(viewport.scaleFactor).toBe(1)
   })
 })
+
+describe("Given a viewport asked what a size would show", () => {
+  const landscape = { width: 800, height: 400 }
+  const portrait = { width: 400, height: 800 }
+
+  const createViewport = (manifest = createTestManifest()) => {
+    const context = new Context(manifest)
+    const settings = new ReaderSettingsManager({}, context)
+
+    return { viewport: new Viewport(context, settings), settings }
+  }
+
+  it("answers for the book and the current spreadMode setting", () => {
+    const { viewport, settings } = createViewport()
+
+    expect(viewport.wouldSpreadAt(landscape)).toBe(true)
+    expect(viewport.wouldSpreadAt(portrait)).toBe(false)
+
+    settings.update({ spreadMode: "always" })
+
+    expect(viewport.wouldSpreadAt(portrait)).toBe(true)
+
+    settings.update({ spreadMode: "never" })
+
+    expect(viewport.wouldSpreadAt(landscape)).toBe(false)
+  })
+
+  it("never spreads a book that does not allow it", () => {
+    const { viewport, settings } = createViewport(
+      createTestManifest({ renditionSpread: "none" }),
+    )
+
+    settings.update({ spreadMode: "always" })
+
+    expect(viewport.wouldSpreadAt(landscape)).toBe(false)
+  })
+
+  it("is the rule its own layout applies", () => {
+    const { viewport } = createViewport()
+    const { element } = viewport.value
+
+    vi.spyOn(element, "clientWidth", "get").mockReturnValue(landscape.width)
+    vi.spyOn(element, "clientHeight", "get").mockReturnValue(landscape.height)
+    viewport.layout()
+
+    expect(viewport.value.isSpread).toBe(viewport.wouldSpreadAt(landscape))
+    expect(viewport.value.isSpread).toBe(true)
+  })
+})

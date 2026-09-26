@@ -1,4 +1,5 @@
 import type { Manifest } from "@prose-reader/shared"
+import { isSpreadAllowedByBook } from "../manifest/isSpreadAllowedByBook"
 import type { CoreInputSettings } from "../settings/types"
 
 type ViewportDimensions = {
@@ -34,20 +35,7 @@ export const shouldUseSpreadModeForViewport = ({
   manifest: Manifest
   viewport: ViewportDimensions
 }) => {
-  /**
-   * For now we don't support spread for reflowable & scrollable content since
-   * two items could have different height, resulting in weird stuff.
-   */
-  if (manifest.renditionFlow === `scrolled-continuous`) return false
-
-  /**
-   * A book that asks for no spread is never shown in one, whatever the
-   * setting: reading systems must not incorporate its items in a synthetic
-   * spread.
-   *
-   * @see https://www.w3.org/TR/epub-rs-33/#spread
-   */
-  if (manifest.renditionSpread === `none`) return false
+  if (!isSpreadAllowedByBook(manifest)) return false
 
   if (spreadMode !== `auto`) return spreadMode === `always`
 

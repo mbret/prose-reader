@@ -1,5 +1,7 @@
 import type { Manifest } from "@prose-reader/shared"
 import { describe, expect, it } from "vitest"
+import { isSpreadAllowedByBook } from "../manifest/isSpreadAllowedByBook"
+import type { CoreInputSettings } from "../settings/types"
 import { shouldUseSpreadModeForViewport } from "./spreadMode"
 
 const createManifest = (
@@ -107,6 +109,62 @@ describe(`shouldUseSpreadModeForViewport`, () => {
         manifest: createManifest({ renditionFlow: `scrolled-continuous` }),
         viewport: landscape,
       }),
+    ).toBe(false)
+  })
+})
+
+describe(`isSpreadAllowedByBook`, () => {
+  const flows: Manifest["renditionFlow"][] = [
+    undefined,
+    `auto`,
+    `paginated`,
+    `scrolled-doc`,
+    `scrolled-continuous`,
+  ]
+  const spreadModes: CoreInputSettings["spreadMode"][] = [
+    `auto`,
+    `always`,
+    `never`,
+  ]
+  const spreads: Manifest["renditionSpread"][] = [
+    undefined,
+    `auto`,
+    `landscape`,
+    `portrait`,
+    `both`,
+    `none`,
+  ]
+
+  it(`is true exactly when some setting and viewport show the book in a spread`, () => {
+    for (const renditionFlow of flows) {
+      for (const renditionSpread of spreads) {
+        const manifest = createManifest({ renditionFlow, renditionSpread })
+        const someSpread = spreadModes.some((spreadMode) =>
+          [landscape, portrait].some((viewport) =>
+            shouldUseSpreadModeForViewport({
+              spreadMode,
+              manifest,
+              viewport,
+            }),
+          ),
+        )
+
+        expect(
+          isSpreadAllowedByBook(manifest),
+          `flow ${renditionFlow}, spread ${renditionSpread}`,
+        ).toBe(someSpread)
+      }
+    }
+  })
+
+  it(`does not allow a book that asks for no spread, or scrolls continuously`, () => {
+    expect(
+      isSpreadAllowedByBook(createManifest({ renditionSpread: `none` })),
+    ).toBe(false)
+    expect(
+      isSpreadAllowedByBook(
+        createManifest({ renditionFlow: `scrolled-continuous` }),
+      ),
     ).toBe(false)
   })
 })

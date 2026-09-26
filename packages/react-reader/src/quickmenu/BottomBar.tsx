@@ -5,6 +5,7 @@ import { BsBookmarks } from "react-icons/bs"
 import {
   LuChevronDown,
   LuCircleHelp,
+  LuColumns2,
   LuGalleryHorizontal,
   LuNotebookPen,
   LuSearch,
@@ -43,7 +44,14 @@ export const BottomBar = memo(
   }: {
     open: boolean
     onItemClick: (
-      item: "annotations" | "search" | "help" | "toc" | "bookmarks" | "gallery",
+      item:
+        | "annotations"
+        | "search"
+        | "help"
+        | "toc"
+        | "bookmarks"
+        | "gallery"
+        | "layout",
     ) => void
   }) => {
     const boxRef = useRef<HTMLDivElement>(null)
@@ -254,6 +262,14 @@ export const BottomBar = memo(
                   variant="ghost"
                 >
                   <BiFontSize />
+                </IconButton>
+                <IconButton
+                  aria-label="Layout"
+                  size="lg"
+                  variant="ghost"
+                  onClick={() => onItemClick("layout")}
+                >
+                  <LuColumns2 />
                 </IconButton>
                 {hasAnnotationsEnhancer(reader) && (
                   <IconButton

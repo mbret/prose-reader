@@ -55,7 +55,8 @@ export type PublicContextType = {
       | "bookmarks"
       | "more"
       | "back"
-      | "gallery",
+      | "gallery"
+      | "layout",
   ) => void
   quickMenuOpen?: boolean
   onQuickMenuOpenChange?: Dispatch<SetStateAction<boolean>>

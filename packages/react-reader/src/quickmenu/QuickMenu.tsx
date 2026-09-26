@@ -1,4 +1,5 @@
 import { memo } from "react"
+import type { PublicContextType } from "../context/context"
 import { useReaderContextValue } from "../context/useReaderContext"
 import { BottomBar } from "./BottomBar"
 import { TopBar } from "./TopBar"
@@ -8,17 +9,7 @@ export const QuickMenu = memo(
   ({
     onItemClick,
   }: {
-    onItemClick: (
-      item:
-        | "annotations"
-        | "search"
-        | "help"
-        | "toc"
-        | "bookmarks"
-        | "more"
-        | "back"
-        | "gallery",
-    ) => void
+    onItemClick: NonNullable<PublicContextType["onItemClick"]>
   }) => {
     const [quickMenuOpen] = useQuickMenu()
     const { refitMenuOpen, fontSizeMenuOpen, selectedHighlight } =
