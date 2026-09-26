@@ -6,19 +6,25 @@ import { createRoot } from "react-dom/client"
 import { BehaviorSubject } from "rxjs"
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
 
-type SpreadModeSettings = Pick<CoreInputSettings, "spreadMode">
+type ManagedReaderSettings = Pick<CoreInputSettings, "spreadMode"> & {
+  fontScale: number
+}
 
 const { useReaderMock } = vi.hoisted(() => ({ useReaderMock: vi.fn() }))
 
 vi.mock("../context/useReader", () => ({ useReader: useReaderMock }))
 
 import { ReactReaderProvider } from "../context/ReactReaderProvider"
-import { useSyncSpreadMode } from "./useSyncSpreadMode"
+import { useSyncManagedSettings } from "./useSyncManagedSettings"
 
-const createReaderWithSpreadMode = (
-  spreadMode: CoreInputSettings["spreadMode"],
+const createReaderWithSettings = (
+  initialSettings: Partial<ManagedReaderSettings> = {},
 ) => {
-  const values$ = new BehaviorSubject<SpreadModeSettings>({ spreadMode })
+  const values$ = new BehaviorSubject<ManagedReaderSettings>({
+    fontScale: 1,
+    spreadMode: `auto`,
+    ...initialSettings,
+  })
 
   return {
     settings: {
@@ -26,20 +32,22 @@ const createReaderWithSpreadMode = (
       get values() {
         return values$.value
       },
-      update: vi.fn(function updateSettings(settings: SpreadModeSettings) {
+      update: vi.fn(function updateSettings(
+        settings: Partial<ManagedReaderSettings>,
+      ) {
         values$.next({ ...values$.value, ...settings })
       }),
     },
   }
 }
 
-const SyncSpreadModeProbe = () => {
-  useSyncSpreadMode()
+const SyncManagedSettingsProbe = () => {
+  useSyncManagedSettings()
 
   return null
 }
 
-describe(`useSyncSpreadMode`, () => {
+describe(`useSyncManagedSettings`, () => {
   let root: ReturnType<typeof createRoot>
 
   const render = async (
@@ -48,7 +56,7 @@ describe(`useSyncSpreadMode`, () => {
     await act(async () => {
       root.render(
         <ReactReaderProvider {...props}>
-          <SyncSpreadModeProbe />
+          <SyncManagedSettingsProbe />
         </ReactReaderProvider>,
       )
     })
@@ -73,8 +81,18 @@ describe(`useSyncSpreadMode`, () => {
     vi.useRealTimers()
   })
 
+  it(`writes the app's font size into the reader as its font scale`, async () => {
+    const reader = createReaderWithSettings()
+    useReaderMock.mockReturnValue(reader)
+
+    await render({ reader: undefined, fontSize: 1.5 })
+    await waitForWrites(200)
+
+    expect(reader.settings.values.fontScale).toBe(1.5)
+  })
+
   it(`writes the app's spread mode into the reader once it has stayed 200 ms`, async () => {
-    const reader = createReaderWithSpreadMode(`auto`)
+    const reader = createReaderWithSettings()
     useReaderMock.mockReturnValue(reader)
 
     await render({ reader: undefined, spreadMode: `never` })
@@ -88,7 +106,7 @@ describe(`useSyncSpreadMode`, () => {
   })
 
   it(`reports a spread mode set on the reader directly as an internal change`, async () => {
-    const reader = createReaderWithSpreadMode(`never`)
+    const reader = createReaderWithSettings({ spreadMode: `never` })
     const onSpreadModeChange = vi.fn()
     useReaderMock.mockReturnValue(reader)
 
@@ -101,7 +119,7 @@ describe(`useSyncSpreadMode`, () => {
   })
 
   it(`keeps the spread mode the reader was created with when the app passes none`, async () => {
-    const reader = createReaderWithSpreadMode(`always`)
+    const reader = createReaderWithSettings({ spreadMode: `always` })
     useReaderMock.mockReturnValue(reader)
 
     await render({ reader: undefined })
