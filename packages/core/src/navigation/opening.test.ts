@@ -92,6 +92,65 @@ describe("where the reader opens", () => {
     },
   )
 
+  /**
+   * The reader opens once its items are first laid out. A navigation asked for
+   * before then takes it somewhere else, so it opens there instead.
+   */
+  it("is where a navigation asked for before it opens goes", async () => {
+    const reader = createTestReader()
+
+    const positions: ReadingPosition[] = []
+    reader.navigation.readingPosition$.subscribe((position) => {
+      positions.push(position)
+    })
+
+    reader.navigation.goToSpineItem({ indexOrId: 1, animation: false })
+    mountTestReader(reader)
+
+    const settled = await settledOn(reader)
+
+    expect(settled.begin.spineItemIndex).toBe(1)
+    // The second of two items, each half the book.
+    expect(positions).toEqual([
+      { cfi: settled.begin.cfi, percentageEstimateOfBook: 0.5 },
+    ])
+  })
+
+  /**
+   * A navigation naming nothing in the book takes the reader nowhere. Ignored,
+   * it does not replace where the reader opens either.
+   */
+  it("is its target when a navigation asked for before it opens names nothing in the book", async () => {
+    const cfi = "epubcfi(/6/4[1]!/4/2)"
+    const reader = createTestReader({ target: { type: "cfi", value: cfi } })
+
+    const navigations: string[] = []
+    reader.navigation.navigation$
+      // The entry the navigator starts with, replayed.
+      .pipe(skip(1))
+      .subscribe(({ triggeredBy }) => {
+        navigations.push(triggeredBy)
+      })
+    const positions: ReadingPosition[] = []
+    reader.navigation.readingPosition$.subscribe((position) => {
+      positions.push(position)
+    })
+
+    reader.navigation.navigate({
+      target: { type: "cfi", value: "not a cfi" },
+      animation: false,
+    })
+    mountTestReader(reader)
+
+    // As if none was asked for, the reader opens with a navigation of its own.
+    await vi.waitFor(() => expect(navigations[0]).toBe("user"))
+
+    const settled = await settledOn(reader)
+
+    expect(settled.begin.spineItemIndex).toBe(1)
+    expect(positions).toEqual([{ cfi, percentageEstimateOfBook: 0.5 }])
+  })
+
   it("is the place a position target names in the laid out book", async () => {
     // Items are one viewport wide: the second starts where the first ends.
     const reader = createTestReader({
