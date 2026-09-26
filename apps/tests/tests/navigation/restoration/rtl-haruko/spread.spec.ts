@@ -77,7 +77,9 @@ test.describe("Given a spread reached by cfi", () => {
   test("settles with both items ready, keeps the cfi as the reading position, and comes back after a resize", async ({
     page,
   }) => {
-    const cfi = "epubcfi(/6/4!/2/4/2)"
+    // The image of item 1's page. A cfi naming nothing there would not be kept
+    // as the reading position once the item loads.
+    const cfi = "epubcfi(/6/4!/4/2)"
 
     await page.setViewportSize(landscape)
     await page.goto(`${url}?cfi=${encodeURIComponent(cfi)}`)
@@ -110,7 +112,8 @@ test.describe("Given a cfi on the second page of a spread", () => {
   test("keeps how far into the book that page is, not the spread's first", async ({
     page,
   }) => {
-    const cfi = "epubcfi(/6/6!/2/4/2)"
+    // The image of item 2's page.
+    const cfi = "epubcfi(/6/6!/4/2)"
 
     await page.setViewportSize(landscape)
     await page.goto(`${url}?cfi=${encodeURIComponent(cfi)}`)
