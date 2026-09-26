@@ -653,6 +653,39 @@ describe("pagination settlement", () => {
     expect(settlement).toEqual([false, true])
   })
 
+  it("settles again after a navigation to where the reader already is", async () => {
+    const reader = createTestReader()
+
+    mountTestReader(reader)
+    await settledOn(reader, 0)
+
+    // skip the replayed current result
+    const settlement: boolean[] = []
+    reader.pagination.state$.pipe(skip(1)).subscribe((state) => {
+      if (settlement.at(-1) !== state.isSettled)
+        settlement.push(state.isSettled)
+    })
+
+    /**
+     * Every navigation resolves a new result, even one landing where the
+     * reader already is. A navigation that only moves the reading position,
+     * to a cfi on the second page of a spread, lands on the same position
+     * too, and apps rely on pagination settling again after it.
+     */
+    reader.navigation.navigate({
+      target: {
+        type: "position",
+        value: reader.navigation.getNavigation().position,
+      },
+      animation: false,
+    })
+
+    await settledOn(reader, 0)
+    await waitFor(100)
+
+    expect(settlement).toEqual([false, true])
+  })
+
   it("settles once when the user lets go of a pan, even where the pan started", async () => {
     const reader = createTestReader()
 

@@ -543,4 +543,43 @@ describe("reading position and settled pagination", () => {
       }),
     })
   })
+
+  it("moves before pagination settles again, when a navigation keeps the pages shown", async () => {
+    /**
+     * In landscape the spread holding item 1 starts at item 0, so a cfi into
+     * item 1 moves the reading position without changing the pages shown.
+     * Pagination settles again all the same, on the spread it had settled on,
+     * so the latest value is pagination's once more.
+     */
+    setTestViewport({ width: 200, height: 100 })
+    const reader = createEnhancedTestReader()
+
+    mountTestReader(reader)
+    await settledOn(reader, 0)
+
+    const placesNamedInOrder =
+      recordPlacesNamedByReadingPositionAndSettledPagination(reader)
+
+    reader.navigation.goToCfi("epubcfi(/6/4[1]!/4/2)", { animate: false })
+    await settledOn(reader, 0)
+
+    expect(placesNamedInOrder).toEqual([
+      {
+        stream: "readingPosition",
+        pageStartProgression: itemStartProgression(0),
+      },
+      {
+        stream: "settledPagination",
+        pageStartProgression: itemStartProgression(0),
+      },
+      {
+        stream: "readingPosition",
+        pageStartProgression: itemStartProgression(1),
+      },
+      {
+        stream: "settledPagination",
+        pageStartProgression: itemStartProgression(0),
+      },
+    ])
+  })
 })
