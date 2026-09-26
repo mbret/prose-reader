@@ -2,14 +2,14 @@ import {
   useReaderContext,
   useReaderContextValue,
 } from "../context/useReaderContext"
-import { useSyncReaderSetting } from "./useSyncReaderSetting"
+import { useSyncReaderSettingWithManagedValue } from "./useSyncReaderSettingWithManagedValue"
 
 /**
- * Keeps the reader on the settings react-reader manages. Each reports a value
- * the reader takes otherwise to the app as `"internal"`, and adopts it as its
- * uncontrolled copy.
+ * Keeps the reader on the settings react-reader manages. A value the reader
+ * takes otherwise is reported to the app as `"internal"`, and adopted as
+ * react-reader's own copy.
  */
-export const useSyncManagedSettings = () => {
+export const useSyncReaderWithManagedSettings = () => {
   const context = useReaderContext()
   const { fontSize, uncontrolledFontSize, spreadMode, uncontrolledSpreadMode } =
     useReaderContextValue([
@@ -19,8 +19,9 @@ export const useSyncManagedSettings = () => {
       "uncontrolledSpreadMode",
     ])
 
-  useSyncReaderSetting({
-    value: fontSize ?? uncontrolledFontSize,
+  useSyncReaderSettingWithManagedValue({
+    appValue: fontSize,
+    uncontrolledValue: uncontrolledFontSize,
     readReaderValue: (settings) => settings.fontScale,
     toReaderSettings: (fontScale) => ({ fontScale }),
     onReaderValueChange: function adoptFontScaleOfReader(fontScale) {
@@ -29,8 +30,9 @@ export const useSyncManagedSettings = () => {
     },
   })
 
-  useSyncReaderSetting({
-    value: spreadMode ?? uncontrolledSpreadMode,
+  useSyncReaderSettingWithManagedValue({
+    appValue: spreadMode,
+    uncontrolledValue: uncontrolledSpreadMode,
     readReaderValue: (settings) => settings.spreadMode,
     toReaderSettings: (spreadMode) => ({ spreadMode }),
     onReaderValueChange: function adoptSpreadModeOfReader(spreadMode) {

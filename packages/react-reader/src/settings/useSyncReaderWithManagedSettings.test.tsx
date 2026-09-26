@@ -1,7 +1,7 @@
 /* @vitest-environment happy-dom */
 
 import type { CoreInputSettings } from "@prose-reader/core"
-import { act, type ComponentProps } from "react"
+import { act, type ComponentProps, useState } from "react"
 import { createRoot } from "react-dom/client"
 import { BehaviorSubject } from "rxjs"
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
@@ -15,7 +15,7 @@ const { useReaderMock } = vi.hoisted(() => ({ useReaderMock: vi.fn() }))
 vi.mock("../context/useReader", () => ({ useReader: useReaderMock }))
 
 import { ReactReaderProvider } from "../context/ReactReaderProvider"
-import { useSyncManagedSettings } from "./useSyncManagedSettings"
+import { useSyncReaderWithManagedSettings } from "./useSyncReaderWithManagedSettings"
 
 const createReaderWithSettings = (
   initialSettings: Partial<ManagedReaderSettings> = {},
@@ -41,13 +41,54 @@ const createReaderWithSettings = (
   }
 }
 
-const SyncManagedSettingsProbe = () => {
-  useSyncManagedSettings()
+const SyncReaderWithManagedSettingsProbe = () => {
+  useSyncReaderWithManagedSettings()
 
   return null
 }
 
-describe(`useSyncManagedSettings`, () => {
+type SavedChange = [
+  setting: "fontSize" | "spreadMode",
+  from: string,
+  value: number | string,
+]
+
+/**
+ * An app that saves every change react-reader reports and passes it back, as
+ * react-reader's guide shows.
+ */
+const AppSavingEveryChange = ({
+  initialFontSize,
+  initialSpreadMode,
+  savedChanges,
+}: {
+  initialFontSize: number
+  initialSpreadMode: CoreInputSettings["spreadMode"]
+  savedChanges: SavedChange[]
+}) => {
+  const [fontSize, setFontSize] = useState(initialFontSize)
+  const [spreadMode, setSpreadMode] = useState(initialSpreadMode)
+
+  return (
+    <ReactReaderProvider
+      reader={undefined}
+      fontSize={fontSize}
+      onFontSizeChange={function saveFontSize(from, value) {
+        savedChanges.push([`fontSize`, from, value])
+        setFontSize(value)
+      }}
+      spreadMode={spreadMode}
+      onSpreadModeChange={function saveSpreadMode(from, value) {
+        savedChanges.push([`spreadMode`, from, value])
+        setSpreadMode(value)
+      }}
+    >
+      <SyncReaderWithManagedSettingsProbe />
+    </ReactReaderProvider>
+  )
+}
+
+describe(`useSyncReaderWithManagedSettings`, () => {
   let root: ReturnType<typeof createRoot>
 
   const render = async (
@@ -56,7 +97,7 @@ describe(`useSyncManagedSettings`, () => {
     await act(async () => {
       root.render(
         <ReactReaderProvider {...props}>
-          <SyncManagedSettingsProbe />
+          <SyncReaderWithManagedSettingsProbe />
         </ReactReaderProvider>,
       )
     })
@@ -79,6 +120,37 @@ describe(`useSyncManagedSettings`, () => {
       root.unmount()
     })
     vi.useRealTimers()
+  })
+
+  it(`keeps the app's values when the reader arrives holding others`, async () => {
+    const reader = createReaderWithSettings({
+      fontScale: 1,
+      spreadMode: `auto`,
+    })
+    const savedChanges: SavedChange[] = []
+    const renderApp = async () => {
+      await act(async () => {
+        root.render(
+          <AppSavingEveryChange
+            initialFontSize={1.5}
+            initialSpreadMode="never"
+            savedChanges={savedChanges}
+          />,
+        )
+      })
+    }
+
+    useReaderMock.mockReturnValue(undefined)
+    await renderApp()
+    useReaderMock.mockReturnValue(reader)
+    await renderApp()
+    await waitForWrites(200)
+
+    expect(reader.settings.values).toEqual({
+      fontScale: 1.5,
+      spreadMode: `never`,
+    })
+    expect(savedChanges).toEqual([])
   })
 
   it(`writes the app's font size into the reader as its font scale`, async () => {

@@ -25,7 +25,7 @@ import { useQuickMenu } from "./quickmenu/useQuickMenu"
 import { useQuickMenuToggleGesture } from "./quickmenu/useQuickMenuToggleGesture"
 import { RefitDialog } from "./refit/RefitDialog"
 import { SearchDialog } from "./search/SearchDialog"
-import { useSyncManagedSettings } from "./settings/useSyncManagedSettings"
+import { useSyncReaderWithManagedSettings } from "./settings/useSyncReaderWithManagedSettings"
 import { TableOfContentsDialog } from "./toc/TableOfContentsDialog"
 import { useZoomSettings } from "./zoom/useZoomSettings"
 import { ZoomControls } from "./zoom/ZoomControls"
@@ -46,7 +46,7 @@ const Effects = memo(() => {
   useQuickMenuToggleGesture()
   usePreventInteractionOnSelection()
   useSyncAnnotationsWithReader()
-  useSyncManagedSettings()
+  useSyncReaderWithManagedSettings()
 
   return <BookmarksEffects />
 })
