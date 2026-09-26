@@ -10,7 +10,7 @@ import {
   resolveXPointer,
   toCfiPosition,
 } from "@prose-reader/koreader"
-import { Report } from "@prose-reader/shared"
+import { type Manifest, Report } from "@prose-reader/shared"
 import {
   BehaviorSubject,
   combineLatest,
@@ -50,18 +50,59 @@ const isXPointerTarget = (target: {
   type: string
 }): target is XPointerNavigationTarget => target.type === "xpointer"
 
+/** A navigation to an xpointer, and the selector target it goes by. */
 type XPointerNavigation = {
   xpointer: string
   target: NavigationTarget<"selector">
 }
 
 /**
- * Lets a reader navigate to KOReader xpointers, and reports its reading
- * position as one.
+ * The pointer names its spine item, which is known at once, and a place in its
+ * document, found once the document is loaded.
+ */
+const xpointerToNavigationTarget = (
+  xpointer: string,
+  manifest: Manifest,
+): NavigationTarget<"selector"> | undefined => {
+  const parsed = parseXPointer(xpointer)
+
+  if (!parsed || !manifest.spineItems[parsed.spineItemIndex]) return undefined
+
+  return {
+    type: "selector",
+    value: {
+      spineItem: parsed.spineItemIndex,
+      find: (document) => {
+        const position = resolveXPointer(parsed, document)
+
+        return position && toCfiPosition(position)
+      },
+    },
+  }
+}
+
+const toXPointerNavigation = (
+  xpointer: string,
+  manifest: Manifest,
+): XPointerNavigation | undefined => {
+  const target = xpointerToNavigationTarget(xpointer, manifest)
+
+  if (!target) {
+    report.warn(`Ignore navigation to ${xpointer}, not in the book`)
+
+    return undefined
+  }
+
+  return { xpointer, target }
+}
+
+/**
+ * Lets a reader navigate to KOReader xpointers, and open at one, and reports
+ * its reading position as one.
  */
 export const koreaderEnhancer =
   <
-    InheritOptions,
+    InheritOptions extends { manifest: Manifest; target?: { type: string } },
     InheritTarget extends { type: string },
     InheritOutput extends EnhancerOutput<RootEnhancer>,
   >(
@@ -72,37 +113,29 @@ export const koreaderEnhancer =
     },
   ) =>
   (
-    options: InheritOptions,
+    options: Omit<InheritOptions, "target"> & {
+      target?: InheritOptions["target"] | XPointerNavigationTarget
+    },
   ): InheritOutput & KoreaderEnhancerOutput<InheritTarget> => {
-    const reader = next(options)
+    const { target: openingTarget, ...optionsWithoutOpeningTarget } = options
+    const isOpeningAtXPointer =
+      openingTarget !== undefined && isXPointerTarget(openingTarget)
+    const openingXPointerNavigation = isOpeningAtXPointer
+      ? toXPointerNavigation(openingTarget.value, options.manifest)
+      : undefined
+    // Known before the reader opens, so `readingPositionXPointer$` never
+    // reports what is shown while the chapter it opens at loads.
     const lastXPointerNavigation = new BehaviorSubject<
       XPointerNavigation | undefined
-    >(undefined)
-
-    /**
-     * The pointer names its spine item, which is known at once, and a place
-     * in its document, found once the document is loaded.
-     */
-    const xpointerToNavigationTarget = (
-      xpointer: string,
-    ): NavigationTarget<"selector"> | undefined => {
-      const parsed = parseXPointer(xpointer)
-
-      if (!parsed || !reader.spineItemsManager.get(parsed.spineItemIndex))
-        return undefined
-
-      return {
-        type: "selector",
-        value: {
-          spineItem: parsed.spineItemIndex,
-          find: (document) => {
-            const position = resolveXPointer(parsed, document)
-
-            return position && toCfiPosition(position)
-          },
-        },
-      }
-    }
+    >(openingXPointerNavigation)
+    const reader = next({
+      ...optionsWithoutOpeningTarget,
+      target: isOpeningAtXPointer
+        ? openingXPointerNavigation?.target
+        : openingTarget,
+      // Only `target` changed, to one the reader it enhances takes; TS cannot
+      // rebuild the generic options from `Omit`.
+    } as InheritOptions)
 
     const navigate = (
       to: UserNavigationEntry<InheritTarget | XPointerNavigationTarget>,
@@ -112,18 +145,17 @@ export const koreaderEnhancer =
       if (!isXPointerTarget(target))
         return reader.navigation.navigate({ ...to, target })
 
-      const selector = xpointerToNavigationTarget(target.value)
+      const xpointerNavigation = toXPointerNavigation(
+        target.value,
+        options.manifest,
+      )
 
-      if (!selector) {
-        report.warn(`Ignore navigation to ${target.value}, not in the book`)
-
-        return
-      }
+      if (!xpointerNavigation) return
 
       // Before navigating, so `readingPositionXPointer$` never reports what is
       // shown while its chapter loads.
-      lastXPointerNavigation.next({ xpointer: target.value, target: selector })
-      reader.navigation.navigate({ ...to, target: selector })
+      lastXPointerNavigation.next(xpointerNavigation)
+      reader.navigation.navigate({ ...to, target: xpointerNavigation.target })
     }
 
     const getLoadedSpineItemDocument = (spineItemIndex: number) => {

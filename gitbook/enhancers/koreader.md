@@ -37,6 +37,21 @@ place in its document, which it finds once that document is loaded, even when
 the chapter was not loaded when the navigation started. A pointer outside the
 book is ignored. `goToXPointer` never animates.
 
+## Opening at an xpointer
+
+```typescript
+const reader = createAppReader({
+  manifest,
+  target: { type: "xpointer", value: "/body/DocFragment[14]/body/div/p[3]/text().42" },
+})
+```
+
+`target` takes an xpointer like any other target. The reader opens at its
+place, even in a chapter that is not loaded yet, and `readingPositionXPointer$`
+reports that pointer from the start, never the start of the book or of the
+chapter. A pointer outside the book is ignored, and the reader opens at the
+start of the book.
+
 ## The reading position as an xpointer
 
 ```typescript
