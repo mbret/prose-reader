@@ -25,9 +25,13 @@ export const createSpineItemLocator = ({
   /**
    * The box a node is laid out in, from `offset` when it is text, or
    * `undefined` when it lays out none, as when it is hidden. A range over the
-   * node's contents measures it, unless it selects nothing that lays out a
-   * box, as in an image, which has no contents, or an empty element: the
-   * element's own box does then.
+   * node's contents from `offset` measures it, unless it selects nothing that
+   * lays out a box, as in an image, which has no contents, or a video, whose
+   * sources lay out none: the element's own box does then.
+   *
+   * Not for the boundary after an element's last child, where that range is
+   * collapsed: the element's box starts where its contents do, pages before
+   * the boundary when the element spans several.
    */
   const getLaidOutRect = (node: Node, offset: number) => {
     const range = getRangeFromNode(node, offset)
@@ -35,7 +39,13 @@ export const createSpineItemLocator = ({
     if (range && range.getClientRects().length > 0)
       return range.getBoundingClientRect()
 
-    if (isHtmlElement(node) && node.getClientRects().length > 0)
+    const isBoundaryAfterContents = !!range?.collapsed && node.hasChildNodes()
+
+    if (
+      !isBoundaryAfterContents &&
+      isHtmlElement(node) &&
+      node.getClientRects().length > 0
+    )
       return node.getBoundingClientRect()
 
     return undefined

@@ -96,4 +96,40 @@ describe("the position of a node in its spine item", () => {
       locator.getSpineItemPositionFromNode(hidden, 0, spineItem),
     ).toBeUndefined()
   })
+
+  it("is the page of its own box for an element whose contents lay out nothing, as a video's sources", () => {
+    const video = document.createElement("video")
+
+    video.append(document.createElement("source"))
+    layOut({ rangeBoxes: [], element: video, elementBoxes: laidOutAt(230) })
+
+    expect(locator.getSpineItemPositionFromNode(video, 0, spineItem)).toEqual(
+      expect.objectContaining({ x: 200, y: 0 }),
+    )
+  })
+
+  /**
+   * A cfi into the empty character data after an element's last child names
+   * the boundary there: the element, at the index past its last child. The
+   * element's own box starts where its contents do, pages before that
+   * boundary when the element spans several.
+   */
+  it("is none for the boundary after an element's last child, rather than where the element starts", () => {
+    const paragraph = document.createElement("p")
+
+    paragraph.append("Text spanning pages")
+    layOut({
+      rangeBoxes: [],
+      element: paragraph,
+      elementBoxes: laidOutAt(30),
+    })
+
+    expect(
+      locator.getSpineItemPositionFromNode(
+        paragraph,
+        paragraph.childNodes.length,
+        spineItem,
+      ),
+    ).toBeUndefined()
+  })
 })
