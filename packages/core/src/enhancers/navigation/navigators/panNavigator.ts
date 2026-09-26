@@ -21,7 +21,6 @@ export class PanNavigator extends ReactiveEntity<{
 
   start(delta: { x: number; y: number }) {
     this.unlock?.()
-    this.unlock = this.reader.navigation.lock()
 
     this.mergeCompare({
       isStarted: true,
@@ -31,6 +30,15 @@ export class PanNavigator extends ReactiveEntity<{
       lastPosition:
         this.reader.navigation.controlledNavigationController.viewportPosition,
     })
+
+    const unlock = this.reader.navigation.lock()
+
+    /**
+     * Whoever reacts to the lock does so before it is returned here, and can
+     * stop the pan then: the pan is over, and its lock with it.
+     */
+    if (this.value.isStarted) this.unlock = unlock
+    else unlock()
   }
 
   stop(delta: { x: number; y: number }) {

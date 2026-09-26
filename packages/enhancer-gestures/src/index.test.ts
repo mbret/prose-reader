@@ -5,7 +5,7 @@ import {
   type Manifest,
   type Navigation,
 } from "@prose-reader/core"
-import { EMPTY, filter, of, skip } from "rxjs"
+import { EMPTY, filter, first, of, skip } from "rxjs"
 import { afterEach, beforeAll, describe, expect, it, vi } from "vitest"
 import { gesturesEnhancer } from "./index"
 
@@ -156,9 +156,18 @@ const onFirstPage = async () => {
 
   /**
    * Presses at `x`, halfway down, moves `distance` to the right in five steps
-   * a frame apart, and lets go. It is over within the time a tap allows.
+   * a frame apart, and lets go unless told not to. It is over within the time
+   * a tap allows.
    */
-  const drag = async ({ x, distance }: { x: number; distance: number }) => {
+  const drag = async ({
+    x,
+    distance,
+    letGo = true,
+  }: {
+    x: number
+    distance: number
+    letGo?: boolean
+  }) => {
     const target = reader.context.value.rootElement
 
     if (!target) throw new Error("the reader is not mounted")
@@ -185,7 +194,8 @@ const onFirstPage = async () => {
     }
 
     await vi.advanceTimersByTimeAsync(16)
-    dispatch("pointerup", x + distance)
+
+    if (letGo) dispatch("pointerup", x + distance)
 
     await vi.runAllTimersAsync()
   }
@@ -221,5 +231,70 @@ describe("Given a reader on its first page", () => {
 
     expect(gestures.map(({ type }) => type)).toContain("pan")
     expect(navigations.length).toBeGreaterThan(0)
+  })
+})
+
+/**
+ * A pan that moves the page holds the navigation until it is stopped: while
+ * held, the reader neither restores, paginates nor moves its reading
+ * position. However the pan ends, the navigation must not stay held.
+ */
+describe("Given a pan moving the page", () => {
+  const isNavigationLocked = (reader: ReturnType<typeof createReader>) => {
+    let isLocked: boolean | undefined
+
+    reader.navigation.isLocked$
+      .subscribe((value) => {
+        isLocked = value
+      })
+      .unsubscribe()
+
+    return isLocked
+  }
+
+  it("releases the navigation when a gestures setting changes before the user lets go", async () => {
+    const { reader, drag } = await onFirstPage()
+
+    // Towards the second page, still held.
+    await drag({ x: viewport.width / 2, distance: -60, letGo: false })
+
+    expect(isNavigationLocked(reader)).toBe(true)
+
+    reader.gestures.settings.update({ fontScaleMaxScale: 4 })
+    await vi.runAllTimersAsync()
+
+    expect(isNavigationLocked(reader)).toBe(false)
+    expect(reader.pagination.state.isSettled).toBe(true)
+  })
+
+  /**
+   * Whoever reacts to the lock the pan takes does so before `start()` has
+   * returned. Changing a gestures setting then ends the pan right there.
+   */
+  it("releases the navigation when a gestures setting changes as the pan takes it", async () => {
+    const { reader, drag } = await onFirstPage()
+    let hasChangedSetting = false
+
+    reader.navigation.isLocked$.pipe(filter(Boolean), first()).subscribe(() => {
+      hasChangedSetting = true
+      reader.gestures.settings.update({ fontScaleMaxScale: 4 })
+    })
+
+    await drag({ x: viewport.width / 2, distance: -60, letGo: false })
+
+    expect(hasChangedSetting).toBe(true)
+    expect(isNavigationLocked(reader)).toBe(false)
+    expect(reader.pagination.state.isSettled).toBe(true)
+  })
+
+  it("lets the reader be destroyed before the user lets go", async () => {
+    const { reader, drag } = await onFirstPage()
+
+    await drag({ x: viewport.width / 2, distance: -60, letGo: false })
+
+    expect(isNavigationLocked(reader)).toBe(true)
+    // Destroyed here, not again after the test.
+    readers.splice(readers.indexOf(reader), 1)
+    expect(() => reader.destroy()).not.toThrow()
   })
 })

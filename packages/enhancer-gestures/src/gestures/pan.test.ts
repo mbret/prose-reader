@@ -61,17 +61,21 @@ const createHarness = ({
   }
   const panNavigatorState = {
     isStarted: false,
+    lastDelta: { x: 0, y: 0 },
   }
   const move = vi.fn((position: { x: number; y: number }) => {
     zoomState.currentPosition = position
   })
-  const start = vi.fn(() => {
+  const start = vi.fn((delta: { x: number; y: number }) => {
     panNavigatorState.isStarted = true
+    panNavigatorState.lastDelta = delta
   })
   const stop = vi.fn(() => {
     panNavigatorState.isStarted = false
   })
-  const panMoveTo = vi.fn()
+  const panMoveTo = vi.fn((delta: { x: number; y: number }) => {
+    panNavigatorState.lastDelta = delta
+  })
 
   const reader = {
     zoom: {
@@ -115,6 +119,8 @@ const createHarness = ({
 
   return {
     events$,
+    values$,
+    zoomState,
     move,
     panEvents,
     panMoveTo,
@@ -159,5 +165,76 @@ describe("registerPan", () => {
 
     expect(move).not.toHaveBeenCalled()
     expect(start).not.toHaveBeenCalled()
+  })
+})
+
+/**
+ * The pan navigator holds the navigation from `start()` to `stop()`: while it
+ * is held, the reader neither restores, paginates nor moves the reading
+ * position. A pan that moved the page has to stop it however it ends.
+ */
+describe("registerPan stopping the pan navigator", () => {
+  type Harness = ReturnType<typeof createHarness>
+
+  it.each<[string, (harness: Harness) => void, { x: number; y: number }]>([
+    [
+      "it ends",
+      ({ events$ }) => events$.next(createPanEvent("panEnd", 30, 0)),
+      { x: 30, y: 0 },
+    ],
+    [
+      "a gestures setting changes before it ends",
+      ({ values$ }) =>
+        values$.next({ ...values$.getValue(), fontScaleMaxScale: 4 }),
+      { x: 20, y: 0 },
+    ],
+    [
+      "it ends zoomed in",
+      ({ events$, zoomState }) => {
+        zoomState.isZooming = true
+        zoomState.currentScale = 2
+        events$.next(createPanEvent("panEnd", 30, 0))
+      },
+      { x: 20, y: 0 },
+    ],
+    [
+      "its gestures are unsubscribed from, as when the reader is destroyed",
+      ({ subscription }) => subscription.unsubscribe(),
+      { x: 20, y: 0 },
+    ],
+  ])("stops it once when %s, where the page was left", (_, end, landing) => {
+    const harness = createHarness({
+      currentScale: 1,
+      isZooming: false,
+      panNavigation: "pan",
+    })
+    const { events$, start, stop } = harness
+
+    events$.next(createPanEvent("panStart", 0, 0))
+    events$.next(createPanEvent("panMove", 10, 0))
+    events$.next(createPanEvent("panMove", 20, 0))
+
+    expect(start).toHaveBeenCalledTimes(1)
+
+    end(harness)
+    // A later end must not stop it again.
+    harness.subscription.unsubscribe()
+
+    expect(stop.mock.calls).toEqual([[landing]])
+  })
+
+  it("stops nothing for a pan that did not move the page", () => {
+    const { events$, stop, subscription } = createHarness({
+      currentScale: 2,
+      isZooming: true,
+      panNavigation: "pan",
+    })
+
+    events$.next(createPanEvent("panStart", 0, 0))
+    events$.next(createPanEvent("panMove", 10, 5))
+    events$.next(createPanEvent("panEnd", 20, 5))
+    subscription.unsubscribe()
+
+    expect(stop).not.toHaveBeenCalled()
   })
 })
