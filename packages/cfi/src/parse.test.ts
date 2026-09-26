@@ -192,4 +192,57 @@ describe("EPUB CFI Parser", () => {
       }
     })
   })
+
+  /**
+   * A saved value gone corrupted can still read partly like a CFI. Read
+   * partly, it would name a place it never named.
+   */
+  describe("a string only partly a CFI", () => {
+    it.each([
+      [
+        "text after the closing parenthesis",
+        "epubcfi(/6/2!)junk",
+        'to end with the ")"',
+      ],
+      ["an epubcfi( never closed", "epubcfi(/6/14!/4/2", 'to end with the ")"'],
+      [
+        "a space outside an assertion",
+        "epubcfi(/6/4! /4/2)",
+        'Unexpected character " "',
+      ],
+      [
+        "an encoded character",
+        "epubcfi(%2F6%2F4!%2F4)",
+        'Unexpected character "%"',
+      ],
+      [
+        "a step without its number",
+        "epubcfi(/6//4)",
+        'Expected a number after "/"',
+      ],
+      [
+        "a character offset without its number",
+        "epubcfi(/6/4!/4/2/1:)",
+        'Expected a number after ":"',
+      ],
+      [
+        "a temporal offset that is not a number",
+        "epubcfi(/4~1.2.3)",
+        'Expected a number after "~"',
+      ],
+      [
+        "an assertion never closed",
+        "epubcfi(/6/4[chap01!/4/2)",
+        'Expected "]" to close an assertion',
+      ],
+    ])("should throw for %s", (_, cfi, reason) => {
+      expect(() => parse(cfi)).toThrow(reason)
+    })
+
+    it("should read a CFI with whitespace around it", () => {
+      expect(parse(" epubcfi(/6/4!/4/2)\n")).toEqual(
+        parse("epubcfi(/6/4!/4/2)"),
+      )
+    })
+  })
 })

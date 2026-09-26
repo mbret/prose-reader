@@ -18,6 +18,11 @@ installReaderTestEnvironment()
 const targetsNamingNothing: [string, NavigationTarget][] = [
   ["a malformed cfi", { type: "cfi", value: "not a cfi" }],
   ["an empty cfi", { type: "cfi", value: "" }],
+  // Its start reads like the first item's cfi.
+  [
+    "a cfi with text after its end",
+    { type: "cfi", value: "epubcfi(/6/2!)junk" },
+  ],
   [
     "a cfi of an item the book does not have",
     { type: "cfi", value: "epubcfi(/6/999!/4/2/1:0)" },
