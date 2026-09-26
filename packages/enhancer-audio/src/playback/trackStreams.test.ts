@@ -5,8 +5,7 @@ import type { Manifest } from "@prose-reader/shared"
 import { BehaviorSubject, firstValueFrom } from "rxjs"
 import { describe, expect, it } from "vitest"
 import type { AudioEnhancerState, AudioTrack } from "../types"
-import { createTrackStreams } from "./trackStreams"
-import type { AudioControllerReader } from "./types"
+import { createTrackStreams, getManifestAudioTracks } from "./trackStreams"
 
 const createSpineItem = ({
   id,
@@ -69,10 +68,12 @@ const createState = (
   ...overrides,
 })
 
-const createReader = ({
+const createStreams = ({
   spineItems = [],
+  state = createState(),
 }: {
   spineItems?: Manifest["spineItems"]
+  state?: AudioEnhancerState
 } = {}) => {
   const paginationState$ = new BehaviorSubject(
     createPaginationState({
@@ -81,61 +82,56 @@ const createReader = ({
     }),
   )
 
-  const reader: Pick<AudioControllerReader, "context" | "pagination"> = {
-    context: { manifest: createManifest(spineItems) },
-    pagination: { state$: paginationState$ },
-  }
-
-  return { paginationState$, reader }
-}
-
-describe(`createTrackStreams`, () => {
-  describe(`tracks$`, () => {
-    it(`extracts only audio spine items from the manifest`, async () => {
-      const { reader } = createReader({
-        spineItems: [
-          createSpineItem({ id: `audio-1`, index: 0 }),
-          createSpineItem({
-            id: `chapter-1`,
-            index: 1,
-            href: `chapter-1.xhtml`,
-            mediaType: `application/xhtml+xml`,
-          }),
-          createSpineItem({ id: `audio-2`, index: 2 }),
-        ],
-      })
-      const state$ = new BehaviorSubject(createState())
-      const { tracks$ } = createTrackStreams(reader, state$)
-
-      const tracks = await firstValueFrom(tracks$)
-
-      expect(tracks).toEqual([
-        {
-          id: `audio-1`,
-          href: `audio-1.mp3`,
-          index: 0,
-          mediaType: `audio/mpeg`,
-        },
-        {
-          id: `audio-2`,
-          href: `audio-2.mp3`,
-          index: 2,
-          mediaType: `audio/mpeg`,
-        },
-      ])
-    })
+  const streams = createTrackStreams({
+    tracks: getManifestAudioTracks(createManifest(spineItems)),
+    paginationState$,
+    state$: new BehaviorSubject(state),
   })
 
+  return { paginationState$, ...streams }
+}
+
+describe(`getManifestAudioTracks`, () => {
+  it(`extracts only audio spine items from the manifest`, () => {
+    const tracks = getManifestAudioTracks(
+      createManifest([
+        createSpineItem({ id: `audio-1`, index: 0 }),
+        createSpineItem({
+          id: `chapter-1`,
+          index: 1,
+          href: `chapter-1.xhtml`,
+          mediaType: `application/xhtml+xml`,
+        }),
+        createSpineItem({ id: `audio-2`, index: 2 }),
+      ]),
+    )
+
+    expect(tracks).toEqual([
+      {
+        id: `audio-1`,
+        href: `audio-1.mp3`,
+        index: 0,
+        mediaType: `audio/mpeg`,
+      },
+      {
+        id: `audio-2`,
+        href: `audio-2.mp3`,
+        index: 2,
+        mediaType: `audio/mpeg`,
+      },
+    ])
+  })
+})
+
+describe(`createTrackStreams`, () => {
   describe(`visibleTrackIds$`, () => {
     it(`returns track IDs at pagination boundaries`, async () => {
-      const { reader, paginationState$ } = createReader({
+      const { paginationState$, visibleTrackIds$ } = createStreams({
         spineItems: [
           createSpineItem({ id: `track-1`, index: 0 }),
           createSpineItem({ id: `track-2`, index: 1 }),
         ],
       })
-      const state$ = new BehaviorSubject(createState())
-      const { visibleTrackIds$ } = createTrackStreams(reader, state$)
 
       const emissions: string[][] = []
       const sub = visibleTrackIds$.subscribe((ids) => emissions.push(ids))
@@ -153,11 +149,9 @@ describe(`createTrackStreams`, () => {
     })
 
     it(`deduplicates when begin and end point to the same track`, async () => {
-      const { reader, paginationState$ } = createReader({
+      const { paginationState$, visibleTrackIds$ } = createStreams({
         spineItems: [createSpineItem({ id: `track-1`, index: 0 })],
       })
-      const state$ = new BehaviorSubject(createState())
-      const { visibleTrackIds$ } = createTrackStreams(reader, state$)
 
       const emissions: string[][] = []
       const sub = visibleTrackIds$.subscribe((ids) => emissions.push(ids))
@@ -175,7 +169,7 @@ describe(`createTrackStreams`, () => {
     })
 
     it(`returns empty when pagination points to non-audio spine items`, async () => {
-      const { reader, paginationState$ } = createReader({
+      const { paginationState$, visibleTrackIds$ } = createStreams({
         spineItems: [
           createSpineItem({
             id: `chapter-1`,
@@ -185,8 +179,6 @@ describe(`createTrackStreams`, () => {
           }),
         ],
       })
-      const state$ = new BehaviorSubject(createState())
-      const { visibleTrackIds$ } = createTrackStreams(reader, state$)
 
       const emissions: string[][] = []
       const sub = visibleTrackIds$.subscribe((ids) => emissions.push(ids))
@@ -204,6 +196,46 @@ describe(`createTrackStreams`, () => {
     })
   })
 
+  describe(`firstVisibleTrackId$`, () => {
+    it(`starts every subscriber on the current track, however late it subscribes`, () => {
+      const { paginationState$, firstVisibleTrackId$ } = createStreams({
+        spineItems: [
+          createSpineItem({ id: `track-1`, index: 0 }),
+          createSpineItem({ id: `track-2`, index: 1 }),
+        ],
+      })
+
+      paginationState$.next(
+        createPaginationState({
+          beginSpineItemIndex: 1,
+          endSpineItemIndex: 1,
+        }),
+      )
+
+      const firstSubscriberTrackIds: Array<string | undefined> = []
+      const laterSubscriberTrackIds: Array<string | undefined> = []
+      const firstSub = firstVisibleTrackId$.subscribe((trackId) =>
+        firstSubscriberTrackIds.push(trackId),
+      )
+      const laterSub = firstVisibleTrackId$.subscribe((trackId) =>
+        laterSubscriberTrackIds.push(trackId),
+      )
+
+      paginationState$.next(
+        createPaginationState({
+          beginSpineItemIndex: 0,
+          endSpineItemIndex: 0,
+        }),
+      )
+
+      expect(firstSubscriberTrackIds).toEqual([`track-2`, `track-1`])
+      expect(laterSubscriberTrackIds).toEqual([`track-2`, `track-1`])
+
+      firstSub.unsubscribe()
+      laterSub.unsubscribe()
+    })
+  })
+
   describe(`nextTrack$`, () => {
     it(`returns the next track within the pagination window`, async () => {
       const track1: AudioTrack = {
@@ -212,14 +244,13 @@ describe(`createTrackStreams`, () => {
         index: 0,
         mediaType: `audio/mpeg`,
       }
-      const { reader, paginationState$ } = createReader({
+      const { paginationState$, nextTrack$ } = createStreams({
         spineItems: [
           createSpineItem({ id: `track-1`, index: 0 }),
           createSpineItem({ id: `track-2`, index: 1 }),
         ],
+        state: createState({ currentTrack: track1 }),
       })
-      const state$ = new BehaviorSubject(createState({ currentTrack: track1 }))
-      const { nextTrack$ } = createTrackStreams(reader, state$)
 
       paginationState$.next(
         createPaginationState({
@@ -240,14 +271,13 @@ describe(`createTrackStreams`, () => {
         index: 0,
         mediaType: `audio/mpeg`,
       }
-      const { reader, paginationState$ } = createReader({
+      const { paginationState$, nextTrack$ } = createStreams({
         spineItems: [
           createSpineItem({ id: `track-1`, index: 0 }),
           createSpineItem({ id: `track-2`, index: 1 }),
         ],
+        state: createState({ currentTrack: track1 }),
       })
-      const state$ = new BehaviorSubject(createState({ currentTrack: track1 }))
-      const { nextTrack$ } = createTrackStreams(reader, state$)
 
       paginationState$.next(
         createPaginationState({
@@ -263,14 +293,12 @@ describe(`createTrackStreams`, () => {
     })
 
     it(`returns undefined for both when there is no current track`, async () => {
-      const { reader, paginationState$ } = createReader({
+      const { paginationState$, nextTrack$ } = createStreams({
         spineItems: [
           createSpineItem({ id: `track-1`, index: 0 }),
           createSpineItem({ id: `track-2`, index: 1 }),
         ],
       })
-      const state$ = new BehaviorSubject(createState())
-      const { nextTrack$ } = createTrackStreams(reader, state$)
 
       paginationState$.next(
         createPaginationState({
@@ -292,14 +320,13 @@ describe(`createTrackStreams`, () => {
         index: 1,
         mediaType: `audio/mpeg`,
       }
-      const { reader, paginationState$ } = createReader({
+      const { paginationState$, nextTrack$ } = createStreams({
         spineItems: [
           createSpineItem({ id: `track-1`, index: 0 }),
           createSpineItem({ id: `track-2`, index: 1 }),
         ],
+        state: createState({ currentTrack: track2 }),
       })
-      const state$ = new BehaviorSubject(createState({ currentTrack: track2 }))
-      const { nextTrack$ } = createTrackStreams(reader, state$)
 
       paginationState$.next(
         createPaginationState({

@@ -105,15 +105,17 @@ const createReader = ({
     number,
     ResourceHandler["getResource"] | undefined
   >(),
+  initialPagination = {
+    beginSpineItemIndex: undefined,
+    endSpineItemIndex: undefined,
+  },
 }: {
   spineItems?: Array<ReturnType<typeof createManifestSpineItem>>
   spineItemResources?: Map<number, ResourceHandler["getResource"] | undefined>
+  initialPagination?: Parameters<typeof createPaginationState>[0]
 } = {}) => {
   const paginationState$ = new BehaviorSubject(
-    createPaginationState({
-      beginSpineItemIndex: undefined,
-      endSpineItemIndex: undefined,
-    }),
+    createPaginationState(initialPagination),
   )
 
   for (const spineItem of spineItems) {
@@ -176,6 +178,35 @@ describe(`AudioController`, () => {
         mediaType: `audio/mpeg`,
       },
     ])
+  })
+
+  it(`selects and plays the track already visible when it is created`, async () => {
+    const { reader } = createReader({
+      spineItems: [
+        createManifestSpineItem({ id: `track-1`, index: 0 }),
+        createManifestSpineItem({ id: `track-2`, index: 1 }),
+      ],
+      initialPagination: { beginSpineItemIndex: 1, endSpineItemIndex: 1 },
+    })
+    const { audio } = createAudio()
+    const controller = new AudioController(reader, audio)
+    const playedSources: string[] = []
+
+    vi.spyOn(audio.element, `play`).mockImplementation(() => {
+      playedSources.push(audio.element.getAttribute(`src`) ?? ``)
+
+      return Promise.resolve()
+    })
+
+    expect(controller.state.currentTrack?.id).toBe(`track-2`)
+
+    await flush()
+
+    controller.play()
+
+    await flush()
+
+    expect(playedSources).toEqual([`https://example.com/track-2.mp3`])
   })
 
   it(`does not resume an in-flight source load after destroy`, async () => {

@@ -3,7 +3,6 @@ import {
   BehaviorSubject,
   catchError,
   defaultIfEmpty,
-  distinctUntilChanged,
   EMPTY,
   filter,
   map,
@@ -26,7 +25,7 @@ import type {
 import { AudioVisualizer } from "../visualizer"
 import { AudioElementAdapter } from "./AudioElementAdapter"
 import { ResourcesResolver } from "./ResourcesResolver"
-import { createTrackStreams } from "./trackStreams"
+import { createTrackStreams, getManifestAudioTracks } from "./trackStreams"
 import type { AudioControllerReader } from "./types"
 
 type SelectCommand = {
@@ -44,8 +43,7 @@ const initialDesiredPlayback: DesiredPlayback = {
   trackId: undefined,
 }
 
-const initialState: AudioEnhancerState = {
-  tracks: [],
+const initialState: Omit<AudioEnhancerState, "tracks"> = {
   currentTrack: undefined,
   isPlaying: false,
   isLoading: false,
@@ -75,34 +73,23 @@ export class AudioController extends ReactiveEntity<AudioEnhancerState> {
     reader: AudioControllerReader,
     audio = new AudioElementAdapter(),
   ) {
-    super(initialState)
+    super({
+      ...initialState,
+      tracks: getManifestAudioTracks(reader.context.manifest),
+    })
 
     this.reader = reader
     this.audio = audio
     this.visualizer$ = new AudioVisualizer(this.audio.element)
 
-    const { tracks$, visibleTrackIds$, nextTrack$ } = createTrackStreams(
-      this.reader,
-      this.state$,
-    )
+    const { visibleTrackIds$, firstVisibleTrackId$, nextTrack$ } =
+      createTrackStreams({
+        tracks: this.state.tracks,
+        paginationState$: this.reader.pagination.state$,
+        state$: this.state$,
+      })
 
     this.visibleTrackIds$ = visibleTrackIds$
-
-    const firstVisibleTrackId$ = this.visibleTrackIds$.pipe(
-      map((trackIds) => trackIds[0]),
-      distinctUntilChanged(),
-      share(),
-    )
-
-    const visibleTrackReset$ = firstVisibleTrackId$.pipe(
-      withLatestFrom(this.state$),
-      filter(
-        ([trackId, state]) =>
-          trackId === undefined &&
-          (state.currentTrack?.id !== undefined || state.isLoading),
-      ),
-      map(([, state]) => state.tracks),
-    )
 
     const visibleTrackSelectionIntent$ = firstVisibleTrackId$.pipe(
       filter((trackId): trackId is string => trackId !== undefined),
@@ -116,18 +103,19 @@ export class AudioController extends ReactiveEntity<AudioEnhancerState> {
       })),
     )
 
-    const tracksChanged$ = tracks$.pipe(
-      tap(() => this.resourcesResolver.releaseAll()),
-    )
-
-    const playbackReset$ = merge(visibleTrackReset$, tracksChanged$).pipe(
-      tap((tracks) => {
+    const playbackReset$ = firstVisibleTrackId$.pipe(
+      withLatestFrom(this.state$),
+      filter(
+        ([trackId, state]) =>
+          trackId === undefined &&
+          (state.currentTrack?.id !== undefined || state.isLoading),
+      ),
+      tap(() => {
         this.emitDesiredPlayback({ shouldPlay: false, trackId: undefined })
         this.visualizer$.stop({ resetLevels: true })
         this.unmountCurrentSource()
 
         this.mergeCompare({
-          tracks,
           currentTrack: undefined,
           isLoading: false,
           isPlaying: false,
@@ -356,7 +344,7 @@ export class AudioController extends ReactiveEntity<AudioEnhancerState> {
   }: {
     trackId: string
     options: SelectAudioTrackOptions
-    playbackReset$: Observable<AudioTrack[]>
+    playbackReset$: Observable<unknown>
   }) {
     const track = this.state.tracks.find(({ id }) => id === trackId)
 
