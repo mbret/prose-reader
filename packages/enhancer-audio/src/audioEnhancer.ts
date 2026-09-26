@@ -5,7 +5,10 @@ import type { AudioEnhancerAPI } from "./types"
 import { isAudioSpineItem } from "./utils"
 
 export const audioEnhancer =
-  <InheritOptions extends CreateReaderOptions, InheritOutput extends Reader>(
+  <
+    InheritOptions extends Pick<CreateReaderOptions, "getRenderer">,
+    InheritOutput extends Reader,
+  >(
     next: (options: InheritOptions) => InheritOutput,
   ) =>
   (options: InheritOptions): InheritOutput & AudioEnhancerAPI => {
