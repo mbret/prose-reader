@@ -15,6 +15,7 @@ import { useBookBoundariesReachedToast } from "./navigation/useBookBoundariesRea
 import { useBookSettings } from "./settings/useBookSettings"
 import { useFontSizeSettings } from "./settings/useFontSizeSettings"
 import { useSettings } from "./settings/useSettings"
+import { useSpreadModeSettings } from "./settings/useSpreadModeSettings"
 import { useUpdateReaderSettings } from "./settings/useUpdateReaderSettings"
 import { isQuickMenuOpenSignal, useResetStateOnUnMount } from "./states"
 import { isClientStreamedBook } from "./streaming"
@@ -58,13 +59,8 @@ export const ReaderScreen = memo(() => {
   usePersistAnnotations(annotationsSignal, epubKey)
   useBookBoundariesReachedToast()
 
-  const {
-    fontSizeScopeReference,
-    fontSizeValue,
-    onFontSizeChange,
-    onFontSizeScopeChange,
-    fontSizeValues,
-  } = useFontSizeSettings(bookSettingsSignal, breakpointValue)
+  const fontSize = useFontSizeSettings(bookSettingsSignal, breakpointValue)
+  const spreadMode = useSpreadModeSettings(bookSettingsSignal, breakpointValue)
 
   const onItemClick = useCallback(
     (
@@ -99,11 +95,16 @@ export const ReaderScreen = memo(() => {
         reader={reader}
         quickMenuOpen={isQuickMenuOpen}
         onQuickMenuOpenChange={isQuickMenuOpenSignal.update}
-        fontSize={fontSizeValue}
-        onFontSizeChange={onFontSizeChange}
-        fontSizeValues={fontSizeValues}
-        onFontSizeScopeChange={onFontSizeScopeChange}
-        fontSizeScope={fontSizeScopeReference}
+        fontSize={fontSize.value}
+        onFontSizeChange={fontSize.onChange}
+        fontSizeValues={fontSize.values}
+        onFontSizeScopeChange={fontSize.onScopeChange}
+        fontSizeScope={fontSize.scopeReference}
+        spreadMode={spreadMode.value}
+        onSpreadModeChange={spreadMode.onChange}
+        spreadModeValues={spreadMode.values}
+        onSpreadModeScopeChange={spreadMode.onScopeChange}
+        spreadModeScope={spreadMode.scopeReference}
         slots={{
           container: {
             props: {

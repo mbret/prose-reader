@@ -12,7 +12,6 @@ import { Toaster } from "./components/ui/toaster"
 import { ReactReaderProvider } from "./context/ReactReaderProvider"
 import { useReaderContextValue } from "./context/useReaderContext"
 import { FontSizeControlsDialog } from "./fonts/FontSizeControlsDialog"
-import { SyncFontSettings } from "./fonts/SyncFontSettings"
 import { GalleryDialog } from "./gallery/GalleryDialog"
 import { HelpDialog } from "./help/HelpDialog"
 import { LayoutDialog } from "./layout/LayoutDialog"
@@ -26,6 +25,7 @@ import { useQuickMenu } from "./quickmenu/useQuickMenu"
 import { useQuickMenuToggleGesture } from "./quickmenu/useQuickMenuToggleGesture"
 import { RefitDialog } from "./refit/RefitDialog"
 import { SearchDialog } from "./search/SearchDialog"
+import { useSyncReaderWithManagedSettings } from "./settings/useSyncReaderWithManagedSettings"
 import { TableOfContentsDialog } from "./toc/TableOfContentsDialog"
 import { useZoomSettings } from "./zoom/useZoomSettings"
 import { ZoomControls } from "./zoom/ZoomControls"
@@ -46,13 +46,9 @@ const Effects = memo(() => {
   useQuickMenuToggleGesture()
   usePreventInteractionOnSelection()
   useSyncAnnotationsWithReader()
+  useSyncReaderWithManagedSettings()
 
-  return (
-    <>
-      <SyncFontSettings />
-      <BookmarksEffects />
-    </>
-  )
+  return <BookmarksEffects />
 })
 
 const InnerReactReader = memo(
