@@ -818,3 +818,187 @@ test.describe("Given a cfi naming nothing in a chapter not loaded yet", () => {
     )
   })
 })
+
+/**
+ * The first character of a chapter's title, the first line of its first page:
+ * its body's first section, the section's heading, the heading's text.
+ */
+const getChapterTitleCfi = (chapterIndex: number) =>
+  `epubcfi(/6/${(chapterIndex + 1) * 2}!/4/2/2/1:0)`
+
+/**
+ * Where the character a cfi points to is laid out in its own document, and
+ * whether it is text.
+ */
+const measureCharacterAtCfi = (page: Page, cfi: string) =>
+  page.evaluate((cfi) => {
+    // @ts-expect-error window.reader is set by this scenario's index.tsx
+    const reader = window.reader as Reader
+    const { node, offset = 0 } = reader.cfi.resolveCfi({ cfi })
+
+    if (!node?.ownerDocument) return "cfi did not resolve to a node"
+
+    const range = node.ownerDocument.createRange()
+
+    range.setStart(node, offset)
+    range.setEnd(node, offset + 1)
+
+    return {
+      isText: node.nodeType === Node.TEXT_NODE,
+      x: range.getBoundingClientRect().x,
+    }
+  }, cfi)
+
+/**
+ * Without a horizontal margin, a page's first line starts at the page's left
+ * edge, and on a chapter's first page that is the left edge of the chapter's
+ * document: the first character there measures `x === 0`. So does a node that
+ * isn't rendered, with an empty rect, and it has no page. Telling the two apart
+ * is what finds the page holding the first.
+ */
+test.describe("Given pages without a horizontal margin", () => {
+  test.beforeEach(async ({ page }) => {
+    await page.setViewportSize(initialSize)
+    await page.goto(`${url}?pageHorizontalMargin=0`)
+    await waitForSettled(page)
+  })
+
+  test("a cfi on the first character of a page, at the left edge of its document, is final on that page, and a resize restores to it", async ({
+    page,
+  }) => {
+    const chapterIndex = await getChapterIndex(page, "ch03.xhtml")
+    const cfi = getChapterTitleCfi(chapterIndex)
+
+    await navigateAndReadAtOnce(page, { cfi, into: chapterIndex })
+    await waitForSettled(page)
+
+    expect(await measureCharacterAtCfi(page, cfi)).toEqual({
+      isText: true,
+      x: 0,
+    })
+
+    /**
+     * Once the chapter is laid out, the reader measures the character to find
+     * the page holding it, and the reading position is final on that page.
+     *
+     * Only a chapter's first page starts at its document's left edge, each
+     * next one a page further. That page starts where the chapter does, the
+     * progression and the page a reader falls back to without one, so the
+     * values below would hold without the page found: its being final does
+     * not.
+     */
+    await expect
+      .poll(
+        async () => {
+          const { readingPosition, isReadingPositionFinal } =
+            await readPosition(page)
+
+          return { readingPosition, isReadingPositionFinal }
+        },
+        { timeout: 10_000 },
+      )
+      .toEqual({ readingPosition: cfi, isReadingPositionFinal: true })
+
+    const position = await readPosition(page)
+
+    expect(position.spineItemIndex).toBe(chapterIndex)
+    expect(position.pageIndex).toBe(0)
+    expect(position.readingProgression).toBeCloseTo(
+      position.beginPageProgression,
+      10,
+    )
+
+    await resizeAndExpectAnchorVisible(page, narrowSize, cfi)
+
+    const restored = await readPosition(page)
+
+    expect(restored.spineItemIndex).toBe(chapterIndex)
+    expect(restored.pageIndex).toBe(0)
+    expect(restored.readingPosition).toBe(cfi)
+    expect(restored.isReadingPositionFinal).toBe(true)
+    expect(restored.readingProgression).toBe(position.readingProgression)
+  })
+
+  test("a rendered node at the left edge of its document has its page, whatever its size, and one that isn't rendered has none", async ({
+    page,
+  }) => {
+    const chapterIndex = await getChapterIndex(page, "ch03.xhtml")
+    const cfi = getChapterTitleCfi(chapterIndex)
+
+    await page.evaluate((indexOrId) => {
+      // @ts-expect-error window.reader is set by this scenario's index.tsx
+      const reader = window.reader as Reader
+
+      reader.navigation.goToSpineItem({ indexOrId })
+    }, chapterIndex)
+    await waitForSettled(page)
+
+    expect(await measureCharacterAtCfi(page, cfi)).toEqual({
+      isText: true,
+      x: 0,
+    })
+
+    const pageIndexes = await page.evaluate(
+      ({ cfi, chapterIndex }) => {
+        // @ts-expect-error window.reader is set by this scenario's index.tsx
+        const reader = window.reader as Reader
+        const { node: title } = reader.cfi.resolveCfi({ cfi })
+        const document = title?.ownerDocument
+
+        if (!title || !document) throw new Error("the title is not loaded")
+
+        const getPageIndex = (node: Node) =>
+          reader.spine.locator.getSpineItemPageIndexFromNode(
+            node,
+            0,
+            chapterIndex,
+          ) ?? "none"
+        const titlePageIndex = getPageIndex(title)
+
+        /**
+         * What isn't rendered, of each kind the reader measures: text, from
+         * the offset on, and an element without text, such as an image, as a
+         * whole.
+         */
+        const hidden = document.createElement("div")
+        const hiddenText = document.createTextNode("Hidden")
+        const hiddenImage = document.createElement("img")
+        const hiddenEmptyElement = document.createElement("span")
+
+        hidden.style.display = "none"
+        hidden.append(hiddenText, hiddenImage, hiddenEmptyElement)
+        document.body.append(hidden)
+
+        // Rendered, without a size, before the title's first character.
+        const renderedElementWithoutSize = document.createElement("span")
+
+        renderedElementWithoutSize.style.display = "inline-block"
+        renderedElementWithoutSize.style.width = "0"
+        renderedElementWithoutSize.style.height = "0"
+        title.parentNode?.insertBefore(renderedElementWithoutSize, title)
+
+        const pageIndexes = {
+          title: titlePageIndex,
+          hiddenText: getPageIndex(hiddenText),
+          hiddenImage: getPageIndex(hiddenImage),
+          hiddenEmptyElement: getPageIndex(hiddenEmptyElement),
+          renderedElementWithoutSize: getPageIndex(renderedElementWithoutSize),
+        }
+
+        hidden.remove()
+        renderedElementWithoutSize.remove()
+
+        return pageIndexes
+      },
+      { cfi, chapterIndex },
+    )
+
+    expect(pageIndexes).toEqual({
+      title: 0,
+      hiddenText: "none",
+      hiddenImage: "none",
+      hiddenEmptyElement: "none",
+      renderedElementWithoutSize: 0,
+    })
+  })
+})
