@@ -122,6 +122,15 @@ export type ReadingPosition = {
    * of its own. A position on the last page is short of 1.
    */
   percentageEstimateOfBook: number
+  /**
+   * Whether the reader has found the page the navigation took it to. Until
+   * then the value stands in: `cfi` is the place the target names, or the
+   * start of the spine item the navigation goes to when it names none, and
+   * the progress is that item's start. It is still where the reader is, as
+   * far as it knows, and the value to save. A final value stays until the
+   * next navigation.
+   */
+  isFinal: boolean
 }
 
 /**

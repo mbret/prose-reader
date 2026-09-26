@@ -44,10 +44,15 @@ const readerState = ({ appBridge }: ReturnType<typeof createBridge>) => {
 
 const noReaderState = { pagination: null, context: null, readingPosition: null }
 
-const firstChapter = { cfi: "epubcfi(/6/2[1]!)", percentageEstimateOfBook: 0 }
+const firstChapter = {
+  cfi: "epubcfi(/6/2[1]!)",
+  percentageEstimateOfBook: 0,
+  isFinal: true,
+}
 const secondChapter = {
   cfi: "epubcfi(/6/4[2]!)",
   percentageEstimateOfBook: 0.5,
+  isFinal: true,
 }
 
 describe("Given the native end of the bridge", () => {

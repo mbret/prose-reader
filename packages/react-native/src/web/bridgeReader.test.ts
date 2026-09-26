@@ -290,10 +290,20 @@ describe("Given a bridged webview", () => {
 
       load({ target })
 
-      // The chapters weigh nothing in this manifest, so each holds half the
-      // book.
+      /**
+       * The chapters weigh nothing in this manifest, so each holds half the
+       * book. The chapter is not laid out yet, so the value is not final, and
+       * reported all the same: it is where the reader is.
+       */
       expect(reported("readingPosition")).toEqual([
-        [1, { cfi: secondChapterCfi, percentageEstimateOfBook: 0.5 }],
+        [
+          1,
+          {
+            cfi: secondChapterCfi,
+            percentageEstimateOfBook: 0.5,
+            isFinal: false,
+          },
+        ],
       ])
     })
 
@@ -388,6 +398,7 @@ describe("Given a bridged webview", () => {
       readingPosition.next({
         cfi: secondChapterCfi,
         percentageEstimateOfBook: 0,
+        isFinal: true,
       })
 
       expect(reported("readingPosition")).not.toContainEqual([
