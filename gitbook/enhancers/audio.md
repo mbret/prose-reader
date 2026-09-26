@@ -42,7 +42,9 @@ We encourage you to visit the [prose reader demo](https://github.com/mbret/prose
 
 ### How It Works
 
-When the reader loads a manifest, the enhancer filters spine items to build a list of audio tracks. For each audio spine item, a dedicated `AudioRenderer` is used instead of the default HTML renderer. This renderer produces a minimal placeholder page (pre-paginated, no iframe) since audio content has no visual document to display.
+When the reader is created, the enhancer filters the manifest's spine items to build a list of audio tracks. For each audio spine item, a dedicated `AudioRenderer` is used instead of the default HTML renderer. This renderer produces a minimal placeholder page (pre-paginated, no iframe) since audio content has no visual document to display.
+
+The first audio track at the pagination boundaries is the current track, including the one the book opens on: its source starts loading without any user action. Navigating off audio content stops playback and clears the current track.
 
 Playback is handled by a single internal `HTMLAudioElement`. Track resources are resolved through the reader's resource handler, supporting blob URLs, direct URLs, and HTTP responses. When a track ends, the enhancer automatically advances to the next track in the current pagination window or navigates to the next page.
 
