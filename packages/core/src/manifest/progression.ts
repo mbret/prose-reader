@@ -1,27 +1,40 @@
 import type { Manifest } from "@prose-reader/shared"
+import { isDefined } from "../utils/isDefined"
 
 /**
- * How much of the book a spine item holds, from 0 to 1: its
- * `progressionWeight`, or an even share of the spine when it has none.
+ * How much of the book each spine item holds, from 0 to 1 and adding up to 1.
+ * The manifest's `progressionWeight`s, scaled to their total, when every item
+ * has one and they add up to more than nothing. Otherwise every item holds an
+ * even share: weights for part of the spine say nothing of the rest.
  */
-const getSpineItemProgressionWeight = (
-  manifest: Manifest,
-  item: Manifest["spineItems"][number] | undefined,
-) => item?.progressionWeight ?? 1 / manifest.spineItems.length
+const getSpineItemsProgressionWeights = (manifest: Manifest) => {
+  const weights = manifest.spineItems.map(
+    ({ progressionWeight }) => progressionWeight,
+  )
+  const totalWeight = weights.reduce<number>(
+    (total, weight) => total + (weight ?? 0),
+    0,
+  )
+
+  if (totalWeight > 0 && weights.every(isDefined)) {
+    return weights.map((weight) => weight / totalWeight)
+  }
+
+  return weights.map(() => 1 / weights.length)
+}
 
 /**
  * Where the spine item at `index` starts in the book and how much of it it
  * holds, both from 0 to 1.
  */
-export const getSpineItemProgression = (manifest: Manifest, index: number) => ({
-  start: manifest.spineItems
-    .slice(0, index)
-    .reduce(
-      (total, item) => total + getSpineItemProgressionWeight(manifest, item),
-      0,
-    ),
-  weight: getSpineItemProgressionWeight(manifest, manifest.spineItems[index]),
-})
+export const getSpineItemProgression = (manifest: Manifest, index: number) => {
+  const weights = getSpineItemsProgressionWeights(manifest)
+
+  return {
+    start: weights.slice(0, index).reduce((total, weight) => total + weight, 0),
+    weight: weights[index] ?? 0,
+  }
+}
 
 /**
  * How far into the book a page of a spine item starts, from 0 to 1: the item's

@@ -290,10 +290,10 @@ describe("Given a bridged webview", () => {
 
       load({ target })
 
-      // Both chapters weigh nothing in this manifest, so neither is further
-      // into the book than the other.
+      // The chapters weigh nothing in this manifest, so each holds half the
+      // book.
       expect(reported("readingPosition")).toEqual([
-        [1, { cfi: secondChapterCfi, percentageEstimateOfBook: 0 }],
+        [1, { cfi: secondChapterCfi, percentageEstimateOfBook: 0.5 }],
       ])
     })
 

@@ -40,11 +40,17 @@ const readPosition = async (page: Page) => {
 
       /**
        * Where the begin page starts in the book: its chapter's start, and the
-       * share of the chapter's weight the pages before it hold.
+       * share of the chapter's weight the pages before it hold. Every chapter
+       * of this book has a weight, so they only need scaling to their total.
        */
       const { spineItems } = reader.context.manifest
+      const totalWeight = spineItems.reduce(
+        (total, { progressionWeight }) =>
+          total + (progressionWeight ?? Number.NaN),
+        0,
+      )
       const weightOf = (index: number) =>
-        spineItems[index]?.progressionWeight ?? 1 / spineItems.length
+        (spineItems[index]?.progressionWeight ?? Number.NaN) / totalWeight
       const chapterStart = spineItems
         .slice(0, begin.spineItemIndex)
         .reduce((total, _, index) => total + weightOf(index), 0)
@@ -301,11 +307,14 @@ test.describe("Given a page reached by turning pages", () => {
     expect(atOnce.wasReady).toBe(false)
     expect(atOnce.isRootCfi).toBe(true)
     expect(atOnce.itemIndex).toBe(chapterIndex)
-    expect(atOnce.percentageEstimateOfBook).toBe(settled.chapterStart)
+    expect(atOnce.percentageEstimateOfBook).toBeCloseTo(
+      settled.chapterStart,
+      10,
+    )
     expect(settled.spineItemIndex).toBe(chapterIndex)
     expect(settled.isRootCfi).toBe(false)
     expect(settled.pageIndex).toBe(0)
-    expect(settled.readingProgression).toBe(settled.chapterStart)
+    expect(settled.readingProgression).toBeCloseTo(settled.chapterStart, 10)
     expect(await readRecorded()).toEqual([
       { cfi: atOnce.cfi, isRootCfi: true, itemIndex: chapterIndex },
       { cfi: settled.cfi, isRootCfi: false, itemIndex: chapterIndex },
@@ -640,7 +649,10 @@ test.describe("Given chapters that are not preloaded", () => {
     expect(atOnce.wasReady).toBe(false)
     expect(atOnce.isRootCfi).toBe(true)
     expect(atOnce.itemIndex).toBe(previousIndex)
-    expect(atOnce.percentageEstimateOfBook).toBe(settled.chapterStart)
+    expect(atOnce.percentageEstimateOfBook).toBeCloseTo(
+      settled.chapterStart,
+      10,
+    )
     expect(settled.spineItemIndex).toBe(previousIndex)
     expect(settled.numberOfPages).toBeGreaterThan(1)
     expect(settled.pageIndex).toBe(settled.numberOfPages - 1)

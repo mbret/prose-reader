@@ -52,8 +52,8 @@ It is set the moment a navigation happens:
   navigation lands on, or the element a url names, and stays there.
 
 Its `percentageEstimateOfBook` is where the page holding the `cfi` starts,
-estimated from the `progressionWeight` of each spine item in the manifest and
-the pages of its own. It moves with the `cfi`, never apart from it. When the
+estimated from the `progressionWeight` of each spine item in the manifest, or
+an even share each when an item has none, and the pages of its own. It moves with the `cfi`, never apart from it. When the
 reading position is a chapter's start, so is its progress; after a navigation
 to a cfi, the progress is that chapter's start until the page holding the cfi
 is laid out. Being where a page starts, it is short of `1` on the last page.
