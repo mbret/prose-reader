@@ -86,6 +86,22 @@ describe("EPUB CFI Parser", () => {
       ])
     })
 
+    /**
+     * A text assertion is the document's text, which `generate` writes as it
+     * is, line breaks included.
+     */
+    it("should parse a text assertion spanning lines", () => {
+      expect(
+        parse("epubcfi(/4[body01]/10[para05]/2:3[Hello\n\t\tWorld])"),
+      ).toEqual([
+        [
+          { index: 4, id: "body01" },
+          { index: 10, id: "para05" },
+          { index: 2, offset: 3, text: ["Hello\n\t\tWorld"] },
+        ],
+      ])
+    })
+
     it("should parse a CFI range", () => {
       const cfi = "epubcfi(/4[body01]/10[para05],/2/1:1,/3:4)"
       const parsed = parse(cfi)
@@ -205,6 +221,7 @@ describe("EPUB CFI Parser", () => {
         'to end with the ")"',
       ],
       ["an epubcfi( never closed", "epubcfi(/6/14!/4/2", 'to end with the ")"'],
+      ["nothing inside epubcfi()", "epubcfi()", "Failed to tokenize"],
       [
         "a space outside an assertion",
         "epubcfi(/6/4! /4/2)",
