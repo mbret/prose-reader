@@ -6,13 +6,19 @@ import type {
 } from "../types"
 
 export const mapUserNavigationToInternal = (
-  stream: Observable<[UserNavigationEntry, InternalNavigationEntry]>,
+  stream: Observable<[UserNavigationEntry, InternalNavigationEntry, boolean]>,
 ): Observable<{
   navigation: InternalNavigationInput
   previousNavigation: InternalNavigationEntry
+  /**
+   * Whether `lock()` is held, as by a pan, the user's scrolling or the app.
+   * The navigation is then unfinished: it is not snapped to a page, and lands
+   * once the lock is released.
+   */
+  awaitsLockRelease: boolean
 }> => {
   return stream.pipe(
-    map(([userNavigation, previousNavigation]) => {
+    map(([userNavigation, previousNavigation, awaitsLockRelease]) => {
       const navigation: InternalNavigationInput = {
         type: "api",
         meta: {
@@ -30,6 +36,7 @@ export const mapUserNavigationToInternal = (
       return {
         previousNavigation,
         navigation,
+        awaitsLockRelease,
       }
     }),
   )

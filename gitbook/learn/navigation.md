@@ -64,7 +64,8 @@ the moment a navigation happens, and refined as the reader finds out:
 A navigation whose target names nothing in the book, such as a cfi that
 [can't be read](../cfi/about.md) or a cfi of a chapter the book does not have,
 is ignored with a warning: the reader stays where it is, and so does the
-reading position.
+reading position. One made while the navigation is held, such as a pan's,
+moves it once released, as [Pans and locks](#pans-and-locks) explains.
 
 Its `percentageEstimateOfBook` is where the page holding the `cfi` starts,
 estimated from the `progressionWeight` of each spine item in the manifest, or
@@ -175,6 +176,12 @@ While it is held, the reader does not move the page on its own: the restoration
 of a layout that lands meanwhile waits for the release, and so does the snap of
 a navigation made while it is held. Locks add up, so the navigation is held
 until every one of them is released; a release called twice releases it once.
+
+A navigation made while it is held has not landed anywhere yet, so the
+[reading position](#reading-position) stays where it was. Once released, it
+moves to where the navigation lands: for a pan, the page it snaps to, which
+turns as soon as the next page shows by `navigationSnapThreshold`, often before
+that page is the one showing the most.
 
 `isLocked$` turns `false` as soon as the last lock is released, before the
 restoration that follows and before any animation still running. To know when

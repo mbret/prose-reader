@@ -464,6 +464,83 @@ describe("reading position", () => {
   })
 })
 
+/**
+ * A pan holds the viewport: the page follows the user's finger, and nothing
+ * snaps to a page until they let go. What shows the most of itself while held
+ * is not where the pan lands: once let go, it turns the page as soon as the
+ * next one shows by the snap threshold, 40 pixels, far short of the half of
+ * its width that makes it the page that shows first.
+ */
+describe("reading position around a pan", () => {
+  /**
+   * Holds the viewport and drags the page `distance` pixels towards the end
+   * of this left-to-right book, back towards its start when negative, then
+   * lets go, the way the pan navigator does. Returns the reading positions
+   * emitted while it was held.
+   */
+  const panBy = (
+    reader: ReturnType<typeof createTestReader>,
+    distance: number,
+  ) => {
+    const whileHeld: ReadingPosition[] = []
+    const recording = reader.navigation.readingPosition$
+      .pipe(skip(1))
+      .subscribe((position) => {
+        whileHeld.push(position)
+      })
+    const letGo = reader.navigation.lock()
+    const { x } = reader.navigation.getNavigation().position
+
+    reader.navigation.navigate({
+      target: {
+        type: "position",
+        value: new SpinePosition({ x: x + distance, y: 0 }),
+      },
+      animation: false,
+    })
+    recording.unsubscribe()
+    letGo()
+
+    return whileHeld
+  }
+
+  it.each([
+    ["past the snap threshold", 0, 45, 1],
+    ["past half the page", 0, 55, 1],
+    ["short of the snap threshold", 0, 30, 0],
+    ["back past the snap threshold", 1, -45, 0],
+  ])(
+    "is the page it lands on once let go, never where it was held, dragged %s",
+    async (_, from, distance, landsOn) => {
+      const reader = createTestReader()
+
+      mountTestReader(reader)
+      await settledOn(reader, 0)
+
+      reader.navigation.goToSpineItem({ indexOrId: from, animation: false })
+      await settledOn(reader, from)
+
+      const whileHeld = panBy(reader, distance)
+
+      // Held, the pan has not landed anywhere: the reader is still where it
+      // was, as far as it knows.
+      expect(whileHeld).toEqual([])
+
+      const settled = await settledOn(reader, landsOn)
+
+      await vi.waitFor(async () =>
+        expect(
+          await firstValueFrom(reader.navigation.readingPosition$),
+        ).toEqual({
+          cfi: settled.begin.cfi,
+          percentageEstimateOfBook: itemStartProgression(landsOn),
+          state: "final",
+        }),
+      )
+    },
+  )
+})
+
 describe("reading position and settled pagination", () => {
   type PlaceNamedByStream = {
     stream: "readingPosition" | "settledPagination"

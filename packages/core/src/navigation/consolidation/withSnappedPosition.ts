@@ -1,4 +1,4 @@
-import { map, type Observable, withLatestFrom } from "rxjs"
+import { map, type Observable } from "rxjs"
 import type { ReaderSettingsManager } from "../../settings/ReaderSettingsManager"
 import type { SpineLocator } from "../../spine/locator/SpineLocator"
 import type { Spine } from "../../spine/Spine"
@@ -64,31 +64,35 @@ export const getSnappedPosition = ({
 }
 
 /**
- * Scrollable mode has no page to snap to, and while the user holds the
- * viewport the position is theirs.
+ * Scrollable mode has no page to snap to, and a navigation made while
+ * `lock()` is held, as by a pan, snaps once it is released: until then the
+ * position is the lock holder's.
  */
 export const withSnappedPosition =
   ({
     navigationResolver,
     settings,
     spine,
-    isUserInteractionLocked$,
   }: {
     navigationResolver: NavigationResolver
     settings: ReaderSettingsManager
     spine: Spine
-    isUserInteractionLocked$: Observable<boolean>
   }) =>
-  <N extends { navigation: InternalNavigationEntry; snapToPage: boolean }>(
+  <
+    N extends {
+      navigation: InternalNavigationEntry
+      snapToPage: boolean
+      awaitsLockRelease: boolean
+    },
+  >(
     stream: Observable<N>,
   ) =>
     stream.pipe(
-      withLatestFrom(isUserInteractionLocked$),
-      map(([params, isUserLocked]) => {
+      map((params) => {
         if (
           !params.snapToPage ||
           settings.values.computedPageTurnMode === "scrollable" ||
-          isUserLocked
+          params.awaitsLockRelease
         )
           return params
 

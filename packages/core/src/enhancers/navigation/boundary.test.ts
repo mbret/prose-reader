@@ -350,7 +350,7 @@ describe("outOfSpineBoundary", () => {
     /**
      * Regression: pan navigation holds `reader.navigation.lock()`. While
      * the lock is held the user-driven entry is deferred via
-     * `navigationUpdateFollowingUserUnlock$`; on unlock the navigator
+     * `navigationUpdateOnLockRelease$`; on unlock the navigator
      * runs a restoration cycle. Previously that cycle unconditionally
      * rewrote `requestedPosition` to the resolved `position`, so a pan
      * past start/end never reached `outOfSpineBoundary`. The fix
