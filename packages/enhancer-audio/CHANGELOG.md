@@ -3,6 +3,23 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## [17.0.0](https://github.com/mbret/prose-reader/compare/v16.0.1...v17.0.0) (2026-09-26)
+
+**Note:** Version bump only for package @prose-reader/enhancer-audio
+
+
+
+
+
+## [16.0.1](https://github.com/mbret/prose-reader/compare/v16.0.0...v16.0.1) (2026-09-26)
+
+
+### Bug Fixes
+
+* **enhancer-audio:** select the track a book opens on ([5dba3ae](https://github.com/mbret/prose-reader/commit/5dba3aec588a512925d02533694c0623131538fb))
+
+
+
 ## [16.0.0](https://github.com/mbret/prose-reader/compare/v15.0.1...v16.0.0) (2026-09-26)
 
 

@@ -52,9 +52,11 @@ export function cfiEscape(str: string): string {
 }
 
 /**
- * Regular expression to check if a string is a valid CFI
+ * Regular expression to check if a string is a valid CFI. Its values can hold
+ * line breaks, such as a text assertion spanning lines, so it matches across
+ * them.
  */
-export const isCFI = /^epubcfi\((.*)\)$/
+export const isCFI = /^epubcfi\(([\s\S]*)\)$/
 
 /**
  * @important Make it non browser runtime specific
