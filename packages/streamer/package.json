@@ -1,6 +1,6 @@
 {
   "name": "@prose-reader/streamer",
-  "version": "14.0.0",
+  "version": "15.0.0",
   "type": "module",
   "main": "./dist/index/index.cjs",
   "module": "./dist/index/index.js",
@@ -33,7 +33,7 @@
     "xmldoc": "^3.0.0"
   },
   "peerDependencies": {
-    "rxjs": "*"
+    "rxjs": "^7.5.5"
   },
   "gitHead": "4601e14dcacf50b2295cb343582a7ef2c7e1eedc",
   "engines": {

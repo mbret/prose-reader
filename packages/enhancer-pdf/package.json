@@ -1,6 +1,6 @@
 {
   "name": "@prose-reader/enhancer-pdf",
-  "version": "14.0.0",
+  "version": "15.0.0",
   "type": "module",
   "main": "./dist/index.cjs",
   "module": "./dist/index.js",
@@ -29,6 +29,6 @@
     "@prose-reader/archive-reader": "workspace:^",
     "@prose-reader/core": "workspace:^",
     "pdfjs-dist": ">=6.2.108 <7",
-    "rxjs": "*"
+    "rxjs": "^7.5.5"
   }
 }

@@ -122,11 +122,7 @@ export class Viewport extends ReactiveEntity<State> {
    */
   public layout() {
     const size = this.measure()
-    const isSpread = shouldUseSpreadModeForViewport({
-      spreadMode: this.settingsManager.values.spreadMode,
-      manifest: this.context.manifest,
-      viewport: size,
-    })
+    const isSpread = this.wouldSpreadAt(size)
 
     this.syncAbsoluteViewportCssVariables(size)
 
@@ -139,6 +135,20 @@ export class Viewport extends ReactiveEntity<State> {
       },
     })
     this.layoutSubject.next()
+  }
+
+  /**
+   * Whether a viewport of this size would show two pages side by side, for
+   * this book and the current `spreadMode` setting. It is the rule every
+   * layout applies to the viewport's own size, so it tells what a rotation or
+   * a resize would show before it happens. `isSpread` is what is shown now.
+   */
+  public wouldSpreadAt(size: { width: number; height: number }) {
+    return shouldUseSpreadModeForViewport({
+      spreadMode: this.settingsManager.values.spreadMode,
+      manifest: this.context.manifest,
+      viewport: size,
+    })
   }
 
   public get absoluteViewport() {

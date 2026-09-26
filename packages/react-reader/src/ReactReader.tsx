@@ -15,6 +15,7 @@ import { FontSizeControlsDialog } from "./fonts/FontSizeControlsDialog"
 import { SyncFontSettings } from "./fonts/SyncFontSettings"
 import { GalleryDialog } from "./gallery/GalleryDialog"
 import { HelpDialog } from "./help/HelpDialog"
+import { LayoutDialog } from "./layout/LayoutDialog"
 import { FloatingProgress } from "./navigation/FloatingProgress"
 import { FloatingTime } from "./navigation/FloatingTime"
 import { SpreadRotationHint } from "./navigation/SpreadRotationHint"
@@ -72,6 +73,7 @@ const InnerReactReader = memo(
       "bookmarks" | "annotations" | undefined
     >(undefined)
     const [isGalleryOpen, setIsGalleryOpen] = useState(false)
+    const [isLayoutOpen, setIsLayoutOpen] = useState(false)
     const [quickMenuOpen, setQuickMenuOpen] = useQuickMenu()
 
     const onNavigate = useCallback(() => {
@@ -97,6 +99,8 @@ const InnerReactReader = memo(
           setIsAnnotationsOpenWith("bookmarks")
         } else if (item === "gallery") {
           setIsGalleryOpen(true)
+        } else if (item === "layout") {
+          setIsLayoutOpen(true)
         }
         onItemClick?.(item)
       },
@@ -124,6 +128,7 @@ const InnerReactReader = memo(
           <SpreadRotationHint />
           <GalleryDialog open={isGalleryOpen} setOpen={setIsGalleryOpen} />
           <RefitDialog />
+          <LayoutDialog open={isLayoutOpen} setOpen={setIsLayoutOpen} />
           <QuickMenu onItemClick={_onItemClick} />
           <ZoomControls />
           <AnnotateControls />

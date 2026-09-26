@@ -1,6 +1,6 @@
 {
   "name": "@prose-reader/enhancer-refit",
-  "version": "14.0.0",
+  "version": "15.0.0",
   "type": "module",
   "main": "./dist/index.cjs",
   "module": "./dist/index.js",
@@ -24,6 +24,6 @@
   },
   "peerDependencies": {
     "@prose-reader/core": "workspace:^",
-    "rxjs": "*"
+    "rxjs": "^7.5.5"
   }
 }

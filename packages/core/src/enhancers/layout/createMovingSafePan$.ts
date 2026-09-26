@@ -1,19 +1,17 @@
 import {
   animationFrameScheduler,
+  distinctUntilChanged,
+  map,
   merge,
   NEVER,
   Observable,
   of,
   scheduled,
-} from "rxjs"
-import {
-  distinctUntilChanged,
-  map,
   switchMap,
   take,
   takeUntil,
   tap,
-} from "rxjs/operators"
+} from "rxjs"
 import type { Reader } from "../../reader"
 import { setStylePropertyIfChanged } from "../../utils/dom"
 

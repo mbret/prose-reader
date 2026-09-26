@@ -1,6 +1,6 @@
 {
   "name": "@prose-reader/enhancer-audio",
-  "version": "14.0.0",
+  "version": "15.0.0",
   "type": "module",
   "main": "./dist/index.cjs",
   "module": "./dist/index.js",
@@ -28,6 +28,6 @@
     "@prose-reader/shared": "workspace:^"
   },
   "peerDependencies": {
-    "rxjs": "*"
+    "rxjs": "^7.5.5"
   }
 }

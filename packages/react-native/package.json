@@ -1,6 +1,6 @@
 {
   "name": "@prose-reader/react-native",
-  "version": "14.0.0",
+  "version": "15.0.0",
   "type": "module",
   "main": "./dist/native/index.cjs",
   "module": "./dist/native/index.js",
@@ -52,6 +52,6 @@
     "expo-file-system": "^57.0.0",
     "react": "19.x",
     "react-native-webview": "*",
-    "rxjs": "*"
+    "rxjs": "^7.5.5"
   }
 }

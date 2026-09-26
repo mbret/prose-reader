@@ -3,6 +3,17 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## [15.0.0](https://github.com/mbret/prose-reader/compare/v14.1.0...v15.0.0) (2026-09-26)
+
+
+### Bug Fixes
+
+* **deps:** declare the rxjs versions each package needs ([1b31ae0](https://github.com/mbret/prose-reader/commit/1b31ae0031a7d1eb6b2d914dbbc70ebd8c88b9d1))
+* **deps:** raise the rxjs floor to 7.5.5, the first to export its types ([eecd5af](https://github.com/mbret/prose-reader/commit/eecd5af26db5fb1c999b7f1012c11ae286206288))
+* **enhancer-pdf,enhancer-audio:** constrain options only to what they read ([8b7bcc0](https://github.com/mbret/prose-reader/commit/8b7bcc085eb5000060d0cc3f46afa77a76de37b1))
+
+
+
 ## [14.0.0](https://github.com/mbret/prose-reader/compare/v13.0.5...v14.0.0) (2026-09-25)
 
 **Note:** Version bump only for package @prose-reader/enhancer-pdf

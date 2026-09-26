@@ -56,16 +56,19 @@ reader.viewport.watch("isSpread").subscribe((isSpread) => {
 })
 ```
 
-To know what a viewport of another size would do, for example after the device rotates, use `shouldUseSpreadModeForViewport`. It is the same rule the viewport applies:
+To know what a viewport of another size would show, for example after the device rotates, ask the viewport. It applies the rule every layout applies, for the book and the current setting:
 
 ```typescript
-import { shouldUseSpreadModeForViewport } from "@prose-reader/core"
-
-const rotatedWouldSpread = shouldUseSpreadModeForViewport({
-  spreadMode: reader.settings.values.spreadMode,
-  manifest: reader.context.manifest,
-  viewport: { width: window.innerHeight, height: window.innerWidth },
+const rotatedWouldSpread = reader.viewport.wouldSpreadAt({
+  width: reader.viewport.value.height,
+  height: reader.viewport.value.width,
 })
+```
+
+Whether the book can be shown in a spread at all is in the context. When it can't, the setting changes nothing for it, so a settings screen can disable its spread choice:
+
+```typescript
+reader.context.value.isSpreadAllowed // false for a `none` spread or a `scrolled-continuous` flow
 ```
 
 ## Absolute vs Relative viewport

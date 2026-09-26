@@ -9,10 +9,16 @@ guidance silently reaches some tools and not others. `pnpm run check:agent-docs`
 enforces the pairing and runs in CI; add both files when you add guidelines for
 a package.
 
+Skills follow the same rule. Each one lives in `.agents/skills/<name>`, which
+most agents read, Codex included. Claude Code reads only `.claude/skills/`, so
+each skill also has a symlink there, `../../.agents/skills/<name>`. The same
+check enforces both, so add the symlink with the skill, whether you write it or
+install it with the `skills` CLI that `skills-lock.json` belongs to.
+
 # Writing code
 
 The code-level guidelines live in the `writing-typescript` skill,
-`.claude/skills/writing-typescript/SKILL.md`: naming, deriving state rather than
+`.agents/skills/writing-typescript/SKILL.md`: naming, deriving state rather than
 writing it, DOM reads and writes, and TypeScript `as`. Load it before writing,
 changing or reviewing code, in any package, app, test or script. A tool without
 skills reads that file directly.

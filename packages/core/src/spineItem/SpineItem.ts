@@ -1,5 +1,4 @@
-import { merge } from "rxjs"
-import { share, takeUntil, tap } from "rxjs/operators"
+import { merge, share, takeUntil, tap } from "rxjs"
 import type { Manifest } from ".."
 import { HTML_PREFIX_SPINE_ITEM } from "../constants"
 import type { Context } from "../context/Context"

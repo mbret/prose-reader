@@ -1,10 +1,10 @@
 import { expect, type Page, test } from "@playwright/test"
-import { locateSpineItems, navigateToSpineItem } from "../../utils"
 import {
-  resizeAndSettle,
-  updateSettingsAndSettle,
-  waitForSettled,
-} from "../../utils/pagination"
+  locateSpineItems,
+  navigateToSpineItem,
+  updateSettings,
+} from "../../utils"
+import { waitForSettled } from "../../utils/pagination"
 
 /**
  * The book is a pre-paginated manga, which shows a spread in landscape and
@@ -13,6 +13,10 @@ import {
  * These specs check what ends up on screen. That the reader lays out once for
  * each size or spread setting it is given is proved in
  * `layoutTriggers.test.ts`, where the test holds the observer and the clock.
+ *
+ * Every resize or setting change below changes the share of the window the
+ * second page takes, so each step polls for the new share: it cannot be met by
+ * what was on screen before the change.
  */
 
 const url = "http://localhost:3333/tests/layout/spread/index.html"
@@ -20,9 +24,10 @@ const landscape = { width: 723, height: 671 }
 const portrait = { width: 400, height: 671 }
 
 /**
- * The share of the window's width the second page takes on screen: a half
- * when it is shown in a spread, all of it on its own. A page off screen still
- * has a width, so it first asserts that the page is in the window.
+ * The share of the window's width the second page takes: a half when it is
+ * shown in a spread, all of it on its own. A page off screen still has a width,
+ * and a page half out of the window can take half of it, so a page that is not
+ * entirely in the window measures as "off screen" instead.
  */
 const secondPageShareOfWidth = async (page: Page) => {
   const [secondPage] = await locateSpineItems({
@@ -33,15 +38,24 @@ const secondPageShareOfWidth = async (page: Page) => {
 
   if (!secondPage) throw new Error("the second page is missing")
 
-  // not 1: Mobile Safari measures a sub-pixel of the page outside the window
-  await expect(secondPage).toBeInViewport({ ratio: 0.99 })
+  const secondPageBox = await secondPage.boundingBox()
+  const windowSize = page.viewportSize()
 
-  const box = await secondPage.boundingBox()
-  const window = page.viewportSize()
+  if (!secondPageBox || !windowSize) {
+    throw new Error("the second page has no size on screen")
+  }
 
-  if (!box || !window) throw new Error("the second page has no size on screen")
+  // a pixel of slack: Mobile Safari measures a sub-pixel of the page outside
+  // the window
+  const isEntirelyInWindow =
+    secondPageBox.x >= -1 &&
+    secondPageBox.y >= -1 &&
+    secondPageBox.x + secondPageBox.width <= windowSize.width + 1 &&
+    secondPageBox.y + secondPageBox.height <= windowSize.height + 1
 
-  return Math.round((box.width / window.width) * 100) / 100
+  if (!isEntirelyInWindow) return "off screen"
+
+  return Math.round((secondPageBox.width / windowSize.width) * 100) / 100
 }
 
 /**
@@ -68,34 +82,36 @@ test.describe("Given a reader resized across the spread threshold", () => {
 
     expect(await secondPageShareOfWidth(page)).toBe(0.5)
 
-    await resizeAndSettle(page, portrait)
+    await page.setViewportSize(portrait)
 
-    expect(await secondPageShareOfWidth(page)).toBe(1)
+    await expect.poll(() => secondPageShareOfWidth(page)).toBe(1)
 
-    await resizeAndSettle(page, landscape)
+    await page.setViewportSize(landscape)
 
-    expect(await secondPageShareOfWidth(page)).toBe(0.5)
+    await expect.poll(() => secondPageShareOfWidth(page)).toBe(0.5)
   })
 })
 
 test.describe("Given the spreadMode setting", () => {
-  test("never shows the pages one at a time in landscape", async ({ page }) => {
+  test('"never" shows one page at a time, even in landscape', async ({
+    page,
+  }) => {
     await openOnSecondPage(page, landscape)
 
     expect(await secondPageShareOfWidth(page)).toBe(0.5)
 
-    await updateSettingsAndSettle(page, { spreadMode: "never" })
+    await updateSettings({ page, settings: { spreadMode: "never" } })
 
-    expect(await secondPageShareOfWidth(page)).toBe(1)
+    await expect.poll(() => secondPageShareOfWidth(page)).toBe(1)
   })
 
-  test("always shows a spread in portrait", async ({ page }) => {
+  test('"always" shows a spread, even in portrait', async ({ page }) => {
     await openOnSecondPage(page, portrait)
 
     expect(await secondPageShareOfWidth(page)).toBe(1)
 
-    await updateSettingsAndSettle(page, { spreadMode: "always" })
+    await updateSettings({ page, settings: { spreadMode: "always" } })
 
-    expect(await secondPageShareOfWidth(page)).toBe(0.5)
+    await expect.poll(() => secondPageShareOfWidth(page)).toBe(0.5)
   })
 })

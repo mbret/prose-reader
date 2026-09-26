@@ -1,9 +1,5 @@
 import { Box, Presence } from "@chakra-ui/react"
-import {
-  type CoreInputSettings,
-  shouldUseSpreadModeForViewport,
-} from "@prose-reader/core"
-import { isShallowEqual, type Manifest } from "@prose-reader/shared"
+import { isShallowEqual } from "@prose-reader/shared"
 import { memo } from "react"
 import { MdScreenRotation } from "react-icons/md"
 import { useObserve } from "reactjrx"
@@ -32,11 +28,6 @@ const ANIMATION_NAME_IN_OUT = {
 }
 const ANIMATION_DURATION_IN_OUT = { base: "moderate", _motionReduce: "0ms" }
 
-type ViewportDimensions = {
-  height: number
-  width: number
-}
-
 type ViewportState = `busy` | `free`
 
 /**
@@ -52,51 +43,24 @@ type HintPagination = {
 
 type ReaderWithSpreadHintStreams = NonNullable<ReturnType<typeof useReader>>
 
-export const wouldRotationUseSpreadMode = ({
-  manifest,
-  spreadMode,
-  viewport,
-}: {
-  manifest: Manifest
-  spreadMode: CoreInputSettings["spreadMode"]
-  viewport: ViewportDimensions
-}) => {
-  if (viewport.width === viewport.height) return false
-
-  return shouldUseSpreadModeForViewport({
-    spreadMode,
-    manifest,
-    viewport: {
-      height: viewport.width,
-      width: viewport.height,
-    },
-  })
-}
-
 export const getSpreadRotationHintTargetKey = ({
-  manifest,
   pagination,
-  spreadMode,
   isSpread,
   viewportState,
-  viewport,
+  wouldSpreadWhenRotated,
   isPanorama,
 }: {
-  manifest: Manifest
   pagination: HintPagination
-  /** The `spreadMode` setting. */
-  spreadMode: CoreInputSettings["spreadMode"]
   /** Whether the viewport shows a spread now. */
   isSpread: boolean
   viewportState: ViewportState
-  viewport: ViewportDimensions
+  /** Whether rotating the device would show one. */
+  wouldSpreadWhenRotated: boolean
   isPanorama: boolean
 }) => {
   if (viewportState !== `free`) return undefined
   if (isSpread) return undefined
-  if (!wouldRotationUseSpreadMode({ manifest, spreadMode, viewport })) {
-    return undefined
-  }
+  if (!wouldSpreadWhenRotated) return undefined
 
   if (!isPanorama) return undefined
 
@@ -163,6 +127,7 @@ const observeSpreadRotationHintTargetKey = (
     pagination$,
     reader.viewportState$,
     reader.viewport.watch([`width`, `height`, `isSpread`]),
+    // what a rotation would show changes with the setting too
     reader.settings.watch([`spreadMode`]),
     beginSpineItem$,
   ]).pipe(
@@ -172,10 +137,9 @@ const observeSpreadRotationHintTargetKey = (
         pagination,
         viewportState,
         { isSpread, ...viewport },
-        { spreadMode },
+        _spreadMode,
         { spineItem, isReady },
       ]) => {
-        const manifest = reader.context.manifest
         const isPanorama =
           isReady &&
           cbzReader !== undefined &&
@@ -183,12 +147,14 @@ const observeSpreadRotationHintTargetKey = (
           cbzReader.cbz.isPanoramaSpineItem(spineItem)
 
         return getSpreadRotationHintTargetKey({
-          manifest,
           pagination,
-          spreadMode,
           isSpread,
           viewportState,
-          viewport,
+          // the viewport's own size turned a quarter
+          wouldSpreadWhenRotated: reader.viewport.wouldSpreadAt({
+            width: viewport.height,
+            height: viewport.width,
+          }),
           isPanorama,
         })
       },

@@ -1,8 +1,16 @@
 import { expect, type Page, test } from "@playwright/test"
-import { locateSpineItems } from "../../utils"
-import { updateSettingsAndSettle, waitForSettled } from "../../utils/pagination"
+import { locateSpineItems, updateSettings } from "../../utils"
+import { waitForSettled } from "../../utils/pagination"
 
-const boxesOfTheFirstTwoPages = async (page: Page) => {
+// the precision toBeCloseTo checks with by default
+const isCloseTo = (a: number, b: number) => Math.abs(a - b) < 0.005
+
+/**
+ * Where the second page sits against the first. The two arrangements exclude
+ * each other, so polling for the new one after a setting change cannot be met
+ * by what was on screen before it.
+ */
+const arrangementOfTheFirstTwoPages = async (page: Page) => {
   const items = await locateSpineItems({
     page,
     indexes: [0, 1],
@@ -14,12 +22,26 @@ const boxesOfTheFirstTwoPages = async (page: Page) => {
 
   if (!first || !second) throw new Error("a page has no box")
 
-  return { first, second }
+  if (
+    isCloseTo(second.x, first.x + first.width) &&
+    isCloseTo(second.y, first.y)
+  ) {
+    return "side by side"
+  }
+
+  if (
+    isCloseTo(second.x, first.x) &&
+    isCloseTo(second.y, first.y + first.height)
+  ) {
+    return "stacked"
+  }
+
+  return `neither: ${JSON.stringify({ first, second })}`
 }
 
 const settingsThatStackThePages: {
   change: string
-  settings: Parameters<typeof updateSettingsAndSettle>[1]
+  settings: Parameters<typeof updateSettings>[0]["settings"]
 }[] = [
   {
     change: "the page turn direction becomes vertical",
@@ -43,17 +65,13 @@ test.describe("Given a book whose pages sit side by side", () => {
         )
         await waitForSettled(page)
 
-        const before = await boxesOfTheFirstTwoPages(page)
+        expect(await arrangementOfTheFirstTwoPages(page)).toBe("side by side")
 
-        expect(before.second.x).toBeCloseTo(before.first.x + before.first.width)
-        expect(before.second.y).toBeCloseTo(before.first.y)
+        await updateSettings({ page, settings })
 
-        await updateSettingsAndSettle(page, settings)
-
-        const after = await boxesOfTheFirstTwoPages(page)
-
-        expect(after.second.x).toBeCloseTo(after.first.x)
-        expect(after.second.y).toBeCloseTo(after.first.y + after.first.height)
+        await expect
+          .poll(() => arrangementOfTheFirstTwoPages(page))
+          .toBe("stacked")
       })
     })
   }

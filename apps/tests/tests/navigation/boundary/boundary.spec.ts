@@ -49,18 +49,36 @@ test.describe("Given the user is on the first page (start of book)", () => {
    * forwarding, which the gestures enhancer's unit test does not go through.
    * The browser's own drag of the page's image would cancel the pointer before
    * it is released; the gestures enhancer stops that drag.
+   *
+   * The recognizers time the press on the page's clock: a tap is dropped when
+   * it is held past the tap recognizer's `maximumPressTime` (150ms), and a pan
+   * starts on a timer once the move passes its threshold. Each input event
+   * Playwright sends waits for the page to take it, and on a busy runner the
+   * press alone has taken longer than 150ms. So the spec holds the page's
+   * clock and gives the press a duration of its own, the same on any runner.
    */
   test("a drag too short to pan is an unhandled tap, and does not fire the start boundary", async ({
     page,
   }) => {
+    await page.clock.install()
     await setup(page)
+
+    // `pauseAt` refuses a time in the past, and the page's clock moves on
+    // while the call travels, so it pauses a second ahead. The reader is
+    // idle by then, so the timers that jump runs are none of the gesture's.
+    await page.clock.pauseAt(await page.evaluate(() => Date.now() + 1000))
 
     // 5px, below the pan recognizer's `posThreshold` of 20, in the middle of
     // the page, away from the page turn margins
     await page.mouse.move(200, 300)
     await page.mouse.down()
     await page.mouse.move(205, 300, { steps: 2 })
+    // a quick press: time for a pan to start had the move passed its
+    // threshold, and well within `maximumPressTime`
+    await page.clock.runFor(50)
     await page.mouse.up()
+
+    await page.clock.resume()
 
     await expect(marker(page)).toHaveAttribute("data-gestures", "unhandled tap")
     await expectSpineItemsInViewport({ page, indexes: [0] })
