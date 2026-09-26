@@ -2,7 +2,7 @@
 
 This enhancer connects a reader to the KOReader ecosystem: it navigates to the
 **crengine xpointers** KOReader and the KOReader-sync servers exchange, and
-reports the reading position as one. The conversions themselves come from
+converts a cfi, such as the reading position, to one. The conversions themselves come from
 [`@prose-reader/koreader`](../koreader/README.md); this enhancer is what ties
 them to a live reader.
 
@@ -40,24 +40,30 @@ book is ignored. `goToXPointer` never animates.
 ## The reading position as an xpointer
 
 ```typescript
-reader.navigation.readingPositionXPointer$.subscribe((xpointer) => {
-  // push it to a KOReader sync server
-})
+reader.navigation.readingPosition$.subscribe(
+  ({ cfi, percentageEstimateOfBook }) => {
+    const xpointer = reader.koreader.cfiToXPointer(cfi)
+
+    // push the xpointer and its percentage to a KOReader sync server
+  },
+)
 ```
 
-`readingPositionXPointer$` is the `cfi` of `reader.navigation.readingPosition$`
-as an xpointer, for a sync client to push. It never emits a pointer less precise than
-the position the reader is on, since pushing one would overwrite a better
-position on the server:
+`reader.koreader.cfiToXPointer(cfi)` is the xpointer of a cfi. Convert the
+reading position as it comes, and push it the way the
+[navigation guide](../learn/navigation.md#saving-it) says to save it. A cfi
+naming a chapter converts at once, and one naming a place in its text needs the
+chapter's document, which is loaded by the time the reading position names
+that place. It returns `undefined` when it cannot convert: a place in a
+chapter that is not loaded, or a cfi naming nothing in the book.
 
-- A position in the text is emitted once its chapter's document is loaded,
-  rather than as the chapter start in the meantime. On its way to a cfi naming
-  a place, such as the one the book was reopened at, nothing is emitted until
-  the chapter shows where the cfi leads.
-- While the reader is on its way to an xpointer whose chapter is loading, it
-  emits that xpointer, not the chapter start shown in the meantime.
+The reading position is what the
+[navigation guide](../learn/navigation.md#reading-position) says, whatever the
+target, xpointers included:
+
+- On the way to an xpointer whose chapter is loading, it stands in at the
+  chapter's start. Once the chapter shows the place, it is that place, final
+  once the page holding it is laid out.
 - When an xpointer's place cannot be found once its chapter has loaded, a stale
   one for instance, the reader goes to the chapter's first page, and that page
-  is what it emits.
-
-It replays the current pointer on subscription.
+  is the reading position.

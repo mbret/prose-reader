@@ -11,20 +11,6 @@ import {
   toCfiPosition,
 } from "@prose-reader/koreader"
 import { Report } from "@prose-reader/shared"
-import {
-  BehaviorSubject,
-  combineLatest,
-  distinctUntilChanged,
-  EMPTY,
-  filter,
-  first,
-  map,
-  type Observable,
-  of,
-  shareReplay,
-  switchMap,
-  takeUntil,
-} from "rxjs"
 
 const report = Report.namespace(`@prose-reader/enhancer-koreader`)
 
@@ -38,11 +24,15 @@ export type KoreaderEnhancerOutput<InheritTarget> = {
     ) => void
     /** Goes to the place an xpointer names. Never animates. */
     goToXPointer: (xpointer: string) => void
+  }
+  koreader: {
     /**
-     * The reading position as an xpointer, the value a KOReader sync client
-     * pushes. It only emits pointers as exact as the reading position.
+     * The xpointer of a cfi, such as the reading position's, for a KOReader
+     * sync client to push. A cfi naming a spine item converts at once; one
+     * naming a place in its text needs the item's document loaded, and is
+     * `undefined` otherwise, as for a cfi that names nothing in the book.
      */
-    readingPositionXPointer$: Observable<string>
+    cfiToXPointer: (cfi: string) => string | undefined
   }
 }
 
@@ -50,14 +40,9 @@ const isXPointerTarget = (target: {
   type: string
 }): target is XPointerNavigationTarget => target.type === "xpointer"
 
-type XPointerNavigation = {
-  xpointer: string
-  target: NavigationTarget<"selector">
-}
-
 /**
- * Lets a reader navigate to KOReader xpointers, and reports its reading
- * position as one.
+ * Lets a reader navigate to KOReader xpointers, and convert a cfi, such as its
+ * reading position, to one.
  */
 export const koreaderEnhancer =
   <
@@ -75,9 +60,6 @@ export const koreaderEnhancer =
     options: InheritOptions,
   ): InheritOutput & KoreaderEnhancerOutput<InheritTarget> => {
     const reader = next(options)
-    const lastXPointerNavigation = new BehaviorSubject<
-      XPointerNavigation | undefined
-    >(undefined)
 
     /**
      * The pointer names its spine item, which is known at once, and a place
@@ -120,9 +102,6 @@ export const koreaderEnhancer =
         return
       }
 
-      // Before navigating, so `readingPositionXPointer$` never reports what is
-      // shown while its chapter loads.
-      lastXPointerNavigation.next({ xpointer: target.value, target: selector })
       reader.navigation.navigate({ ...to, target: selector })
     }
 
@@ -137,74 +116,6 @@ export const koreaderEnhancer =
         : undefined
     }
 
-    /**
-     * The xpointer of a cfi. An item start converts at once; a place in the
-     * text once its document is loaded, rather than as the item start in the
-     * meantime, which would overwrite a better position on a sync server.
-     */
-    const readingPositionToXPointer = (cfi: string): Observable<string> => {
-      if (reader.cfi.isRootCfi(cfi)) {
-        const xpointer = cfiToXPointer(cfi, getLoadedSpineItemDocument)
-
-        return xpointer === undefined ? EMPTY : of(xpointer)
-      }
-
-      const spineItem = reader.cfi.getSpineItemFromCfi(cfi)
-
-      if (!spineItem) return EMPTY
-
-      return spineItem.watch("isLoaded").pipe(
-        filter(Boolean),
-        first(),
-        map(() => cfiToXPointer(cfi, getLoadedSpineItemDocument)),
-        filter((xpointer) => xpointer !== undefined),
-      )
-    }
-
-    const readingPositionXPointer$ = combineLatest([
-      reader.navigation.readingPosition$,
-      lastXPointerNavigation,
-      // Every navigation, so one away from the xpointer is seen even when the
-      // reading position stays the same.
-      reader.navigation.navigation$,
-    ]).pipe(
-      switchMap(([readingPosition, xpointerNavigation]) => {
-        const { target } = reader.navigation.getNavigation()
-        const isReadingPositionStandingIn = readingPosition.state === "standIn"
-
-        /**
-         * On its way to an xpointer, the reading position stands in at the
-         * chapter start until the chapter gives the real one. The xpointer
-         * itself is the better answer meanwhile.
-         */
-        const isNavigatingToXPointer =
-          xpointerNavigation !== undefined &&
-          target === xpointerNavigation.target &&
-          isReadingPositionStandingIn
-
-        if (isNavigatingToXPointer) return of(xpointerNavigation.xpointer)
-
-        /**
-         * On its way to a cfi naming a place, such as the one the book was
-         * reopened at, the reading position stands in at the chapter start
-         * until the chapter's document shows where the cfi leads. Pushed, it
-         * would overwrite a better position on the server: the place, or the
-         * page shown when the cfi names none, is reported once known.
-         */
-        const isStandingInForCfiPlace =
-          isReadingPositionStandingIn &&
-          target.type === "cfi" &&
-          !reader.cfi.isRootCfi(target.value)
-
-        return isStandingInForCfiPlace
-          ? EMPTY
-          : readingPositionToXPointer(readingPosition.cfi)
-      }),
-      distinctUntilChanged(),
-      takeUntil(reader.$.destroy$),
-      shareReplay({ bufferSize: 1, refCount: true }),
-    )
-
     return {
       ...reader,
       navigation: {
@@ -215,7 +126,9 @@ export const koreaderEnhancer =
             target: { type: "xpointer", value: xpointer },
             animation: false,
           }),
-        readingPositionXPointer$,
+      },
+      koreader: {
+        cfiToXPointer: (cfi) => cfiToXPointer(cfi, getLoadedSpineItemDocument),
       },
     }
   }

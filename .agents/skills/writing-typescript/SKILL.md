@@ -44,8 +44,8 @@ surroundings do not travel with it.
 
 - **Say what it is for, and in what context**, not only what it is.
   `getSelector` says what it returns; `xpointerToNavigationTarget` says what
-  for. `xpointer$` gives a format; `readingPositionXPointer$` says what the
-  value is.
+  for. `xpointer$` gives a format; `readingPosition$` says what the value
+  is.
 - **Do not shorten for looks.** No abbreviations, and no dropping a qualifier
   because the file makes it look obvious: `isNavigatingToXPointer`, not
   `navigating`; `getLoadedSpineItemDocument`, not `getDoc`.
@@ -73,8 +73,8 @@ together, or reads as a sentence. Then:
   never animates: that is in its doc comment, not in
   `goToXPointerWithoutAnimation`.
 - **Soften, never blur.** Drop only what the context already says, never what a
-  consumer would have to guess. `readingPositionXPointer$` stays whole: on
-  `reader.navigation`, `xpointer$` would not say which place it names.
+  consumer would have to guess. `cfiToXPointer` stays whole: on
+  `reader.koreader`, `toXPointer` would not say what it converts.
 - **The softening stops at the public name.** The code behind it keeps
   internal names: `goToXPointer` is built from `xpointerToNavigationTarget`.
 - **List the user-facing names a change introduces** in its PR description, so

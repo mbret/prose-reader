@@ -1,5 +1,5 @@
 import { createArchiveFromJszip } from "@prose-reader/archive-reader/archives/createArchiveFromJszip"
-import { createReader } from "@prose-reader/core"
+import { createReader, type ReadingPosition } from "@prose-reader/core"
 import { koreaderEnhancer } from "@prose-reader/enhancer-koreader"
 import { generateXPointer, xPointerToCfi } from "@prose-reader/koreader"
 import { Streamer } from "@prose-reader/streamer"
@@ -47,12 +47,18 @@ async function run() {
     },
   })
 
-  // Every xpointer the reader reports, from the start, as a sync client would
-  // see them.
-  const xpointers: string[] = []
+  // Every reading position from the start, converted to an xpointer as it
+  // comes, the way a sync client converts what it pushes.
+  const readingPositionsAsXPointers: {
+    xpointer: string | undefined
+    state: ReadingPosition["state"]
+  }[] = []
 
-  reader.navigation.readingPositionXPointer$.subscribe((xpointer) => {
-    xpointers.push(xpointer)
+  reader.navigation.readingPosition$.subscribe(({ cfi, state }) => {
+    readingPositionsAsXPointers.push({
+      xpointer: reader.koreader.cfiToXPointer(cfi),
+      state,
+    })
   })
 
   // biome-ignore lint/style/noNonNullAssertion: TODO
@@ -61,7 +67,7 @@ async function run() {
   // @ts-expect-error export for the spec
   window.reader = reader
   // @ts-expect-error export for the spec
-  window.xpointers = xpointers
+  window.readingPositionsAsXPointers = readingPositionsAsXPointers
   // @ts-expect-error export for the spec
   window.koreader = { generateXPointer, xPointerToCfi }
 }
