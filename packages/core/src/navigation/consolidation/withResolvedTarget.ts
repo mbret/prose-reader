@@ -48,7 +48,9 @@ export const withResolvedTarget =
 
 /**
  * A navigation without an anchor resolves its target again for one: a target
- * naming a place in an item that had not loaded finds it once the item has.
+ * naming a place in an item that had not loaded finds it once the item has,
+ * or finds it is nowhere, and the navigation is anchored at the page it lands
+ * on instead.
  */
 export const withAnchorFromTarget =
   ({ resolvers }: { resolvers: NavigationTargetResolvers }) =>

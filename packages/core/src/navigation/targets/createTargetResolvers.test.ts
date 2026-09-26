@@ -10,6 +10,9 @@ import type { TargetResolution } from "./types"
 
 const itemStart = "epubcfi(/6/2[0]!)"
 const text = "epubcfi(/6/2[0]!/4/8/1:0)"
+// A path no node of the document has, as a saved position can once the book
+// changed.
+const nothing = "epubcfi(/6/2[0]!/4/999/1:0)"
 
 /** The item's document, holding the element a selector finds. */
 const document = new DOMParser().parseFromString(
@@ -27,12 +30,27 @@ const createResolvers = ({
 } = {}) => {
   const navigationResolver = {
     clampPositionInSpine: (position: SpinePosition) => position,
-    getNavigationForCfi: () => new SpinePosition({ x: 0, y: 0 }),
+    getNavigationForNode: () => new SpinePosition({ x: 0, y: 0 }),
   }
-  const item = { index: 0, href: "0.xhtml" }
+  const spineItem = {
+    item: { index: 0, href: "0.xhtml" },
+    index: 0,
+    value: { isLoaded },
+    renderer: {
+      getDocumentFrame: () =>
+        hasDocument ? { contentDocument: document } : undefined,
+    },
+  }
   const cfi = {
     isRootCfi: (value: string) => value.endsWith("!)"),
-    getSpineItemFromCfi: () => ({ index: 0 }),
+    getSpineItemFromCfi: () => spineItem,
+    // `text` names the note, once its document is there to look in.
+    resolveCfi: ({ cfi }: { cfi: string }) => ({
+      node:
+        isLoaded && hasDocument && cfi === text
+          ? document.getElementById("note")
+          : null,
+    }),
     generateRootCfi: () => itemStart,
     generateCfiForSpineItemPage: ({
       pageNode,
@@ -40,16 +58,7 @@ const createResolvers = ({
       pageNode: { node: Node }
     }) => (pageNode.node === document.getElementById("note") ? text : "other"),
   }
-  const spineItemsManager = {
-    get: () => ({
-      item,
-      value: { isLoaded },
-      renderer: {
-        getDocumentFrame: () =>
-          hasDocument ? { contentDocument: document } : undefined,
-      },
-    }),
-  }
+  const spineItemsManager = { get: () => spineItem }
   const settings = { values: { computedPageTurnDirection: "horizontal" } }
 
   return createTargetResolvers({
@@ -100,17 +109,58 @@ const note: NavigationTarget = {
 }
 
 describe("target resolvers", () => {
-  it("anchor a cfi navigation at the cfi", () => {
-    expect(resolve({ type: "cfi", value: text }).anchor).toEqual({
-      cfi: text,
-      isFinal: false,
+  it("anchor a cfi navigation at the cfi, once its document shows it names a place", () => {
+    expect(resolve({ type: "cfi", value: text })).toMatchObject({
+      anchor: { cfi: text, isFinal: false },
+      awaitsDocument: false,
     })
   })
 
-  it("leave a cfi naming only an item to be anchored at the page it lands on", () => {
-    // A book reopened at a saved item start lands on the item's first page.
-    expect(resolve({ type: "cfi", value: itemStart }).anchor).toBeUndefined()
+  it.each([
+    ["one naming a place", text],
+    ["one naming nothing", nothing],
+  ])(
+    "leave a cfi into an item not loaded without an anchor, %s, awaiting the item for restorations to resolve it again",
+    (_, value) => {
+      /**
+       * Nothing shows yet where the cfi leads, to a place or nowhere: as for a
+       * selector, the navigation has no place until the item is loaded.
+       */
+      expect(
+        resolve({ type: "cfi", value }, { isLoaded: false }),
+      ).toMatchObject({
+        spineItem: 0,
+        anchor: undefined,
+        awaitsDocument: true,
+      })
+    },
+  )
+
+  it("leave a cfi into a loaded item without a document to be anchored at the page it lands on", () => {
+    // No document will ever show where it leads, so it does not wait for one.
+    expect(
+      resolve({ type: "cfi", value: text }, { hasDocument: false }),
+    ).toMatchObject({ anchor: undefined, awaitsDocument: false })
   })
+
+  it("leave a cfi naming nothing in its loaded document to be anchored at the page it lands on", () => {
+    expect(resolve({ type: "cfi", value: nothing })).toMatchObject({
+      spineItem: 0,
+      anchor: undefined,
+      awaitsDocument: false,
+    })
+  })
+
+  it.each([true, false])(
+    "leave a cfi naming only an item to be anchored at the page it lands on, loaded: %s",
+    (isLoaded) => {
+      // A book reopened at a saved item start lands on the item's first page,
+      // with nothing to look for in its document.
+      expect(
+        resolve({ type: "cfi", value: itemStart }, { isLoaded }),
+      ).toMatchObject({ anchor: undefined, awaitsDocument: false })
+    },
+  )
 
   it("anchor a selector navigation at the cfi of what it finds", () => {
     expect(resolve(note).anchor).toEqual({ cfi: text, isFinal: false })

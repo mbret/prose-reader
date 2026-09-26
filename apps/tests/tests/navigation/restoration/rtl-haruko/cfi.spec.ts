@@ -19,8 +19,8 @@ test.describe("Given a CFI which points to item index 1", () => {
           height,
         })
 
-        // safari books online chapter
-        const cfi = `epubcfi(/6/4!/2/4/2)`
+        // The image of item 1's page.
+        const cfi = `epubcfi(/6/4!/4/2)`
 
         await page.goto(
           `http://localhost:3333/tests/navigation/restoration/rtl-haruko/index.html?cfi=${encodeURIComponent(cfi)}`,

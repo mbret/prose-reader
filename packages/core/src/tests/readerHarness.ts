@@ -1,14 +1,15 @@
 import type { Manifest } from "@prose-reader/shared"
 import {
   BehaviorSubject,
+  EMPTY,
   filter,
   first,
   firstValueFrom,
-  ignoreElements,
   map,
   type Observable,
   of,
   ReplaySubject,
+  switchMap,
   timeout,
 } from "rxjs"
 import { afterAll, afterEach, beforeAll, beforeEach, vi } from "vitest"
@@ -20,7 +21,11 @@ import { themeEnhancer } from "../enhancers/theme"
 import { zoomEnhancer } from "../enhancers/zoom"
 import { type CreateReaderOptions, createReader } from "../reader"
 import { DefaultRenderer } from "../spineItem/renderer/DefaultRenderer"
-import type { DocumentRendererParams } from "../spineItem/renderer/DocumentRenderer"
+import {
+  DocumentRenderer,
+  type DocumentRendererParams,
+} from "../spineItem/renderer/DocumentRenderer"
+import { isHtmlTagElement } from "../utils/dom"
 import { createTestManifest } from "./utils"
 
 /**
@@ -116,18 +121,94 @@ const track = <TReader extends { destroy: () => void }>(reader: TReader) => {
 const resolvedResource = () => of(new Response("", { status: 200 }))
 
 /**
+ * Renders an item as a text document in a frame, the way the html renderer
+ * does, so a cfi resolves against real nodes. Its body holds one paragraph,
+ * `/4/2`, with its text at `/4/2/1`, and nothing else.
+ *
+ * The default renderer has no document at all, so a cfi naming a place in an
+ * item it renders can never be found, nor ruled out.
+ */
+export class TextDocumentRenderer extends DocumentRenderer {
+  onCreateDocument() {
+    const frame = this.context.document.createElement("iframe")
+
+    this.setDocumentContainer(frame)
+
+    return of(frame)
+  }
+
+  onLoadDocument() {
+    this.attach()
+
+    const frameDocument = this.getDocumentFrame()?.contentDocument
+
+    if (!frameDocument) throw new Error("the frame has no document")
+
+    frameDocument.body.innerHTML = `<p>A paragraph of text.</p>`
+
+    /**
+     * jsdom lays nothing out, and gives ranges no measurements at all: here
+     * they measure nothing, as its elements do. The frame has a `Range` of its
+     * own.
+     */
+    const { body } = frameDocument
+    const rangePrototype: Range = Object.getPrototypeOf(
+      frameDocument.createRange(),
+    )
+
+    rangePrototype.getBoundingClientRect = () => body.getBoundingClientRect()
+    rangePrototype.getClientRects = () => body.getClientRects()
+
+    return EMPTY
+  }
+
+  onUnload() {
+    this.detach()
+  }
+
+  onLayout() {
+    return of(undefined)
+  }
+
+  onRenderHeadless() {
+    return EMPTY
+  }
+
+  getDocumentFrame() {
+    const frame = this.documentContainer
+
+    return isHtmlTagElement(frame, "iframe") ? frame : undefined
+  }
+}
+
+/** Renders every item as a text document, see {@link TextDocumentRenderer}. */
+export const renderTextDocuments = () => (props: DocumentRendererParams) =>
+  new TextDocumentRenderer(props)
+
+/**
  * Keeps one item from becoming ready: its renderer finishes loading only when
  * `release` is called. Everything else runs as usual, so the item is loading
- * for exactly as long as the test needs.
+ * for exactly as long as the test needs. Every item is rendered by `Renderer`,
+ * the one held included, which loads its document once released.
  */
-export const holdItem = (href: string) => {
+export const holdItem = (
+  href: string,
+  Renderer: new (
+    props: DocumentRendererParams,
+  ) => DocumentRenderer = DefaultRenderer,
+) => {
   const released = new ReplaySubject<void>(1)
 
-  class HeldRenderer extends DefaultRenderer {
-    /** Loads nothing, and completes when released. */
-    onLoadDocument() {
-      return released.pipe(first(), ignoreElements())
-    }
+  const loadDocumentOnceReleased = (renderer: DocumentRenderer) => {
+    const loadDocument = renderer.onLoadDocument.bind(renderer)
+
+    renderer.onLoadDocument = () =>
+      released.pipe(
+        first(),
+        switchMap(() => loadDocument()),
+      )
+
+    return renderer
   }
 
   return {
@@ -135,8 +216,8 @@ export const holdItem = (href: string) => {
       (item: Manifest["spineItems"][number]) =>
       (props: DocumentRendererParams) =>
         item.href === href
-          ? new HeldRenderer(props)
-          : new DefaultRenderer(props),
+          ? loadDocumentOnceReleased(new Renderer(props))
+          : new Renderer(props),
     release: () => {
       released.next()
       released.complete()

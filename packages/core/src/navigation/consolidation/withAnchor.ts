@@ -23,13 +23,14 @@ type Navigation = {
  * far into the book that page starts.
  *
  * - A target that names a place in the text, a cfi or what a selector found,
- *   comes with it, not final: its resolver sets it, and this step makes it
- *   final once the page holding it is laid out. That page is not the one at
- *   the navigation's position, which is a spread's first page while the
- *   anchor can be on the second.
+ *   comes with it once its document shows the place, not final: its resolver
+ *   sets it, and this step makes it final once the page holding it is laid
+ *   out. That page is not the one at the navigation's position, which is a
+ *   spread's first page while the anchor can be on the second.
  * - Otherwise it is the first character of the page that shows first at the
  *   navigation's position, the begin edge of what is visible, final as soon
- *   as that page is laid out.
+ *   as that page is laid out. That includes a target whose document shows it
+ *   names nothing.
  * - Until then the navigation has none, and restoration works from its
  *   position. The first restoration that lands on a layout with the page
  *   finds it.

@@ -541,7 +541,7 @@ test.describe("Given a page reached by turning pages", () => {
     )
   })
 
-  test("a book reopened at the reading position reports no other on the way, not even its start, and ends final on it", async ({
+  test("a book reopened at the reading position reports its chapter's start on the way, never the book's, and ends final on it", async ({
     page,
   }) => {
     const position = await turnToThirdPageOfLongChapter(page)
@@ -556,29 +556,40 @@ test.describe("Given a page reached by turning pages", () => {
 
     // Every value an app saving the reading position would have saved.
     const saved = await page.evaluate(() => {
+      // @ts-expect-error window.reader is set by this scenario's index.tsx
+      const reader = window.reader as Reader
       // @ts-expect-error window.readingPositions is set by this scenario's index.tsx
-      return window.readingPositions as {
+      const values = window.readingPositions as {
         cfi: string
         percentageEstimateOfBook: number
         isFinal: boolean
       }[]
+
+      return values.map((value) => ({
+        ...value,
+        isRootCfi: reader.cfi.isRootCfi(value.cfi),
+        itemIndex: reader.cfi.parseCfi(value.cfi).itemIndex,
+      }))
     })
 
     /**
-     * The cfi is known at once and never changes. How far into the book it is
-     * is only known once the page holding it is laid out: until then it is
-     * the chapter's start, like the position of a navigation into a chapter
-     * that is not loaded, never the start of the book, and the value is not
-     * final. Once final, it is the last value.
+     * Until the chapter is loaded, the reader does not know where the cfi
+     * takes it: the reading position is the chapter's start, not final, as
+     * for any navigation into a chapter not loaded. Then it is the cfi, final
+     * once the page holding it is laid out. None is the start of the book.
      */
-    expect(saved.map(({ cfi }) => cfi)).toEqual(saved.map(() => position.cfi))
-    expect(saved.map(({ isFinal }) => isFinal)).toEqual(
-      saved.map((_, index) => index === saved.length - 1),
-    )
-    expect(saved[saved.length - 1]?.percentageEstimateOfBook).toBeCloseTo(
+    const last = saved[saved.length - 1]
+
+    expect(last).toMatchObject({ cfi: position.cfi, isFinal: true })
+    expect(last?.percentageEstimateOfBook).toBeCloseTo(
       position.readingProgression ?? Number.NaN,
       10,
     )
+    for (const value of saved.slice(0, -1)) {
+      expect(value.isFinal).toBe(false)
+      expect(value.itemIndex).toBe(position.spineItemIndex)
+      expect(value.isRootCfi || value.cfi === position.cfi).toBe(true)
+    }
     for (const { percentageEstimateOfBook } of saved) {
       expect(percentageEstimateOfBook).toBeGreaterThanOrEqual(
         position.chapterStart,
@@ -724,5 +735,84 @@ test.describe("Given chapters that are not preloaded", () => {
         isFinal: true,
       },
     ])
+  })
+})
+
+test.describe("Given a cfi naming nothing in a chapter not loaded yet", () => {
+  test.beforeEach(async ({ page }) => {
+    await page.setViewportSize(initialSize)
+    // Only visible chapters load, so the chapter gone to is not loaded yet.
+    await page.goto(`${url}?preload=0`)
+    await waitForSettled(page)
+  })
+
+  test("the reading position is the chapter's start while the chapter loads, then the page shown, which reopens the book there", async ({
+    page,
+  }) => {
+    const chapterIndex = await getLongChapterIndex(page)
+    // A path no node of the chapter has, as a saved position can once the
+    // book changed.
+    const cfi = `epubcfi(/6/${(chapterIndex + 1) * 2}!/4/2/999/1:0)`
+    const readRecorded = await recordReadingPositions(page)
+    const atOnce = await navigateAndReadAtOnce(page, {
+      cfi,
+      into: chapterIndex,
+    })
+    await waitForSettled(page)
+
+    const settled = await readPosition(page)
+
+    /**
+     * Until the chapter is loaded, the reader does not know where the cfi
+     * takes it: the reading position is the chapter's start, not final, as
+     * for any navigation into a chapter not loaded, never the cfi as asked.
+     * Once it has loaded, the reader is at the chapter's start, where the cfi
+     * could not take it, and the reading position is the page shown, final.
+     */
+    expect(atOnce.wasReady).toBe(false)
+    expect(atOnce.isRootCfi).toBe(true)
+    expect(atOnce.itemIndex).toBe(chapterIndex)
+    expect(atOnce.isFinal).toBe(false)
+    expect(atOnce.percentageEstimateOfBook).toBeCloseTo(
+      settled.chapterStart,
+      10,
+    )
+    expect(settled.spineItemIndex).toBe(chapterIndex)
+    expect(settled.pageIndex).toBe(0)
+    expect(settled.isRootCfi).toBe(false)
+    expect(settled.readingPosition).toBe(settled.cfi)
+    expect(settled.readingProgression).toBeCloseTo(settled.chapterStart, 10)
+    expect(await readRecorded()).toEqual([
+      {
+        cfi: atOnce.cfi,
+        isRootCfi: true,
+        itemIndex: chapterIndex,
+        isFinal: false,
+      },
+      {
+        cfi: settled.cfi,
+        isRootCfi: false,
+        itemIndex: chapterIndex,
+        isFinal: true,
+      },
+    ])
+
+    // A relayout restores to the page shown, as for any page gone to.
+    await resizeAndExpectAnchorVisible(page, narrowSize, settled.cfi)
+
+    await page.setViewportSize(initialSize)
+    await page.goto(`${url}?preload=0&cfi=${encodeURIComponent(settled.cfi)}`)
+    await waitForSettled(page)
+
+    const reopened = await readPosition(page)
+
+    expect(reopened.spineItemIndex).toBe(chapterIndex)
+    expect(reopened.pageIndex).toBe(settled.pageIndex)
+    expect(reopened.readingPosition).toBe(settled.cfi)
+    expect(reopened.isReadingPositionFinal).toBe(true)
+    expect(reopened.readingProgression).toBeCloseTo(
+      settled.readingProgression ?? Number.NaN,
+      10,
+    )
   })
 })
