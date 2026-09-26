@@ -30,7 +30,6 @@
     "@prose-reader/shared": "workspace:^"
   },
   "peerDependencies": {
-    "@prose-reader/core": "workspace:^",
-    "rxjs": "^7.2.0"
+    "@prose-reader/core": "workspace:^"
   }
 }

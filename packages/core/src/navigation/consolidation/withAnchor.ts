@@ -108,9 +108,10 @@ export const withAnchor =
     }
 
     /**
-     * The page holding a target's anchor, resolved from the anchor itself.
-     * Its item is the one resolving the cfi gives, which an enhancer can map
-     * onto another.
+     * The page holding a target's anchor, resolved from the anchor itself,
+     * once its item is ready on a current layout. Its item is the one
+     * resolving the cfi gives, which an enhancer can map onto another. Every
+     * node has a page, one that isn't rendered that of the content after it.
      */
     const getPageHoldingTargetAnchor = (anchorCfi: string) => {
       const { node, offset, spineItem } = cfi.resolveCfi({ cfi: anchorCfi })
@@ -119,10 +120,14 @@ export const withAnchor =
         return undefined
 
       const pageIndex = node
-        ? spine.locator.getSpineItemPageIndexFromNode(node, offset, spineItem)
+        ? spine.locator.spineItemLocator.getSpineItemPageIndexFromNode(
+            node,
+            offset ?? 0,
+            spineItem,
+          )
         : 0
 
-      return pageIndex === undefined ? undefined : { spineItem, pageIndex }
+      return { spineItem, pageIndex }
     }
 
     const getAnchorPageStartProgression = ({

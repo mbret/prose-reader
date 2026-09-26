@@ -54,7 +54,10 @@ the moment a navigation happens, and refined as the reader finds out:
   character: after turning pages, scrolling, `goToSpineItem` or a url without
   a fragment, and for a cfi whose path leads to nothing in its chapter, such as
   a saved position from before the book changed, which takes the reader to the
-  chapter's start.
+  chapter's start. A place that isn't rendered, such as a page-break marker the
+  book's CSS hides, is where the content after it is: the reader goes to the
+  page that content starts on, or to the chapter's last page when nothing
+  rendered follows.
 - **Once the page holding it is laid out**: `final`, and it stays for the rest
   of the navigation. In a chapter already laid out, such as when turning pages,
   that is at once. The change of `state` is emitted even when the `cfi` and its

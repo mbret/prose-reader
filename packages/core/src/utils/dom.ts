@@ -246,6 +246,26 @@ export const getRangeFromNode = (node: Node, offset: number) => {
   return undefined
 }
 
+/**
+ * The node after `node` in document order: its first child, or, with
+ * `skipDescendants` or when it has none, the next sibling of it or of its
+ * closest ancestor that has one. Never one of its ancestors.
+ */
+export const getNextNodeInDocumentOrder = (
+  node: Node,
+  { skipDescendants }: { skipDescendants: boolean },
+) => {
+  if (!skipDescendants && node.firstChild) return node.firstChild
+
+  let nodeOrAncestor: Node | null = node
+
+  while (nodeOrAncestor && !nodeOrAncestor.nextSibling) {
+    nodeOrAncestor = nodeOrAncestor.parentNode
+  }
+
+  return nodeOrAncestor?.nextSibling ?? null
+}
+
 export const noopElement = () => document.createElement("div")
 
 export const getElementsWithAssets = (

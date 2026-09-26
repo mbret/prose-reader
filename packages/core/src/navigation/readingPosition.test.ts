@@ -213,7 +213,9 @@ describe("reading position", () => {
      * 1's page, and so is how far into the book it is. The items have
      * documents, where the cfi is found: without one, it names no place.
      * Finding the page holding it measures its node, which only a browser can
-     * do: whether it is final is left to the browser specs.
+     * do: jsdom renders nothing, so every node counts as not rendered there,
+     * and is placed on its item's last page. The browser specs check the page
+     * found, and whether the position is final on it.
      */
     const cfi = "epubcfi(/6/4[1]!/4/2)"
     const reader = createTestReader({
@@ -946,13 +948,13 @@ describe("reading position of a cfi into a document", () => {
      * at some other character, and saving that one instead would reopen at a
      * different page once the book is laid out differently. It is final
      * once the page holding it is found by measuring its node, which only a
-     * browser can do, and the browser specs check: jsdom measures nothing, so
-     * here the cfi is found in its document but never final.
+     * browser can do, and the browser specs check. jsdom renders nothing: the
+     * node is placed on its item's last page, its only one here, and the cfi
+     * is final as soon as its item is ready on a current layout.
+     * `withAnchor.test.ts` holds the item and the layout to check the
+     * `targetPlace` in between.
      */
     expect(settled.begin.cfi).not.toBe(cfiNamingText)
-    expect(positions).toEqual([
-      itemStart,
-      inSecondItem(cfiNamingText, "targetPlace"),
-    ])
+    expect(positions).toEqual([itemStart, inSecondItem(cfiNamingText, "final")])
   })
 })
