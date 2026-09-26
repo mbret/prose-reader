@@ -112,3 +112,10 @@ book: a settled result does not mean every item has been loaded.
 The reading position needs no such check: every value it takes is the closest
 known position of the reader's latest navigation, as the
 [navigation page](navigation.md#reading-position) explains.
+
+The two move in a set order. The reading position moves to where a navigation
+goes before pagination settles there, and once it has moved, no settled result
+describes the place the navigation left. An app that keeps pagination's
+estimate next to the reading position can therefore let the latest value win:
+the reading position's own `percentageEstimateOfBook` stands until the settled
+estimate for the same place replaces it.
