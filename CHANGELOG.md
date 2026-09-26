@@ -654,8 +654,6 @@ Both reported by Codex review.
 
 Co-Authored-By: Claude Opus 5 <noreply@anthropic.com>
 Claude-Session: https://claude.ai/code/session_01DBqLS9PKYZf3fPBLPYkezW
-* **release:** only from a `BREAKING CHANGE:` footer and ignores the
-`!` subject marker entirely. So `feat!:` resolved to a patch.
 
 ### Features
 
