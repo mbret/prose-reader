@@ -1,6 +1,10 @@
 import type { Context } from "../context/Context"
 import type { ReaderSettingsManager } from "../settings/ReaderSettingsManager"
-import { getRangeFromNode, isHtmlElement } from "../utils/dom"
+import {
+  getNextNodeInDocumentOrder,
+  getRangeFromNode,
+  isHtmlElement,
+} from "../utils/dom"
 import type { Viewport } from "../viewport/Viewport"
 import {
   getClosestValidOffsetFromApproximateOffsetInPages,
@@ -23,8 +27,8 @@ export const createSpineItemLocator = ({
   viewport: Viewport
 }) => {
   /**
-   * Where the page holding a node, from `offset` on, starts in its item, or
-   * `undefined` when the node isn't rendered: `display: none`, or inside it.
+   * The rect a node covers, from `offset` on, or `undefined` when it isn't
+   * rendered: `display: none`, or inside it.
    *
    * Its rect alone cannot tell the two apart. A node that isn't rendered
    * measures an empty rect at `x === 0`, the same `x` as rendered text at the
@@ -32,11 +36,7 @@ export const createSpineItemLocator = ({
    * Only a rendered node has client rects, whatever their size: an element
    * without one still has its box, a collapsed range in text its line's.
    */
-  const getSpineItemPositionFromNode = (
-    node: Node,
-    offset: number,
-    spineItem: SpineItem,
-  ) => {
+  const getRenderedRectOfNode = (node: Node, offset: number) => {
     /**
      * A range in an element without text, such as an `img`, is collapsed
      * inside it and has no box, so the element is measured as a whole.
@@ -46,11 +46,65 @@ export const createSpineItemLocator = ({
         ? node
         : getRangeFromNode(node, offset)
 
-    if (!elementOrRangeToMeasure?.getClientRects().length) return undefined
+    return elementOrRangeToMeasure?.getClientRects().length
+      ? elementOrRangeToMeasure.getBoundingClientRect()
+      : undefined
+  }
+
+  /**
+   * The rect of the first content rendered after a node and outside it, in
+   * document order: the first text or childless element, such as an `img`,
+   * that has a box.
+   */
+  const getRenderedRectAfterNode = (node: Node) => {
+    let candidate = getNextNodeInDocumentOrder(node, { skipDescendants: true })
+
+    while (candidate) {
+      const isTextOrChildlessElement =
+        candidate.nodeType === Node.TEXT_NODE ||
+        (isHtmlElement(candidate) && !candidate.hasChildNodes())
+      const renderedRect = isTextOrChildlessElement
+        ? getRenderedRectOfNode(candidate, 0)
+        : undefined
+
+      if (renderedRect) return renderedRect
+
+      candidate = getNextNodeInDocumentOrder(candidate, {
+        skipDescendants: false,
+      })
+    }
+
+    return undefined
+  }
+
+  /**
+   * Where the page holding a node, from `offset` on, starts in its item.
+   *
+   * A node that isn't rendered, `display: none` or inside it, is where the
+   * content after it is: a hidden page-break marker is on the page it breaks
+   * to. With nothing rendered after it, it is past everything shown, on the
+   * item's last page.
+   */
+  const getSpineItemPositionFromNode = (
+    node: Node,
+    offset: number,
+    spineItem: SpineItem,
+  ) => {
+    const renderedRect =
+      getRenderedRectOfNode(node, offset) ?? getRenderedRectAfterNode(node)
+
+    if (!renderedRect)
+      return getSpineItemPositionFromPageIndex({
+        context,
+        isUsingVerticalWriting: !!spineItem.isUsingVerticalWriting(),
+        itemLayout: spineItem.layoutInfo,
+        pageIndex: spineItem.numberOfPages - 1,
+        viewport,
+      })
 
     const pageStartOffsetInSpineItem =
       getClosestValidOffsetFromApproximateOffsetInPages(
-        elementOrRangeToMeasure.getBoundingClientRect().x,
+        renderedRect.x,
         viewport.pageSize.width,
         spineItem.layoutInfo?.width || 0,
       )
@@ -86,22 +140,19 @@ export const createSpineItemLocator = ({
     offset: number,
     spineItem: SpineItem,
   ) => {
-    const position = getSpineItemPositionFromNode(node, offset, spineItem)
     const { height, width } = spineItem.layoutInfo
 
-    return position
-      ? getSpineItemPageIndexFromSpineItemPosition({
-          isUsingVerticalWriting: !!spineItem.isUsingVerticalWriting(),
-          position,
-          itemHeight: height,
-          itemWidth: width,
-          isRTL: context.isRTL(),
-          pageWidth: viewport.pageSize.width,
-          pageHeight: viewport.pageSize.height,
-          pageTurnDirection: settings.values.computedPageTurnDirection,
-          pageTurnMode: settings.values.pageTurnMode,
-        })
-      : undefined
+    return getSpineItemPageIndexFromSpineItemPosition({
+      isUsingVerticalWriting: !!spineItem.isUsingVerticalWriting(),
+      position: getSpineItemPositionFromNode(node, offset, spineItem),
+      itemHeight: height,
+      itemWidth: width,
+      isRTL: context.isRTL(),
+      pageWidth: viewport.pageSize.width,
+      pageHeight: viewport.pageSize.height,
+      pageTurnDirection: settings.values.computedPageTurnDirection,
+      pageTurnMode: settings.values.pageTurnMode,
+    })
   }
 
   const getSpineItemPagePositionFromSpineItemPosition = (

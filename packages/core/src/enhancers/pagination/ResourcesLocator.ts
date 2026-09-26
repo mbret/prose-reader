@@ -92,7 +92,7 @@ export const consolidate = (
             node,
             startOffset ?? 0,
             spineItem,
-          ) ?? itemPageIndex
+          )
       }
 
       let absolutePageIndex = resource?.absolutePageIndex

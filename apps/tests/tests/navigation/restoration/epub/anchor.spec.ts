@@ -925,8 +925,9 @@ const measureCharacterAtCfi = (page: Page, cfi: string) =>
  * Without a horizontal margin, a page's first line starts at the page's left
  * edge, and on a chapter's first page that is the left edge of the chapter's
  * document: the first character there measures `x === 0`. So does a node that
- * isn't rendered, with an empty rect, and it has no page. Telling the two apart
- * is what finds the page holding the first.
+ * isn't rendered, with an empty rect, which is placed where the content after
+ * it is instead. Telling the two apart is what finds the page holding the
+ * first.
  */
 test.describe("Given pages without a horizontal margin", () => {
   test.beforeEach(async ({ page }) => {
@@ -991,7 +992,7 @@ test.describe("Given pages without a horizontal margin", () => {
     expect(restored.readingProgression).toBe(position.readingProgression)
   })
 
-  test("a rendered node at the left edge of its document has its page, whatever its size, and one that isn't rendered has none", async ({
+  test("a rendered node at the left edge of its document has its page, whatever its size, and one that isn't rendered with nothing after it is on the last page", async ({
     page,
   }) => {
     const chapterIndex = await getChapterIndex(page, "ch03.xhtml")
@@ -1030,7 +1031,7 @@ test.describe("Given pages without a horizontal margin", () => {
         /**
          * What isn't rendered, of each kind the reader measures: text, from
          * the offset on, and an element without text, such as an image, as a
-         * whole.
+         * whole. At the end of the chapter, nothing rendered comes after it.
          */
         const hidden = document.createElement("div")
         const hiddenText = document.createTextNode("Hidden")
@@ -1050,6 +1051,9 @@ test.describe("Given pages without a horizontal margin", () => {
         title.parentNode?.insertBefore(renderedElementWithoutSize, title)
 
         const pageIndexes = {
+          lastPage:
+            (reader.spineItemsManager.get(chapterIndex)?.numberOfPages ?? 0) -
+            1,
           title: titlePageIndex,
           hiddenText: getPageIndex(hiddenText),
           hiddenImage: getPageIndex(hiddenImage),
@@ -1065,12 +1069,137 @@ test.describe("Given pages without a horizontal margin", () => {
       { cfi, chapterIndex },
     )
 
+    expect(pageIndexes.lastPage).toBeGreaterThan(0)
     expect(pageIndexes).toEqual({
+      lastPage: pageIndexes.lastPage,
       title: 0,
-      hiddenText: "none",
-      hiddenImage: "none",
-      hiddenEmptyElement: "none",
+      hiddenText: pageIndexes.lastPage,
+      hiddenImage: pageIndexes.lastPage,
+      hiddenEmptyElement: pageIndexes.lastPage,
       renderedElementWithoutSize: 0,
     })
+  })
+})
+
+/**
+ * Hides a marker right before the first paragraph of a chapter that starts
+ * past its first page, as a book hides a page-break marker. Its cfi names a
+ * place that isn't rendered, and the paragraph after it is where that place
+ * is. Returns both cfis, and the page the paragraph starts on.
+ */
+const hideMarkerBeforeParagraphPastFirstPage = (
+  page: Page,
+  chapterIndex: number,
+) =>
+  page.evaluate((chapterIndex) => {
+    // @ts-expect-error window.reader is set by this scenario's index.tsx
+    const reader = window.reader as Reader
+    const spineItem = reader.spineItemsManager.get(chapterIndex)
+    const document = spineItem?.renderer.getDocumentFrame()?.contentDocument
+
+    if (!spineItem || !document) throw new Error("the chapter is not loaded")
+
+    const paragraphText = Array.from(document.querySelectorAll("p"))
+      .map((paragraph) => paragraph.firstChild)
+      .find(
+        (text): text is Text =>
+          text?.nodeType === Node.TEXT_NODE &&
+          !!text.textContent?.trim() &&
+          (reader.spine.locator.getSpineItemPageIndexFromNode(
+            text,
+            0,
+            chapterIndex,
+          ) ?? 0) > 0,
+      )
+    const paragraph = paragraphText?.parentNode
+
+    if (!paragraphText || !paragraph)
+      throw new Error("no paragraph starts past the chapter's first page")
+
+    const marker = document.createElement("span")
+
+    marker.style.display = "none"
+    paragraph.parentNode?.insertBefore(marker, paragraph)
+
+    const cfiOf = (node: Node) =>
+      reader.cfi.generateCfiForSpineItemPage({
+        spineItem: spineItem.item,
+        pageNode: { node, offset: 0 },
+      })
+
+    return {
+      markerCfi: cfiOf(marker),
+      paragraphCfi: cfiOf(paragraphText),
+      paragraphPageIndex: reader.spine.locator.getSpineItemPageIndexFromNode(
+        paragraphText,
+        0,
+        chapterIndex,
+      ),
+    }
+  }, chapterIndex)
+
+test.describe("Given a cfi naming a place that isn't rendered", () => {
+  test.beforeEach(async ({ page }) => {
+    await page.setViewportSize(initialSize)
+    await page.goto(url)
+    await waitForSettled(page)
+  })
+
+  test("the reader goes to the page of the content after it, final there, and a resize restores to it", async ({
+    page,
+  }) => {
+    const chapterIndex = await getLongChapterIndex(page)
+
+    await page.evaluate((indexOrId) => {
+      // @ts-expect-error window.reader is set by this scenario's index.tsx
+      const reader = window.reader as Reader
+
+      reader.navigation.goToSpineItem({ indexOrId })
+    }, chapterIndex)
+    await waitForSettled(page)
+
+    const { markerCfi, paragraphCfi, paragraphPageIndex } =
+      await hideMarkerBeforeParagraphPastFirstPage(page, chapterIndex)
+
+    expect(paragraphPageIndex).toBeGreaterThan(0)
+
+    await navigateAndReadAtOnce(page, { cfi: markerCfi, into: chapterIndex })
+    await waitForSettled(page)
+
+    /**
+     * The marker has no page of its own: the place it names is where the
+     * paragraph after it starts. The reader goes there, and the reading
+     * position is the marker, final on that page.
+     */
+    await expect
+      .poll(
+        async () => {
+          const { readingPosition, readingPositionState, pageIndex } =
+            await readPosition(page)
+
+          return { readingPosition, readingPositionState, pageIndex }
+        },
+        { timeout: 10_000 },
+      )
+      .toEqual({
+        readingPosition: markerCfi,
+        readingPositionState: "final",
+        pageIndex: paragraphPageIndex,
+      })
+
+    const position = await readPosition(page)
+
+    expect(position.spineItemIndex).toBe(chapterIndex)
+    expect(position.readingProgression).toBeCloseTo(
+      position.beginPageProgression,
+      10,
+    )
+
+    await resizeAndExpectAnchorVisible(page, narrowSize, paragraphCfi)
+
+    const restored = await readPosition(page)
+
+    expect(restored.readingPosition).toBe(markerCfi)
+    expect(restored.readingPositionState).toBe("final")
   })
 })

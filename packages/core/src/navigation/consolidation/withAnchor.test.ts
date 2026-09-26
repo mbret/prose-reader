@@ -49,7 +49,7 @@ const createSpine = ({
       get: () => spineItem,
     },
     locator: {
-      getSpineItemPageIndexFromNode: () => 3,
+      spineItemLocator: { getSpineItemPageIndexFromNode: () => 3 },
       getVisibleSpineItemsFromPosition: () => ({
         beginIndex: 0,
         endIndex: 0,

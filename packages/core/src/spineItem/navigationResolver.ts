@@ -3,7 +3,7 @@ import type { ReaderSettingsManager } from "../settings/ReaderSettingsManager"
 import type { Viewport } from "../viewport/Viewport"
 import { createSpineItemLocator } from "./locationResolver"
 import type { SpineItem } from "./SpineItem"
-import { SpineItemPosition } from "./types"
+import type { SpineItemPosition } from "./types"
 
 export type SpineItemNavigationResolver = ReturnType<
   typeof createNavigationResolver
@@ -37,15 +37,8 @@ export const createNavigationResolver = ({
     spineItem: SpineItem,
     node: Node,
     offset: number,
-  ): SpineItemPosition => {
-    const position = spineItemLocator.getSpineItemPositionFromNode(
-      node,
-      offset,
-      spineItem,
-    )
-
-    return position || new SpineItemPosition({ x: 0, y: 0 })
-  }
+  ): SpineItemPosition =>
+    spineItemLocator.getSpineItemPositionFromNode(node, offset, spineItem)
 
   const getNavigationForPosition = (
     spineItem: SpineItem,
