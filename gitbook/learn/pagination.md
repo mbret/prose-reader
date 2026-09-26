@@ -17,7 +17,7 @@ Two values describe where the reader is, and they answer different questions:
 | | `reader.pagination` | `reader.navigation.readingPosition$` |
 | --- | --- | --- |
 | Answers | What is on screen now | Where the reader is in the book |
-| Moves when | The reader navigates, and whenever the book is laid out again: a resize, a rotation, a font size change, a chapter loading nearby | Only when the reader navigates |
+| Moves when | The reader navigates, and whenever the book is laid out again: a resize, a rotation, a font size change, a chapter loading nearby | The reader navigates, and the page it goes to is laid out. Never on a relayout after that |
 | Use it for | Page numbers, progress bars, the current chapter's title | Saving progress, reopening the book, syncing the position to another device |
 
 Pagination moves on a relayout because its `cfi` is the first visible character

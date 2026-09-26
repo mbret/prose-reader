@@ -26,9 +26,12 @@ where to go: a bookmark, a table of contents entry, a link.
 the next time, and its `percentageEstimateOfBook`, how far into the book that
 is, to save with it for a progress shown outside the reader.
 
-It only moves when the reader navigates. A resize, a rotation, a font size
-change or a chapter loading nearby lays the book out again and reflows the page
-around the reading position, but never changes it. The
+It moves when the reader navigates, and when the page that navigation goes to
+is laid out: until then the reading position, or only its progress, stands at
+the start of that page's chapter, as the cases below say. After that it stays
+for the rest of the navigation. A resize, a rotation, a font size change or a
+chapter loading nearby lays the book out again and reflows the page around the
+reading position, but never changes it. The
 [pagination page](pagination.md#pagination-or-reading-position) explains why
 that makes it the value to save rather than pagination's `begin.cfi`. It is
 also what the reader returns to itself after such a relayout, so a book
