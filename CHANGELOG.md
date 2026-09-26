@@ -3,6 +3,15 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## [17.0.1](https://github.com/mbret/prose-reader/compare/v17.0.0...v17.0.1) (2026-09-26)
+
+
+### Bug Fixes
+
+* **cfi:** read a text assertion spanning lines ([0823177](https://github.com/mbret/prose-reader/commit/08231777bb2db2b36c80895d1b40da86118a87d4))
+
+
+
 ## [17.0.0](https://github.com/mbret/prose-reader/compare/v16.0.1...v17.0.0) (2026-09-26)
 
 
