@@ -48,7 +48,7 @@ export const createNavigator = ({
 }) => {
   const userExplicitNavigationSubject = new Subject<UserNavigationEntry>()
   const userNavigation$ = userExplicitNavigationSubject.asObservable()
-  const userInteractionLock = new Locker()
+  const navigationLock = new Locker()
   const cfiManager = cfi
   const navigationResolver = createNavigationResolver({
     cfi: cfiManager,
@@ -101,13 +101,13 @@ export const createNavigator = ({
     spine,
     viewport,
     cfiManager,
-    userInteractionLock.isLocked$,
+    navigationLock.isLocked$,
     target,
   )
 
   const navigationState$ = combineLatest([
     ...navigationModeControllers.map((controller) => controller.isNavigating$),
-    userInteractionLock.isLocked$,
+    navigationLock.isLocked$,
     internalNavigator.locker.isLocked$,
   ]).pipe(
     map((states) => (states.some((isLocked) => isLocked) ? `busy` : `free`)),
@@ -148,9 +148,9 @@ export const createNavigator = ({
     navigationState$,
     navigate,
     /** Holds the navigation for a pan, and returns its release. */
-    lock: () => userInteractionLock.lock(),
+    lock: () => navigationLock.lock(),
     /** Whether a `lock()` is held. */
-    isLocked$: userInteractionLock.isLocked$,
+    isLocked$: navigationLock.isLocked$,
     navigationResolver: navigationResolver,
     /** Every navigation as it happens, restorations included. */
     navigation$: internalNavigator.navigation$,

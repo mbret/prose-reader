@@ -109,7 +109,8 @@ export class InternalNavigator extends DestroyableClass {
    * state moves on, even when its cfi and progression stay the same: a
    * relayout reflows the page around it without changing it. A navigation
    * whose target names nothing in the book, such as a cfi that can't be read,
-   * is ignored, and leaves it where it was.
+   * is ignored, and leaves it where it was. One made while `lock()` is held,
+   * as by a pan, moves it once the lock is released, to where it lands.
    */
   public readonly readingPosition$: Observable<ReadingPosition> =
     this.navigationSubject.pipe(
@@ -132,10 +133,12 @@ export class InternalNavigator extends DestroyableClass {
     protected viewport: Viewport,
     protected cfiManager: CfiManager,
     /**
-     * While held, automatic position adjustments (correction, restoration)
-     * are deferred so they don't fight the user's direct manipulation.
+     * Whether `lock()` is held, as by a pan, the user's scrolling or the app.
+     * Meanwhile automatic position adjustments (correction, restoration) are
+     * deferred so they don't fight whoever moves the page, and a navigation
+     * lands once the lock is released.
      */
-    protected isUserInteractionLocked$: Observable<boolean>,
+    protected isNavigationLocked$: Observable<boolean>,
     /** Where the reader opens, the start of the book by default. */
     initialTarget?: NavigationTarget,
   ) {
@@ -217,7 +220,7 @@ export class InternalNavigator extends DestroyableClass {
 
     const navigationFromUser$ = merge(firstNavigation$, userNavigationInBook$)
       .pipe(
-        withLatestFrom(this.navigationSubject),
+        withLatestFrom(this.navigationSubject, isNavigationLocked$),
         mapUserNavigationToInternal,
         withResolvedTarget({ resolvers: targetResolvers }),
         withSpineItem({
@@ -249,7 +252,6 @@ export class InternalNavigator extends DestroyableClass {
           navigationResolver,
           settings,
           spine,
-          isUserInteractionLocked$,
         }),
         withSpineItemPosition({
           spineItemsManager: spine.spineItemsManager,
@@ -258,24 +260,32 @@ export class InternalNavigator extends DestroyableClass {
           navigationResolver,
         }),
         withAnchor({ spine, cfi: cfiManager, context }),
-        map((params) => params.navigation),
+        map(({ navigation, awaitsLockRelease }) => ({
+          navigation,
+          awaitsLockRelease,
+        })),
         share(),
       )
 
-    const navigationUpdateFollowingUserUnlock$ = navigationFromUser$.pipe(
-      withLatestFrom(isUserInteractionLocked$),
-      filter(([, isUserLocked]) => isUserLocked),
-      switchMap(([navigation]) => {
+    const navigationUpdateOnLockRelease$ = navigationFromUser$.pipe(
+      filter(({ awaitsLockRelease }) => awaitsLockRelease),
+      switchMap(({ navigation }) => {
         // @todo emit true/false to keep stream pure
         const unlock = this.locker.lock()
 
-        return isUserInteractionLocked$.pipe(
+        return isNavigationLocked$.pipe(
           filter((isUserLocked) => !isUserLocked),
           first(),
           map(() => ({
             navigation: {
               ...navigation,
               animation: "snap" as const,
+              /**
+               * Locked, the navigation kept the anchor of the one it
+               * replaced. Released, it lands, and finds its own where it
+               * does.
+               */
+              anchor: undefined,
             },
           })),
           finalize(() => {
@@ -310,7 +320,7 @@ export class InternalNavigator extends DestroyableClass {
       switchMap(() => {
         return of(null).pipe(
           switchMap(() =>
-            isUserInteractionLocked$.pipe(
+            isNavigationLocked$.pipe(
               filter((isLocked) => !isLocked),
               first(),
             ),
@@ -326,16 +336,14 @@ export class InternalNavigator extends DestroyableClass {
            * another navigation. Whether it's user or internal, it means
            * it has been controlled outside.
            */
-          takeUntil(
-            merge(navigationUpdateFollowingUserUnlock$, navigationFromUser$),
-          ),
+          takeUntil(merge(navigationUpdateOnLockRelease$, navigationFromUser$)),
         )
       }),
     )
 
     const navigationRestored$ = merge(
       navigationUpdateFromLayout$,
-      navigationUpdateFollowingUserUnlock$,
+      navigationUpdateOnLockRelease$,
     ).pipe(
       withAnchorFromTarget({ resolvers: targetResolvers }),
       withRestoredPosition({
@@ -381,7 +389,10 @@ export class InternalNavigator extends DestroyableClass {
       share(),
     )
 
-    const navigationUpdate$ = merge(navigationRestored$, navigationFromUser$)
+    const navigationUpdate$ = merge(
+      navigationRestored$,
+      navigationFromUser$.pipe(map(({ navigation }) => navigation)),
+    )
 
     const notifyNavigationUpdate = (
       stream: Observable<[InternalNavigationEntry, InternalNavigationEntry]>,

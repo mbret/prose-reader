@@ -608,6 +608,71 @@ test.describe("Given a page reached by turning pages", () => {
 })
 
 /**
+ * Drags the page a fifth of the window towards the next one and lets go, with
+ * the pan navigator, as a finger does. That is past the snap threshold, so the
+ * page turns once let go, and short of half the page, so while held the page
+ * before is the one that shows the most.
+ */
+const dragTowardsTheNextPage = (page: Page) =>
+  page.evaluate(() => {
+    // @ts-expect-error window.reader is set by this scenario's index.tsx
+    const reader = window.reader as Reader
+    const { panNavigator } = reader.navigation
+    // A finger moving left pulls the next page in.
+    const delta = { x: -window.innerWidth / 5, y: 0 }
+
+    panNavigator.start({ x: 0, y: 0 })
+    panNavigator.panMoveTo(delta)
+    panNavigator.stop(delta)
+  })
+
+test.describe("Given a page reached by dragging", () => {
+  test.beforeEach(async ({ page }) => {
+    await page.setViewportSize(initialSize)
+    await page.goto(url)
+    await waitForSettled(page)
+  })
+
+  test("the reading position is the page the drag lands on, not the one it was held on, and a resize restores to it", async ({
+    page,
+  }) => {
+    const chapterIndex = await getLongChapterIndex(page)
+
+    await page.evaluate((indexOrId) => {
+      // @ts-expect-error window.reader is set by this scenario's index.tsx
+      const reader = window.reader as Reader
+
+      reader.navigation.goToSpineItem({ indexOrId })
+    }, chapterIndex)
+    await waitForSettled(page)
+
+    const start = await readPosition(page)
+
+    expect(start.spineItemIndex).toBe(chapterIndex)
+    expect(start.pageIndex).toBe(0)
+    expect(start.numberOfPages).toBeGreaterThan(1)
+
+    await dragTowardsTheNextPage(page)
+    await expect
+      .poll(() => readPosition(page).then(({ pageIndex }) => pageIndex))
+      .toBe(1)
+
+    const landed = await readPosition(page)
+
+    expect(landed.spineItemIndex).toBe(chapterIndex)
+    expect(landed.isRootCfi).toBe(false)
+    expect(landed.readingPosition).toBe(landed.cfi)
+    expect(landed.readingPositionState).toBe("final")
+
+    /**
+     * A resize restores to the reading position: the page before, were it
+     * still the one the drag was held on.
+     */
+    await resizeAndExpectAnchorVisible(page, narrowSize, landed.cfi)
+  })
+})
+
+/**
  * Opens a chapter that is not loaded yet at a cfi naming only the chapter,
  * written as another tool can write it: without the id assertion the reader
  * adds. Reads the reading position at once, then once the chapter settles.

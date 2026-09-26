@@ -17,7 +17,14 @@ import type {
 type Navigation = {
   navigation: InternalNavigationInput | InternalNavigationEntry
   awaitsDocument: boolean
-}
+} & (
+  | {
+      awaitsLockRelease: boolean
+      previousNavigation: InternalNavigationEntry
+    }
+  // A restoration waits for the lock to be released.
+  | { awaitsLockRelease?: never }
+)
 
 /**
  * The navigation's anchor: where it takes the reader in the text, as a cfi,
@@ -40,6 +47,12 @@ type Navigation = {
  * - While the target awaits its document it stands in too: the page at its
  *   position can belong to another item, and a final anchor would stop the
  *   target from being resolved again.
+ * - While `lock()` is held, as by a pan, the navigation is unfinished: its
+ *   position is the lock holder's, and the page that shows the most there
+ *   need not be the one it lands on once released, which can snap to the
+ *   next page before that one shows the most. It keeps the anchor of the
+ *   navigation it replaces, where the reader still is as far as it knows;
+ *   the release finds its own.
  *
  * A final anchor is kept for the rest of the navigation. Restorations land on
  * the page holding it; taking that page's own first character instead would
@@ -186,14 +199,16 @@ export const withAnchor =
 
     return stream.pipe(
       map(
-        ({ navigation, ...rest }) =>
+        (params) =>
           // Only the anchor is set, so the caller's shape still holds, as for
           // the other consolidation steps.
           ({
-            ...rest,
+            ...params,
             navigation: {
-              ...navigation,
-              anchor: getAnchor(navigation, rest.awaitsDocument),
+              ...params.navigation,
+              anchor: params.awaitsLockRelease
+                ? params.previousNavigation.anchor
+                : getAnchor(params.navigation, params.awaitsDocument),
             },
           }) as N,
       ),
