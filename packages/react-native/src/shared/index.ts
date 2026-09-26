@@ -3,6 +3,7 @@ import type {
   createReader,
   EnhancerPaginationInfo,
   NavigationTarget,
+  ReadingPosition,
 } from "@prose-reader/core"
 import type { Bridge, BridgeStore } from "@webview-bridge/react-native"
 
@@ -28,7 +29,7 @@ export type ReaderLoadOptions = Pick<ReaderOptions, "manifest"> & {
 export type ReaderState = {
   pagination: EnhancerPaginationInfo | null
   context: RnContextState | null
-  readingPosition: string | null
+  readingPosition: ReadingPosition | null
 }
 
 export interface BridgeState extends Bridge, ReaderState {

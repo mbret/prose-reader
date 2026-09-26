@@ -109,6 +109,20 @@ export type NavigationConsolidation = {
 }
 
 /**
+ * Where the reader is in the book: what to save, and to open the book at with
+ * a cfi target.
+ */
+export type ReadingPosition = {
+  cfi: string
+  /**
+   * How far into the book `cfi` is, from 0 to 1: where the page holding it
+   * starts, estimated from each spine item's `progressionWeight` and the pages
+   * of its own. A position on the last page is short of 1.
+   */
+  percentageEstimateOfBook: number
+}
+
+/**
  * Priority of info taken for restoration:
  * - anchor
  * - spine item position
@@ -162,6 +176,12 @@ export type InternalNavigationEntry = {
    * the page it goes to is laid out.
    */
   anchor?: string
+  /**
+   * How far into the book the page holding `anchor` starts, from 0 to 1.
+   * Found by `withAnchor` on that page and kept with the anchor; `undefined`
+   * until the page is laid out.
+   */
+  anchorPageStartProgression?: number
 } & NavigationConsolidation
 
 /**

@@ -16,7 +16,7 @@ export const usePersistReadingPosition = (bookKey: string) => {
 
   const persistReadingPosition = useCallback(
     () =>
-      reader?.navigation.readingPosition$.subscribe((cfi) => {
+      reader?.navigation.readingPosition$.subscribe(({ cfi }) => {
         localStorage.setItem(getReadingPositionKey(bookKey), cfi)
       }),
     [reader, bookKey],

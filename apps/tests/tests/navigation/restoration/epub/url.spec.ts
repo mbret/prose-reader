@@ -65,7 +65,7 @@ const getReadingPositionElementId = (page: Page) =>
     // Replays the current one, synchronously.
     reader.navigation.readingPosition$
       .subscribe((value) => {
-        cfi = value
+        cfi = value.cfi
       })
       .unsubscribe()
 

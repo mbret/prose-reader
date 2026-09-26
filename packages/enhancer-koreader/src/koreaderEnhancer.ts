@@ -168,7 +168,7 @@ export const koreaderEnhancer =
       // reading position stays the same.
       reader.navigation.navigation$,
     ]).pipe(
-      switchMap(([cfi, xpointerNavigation]) => {
+      switchMap(([{ cfi }, xpointerNavigation]) => {
         /**
          * On its way to an xpointer whose chapter is loading, the reading
          * position is the chapter start. The xpointer itself is the better

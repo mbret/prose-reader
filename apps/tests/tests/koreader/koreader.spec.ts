@@ -236,7 +236,7 @@ test.describe("Given a book reopened at a cfi inside a chapter not loaded yet", 
       let value: string | undefined
 
       reader.navigation.readingPosition$
-        .subscribe((cfi) => {
+        .subscribe(({ cfi }) => {
           value = cfi
         })
         .unsubscribe()

@@ -45,8 +45,8 @@ reader.navigation.readingPositionXPointer$.subscribe((xpointer) => {
 })
 ```
 
-`readingPositionXPointer$` is `reader.navigation.readingPosition$` as an
-xpointer, for a sync client to push. It never emits a pointer less precise than
+`readingPositionXPointer$` is the `cfi` of `reader.navigation.readingPosition$`
+as an xpointer, for a sync client to push. It never emits a pointer less precise than
 the position the reader is on, since pushing one would overwrite a better
 position on the server:
 
