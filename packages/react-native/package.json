@@ -52,6 +52,6 @@
     "expo-file-system": "^57.0.0",
     "react": "19.x",
     "react-native-webview": "*",
-    "rxjs": "*"
+    "rxjs": "^7.5.5"
   }
 }

@@ -47,7 +47,7 @@
     "react-dom": "19.x || 18.x",
     "react-icons": "^5.4.0",
     "reactjrx": "1.x",
-    "rxjs": "*",
+    "rxjs": "^7.5.5",
     "screenfull": "^6.0.2"
   }
 }

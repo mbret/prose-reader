@@ -25,6 +25,6 @@
   "peerDependencies": {
     "@prose-reader/core": "workspace:^",
     "@prose-reader/shared": "workspace:^",
-    "rxjs": "*"
+    "rxjs": "^7.5.5"
   }
 }

@@ -29,11 +29,11 @@
   },
   "devDependencies": {
     "gesturx": "*",
-    "rxjs": "*"
+    "rxjs": "^7.5.5"
   },
   "peerDependencies": {
     "gesturx": "^1.11.1",
-    "rxjs": "7.x"
+    "rxjs": "^7.5.5"
   },
   "gitHead": "4601e14dcacf50b2295cb343582a7ef2c7e1eedc"
 }
