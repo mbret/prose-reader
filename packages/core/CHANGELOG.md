@@ -3,6 +3,30 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## [16.0.0](https://github.com/mbret/prose-reader/compare/v15.0.1...v16.0.0) (2026-09-26)
+
+
+### ⚠ BREAKING CHANGES
+
+* **navigation:** reader.navigation.readingPosition$ emits
+{ cfi, percentageEstimateOfBook } instead of the cfi, and the
+readingPosition of @prose-reader/react-native's ReaderState follows it.
+
+Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
+Claude-Session: https://claude.ai/code/session_01VuXSQD73D2tabpXXxzCrPG
+
+### Features
+
+* **navigation:** report how far into the book the reading position is ([bd3971f](https://github.com/mbret/prose-reader/commit/bd3971fa3bf1730bad14c6d7fcbc38afcbe64bed))
+
+
+### Bug Fixes
+
+* **core:** keep progression estimates within the book whatever the weights ([fca46fa](https://github.com/mbret/prose-reader/commit/fca46fa5fa85b4abc2b32b0d69b5307e82b5d057))
+* **navigation:** take a target's progression from the page holding it ([e3b5681](https://github.com/mbret/prose-reader/commit/e3b5681e09b4d5e70b5e90a1b753818fbb4a01c7))
+
+
+
 ## [15.0.1](https://github.com/mbret/prose-reader/compare/v15.0.0...v15.0.1) (2026-09-26)
 
 **Note:** Version bump only for package @prose-reader/core
