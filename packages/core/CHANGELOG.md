@@ -19,9 +19,6 @@ See [Conventional Commits](https://conventionalcommits.org) for commit guideline
 * **cfi:** parse throws for strings it used to read in part, such as
 a cfi with text after its closing parenthesis or without one, or with a
 step or an offset missing its number.
-
-Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
-Claude-Session: https://claude.ai/code/session_015NcxSCfPM1xnxgFqpDBeRu
 * **navigation:** a navigation to a spine item the book does not have is
 ignored rather than clamped to its first or last item, and a navigation
 to an empty cfi is ignored rather than going to the first item.
@@ -41,9 +38,6 @@ to an empty cfi is ignored rather than going to the first item.
 * **navigation:** reader.navigation.readingPosition$ emits
 { cfi, percentageEstimateOfBook } instead of the cfi, and the
 readingPosition of @prose-reader/react-native's ReaderState follows it.
-
-Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
-Claude-Session: https://claude.ai/code/session_01VuXSQD73D2tabpXXxzCrPG
 
 ### Features
 
@@ -75,9 +69,6 @@ Claude-Session: https://claude.ai/code/session_01VuXSQD73D2tabpXXxzCrPG
 which reads the book and the `spreadMode` setting from the reader.
 `Context.update` accepts only `rootElement` and `hasVerticalWriting`.
 
-Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
-Claude-Session: https://claude.ai/code/session_01DBqLS9PKYZf3fPBLPYkezW
-
 ### Features
 
 * **core:** ask the reader about spreads instead of free functions ([33d9b41](https://github.com/mbret/prose-reader/commit/33d9b41e4f28beb762d53da58fdeb296a97872f9))
@@ -98,9 +89,6 @@ Claude-Session: https://claude.ai/code/session_01DBqLS9PKYZf3fPBLPYkezW
 * **core:** the `cfi` option of `createReader` is removed. Pass
 `target: { type: "cfi", value: cfi }` instead. `ReaderLoadOptions` of
 `@prose-reader/react-native` takes `target` in place of `cfi` the same way.
-
-Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
-Claude-Session: https://claude.ai/code/session_01YNJfUFaQbVhXaYd5pGyGfK
 
 ### Features
 
@@ -153,9 +141,6 @@ new target type. After `goToUrl` to an element, the reading position is that
 element's cfi rather than the first character of its page. A url outside the
 book is ignored instead of going to the first item.
 
-Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
-Claude-Session: https://claude.ai/code/session_01YNJfUFaQbVhXaYd5pGyGfK
-
 ### Bug Fixes
 
 * **navigation:** keep a selector waiting for its document without an anchor ([f6a33d4](https://github.com/mbret/prose-reader/commit/f6a33d463608f3b5090932214de0c725f28b6a4f))
@@ -176,22 +161,6 @@ Claude-Session: https://claude.ai/code/session_01YNJfUFaQbVhXaYd5pGyGfK
 * **navigation:** UserNavigationEntry.direction is removed, and
 InternalNavigationEntry.directionFromLastNavigation no longer includes
 "anchor".
-
-Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
-Claude-Session: https://claude.ai/code/session_01YNJfUFaQbVhXaYd5pGyGfK
-
-* refactor(navigation): drop comments that restate the pipeline
-
-Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
-Claude-Session: https://claude.ai/code/session_01YNJfUFaQbVhXaYd5pGyGfK
-
-* test(navigation): pin the reading position of a chapter opened at its root cfi
-
-While the chapter loads it is the chapter start as the reader names it, not
-the cfi as given; once loaded it is the first page, not the chapter.
-
-Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
-Claude-Session: https://claude.ai/code/session_01YNJfUFaQbVhXaYd5pGyGfK
 
 ### Bug Fixes
 
@@ -233,11 +202,6 @@ from `reader.viewport.value.isSpread`, or follow it with
 `shouldUseSpreadModeForViewport`, which takes the setting. react-reader's
 `wouldRotationUseComputedSpreadMode` is renamed
 `wouldRotationUseSpreadMode` and takes the setting too.
-
-
-Claude-Session: https://claude.ai/code/session_01DBqLS9PKYZf3fPBLPYkezW
-
-Co-authored-by: Claude <noreply@anthropic.com>
 
 ### Bug Fixes
 
@@ -319,19 +283,6 @@ Co-authored-by: Claude <noreply@anthropic.com>
 * **navigation:** `reader.navigation.state$` no longer emits `canTurnLeft`
 and `canTurnRight`.
 
-Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
-Claude-Session: https://claude.ai/code/session_01PrAJRJ7bRywuXZwwLMJupc
-
-* test(navigation): annotate state fixtures instead of asserting them
-
-The fixtures were narrowed with `as const`. An annotation against the
-helper's parameter type is as short, checks each fixture where it is
-declared, and leaves no assertion for the repository's `as` policy to ask
-about.
-
-Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
-Claude-Session: https://claude.ai/code/session_01PrAJRJ7bRywuXZwwLMJupc
-
 ### Code Refactoring
 
 * **navigation:** drop canTurnLeft and canTurnRight from the navigation state ([#393](https://github.com/mbret/prose-reader/issues/393)) ([b441ae6](https://github.com/mbret/prose-reader/commit/b441ae6c3d4b88d5fdea93dd8183e9d26a68ae57))
@@ -378,52 +329,6 @@ described, through casts.
 * **pagination:** `PagesState` gains `layoutRequest`, which reaches
 `reader.layout$` values, and `SpineLayout.layout$` emits the number of
 the request it laid out for.
-
-Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
-Claude-Session: https://claude.ai/code/session_01QxXodieMWcddW8qxxf1R22
-
-* refactor(spine): derive layout currency from cancellation instead of numbering requests
-
-Request numbers were there to tell a replaced layout from the current
-one, because a request did not cancel what was already running: the
-spine layout debounced before its switch, so a pass for an older
-request could still finish, and the pages it produced were computed in
-a stream that only switched on completed passes.
-
-The wait now sits inside the switch, so a request cancels the pass
-still running for an older one, and pages still being computed are
-abandoned when a layout is requested. The next pages published after a
-request are then the ones it asked for, and `isLayoutCurrent$` follows
-from the streams: false from a request, true when pages are next
-published. The numbering, the pages' `layoutRequest` field and the
-public type change go.
-
-Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
-Claude-Session: https://claude.ai/code/session_01QxXodieMWcddW8qxxf1R22
-
-* fix(spine): count a reader layout as requested before the viewport is measured
-
-`reader.layout()` measures the viewport before it lays the spine out,
-and the viewport notifies synchronously, so anything reacting to it
-could navigate while the pages still counted as current, and settle on
-the layout being replaced. `master` avoided this because the
-controller heard `reader.layout()` first; dropping that input for the
-spine's own request stream lost it (found in review).
-
-The reader now passes its layout requests to the spine, filtered to
-after mount, which is the guard its own pipeline already applied, and
-the spine counts them from the moment they are made. Viewport layouts
-alone still do not count: zoom re-measures the viewport with the spine
-geometry intact, and no spine layout would follow to make the pages
-current again.
-
-Tests: a navigation made while a requested layout measures the viewport
-does not settle; a viewport-only layout keeps settlement; the enriched
-result withdraws while the spine relays out for another item, which
-fails on `master` as well.
-
-Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
-Claude-Session: https://claude.ai/code/session_01QxXodieMWcddW8qxxf1R22
 
 ### Bug Fixes
 

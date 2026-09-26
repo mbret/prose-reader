@@ -53,9 +53,6 @@ See [Conventional Commits](https://conventionalcommits.org) for commit guideline
 which reads the book and the `spreadMode` setting from the reader.
 `Context.update` accepts only `rootElement` and `hasVerticalWriting`.
 
-Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
-Claude-Session: https://claude.ai/code/session_01DBqLS9PKYZf3fPBLPYkezW
-
 ### Features
 
 * **core:** ask the reader about spreads instead of free functions ([33d9b41](https://github.com/mbret/prose-reader/commit/33d9b41e4f28beb762d53da58fdeb296a97872f9))
@@ -157,11 +154,6 @@ from `reader.viewport.value.isSpread`, or follow it with
 `shouldUseSpreadModeForViewport`, which takes the setting. react-reader's
 `wouldRotationUseComputedSpreadMode` is renamed
 `wouldRotationUseSpreadMode` and takes the setting too.
-
-
-Claude-Session: https://claude.ai/code/session_01DBqLS9PKYZf3fPBLPYkezW
-
-Co-authored-by: Claude <noreply@anthropic.com>
 
 ### Bug Fixes
 

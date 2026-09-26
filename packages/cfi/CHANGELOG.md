@@ -21,9 +21,6 @@ See [Conventional Commits](https://conventionalcommits.org) for commit guideline
 a cfi with text after its closing parenthesis or without one, or with a
 step or an offset missing its number.
 
-Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
-Claude-Session: https://claude.ai/code/session_015NcxSCfPM1xnxgFqpDBeRu
-
 ### Bug Fixes
 
 * **cfi:** throw for a string that is only partly a cfi ([a071e27](https://github.com/mbret/prose-reader/commit/a071e27d351cd807139fd9bfa9a0644a95c6dfef))

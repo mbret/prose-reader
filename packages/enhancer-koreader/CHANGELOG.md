@@ -28,9 +28,6 @@ See [Conventional Commits](https://conventionalcommits.org) for commit guideline
 { cfi, percentageEstimateOfBook } instead of the cfi, and the
 readingPosition of @prose-reader/react-native's ReaderState follows it.
 
-Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
-Claude-Session: https://claude.ai/code/session_01VuXSQD73D2tabpXXxzCrPG
-
 ### Features
 
 * **navigation:** report how far into the book the reading position is ([bd3971f](https://github.com/mbret/prose-reader/commit/bd3971fa3bf1730bad14c6d7fcbc38afcbe64bed))
