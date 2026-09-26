@@ -6,7 +6,7 @@
       "graphType": "all"
     },
     "version": {
-      "changelogPreset": "./config/changelog-preset.mjs"
+      "changelogPreset": "conventionalcommits"
     }
   },
   "$schema": "node_modules/lerna/schemas/lerna-schema.json"
