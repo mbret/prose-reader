@@ -1,6 +1,6 @@
 {
   "name": "@prose-reader/enhancer-koreader",
-  "version": "17.0.2",
+  "version": "17.0.3",
   "type": "module",
   "license": "MIT",
   "main": "./dist/index.cjs",

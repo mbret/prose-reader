@@ -1,7 +1,7 @@
 {
   "name": "@prose-reader/react-reader",
   "private": false,
-  "version": "17.0.2",
+  "version": "17.0.3",
   "type": "module",
   "types": "./dist/index.d.ts",
   "publishConfig": {
