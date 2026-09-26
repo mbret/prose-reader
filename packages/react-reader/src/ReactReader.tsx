@@ -12,10 +12,11 @@ import { Toaster } from "./components/ui/toaster"
 import { ReactReaderProvider } from "./context/ReactReaderProvider"
 import { useReaderContextValue } from "./context/useReaderContext"
 import { FontSizeControlsDialog } from "./fonts/FontSizeControlsDialog"
-import { SyncFontSettings } from "./fonts/SyncFontSettings"
+import { useSyncFontSize } from "./fonts/useSyncFontSize"
 import { GalleryDialog } from "./gallery/GalleryDialog"
 import { HelpDialog } from "./help/HelpDialog"
 import { LayoutDialog } from "./layout/LayoutDialog"
+import { useSyncSpreadMode } from "./layout/useSyncSpreadMode"
 import { FloatingProgress } from "./navigation/FloatingProgress"
 import { FloatingTime } from "./navigation/FloatingTime"
 import { SpreadRotationHint } from "./navigation/SpreadRotationHint"
@@ -46,13 +47,10 @@ const Effects = memo(() => {
   useQuickMenuToggleGesture()
   usePreventInteractionOnSelection()
   useSyncAnnotationsWithReader()
+  useSyncFontSize()
+  useSyncSpreadMode()
 
-  return (
-    <>
-      <SyncFontSettings />
-      <BookmarksEffects />
-    </>
-  )
+  return <BookmarksEffects />
 })
 
 const InnerReactReader = memo(

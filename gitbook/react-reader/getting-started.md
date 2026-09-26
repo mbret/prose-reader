@@ -69,19 +69,26 @@ const useReaderInstance = (
 
 ## Settings
 
-The user changes some of the reader's settings from react-reader's menus. Each has a single source of truth, which decides how you set its initial value and how you keep the user's choice.
+The user changes some of the reader's settings from react-reader's menus: the font size, and the spread mode in the Layout dialog. react-reader manages both the same way, as props of the component:
 
-**Settings react-reader manages** are props of the component: font size, with `fontSize`, `onFontSizeChange` and the font size scopes. react-reader writes them into the reader (`fontScale`), so don't give them to your reader when you create it: they would be overwritten. Keep the value in your app, save it from the change callback and pass it back as a prop.
+| Setting | Value | Change callback | Scopes | Reader setting |
+| --- | --- | --- | --- | --- |
+| Font size | `fontSize` | `onFontSizeChange` | `fontSizeScope`, `onFontSizeScopeChange`, `fontSizeValues` | `fontScale` |
+| Spread mode | `spreadMode` | `onSpreadModeChange` | `spreadModeScope`, `onSpreadModeScopeChange`, `spreadModeValues` | `spreadMode` |
 
-**Settings that stay the reader's own** have no prop, such as `spreadMode`. react-reader reads and writes `reader.settings` directly and keeps no copy. Give the initial value to your reader when you create it, and watch the setting to save the user's choice:
+react-reader writes the value into the reader, so don't give it to your reader when you create it: it would be overwritten. Keep the value in your app, save it from the change callback and pass it back as a prop:
 
-```typescript
-const reader = createAppReader({ manifest, spreadMode: saved.spreadMode ?? "auto" })
-
-reader.settings.watch(["spreadMode"]).subscribe(({ spreadMode }) => {
-  save({ spreadMode })
-})
+```tsx
+<ReactReader
+  reader={reader}
+  fontSize={saved.fontSize}
+  onFontSizeChange={(_scope, fontSize) => save({ fontSize })}
+  spreadMode={saved.spreadMode}
+  onSpreadModeChange={(_scope, spreadMode) => save({ spreadMode })}
+/>
 ```
+
+The change callback receives the scope whose value the user changed, or `"internal"` for a value set on the reader directly. Without the value prop, react-reader keeps its own copy for as long as it is mounted, starting from the value the reader was created with. Its menus offer to pick a scope only once you pass the scope props.
 
 ## Toggling features
 
