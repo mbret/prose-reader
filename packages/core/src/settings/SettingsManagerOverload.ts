@@ -1,16 +1,14 @@
 import { isShallowEqual, shallowMergeIfDefined } from "@prose-reader/shared"
 import {
   combineLatest,
+  distinctUntilChanged,
+  map,
   type Observable,
   type ObservedValueOf,
   Subject,
-} from "rxjs"
-import {
-  distinctUntilChanged,
-  map,
   shareReplay,
   startWith,
-} from "rxjs/operators"
+} from "rxjs"
 import { watchKeys } from "../utils/rxjs"
 import type { SettingsInterface } from "./SettingsInterface"
 import type { CoreInputSettings, CoreOutputSettings } from "./types"

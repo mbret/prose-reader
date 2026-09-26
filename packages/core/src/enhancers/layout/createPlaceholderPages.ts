@@ -1,6 +1,5 @@
 import type { Manifest } from "@prose-reader/shared"
-import { merge } from "rxjs"
-import { tap } from "rxjs/operators"
+import { merge, tap } from "rxjs"
 import { HTML_PREFIX as HTML_PREFIX_CORE } from "../../constants"
 import type { Reader } from "../../reader"
 import {

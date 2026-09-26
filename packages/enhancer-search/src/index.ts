@@ -1,6 +1,5 @@
 import { deferIdle, type Reader } from "@prose-reader/core"
-import { defer, forkJoin, of } from "rxjs"
-import { catchError, finalize, map, switchMap } from "rxjs/operators"
+import { catchError, defer, finalize, forkJoin, map, of, switchMap } from "rxjs"
 import { report } from "./report"
 import type { SearchResult } from "./search"
 import { searchInDocument } from "./search"

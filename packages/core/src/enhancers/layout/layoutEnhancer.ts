@@ -1,14 +1,17 @@
 import { detectMimeTypeFromName } from "@prose-reader/shared"
-import { EMPTY, merge, type Observable, type ObservedValueOf } from "rxjs"
 import {
   debounceTime,
+  EMPTY,
   filter,
+  merge,
+  type Observable,
+  type ObservedValueOf,
   shareReplay,
   skip,
   switchMap,
   takeUntil,
   tap,
-} from "rxjs/operators"
+} from "rxjs"
 import type { SettingsInterface } from "../../settings/SettingsInterface"
 import type { Pages } from "../../spine/Pages"
 import {
