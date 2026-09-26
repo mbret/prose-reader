@@ -168,35 +168,37 @@ export const koreaderEnhancer =
       // reading position stays the same.
       reader.navigation.navigation$,
     ]).pipe(
-      switchMap(([{ cfi, isFinal }, xpointerNavigation]) => {
+      switchMap(([readingPosition, xpointerNavigation]) => {
         const { target } = reader.navigation.getNavigation()
+        const isReadingPositionStandingIn = readingPosition.state === "standIn"
 
         /**
-         * On its way to an xpointer whose chapter is loading, the reading
-         * position is the chapter start. The xpointer itself is the better
-         * answer until the chapter gives the real one.
+         * On its way to an xpointer, the reading position stands in at the
+         * chapter start until the chapter gives the real one. The xpointer
+         * itself is the better answer meanwhile.
          */
         const isNavigatingToXPointer =
           xpointerNavigation !== undefined &&
           target === xpointerNavigation.target &&
-          reader.cfi.isRootCfi(cfi)
+          isReadingPositionStandingIn
 
         if (isNavigatingToXPointer) return of(xpointerNavigation.xpointer)
 
         /**
          * On its way to a cfi naming a place, such as the one the book was
-         * reopened at, the reading position is the chapter start until the
-         * chapter's document shows where the cfi leads. Pushed, it would
-         * overwrite a better position on the server: the place, or the page
-         * shown when the cfi names none, is reported once known.
+         * reopened at, the reading position stands in at the chapter start
+         * until the chapter's document shows where the cfi leads. Pushed, it
+         * would overwrite a better position on the server: the place, or the
+         * page shown when the cfi names none, is reported once known.
          */
         const isStandingInForCfiPlace =
-          !isFinal &&
-          reader.cfi.isRootCfi(cfi) &&
+          isReadingPositionStandingIn &&
           target.type === "cfi" &&
           !reader.cfi.isRootCfi(target.value)
 
-        return isStandingInForCfiPlace ? EMPTY : readingPositionToXPointer(cfi)
+        return isStandingInForCfiPlace
+          ? EMPTY
+          : readingPositionToXPointer(readingPosition.cfi)
       }),
       distinctUntilChanged(),
       takeUntil(reader.$.destroy$),

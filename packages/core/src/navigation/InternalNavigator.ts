@@ -97,24 +97,24 @@ export class InternalNavigator extends DestroyableClass {
 
   /**
    * Where the reader is in the book, to save and reopen at, the same way
-   * whatever the target: the projection of the current navigation's anchor,
-   * which the target names once its document shows the place and
-   * `withAnchor` otherwise finds, and final when the anchor is. Until then
-   * its progression is the start of the item the navigation goes to, and so
-   * is its cfi while the anchor stands in, such as while that item loads: the
-   * only place a cfi can name there. A target whose document shows it names
-   * nothing, such as a cfi whose path leads nowhere, ends on the first
-   * character of the page the reader landed on.
+   * whatever the target: the current navigation's anchor, which the target
+   * names once its document shows the place and `withAnchor` otherwise finds.
+   * Until the anchor is final, its progression is the start of the item the
+   * navigation goes to, and so is its cfi while it stands in, such as while
+   * that item loads: the only place a cfi can name there. A target whose
+   * document shows it names nothing, such as a cfi whose path leads nowhere,
+   * ends on the first character of the page the reader landed on.
    *
-   * It only moves when the reader navigates, and once more when the anchor
-   * becomes final, even when its cfi and progression stay the same: a
+   * It only moves when the reader navigates, and again each time the anchor's
+   * state moves on, even when its cfi and progression stay the same: a
    * relayout reflows the page around it without changing it. A navigation
    * whose target names nothing in the book, such as a cfi that can't be read,
    * is ignored, and leaves it where it was.
    */
   public readonly readingPosition$: Observable<ReadingPosition> =
     this.navigationSubject.pipe(
-      map((navigation) => this.getReadingPosition(navigation)),
+      // An entry without a spine item has none, such as the navigator's first.
+      map(({ anchor }) => anchor),
       filter(isDefined),
       distinctUntilChanged(isShallowEqual),
     )
@@ -437,21 +437,6 @@ export class InternalNavigator extends DestroyableClass {
     )
 
     notifiedNavigationUpdate$.pipe(takeUntil(this.destroy$)).subscribe()
-  }
-
-  protected getReadingPosition(
-    navigation: InternalNavigationEntry,
-  ): ReadingPosition | undefined {
-    const { anchor } = navigation
-
-    // Only before the first navigation has a spine item.
-    if (!anchor) return undefined
-
-    return {
-      cfi: anchor.cfi,
-      percentageEstimateOfBook: anchor.percentageEstimateOfBook,
-      isFinal: anchor.state === "final",
-    }
   }
 
   get navigation() {

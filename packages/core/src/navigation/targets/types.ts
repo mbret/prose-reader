@@ -1,10 +1,10 @@
 import type { SpinePosition, UnboundSpinePosition } from "../../spine/types"
 import type {
   InternalNavigationEntry,
-  NavigationAnchor,
   NavigationTargetType,
   NavigationTargetValues,
   NavigationVisibleArea,
+  ReadingPosition,
 } from "../types"
 
 /**
@@ -20,7 +20,7 @@ export type TargetResolution = {
    * The place the target names, once its document shows it. It is final only
    * once the page holding it is laid out, which `withAnchor` finds.
    */
-  anchor?: NavigationAnchor & { state: "targetPlace" }
+  anchor?: ReadingPosition & { state: "targetPlace" }
   directionFromLastNavigation: "forward" | "backward"
   snapToPage: boolean
   /**

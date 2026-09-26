@@ -7,7 +7,7 @@ import {
   createTestManifest,
   createTestManifestSpineItems,
 } from "../../tests/utils"
-import type { InternalNavigationEntry, NavigationAnchor } from "../types"
+import type { InternalNavigationEntry, ReadingPosition } from "../types"
 import { withAnchor } from "./withAnchor"
 
 const itemStart = "epubcfi(/6/2[0]!)"
@@ -100,7 +100,7 @@ const consolidateAnchor = (
   ).then(({ navigation }) => navigation.anchor)
 
 /** The start of the navigation's item, the first of two, while no place is known. */
-const standIn: NavigationAnchor = {
+const standIn: ReadingPosition = {
   cfi: itemStart,
   percentageEstimateOfBook: 0,
   state: "standIn",
@@ -149,7 +149,7 @@ describe("withAnchor", () => {
      * page's own first character would restore to the page before at the
      * next relayout.
      */
-    const anchor: NavigationAnchor = {
+    const anchor: ReadingPosition = {
       cfi: textElsewhere,
       percentageEstimateOfBook: 0.25,
       state: "final",
@@ -164,7 +164,7 @@ describe("withAnchor", () => {
      * its item. Finding it again at every restoration would follow the
      * spread: after a rotation the page shown first can be the other one.
      */
-    const anchor: NavigationAnchor = {
+    const anchor: ReadingPosition = {
       cfi: itemStart,
       percentageEstimateOfBook: 0,
       state: "final",
@@ -181,7 +181,7 @@ describe("withAnchor", () => {
      * resolves to: the navigation's position is a spread's first page, and
      * the cfi can be on the second.
      */
-    const targetPlace: NavigationAnchor = {
+    const targetPlace: ReadingPosition = {
       cfi: textElsewhere,
       percentageEstimateOfBook: 0,
       state: "targetPlace",

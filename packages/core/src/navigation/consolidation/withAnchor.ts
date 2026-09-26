@@ -11,7 +11,7 @@ import type { SpineItem } from "../../spineItem/SpineItem"
 import type {
   InternalNavigationEntry,
   InternalNavigationInput,
-  NavigationAnchor,
+  ReadingPosition,
 } from "../types"
 
 type Navigation = {
@@ -132,7 +132,7 @@ export const withAnchor =
      */
     const getStandInAnchor = (
       navigation: N["navigation"],
-    ): NavigationAnchor | undefined => {
+    ): ReadingPosition | undefined => {
       const spineItem = spine.spineItemsManager.get(navigation.spineItem)
 
       if (!spineItem) return undefined
@@ -150,7 +150,7 @@ export const withAnchor =
     const getAnchor = (
       navigation: N["navigation"],
       awaitsDocument: N["awaitsDocument"],
-    ): NavigationAnchor | undefined => {
+    ): ReadingPosition | undefined => {
       const { anchor } = navigation
 
       if (anchor?.state === "final") return anchor
