@@ -1,5 +1,5 @@
 // @vitest-environment jsdom
-import { EMPTY, filter, firstValueFrom, of } from "rxjs"
+import { EMPTY, filter, firstValueFrom, of, skip } from "rxjs"
 import { describe, expect, it, onTestFinished, vi } from "vitest"
 import { getPageStartProgression } from "../pagination/progression"
 import { SpinePosition } from "../spine/types"
@@ -36,7 +36,8 @@ describe("reading position", () => {
      * The turn keeps the viewport busy, so pagination is still resolving
      * while the navigation has already happened. The reading position does
      * not wait for it: the page a navigation goes to is known as soon as it
-     * is laid out, and so is how far into the book it is.
+     * is laid out, and so is how far into the book it is. The item is
+     * preloaded, so the value is final at once.
      */
     reader.navigation.goToSpineItem({ indexOrId: 1, animation: "turn" })
 
@@ -45,6 +46,7 @@ describe("reading position", () => {
     expect(reader.pagination.state.isSettled).toBe(false)
     expect(reader.cfi.parseCfi(atOnce.cfi).itemIndex).toBe(1)
     expect(atOnce.percentageEstimateOfBook).toBe(itemStartProgression(1))
+    expect(atOnce.isFinal).toBe(true)
 
     const settled = await settledOn(reader, 1)
 
@@ -107,6 +109,7 @@ describe("reading position", () => {
     expect(await firstValueFrom(reader.navigation.readingPosition$)).toEqual({
       cfi: settled.begin.cfi,
       percentageEstimateOfBook: itemStartProgression(1),
+      isFinal: true,
     })
   })
 
@@ -150,6 +153,7 @@ describe("reading position", () => {
     expect(await firstValueFrom(reader.navigation.readingPosition$)).toEqual({
       cfi: settled.begin.cfi,
       percentageEstimateOfBook: itemStartProgression(1),
+      isFinal: true,
     })
   })
 
@@ -194,6 +198,7 @@ describe("reading position", () => {
     expect(await firstValueFrom(reader.navigation.readingPosition$)).toEqual({
       cfi: portrait.begin.cfi,
       percentageEstimateOfBook: itemStartProgression(1),
+      isFinal: true,
     })
   })
 
@@ -216,6 +221,7 @@ describe("reading position", () => {
     expect(await firstValueFrom(reader.navigation.readingPosition$)).toEqual({
       cfi,
       percentageEstimateOfBook: itemStartProgression(1),
+      isFinal: true,
     })
   })
 
@@ -233,24 +239,63 @@ describe("reading position", () => {
     /**
      * A cfi names the exact place to reopen at. The page it settles on starts
      * at some other character, and saving that one instead would reopen at a
-     * different page once the book is laid out differently.
+     * different page once the book is laid out differently. The item is
+     * preloaded, so the page holding the cfi is known at once.
      */
     const cfi = "epubcfi(/6/4[1]!/4/2)"
+    const expected = {
+      cfi,
+      percentageEstimateOfBook: itemStartProgression(1),
+      isFinal: true,
+    }
 
     reader.navigation.goToCfi(cfi, { animate: false })
 
-    expect(positions.at(-1)).toEqual({
-      cfi,
-      percentageEstimateOfBook: itemStartProgression(1),
-    })
+    expect(positions.at(-1)).toEqual(expected)
 
     const settled = await settledOn(reader, 1)
 
     expect(settled.begin.cfi).not.toBe(cfi)
-    expect(positions.at(-1)).toEqual({
+    expect(positions.at(-1)).toEqual(expected)
+  })
+
+  it("is the cfi a navigation asked for while its item loads, final once the page holding it is laid out", async () => {
+    const secondItem = holdItem("/page_1.jpg")
+    const reader = createTestReader({ getRenderer: secondItem.getRenderer })
+
+    mountTestReader(reader)
+    await settledOn(reader, 0)
+
+    const positions: ReadingPosition[] = []
+    reader.navigation.readingPosition$.pipe(skip(1)).subscribe((position) => {
+      positions.push(position)
+    })
+
+    const cfi = "epubcfi(/6/4[1]!/4/2)"
+    const inSecondItem = (isFinal: boolean) => ({
       cfi,
       percentageEstimateOfBook: itemStartProgression(1),
+      isFinal,
     })
+
+    reader.navigation.goToCfi(cfi, { animate: false })
+
+    /**
+     * The page holding the cfi is not laid out yet: the progress is its item's
+     * start, which it can be short of, and the value is not final.
+     */
+    expect(positions).toEqual([inSecondItem(false)])
+
+    secondItem.release()
+    await settledOn(reader, 1)
+
+    /**
+     * Its page found, the value is final, and emitted as such even though the
+     * page is the item's first, where its progress already stood.
+     */
+    await vi.waitFor(() =>
+      expect(positions).toEqual([inSecondItem(false), inSecondItem(true)]),
+    )
   })
 
   it("is at the item navigated to at once, while its page is still loading", async () => {
@@ -276,6 +321,7 @@ describe("reading position", () => {
     expect(await firstValueFrom(reader.navigation.readingPosition$)).toEqual({
       cfi: reader.cfi.generateRootCfi(item.item),
       percentageEstimateOfBook: itemStartProgression(1),
+      isFinal: false,
     })
 
     secondItem.release()
@@ -284,6 +330,7 @@ describe("reading position", () => {
     expect(await firstValueFrom(reader.navigation.readingPosition$)).toEqual({
       cfi: second.begin.cfi,
       percentageEstimateOfBook: itemStartProgression(1),
+      isFinal: true,
     })
   })
 
@@ -304,6 +351,7 @@ describe("reading position", () => {
     const expected = {
       cfi: settled.begin.cfi,
       percentageEstimateOfBook: itemStartProgression(1),
+      isFinal: true,
     }
 
     expect(positions).toEqual([expected])
@@ -319,6 +367,122 @@ describe("reading position", () => {
     await settledOn(reader, 1)
 
     expect(positions).toEqual([expected])
+  })
+
+  it("is final once its navigation finds its page, and stays so until the next navigation", async () => {
+    const secondItem = holdItem("/page_1.jpg")
+    const reader = createTestReader({ getRenderer: secondItem.getRenderer })
+
+    /** Every value, with the navigation it is the reading position of. */
+    const values: { navigationId: symbol; position: ReadingPosition }[] = []
+    reader.navigation.readingPosition$.subscribe((position) => {
+      values.push({
+        navigationId: reader.navigation.getNavigation().id,
+        position,
+      })
+    })
+
+    mountTestReader(reader)
+    await settledOn(reader, 0)
+
+    /**
+     * Into an item still loading, back before it has loaded, into it again at
+     * a cfi once it has, then laid out again and unloaded: restorations of a
+     * navigation keep its id.
+     */
+    reader.navigation.goToSpineItem({ indexOrId: 1, animation: "turn" })
+    await waitFor(50)
+    reader.navigation.goToSpineItem({ indexOrId: 0, animation: false })
+    secondItem.release()
+    await settledOn(reader, 0)
+    reader.navigation.goToCfi("epubcfi(/6/4[1]!/4/2)", { animate: false })
+    await settledOn(reader, 1)
+    reader.layout()
+    await settledOn(reader, 1)
+    reader.spineItemsManager.get(1)?.unload()
+    await settledOn(reader, 1)
+
+    const navigationIds = [
+      ...new Set(values.map(({ navigationId }) => navigationId)),
+    ]
+
+    // The opening, the two into item 1 and the one back. The first into item
+    // 1 went while it loaded, before its page could be found.
+    expect(navigationIds.length).toBeGreaterThan(3)
+    expect(values.map(({ position }) => position.isFinal)).toContain(false)
+
+    for (const navigationId of navigationIds) {
+      const positions = values
+        .filter((value) => value.navigationId === navigationId)
+        .map(({ position }) => position)
+      const firstFinal = positions.findIndex(({ isFinal }) => isFinal)
+
+      if (firstFinal === -1) continue
+
+      // Once final, the value is the one saved: nothing moves it but the next
+      // navigation.
+      for (const position of positions.slice(firstFinal)) {
+        expect(position).toEqual(positions[firstFinal])
+      }
+    }
+
+    // The last navigation found its page.
+    expect(values.at(-1)?.position.isFinal).toBe(true)
+  })
+
+  it("is final once an item without a document has loaded, for a selector into it", async () => {
+    const secondItem = holdItem("/page_1.jpg")
+    const reader = createTestReader({ getRenderer: secondItem.getRenderer })
+
+    mountTestReader(reader)
+    await settledOn(reader, 0)
+
+    const positions: ReadingPosition[] = []
+    reader.navigation.readingPosition$.pipe(skip(1)).subscribe((position) => {
+      positions.push(position)
+    })
+
+    const item = reader.spineItemsManager.get(1)
+
+    if (!item) throw new Error("item 1 is missing")
+
+    /**
+     * The test book's items are images, rendered without a document, as a url
+     * or an xpointer can lead into. What a selector looks for is found once
+     * its item's document is loaded, and while the item loads the navigation
+     * waits for it.
+     */
+    reader.navigation.navigate({
+      target: {
+        type: "selector",
+        value: { spineItem: 1, find: (document) => ({ node: document.body }) },
+      },
+      animation: false,
+    })
+
+    expect(positions).toEqual([
+      {
+        cfi: reader.cfi.generateRootCfi(item.item),
+        percentageEstimateOfBook: itemStartProgression(1),
+        isFinal: false,
+      },
+    ])
+
+    secondItem.release()
+
+    const settled = await settledOn(reader, 1)
+
+    /**
+     * Loaded, the item has no document, nor ever will: the reader stops
+     * waiting for one, and the reading position is the page it landed on.
+     */
+    await vi.waitFor(() =>
+      expect(positions.at(-1)).toEqual({
+        cfi: settled.begin.cfi,
+        percentageEstimateOfBook: itemStartProgression(1),
+        isFinal: true,
+      }),
+    )
   })
 })
 

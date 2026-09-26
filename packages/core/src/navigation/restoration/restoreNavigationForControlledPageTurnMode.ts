@@ -49,7 +49,7 @@ export const restoreNavigationForControlledPageTurnMode = ({
       const hasSpineItemGrewOrShrink =
         spineItemWidthDifference !== 0 || spineItemHeighDifference !== 0
 
-      const cfi = navigation.anchor
+      const cfi = navigation.anchor?.cfi
 
       /**
        * Restoration from the anchor: the place the navigation's target named

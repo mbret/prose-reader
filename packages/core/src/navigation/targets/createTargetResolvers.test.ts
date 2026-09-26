@@ -17,7 +17,14 @@ const document = new DOMParser().parseFromString(
   "text/html",
 )
 
-const createResolvers = ({ isLoaded = true }: { isLoaded?: boolean } = {}) => {
+const createResolvers = ({
+  isLoaded = true,
+  hasDocument = true,
+}: {
+  isLoaded?: boolean
+  // An item rendered without a document, such as audio, has none.
+  hasDocument?: boolean
+} = {}) => {
   const navigationResolver = {
     clampPositionInSpine: (position: SpinePosition) => position,
     getNavigationForCfi: () => new SpinePosition({ x: 0, y: 0 }),
@@ -37,7 +44,10 @@ const createResolvers = ({ isLoaded = true }: { isLoaded?: boolean } = {}) => {
     get: () => ({
       item,
       value: { isLoaded },
-      renderer: { getDocumentFrame: () => ({ contentDocument: document }) },
+      renderer: {
+        getDocumentFrame: () =>
+          hasDocument ? { contentDocument: document } : undefined,
+      },
     }),
   }
   const settings = { values: { computedPageTurnDirection: "horizontal" } }
@@ -91,7 +101,10 @@ const note: NavigationTarget = {
 
 describe("target resolvers", () => {
   it("anchor a cfi navigation at the cfi", () => {
-    expect(resolve({ type: "cfi", value: text }).anchor).toBe(text)
+    expect(resolve({ type: "cfi", value: text }).anchor).toEqual({
+      cfi: text,
+      isFinal: false,
+    })
   })
 
   it("leave a cfi naming only an item to be anchored at the page it lands on", () => {
@@ -100,7 +113,7 @@ describe("target resolvers", () => {
   })
 
   it("anchor a selector navigation at the cfi of what it finds", () => {
-    expect(resolve(note).anchor).toBe(text)
+    expect(resolve(note).anchor).toEqual({ cfi: text, isFinal: false })
   })
 
   it("leave a selector awaiting the document of an item not loaded, without an anchor, for restorations to try again", () => {
@@ -108,6 +121,15 @@ describe("target resolvers", () => {
       spineItem: 0,
       anchor: undefined,
       awaitsDocument: true,
+    })
+  })
+
+  it("leave a selector into a loaded item without a document to be anchored at the page it lands on", () => {
+    // No document will ever show where it leads, so it does not wait for one.
+    expect(resolve(note, { hasDocument: false })).toMatchObject({
+      spineItem: 0,
+      anchor: undefined,
+      awaitsDocument: false,
     })
   })
 

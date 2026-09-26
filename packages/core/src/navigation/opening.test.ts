@@ -12,6 +12,22 @@ import type { ReadingPosition } from "./types"
 
 installReaderTestEnvironment()
 
+/**
+ * The reading positions of a navigation whose page is not laid out yet: the
+ * same value, not final, then final once the page is.
+ */
+const notFinalThenFinal = ({
+  cfi,
+  percentageEstimateOfBook,
+}: Omit<ReadingPosition, "isFinal">): ReadingPosition[] => [
+  { cfi, percentageEstimateOfBook, isFinal: false },
+  { cfi, percentageEstimateOfBook, isFinal: true },
+]
+
+/** Resolves once the reading position is final. */
+const readingPositionIsFinal = (positions: ReadingPosition[]) =>
+  vi.waitFor(() => expect(positions.at(-1)?.isFinal).toBe(true))
+
 describe("where the reader opens", () => {
   it("is the start of the book without a target, as a navigation of its own", async () => {
     const reader = createTestReader()
@@ -44,9 +60,15 @@ describe("where the reader opens", () => {
 
     mountTestReader(reader)
     await settledOn(reader, 1)
+    await readingPositionIsFinal(positions)
 
-    // The second of two items, each half the book.
-    expect(positions).toEqual([{ cfi, percentageEstimateOfBook: 0.5 }])
+    /**
+     * The second of two items, each half the book: the cfi from the start,
+     * final once the page holding it is laid out.
+     */
+    expect(positions).toEqual(
+      notFinalThenFinal({ cfi, percentageEstimateOfBook: 0.5 }),
+    )
   })
 
   it.each([
@@ -75,6 +97,7 @@ describe("where the reader opens", () => {
       await vi.waitFor(() => expect(navigations[0]).toBe("user"))
 
       const settled = await settledOn(reader)
+      await readingPositionIsFinal(positions)
 
       /**
        * A saved position gone stale or corrupted names nothing in the book.
@@ -82,9 +105,12 @@ describe("where the reader opens", () => {
        * value.
        */
       expect(settled.begin.spineItemIndex).toBe(0)
-      expect(positions).toEqual([
-        { cfi: settled.begin.cfi, percentageEstimateOfBook: 0 },
-      ])
+      expect(positions).toEqual(
+        notFinalThenFinal({
+          cfi: settled.begin.cfi,
+          percentageEstimateOfBook: 0,
+        }),
+      )
 
       reader.navigation.goToSpineItem({ indexOrId: 1, animation: false })
 
@@ -108,12 +134,16 @@ describe("where the reader opens", () => {
     mountTestReader(reader)
 
     const settled = await settledOn(reader)
+    await readingPositionIsFinal(positions)
 
     expect(settled.begin.spineItemIndex).toBe(1)
     // The second of two items, each half the book.
-    expect(positions).toEqual([
-      { cfi: settled.begin.cfi, percentageEstimateOfBook: 0.5 },
-    ])
+    expect(positions).toEqual(
+      notFinalThenFinal({
+        cfi: settled.begin.cfi,
+        percentageEstimateOfBook: 0.5,
+      }),
+    )
   })
 
   /**
@@ -146,9 +176,12 @@ describe("where the reader opens", () => {
     await vi.waitFor(() => expect(navigations[0]).toBe("user"))
 
     const settled = await settledOn(reader)
+    await readingPositionIsFinal(positions)
 
     expect(settled.begin.spineItemIndex).toBe(1)
-    expect(positions).toEqual([{ cfi, percentageEstimateOfBook: 0.5 }])
+    expect(positions).toEqual(
+      notFinalThenFinal({ cfi, percentageEstimateOfBook: 0.5 }),
+    )
   })
 
   it("is the place a position target names in the laid out book", async () => {
@@ -192,8 +225,11 @@ describe("where the reader opens", () => {
     )
 
     const settled = await settledOn(reader)
+    await readingPositionIsFinal(positions)
 
     expect(settled.begin.spineItemIndex).toBe(1)
-    expect(positions).toEqual([{ cfi, percentageEstimateOfBook: 0.5 }])
+    expect(positions).toEqual(
+      notFinalThenFinal({ cfi, percentageEstimateOfBook: 0.5 }),
+    )
   })
 })

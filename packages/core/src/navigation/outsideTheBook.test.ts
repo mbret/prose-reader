@@ -81,9 +81,9 @@ describe("a navigation whose target names nothing in the book", () => {
 
       const settled = await settledOn(reader, 0)
 
-      // The start of the book.
+      // The start of the book, laid out already.
       expect(readingPositions).toEqual([
-        { cfi: settled.begin.cfi, percentageEstimateOfBook: 0 },
+        { cfi: settled.begin.cfi, percentageEstimateOfBook: 0, isFinal: true },
       ])
     },
   )
