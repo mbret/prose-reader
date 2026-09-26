@@ -3,6 +3,20 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## [19.0.0](https://github.com/mbret/prose-reader/compare/v18.0.0...v19.0.0) (2026-09-26)
+
+### ⚠ BREAKING CHANGES
+
+* **navigation:** a navigation to a cfi reports its chapter's start as the
+  reading position until the chapter is loaded, rather than the cfi as asked.
+  A cfi whose path leads to nothing in its chapter, or into a spine item
+  without a document, is reported as the page it lands on.
+
+### Bug Fixes
+
+* **navigation:** report where the reader is, the same way for every target ([97ba59f](https://github.com/mbret/prose-reader/commit/97ba59fea40adfc27035c425f5c8d810605c1b2c)), closes [#465](https://github.com/mbret/prose-reader/issues/465)
+
+
 ## [18.0.0](https://github.com/mbret/prose-reader/compare/v17.0.4...v18.0.0) (2026-09-26)
 
 **Note:** Version bump only for package @prose-reader/enhancer-koreader
