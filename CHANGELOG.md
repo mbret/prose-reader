@@ -462,8 +462,6 @@ the request it laid out for.
 now need Node >=22.12, where `require(esm)` landed unflagged. `import`
 is unaffected on any Node that runs them, as is any bundler build.
 Documented on the streamer's Node page.
-* **release:** only from a `BREAKING CHANGE:` footer and ignores the
-`!` subject marker entirely. So `feat!:` resolved to a patch.
 
 ### Features
 
