@@ -46,7 +46,9 @@ export type CreateReaderOptions = Partial<CoreInputSettings> & {
   /**
    * Where the reader opens, the start of the book when omitted. The reader
    * goes there once its items are first laid out, so its reading position
-   * never passes through the start of the book on the way.
+   * never passes through the start of the book on the way. A target naming
+   * nothing in the book, such as a saved position gone stale or corrupted,
+   * opens it at its start too.
    */
   target?: NavigationTarget
   /**

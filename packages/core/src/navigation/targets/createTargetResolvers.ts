@@ -69,16 +69,16 @@ export const createTargetResolvers = ({
       awaitsDocument: false,
     }),
 
-    cfi: (value) => {
-      if (!value)
-        return {
-          directionFromLastNavigation: "forward",
-          snapToPage: true,
-          awaitsDocument: false,
-        }
+    cfi: (value, context) => {
+      const spineItem = cfi.getSpineItemFromCfi(value)
+
+      // Never reached: a navigation to a cfi naming nothing in the book is
+      // ignored before it is resolved.
+      if (!spineItem)
+        return resolvers.position(context.previousNavigation.position, context)
 
       return {
-        spineItem: cfi.getSpineItemFromCfi(value)?.index,
+        spineItem: spineItem.index,
         position: navigationResolver.getNavigationForCfi(value),
         // A cfi naming only an item is anchored at the page it lands on.
         anchor: cfi.isRootCfi(value) ? undefined : value,
@@ -91,12 +91,10 @@ export const createTargetResolvers = ({
     selector: ({ spineItem, find }, context) => {
       const item = spineItemsManager.get(spineItem)
 
+      // Never reached: a navigation to a selector of an item the book does not
+      // have is ignored before it is resolved.
       if (!item)
-        return {
-          directionFromLastNavigation: "forward",
-          snapToPage: true,
-          awaitsDocument: false,
-        }
+        return resolvers.position(context.previousNavigation.position, context)
 
       const document = item.value.isLoaded
         ? item.renderer.getDocumentFrame()?.contentDocument
