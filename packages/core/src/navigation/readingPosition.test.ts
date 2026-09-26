@@ -1,7 +1,10 @@
 // @vitest-environment jsdom
-import { filter, firstValueFrom } from "rxjs"
+import { EMPTY, filter, firstValueFrom, of } from "rxjs"
 import { describe, expect, it, onTestFinished, vi } from "vitest"
+import { getPageStartProgression } from "../pagination/progression"
 import { SpinePosition } from "../spine/types"
+import { DefaultRenderer } from "../spineItem/renderer/DefaultRenderer"
+import { DocumentRenderer } from "../spineItem/renderer/DocumentRenderer"
 import {
   createEnhancedTestReader,
   createTestReader,
@@ -11,7 +14,7 @@ import {
   setTestViewport,
   settledOn,
 } from "../tests/readerHarness"
-import { waitFor } from "../tests/utils"
+import { createTestManifest, waitFor } from "../tests/utils"
 import type { ReadingPosition } from "./types"
 
 installReaderTestEnvironment()
@@ -320,36 +323,45 @@ describe("reading position", () => {
 })
 
 describe("reading position and settled pagination", () => {
-  type ItemNamedByStream = {
+  type PlaceNamedByStream = {
     stream: "readingPosition" | "settledPagination"
-    itemIndex: number | undefined
+    pageStartProgression: number
   }
 
   /**
-   * The item each stream names, in the order they emit: the reading position's
-   * cfi, and the begin edge of every settled pagination result.
+   * The place each stream names, in the order they emit, as how far into the
+   * book its page starts: the reading position's own progression, and the
+   * start of each settled result's begin page. Both come from the same
+   * estimate, so two pages of one item are told apart.
    */
-  const recordItemsNamedByReadingPositionAndSettledPagination = (
+  const recordPlacesNamedByReadingPositionAndSettledPagination = (
     reader: ReturnType<typeof createEnhancedTestReader>,
   ) => {
-    const itemsNamedInOrder: ItemNamedByStream[] = []
+    const placesNamedInOrder: PlaceNamedByStream[] = []
 
     reader.navigation.readingPosition$.subscribe((readingPosition) => {
-      itemsNamedInOrder.push({
+      placesNamedInOrder.push({
         stream: "readingPosition",
-        itemIndex: reader.cfi.parseCfi(readingPosition.cfi).itemIndex,
+        pageStartProgression: readingPosition.percentageEstimateOfBook,
       })
     })
     reader.pagination.state$
       .pipe(filter((pagination) => pagination.isSettled))
-      .subscribe((pagination) => {
-        itemsNamedInOrder.push({
+      .subscribe(({ begin }) => {
+        placesNamedInOrder.push({
           stream: "settledPagination",
-          itemIndex: pagination.begin.spineItemIndex,
+          pageStartProgression: getPageStartProgression({
+            manifest: reader.context.manifest,
+            spineItemIndex: begin.spineItemIndex ?? 0,
+            pageIndex: begin.pageIndexInSpineItem ?? 0,
+            numberOfPages:
+              reader.spineItemsManager.get(begin.spineItemIndex)
+                ?.numberOfPages ?? 1,
+          }),
         })
       })
 
-    return itemsNamedInOrder
+    return placesNamedInOrder
   }
 
   /**
@@ -358,24 +370,25 @@ describe("reading position and settled pagination", () => {
    * the navigation left.
    */
   const expectSettledPaginationToFollowTheReadingPosition = (
-    itemsNamedInOrder: ItemNamedByStream[],
+    placesNamedInOrder: PlaceNamedByStream[],
     { from, to }: { from: number; to: number },
   ) => {
-    const readingPositionMovedAt = itemsNamedInOrder.findIndex(
-      ({ stream, itemIndex }) =>
-        stream === "readingPosition" && itemIndex === to,
+    const readingPositionMovedAt = placesNamedInOrder.findIndex(
+      ({ stream, pageStartProgression }) =>
+        stream === "readingPosition" && pageStartProgression === to,
     )
-    const firstSettledOnNewPlaceAt = itemsNamedInOrder.findIndex(
-      ({ stream, itemIndex }) =>
-        stream === "settledPagination" && itemIndex === to,
+    const firstSettledOnNewPlaceAt = placesNamedInOrder.findIndex(
+      ({ stream, pageStartProgression }) =>
+        stream === "settledPagination" && pageStartProgression === to,
     )
-    const settledOnPlaceLeftAfterwards = itemsNamedInOrder
+    const settledOnPlaceLeftAfterwards = placesNamedInOrder
       .slice(readingPositionMovedAt + 1)
       .filter(
-        ({ stream, itemIndex }) =>
-          stream === "settledPagination" && itemIndex === from,
+        ({ stream, pageStartProgression }) =>
+          stream === "settledPagination" && pageStartProgression === from,
       )
 
+    expect(from).not.toBe(to)
     expect(readingPositionMovedAt).toBeGreaterThan(-1)
     expect(firstSettledOnNewPlaceAt).toBeGreaterThan(readingPositionMovedAt)
     expect(settledOnPlaceLeftAfterwards).toEqual([])
@@ -392,15 +405,15 @@ describe("reading position and settled pagination", () => {
       mountTestReader(reader)
       await settledOn(reader, 0)
 
-      const itemsNamedInOrder =
-        recordItemsNamedByReadingPositionAndSettledPagination(reader)
+      const placesNamedInOrder =
+        recordPlacesNamedByReadingPositionAndSettledPagination(reader)
 
       reader.navigation.goToSpineItem({ indexOrId: 1, animation })
       await settledOn(reader, 1)
 
-      expectSettledPaginationToFollowTheReadingPosition(itemsNamedInOrder, {
-        from: 0,
-        to: 1,
+      expectSettledPaginationToFollowTheReadingPosition(placesNamedInOrder, {
+        from: itemStartProgression(0),
+        to: itemStartProgression(1),
       })
     },
   )
@@ -414,17 +427,17 @@ describe("reading position and settled pagination", () => {
     mountTestReader(reader)
     await settledOn(reader, 0)
 
-    const itemsNamedInOrder =
-      recordItemsNamedByReadingPositionAndSettledPagination(reader)
+    const placesNamedInOrder =
+      recordPlacesNamedByReadingPositionAndSettledPagination(reader)
 
     reader.navigation.goToSpineItem({ indexOrId: 1, animation: false })
     await waitFor(100)
     secondItem.release()
     await settledOn(reader, 1)
 
-    expectSettledPaginationToFollowTheReadingPosition(itemsNamedInOrder, {
-      from: 0,
-      to: 1,
+    expectSettledPaginationToFollowTheReadingPosition(placesNamedInOrder, {
+      from: itemStartProgression(0),
+      to: itemStartProgression(1),
     })
   })
 
@@ -437,8 +450,8 @@ describe("reading position and settled pagination", () => {
     mountTestReader(reader)
     await settledOn(reader, 0)
 
-    const itemsNamedInOrder =
-      recordItemsNamedByReadingPositionAndSettledPagination(reader)
+    const placesNamedInOrder =
+      recordPlacesNamedByReadingPositionAndSettledPagination(reader)
 
     reader.navigation.goToSpineItem({ indexOrId: 1, animation: false })
     await waitFor(100)
@@ -447,9 +460,87 @@ describe("reading position and settled pagination", () => {
     secondItem.release()
     await settledOn(reader, 1)
 
-    expectSettledPaginationToFollowTheReadingPosition(itemsNamedInOrder, {
+    expectSettledPaginationToFollowTheReadingPosition(placesNamedInOrder, {
+      from: itemStartProgression(0),
+      to: itemStartProgression(1),
+    })
+  })
+
+  it("moves before pagination settles on a navigation's place, between pages of one item", async () => {
+    /**
+     * The first item lays out three pages wide, as a reflowable chapter
+     * would, so a navigation can stay within it.
+     */
+    class ThreePagesWideRenderer extends DocumentRenderer {
+      onUnload() {}
+
+      onCreateDocument() {
+        return of(this.context.document.createElement("div"))
+      }
+
+      onLoadDocument() {
+        return EMPTY
+      }
+
+      onLayout() {
+        const { width, height } = this.viewport.pageSize
+
+        return of({ width: width * 3, height })
+      }
+
+      onRenderHeadless() {
+        return EMPTY
+      }
+
+      getDocumentFrame() {
+        return undefined
+      }
+    }
+    const reader = createEnhancedTestReader({
+      manifest: createTestManifest({
+        renditionLayout: "reflowable",
+        spineItems: [0, 1].map((index) => ({
+          href: `/chapter_${index}.xhtml`,
+          id: `${index}`,
+          index,
+          progressionWeight: 0.5,
+          renditionLayout: "reflowable",
+        })),
+      }),
+      getRenderer: (item) => (props) =>
+        item.index === 0
+          ? new ThreePagesWideRenderer(props)
+          : new DefaultRenderer(props),
+    })
+
+    mountTestReader(reader)
+    await settledOn(reader, 0)
+
+    const placesNamedInOrder =
+      recordPlacesNamedByReadingPositionAndSettledPagination(reader)
+
+    reader.navigation.goToPageOfSpineItem({
+      spineItemId: 0,
+      pageIndex: 2,
+      animation: false,
+    })
+    await firstValueFrom(
+      reader.pagination.state$.pipe(
+        filter(
+          (pagination) =>
+            pagination.isSettled && pagination.begin.pageIndexInSpineItem === 2,
+        ),
+      ),
+    )
+
+    expectSettledPaginationToFollowTheReadingPosition(placesNamedInOrder, {
       from: 0,
-      to: 1,
+      to: getPageStartProgression({
+        manifest: reader.context.manifest,
+        spineItemIndex: 0,
+        pageIndex: 2,
+        numberOfPages: 3,
+      }),
     })
   })
 })
