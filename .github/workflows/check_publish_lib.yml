@@ -56,11 +56,11 @@ jobs:
 
       # The bump comes from the commit messages rather than being hardcoded, so
       # a breaking change cannot ship as a minor. A merge that changes a
-      # published package always releases: lerna's conventionalcommits preset
-      # starts at patch and only escalates, so `chore`, `docs` and an
-      # unparseable subject still cut a release, `feat` gives a minor, and
-      # `feat!:` / a `BREAKING CHANGE:` footer gives a major. Changelogs come
-      # along with it.
+      # published package always releases: lerna bumps every changed package
+      # by at least a patch, and the conventionalcommits preset only raises
+      # that. `chore`, `docs` and an unparseable subject raise nothing and cut
+      # a patch, `feat` gives a minor, and a `!` before the colon or a
+      # `BREAKING CHANGE:` footer gives a major. Changelogs come along with it.
       #
       # A release is versioned and tagged here, pushed by the step itself, and
       # published only once the push is in. `lerna publish` pushes for itself,
@@ -69,7 +69,7 @@ jobs:
       # commit, and every later release failed on that tag. The step's push is
       # atomic with no retry, so a refused one leaves nothing behind.
       #
-      # lerna exits 0 whether it versioned or not, so the step names the
+      # lerna exits 0 when it has nothing to version, so the step names the
       # outcome and fails on any it cannot name, which is how a skipped release
       # used to report green (#376):
       # - superseded: master has moved past this merge, before the release or
@@ -89,7 +89,10 @@ jobs:
           git config --global user.email "bret.maxime@gmail.com"
           git config --global user.name "Maxime Bret"
 
-          # lerna checks this only when it pushes, which it no longer does
+          # lerna compares the checkout with the remote only when it pushes,
+          # and it does not push here. When it does, a run behind the remote
+          # fails with EBEHIND, but a superseded run is not a failure: the run
+          # that moved master releases its changes, so it ends green.
           superseded() {
             git fetch --quiet origin master
             [ -n "$(git rev-list "${GITHUB_SHA}..origin/master")" ]

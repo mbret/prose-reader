@@ -6,3 +6,12 @@ updates:
       interval: daily
       time: '01:00'
     open-pull-requests-limit: 10
+    ignore:
+      # From 10.4.0 the preset ships a Handlebars guard beside its templates,
+      # and lerna 10.0.1 renders the guard, which fails every release. Nothing
+      # on a pull request runs lerna version, so a bump would pass its checks
+      # and break the next release. Lerna fixed it after 10.0.1
+      # (lerna/lerna#4415): drop this entry, and the `~10.3.0` range in
+      # package.json, with the lerna release that ships it.
+      - dependency-name: conventional-changelog-conventionalcommits
+        versions: ['>=10.4.0']

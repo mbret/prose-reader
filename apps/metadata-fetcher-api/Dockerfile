@@ -7,7 +7,7 @@
 # Ignore rules are in `Dockerfile.dockerignore`, scoped to this image rather
 # than every build in the monorepo.
 
-ARG NODE_VERSION=25-alpine
+ARG NODE_VERSION=26-alpine
 
 # ---------------------------------------------------------------------------
 # deps — manifests only, so editing source doesn't invalidate the slow install
