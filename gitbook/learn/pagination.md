@@ -114,8 +114,11 @@ known position of the reader's latest navigation, as the
 [navigation page](navigation.md#reading-position) explains.
 
 The two move in a set order. The reading position moves to where a navigation
-goes before pagination settles there, and once it has moved, no settled result
-describes the place the navigation left. An app that keeps pagination's
+goes before pagination settles there, and once it has moved, every settled
+result describes the pages the navigation shows, never pages it moved away
+from. A navigation that keeps the pages shown, such as one to a cfi on the
+second page of a spread, is no exception: the reading position moves, and
+pagination settles again on the same pages. An app that keeps pagination's
 estimate next to the reading position can therefore let the latest value win:
 the reading position's own `percentageEstimateOfBook` stands until the settled
-estimate for the same place replaces it.
+estimate for the pages holding it replaces it.
