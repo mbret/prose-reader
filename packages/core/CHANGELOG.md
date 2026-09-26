@@ -3,6 +3,23 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## [18.0.0](https://github.com/mbret/prose-reader/compare/v17.0.4...v18.0.0) (2026-09-26)
+
+### ⚠ BREAKING CHANGES
+
+* **navigation:** ReadingPosition gains `isFinal`, which code building one
+  must set. readingPosition$ emits once more when a value becomes final, even
+  with the same cfi and progress.
+
+### Features
+
+* **navigation:** say whether the reading position is final ([49ed7f2](https://github.com/mbret/prose-reader/commit/49ed7f222bf217117cf3fae89733245b1af51f44))
+
+### Bug Fixes
+
+* **navigation:** stop a selector waiting for a document its item never gets ([e697b87](https://github.com/mbret/prose-reader/commit/e697b879f2bb6f9061e5e3d2b8a1290c324f90f1))
+
+
 ## [17.0.3](https://github.com/mbret/prose-reader/compare/v17.0.2...v17.0.3) (2026-09-26)
 
 **Note:** Version bump only for package @prose-reader/core

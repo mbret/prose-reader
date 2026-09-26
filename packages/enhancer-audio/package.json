@@ -1,6 +1,6 @@
 {
   "name": "@prose-reader/enhancer-audio",
-  "version": "17.0.3",
+  "version": "18.0.0",
   "type": "module",
   "main": "./dist/index.cjs",
   "module": "./dist/index.js",
