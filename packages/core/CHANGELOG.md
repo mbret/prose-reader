@@ -3,6 +3,13 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## [20.0.1](https://github.com/mbret/prose-reader/compare/v20.0.0...v20.0.1) (2026-09-26)
+
+### Bug Fixes
+
+* **navigation:** move the reading position once a locked navigation lands ([6baa902](https://github.com/mbret/prose-reader/commit/6baa902b824416f0d5105cc648d7c1a6d3dfcf26)), references [#392](https://github.com/mbret/prose-reader/issues/392) [#392](https://github.com/mbret/prose-reader/issues/392)
+
+
 ## [20.0.0](https://github.com/mbret/prose-reader/compare/v19.0.0...v20.0.0) (2026-09-26)
 
 ### ⚠ BREAKING CHANGES
