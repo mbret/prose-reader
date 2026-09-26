@@ -101,11 +101,18 @@ export class InternalNavigator extends DestroyableClass {
    * navigation's anchor, which a cfi target names and `withAnchor` otherwise
    * finds, with its progression. Until the page a navigation goes to is laid
    * out it has neither, and this is the start of the item the navigation goes
-   * to, the only place a cfi can name in content that is not laid out. It only
-   * moves when the reader navigates, and once when such a navigation finds its
-   * page: a relayout reflows the page around it without changing it. A
-   * navigation whose target names nothing in the book, such as a malformed
-   * cfi, is ignored, and leaves it where it was.
+   * to, the only place a cfi can name in content that is not laid out.
+   *
+   * A cfi whose path leads to nothing in its item's document names no place
+   * either, which only shows once the document is loaded: until then this is
+   * the cfi as asked, then the first character of the page the reader landed
+   * on, at the start of the item. A navigation whose target names nothing in
+   * the book at all, such as a malformed cfi, is ignored, and leaves this
+   * where it was.
+   *
+   * It only moves when the reader navigates, and once more when such a
+   * navigation finds its page, or finds that its cfi names nothing: a relayout
+   * reflows the page around it without changing it.
    */
   public readonly readingPosition$: Observable<ReadingPosition> =
     this.navigationSubject.pipe(

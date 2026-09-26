@@ -53,6 +53,12 @@ It is set the moment a navigation happens:
   the only place a cfi can name in a document that is not loaded. Once the
   chapter has loaded, it becomes the first character of the page the
   navigation lands on, or the element a url names, and stays there.
+- **A navigation to a cfi whose path leads to nothing in its chapter**, such as
+  a saved position from before the book changed: the reader goes to the
+  chapter's start. Until the chapter is loaded, such a cfi cannot be told from
+  one naming a place, so the reading position is the cfi as it was given. Once
+  the chapter has loaded, it becomes the first character of the page shown, and
+  stays there.
 
 A navigation whose target names nothing in the book, such as a malformed cfi or
 a cfi of a chapter the book does not have, is ignored with a warning: the reader
@@ -92,7 +98,11 @@ passes through the start of the book on the way, and a saved position is never
 overwritten by the cover.
 
 A saved position can go stale when the book changes, or get corrupted. One
-that names nothing in the book opens it at its start, as without a target.
+that names nothing in the book opens it at its start, as without a target. One
+whose chapter is still there opens that chapter, and the reading position
+follows the rules above: a place in the chapter that is gone becomes the page
+shown once the chapter has loaded, so what you save from there reopens the
+book.
 
 ```typescript
 const saved = localStorage.getItem(`reading-position-${bookId}`)

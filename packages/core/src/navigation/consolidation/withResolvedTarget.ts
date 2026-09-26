@@ -31,7 +31,7 @@ export const withResolvedTarget =
   <N extends Navigation>(stream: Observable<N>) =>
     stream.pipe(
       map((params) => {
-        const { snapToPage, awaitsDocument, ...resolution } = resolveTarget(
+        const { snapToPage, ...resolution } = resolveTarget(
           resolvers,
           params.navigation.target,
           { previousNavigation: params.previousNavigation },
@@ -41,22 +41,22 @@ export const withResolvedTarget =
           ...params,
           navigation: { ...params.navigation, ...resolution },
           snapToPage,
-          awaitsDocument,
         }
       }),
     )
 
 /**
- * A navigation without an anchor resolves its target again for one: a target
- * naming a place in an item that had not loaded finds it once the item has.
+ * A navigation whose target awaits its document resolves it again: once the
+ * document is loaded, the place the target names is found there, and anchors
+ * the navigation, or is found to be nowhere, and the navigation is anchored at
+ * the page it lands on instead.
  */
 export const withAnchorFromTarget =
   ({ resolvers }: { resolvers: NavigationTargetResolvers }) =>
   <N extends { navigation: InternalNavigationEntry }>(stream: Observable<N>) =>
     stream.pipe(
       map((params) => {
-        if (params.navigation.anchor !== undefined)
-          return { ...params, awaitsDocument: false }
+        if (!params.navigation.awaitsDocument) return params
 
         const { anchor, awaitsDocument } = resolveTarget(
           resolvers,
@@ -66,8 +66,7 @@ export const withAnchorFromTarget =
 
         return {
           ...params,
-          navigation: { ...params.navigation, anchor },
-          awaitsDocument,
+          navigation: { ...params.navigation, anchor, awaitsDocument },
         }
       }),
     )

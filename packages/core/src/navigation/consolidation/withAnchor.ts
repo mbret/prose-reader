@@ -9,7 +9,6 @@ import type { InternalNavigationEntry, InternalNavigationInput } from "../types"
 
 type Navigation = {
   navigation: InternalNavigationInput | InternalNavigationEntry
-  awaitsDocument: boolean
 }
 
 /**
@@ -18,22 +17,24 @@ type Navigation = {
  * to it after a relayout, and the reader exposes it as its reading position.
  *
  * - A target that names a place in the text, a cfi or what a selector found,
- *   comes with it: its resolver sets it, and this step keeps it.
+ *   comes with it: its resolver sets it, and this step keeps it. A cfi still
+ *   awaiting its document comes with it too, as asked, until the document
+ *   shows whether it names a place.
  * - Otherwise it is the first character of the page that shows first at the
  *   navigation's position, the begin edge of what is visible, as soon as that
- *   page is laid out.
+ *   page is laid out. That includes a cfi naming nothing in its item's
+ *   document, once the document shows it.
  * - Until then the navigation has none, and restoration works from its
  *   position. The first restoration that lands on a layout with the page
  *   finds it.
- * - While the target awaits its document it has none either: the page at its
- *   position can belong to another item, and would stop the target from being
- *   resolved again.
+ * - While the target awaits its document, the page at its position is not
+ *   taken: it can belong to another item.
  *
  * The progression is where the page holding the anchor starts: found with an
- * anchor taken from a page, or, for a target's anchor, once the page holding
- * it is laid out. A target's page is not the one at the navigation's
- * position, which is a spread's first page while the anchor can be on the
- * second.
+ * anchor taken from a page, or, for a target's anchor, once its document is
+ * loaded and the page holding it is laid out. A target's page is not the one
+ * at the navigation's position, which is a spread's first page while the
+ * anchor can be on the second.
  *
  * Once found both are kept for the rest of the navigation. Restorations land
  * on the page holding the anchor; taking that page's own first character
@@ -120,11 +121,8 @@ export const withAnchor =
         numberOfPages: spineItem.numberOfPages,
       })
 
-    const getAnchor = (
-      navigation: N["navigation"],
-      awaitsDocument: N["awaitsDocument"],
-    ) => {
-      const { anchor, anchorPageStartProgression } = navigation
+    const getAnchor = (navigation: N["navigation"]) => {
+      const { anchor, anchorPageStartProgression, awaitsDocument } = navigation
 
       if (awaitsDocument || anchorPageStartProgression !== undefined)
         return { anchor, anchorPageStartProgression }
@@ -159,10 +157,7 @@ export const withAnchor =
           // the other consolidation steps.
           ({
             ...rest,
-            navigation: {
-              ...navigation,
-              ...getAnchor(navigation, rest.awaitsDocument),
-            },
+            navigation: { ...navigation, ...getAnchor(navigation) },
           }) as N,
       ),
     )

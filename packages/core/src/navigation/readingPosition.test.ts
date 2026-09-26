@@ -1,5 +1,5 @@
 // @vitest-environment jsdom
-import { firstValueFrom } from "rxjs"
+import { firstValueFrom, skip } from "rxjs"
 import { describe, expect, it, onTestFinished, vi } from "vitest"
 import { SpinePosition } from "../spine/types"
 import {
@@ -8,8 +8,10 @@ import {
   holdItem,
   installReaderTestEnvironment,
   mountTestReader,
+  renderTextDocuments,
   setTestViewport,
   settledOn,
+  TextDocumentRenderer,
 } from "../tests/readerHarness"
 import { waitFor } from "../tests/utils"
 import type { ReadingPosition } from "./types"
@@ -316,5 +318,121 @@ describe("reading position", () => {
     await settledOn(reader, 1)
 
     expect(positions).toEqual([expected])
+  })
+})
+
+/**
+ * Items with a document, where a cfi names a place or nothing: their body holds
+ * one paragraph, `/4/2`, and nothing is at `/4/2/999`.
+ */
+describe("reading position of a cfi into a document", () => {
+  // A real item, with a path to nothing in it, as a saved position has once
+  // the book changed.
+  const cfiNamingNothing = "epubcfi(/6/4[1]!/4/2/999/1:0)"
+  const cfiNamingText = "epubcfi(/6/4[1]!/4/2/1:2)"
+
+  /** A reading position in the second item, which starts half into the book. */
+  const inSecondItem = (cfi: string): ReadingPosition => ({
+    cfi,
+    percentageEstimateOfBook: itemStartProgression(1),
+  })
+
+  /** Every reading position from now on, without the current one. */
+  const recordReadingPositions = (
+    reader: ReturnType<typeof createTestReader>,
+  ) => {
+    const positions: ReadingPosition[] = []
+
+    reader.navigation.readingPosition$.pipe(skip(1)).subscribe((position) => {
+      positions.push(position)
+    })
+
+    return positions
+  }
+
+  it("is the cfi asked for while its item loads, then the page landed on once the document shows it names nothing", async () => {
+    const secondItem = holdItem("/page_1.jpg", TextDocumentRenderer)
+    const reader = createTestReader({ getRenderer: secondItem.getRenderer })
+
+    mountTestReader(reader)
+    await settledOn(reader, 0)
+
+    const positions = recordReadingPositions(reader)
+
+    reader.navigation.goToCfi(cfiNamingNothing, { animate: false })
+
+    /**
+     * Until the document is there, a cfi naming nothing cannot be told from
+     * one naming a place, so it is kept as asked, and a relayout meanwhile
+     * does not drop it.
+     */
+    expect(positions).toEqual([inSecondItem(cfiNamingNothing)])
+
+    reader.layout()
+    await firstValueFrom(reader.spine.layout$)
+
+    expect(reader.spineItemsManager.get(1)?.value.isLoaded).toBe(false)
+    expect(positions).toEqual([inSecondItem(cfiNamingNothing)])
+
+    secondItem.release()
+
+    const settled = await settledOn(reader, 1)
+
+    /**
+     * The document shows the cfi names nothing: the reader is at the start of
+     * the item, and the reading position is the page it is on, not a place it
+     * is not at.
+     */
+    expect(settled.begin.cfi).not.toBe(cfiNamingNothing)
+    expect(positions).toEqual([
+      inSecondItem(cfiNamingNothing),
+      inSecondItem(settled.begin.cfi),
+    ])
+
+    reader.layout()
+    await settledOn(reader, 1)
+
+    expect(positions).toEqual([
+      inSecondItem(cfiNamingNothing),
+      inSecondItem(settled.begin.cfi),
+    ])
+  })
+
+  it("is only the page landed on when the cfi names nothing in an item already loaded", async () => {
+    const reader = createTestReader({ getRenderer: renderTextDocuments })
+
+    mountTestReader(reader)
+    await settledOn(reader, 0)
+
+    // The adjacent item is preloaded.
+    await vi.waitFor(() =>
+      expect(reader.spineItemsManager.get(1)?.value.isReady).toBe(true),
+    )
+
+    const positions = recordReadingPositions(reader)
+
+    reader.navigation.goToCfi(cfiNamingNothing, { animate: false })
+
+    const settled = await settledOn(reader, 1)
+
+    expect(positions).toEqual([inSecondItem(settled.begin.cfi)])
+  })
+
+  it("stays the cfi asked for once the document shows it names a place", async () => {
+    const secondItem = holdItem("/page_1.jpg", TextDocumentRenderer)
+    const reader = createTestReader({ getRenderer: secondItem.getRenderer })
+
+    mountTestReader(reader)
+    await settledOn(reader, 0)
+
+    const positions = recordReadingPositions(reader)
+
+    reader.navigation.goToCfi(cfiNamingText, { animate: false })
+    secondItem.release()
+
+    const settled = await settledOn(reader, 1)
+
+    expect(settled.begin.cfi).not.toBe(cfiNamingText)
+    expect(positions).toEqual([inSecondItem(cfiNamingText)])
   })
 })

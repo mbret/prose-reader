@@ -18,6 +18,7 @@ export type TargetResolution = {
   anchor?: string
   directionFromLastNavigation: "forward" | "backward"
   snapToPage: boolean
+  /** See {@link InternalNavigationEntry.awaitsDocument}. */
   awaitsDocument: boolean
 }
 

@@ -83,11 +83,9 @@ const createSpine = ({
 const consolidateAnchor = (
   navigation: Partial<InternalNavigationEntry>,
   context: ReturnType<typeof createSpine>,
-  { awaitsDocument = false }: { awaitsDocument?: boolean } = {},
 ) =>
   firstValueFrom(
     of({
-      awaitsDocument,
       navigation: {
         target: { type: "position", value: { x: 0, y: 0 } },
         position: { x: 0, y: 0 },
@@ -132,11 +130,10 @@ describe("withAnchor", () => {
   it("has none while its target waits for a document, even with a page laid out at its position", async () => {
     /**
      * The page that shows first at the start of an item not loaded yet can be
-     * another item's. Taking its text would stop the target from being
-     * resolved once its own item loads.
+     * another item's, whose text is not where the navigation goes.
      */
     expect(
-      await consolidateAnchor({}, createSpine(), { awaitsDocument: true }),
+      await consolidateAnchor({ awaitsDocument: true }, createSpine()),
     ).toEqual({ anchor: undefined, anchorPageStartProgression: undefined })
   })
 

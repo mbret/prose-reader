@@ -2,6 +2,7 @@ import type { CfiManager } from "../../cfi"
 import { Report } from "../../report"
 import type { ReaderSettingsManager } from "../../settings/ReaderSettingsManager"
 import type { SpineItemsManager } from "../../spine/SpineItemsManager"
+import type { SpineItem } from "../../spineItem/SpineItem"
 import type { NavigationResolver } from "../resolvers/NavigationResolver"
 import type { NavigationTargetValues, NavigationVisibleArea } from "../types"
 import { guessDirection } from "./guessDirection"
@@ -22,6 +23,16 @@ const tryFind = (
     return undefined
   }
 }
+
+/**
+ * The item's document, once it is loaded. Until then, a place in it can be
+ * neither found nor ruled out. An item rendered without a document never has
+ * one.
+ */
+const getLoadedSpineItemDocument = (spineItem: SpineItem) =>
+  spineItem.value.isLoaded
+    ? (spineItem.renderer.getDocumentFrame()?.contentDocument ?? undefined)
+    : undefined
 
 export const createTargetResolvers = ({
   navigationResolver,
@@ -77,14 +88,30 @@ export const createTargetResolvers = ({
       if (!spineItem)
         return resolvers.position(context.previousNavigation.position, context)
 
+      const { node, offset } = cfi.resolveCfi({ cfi: value })
+      const namesOnlyItsItem = cfi.isRootCfi(value)
+      const isDocumentLoaded =
+        getLoadedSpineItemDocument(spineItem) !== undefined
+
       return {
         spineItem: spineItem.index,
-        position: navigationResolver.getNavigationForCfi(value),
-        // A cfi naming only an item is anchored at the page it lands on.
-        anchor: cfi.isRootCfi(value) ? undefined : value,
+        position: navigationResolver.getNavigationForNode({
+          spineItem,
+          node,
+          offset,
+        }),
+        /**
+         * The place the cfi names. A cfi naming only its item names no place,
+         * and neither does one naming nothing in the item's document: both are
+         * anchored at the page they land on. Until the document is loaded, a
+         * cfi naming nothing cannot be told from one naming a place, so it
+         * stands as asked, and restorations resolve it again.
+         */
+        anchor:
+          namesOnlyItsItem || (isDocumentLoaded && !node) ? undefined : value,
         directionFromLastNavigation: "forward",
         snapToPage: false,
-        awaitsDocument: false,
+        awaitsDocument: !namesOnlyItsItem && !isDocumentLoaded,
       }
     },
 
@@ -96,9 +123,7 @@ export const createTargetResolvers = ({
       if (!item)
         return resolvers.position(context.previousNavigation.position, context)
 
-      const document = item.value.isLoaded
-        ? item.renderer.getDocumentFrame()?.contentDocument
-        : undefined
+      const document = getLoadedSpineItemDocument(item)
       const found = document ? tryFind(find, document) : undefined
 
       // Found, it is the cfi of what was found. Otherwise it is the item

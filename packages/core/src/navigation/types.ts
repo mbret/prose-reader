@@ -22,7 +22,12 @@ export type NavigationTargetValues = {
   position: SpinePosition | UnboundSpinePosition
   /** The start of a spine item, by index or id. */
   spineItem: number | string
-  /** A cfi. A malformed one names nothing in the book. */
+  /**
+   * A cfi. A malformed one names nothing in the book. One whose path leads to
+   * nothing in its spine item's document goes to the start of the item, and
+   * once the document is loaded, the reading position is the page landed on
+   * rather than the cfi.
+   */
   cfi: string
   /**
    * A place in a spine item's document, which `find` looks for once the
@@ -173,9 +178,10 @@ export type InternalNavigationEntry = {
   spineItem?: string | number
   /**
    * Where this navigation takes the reader in the text, the value restoration
-   * returns to. Named by the target when it is a cfi, otherwise found by
-   * `withAnchor` for every entry, restorations included; `undefined` until
-   * the page it goes to is laid out.
+   * returns to. Named by the target when it is a cfi, unless its document
+   * shows the cfi names nothing there. Otherwise found by `withAnchor` for
+   * every entry, restorations included; `undefined` until the page it goes to
+   * is laid out.
    */
   anchor?: string
   /**
@@ -184,6 +190,12 @@ export type InternalNavigationEntry = {
    * until the page is laid out.
    */
   anchorPageStartProgression?: number
+  /**
+   * Whether the target names a place in a document that is not loaded yet.
+   * Restorations resolve the target again until it is: the place is found
+   * there then, or found to be nowhere.
+   */
+  awaitsDocument?: boolean
 } & NavigationConsolidation
 
 /**

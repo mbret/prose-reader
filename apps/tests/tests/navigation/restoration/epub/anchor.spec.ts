@@ -670,3 +670,68 @@ test.describe("Given chapters that are not preloaded", () => {
     ])
   })
 })
+
+test.describe("Given a cfi naming nothing in a chapter not loaded yet", () => {
+  test.beforeEach(async ({ page }) => {
+    await page.setViewportSize(initialSize)
+    // Only visible chapters load, so the chapter gone to is not loaded yet.
+    await page.goto(`${url}?preload=0`)
+    await waitForSettled(page)
+  })
+
+  test("the reading position is the cfi while the chapter loads, then the page shown, which reopens the book there", async ({
+    page,
+  }) => {
+    const chapterIndex = await getLongChapterIndex(page)
+    // A path no node of the chapter has, as a saved position can once the
+    // book changed.
+    const cfi = `epubcfi(/6/${(chapterIndex + 1) * 2}!/4/2/999/1:0)`
+    const readRecorded = await recordReadingPositions(page)
+    const atOnce = await navigateAndReadAtOnce(page, {
+      cfi,
+      into: chapterIndex,
+    })
+    await waitForSettled(page)
+
+    const settled = await readPosition(page)
+
+    /**
+     * Until the chapter is loaded, a cfi naming nothing cannot be told from
+     * one naming a place, so the reading position is the cfi as asked. Once
+     * it has loaded, the reader is at the chapter's start, where the cfi could
+     * not take it, and the reading position is the page shown.
+     */
+    expect(atOnce.wasReady).toBe(false)
+    expect(atOnce.cfi).toBe(cfi)
+    expect(atOnce.percentageEstimateOfBook).toBeCloseTo(
+      settled.chapterStart,
+      10,
+    )
+    expect(settled.spineItemIndex).toBe(chapterIndex)
+    expect(settled.pageIndex).toBe(0)
+    expect(settled.isRootCfi).toBe(false)
+    expect(settled.readingPosition).toBe(settled.cfi)
+    expect(settled.readingProgression).toBeCloseTo(settled.chapterStart, 10)
+    expect(await readRecorded()).toEqual([
+      { cfi, isRootCfi: false, itemIndex: chapterIndex },
+      { cfi: settled.cfi, isRootCfi: false, itemIndex: chapterIndex },
+    ])
+
+    // A relayout restores to the page shown, as for any page gone to.
+    await resizeAndExpectAnchorVisible(page, narrowSize, settled.cfi)
+
+    await page.setViewportSize(initialSize)
+    await page.goto(`${url}?preload=0&cfi=${encodeURIComponent(settled.cfi)}`)
+    await waitForSettled(page)
+
+    const reopened = await readPosition(page)
+
+    expect(reopened.spineItemIndex).toBe(chapterIndex)
+    expect(reopened.pageIndex).toBe(settled.pageIndex)
+    expect(reopened.readingPosition).toBe(settled.cfi)
+    expect(reopened.readingProgression).toBeCloseTo(
+      settled.readingProgression ?? Number.NaN,
+      10,
+    )
+  })
+})
