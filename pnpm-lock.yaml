@@ -497,7 +497,7 @@ importers:
         specifier: workspace:^
         version: link:../shared
       rxjs:
-        specifier: ^7.2.0
+        specifier: ^7.5.5
         version: 7.8.2
     devDependencies:
       happy-dom:
@@ -516,7 +516,7 @@ importers:
         specifier: workspace:^
         version: link:../shared
       rxjs:
-        specifier: ^7.2.0
+        specifier: ^7.5.5
         version: 7.8.2
 
   packages/enhancer-audio:
@@ -528,7 +528,7 @@ importers:
         specifier: workspace:^
         version: link:../shared
       rxjs:
-        specifier: ^7.3.0
+        specifier: ^7.5.5
         version: 7.8.2
 
   packages/enhancer-gallery:
@@ -538,7 +538,7 @@ importers:
         version: link:../core
     devDependencies:
       rxjs:
-        specifier: ^7.2.0
+        specifier: ^7.5.5
         version: 7.8.2
 
   packages/enhancer-gestures:
@@ -551,7 +551,7 @@ importers:
         specifier: '*'
         version: 1.11.1(rxjs@7.8.2)
       rxjs:
-        specifier: ^7.2.0
+        specifier: ^7.5.5
         version: 7.8.2
 
   packages/enhancer-pdf:
@@ -563,7 +563,7 @@ importers:
         specifier: workspace:^
         version: link:../core
       rxjs:
-        specifier: ^7.2.0
+        specifier: ^7.5.5
         version: 7.8.2
     devDependencies:
       pdfjs-dist:
@@ -576,7 +576,7 @@ importers:
         specifier: workspace:^
         version: link:../core
       rxjs:
-        specifier: ^7.2.0
+        specifier: ^7.5.5
         version: 7.8.2
 
   packages/enhancer-search:
@@ -588,7 +588,7 @@ importers:
         specifier: workspace:^
         version: link:../shared
       rxjs:
-        specifier: ^7.2.0
+        specifier: ^7.5.5
         version: 7.8.2
 
   packages/koreader:
@@ -646,7 +646,7 @@ importers:
         specifier: ^57.0.0
         version: 57.0.7(expo@57.0.24)(react-native@0.86.3(@babel/core@7.29.7(supports-color@8.1.1))(@types/react@19.3.0)(react@19.2.3)(supports-color@8.1.1))
       rxjs:
-        specifier: ^7.2.0
+        specifier: ^7.5.5
         version: 7.8.2
     devDependencies:
       '@types/react':
@@ -716,7 +716,7 @@ importers:
         specifier: 1.x
         version: 1.142.0(@tanstack/react-query@5.103.2(react@19.3.0))(react-dom@19.3.0(react@19.3.0))(react@19.3.0)(rxjs@7.8.2)
       rxjs:
-        specifier: ^7.2.0
+        specifier: ^7.5.5
         version: 7.8.2
       screenfull:
         specifier: ^6.0.2
@@ -755,7 +755,7 @@ importers:
         specifier: workspace:^
         version: link:../shared
       rxjs:
-        specifier: ^7.2.0
+        specifier: ^7.5.5
         version: 7.8.2
       xmldoc:
         specifier: ^3.0.0

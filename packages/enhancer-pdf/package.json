@@ -29,6 +29,6 @@
     "@prose-reader/archive-reader": "workspace:^",
     "@prose-reader/core": "workspace:^",
     "pdfjs-dist": ">=6.2.108 <7",
-    "rxjs": "^7.2.0"
+    "rxjs": "^7.5.5"
   }
 }

@@ -12,9 +12,6 @@ The audio enhancer automatically builds a track list from spine items that have 
 npm install @prose-reader/enhancer-audio
 ```
 
-The enhancer needs `rxjs` 7.3 or later (`^7.3.0`), one minor above the reader:
-it retries playback with the `delay` option of `retry`, which rxjs added in 7.3.
-
 Connect the enhancer to your reader:
 
 ```typescript

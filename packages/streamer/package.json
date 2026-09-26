@@ -33,7 +33,7 @@
     "xmldoc": "^3.0.0"
   },
   "peerDependencies": {
-    "rxjs": "^7.2.0"
+    "rxjs": "^7.5.5"
   },
   "gitHead": "4601e14dcacf50b2295cb343582a7ef2c7e1eedc",
   "engines": {
