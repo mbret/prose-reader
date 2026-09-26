@@ -104,8 +104,8 @@ export class InternalNavigator extends DestroyableClass {
    * to, the only place a cfi can name in content that is not laid out. It only
    * moves when the reader navigates, and once when such a navigation finds its
    * page: a relayout reflows the page around it without changing it. A
-   * navigation whose target names nothing in the book, such as a malformed
-   * cfi, is ignored, and leaves it where it was.
+   * navigation whose target names nothing in the book, such as a cfi that
+   * can't be read, is ignored, and leaves it where it was.
    */
   public readonly readingPosition$: Observable<ReadingPosition> =
     this.navigationSubject.pipe(
@@ -154,11 +154,11 @@ export class InternalNavigator extends DestroyableClass {
       })
 
     /**
-     * A navigation whose target names nothing in the book, such as a malformed
-     * cfi, or a cfi or a spine item the book does not have, is ignored: the
-     * reader has nowhere to go, and stays where it is. It is dropped before
-     * anything hears of it, so it does not replace the first navigation
-     * either.
+     * A navigation whose target names nothing in the book, such as a cfi that
+     * can't be read, or a cfi or a spine item the book does not have, is
+     * ignored: the reader has nowhere to go, and stays where it is. It is
+     * dropped before anything hears of it, so it does not replace the first
+     * navigation either.
      */
     const userNavigationInBook$ = userNavigation$.pipe(
       filter(({ target }) => {

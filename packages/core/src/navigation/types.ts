@@ -22,7 +22,7 @@ export type NavigationTargetValues = {
   position: SpinePosition | UnboundSpinePosition
   /** The start of a spine item, by index or id. */
   spineItem: number | string
-  /** A cfi. A malformed one names nothing in the book. */
+  /** A cfi. One that can't be read names nothing in the book. */
   cfi: string
   /**
    * A place in a spine item's document, which `find` looks for once the

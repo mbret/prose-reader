@@ -5,7 +5,7 @@ import type { NavigationTarget } from "../types"
 /**
  * Whether a target names a place in the book. A position always does, once
  * clamped to it. Every other target names a spine item, which the book has to
- * have; a malformed cfi names nothing at all.
+ * have; a cfi that can't be read names nothing at all.
  */
 export const isTargetInBook = (
   target: NavigationTarget,

@@ -51,7 +51,7 @@ export class CfiManager {
 
   /**
    * The spine item a cfi names, `undefined` when it names none: an item the
-   * book does not have, or a malformed cfi, which names nothing.
+   * book does not have, or a cfi that can't be read, which names nothing.
    */
   public getSpineItemFromCfi = (cfi: string) => {
     try {
