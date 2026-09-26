@@ -81,7 +81,9 @@ export const createTargetResolvers = ({
         spineItem: spineItem.index,
         position: navigationResolver.getNavigationForCfi(value),
         // A cfi naming only an item is anchored at the page it lands on.
-        anchor: cfi.isRootCfi(value) ? undefined : value,
+        anchor: cfi.isRootCfi(value)
+          ? undefined
+          : { cfi: value, isFinal: false },
         directionFromLastNavigation: "forward",
         snapToPage: false,
         awaitsDocument: false,

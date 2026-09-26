@@ -99,13 +99,13 @@ export class InternalNavigator extends DestroyableClass {
   /**
    * Where the reader is in the book, to save and reopen at: the current
    * navigation's anchor, which a cfi target names and `withAnchor` otherwise
-   * finds, with its progression. Until the page a navigation goes to is laid
-   * out it has neither, and this is the start of the item the navigation goes
-   * to, the only place a cfi can name in content that is not laid out. It only
-   * moves when the reader navigates, and once when such a navigation finds its
-   * page: a relayout reflows the page around it without changing it. A
-   * navigation whose target names nothing in the book, such as a cfi that
-   * can't be read, is ignored, and leaves it where it was.
+   * finds, with its progression once final. Until the page a navigation goes
+   * to is laid out it has neither, and this is the start of the item the
+   * navigation goes to, the only place a cfi can name in content that is not
+   * laid out. It only moves when the reader navigates, and once when such a
+   * navigation finds its page: a relayout reflows the page around it without
+   * changing it. A navigation whose target names nothing in the book, such as
+   * a cfi that can't be read, is ignored, and leaves it where it was.
    */
   public readonly readingPosition$: Observable<ReadingPosition> =
     this.navigationSubject.pipe(
@@ -436,15 +436,17 @@ export class InternalNavigator extends DestroyableClass {
   protected getReadingPosition(
     navigation: InternalNavigationEntry,
   ): ReadingPosition | undefined {
+    const { anchor } = navigation
     const spineItem = this.spine.spineItemsManager.get(navigation.spineItem)
 
     if (!spineItem) return undefined
 
+    // Without an anchor yet, the start of the item the navigation goes to.
     return {
-      cfi: navigation.anchor ?? this.cfiManager.generateRootCfi(spineItem.item),
-      percentageEstimateOfBook:
-        navigation.anchorPageStartProgression ??
-        getSpineItemProgression(this.context.manifest, spineItem.index).start,
+      cfi: anchor?.cfi ?? this.cfiManager.generateRootCfi(spineItem.item),
+      percentageEstimateOfBook: anchor?.isFinal
+        ? anchor.pageStartProgression
+        : getSpineItemProgression(this.context.manifest, spineItem.index).start,
     }
   }
 

@@ -7,7 +7,7 @@ import {
   createTestManifest,
   createTestManifestSpineItems,
 } from "../../tests/utils"
-import type { InternalNavigationEntry } from "../types"
+import type { InternalNavigationEntry, NavigationAnchor } from "../types"
 import { withAnchor } from "./withAnchor"
 
 const itemStart = "epubcfi(/6/2[0]!)"
@@ -96,16 +96,14 @@ const consolidateAnchor = (
         // A navigation entry carries far more; the step reads only these.
       } as InternalNavigationEntry,
     }).pipe(withAnchor(context)),
-  ).then(({ navigation: { anchor, anchorPageStartProgression } }) => ({
-    anchor,
-    anchorPageStartProgression,
-  }))
+  ).then(({ navigation }) => navigation.anchor)
 
 describe("withAnchor", () => {
   it("is the first character of the page at the navigation's position, and where that page starts in the book", async () => {
     expect(await consolidateAnchor({}, createSpine())).toEqual({
-      anchor: pageText,
-      anchorPageStartProgression: expectedPageStartProgression,
+      cfi: pageText,
+      isFinal: true,
+      pageStartProgression: expectedPageStartProgression,
     })
   })
 
@@ -117,16 +115,13 @@ describe("withAnchor", () => {
      */
     expect(
       await consolidateAnchor({}, createSpine({ isLayoutCurrent: false })),
-    ).toEqual({ anchor: undefined, anchorPageStartProgression: undefined })
+    ).toBeUndefined()
   })
 
   it("has none while the item is not ready", async () => {
     expect(
       await consolidateAnchor({}, createSpine({ isReady: false })),
-    ).toEqual({
-      anchor: undefined,
-      anchorPageStartProgression: undefined,
-    })
+    ).toBeUndefined()
   })
 
   it("has none while its target waits for a document, even with a page laid out at its position", async () => {
@@ -137,21 +132,22 @@ describe("withAnchor", () => {
      */
     expect(
       await consolidateAnchor({}, createSpine(), { awaitsDocument: true }),
-    ).toEqual({ anchor: undefined, anchorPageStartProgression: undefined })
+    ).toBeUndefined()
   })
 
-  it("keeps a position in the text for the rest of the navigation", async () => {
+  it("keeps a final position in the text for the rest of the navigation", async () => {
     /**
      * A restoration lands on the page holding the position. Taking that
      * page's own first character would restore to the page before at the
      * next relayout.
      */
-    expect(
-      await consolidateAnchor(
-        { anchor: textElsewhere, anchorPageStartProgression: 0.25 },
-        createSpine(),
-      ),
-    ).toEqual({ anchor: textElsewhere, anchorPageStartProgression: 0.25 })
+    const anchor: NavigationAnchor = {
+      cfi: textElsewhere,
+      isFinal: true,
+      pageStartProgression: 0.25,
+    }
+
+    expect(await consolidateAnchor({ anchor }, createSpine())).toEqual(anchor)
   })
 
   it("keeps a position found on a page without text, rather than finding it again", async () => {
@@ -160,15 +156,16 @@ describe("withAnchor", () => {
      * its item. Finding it again at every restoration would follow the
      * spread: after a rotation the page shown first can be the other one.
      */
-    expect(
-      await consolidateAnchor(
-        { anchor: itemStart, anchorPageStartProgression: 0 },
-        createSpine(),
-      ),
-    ).toEqual({ anchor: itemStart, anchorPageStartProgression: 0 })
+    const anchor: NavigationAnchor = {
+      cfi: itemStart,
+      isFinal: true,
+      pageStartProgression: 0,
+    }
+
+    expect(await consolidateAnchor({ anchor }, createSpine())).toEqual(anchor)
   })
 
-  it("finds where a target's position is in the book once its page is laid out, keeping the position", async () => {
+  it("makes a target's position final once its page is laid out, with where that page is in the book", async () => {
     /**
      * A cfi target names its position before its item is laid out, when
      * nothing tells how far into the book the page holding it is. The first
@@ -176,17 +173,23 @@ describe("withAnchor", () => {
      * resolves to: the navigation's position is a spread's first page, and
      * the cfi can be on the second.
      */
+    const targetAnchor: NavigationAnchor = {
+      cfi: textElsewhere,
+      isFinal: false,
+    }
+
     expect(
       await consolidateAnchor(
-        { anchor: textElsewhere },
+        { anchor: targetAnchor },
         createSpine({ isReady: false }),
       ),
-    ).toEqual({ anchor: textElsewhere, anchorPageStartProgression: undefined })
+    ).toEqual(targetAnchor)
     expect(
-      await consolidateAnchor({ anchor: textElsewhere }, createSpine()),
+      await consolidateAnchor({ anchor: targetAnchor }, createSpine()),
     ).toEqual({
-      anchor: textElsewhere,
-      anchorPageStartProgression: expectedCfiPageStartProgression,
+      cfi: textElsewhere,
+      isFinal: true,
+      pageStartProgression: expectedCfiPageStartProgression,
     })
   })
 })

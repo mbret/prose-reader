@@ -5,7 +5,11 @@ import { getPageStartProgression } from "../../pagination/progression"
 import { PAGE_VISIBILITY_THRESHOLD } from "../../spine/Pages"
 import type { Spine } from "../../spine/Spine"
 import type { SpineItem } from "../../spineItem/SpineItem"
-import type { InternalNavigationEntry, InternalNavigationInput } from "../types"
+import type {
+  InternalNavigationEntry,
+  InternalNavigationInput,
+  NavigationAnchor,
+} from "../types"
 
 type Navigation = {
   navigation: InternalNavigationInput | InternalNavigationEntry
@@ -13,15 +17,19 @@ type Navigation = {
 }
 
 /**
- * The navigation's anchor: where it takes the reader in the text, as a cfi,
- * and how far into the book the page holding it starts. Restoration returns
- * to it after a relayout, and the reader exposes it as its reading position.
+ * The navigation's anchor: where it takes the reader in the text, as a cfi.
+ * Restoration returns to it after a relayout, and the reader exposes it as its
+ * reading position. It is final once the page holding it is laid out, with how
+ * far into the book that page starts.
  *
  * - A target that names a place in the text, a cfi or what a selector found,
- *   comes with it: its resolver sets it, and this step keeps it.
+ *   comes with it, not final: its resolver sets it, and this step makes it
+ *   final once the page holding it is laid out. That page is not the one at
+ *   the navigation's position, which is a spread's first page while the
+ *   anchor can be on the second.
  * - Otherwise it is the first character of the page that shows first at the
- *   navigation's position, the begin edge of what is visible, as soon as that
- *   page is laid out.
+ *   navigation's position, the begin edge of what is visible, final as soon
+ *   as that page is laid out.
  * - Until then the navigation has none, and restoration works from its
  *   position. The first restoration that lands on a layout with the page
  *   finds it.
@@ -29,16 +37,10 @@ type Navigation = {
  *   position can belong to another item, and would stop the target from being
  *   resolved again.
  *
- * The progression is where the page holding the anchor starts: found with an
- * anchor taken from a page, or, for a target's anchor, once the page holding
- * it is laid out. A target's page is not the one at the navigation's
- * position, which is a spread's first page while the anchor can be on the
- * second.
- *
- * Once found both are kept for the rest of the navigation. Restorations land
- * on the page holding the anchor; taking that page's own first character
- * instead would restore to the page before at the next relayout, and every
- * resize would walk the reader back.
+ * A final anchor is kept for the rest of the navigation. Restorations land on
+ * the page holding it; taking that page's own first character instead would
+ * restore to the page before at the next relayout, and every resize would
+ * walk the reader back.
  */
 export const withAnchor =
   ({
@@ -93,8 +95,8 @@ export const withAnchor =
      * Its item is the one resolving the cfi gives, which an enhancer can map
      * onto another.
      */
-    const getPageHoldingTargetAnchor = (anchor: string) => {
-      const { node, offset, spineItem } = cfi.resolveCfi({ cfi: anchor })
+    const getPageHoldingTargetAnchor = (anchorCfi: string) => {
+      const { node, offset, spineItem } = cfi.resolveCfi({ cfi: anchorCfi })
 
       if (!spineItem || !spine.isLayoutCurrent || !spineItem.value.isReady)
         return undefined
@@ -123,45 +125,48 @@ export const withAnchor =
     const getAnchor = (
       navigation: N["navigation"],
       awaitsDocument: N["awaitsDocument"],
-    ) => {
-      const { anchor, anchorPageStartProgression } = navigation
+    ): NavigationAnchor | undefined => {
+      const { anchor } = navigation
 
-      if (awaitsDocument || anchorPageStartProgression !== undefined)
-        return { anchor, anchorPageStartProgression }
+      if (awaitsDocument || anchor?.isFinal) return anchor
 
-      if (anchor !== undefined) {
-        const targetAnchorPage = getPageHoldingTargetAnchor(anchor)
+      if (anchor) {
+        const targetAnchorPage = getPageHoldingTargetAnchor(anchor.cfi)
 
-        return {
-          anchor,
-          anchorPageStartProgression:
-            targetAnchorPage && getAnchorPageStartProgression(targetAnchorPage),
-        }
+        return targetAnchorPage
+          ? {
+              cfi: anchor.cfi,
+              isFinal: true,
+              pageStartProgression:
+                getAnchorPageStartProgression(targetAnchorPage),
+            }
+          : anchor
       }
 
       const page = getPageAtNavigationPosition(navigation)
 
-      return {
-        anchor: page && cfi.generateCfiForPage(page.spineItem.item, page.page),
-        anchorPageStartProgression:
-          page &&
-          getAnchorPageStartProgression({
+      return (
+        page && {
+          cfi: cfi.generateCfiForPage(page.spineItem.item, page.page),
+          isFinal: true,
+          pageStartProgression: getAnchorPageStartProgression({
             spineItem: page.spineItem,
             pageIndex: page.page.pageIndex,
           }),
-      }
+        }
+      )
     }
 
     return stream.pipe(
       map(
         ({ navigation, ...rest }) =>
-          // Only fields are added, so the caller's shape still holds, as for
+          // Only the anchor is set, so the caller's shape still holds, as for
           // the other consolidation steps.
           ({
             ...rest,
             navigation: {
               ...navigation,
-              ...getAnchor(navigation, rest.awaitsDocument),
+              anchor: getAnchor(navigation, rest.awaitsDocument),
             },
           }) as N,
       ),

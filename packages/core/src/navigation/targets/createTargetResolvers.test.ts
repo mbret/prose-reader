@@ -101,7 +101,10 @@ const note: NavigationTarget = {
 
 describe("target resolvers", () => {
   it("anchor a cfi navigation at the cfi", () => {
-    expect(resolve({ type: "cfi", value: text }).anchor).toBe(text)
+    expect(resolve({ type: "cfi", value: text }).anchor).toEqual({
+      cfi: text,
+      isFinal: false,
+    })
   })
 
   it("leave a cfi naming only an item to be anchored at the page it lands on", () => {
@@ -110,7 +113,7 @@ describe("target resolvers", () => {
   })
 
   it("anchor a selector navigation at the cfi of what it finds", () => {
-    expect(resolve(note).anchor).toBe(text)
+    expect(resolve(note).anchor).toEqual({ cfi: text, isFinal: false })
   })
 
   it("leave a selector awaiting the document of an item not loaded, without an anchor, for restorations to try again", () => {

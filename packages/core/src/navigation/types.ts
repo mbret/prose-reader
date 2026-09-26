@@ -173,18 +173,30 @@ export type InternalNavigationEntry = {
   spineItem?: string | number
   /**
    * Where this navigation takes the reader in the text, the value restoration
-   * returns to. Named by the target when it is a cfi, otherwise found by
-   * `withAnchor` for every entry, restorations included; `undefined` until
-   * the page it goes to is laid out.
+   * returns to and the reading position shows. Named by the target when it is
+   * a cfi, otherwise found by `withAnchor` for every entry, restorations
+   * included; `undefined` until the page it goes to is laid out.
    */
-  anchor?: string
-  /**
-   * How far into the book the page holding `anchor` starts, from 0 to 1.
-   * Found by `withAnchor` on that page and kept with the anchor; `undefined`
-   * until the page is laid out.
-   */
-  anchorPageStartProgression?: number
+  anchor?: NavigationAnchor
 } & NavigationConsolidation
+
+/**
+ * Where a navigation takes the reader in the text, as a cfi. It is final once
+ * the page holding it is laid out, which tells how far into the book it is,
+ * and then kept for the rest of the navigation.
+ */
+export type NavigationAnchor =
+  | {
+      cfi: string
+      /** The place a target names, before the page holding it is laid out. */
+      isFinal: false
+    }
+  | {
+      cfi: string
+      isFinal: true
+      /** How far into the book the page holding `cfi` starts, from 0 to 1. */
+      pageStartProgression: number
+    }
 
 /**
  * A navigation surface describes the viewport rectangle that gives meaning to

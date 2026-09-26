@@ -1,6 +1,7 @@
 import type { SpinePosition, UnboundSpinePosition } from "../../spine/types"
 import type {
   InternalNavigationEntry,
+  NavigationAnchor,
   NavigationTargetType,
   NavigationTargetValues,
   NavigationVisibleArea,
@@ -15,7 +16,11 @@ export type TargetResolution = {
   position?: SpinePosition | UnboundSpinePosition
   requestedPosition?: SpinePosition | UnboundSpinePosition
   requestedVisibleArea?: NavigationVisibleArea
-  anchor?: string
+  /**
+   * The place the target names. It is final only once the page holding it is
+   * laid out, which `withAnchor` finds.
+   */
+  anchor?: Extract<NavigationAnchor, { isFinal: false }>
   directionFromLastNavigation: "forward" | "backward"
   snapToPage: boolean
   /**
