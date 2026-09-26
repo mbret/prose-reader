@@ -5,7 +5,7 @@ import {
   type Manifest,
   type Navigation,
 } from "@prose-reader/core"
-import { EMPTY, filter, of, skip } from "rxjs"
+import { EMPTY, filter, first, of, skip } from "rxjs"
 import { afterEach, beforeAll, describe, expect, it, vi } from "vitest"
 import { gesturesEnhancer } from "./index"
 
@@ -263,6 +263,26 @@ describe("Given a pan moving the page", () => {
     reader.gestures.settings.update({ fontScaleMaxScale: 4 })
     await vi.runAllTimersAsync()
 
+    expect(isNavigationLocked(reader)).toBe(false)
+    expect(reader.pagination.state.isSettled).toBe(true)
+  })
+
+  /**
+   * Whoever reacts to the lock the pan takes does so before `start()` has
+   * returned. Changing a gestures setting then ends the pan right there.
+   */
+  it("releases the navigation when a gestures setting changes as the pan takes it", async () => {
+    const { reader, drag } = await onFirstPage()
+    let hasChangedSetting = false
+
+    reader.navigation.isLocked$.pipe(filter(Boolean), first()).subscribe(() => {
+      hasChangedSetting = true
+      reader.gestures.settings.update({ fontScaleMaxScale: 4 })
+    })
+
+    await drag({ x: viewport.width / 2, distance: -60, letGo: false })
+
+    expect(hasChangedSetting).toBe(true)
     expect(isNavigationLocked(reader)).toBe(false)
     expect(reader.pagination.state.isSettled).toBe(true)
   })
