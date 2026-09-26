@@ -4,6 +4,7 @@ import type { Context } from "../../context/Context"
 import { getPageStartProgression } from "../../manifest/progression"
 import { PAGE_VISIBILITY_THRESHOLD } from "../../spine/Pages"
 import type { Spine } from "../../spine/Spine"
+import type { SpineItem } from "../../spineItem/SpineItem"
 import type { InternalNavigationEntry, InternalNavigationInput } from "../types"
 
 type Navigation = {
@@ -28,8 +29,11 @@ type Navigation = {
  *   position can belong to another item, and would stop the target from being
  *   resolved again.
  *
- * The progression is that same page's, so it is found with the anchor, or,
- * for a target's anchor, once the page holding it is laid out.
+ * The progression is where the page holding the anchor starts: found with an
+ * anchor taken from a page, or, for a target's anchor, once the page holding
+ * it is laid out. A target's page is not the one at the navigation's
+ * position, which is a spread's first page while the anchor can be on the
+ * second.
  *
  * Once found both are kept for the rest of the navigation. Restorations land
  * on the page holding the anchor; taking that page's own first character
@@ -47,7 +51,7 @@ export const withAnchor =
     context: Context
   }) =>
   <N extends Navigation>(stream: Observable<N>): Observable<N> => {
-    const getAnchorPage = ({ position }: N["navigation"]) => {
+    const getPageAtNavigationPosition = ({ position }: N["navigation"]) => {
       if (!position) return undefined
 
       /**
@@ -84,32 +88,67 @@ export const withAnchor =
       return page && { spineItem, page }
     }
 
+    /**
+     * The page holding a target's anchor, resolved from the anchor itself.
+     * Its item is the one resolving the cfi gives, which an enhancer can map
+     * onto another.
+     */
+    const getPageHoldingTargetAnchor = (anchor: string) => {
+      const { node, offset, spineItem } = cfi.resolveCfi({ cfi: anchor })
+
+      if (!spineItem || !spine.isLayoutCurrent || !spineItem.value.isReady)
+        return undefined
+
+      const pageIndex = node
+        ? spine.locator.getSpineItemPageIndexFromNode(node, offset, spineItem)
+        : 0
+
+      return pageIndex === undefined ? undefined : { spineItem, pageIndex }
+    }
+
+    const getAnchorPageStartProgression = ({
+      spineItem,
+      pageIndex,
+    }: {
+      spineItem: SpineItem
+      pageIndex: number
+    }) =>
+      getPageStartProgression({
+        manifest: context.manifest,
+        spineItemIndex: spineItem.index,
+        pageIndex,
+        numberOfPages: spineItem.numberOfPages,
+      })
+
     const getAnchor = (
       navigation: N["navigation"],
       awaitsDocument: N["awaitsDocument"],
     ) => {
-      const hasAnchorWithPageStartProgression =
-        navigation.anchor !== undefined &&
-        navigation.anchorPageStartProgression !== undefined
-      const anchorPage =
-        hasAnchorWithPageStartProgression || awaitsDocument
-          ? undefined
-          : getAnchorPage(navigation)
+      const { anchor, anchorPageStartProgression } = navigation
+
+      if (awaitsDocument || anchorPageStartProgression !== undefined)
+        return { anchor, anchorPageStartProgression }
+
+      if (anchor !== undefined) {
+        const targetAnchorPage = getPageHoldingTargetAnchor(anchor)
+
+        return {
+          anchor,
+          anchorPageStartProgression:
+            targetAnchorPage && getAnchorPageStartProgression(targetAnchorPage),
+        }
+      }
+
+      const page = getPageAtNavigationPosition(navigation)
 
       return {
-        anchor:
-          navigation.anchor ??
-          (anchorPage &&
-            cfi.generateCfiForPage(anchorPage.spineItem.item, anchorPage.page)),
+        anchor: page && cfi.generateCfiForPage(page.spineItem.item, page.page),
         anchorPageStartProgression:
-          navigation.anchorPageStartProgression ??
-          (anchorPage &&
-            getPageStartProgression({
-              manifest: context.manifest,
-              spineItemIndex: anchorPage.spineItem.index,
-              pageIndex: anchorPage.page.pageIndex,
-              numberOfPages: anchorPage.spineItem.numberOfPages,
-            })),
+          page &&
+          getAnchorPageStartProgression({
+            spineItem: page.spineItem,
+            pageIndex: page.page.pageIndex,
+          }),
       }
     }
 

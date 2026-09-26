@@ -16,7 +16,8 @@ const textElsewhere = "epubcfi(/6/2[0]!/4/8/1:0)"
 
 /**
  * Two items holding half the book each. The page at any position is the
- * second of the first item's four, so it starts an eighth into the book.
+ * second of the first item's four, so it starts an eighth into the book. A
+ * cfi resolves onto the fourth, as the second page of a spread would.
  */
 const manifest = createTestManifest({
   spineItems: createTestManifestSpineItems([
@@ -25,6 +26,7 @@ const manifest = createTestManifest({
   ]),
 })
 const expectedPageStartProgression = 0.125
+const expectedCfiPageStartProgression = 0.375
 
 /**
  * The spine and pages this step reads, held in whatever state a test needs:
@@ -40,12 +42,14 @@ const createSpine = ({
   isReady?: boolean
 } = {}) => {
   const item = { index: 0 }
+  const spineItem = { item, index: 0, numberOfPages: 4, value: { isReady } }
   const spine = {
     isLayoutCurrent,
     spineItemsManager: {
-      get: () => ({ item, index: 0, numberOfPages: 4, value: { isReady } }),
+      get: () => spineItem,
     },
     locator: {
+      getSpineItemPageIndexFromNode: () => 3,
       getVisibleSpineItemsFromPosition: () => ({
         beginIndex: 0,
         endIndex: 0,
@@ -64,6 +68,7 @@ const createSpine = ({
   }
   const cfi = {
     generateCfiForPage: () => pageText,
+    resolveCfi: () => ({ node: {}, offset: 0, spineItem }),
   }
 
   return {
@@ -167,7 +172,9 @@ describe("withAnchor", () => {
     /**
      * A cfi target names its position before its item is laid out, when
      * nothing tells how far into the book the page holding it is. The first
-     * consolidation that lands on that page finds it.
+     * consolidation that lands on that page finds it, from the page the cfi
+     * resolves to: the navigation's position is a spread's first page, and
+     * the cfi can be on the second.
      */
     expect(
       await consolidateAnchor(
@@ -179,7 +186,7 @@ describe("withAnchor", () => {
       await consolidateAnchor({ anchor: textElsewhere }, createSpine()),
     ).toEqual({
       anchor: textElsewhere,
-      anchorPageStartProgression: expectedPageStartProgression,
+      anchorPageStartProgression: expectedCfiPageStartProgression,
     })
   })
 })

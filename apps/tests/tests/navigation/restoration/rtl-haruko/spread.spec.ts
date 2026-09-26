@@ -29,13 +29,27 @@ const readVisibleRange = async (page: Page) => {
 
       const isReady = (index: number | undefined) =>
         reader.spineItemsManager.get(index)?.value.isReady ?? false
-      let readingPosition: string | undefined
+      let readingPosition:
+        | { cfi: string; percentageEstimateOfBook: number }
+        | undefined
       // Replays the current one, synchronously.
       reader.navigation.readingPosition$
-        .subscribe(({ cfi }) => {
-          readingPosition = cfi
+        .subscribe((value) => {
+          readingPosition = value
         })
         .unsubscribe()
+
+      // Where each item starts in the book. Every item of this book has a
+      // weight, so they only need scaling to their total.
+      const weights = reader.context.manifest.spineItems.map(
+        ({ progressionWeight }) => progressionWeight ?? Number.NaN,
+      )
+      const totalWeight = weights.reduce((total, weight) => total + weight, 0)
+      const itemStarts = weights.map(
+        (_, index) =>
+          weights.slice(0, index).reduce((total, weight) => total + weight, 0) /
+          totalWeight,
+      )
 
       return {
         items: [pagination.begin.spineItemIndex, pagination.end.spineItemIndex],
@@ -44,7 +58,9 @@ const readVisibleRange = async (page: Page) => {
           isReady(pagination.end.spineItemIndex),
         ],
         beginCfi: pagination.begin.cfi,
-        readingPosition,
+        readingPosition: readingPosition?.cfi,
+        readingProgression: readingPosition?.percentageEstimateOfBook,
+        itemStarts,
       }
     },
     undefined,
@@ -87,5 +103,31 @@ test.describe("Given a spread reached by cfi", () => {
     expect(restored.items).toEqual(spread.items)
     expect(restored.ready).toEqual([true, true])
     expect(restored.readingPosition).toBe(cfi)
+  })
+})
+
+test.describe("Given a cfi on the second page of a spread", () => {
+  test("keeps how far into the book that page is, not the spread's first", async ({
+    page,
+  }) => {
+    const cfi = "epubcfi(/6/6!/2/4/2)"
+
+    await page.setViewportSize(landscape)
+    await page.goto(`${url}?cfi=${encodeURIComponent(cfi)}`)
+    await waitForSettled(page)
+
+    const spread = await readVisibleRange(page)
+
+    /**
+     * The spread holding item 2 starts at item 1, so the position the reader
+     * goes to is item 1's page. The cfi is on item 2's.
+     */
+    expect(spread.items).toEqual([1, 2])
+    expect(spread.readingPosition).toBe(cfi)
+    expect(spread.itemStarts[2]).toBeGreaterThan(spread.itemStarts[1] ?? 1)
+    expect(spread.readingProgression).toBeCloseTo(
+      spread.itemStarts[2] ?? Number.NaN,
+      10,
+    )
   })
 })

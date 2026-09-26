@@ -194,6 +194,28 @@ describe("reading position", () => {
     })
   })
 
+  it("is as far into the book as the page holding a cfi, even on the second page of a spread", async () => {
+    setTestViewport({ width: 200, height: 100 })
+
+    /**
+     * In landscape the spread holding item 1 starts at item 0: the position
+     * a cfi into item 1 goes to is item 0's page. The cfi is still on item
+     * 1's page, and so is how far into the book it is.
+     */
+    const cfi = "epubcfi(/6/4[1]!/4/2)"
+    const reader = createTestReader({ target: { type: "cfi", value: cfi } })
+
+    mountTestReader(reader)
+
+    const spread = await settledOn(reader, 0)
+
+    expect(spread.end.spineItemIndex).toBe(1)
+    expect(await firstValueFrom(reader.navigation.readingPosition$)).toEqual({
+      cfi,
+      percentageEstimateOfBook: itemStartProgression(1),
+    })
+  })
+
   it("is the cfi a navigation asked for, before and after it settles", async () => {
     const reader = createTestReader()
 
