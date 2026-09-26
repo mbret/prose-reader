@@ -29,7 +29,7 @@ const readPosition = async (page: Page) => {
       const { begin } = pagination
       const navigation = reader.navigation.getNavigation()
       let readingPosition:
-        | { cfi: string; percentageEstimateOfBook: number }
+        | { cfi: string; percentageEstimateOfBook: number; isFinal: boolean }
         | undefined
       // Replays the current one, synchronously.
       reader.navigation.readingPosition$
@@ -74,6 +74,7 @@ const readPosition = async (page: Page) => {
             : undefined,
         readingPosition: readingPosition?.cfi,
         readingProgression: readingPosition?.percentageEstimateOfBook,
+        isReadingPositionFinal: readingPosition?.isFinal,
       }
     },
     undefined,
@@ -94,11 +95,11 @@ const recordReadingPositions = async (page: Page) => {
   await page.evaluate(() => {
     // @ts-expect-error window.reader is set by this scenario's index.tsx
     const reader = window.reader as Reader
-    const recorded: string[] = []
+    const recorded: { cfi: string; isFinal: boolean }[] = []
     let replaying = true
 
-    reader.navigation.readingPosition$.subscribe(({ cfi }) => {
-      if (!replaying) recorded.push(cfi)
+    reader.navigation.readingPosition$.subscribe(({ cfi, isFinal }) => {
+      if (!replaying) recorded.push({ cfi, isFinal })
     })
     replaying = false
 
@@ -111,12 +112,16 @@ const recordReadingPositions = async (page: Page) => {
       // @ts-expect-error window.reader is set by this scenario's index.tsx
       const reader = window.reader as Reader
       // @ts-expect-error scratch slot for this spec
-      const recorded = window.__readingPositions as string[]
+      const recorded = window.__readingPositions as {
+        cfi: string
+        isFinal: boolean
+      }[]
 
-      return recorded.map((cfi) => ({
+      return recorded.map(({ cfi, isFinal }) => ({
         cfi,
         isRootCfi: reader.cfi.isRootCfi(cfi),
         itemIndex: reader.cfi.parseCfi(cfi).itemIndex,
+        isFinal,
       }))
     })
 }
@@ -169,7 +174,7 @@ const navigateAndReadAtOnce = (
     }
 
     let readingPosition:
-      | { cfi: string; percentageEstimateOfBook: number }
+      | { cfi: string; percentageEstimateOfBook: number; isFinal: boolean }
       | undefined
     reader.navigation.readingPosition$
       .subscribe((value) => {
@@ -179,11 +184,12 @@ const navigateAndReadAtOnce = (
 
     if (readingPosition === undefined) throw new Error("no reading position")
 
-    const { cfi, percentageEstimateOfBook } = readingPosition
+    const { cfi, percentageEstimateOfBook, isFinal } = readingPosition
 
     return {
       cfi,
       percentageEstimateOfBook,
+      isFinal,
       isRootCfi: reader.cfi.isRootCfi(cfi),
       itemIndex: reader.cfi.parseCfi(cfi).itemIndex,
       wasReady,
@@ -281,8 +287,14 @@ test.describe("Given a page reached by turning pages", () => {
     expect(turned.pageIndex).toBe(1)
     expect(atOnce.isRootCfi).toBe(false)
     expect(atOnce.cfi).toBe(turned.cfi)
+    expect(atOnce.isFinal).toBe(true)
     expect(await readRecorded()).toEqual([
-      { cfi: turned.cfi, isRootCfi: false, itemIndex: chapterIndex },
+      {
+        cfi: turned.cfi,
+        isRootCfi: false,
+        itemIndex: chapterIndex,
+        isFinal: true,
+      },
     ])
   })
 
@@ -306,6 +318,7 @@ test.describe("Given a page reached by turning pages", () => {
      */
     expect(atOnce.wasReady).toBe(false)
     expect(atOnce.isRootCfi).toBe(true)
+    expect(atOnce.isFinal).toBe(false)
     expect(atOnce.itemIndex).toBe(chapterIndex)
     expect(atOnce.percentageEstimateOfBook).toBeCloseTo(
       settled.chapterStart,
@@ -315,9 +328,20 @@ test.describe("Given a page reached by turning pages", () => {
     expect(settled.isRootCfi).toBe(false)
     expect(settled.pageIndex).toBe(0)
     expect(settled.readingProgression).toBeCloseTo(settled.chapterStart, 10)
+    expect(settled.isReadingPositionFinal).toBe(true)
     expect(await readRecorded()).toEqual([
-      { cfi: atOnce.cfi, isRootCfi: true, itemIndex: chapterIndex },
-      { cfi: settled.cfi, isRootCfi: false, itemIndex: chapterIndex },
+      {
+        cfi: atOnce.cfi,
+        isRootCfi: true,
+        itemIndex: chapterIndex,
+        isFinal: false,
+      },
+      {
+        cfi: settled.cfi,
+        isRootCfi: false,
+        itemIndex: chapterIndex,
+        isFinal: true,
+      },
     ])
   })
 
@@ -338,34 +362,39 @@ test.describe("Given a page reached by turning pages", () => {
 
       if (!item || item.value.isReady) throw new Error("chapter already ready")
 
-      return new Promise<{ isReady: boolean; isRootCfi: boolean }>(
-        (resolve) => {
-          let isHeld = false
-          const loading = item.renderer.state$.subscribe(({ state }) => {
-            // The renderer can report loading more than once.
-            if (state !== "loading" || isHeld) return
+      return new Promise<{
+        isReady: boolean
+        isRootCfi: boolean
+        isFinal: boolean
+      }>((resolve) => {
+        let isHeld = false
+        const loading = item.renderer.state$.subscribe(({ state }) => {
+          // The renderer can report loading more than once.
+          if (state !== "loading" || isHeld) return
 
-            isHeld = true
-            // @ts-expect-error scratch slot for this spec
-            window.__letGo = reader.navigation.lock()
-            queueMicrotask(() => loading.unsubscribe())
+          isHeld = true
+          // @ts-expect-error scratch slot for this spec
+          window.__letGo = reader.navigation.lock()
+          queueMicrotask(() => loading.unsubscribe())
 
-            let cfi = ""
-            reader.navigation.readingPosition$
-              .subscribe((value) => {
-                cfi = value.cfi
-              })
-              .unsubscribe()
-
-            resolve({
-              isReady: item.value.isReady,
-              isRootCfi: reader.cfi.isRootCfi(cfi),
+          let cfi = ""
+          let isFinal = true
+          reader.navigation.readingPosition$
+            .subscribe((value) => {
+              cfi = value.cfi
+              isFinal = value.isFinal
             })
-          })
+            .unsubscribe()
 
-          reader.navigation.goToSpineItem({ indexOrId })
-        },
-      )
+          resolve({
+            isReady: item.value.isReady,
+            isRootCfi: reader.cfi.isRootCfi(cfi),
+            isFinal,
+          })
+        })
+
+        reader.navigation.goToSpineItem({ indexOrId })
+      })
     }, chapterIndex)
 
     /**
@@ -374,7 +403,7 @@ test.describe("Given a page reached by turning pages", () => {
      * follows, and that gives the reading position its page. Until then it is
      * the chapter's start.
      */
-    expect(held).toEqual({ isReady: false, isRootCfi: true })
+    expect(held).toEqual({ isReady: false, isRootCfi: true, isFinal: false })
 
     await page.evaluate(() => {
       // @ts-expect-error scratch slot for this spec
@@ -390,6 +419,7 @@ test.describe("Given a page reached by turning pages", () => {
     const recorded = await readRecorded()
 
     expect(recorded.map(({ isRootCfi }) => isRootCfi)).toEqual([true, false])
+    expect(recorded.map(({ isFinal }) => isFinal)).toEqual([false, true])
     expect(recorded.map(({ itemIndex }) => itemIndex)).toEqual([
       chapterIndex,
       chapterIndex,
@@ -403,6 +433,7 @@ test.describe("Given a page reached by turning pages", () => {
     const position = await turnToThirdPageOfLongChapter(page)
 
     expect(position.readingPosition).toBe(position.cfi)
+    expect(position.isReadingPositionFinal).toBe(true)
 
     /**
      * Two pages into the chapter, the reading position is past the chapter's
@@ -502,40 +533,65 @@ test.describe("Given a page reached by turning pages", () => {
     expect(reopened.spineItemIndex).toBe(position.spineItemIndex)
     expect(reopened.pageIndex).toBe(position.pageIndex)
     expect(reopened.readingPosition).toBe(position.cfi)
+    // Found in its chapter's document, where the page holding it is measured.
+    expect(reopened.isReadingPositionFinal).toBe(true)
     expect(reopened.readingProgression).toBeCloseTo(
       position.readingProgression ?? Number.NaN,
       10,
     )
   })
 
-  test("a book reopened at the reading position reports no other on the way, not even its start", async ({
+  test("a book reopened at the reading position reports its chapter's start on the way, never the book's, and ends final on it", async ({
     page,
   }) => {
     const position = await turnToThirdPageOfLongChapter(page)
 
     await page.goto(`${url}?cfi=${encodeURIComponent(position.cfi)}`)
     await waitForSettled(page)
+    await expect
+      .poll(() =>
+        readPosition(page).then((read) => read.isReadingPositionFinal),
+      )
+      .toBe(true)
 
     // Every value an app saving the reading position would have saved.
     const saved = await page.evaluate(() => {
+      // @ts-expect-error window.reader is set by this scenario's index.tsx
+      const reader = window.reader as Reader
       // @ts-expect-error window.readingPositions is set by this scenario's index.tsx
-      return window.readingPositions as {
+      const values = window.readingPositions as {
         cfi: string
         percentageEstimateOfBook: number
+        isFinal: boolean
       }[]
+
+      return values.map((value) => ({
+        ...value,
+        isRootCfi: reader.cfi.isRootCfi(value.cfi),
+        itemIndex: reader.cfi.parseCfi(value.cfi).itemIndex,
+      }))
     })
 
     /**
-     * The cfi is known at once and never changes. How far into the book it is
-     * is only known once the page holding it is laid out: until then it is
-     * the chapter's start, like the position of a navigation into a chapter
-     * that is not loaded, never the start of the book.
+     * Until the chapter is loaded, the reader does not know where the cfi
+     * takes it: the reading position is the chapter's start, not final, as
+     * for any navigation into a chapter not loaded. Then it is the cfi, final
+     * once the page holding it is laid out. None is the start of the book,
+     * and an app keeping its saved cfi until the position is final never
+     * saves anything coarser.
      */
-    expect(saved.map(({ cfi }) => cfi)).toEqual(saved.map(() => position.cfi))
-    expect(saved[saved.length - 1]?.percentageEstimateOfBook).toBeCloseTo(
+    const last = saved[saved.length - 1]
+
+    expect(last).toMatchObject({ cfi: position.cfi, isFinal: true })
+    expect(last?.percentageEstimateOfBook).toBeCloseTo(
       position.readingProgression ?? Number.NaN,
       10,
     )
+    for (const value of saved.slice(0, -1)) {
+      expect(value.isFinal).toBe(false)
+      expect(value.itemIndex).toBe(position.spineItemIndex)
+      expect(value.isRootCfi || value.cfi === position.cfi).toBe(true)
+    }
     for (const { percentageEstimateOfBook } of saved) {
       expect(percentageEstimateOfBook).toBeGreaterThanOrEqual(
         position.chapterStart,
@@ -594,6 +650,7 @@ test.describe("Given a chapter opened at a cfi naming only the chapter", () => {
     const { atOnce, chapterStart } = await openChapterAtRootCfi(page)
 
     expect(atOnce.cfi).toBe(chapterStart)
+    expect(atOnce.isFinal).toBe(false)
   })
 
   test("the reading position is the chapter's first page once it loads, not the chapter", async ({
@@ -607,6 +664,7 @@ test.describe("Given a chapter opened at a cfi naming only the chapter", () => {
     expect(settled.isRootCfi).toBe(false)
     expect(settled.readingPosition).toBe(settled.cfi)
     expect(recorded.map(({ cfi }) => cfi)).toEqual([atOnce.cfi, settled.cfi])
+    expect(recorded.map(({ isFinal }) => isFinal)).toEqual([false, true])
   })
 })
 
@@ -648,6 +706,7 @@ test.describe("Given chapters that are not preloaded", () => {
      */
     expect(atOnce.wasReady).toBe(false)
     expect(atOnce.isRootCfi).toBe(true)
+    expect(atOnce.isFinal).toBe(false)
     expect(atOnce.itemIndex).toBe(previousIndex)
     expect(atOnce.percentageEstimateOfBook).toBeCloseTo(
       settled.chapterStart,
@@ -665,8 +724,18 @@ test.describe("Given chapters that are not preloaded", () => {
     )
     expect(settled.readingProgression).toBeGreaterThan(settled.chapterStart)
     expect(await readRecorded()).toEqual([
-      { cfi: atOnce.cfi, isRootCfi: true, itemIndex: previousIndex },
-      { cfi: settled.cfi, isRootCfi: false, itemIndex: previousIndex },
+      {
+        cfi: atOnce.cfi,
+        isRootCfi: true,
+        itemIndex: previousIndex,
+        isFinal: false,
+      },
+      {
+        cfi: settled.cfi,
+        isRootCfi: false,
+        itemIndex: previousIndex,
+        isFinal: true,
+      },
     ])
   })
 })
@@ -679,7 +748,7 @@ test.describe("Given a cfi naming nothing in a chapter not loaded yet", () => {
     await waitForSettled(page)
   })
 
-  test("the reading position is the cfi while the chapter loads, then the page shown, which reopens the book there", async ({
+  test("the reading position is the chapter's start while the chapter loads, then the page shown, which reopens the book there", async ({
     page,
   }) => {
     const chapterIndex = await getLongChapterIndex(page)
@@ -696,13 +765,16 @@ test.describe("Given a cfi naming nothing in a chapter not loaded yet", () => {
     const settled = await readPosition(page)
 
     /**
-     * Until the chapter is loaded, a cfi naming nothing cannot be told from
-     * one naming a place, so the reading position is the cfi as asked. Once
-     * it has loaded, the reader is at the chapter's start, where the cfi could
-     * not take it, and the reading position is the page shown.
+     * Until the chapter is loaded, the reader does not know where the cfi
+     * takes it: the reading position is the chapter's start, not final, as
+     * for any navigation into a chapter not loaded, never the cfi as asked.
+     * Once it has loaded, the reader is at the chapter's start, where the cfi
+     * could not take it, and the reading position is the page shown, final.
      */
     expect(atOnce.wasReady).toBe(false)
-    expect(atOnce.cfi).toBe(cfi)
+    expect(atOnce.isRootCfi).toBe(true)
+    expect(atOnce.itemIndex).toBe(chapterIndex)
+    expect(atOnce.isFinal).toBe(false)
     expect(atOnce.percentageEstimateOfBook).toBeCloseTo(
       settled.chapterStart,
       10,
@@ -713,8 +785,18 @@ test.describe("Given a cfi naming nothing in a chapter not loaded yet", () => {
     expect(settled.readingPosition).toBe(settled.cfi)
     expect(settled.readingProgression).toBeCloseTo(settled.chapterStart, 10)
     expect(await readRecorded()).toEqual([
-      { cfi, isRootCfi: false, itemIndex: chapterIndex },
-      { cfi: settled.cfi, isRootCfi: false, itemIndex: chapterIndex },
+      {
+        cfi: atOnce.cfi,
+        isRootCfi: true,
+        itemIndex: chapterIndex,
+        isFinal: false,
+      },
+      {
+        cfi: settled.cfi,
+        isRootCfi: false,
+        itemIndex: chapterIndex,
+        isFinal: true,
+      },
     ])
 
     // A relayout restores to the page shown, as for any page gone to.
@@ -729,6 +811,7 @@ test.describe("Given a cfi naming nothing in a chapter not loaded yet", () => {
     expect(reopened.spineItemIndex).toBe(chapterIndex)
     expect(reopened.pageIndex).toBe(settled.pageIndex)
     expect(reopened.readingPosition).toBe(settled.cfi)
+    expect(reopened.isReadingPositionFinal).toBe(true)
     expect(reopened.readingProgression).toBeCloseTo(
       settled.readingProgression ?? Number.NaN,
       10,

@@ -106,6 +106,7 @@ describe("reading position", () => {
     expect(await firstValueFrom(reader.navigation.readingPosition$)).toEqual({
       cfi: settled.begin.cfi,
       percentageEstimateOfBook: itemStartProgression(1),
+      isFinal: true,
     })
   })
 
@@ -149,6 +150,7 @@ describe("reading position", () => {
     expect(await firstValueFrom(reader.navigation.readingPosition$)).toEqual({
       cfi: settled.begin.cfi,
       percentageEstimateOfBook: itemStartProgression(1),
+      isFinal: true,
     })
   })
 
@@ -193,6 +195,7 @@ describe("reading position", () => {
     expect(await firstValueFrom(reader.navigation.readingPosition$)).toEqual({
       cfi: portrait.begin.cfi,
       percentageEstimateOfBook: itemStartProgression(1),
+      isFinal: true,
     })
   })
 
@@ -203,8 +206,9 @@ describe("reading position", () => {
      * In landscape the spread holding item 1 starts at item 0: the position
      * a cfi into item 1 goes to is item 0's page. The cfi is still on item
      * 1's page, and so is how far into the book it is. The items have
-     * documents, where the cfi is found: without one, it would await a
-     * document for good, and its page would never be looked for.
+     * documents, where the cfi is found: without one, it names no place.
+     * Finding the page holding it measures its node, which only a browser can
+     * do: whether it is final is left to the browser specs.
      */
     const cfi = "epubcfi(/6/4[1]!/4/2)"
     const reader = createTestReader({
@@ -217,13 +221,12 @@ describe("reading position", () => {
     const spread = await settledOn(reader, 0)
 
     expect(spread.end.spineItemIndex).toBe(1)
-    expect(await firstValueFrom(reader.navigation.readingPosition$)).toEqual({
-      cfi,
-      percentageEstimateOfBook: itemStartProgression(1),
-    })
+    expect(
+      await firstValueFrom(reader.navigation.readingPosition$),
+    ).toMatchObject({ cfi, percentageEstimateOfBook: itemStartProgression(1) })
   })
 
-  it("is the cfi a navigation asked for, before and after it settles", async () => {
+  it("is the page landed on for a cfi into an item without a document, where no place can be found", async () => {
     const reader = createTestReader()
 
     mountTestReader(reader)
@@ -234,27 +237,23 @@ describe("reading position", () => {
       positions.push(position)
     })
 
-    /**
-     * A cfi names the exact place to reopen at. The page it settles on starts
-     * at some other character, and saving that one instead would reopen at a
-     * different page once the book is laid out differently.
-     */
-    const cfi = "epubcfi(/6/4[1]!/4/2)"
-
-    reader.navigation.goToCfi(cfi, { animate: false })
-
-    expect(positions.at(-1)).toEqual({
-      cfi,
-      percentageEstimateOfBook: itemStartProgression(1),
-    })
+    // The test book's items are images, rendered without a document.
+    reader.navigation.goToCfi("epubcfi(/6/4[1]!/4/2)", { animate: false })
 
     const settled = await settledOn(reader, 1)
 
-    expect(settled.begin.cfi).not.toBe(cfi)
-    expect(positions.at(-1)).toEqual({
-      cfi,
-      percentageEstimateOfBook: itemStartProgression(1),
-    })
+    /**
+     * Nothing can show where the cfi leads in an item without a document, so
+     * the reader does not wait for one: once the item is loaded, the reading
+     * position is the page the navigation landed on, and it is final.
+     */
+    await vi.waitFor(() =>
+      expect(positions.at(-1)).toEqual({
+        cfi: settled.begin.cfi,
+        percentageEstimateOfBook: itemStartProgression(1),
+        isFinal: true,
+      }),
+    )
   })
 
   it("is at the item navigated to at once, while its page is still loading", async () => {
@@ -280,6 +279,7 @@ describe("reading position", () => {
     expect(await firstValueFrom(reader.navigation.readingPosition$)).toEqual({
       cfi: reader.cfi.generateRootCfi(item.item),
       percentageEstimateOfBook: itemStartProgression(1),
+      isFinal: false,
     })
 
     secondItem.release()
@@ -288,6 +288,7 @@ describe("reading position", () => {
     expect(await firstValueFrom(reader.navigation.readingPosition$)).toEqual({
       cfi: second.begin.cfi,
       percentageEstimateOfBook: itemStartProgression(1),
+      isFinal: true,
     })
   })
 
@@ -308,6 +309,7 @@ describe("reading position", () => {
     const expected = {
       cfi: settled.begin.cfi,
       percentageEstimateOfBook: itemStartProgression(1),
+      isFinal: true,
     }
 
     expect(positions).toEqual([expected])
@@ -337,10 +339,20 @@ describe("reading position of a cfi into a document", () => {
   const cfiNamingText = "epubcfi(/6/4[1]!/4/2/1:2)"
 
   /** A reading position in the second item, which starts half into the book. */
-  const inSecondItem = (cfi: string): ReadingPosition => ({
+  const inSecondItem = (cfi: string, isFinal: boolean): ReadingPosition => ({
     cfi,
     percentageEstimateOfBook: itemStartProgression(1),
+    isFinal,
   })
+
+  /** The second item's start, the closest the reader knows while it loads. */
+  const secondItemStart = (reader: ReturnType<typeof createTestReader>) => {
+    const item = reader.spineItemsManager.get(1)
+
+    if (!item) throw new Error("item 1 is missing")
+
+    return inSecondItem(reader.cfi.generateRootCfi(item.item), false)
+  }
 
   /** Every reading position from now on, without the current one. */
   const recordReadingPositions = (
@@ -355,7 +367,7 @@ describe("reading position of a cfi into a document", () => {
     return positions
   }
 
-  it("is the cfi asked for while its item loads, then the page landed on once the document shows it names nothing", async () => {
+  it("is its item's start while the item loads, then the page landed on once the document shows the cfi names nothing", async () => {
     const secondItem = holdItem("/page_1.jpg", TextDocumentRenderer)
     const reader = createTestReader({ getRenderer: secondItem.getRenderer })
 
@@ -367,17 +379,20 @@ describe("reading position of a cfi into a document", () => {
     reader.navigation.goToCfi(cfiNamingNothing, { animate: false })
 
     /**
-     * Until the document is there, a cfi naming nothing cannot be told from
-     * one naming a place, so it is kept as asked, and a relayout meanwhile
-     * does not drop it.
+     * Until the document is there, the reader does not know where the cfi
+     * takes it: to a place, or nowhere. The reading position is the item's
+     * start, not final, as for any navigation into an item still loading, and
+     * a relayout meanwhile does not change it.
      */
-    expect(positions).toEqual([inSecondItem(cfiNamingNothing)])
+    const itemStart = secondItemStart(reader)
+
+    expect(positions).toEqual([itemStart])
 
     reader.layout()
     await firstValueFrom(reader.spine.layout$)
 
     expect(reader.spineItemsManager.get(1)?.value.isLoaded).toBe(false)
-    expect(positions).toEqual([inSecondItem(cfiNamingNothing)])
+    expect(positions).toEqual([itemStart])
 
     secondItem.release()
 
@@ -385,21 +400,21 @@ describe("reading position of a cfi into a document", () => {
 
     /**
      * The document shows the cfi names nothing: the reader is at the start of
-     * the item, and the reading position is the page it is on, not a place it
-     * is not at.
+     * the item, and the reading position is the page it is on, never a place
+     * it is not at.
      */
     expect(settled.begin.cfi).not.toBe(cfiNamingNothing)
     expect(positions).toEqual([
-      inSecondItem(cfiNamingNothing),
-      inSecondItem(settled.begin.cfi),
+      itemStart,
+      inSecondItem(settled.begin.cfi, true),
     ])
 
     reader.layout()
     await settledOn(reader, 1)
 
     expect(positions).toEqual([
-      inSecondItem(cfiNamingNothing),
-      inSecondItem(settled.begin.cfi),
+      itemStart,
+      inSecondItem(settled.begin.cfi, true),
     ])
   })
 
@@ -420,10 +435,10 @@ describe("reading position of a cfi into a document", () => {
 
     const settled = await settledOn(reader, 1)
 
-    expect(positions).toEqual([inSecondItem(settled.begin.cfi)])
+    expect(positions).toEqual([inSecondItem(settled.begin.cfi, true)])
   })
 
-  it("stays the cfi asked for once the document shows it names a place", async () => {
+  it("is its item's start while the item loads, then the cfi once the document shows it names a place, before and after it settles", async () => {
     const secondItem = holdItem("/page_1.jpg", TextDocumentRenderer)
     const reader = createTestReader({ getRenderer: secondItem.getRenderer })
 
@@ -433,11 +448,28 @@ describe("reading position of a cfi into a document", () => {
     const positions = recordReadingPositions(reader)
 
     reader.navigation.goToCfi(cfiNamingText, { animate: false })
+
+    const itemStart = secondItemStart(reader)
+
+    expect(positions).toEqual([itemStart])
+
     secondItem.release()
 
     const settled = await settledOn(reader, 1)
 
+    /**
+     * A cfi names the exact place to reopen at. The page it settles on starts
+     * at some other character, and saving that one instead would reopen at a
+     * different page once the book is laid out differently. Whether it is
+     * final needs the page holding it, found by measuring its node, which
+     * only a browser can do: the browser specs check it.
+     */
     expect(settled.begin.cfi).not.toBe(cfiNamingText)
-    expect(positions).toEqual([inSecondItem(cfiNamingText)])
+    expect(positions).toHaveLength(2)
+    expect(positions[0]).toEqual(itemStart)
+    expect(positions[1]).toMatchObject({
+      cfi: cfiNamingText,
+      percentageEstimateOfBook: itemStartProgression(1),
+    })
   })
 })

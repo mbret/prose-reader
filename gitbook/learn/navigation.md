@@ -23,42 +23,35 @@ where to go: a bookmark, a table of contents entry, a link.
 
 `reader.navigation.readingPosition$` is where the reader is in the book: its
 `cfi`, the value to save and to [open the book at](#opening-the-book-somewhere)
-the next time, and its `percentageEstimateOfBook`, how far into the book that
-is, to save with it for a progress shown outside the reader.
+the next time, its `percentageEstimateOfBook`, how far into the book that is,
+to save with it for a progress shown outside the reader, and `isFinal`,
+whether the reader has found where the navigation took it.
 
-It moves when the reader navigates, and when the page that navigation goes to
-is laid out: until then the reading position, or only its progress, stands at
-the start of that page's chapter, as the cases below say. After that it stays
-for the rest of the navigation. A resize, a rotation, a font size change or a
-chapter loading nearby lays the book out again and reflows the page around the
-reading position, but never changes it. The
-[pagination page](pagination.md#pagination-or-reading-position) explains why
-that makes it the value to save rather than pagination's `begin.cfi`. It is
-also what the reader returns to itself after such a relayout, so a book
-reopened at a saved reading position shows the same text as one that was
-resized.
+It is the reader's own answer, the same whatever the navigation's target: a
+cfi, a url, a spine item, a page turn, or a target an enhancer adds. It is set
+the moment a navigation happens, and refined as the reader finds out:
 
-It is set the moment a navigation happens:
+- **Until the chapter the navigation goes to is loaded**: that chapter's
+  start, the only place a cfi can name in a chapter that is not loaded, not
+  final. Nothing shows yet where the target leads in the chapter.
+- **Once the chapter is loaded**: the place the target names, when the chapter
+  holds it, a cfi or the element a url's fragment names, kept as it is even once
+  the page holding it shows. Otherwise the first character of the page the
+  navigation lands on, once that page is laid out: after turning pages,
+  scrolling, `goToSpineItem` or a url without a fragment, and for a cfi whose
+  path leads to nothing in its chapter, such as a saved position from before
+  the book changed, which takes the reader to the chapter's start.
+- **Once the page holding it is laid out**: final, and it stays for the rest of
+  the navigation. In a chapter already laid out, such as when turning pages,
+  that is at once.
 
-- **A navigation to a cfi**, with `goToCfi` or by opening the book at one:
-  that cfi. It names the exact place asked for, so it is kept as
-  it is, even once the page holding it shows. A url whose fragment names an
-  element, with `goToUrl` or a link, is kept the same way: as the cfi of that
-  element.
-- **Any other navigation**, turning pages, scrolling, `goToSpineItem`, or a url
-  without a fragment: the first character of the page it goes to. It does not
-  wait for the page turn to end or for pagination to settle; the page is known
-  as soon as its chapter is laid out.
-- **A navigation into a chapter that is not loaded yet**: that chapter's start,
-  the only place a cfi can name in a document that is not loaded. Once the
-  chapter has loaded, it becomes the first character of the page the
-  navigation lands on, or the element a url names, and stays there.
-- **A navigation to a cfi whose path leads to nothing in its chapter**, such as
-  a saved position from before the book changed: the reader goes to the
-  chapter's start. Until the chapter is loaded, such a cfi cannot be told from
-  one naming a place, so the reading position is the cfi as it was given. Once
-  the chapter has loaded, it becomes the first character of the page shown, and
-  stays there.
+A resize, a rotation, a font size change or a chapter loading nearby lays the
+book out again and reflows the page around the reading position, but never
+changes it. The [pagination page](pagination.md#pagination-or-reading-position)
+explains why that makes it the value to save rather than pagination's
+`begin.cfi`. It is also what the reader returns to itself after such a
+relayout, so a book reopened at a saved reading position shows the same text as
+one that was resized.
 
 A navigation whose target names nothing in the book, such as a cfi that
 [can't be read](../cfi/about.md) or a cfi of a chapter the book does not have,
@@ -67,27 +60,49 @@ reading position.
 
 Its `percentageEstimateOfBook` is where the page holding the `cfi` starts,
 estimated from the `progressionWeight` of each spine item in the manifest, or
-an even share each when an item has none, and the pages of its own. It moves with the `cfi`, never apart from it. When the
-reading position is a chapter's start, so is its progress; after a navigation
-to a cfi, the progress is that chapter's start until the page holding the cfi
-is laid out. Being where a page starts, it is short of `1` on the last page.
-Pagination's `percentageEstimateOfBook` measures how far the end of what is
-visible reaches instead, so the two differ by about the pages on screen.
+an even share each when an item has none, and the pages of its own. It moves
+with the `cfi`, never apart from it: until the value is final, it is the start
+of the chapter the navigation goes to. Being where a page starts, it is short of
+`1` on the last page. Pagination's `percentageEstimateOfBook` measures how far
+the end of what is visible reaches instead, so the two differ by about the
+pages on screen.
 
-Save every value as it comes, both fields together. The one case where a value
-is far from the reader is a turn back into a previous chapter that is not
-loaded yet: until it loads, the reading position is that chapter's start
-rather than its last page. Adjacent chapters are preloaded by default
-(`numberOfAdjacentSpineItemToPreLoad`), so this only shows when they are not.
+### Saving it
+
+A value that is not final is the closest the reader knows so far, coarser than
+where it is going: its chapter's start while the chapter loads, and that start
+as the progress until the page is laid out. A navigation to a cfi or a url
+reports the chapter's start until the chapter loads, and so does a turn back
+into a previous chapter that is not loaded yet, rather than its last page.
+Adjacent chapters are preloaded by default (`numberOfAdjacentSpineItemToPreLoad`),
+so this mostly shows when opening the book, and around chapters that are not
+preloaded. Saving every value as it comes is enough when a chapter's start will
+do for the time a chapter takes to load and be laid out, the only time a value
+is not final. Should the reader be closed then, it reopens at that chapter's
+start.
+
+The target a navigation asked for is yours, and stays available as
+`reader.navigation.getNavigation().target`. A cfi, a url or an xpointer already
+names a place: to never save anything coarser, save it until the reading
+position is final. With a cfi, including the one the book opened at:
 
 ```typescript
-reader.navigation.readingPosition$.subscribe((readingPosition) => {
-  localStorage.setItem(
-    `reading-position-${bookId}`,
-    JSON.stringify(readingPosition),
-  )
-})
+reader.navigation.readingPosition$.subscribe(
+  ({ cfi, percentageEstimateOfBook, isFinal }) => {
+    const { target } = reader.navigation.getNavigation()
+    // Until the reader has found where it is, a cfi you sent it to is finer.
+    const cfiToSave = !isFinal && target.type === "cfi" ? target.value : cfi
+
+    localStorage.setItem(
+      `reading-position-${bookId}`,
+      JSON.stringify({ cfi: cfiToSave, percentageEstimateOfBook }),
+    )
+  },
+)
 ```
+
+The [koreader enhancer](../enhancers/koreader.md) does the same for the
+xpointers it reports.
 
 ## Opening the book somewhere
 
@@ -101,13 +116,13 @@ overwritten by the cover.
 A saved position can go stale when the book changes, or get corrupted. One
 that names nothing in the book opens it at its start, as without a target. One
 whose chapter is still there opens that chapter, and the reading position
-follows the rules above: a place in the chapter that is gone becomes the page
-shown once the chapter has loaded, so what you save from there reopens the
-book.
+follows the rules above: that chapter's start until it has loaded, then the
+place saved, or the page shown when that place is gone, so what you save from
+there reopens the book.
 
 ```typescript
 const saved = localStorage.getItem(`reading-position-${bookId}`)
-const readingPosition: ReadingPosition | undefined = saved
+const readingPosition: { cfi: string } | undefined = saved
   ? JSON.parse(saved)
   : undefined
 

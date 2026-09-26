@@ -20,7 +20,14 @@ const document = new DOMParser().parseFromString(
   "text/html",
 )
 
-const createResolvers = ({ isLoaded = true }: { isLoaded?: boolean } = {}) => {
+const createResolvers = ({
+  isLoaded = true,
+  hasDocument = true,
+}: {
+  isLoaded?: boolean
+  // An item rendered without a document, such as an image, has none.
+  hasDocument?: boolean
+} = {}) => {
   const navigationResolver = {
     clampPositionInSpine: (position: SpinePosition) => position,
     getNavigationForNode: () => new SpinePosition({ x: 0, y: 0 }),
@@ -29,14 +36,20 @@ const createResolvers = ({ isLoaded = true }: { isLoaded?: boolean } = {}) => {
     item: { index: 0, href: "0.xhtml" },
     index: 0,
     value: { isLoaded },
-    renderer: { getDocumentFrame: () => ({ contentDocument: document }) },
+    renderer: {
+      getDocumentFrame: () =>
+        hasDocument ? { contentDocument: document } : undefined,
+    },
   }
   const cfi = {
     isRootCfi: (value: string) => value.endsWith("!)"),
     getSpineItemFromCfi: () => spineItem,
     // `text` names the note, once its document is there to look in.
     resolveCfi: ({ cfi }: { cfi: string }) => ({
-      node: isLoaded && cfi === text ? document.getElementById("note") : null,
+      node:
+        isLoaded && hasDocument && cfi === text
+          ? document.getElementById("note")
+          : null,
     }),
     generateRootCfi: () => itemStart,
     generateCfiForSpineItemPage: ({
@@ -103,16 +116,39 @@ describe("target resolvers", () => {
     })
   })
 
-  it("keep a cfi into a document not loaded as asked, awaiting the document for restorations to resolve it again", () => {
-    // Nothing is found yet, which does not tell whether the cfi names a place.
-    expect(
-      resolve({ type: "cfi", value: nothing }, { isLoaded: false }),
-    ).toMatchObject({
-      spineItem: 0,
-      anchor: nothing,
-      awaitsDocument: true,
-    })
-  })
+  it.each([
+    ["one naming a place", text],
+    ["one naming nothing", nothing],
+  ])(
+    "leave a cfi into an item not loaded without an anchor, %s, awaiting the item for restorations to resolve it again",
+    (_, value) => {
+      /**
+       * Nothing shows yet where the cfi leads, to a place or nowhere: as for a
+       * selector, the navigation has no place until the item is loaded.
+       */
+      expect(
+        resolve({ type: "cfi", value }, { isLoaded: false }),
+      ).toMatchObject({
+        spineItem: 0,
+        anchor: undefined,
+        awaitsDocument: true,
+      })
+    },
+  )
+
+  it.each<[string, NavigationTarget]>([
+    ["a cfi", { type: "cfi", value: text }],
+    ["a selector", note],
+  ])(
+    "leave %s into a loaded item without a document to be anchored at the page it lands on",
+    (_, target) => {
+      // No document will show where it leads, so it does not wait for one.
+      expect(resolve(target, { hasDocument: false })).toMatchObject({
+        anchor: undefined,
+        awaitsDocument: false,
+      })
+    },
+  )
 
   it("leave a cfi naming nothing in its loaded document to be anchored at the page it lands on", () => {
     expect(resolve({ type: "cfi", value: nothing })).toMatchObject({

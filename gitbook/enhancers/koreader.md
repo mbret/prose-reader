@@ -50,10 +50,11 @@ as an xpointer, for a sync client to push. It never emits a pointer less precise
 the position the reader is on, since pushing one would overwrite a better
 position on the server:
 
-- A position in the text is emitted once its chapter's document is loaded,
-  rather than as the chapter start in the meantime.
-- While the reader is on its way to an xpointer whose chapter is loading, it
-  emits that xpointer, not the chapter start shown in the meantime.
+- A reading position is converted once it is final, once the reader has found
+  where a navigation took it, rather than the chapter start standing in while
+  the chapter loads.
+- On its way to an xpointer, it emits that xpointer at once. On its way
+  anywhere else, the last pointer stands until the reading position is final.
 - When an xpointer's place cannot be found once its chapter has loaded, a stale
   one for instance, the reader goes to the chapter's first page, and that page
   is what it emits.

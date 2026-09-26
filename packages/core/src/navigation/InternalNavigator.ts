@@ -97,22 +97,24 @@ export class InternalNavigator extends DestroyableClass {
   )
 
   /**
-   * Where the reader is in the book, to save and reopen at: the current
-   * navigation's anchor, which a cfi target names and `withAnchor` otherwise
-   * finds, with its progression. Until the page a navigation goes to is laid
-   * out it has neither, and this is the start of the item the navigation goes
-   * to, the only place a cfi can name in content that is not laid out.
+   * Where the reader is in the book, to save and reopen at, refined as the
+   * reader finds out, the same way whatever the target: the current
+   * navigation's anchor, which the target names once its document shows the
+   * place and `withAnchor` otherwise finds, with its progression.
    *
-   * A cfi whose path leads to nothing in its item's document names no place
-   * either, which only shows once the document is loaded: until then this is
-   * the cfi as asked, then the first character of the page the reader landed
-   * on, at the start of the item. A navigation whose target names nothing in
-   * the book at all, such as a cfi that can't be read, is ignored, and leaves
-   * this where it was.
+   * Until the navigation has found its page, this is the closest the reader
+   * knows, and `isFinal` is false: the start of the item the navigation goes
+   * to while that item loads, the only place a cfi can name there, and the
+   * item's start as the progression until the page holding the position is
+   * laid out. A target whose document shows it names nothing, such as a cfi
+   * whose path leads nowhere, ends on the first character of the page the
+   * reader landed on. A navigation whose target names nothing in the book at
+   * all, such as a cfi that can't be read, is ignored, and leaves this where
+   * it was.
    *
-   * It only moves when the reader navigates, and once more when such a
-   * navigation finds its page, or finds that its cfi names nothing: a relayout
-   * reflows the page around it without changing it.
+   * It only moves when the reader navigates, and as that navigation finds its
+   * page, until it is final: a relayout reflows the page around it without
+   * changing it.
    */
   public readonly readingPosition$: Observable<ReadingPosition> =
     this.navigationSubject.pipe(
@@ -452,6 +454,8 @@ export class InternalNavigator extends DestroyableClass {
       percentageEstimateOfBook:
         navigation.anchorPageStartProgression ??
         getSpineItemProgression(this.context.manifest, spineItem.index).start,
+      // `withAnchor` finds the page with the anchor, and keeps both.
+      isFinal: navigation.anchorPageStartProgression !== undefined,
     }
   }
 

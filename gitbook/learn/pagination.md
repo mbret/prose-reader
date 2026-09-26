@@ -57,7 +57,8 @@ reader.mount(document.getElementById("reader")!)
 ```
 
 The [navigation page](navigation.md#reading-position) says exactly when the
-reading position changes.
+reading position changes, and [how to keep the cfi](navigation.md#saving-it)
+the book opened at until the reader has found its place.
 
 The reading position carries its own `percentageEstimateOfBook`, the progress
 to save for a library screen: it moves with the position it describes, where

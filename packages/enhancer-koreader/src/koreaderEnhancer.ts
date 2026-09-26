@@ -16,9 +16,6 @@ import {
   combineLatest,
   distinctUntilChanged,
   EMPTY,
-  filter,
-  first,
-  map,
   type Observable,
   of,
   shareReplay,
@@ -137,30 +134,6 @@ export const koreaderEnhancer =
         : undefined
     }
 
-    /**
-     * The xpointer of a cfi. An item start converts at once; a place in the
-     * text once its document is loaded, rather than as the item start in the
-     * meantime, which would overwrite a better position on a sync server.
-     */
-    const readingPositionToXPointer = (cfi: string): Observable<string> => {
-      if (reader.cfi.isRootCfi(cfi)) {
-        const xpointer = cfiToXPointer(cfi, getLoadedSpineItemDocument)
-
-        return xpointer === undefined ? EMPTY : of(xpointer)
-      }
-
-      const spineItem = reader.cfi.getSpineItemFromCfi(cfi)
-
-      if (!spineItem) return EMPTY
-
-      return spineItem.watch("isLoaded").pipe(
-        filter(Boolean),
-        first(),
-        map(() => cfiToXPointer(cfi, getLoadedSpineItemDocument)),
-        filter((xpointer) => xpointer !== undefined),
-      )
-    }
-
     const readingPositionXPointer$ = combineLatest([
       reader.navigation.readingPosition$,
       lastXPointerNavigation,
@@ -168,21 +141,26 @@ export const koreaderEnhancer =
       // reading position stays the same.
       reader.navigation.navigation$,
     ]).pipe(
-      switchMap(([{ cfi }, xpointerNavigation]) => {
+      switchMap(([{ cfi, isFinal }, xpointerNavigation]) => {
+        // Found, its item is loaded, and its document converts it.
+        if (isFinal) {
+          const xpointer = cfiToXPointer(cfi, getLoadedSpineItemDocument)
+
+          return xpointer === undefined ? EMPTY : of(xpointer)
+        }
+
         /**
-         * On its way to an xpointer whose chapter is loading, the reading
-         * position is the chapter start. The xpointer itself is the better
-         * answer until the chapter gives the real one.
+         * Until the reader has found where a navigation took it, the reading
+         * position is a stand-in, such as the chapter start while the chapter
+         * loads, which would overwrite a better position on a sync server. On
+         * its way to an xpointer, the xpointer is the better answer; otherwise
+         * the last one reported stands.
          */
         const isNavigatingToXPointer =
           xpointerNavigation !== undefined &&
-          reader.navigation.getNavigation().target ===
-            xpointerNavigation.target &&
-          reader.cfi.isRootCfi(cfi)
+          reader.navigation.getNavigation().target === xpointerNavigation.target
 
-        return isNavigatingToXPointer
-          ? of(xpointerNavigation.xpointer)
-          : readingPositionToXPointer(cfi)
+        return isNavigatingToXPointer ? of(xpointerNavigation.xpointer) : EMPTY
       }),
       distinctUntilChanged(),
       takeUntil(reader.$.destroy$),

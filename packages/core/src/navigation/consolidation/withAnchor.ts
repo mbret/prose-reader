@@ -17,13 +17,12 @@ type Navigation = {
  * to it after a relayout, and the reader exposes it as its reading position.
  *
  * - A target that names a place in the text, a cfi or what a selector found,
- *   comes with it: its resolver sets it, and this step keeps it. A cfi still
- *   awaiting its document comes with it too, as asked, until the document
- *   shows whether it names a place.
+ *   comes with it once its document shows the place: its resolver sets it,
+ *   and this step keeps it.
  * - Otherwise it is the first character of the page that shows first at the
  *   navigation's position, the begin edge of what is visible, as soon as that
- *   page is laid out. That includes a cfi naming nothing in its item's
- *   document, once the document shows it.
+ *   page is laid out. That includes a target whose document shows it names
+ *   nothing.
  * - Until then the navigation has none, and restoration works from its
  *   position. The first restoration that lands on a layout with the page
  *   finds it.

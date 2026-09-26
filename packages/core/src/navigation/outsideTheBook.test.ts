@@ -83,7 +83,7 @@ describe("a navigation whose target names nothing in the book", () => {
 
       // The start of the book.
       expect(readingPositions).toEqual([
-        { cfi: settled.begin.cfi, percentageEstimateOfBook: 0 },
+        { cfi: settled.begin.cfi, percentageEstimateOfBook: 0, isFinal: true },
       ])
     },
   )

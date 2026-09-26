@@ -218,7 +218,11 @@ const SaveReadingPosition = ({ bookId }: { bookId: string }) => {
   const readingPosition = useReaderState((state) => state.readingPosition)
 
   useEffect(() => {
-    if (readingPosition) storage.setReadingPosition(bookId, readingPosition)
+    // Until it is final, it is a stand-in coarser than the cfi the book
+    // opened at: what was saved stays.
+    if (readingPosition?.isFinal) {
+      storage.setReadingPosition(bookId, readingPosition)
+    }
   }, [bookId, readingPosition])
 
   return null
@@ -226,8 +230,12 @@ const SaveReadingPosition = ({ bookId }: { bookId: string }) => {
 ```
 
 `storage` stands for wherever your app keeps data. The first position the
-reader reports is the one it opens at, the `target` sent with `load` or the
-start of the book, so every value can be saved as it comes. `load` clears the state
+reader reports is where it opens, in the chapter of the `target` sent with
+`load` or at the start of the book, never the start of the book on the way to
+a target. Until that chapter has loaded, it is the chapter's start, and
+`isFinal` is `false`: saving only final values keeps the cfi saved last until
+the reader has found its place, as the
+[navigation guide](../learn/navigation.md#saving-it) explains. `load` clears the state
 the moment it is called, and nothing the previous book's reader reports lands
 after it: every `readingPosition` is one of the book last passed to `load`, so
 save it under that book, as `SaveReadingPosition` does with the `bookId` the

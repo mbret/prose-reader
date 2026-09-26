@@ -25,8 +25,7 @@ export type NavigationTargetValues = {
   /**
    * A cfi. One that can't be read names nothing in the book. One whose path
    * leads to nothing in its spine item's document goes to the start of the
-   * item, and once the document is loaded, the reading position is the page
-   * landed on rather than the cfi.
+   * item.
    */
   cfi: string
   /**
@@ -116,8 +115,8 @@ export type NavigationConsolidation = {
 }
 
 /**
- * Where the reader is in the book: what to save, and to open the book at with
- * a cfi target.
+ * Where the reader is in the book, refined as the reader finds out: what to
+ * save, and to open the book at with a cfi target. The same for every target.
  */
 export type ReadingPosition = {
   cfi: string
@@ -127,6 +126,14 @@ export type ReadingPosition = {
    * of its own. A position on the last page is short of 1.
    */
   percentageEstimateOfBook: number
+  /**
+   * Whether the reader has found the page the navigation took it to. Until
+   * it has, the position is the closest it knows: the start of the spine item
+   * the navigation goes to while that item loads, and the item's start as the
+   * progress until the page holding the position is laid out. A final
+   * position stays until the next navigation.
+   */
+  isFinal: boolean
 }
 
 /**
@@ -178,8 +185,8 @@ export type InternalNavigationEntry = {
   spineItem?: string | number
   /**
    * Where this navigation takes the reader in the text, the value restoration
-   * returns to. Named by the target when it is a cfi, unless its document
-   * shows the cfi names nothing there. Otherwise found by `withAnchor` for
+   * returns to. The place the target names, a cfi or what a selector found,
+   * once its document shows it there. Otherwise found by `withAnchor` for
    * every entry, restorations included; `undefined` until the page it goes to
    * is laid out.
    */
@@ -191,7 +198,7 @@ export type InternalNavigationEntry = {
    */
   anchorPageStartProgression?: number
   /**
-   * Whether the target names a place in a document that is not loaded yet.
+   * Whether the target names a place in a spine item that is not loaded yet.
    * Restorations resolve the target again until it is: the place is found
    * there then, or found to be nowhere.
    */
