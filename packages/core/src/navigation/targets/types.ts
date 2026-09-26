@@ -18,6 +18,11 @@ export type TargetResolution = {
   anchor?: string
   directionFromLastNavigation: "forward" | "backward"
   snapToPage: boolean
+  /**
+   * Whether the target names a place in a spine item that is not loaded yet.
+   * The navigation has no anchor until it is, and restorations resolve the
+   * target again.
+   */
   awaitsDocument: boolean
 }
 

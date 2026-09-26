@@ -101,8 +101,13 @@ export const createTargetResolvers = ({
         : undefined
       const found = document ? tryFind(find, document) : undefined
 
-      // Found, it is the cfi of what was found. Otherwise it is the item
-      // start, which names no text.
+      /**
+       * Found, it is the cfi of what was found. Otherwise it is the item
+       * start, which names no text. It awaits the item's document only while
+       * the item loads: an item rendered without a document, such as audio,
+       * never gets one, and its navigation is anchored at the page it lands
+       * on instead of waiting for good.
+       */
       return {
         ...resolvers.cfi(
           found
@@ -113,7 +118,7 @@ export const createTargetResolvers = ({
             : cfi.generateRootCfi(item.item),
           context,
         ),
-        awaitsDocument: !document,
+        awaitsDocument: !item.value.isLoaded,
       }
     },
   }

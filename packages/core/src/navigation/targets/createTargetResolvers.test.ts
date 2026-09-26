@@ -17,7 +17,14 @@ const document = new DOMParser().parseFromString(
   "text/html",
 )
 
-const createResolvers = ({ isLoaded = true }: { isLoaded?: boolean } = {}) => {
+const createResolvers = ({
+  isLoaded = true,
+  hasDocument = true,
+}: {
+  isLoaded?: boolean
+  // An item rendered without a document, such as audio, has none.
+  hasDocument?: boolean
+} = {}) => {
   const navigationResolver = {
     clampPositionInSpine: (position: SpinePosition) => position,
     getNavigationForCfi: () => new SpinePosition({ x: 0, y: 0 }),
@@ -37,7 +44,10 @@ const createResolvers = ({ isLoaded = true }: { isLoaded?: boolean } = {}) => {
     get: () => ({
       item,
       value: { isLoaded },
-      renderer: { getDocumentFrame: () => ({ contentDocument: document }) },
+      renderer: {
+        getDocumentFrame: () =>
+          hasDocument ? { contentDocument: document } : undefined,
+      },
     }),
   }
   const settings = { values: { computedPageTurnDirection: "horizontal" } }
@@ -108,6 +118,15 @@ describe("target resolvers", () => {
       spineItem: 0,
       anchor: undefined,
       awaitsDocument: true,
+    })
+  })
+
+  it("leave a selector into a loaded item without a document to be anchored at the page it lands on", () => {
+    // No document will ever show where it leads, so it does not wait for one.
+    expect(resolve(note, { hasDocument: false })).toMatchObject({
+      spineItem: 0,
+      anchor: undefined,
+      awaitsDocument: false,
     })
   })
 
