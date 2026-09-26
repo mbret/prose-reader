@@ -20,9 +20,6 @@ See [Conventional Commits](https://conventionalcommits.org) for commit guideline
 * **cfi:** parse throws for strings it used to read in part, such as
 a cfi with text after its closing parenthesis or without one, or with a
 step or an offset missing its number.
-
-Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
-Claude-Session: https://claude.ai/code/session_015NcxSCfPM1xnxgFqpDBeRu
 * **navigation:** a navigation to a spine item the book does not have is
 ignored rather than clamped to its first or last item, and a navigation
 to an empty cfi is ignored rather than going to the first item.
@@ -51,9 +48,6 @@ to an empty cfi is ignored rather than going to the first item.
 * **navigation:** reader.navigation.readingPosition$ emits
 { cfi, percentageEstimateOfBook } instead of the cfi, and the
 readingPosition of @prose-reader/react-native's ReaderState follows it.
-
-Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
-Claude-Session: https://claude.ai/code/session_01VuXSQD73D2tabpXXxzCrPG
 
 ### Features
 
@@ -86,9 +80,6 @@ Claude-Session: https://claude.ai/code/session_01VuXSQD73D2tabpXXxzCrPG
 `@prose-reader/core`. Call `reader.viewport.wouldSpreadAt(size)` instead,
 which reads the book and the `spreadMode` setting from the reader.
 `Context.update` accepts only `rootElement` and `hasVerticalWriting`.
-
-Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
-Claude-Session: https://claude.ai/code/session_01DBqLS9PKYZf3fPBLPYkezW
 
 ### Features
 
@@ -127,9 +118,6 @@ Claude-Session: https://claude.ai/code/session_01DBqLS9PKYZf3fPBLPYkezW
 * **core:** the `cfi` option of `createReader` is removed. Pass
 `target: { type: "cfi", value: cfi }` instead. `ReaderLoadOptions` of
 `@prose-reader/react-native` takes `target` in place of `cfi` the same way.
-
-Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
-Claude-Session: https://claude.ai/code/session_01YNJfUFaQbVhXaYd5pGyGfK
 
 ### Features
 
@@ -194,9 +182,6 @@ new target type. After `goToUrl` to an element, the reading position is that
 element's cfi rather than the first character of its page. A url outside the
 book is ignored instead of going to the first item.
 
-Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
-Claude-Session: https://claude.ai/code/session_01YNJfUFaQbVhXaYd5pGyGfK
-
 ### Bug Fixes
 
 * **navigation:** keep a selector waiting for its document without an anchor ([f6a33d4](https://github.com/mbret/prose-reader/commit/f6a33d463608f3b5090932214de0c725f28b6a4f))
@@ -217,22 +202,6 @@ Claude-Session: https://claude.ai/code/session_01YNJfUFaQbVhXaYd5pGyGfK
 * **navigation:** UserNavigationEntry.direction is removed, and
 InternalNavigationEntry.directionFromLastNavigation no longer includes
 "anchor".
-
-Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
-Claude-Session: https://claude.ai/code/session_01YNJfUFaQbVhXaYd5pGyGfK
-
-* refactor(navigation): drop comments that restate the pipeline
-
-Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
-Claude-Session: https://claude.ai/code/session_01YNJfUFaQbVhXaYd5pGyGfK
-
-* test(navigation): pin the reading position of a chapter opened at its root cfi
-
-While the chapter loads it is the chapter start as the reader names it, not
-the cfi as given; once loaded it is the first page, not the chapter.
-
-Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
-Claude-Session: https://claude.ai/code/session_01YNJfUFaQbVhXaYd5pGyGfK
 
 ### Bug Fixes
 
@@ -276,11 +245,6 @@ from `reader.viewport.value.isSpread`, or follow it with
 `wouldRotationUseComputedSpreadMode` is renamed
 `wouldRotationUseSpreadMode` and takes the setting too.
 
-
-Claude-Session: https://claude.ai/code/session_01DBqLS9PKYZf3fPBLPYkezW
-
-Co-authored-by: Claude <noreply@anthropic.com>
-
 ### Features
 
 * **metadata-fetcher-api:** cap concurrent lookups, leave rate limiting to the deployment ([#425](https://github.com/mbret/prose-reader/issues/425)) ([a0d78ea](https://github.com/mbret/prose-reader/commit/a0d78ea7200ee66cf08b65e1d2f5e9ae412ea255))
@@ -304,9 +268,6 @@ Co-authored-by: Claude <noreply@anthropic.com>
 state are `null`, not `undefined`, until the reader of the book last loaded
 reports them. The web side reports through `report(load, state)` instead of
 `setPagination` and `setContext`.
-
-Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
-Claude-Session: https://claude.ai/code/session_016xgXrGA781dXRQAH1vuHxd
 
 ### Features
 
@@ -380,19 +341,6 @@ Claude-Session: https://claude.ai/code/session_016xgXrGA781dXRQAH1vuHxd
 * **navigation:** `reader.navigation.state$` no longer emits `canTurnLeft`
 and `canTurnRight`.
 
-Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
-Claude-Session: https://claude.ai/code/session_01PrAJRJ7bRywuXZwwLMJupc
-
-* test(navigation): annotate state fixtures instead of asserting them
-
-The fixtures were narrowed with `as const`. An annotation against the
-helper's parameter type is as short, checks each fixture where it is
-declared, and leaves no assertion for the repository's `as` policy to ask
-about.
-
-Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
-Claude-Session: https://claude.ai/code/session_01PrAJRJ7bRywuXZwwLMJupc
-
 ### Bug Fixes
 
 * **react-native:** release replaced readers and order expo archives, with real tests ([#394](https://github.com/mbret/prose-reader/issues/394)) ([fcff364](https://github.com/mbret/prose-reader/commit/fcff3641b9950e1d275623be7ea4288c48d29a4d))
@@ -428,65 +376,6 @@ described, through casts.
 * **react-native:** @prose-reader/react-native requires Expo SDK 57; its
 expo-file-system peer is ^57.0.0.
 
-Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
-Claude-Session: https://claude.ai/code/session_01PCcUZEBkJdYVWXpz1ZerQ7
-
-* docs(react-native): install the package with npm install alone
-
-npm and pnpm install a package's peers with it, so listing all ten of them
-was noise, and it asked apps to add internals such as @prose-reader/shared by
-hand. Installed from a packed tarball into a fresh SDK 57 app, a plain
-`npm install @prose-reader/react-native` brings every peer and leaves `npm
-ls` clean. expo-file-system is already there, since expo depends on it.
-
-The one exception is react-native-webview: npm takes its latest release
-(14.0.1) where SDK 57 ships 13.16.1, and `expo install --check` does not flag
-it because the app does not list it. `npx expo install react-native-webview`
-gets 13.16.1.
-
-Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
-Claude-Session: https://claude.ai/code/session_01PCcUZEBkJdYVWXpz1ZerQ7
-
-* docs(react-native): list every peer in the install command again
-
-The package only uses peer dependencies, all of them required. Listing
-them makes the app declare each one, the way the react-reader page
-documents its own peers, and it works with Yarn, which does not install
-peers for you. It also routes both native modules through `npx expo
-install`. With the plain `npm install`, react-native-webview came in as
-npm's latest release (14.0.1), undeclared, and `expo install --check`
-never saw it.
-
-The paragraph now says why the command is that long.
-
-Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
-Claude-Session: https://claude.ai/code/session_01PCcUZEBkJdYVWXpz1ZerQ7
-
-* build(demo): regenerate the native projects for expo sdk 57
-
-The committed ios/ and android/ projects were SDK 53 prebuild output. The
-iOS one pinned a 15.5 deployment target, while SDK 57's ExpoFileSystem pod
-requires 16.4. `expo run:ios` only prebuilds when the folder is missing,
-so `npm run ios` reused that project and failed at `pod install`.
-
-Both are regenerated with `expo prebuild --clean` under SDK 57, from
-app.json alone, since neither held anything custom:
-- iOS targets 16.4, the SDK default, now that app.json no longer overrides
-  it. The Podfile follows the SDK 57 template.
-- The Kotlin sources move to the directory matching the
-  com.mbret.prosereactnativedemo package. The Gradle wrapper and the
-  debugOptimized variant come from the SDK 57 template.
-- ios/Podfile.lock, resolved against Expo 53 and React Native 0.79, is
-  deleted along with the workspace `pod install` generates. CocoaPods does
-  not run on Linux, so the first `npm run ios` writes both again.
-
-The README says to regenerate the projects after an app.json change or an
-SDK upgrade, since `npm run ios` and `npm run android` build them as they
-are.
-
-Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
-Claude-Session: https://claude.ai/code/session_01PCcUZEBkJdYVWXpz1ZerQ7
-
 ### Features
 
 * **react-native:** settle the library and its demo on expo sdk 57 ([#386](https://github.com/mbret/prose-reader/issues/386)) ([fa9448f](https://github.com/mbret/prose-reader/commit/fa9448f511a7b9cf855016e14884854ebf5108d9))
@@ -517,52 +406,6 @@ Claude-Session: https://claude.ai/code/session_01PCcUZEBkJdYVWXpz1ZerQ7
 * **pagination:** `PagesState` gains `layoutRequest`, which reaches
 `reader.layout$` values, and `SpineLayout.layout$` emits the number of
 the request it laid out for.
-
-Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
-Claude-Session: https://claude.ai/code/session_01QxXodieMWcddW8qxxf1R22
-
-* refactor(spine): derive layout currency from cancellation instead of numbering requests
-
-Request numbers were there to tell a replaced layout from the current
-one, because a request did not cancel what was already running: the
-spine layout debounced before its switch, so a pass for an older
-request could still finish, and the pages it produced were computed in
-a stream that only switched on completed passes.
-
-The wait now sits inside the switch, so a request cancels the pass
-still running for an older one, and pages still being computed are
-abandoned when a layout is requested. The next pages published after a
-request are then the ones it asked for, and `isLayoutCurrent$` follows
-from the streams: false from a request, true when pages are next
-published. The numbering, the pages' `layoutRequest` field and the
-public type change go.
-
-Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
-Claude-Session: https://claude.ai/code/session_01QxXodieMWcddW8qxxf1R22
-
-* fix(spine): count a reader layout as requested before the viewport is measured
-
-`reader.layout()` measures the viewport before it lays the spine out,
-and the viewport notifies synchronously, so anything reacting to it
-could navigate while the pages still counted as current, and settle on
-the layout being replaced. `master` avoided this because the
-controller heard `reader.layout()` first; dropping that input for the
-spine's own request stream lost it (found in review).
-
-The reader now passes its layout requests to the spine, filtered to
-after mount, which is the guard its own pipeline already applied, and
-the spine counts them from the moment they are made. Viewport layouts
-alone still do not count: zoom re-measures the viewport with the spine
-geometry intact, and no spine layout would follow to make the pages
-current again.
-
-Tests: a navigation made while a requested layout measures the viewport
-does not settle; a viewport-only layout keeps settlement; the enriched
-result withdraws while the spine relays out for another item, which
-fails on `master` as well.
-
-Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
-Claude-Session: https://claude.ai/code/session_01QxXodieMWcddW8qxxf1R22
 
 ### Bug Fixes
 
@@ -619,41 +462,6 @@ Claude-Session: https://claude.ai/code/session_01QxXodieMWcddW8qxxf1R22
 now need Node >=22.12, where `require(esm)` landed unflagged. `import`
 is unaffected on any Node that runs them, as is any bundler build.
 Documented on the streamer's Node page.
-
-Verified: full build, `npm run tsc`, 1311 unit tests, and the e2e suite
-at 39/39 on a real browser. `require()` of the built CJS bundles still
-loads and parses. The react-native demo's own CI steps — `npm ci` against
-the regenerated lockfile, then `tsc` — both pass.
-
-Not verified: Metro actually bundling the ESM-only package. `expo export`
-cannot run here — it fails resolving the `file:`-linked
-`@prose-reader/react-native` symlink, before reaching any xmldoc code, so
-the limitation is pre-existing and unrelated to this change. CI only
-typechecks that demo, so it will not cover this either; the native path
-is worth a manual bundle before relying on it.
-
-Co-Authored-By: Claude Opus 5 <noreply@anthropic.com>
-Claude-Session: https://claude.ai/code/session_01DBqLS9PKYZf3fPBLPYkezW
-
-* fix(deps): declare the Node floor the xmldoc upgrade introduces
-
-xmldoc declares `engines: node >=22`, but that is not the floor for
-packages that reach it through a CommonJS entry: unflagged `require(esm)`
-only landed in Node 22.12. On 22.0–22.11 npm accepts the install and the
-failure surfaces later, when a consumer first calls `require()`.
-
-Declare `engines: node >=22.12` on the three packages that depend on
-xmldoc so the mismatch is reported at install time instead.
-
-Repeat the requirement on the archive-reader and metadata-fetcher pages
-too. It was only on the streamer's Node page, and those two are
-documented and consumed as standalone packages whose pages do not link
-there, so their readers would not have seen it.
-
-Both reported by Codex review.
-
-Co-Authored-By: Claude Opus 5 <noreply@anthropic.com>
-Claude-Session: https://claude.ai/code/session_01DBqLS9PKYZf3fPBLPYkezW
 * **release:** only from a `BREAKING CHANGE:` footer and ignores the
 `!` subject marker entirely. So `feat!:` resolved to a patch.
 
