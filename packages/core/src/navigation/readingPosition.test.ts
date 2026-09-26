@@ -849,16 +849,12 @@ describe("reading position of a cfi into a document", () => {
     /**
      * A cfi names the exact place to reopen at. The page it settles on starts
      * at some other character, and saving that one instead would reopen at a
-     * different page once the book is laid out differently. Whether it is
-     * final needs the page holding it, found by measuring its node, which
-     * only a browser can do: the browser specs check it.
+     * different page once the book is laid out differently. It is final
+     * once the page holding it is found by measuring its node, which only a
+     * browser can do, and the browser specs check: jsdom measures nothing, so
+     * here the cfi is found in its document but never final.
      */
     expect(settled.begin.cfi).not.toBe(cfiNamingText)
-    expect(positions).toHaveLength(2)
-    expect(positions[0]).toEqual(itemStart)
-    expect(positions[1]).toMatchObject({
-      cfi: cfiNamingText,
-      percentageEstimateOfBook: itemStartProgression(1),
-    })
+    expect(positions).toEqual([itemStart, inSecondItem(cfiNamingText, false)])
   })
 })

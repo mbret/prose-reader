@@ -49,7 +49,9 @@ export const restoreNavigationForControlledPageTurnMode = ({
       const hasSpineItemGrewOrShrink =
         spineItemWidthDifference !== 0 || spineItemHeighDifference !== 0
 
-      const cfi = navigation.anchor?.cfi
+      const { anchor } = navigation
+      // A stand-in names no place to return to.
+      const cfi = anchor?.state === "standIn" ? undefined : anchor?.cfi
 
       /**
        * Restoration from the anchor: the place the navigation's target named

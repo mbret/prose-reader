@@ -185,32 +185,34 @@ export type InternalNavigationEntry = {
   /** The spine item the navigation resolved to. */
   spineItem?: string | number
   /**
-   * Where this navigation takes the reader in the text, the value restoration
-   * returns to and the reading position shows. The place the target names, a
-   * cfi or what a selector found, once its document shows it there. Otherwise
-   * found by `withAnchor` for every entry, restorations included; `undefined`
-   * until the page it goes to is laid out.
+   * Where this navigation takes the reader in the text, as far as the reader
+   * knows: the reading position is its projection, and restoration returns to
+   * it once it is a place. Every entry with a spine item has one, restorations
+   * included; see {@link NavigationAnchor}.
    */
   anchor?: NavigationAnchor
 } & NavigationConsolidation
 
 /**
- * Where a navigation takes the reader in the text, as a cfi. It is final once
- * the page holding it is laid out, which tells how far into the book it is,
- * and then kept for the rest of the navigation.
+ * Where a navigation takes the reader in the text, as a cfi, and how far into
+ * the book that is, from 0 to 1, refined as the reader finds out:
+ *
+ * - `standIn`: no place is known yet. The start of the spine item the
+ *   navigation goes to, while its page is not laid out or its target awaits
+ *   its document. Restorations resolve the target again, and do not return to
+ *   it.
+ * - `targetPlace`: the place the target names, a cfi or what a selector found,
+ *   once its document shows it there. Its page is not laid out yet, so how far
+ *   into the book it is stands at the start of its spine item.
+ * - `final`: the place the target names, or otherwise the first character of
+ *   the page the navigation lands on, with where the page holding it starts.
+ *   Kept for the rest of the navigation.
  */
-export type NavigationAnchor =
-  | {
-      cfi: string
-      /** The place a target names, before the page holding it is laid out. */
-      isFinal: false
-    }
-  | {
-      cfi: string
-      isFinal: true
-      /** How far into the book the page holding `cfi` starts, from 0 to 1. */
-      pageStartProgression: number
-    }
+export type NavigationAnchor = {
+  cfi: string
+  percentageEstimateOfBook: number
+  state: "standIn" | "targetPlace" | "final"
+}
 
 /**
  * A navigation surface describes the viewport rectangle that gives meaning to

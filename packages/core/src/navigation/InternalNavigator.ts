@@ -20,7 +20,6 @@ import {
 } from "rxjs"
 import type { CfiManager } from "../cfi"
 import type { Context } from "../context/Context"
-import { getSpineItemProgression } from "../pagination/progression"
 import { Report } from "../report"
 import type { ReaderSettingsManager } from "../settings/ReaderSettingsManager"
 import type { Spine } from "../spine/Spine"
@@ -98,14 +97,14 @@ export class InternalNavigator extends DestroyableClass {
 
   /**
    * Where the reader is in the book, to save and reopen at, the same way
-   * whatever the target: the current navigation's anchor, which the target
-   * names once its document shows the place and `withAnchor` otherwise finds,
-   * and final when the anchor is. Until then its progression is the start of
-   * the item the navigation goes to, and so is its cfi while the navigation
-   * has no anchor, such as while that item loads: the only place a cfi can
-   * name there. A target whose document shows it names nothing, such as a cfi
-   * whose path leads nowhere, ends on the first character of the page the
-   * reader landed on.
+   * whatever the target: the projection of the current navigation's anchor,
+   * which the target names once its document shows the place and
+   * `withAnchor` otherwise finds, and final when the anchor is. Until then
+   * its progression is the start of the item the navigation goes to, and so
+   * is its cfi while the anchor stands in, such as while that item loads: the
+   * only place a cfi can name there. A target whose document shows it names
+   * nothing, such as a cfi whose path leads nowhere, ends on the first
+   * character of the page the reader landed on.
    *
    * It only moves when the reader navigates, and once more when the anchor
    * becomes final, even when its cfi and progression stay the same: a
@@ -150,6 +149,7 @@ export class InternalNavigator extends DestroyableClass {
       cfi: cfiManager,
       settings,
       spineItemsManager: spine.spineItemsManager,
+      context,
       getNavigationVisibleArea,
     })
 
@@ -443,17 +443,14 @@ export class InternalNavigator extends DestroyableClass {
     navigation: InternalNavigationEntry,
   ): ReadingPosition | undefined {
     const { anchor } = navigation
-    const spineItem = this.spine.spineItemsManager.get(navigation.spineItem)
 
-    if (!spineItem) return undefined
+    // Only before the first navigation has a spine item.
+    if (!anchor) return undefined
 
-    // Without an anchor yet, the start of the item the navigation goes to.
     return {
-      cfi: anchor?.cfi ?? this.cfiManager.generateRootCfi(spineItem.item),
-      percentageEstimateOfBook: anchor?.isFinal
-        ? anchor.pageStartProgression
-        : getSpineItemProgression(this.context.manifest, spineItem.index).start,
-      isFinal: anchor?.isFinal ?? false,
+      cfi: anchor.cfi,
+      percentageEstimateOfBook: anchor.percentageEstimateOfBook,
+      isFinal: anchor.state === "final",
     }
   }
 

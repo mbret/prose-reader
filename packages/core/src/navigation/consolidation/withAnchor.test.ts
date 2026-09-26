@@ -68,6 +68,7 @@ const createSpine = ({
   }
   const cfi = {
     generateCfiForPage: () => pageText,
+    generateRootCfi: () => itemStart,
     resolveCfi: () => ({ node: {}, offset: 0, spineItem }),
   }
 
@@ -98,16 +99,23 @@ const consolidateAnchor = (
     }).pipe(withAnchor(context)),
   ).then(({ navigation }) => navigation.anchor)
 
+/** The start of the navigation's item, the first of two, while no place is known. */
+const standIn: NavigationAnchor = {
+  cfi: itemStart,
+  percentageEstimateOfBook: 0,
+  state: "standIn",
+}
+
 describe("withAnchor", () => {
   it("is the first character of the page at the navigation's position, and where that page starts in the book", async () => {
     expect(await consolidateAnchor({}, createSpine())).toEqual({
       cfi: pageText,
-      isFinal: true,
-      pageStartProgression: expectedPageStartProgression,
+      percentageEstimateOfBook: expectedPageStartProgression,
+      state: "final",
     })
   })
 
-  it("has none while a layout is pending, rather than a page of the one being replaced", async () => {
+  it("stands in at its item's start while a layout is pending, rather than taking a page of the one being replaced", async () => {
     /**
      * Pages are published a few frames after a layout pass. Until then they
      * still describe the layout being replaced, while positions already
@@ -115,16 +123,16 @@ describe("withAnchor", () => {
      */
     expect(
       await consolidateAnchor({}, createSpine({ isLayoutCurrent: false })),
-    ).toBeUndefined()
+    ).toEqual(standIn)
   })
 
-  it("has none while the item is not ready", async () => {
+  it("stands in at its item's start while the item is not ready", async () => {
     expect(
       await consolidateAnchor({}, createSpine({ isReady: false })),
-    ).toBeUndefined()
+    ).toEqual(standIn)
   })
 
-  it("has none while its target waits for a document, even with a page laid out at its position", async () => {
+  it("stands in at its item's start while its target waits for a document, even with a page laid out at its position", async () => {
     /**
      * The page that shows first at the start of an item not loaded yet can be
      * another item's. Taking its text would stop the target from being
@@ -132,7 +140,7 @@ describe("withAnchor", () => {
      */
     expect(
       await consolidateAnchor({}, createSpine(), { awaitsDocument: true }),
-    ).toBeUndefined()
+    ).toEqual(standIn)
   })
 
   it("keeps a final position in the text for the rest of the navigation", async () => {
@@ -143,8 +151,8 @@ describe("withAnchor", () => {
      */
     const anchor: NavigationAnchor = {
       cfi: textElsewhere,
-      isFinal: true,
-      pageStartProgression: 0.25,
+      percentageEstimateOfBook: 0.25,
+      state: "final",
     }
 
     expect(await consolidateAnchor({ anchor }, createSpine())).toEqual(anchor)
@@ -158,8 +166,8 @@ describe("withAnchor", () => {
      */
     const anchor: NavigationAnchor = {
       cfi: itemStart,
-      isFinal: true,
-      pageStartProgression: 0,
+      percentageEstimateOfBook: 0,
+      state: "final",
     }
 
     expect(await consolidateAnchor({ anchor }, createSpine())).toEqual(anchor)
@@ -173,23 +181,24 @@ describe("withAnchor", () => {
      * resolves to: the navigation's position is a spread's first page, and
      * the cfi can be on the second.
      */
-    const targetAnchor: NavigationAnchor = {
+    const targetPlace: NavigationAnchor = {
       cfi: textElsewhere,
-      isFinal: false,
+      percentageEstimateOfBook: 0,
+      state: "targetPlace",
     }
 
     expect(
       await consolidateAnchor(
-        { anchor: targetAnchor },
+        { anchor: targetPlace },
         createSpine({ isReady: false }),
       ),
-    ).toEqual(targetAnchor)
+    ).toEqual(targetPlace)
     expect(
-      await consolidateAnchor({ anchor: targetAnchor }, createSpine()),
+      await consolidateAnchor({ anchor: targetPlace }, createSpine()),
     ).toEqual({
       cfi: textElsewhere,
-      isFinal: true,
-      pageStartProgression: expectedCfiPageStartProgression,
+      percentageEstimateOfBook: expectedCfiPageStartProgression,
+      state: "final",
     })
   })
 })

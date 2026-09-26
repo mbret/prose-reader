@@ -47,20 +47,22 @@ export const withResolvedTarget =
     )
 
 /**
- * A navigation without an anchor resolves its target again for one: a target
- * naming a place in an item that had not loaded finds it once the item has,
- * or finds it is nowhere, and the navigation is anchored at the page it lands
- * on instead.
+ * A navigation whose anchor only stands in resolves its target again for a
+ * place: a target naming a place in an item that had not loaded finds it once
+ * the item has, or finds it is nowhere, and the navigation is anchored at the
+ * page it lands on instead.
  */
 export const withAnchorFromTarget =
   ({ resolvers }: { resolvers: NavigationTargetResolvers }) =>
   <N extends { navigation: InternalNavigationEntry }>(stream: Observable<N>) =>
     stream.pipe(
       map((params) => {
-        if (params.navigation.anchor !== undefined)
+        const { anchor: currentAnchor } = params.navigation
+
+        if (currentAnchor !== undefined && currentAnchor.state !== "standIn")
           return { ...params, awaitsDocument: false }
 
-        const { anchor, awaitsDocument } = resolveTarget(
+        const { anchor: targetPlace, awaitsDocument } = resolveTarget(
           resolvers,
           params.navigation.target,
           { previousNavigation: params.navigation },
@@ -68,7 +70,10 @@ export const withAnchorFromTarget =
 
         return {
           ...params,
-          navigation: { ...params.navigation, anchor },
+          navigation: {
+            ...params.navigation,
+            anchor: targetPlace ?? currentAnchor,
+          },
           awaitsDocument,
         }
       }),
