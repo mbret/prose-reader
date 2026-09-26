@@ -1,4 +1,14 @@
-import { readFile } from "node:fs/promises"
+import {
+  copyFile,
+  mkdir,
+  mkdtemp,
+  readFile,
+  rm,
+  symlink,
+} from "node:fs/promises"
+import { tmpdir } from "node:os"
+import { join } from "node:path"
+import { fileURLToPath } from "node:url"
 import { mainTitle } from "@prose-reader/archive-reader"
 import {
   type FetchedMetadata,
@@ -7,13 +17,9 @@ import {
   MetadataProviderResponseError,
 } from "@prose-reader/metadata-fetcher"
 import { TextReader, Uint8ArrayWriter, ZipWriter } from "@zip.js/zip.js"
-import type { Express } from "express"
+import express, { type Express } from "express"
 import { afterAll, beforeAll, describe, expect, it } from "vitest"
 import { createApp } from "./createApp.ts"
-import {
-  PLAYGROUND_FILE,
-  PLAYGROUND_SCRIPT_FILE,
-} from "./playground/playground.ts"
 
 /**
  * `response.json()` is `unknown` — rightly so. These two assert the shape the
@@ -398,7 +404,12 @@ describe("metadata-fetcher-api playground", () => {
       expect(html).not.toContain("const form =")
       expect(html).not.toMatch(/localStorage|sessionStorage|indexedDB/)
       // served straight from playground.html, so editing it needs no restart
-      expect(html).toBe(await readFile(PLAYGROUND_FILE, "utf8"))
+      expect(html).toBe(
+        await readFile(
+          new URL("./playground/playground.html", import.meta.url),
+          "utf8",
+        ),
+      )
 
       const scriptResponse = await api.get("/playground/playground.js")
       const script = await scriptResponse.text()
@@ -417,9 +428,54 @@ describe("metadata-fetcher-api playground", () => {
       expect(script).not.toContain("label = `GET ")
       expect(script).toContain("console.log(label, body)")
       expect(script).not.toMatch(/localStorage|sessionStorage|indexedDB/)
-      expect(script).toBe(await readFile(PLAYGROUND_SCRIPT_FILE, "utf8"))
+      expect(script).toBe(
+        await readFile(
+          new URL("./playground/playground.js", import.meta.url),
+          "utf8",
+        ),
+      )
     } finally {
       await api.close()
+    }
+  })
+
+  it("serves the page from a checkout under a dot-directory", async () => {
+    const temporaryDirectory = await mkdtemp(
+      join(tmpdir(), "prose-playground-"),
+    )
+    const dotDirectoryCheckout = join(temporaryDirectory, ".checkout")
+    const copiedPlaygroundDirectory = join(dotDirectoryCheckout, "playground")
+
+    await mkdir(copiedPlaygroundDirectory, { recursive: true })
+    // lets the copy resolve `express` the way the original does
+    await symlink(
+      fileURLToPath(new URL("../node_modules", import.meta.url)),
+      join(dotDirectoryCheckout, "node_modules"),
+      "junction",
+    )
+    await Promise.all(
+      ["playground.ts", "playground.html", "playground.js"].map((fileName) =>
+        copyFile(
+          new URL(`./playground/${fileName}`, import.meta.url),
+          join(copiedPlaygroundDirectory, fileName),
+        ),
+      ),
+    )
+
+    const copiedPlayground: typeof import("./playground/playground.ts") =
+      await import(join(copiedPlaygroundDirectory, "playground.ts"))
+    const app = express()
+
+    copiedPlayground.registerPlayground(app)
+
+    const api = serve(app)
+
+    try {
+      expect((await api.get("/")).status).toBe(200)
+      expect((await api.get("/playground/playground.js")).status).toBe(200)
+    } finally {
+      await api.close()
+      await rm(temporaryDirectory, { recursive: true, force: true })
     }
   })
 
