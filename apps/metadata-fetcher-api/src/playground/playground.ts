@@ -1,8 +1,4 @@
-import { join } from "node:path"
-import express, { type Express } from "express"
-
-export const PLAYGROUND_FILE = join(import.meta.dirname, "playground.html")
-export const PLAYGROUND_SCRIPT_FILE = join(import.meta.dirname, "playground.js")
+import express, { type Express, type RequestHandler } from "express"
 
 const decodedHeader = (value: string | undefined): string | undefined => {
   if (value === undefined) return undefined
@@ -17,6 +13,20 @@ const decodedHeader = (value: string | undefined): string | undefined => {
 }
 
 /**
+ * Sends a file that sits next to this module, named relative to `root`: `send`
+ * answers 404 for a dot-segment anywhere in the path it checks, and only the
+ * part below `root` is ours. A checkout under `~/.config` or
+ * `.claude/worktrees` must still serve.
+ */
+const sendPlaygroundAsset =
+  (assetFileName: string): RequestHandler =>
+  (_request, response, next) => {
+    response.sendFile(assetFileName, { root: import.meta.dirname }, (error) => {
+      if (error) next(error)
+    })
+  }
+
+/**
  * Mounts the development playground at `/`: a form that runs a lookup and
  * shows each candidate with the signals behind its score.
  *
@@ -27,17 +37,8 @@ const decodedHeader = (value: string | undefined): string | undefined => {
  * then shows up on refresh, since `node --watch` only watches imported modules.
  */
 export const registerPlayground = (app: Express): void => {
-  app.get("/", (_request, response, next) => {
-    response.sendFile(PLAYGROUND_FILE, (error) => {
-      if (error) next(error)
-    })
-  })
-
-  app.get("/playground/playground.js", (_request, response, next) => {
-    response.sendFile(PLAYGROUND_SCRIPT_FILE, (error) => {
-      if (error) next(error)
-    })
-  })
+  app.get("/", sendPlaygroundAsset("playground.html"))
+  app.get("/playground/playground.js", sendPlaygroundAsset("playground.js"))
 
   app.post(
     "/playground/resolve",

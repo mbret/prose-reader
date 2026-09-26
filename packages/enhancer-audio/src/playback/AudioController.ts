@@ -227,6 +227,8 @@ export class AudioController extends ReactiveEntity<AudioEnhancerState> {
 
         return this.audio.play$().pipe(
           catchError(() => {
+            // A pending play that fails leaves the element unpaused.
+            this.emitDesiredPlayback({ shouldPlay: false, trackId: undefined })
             this.mergeCompare({ hasError: true })
 
             return EMPTY

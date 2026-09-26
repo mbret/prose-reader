@@ -1,7 +1,10 @@
 import { map, type Observable } from "rxjs"
 import type { CfiManager } from "../../cfi"
+import type { Context } from "../../context/Context"
+import { getPageStartProgression } from "../../pagination/progression"
 import { PAGE_VISIBILITY_THRESHOLD } from "../../spine/Pages"
 import type { Spine } from "../../spine/Spine"
+import type { SpineItem } from "../../spineItem/SpineItem"
 import type { InternalNavigationEntry, InternalNavigationInput } from "../types"
 
 type Navigation = {
@@ -10,9 +13,9 @@ type Navigation = {
 }
 
 /**
- * The navigation's anchor: where it takes the reader in the text, as a cfi.
- * Restoration returns to it after a relayout, and the reader exposes it as its
- * reading position.
+ * The navigation's anchor: where it takes the reader in the text, as a cfi,
+ * and how far into the book the page holding it starts. Restoration returns
+ * to it after a relayout, and the reader exposes it as its reading position.
  *
  * - A target that names a place in the text, a cfi or what a selector found,
  *   comes with it: its resolver sets it, and this step keeps it.
@@ -26,15 +29,29 @@ type Navigation = {
  *   position can belong to another item, and would stop the target from being
  *   resolved again.
  *
- * Once found it is kept for the rest of the navigation. Restorations land on
- * the page holding it; taking that page's own first character instead would
- * restore to the page before at the next relayout, and every resize would walk
- * the reader back.
+ * The progression is where the page holding the anchor starts: found with an
+ * anchor taken from a page, or, for a target's anchor, once the page holding
+ * it is laid out. A target's page is not the one at the navigation's
+ * position, which is a spread's first page while the anchor can be on the
+ * second.
+ *
+ * Once found both are kept for the rest of the navigation. Restorations land
+ * on the page holding the anchor; taking that page's own first character
+ * instead would restore to the page before at the next relayout, and every
+ * resize would walk the reader back.
  */
 export const withAnchor =
-  ({ spine, cfi }: { spine: Spine; cfi: CfiManager }) =>
+  ({
+    spine,
+    cfi,
+    context,
+  }: {
+    spine: Spine
+    cfi: CfiManager
+    context: Context
+  }) =>
   <N extends Navigation>(stream: Observable<N>): Observable<N> => {
-    const getPageCfi = ({ position }: N["navigation"]) => {
+    const getPageAtNavigationPosition = ({ position }: N["navigation"]) => {
       if (!position) return undefined
 
       /**
@@ -68,25 +85,83 @@ export const withAnchor =
           ? undefined
           : spine.pages.fromSpineItemPageIndex(spineItem, beginPageIndex)
 
-      return page && cfi.generateCfiForPage(spineItem.item, page)
+      return page && { spineItem, page }
     }
+
+    /**
+     * The page holding a target's anchor, resolved from the anchor itself.
+     * Its item is the one resolving the cfi gives, which an enhancer can map
+     * onto another.
+     */
+    const getPageHoldingTargetAnchor = (anchor: string) => {
+      const { node, offset, spineItem } = cfi.resolveCfi({ cfi: anchor })
+
+      if (!spineItem || !spine.isLayoutCurrent || !spineItem.value.isReady)
+        return undefined
+
+      const pageIndex = node
+        ? spine.locator.getSpineItemPageIndexFromNode(node, offset, spineItem)
+        : 0
+
+      return pageIndex === undefined ? undefined : { spineItem, pageIndex }
+    }
+
+    const getAnchorPageStartProgression = ({
+      spineItem,
+      pageIndex,
+    }: {
+      spineItem: SpineItem
+      pageIndex: number
+    }) =>
+      getPageStartProgression({
+        manifest: context.manifest,
+        spineItemIndex: spineItem.index,
+        pageIndex,
+        numberOfPages: spineItem.numberOfPages,
+      })
 
     const getAnchor = (
       navigation: N["navigation"],
       awaitsDocument: N["awaitsDocument"],
-    ) =>
-      navigation.anchor ?? (awaitsDocument ? undefined : getPageCfi(navigation))
+    ) => {
+      const { anchor, anchorPageStartProgression } = navigation
+
+      if (awaitsDocument || anchorPageStartProgression !== undefined)
+        return { anchor, anchorPageStartProgression }
+
+      if (anchor !== undefined) {
+        const targetAnchorPage = getPageHoldingTargetAnchor(anchor)
+
+        return {
+          anchor,
+          anchorPageStartProgression:
+            targetAnchorPage && getAnchorPageStartProgression(targetAnchorPage),
+        }
+      }
+
+      const page = getPageAtNavigationPosition(navigation)
+
+      return {
+        anchor: page && cfi.generateCfiForPage(page.spineItem.item, page.page),
+        anchorPageStartProgression:
+          page &&
+          getAnchorPageStartProgression({
+            spineItem: page.spineItem,
+            pageIndex: page.page.pageIndex,
+          }),
+      }
+    }
 
     return stream.pipe(
       map(
         ({ navigation, ...rest }) =>
-          // Only a field is added, so the caller's shape still holds, as for
+          // Only fields are added, so the caller's shape still holds, as for
           // the other consolidation steps.
           ({
             ...rest,
             navigation: {
               ...navigation,
-              anchor: getAnchor(navigation, rest.awaitsDocument),
+              ...getAnchor(navigation, rest.awaitsDocument),
             },
           }) as N,
       ),

@@ -1,13 +1,32 @@
 import { firstValueFrom, of } from "rxjs"
 import { describe, expect, it } from "vitest"
 import type { CfiManager } from "../../cfi"
+import type { Context } from "../../context/Context"
 import type { Spine } from "../../spine/Spine"
+import {
+  createTestManifest,
+  createTestManifestSpineItems,
+} from "../../tests/utils"
 import type { InternalNavigationEntry } from "../types"
 import { withAnchor } from "./withAnchor"
 
 const itemStart = "epubcfi(/6/2[0]!)"
 const pageText = "epubcfi(/6/2[0]!/4/2/1:0)"
 const textElsewhere = "epubcfi(/6/2[0]!/4/8/1:0)"
+
+/**
+ * Two items holding half the book each. The page at any position is the
+ * second of the first item's four, so it starts an eighth into the book. A
+ * cfi resolves onto the fourth, as the second page of a spread would.
+ */
+const manifest = createTestManifest({
+  spineItems: createTestManifestSpineItems([
+    { progressionWeight: 0.5 },
+    { progressionWeight: 0.5 },
+  ]),
+})
+const expectedPageStartProgression = 0.125
+const expectedCfiPageStartProgression = 0.375
 
 /**
  * The spine and pages this step reads, held in whatever state a test needs:
@@ -23,40 +42,45 @@ const createSpine = ({
   isReady?: boolean
 } = {}) => {
   const item = { index: 0 }
+  const spineItem = { item, index: 0, numberOfPages: 4, value: { isReady } }
   const spine = {
     isLayoutCurrent,
     spineItemsManager: {
-      get: () => ({ item, value: { isReady } }),
+      get: () => spineItem,
     },
     locator: {
+      getSpineItemPageIndexFromNode: () => 3,
       getVisibleSpineItemsFromPosition: () => ({
         beginIndex: 0,
         endIndex: 0,
       }),
       getVisiblePagesFromViewportPosition: () => ({
-        beginPageIndex: 0,
-        endPageIndex: 0,
+        beginPageIndex: 1,
+        endPageIndex: 1,
       }),
     },
     pages: {
       fromSpineItemPageIndex: () => ({
+        pageIndex: 1,
         firstVisibleNode: { node: {}, offset: 0 },
       }),
     },
   }
   const cfi = {
     generateCfiForPage: () => pageText,
+    resolveCfi: () => ({ node: {}, offset: 0, spineItem }),
   }
 
   return {
-    // The step only reads the members above, so a partial spine and cfi
-    // manager stand in for the real ones.
+    // The step only reads the members above, so a partial spine, cfi manager
+    // and context stand in for the real ones.
     spine: spine as unknown as Spine,
     cfi: cfi as unknown as CfiManager,
+    context: { manifest } as unknown as Context,
   }
 }
 
-const anchorOf = (
+const consolidateAnchor = (
   navigation: Partial<InternalNavigationEntry>,
   context: ReturnType<typeof createSpine>,
   { awaitsDocument = false }: { awaitsDocument?: boolean } = {},
@@ -72,11 +96,17 @@ const anchorOf = (
         // A navigation entry carries far more; the step reads only these.
       } as InternalNavigationEntry,
     }).pipe(withAnchor(context)),
-  ).then(({ navigation }) => navigation.anchor)
+  ).then(({ navigation: { anchor, anchorPageStartProgression } }) => ({
+    anchor,
+    anchorPageStartProgression,
+  }))
 
 describe("withAnchor", () => {
-  it("is the first character of the page at the navigation's position", async () => {
-    expect(await anchorOf({}, createSpine())).toBe(pageText)
+  it("is the first character of the page at the navigation's position, and where that page starts in the book", async () => {
+    expect(await consolidateAnchor({}, createSpine())).toEqual({
+      anchor: pageText,
+      anchorPageStartProgression: expectedPageStartProgression,
+    })
   })
 
   it("has none while a layout is pending, rather than a page of the one being replaced", async () => {
@@ -86,12 +116,17 @@ describe("withAnchor", () => {
      * follow the new one: the page they give for a position holds other text.
      */
     expect(
-      await anchorOf({}, createSpine({ isLayoutCurrent: false })),
-    ).toBeUndefined()
+      await consolidateAnchor({}, createSpine({ isLayoutCurrent: false })),
+    ).toEqual({ anchor: undefined, anchorPageStartProgression: undefined })
   })
 
   it("has none while the item is not ready", async () => {
-    expect(await anchorOf({}, createSpine({ isReady: false }))).toBeUndefined()
+    expect(
+      await consolidateAnchor({}, createSpine({ isReady: false })),
+    ).toEqual({
+      anchor: undefined,
+      anchorPageStartProgression: undefined,
+    })
   })
 
   it("has none while its target waits for a document, even with a page laid out at its position", async () => {
@@ -101,8 +136,8 @@ describe("withAnchor", () => {
      * resolved once its own item loads.
      */
     expect(
-      await anchorOf({}, createSpine(), { awaitsDocument: true }),
-    ).toBeUndefined()
+      await consolidateAnchor({}, createSpine(), { awaitsDocument: true }),
+    ).toEqual({ anchor: undefined, anchorPageStartProgression: undefined })
   })
 
   it("keeps a position in the text for the rest of the navigation", async () => {
@@ -111,9 +146,12 @@ describe("withAnchor", () => {
      * page's own first character would restore to the page before at the
      * next relayout.
      */
-    expect(await anchorOf({ anchor: textElsewhere }, createSpine())).toBe(
-      textElsewhere,
-    )
+    expect(
+      await consolidateAnchor(
+        { anchor: textElsewhere, anchorPageStartProgression: 0.25 },
+        createSpine(),
+      ),
+    ).toEqual({ anchor: textElsewhere, anchorPageStartProgression: 0.25 })
   })
 
   it("keeps a position found on a page without text, rather than finding it again", async () => {
@@ -122,6 +160,33 @@ describe("withAnchor", () => {
      * its item. Finding it again at every restoration would follow the
      * spread: after a rotation the page shown first can be the other one.
      */
-    expect(await anchorOf({ anchor: itemStart }, createSpine())).toBe(itemStart)
+    expect(
+      await consolidateAnchor(
+        { anchor: itemStart, anchorPageStartProgression: 0 },
+        createSpine(),
+      ),
+    ).toEqual({ anchor: itemStart, anchorPageStartProgression: 0 })
+  })
+
+  it("finds where a target's position is in the book once its page is laid out, keeping the position", async () => {
+    /**
+     * A cfi target names its position before its item is laid out, when
+     * nothing tells how far into the book the page holding it is. The first
+     * consolidation that lands on that page finds it, from the page the cfi
+     * resolves to: the navigation's position is a spread's first page, and
+     * the cfi can be on the second.
+     */
+    expect(
+      await consolidateAnchor(
+        { anchor: textElsewhere },
+        createSpine({ isReady: false }),
+      ),
+    ).toEqual({ anchor: textElsewhere, anchorPageStartProgression: undefined })
+    expect(
+      await consolidateAnchor({ anchor: textElsewhere }, createSpine()),
+    ).toEqual({
+      anchor: textElsewhere,
+      anchorPageStartProgression: expectedCfiPageStartProgression,
+    })
   })
 })

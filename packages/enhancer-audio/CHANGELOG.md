@@ -3,6 +3,23 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## [16.0.0](https://github.com/mbret/prose-reader/compare/v15.0.1...v16.0.0) (2026-09-26)
+
+
+### Bug Fixes
+
+* **enhancer-audio:** fail a refused play instead of waiting for canplay ([96f2dc0](https://github.com/mbret/prose-reader/commit/96f2dc07e5584bed4f6676b1dfe8d76f87ceef88))
+
+
+
+## [15.0.1](https://github.com/mbret/prose-reader/compare/v15.0.0...v15.0.1) (2026-09-26)
+
+**Note:** Version bump only for package @prose-reader/enhancer-audio
+
+
+
+
+
 ## [15.0.0](https://github.com/mbret/prose-reader/compare/v14.1.0...v15.0.0) (2026-09-26)
 
 

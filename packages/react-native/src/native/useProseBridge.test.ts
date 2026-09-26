@@ -44,6 +44,12 @@ const readerState = ({ appBridge }: ReturnType<typeof createBridge>) => {
 
 const noReaderState = { pagination: null, context: null, readingPosition: null }
 
+const firstChapter = { cfi: "epubcfi(/6/2[1]!)", percentageEstimateOfBook: 0 }
+const secondChapter = {
+  cfi: "epubcfi(/6/4[2]!)",
+  percentageEstimateOfBook: 0.5,
+}
+
 describe("Given the native end of the bridge", () => {
   it("has no reader state before a book is loaded", () => {
     expect(readerState(createBridge())).toEqual(noReaderState)
@@ -55,9 +61,9 @@ describe("Given the native end of the bridge", () => {
 
     proseBridge.appBridge
       .getState()
-      .report(load, { readingPosition: "epubcfi(/6/4[2]!)" })
+      .report(load, { readingPosition: secondChapter })
 
-    expect(readerState(proseBridge).readingPosition).toBe("epubcfi(/6/4[2]!)")
+    expect(readerState(proseBridge).readingPosition).toEqual(secondChapter)
   })
 
   describe("when another book is loaded", () => {
@@ -66,7 +72,7 @@ describe("Given the native end of the bridge", () => {
       const load = proseBridge.startLoad()
       const { report } = proseBridge.appBridge.getState()
 
-      report(load, { readingPosition: "epubcfi(/6/4[2]!)" })
+      report(load, { readingPosition: secondChapter })
 
       proseBridge.startLoad()
 
@@ -84,13 +90,13 @@ describe("Given the native end of the bridge", () => {
       const nextLoad = proseBridge.startLoad()
       const { report } = proseBridge.appBridge.getState()
 
-      report(previousLoad, { readingPosition: "epubcfi(/6/4[2]!)" })
+      report(previousLoad, { readingPosition: secondChapter })
 
       expect(readerState(proseBridge)).toEqual(noReaderState)
 
-      report(nextLoad, { readingPosition: "epubcfi(/6/2[1]!)" })
+      report(nextLoad, { readingPosition: firstChapter })
 
-      expect(readerState(proseBridge).readingPosition).toBe("epubcfi(/6/2[1]!)")
+      expect(readerState(proseBridge).readingPosition).toEqual(firstChapter)
     })
   })
 })

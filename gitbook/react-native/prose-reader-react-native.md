@@ -170,8 +170,10 @@ it is expected to lag behind it — see
 
 ## Saving the reading position
 
-To reopen a book where the reader left it, save `readingPosition` and send it
-back with the next `load`. Save it rather than pagination's `begin.cfi`, which
+To reopen a book where the reader left it, save `readingPosition` and send its
+`cfi` back with the next `load`. Its `percentageEstimateOfBook` is the progress
+to save alongside, for a library screen. Save it rather than pagination's
+`begin.cfi`, which
 moves every time the book is laid out again, on a rotation for example: the
 [reading position section of the navigation guide](../learn/navigation.md#reading-position)
 explains why, and when the reading position changes.
@@ -197,11 +199,13 @@ const Reader = ({ bookId, html }: { bookId: string; html: string }) => {
         javaScriptEnabled
         onLoadEnd={async () => {
           // `undefined` the first time: the book opens at its start.
-          const cfi = await storage.getReadingPosition(bookId)
+          const readingPosition = await storage.getReadingPosition(bookId)
 
           reader.load({
             manifest,
-            target: cfi ? { type: "cfi", value: cfi } : undefined,
+            target: readingPosition
+              ? { type: "cfi", value: readingPosition.cfi }
+              : undefined,
           })
         }}
       />

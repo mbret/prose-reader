@@ -956,16 +956,31 @@ describe(`AudioController`, () => {
     expect(revokeObjectUrl).not.toHaveBeenCalledWith(`blob:track-2`)
   })
 
-  it(`sets hasError when play fails after retry`, async () => {
+  it(`sets hasError and returns to paused as soon as the element refuses to play`, async () => {
     const { reader, paginationState$ } = createReader({
       spineItems: [createManifestSpineItem()],
     })
-    const { audio } = createAudio()
+    const { audio, pauseSpy } = createAudio()
     const controller = new AudioController(reader, audio)
+    let isElementPaused = true
 
-    vi.spyOn(audio.element, `play`).mockRejectedValue(
-      new DOMException(``, `NotSupportedError`),
-    )
+    Object.defineProperty(audio.element, `paused`, {
+      configurable: true,
+      get: () => isElementPaused,
+    })
+
+    const playSpy = vi.spyOn(audio.element, `play`).mockImplementation(() => {
+      isElementPaused = false
+      audio.element.dispatchEvent(new Event(`play`))
+
+      return Promise.reject(new DOMException(``, `NotSupportedError`))
+    })
+    pauseSpy.mockImplementation(() => {
+      if (isElementPaused) return
+
+      isElementPaused = true
+      audio.element.dispatchEvent(new Event(`pause`))
+    })
 
     paginationState$.next(
       createPaginationState({
@@ -982,11 +997,57 @@ describe(`AudioController`, () => {
     controller.play()
     await flush()
 
+    expect(playSpy).toHaveBeenCalledTimes(1)
+    expect(controller.state.hasError).toBe(true)
+    expect(controller.state.isPlaying).toBe(false)
+    expect(audio.paused).toBe(true)
+  })
+
+  it(`neither replays nor reports an error when a pause interrupts a pending play`, async () => {
+    const { reader, paginationState$ } = createReader({
+      spineItems: [createManifestSpineItem()],
+    })
+    const { audio, pauseSpy } = createAudio()
+    const controller = new AudioController(reader, audio)
+    const rejectPendingPlays: Array<(reason: DOMException) => void> = []
+
+    const playSpy = vi.spyOn(audio.element, `play`).mockImplementation(
+      () =>
+        new Promise((_resolve, reject) => {
+          rejectPendingPlays.push(reject)
+        }),
+    )
+    pauseSpy.mockImplementation(() => {
+      for (const rejectPendingPlay of rejectPendingPlays.splice(0)) {
+        rejectPendingPlay(new DOMException(``, `AbortError`))
+      }
+    })
+
+    paginationState$.next(
+      createPaginationState({
+        beginSpineItemIndex: 0,
+        endSpineItemIndex: 0,
+      }),
+    )
+
+    await flush()
+
+    controller.play()
+    await flush()
+
+    expect(playSpy).toHaveBeenCalledTimes(1)
+    expect(rejectPendingPlays).toHaveLength(1)
+
+    controller.pause()
+    await flush()
+
+    expect(rejectPendingPlays).toHaveLength(0)
+
     audio.element.dispatchEvent(new Event(`canplay`))
     await flush()
 
-    expect(controller.state.hasError).toBe(true)
-    expect(controller.state.isPlaying).toBe(false)
+    expect(playSpy).toHaveBeenCalledTimes(1)
+    expect(controller.state.hasError).toBe(false)
   })
 
   it(`clears hasError when selecting a new track after a play failure`, async () => {
@@ -1015,9 +1076,6 @@ describe(`AudioController`, () => {
     controller.play()
     await flush()
 
-    audio.element.dispatchEvent(new Event(`canplay`))
-    await flush()
-
     expect(controller.state.hasError).toBe(true)
 
     controller.select(`track-2`, { navigate: false })
@@ -1029,7 +1087,7 @@ describe(`AudioController`, () => {
     expect(controller.state.hasError).toBe(false)
   })
 
-  it(`clears hasError when retrying play succeeds`, async () => {
+  it(`clears hasError when a later play succeeds`, async () => {
     const { reader, paginationState$ } = createReader({
       spineItems: [createManifestSpineItem()],
     })
@@ -1038,7 +1096,7 @@ describe(`AudioController`, () => {
 
     const playSpy = vi
       .spyOn(audio.element, `play`)
-      .mockRejectedValue(new DOMException(``, `NotSupportedError`))
+      .mockRejectedValue(new DOMException(``, `NotAllowedError`))
 
     paginationState$.next(
       createPaginationState({
@@ -1050,9 +1108,6 @@ describe(`AudioController`, () => {
     await flush()
 
     controller.play()
-    await flush()
-
-    audio.element.dispatchEvent(new Event(`canplay`))
     await flush()
 
     expect(controller.state.hasError).toBe(true)
