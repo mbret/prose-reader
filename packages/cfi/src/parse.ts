@@ -61,7 +61,7 @@ export function unwrapCfi(cfi: string): string {
     )
   }
 
-  return match ? match[1] || cfi : cfi
+  return match ? (match[1] ?? "") : cfi
 }
 
 /**
