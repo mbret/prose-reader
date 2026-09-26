@@ -1,3 +1,4 @@
+import type { CoreInputSettings } from "@prose-reader/core"
 import type { ReactReader } from "@prose-reader/react-reader"
 import { type ComponentProps, useEffect, useState } from "react"
 import { type Signal, signal, useSignal } from "reactjrx"
@@ -8,6 +9,10 @@ export type BookSettings = {
   fontSize?: number
   fontSizeScope?: Parameters<
     NonNullable<ReactReaderProps["onFontSizeScopeChange"]>
+  >[0]
+  spreadMode?: CoreInputSettings["spreadMode"]
+  spreadModeScope?: Parameters<
+    NonNullable<ReactReaderProps["onSpreadModeScopeChange"]>
   >[0]
 }
 

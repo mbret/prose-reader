@@ -1,9 +1,10 @@
+import type { CoreInputSettings } from "@prose-reader/core"
 import { type Signal, useSignalValue } from "reactjrx"
 import type { BookSettings } from "./useBookSettings"
 import { type ScreenScopeReference, useScopedSetting } from "./useScopedSetting"
 import { useSettings } from "./useSettings"
 
-export const useFontSizeSettings = (
+export const useSpreadModeSettings = (
   bookSettingsSignal: Signal<BookSettings>,
   screen?: ScreenScopeReference,
 ) => {
@@ -11,45 +12,48 @@ export const useFontSizeSettings = (
   const bookSettings = useSignalValue(bookSettingsSignal)
 
   return useScopedSetting({
-    scope: bookSettings.fontSizeScope,
+    scope: bookSettings.spreadModeScope,
     screen,
     values: {
-      global: localSettings.fontSizeGlobal,
-      book: bookSettings.fontSize,
-      mobile: localSettings.fontSizeScreenMobile,
-      tablet: localSettings.fontSizeScreenTablet,
-      desktop: localSettings.fontSizeScreenDesktop,
+      global: localSettings.spreadModeGlobal,
+      book: bookSettings.spreadMode,
+      mobile: localSettings.spreadModeScreenMobile,
+      tablet: localSettings.spreadModeScreenTablet,
+      desktop: localSettings.spreadModeScreenDesktop,
     },
-    saveValue: function saveFontSize(reference, fontSize: number) {
+    saveValue: function saveSpreadMode(
+      reference,
+      spreadMode: CoreInputSettings["spreadMode"],
+    ) {
       switch (reference) {
         case "global":
-          setLocalSettings((old) => ({ ...old, fontSizeGlobal: fontSize }))
+          setLocalSettings((old) => ({ ...old, spreadModeGlobal: spreadMode }))
           break
         case "book":
-          bookSettingsSignal.update((old) => ({ ...old, fontSize }))
+          bookSettingsSignal.update((old) => ({ ...old, spreadMode }))
           break
         case "mobile":
           setLocalSettings((old) => ({
             ...old,
-            fontSizeScreenMobile: fontSize,
+            spreadModeScreenMobile: spreadMode,
           }))
           break
         case "tablet":
           setLocalSettings((old) => ({
             ...old,
-            fontSizeScreenTablet: fontSize,
+            spreadModeScreenTablet: spreadMode,
           }))
           break
         case "desktop":
           setLocalSettings((old) => ({
             ...old,
-            fontSizeScreenDesktop: fontSize,
+            spreadModeScreenDesktop: spreadMode,
           }))
           break
       }
     },
-    saveScope: function saveFontSizeScope(fontSizeScope) {
-      bookSettingsSignal.update((old) => ({ ...old, fontSizeScope }))
+    saveScope: function saveSpreadModeScope(spreadModeScope) {
+      bookSettingsSignal.update((old) => ({ ...old, spreadModeScope }))
     },
   })
 }

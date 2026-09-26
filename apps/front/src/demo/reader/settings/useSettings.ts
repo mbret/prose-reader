@@ -1,3 +1,4 @@
+import type { CoreInputSettings } from "@prose-reader/core"
 import { signal, useSignal } from "reactjrx"
 
 export type LocalSettings = {
@@ -7,6 +8,10 @@ export type LocalSettings = {
   fontSizeScreenMobile?: number
   fontSizeScreenTablet?: number
   fontSizeScreenDesktop?: number
+  spreadModeGlobal?: CoreInputSettings["spreadMode"]
+  spreadModeScreenMobile?: CoreInputSettings["spreadMode"]
+  spreadModeScreenTablet?: CoreInputSettings["spreadMode"]
+  spreadModeScreenDesktop?: CoreInputSettings["spreadMode"]
 }
 
 const hydratedSettings = ((): Partial<LocalSettings> => {
@@ -30,6 +35,13 @@ const settings = signal<LocalSettings>({
     fontSizeScreenMobile: hydratedSettings.fontSizeScreenMobile ?? undefined,
     fontSizeScreenTablet: hydratedSettings.fontSizeScreenTablet ?? undefined,
     fontSizeScreenDesktop: hydratedSettings.fontSizeScreenDesktop ?? undefined,
+    spreadModeGlobal: hydratedSettings.spreadModeGlobal ?? undefined,
+    spreadModeScreenMobile:
+      hydratedSettings.spreadModeScreenMobile ?? undefined,
+    spreadModeScreenTablet:
+      hydratedSettings.spreadModeScreenTablet ?? undefined,
+    spreadModeScreenDesktop:
+      hydratedSettings.spreadModeScreenDesktop ?? undefined,
   },
 })
 
