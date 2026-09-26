@@ -10,6 +10,14 @@ For convenience you can handle errors on a global level and just make your entir
 
 SpineItem instances have an error state that you can access when a problem occurs. An error can potentially occur when the resource is fetched for example, or during rendering if you have a complex document handling. That being said, the most typical issue is usually network request error when fetching resources.
 
+```typescript
+reader.spineItemsObserver.itemStateChange$.subscribe(({ item, isError, error }) => {
+  if (isError) console.warn(`${item.item.href} failed to load`, error)
+})
+```
+
+The reader loads an item in error again the next time it loads the items around the position, such as after a navigation or a layout.
+
 You can take advantage of the error state to display a placeholder page to let the user know something went wrong.
 
 {% hint style="info" %}
