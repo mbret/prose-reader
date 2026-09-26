@@ -1,6 +1,6 @@
 import type { Context } from "../context/Context"
 import type { ReaderSettingsManager } from "../settings/ReaderSettingsManager"
-import { getRangeFromNode } from "../utils/dom"
+import { getRangeFromNode, isHtmlElement } from "../utils/dom"
 import type { Viewport } from "../viewport/Viewport"
 import {
   getClosestValidOffsetFromApproximateOffsetInPages,
@@ -22,24 +22,32 @@ export const createSpineItemLocator = ({
   settings: ReaderSettingsManager
   viewport: Viewport
 }) => {
+  /**
+   * The box a node is laid out in, from `offset` when it is text, or
+   * `undefined` when it lays out none, as when it is hidden. A range over the
+   * node's contents measures it, unless it selects nothing that lays out a
+   * box, as in an image, which has no contents, or an empty element: the
+   * element's own box does then.
+   */
+  const getLaidOutRect = (node: Node, offset: number) => {
+    const range = getRangeFromNode(node, offset)
+
+    if (range && range.getClientRects().length > 0)
+      return range.getBoundingClientRect()
+
+    if (isHtmlElement(node) && node.getClientRects().length > 0)
+      return node.getBoundingClientRect()
+
+    return undefined
+  }
+
   const getSpineItemPositionFromNode = (
     node: Node,
     offset: number,
     spineItem: SpineItem,
   ) => {
-    let offsetOfNodeInSpineItem: number | undefined
-
-    // for some reason `img` does not work with range (x always = 0)
-    if (
-      node?.nodeName === `img` ||
-      (node?.textContent === `` && node.nodeType === Node.ELEMENT_NODE)
-    ) {
-      offsetOfNodeInSpineItem = (node as HTMLElement).getBoundingClientRect().x
-    } else if (node) {
-      const range = node ? getRangeFromNode(node, offset) : undefined
-      offsetOfNodeInSpineItem =
-        range?.getBoundingClientRect().x || offsetOfNodeInSpineItem
-    }
+    // A node at the item's left edge is at 0, which is a place like any other.
+    const offsetOfNodeInSpineItem = getLaidOutRect(node, offset)?.x
 
     const spineItemWidth = spineItem.layoutInfo?.width || 0
     const pageWidth = viewport.pageSize.width

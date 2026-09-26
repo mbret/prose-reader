@@ -890,3 +890,84 @@ test.describe("Given a cfi naming nothing in a chapter not loaded yet", () => {
     )
   })
 })
+
+/**
+ * Without a horizontal margin, a chapter's first page starts its text at the
+ * chapter's left edge, where the reader measures a node at 0.
+ */
+test.describe("Given pages without a horizontal margin", () => {
+  const withoutMargin = `${url}?pageHorizontalMargin=0`
+
+  test("a book reopened at a chapter's first text, at its left edge, ends final on it", async ({
+    page,
+  }) => {
+    await page.setViewportSize(initialSize)
+    await page.goto(withoutMargin)
+    await waitForSettled(page)
+
+    const chapterIndex = await getLongChapterIndex(page)
+
+    await page.evaluate((indexOrId) => {
+      // @ts-expect-error window.reader is set by this scenario's index.tsx
+      const reader = window.reader as Reader
+
+      reader.navigation.goToSpineItem({ indexOrId })
+    }, chapterIndex)
+    await waitForSettled(page)
+
+    // The chapter's first text, and where its first character is laid out.
+    const firstText = await page.evaluate((index) => {
+      // @ts-expect-error window.reader is set by this scenario's index.tsx
+      const reader = window.reader as Reader
+      const item = reader.spineItemsManager.get(index)
+      const document = item?.renderer.getDocumentFrame()?.contentDocument
+
+      if (!item || !document) throw new Error("the chapter has no document")
+
+      const walker = document.createTreeWalker(
+        document.body,
+        NodeFilter.SHOW_TEXT,
+        (node) =>
+          node.textContent?.trim()
+            ? NodeFilter.FILTER_ACCEPT
+            : NodeFilter.FILTER_SKIP,
+      )
+      const node = walker.nextNode()
+
+      if (!node) throw new Error("the chapter has no text")
+
+      const firstCharacter = document.createRange()
+
+      firstCharacter.setStart(node, 0)
+      firstCharacter.setEnd(node, 1)
+
+      return {
+        cfi: reader.cfi.generateCfiForSpineItemPage({
+          spineItem: item.item,
+          pageNode: { node, offset: 0 },
+        }),
+        x: firstCharacter.getBoundingClientRect().x,
+      }
+    }, chapterIndex)
+
+    expect(firstText.x).toBe(0)
+
+    await page.goto(`${withoutMargin}&cfi=${encodeURIComponent(firstText.cfi)}`)
+    await waitForSettled(page)
+
+    // Found in its chapter's document, then measured on the page holding it.
+    await expect
+      .poll(() =>
+        readPosition(page).then(
+          ({ readingPositionState }) => readingPositionState,
+        ),
+      )
+      .toBe("final")
+
+    const reopened = await readPosition(page)
+
+    expect(reopened.spineItemIndex).toBe(chapterIndex)
+    expect(reopened.pageIndex).toBe(0)
+    expect(reopened.readingPosition).toBe(firstText.cfi)
+  })
+})
