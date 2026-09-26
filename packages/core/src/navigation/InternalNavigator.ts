@@ -43,6 +43,7 @@ import { Locker } from "./Locker"
 import type { createNavigationResolver } from "./resolvers/NavigationResolver"
 import { withRestoredPosition } from "./restoration/withRestoredPosition"
 import { createTargetResolvers } from "./targets/createTargetResolvers"
+import { isTargetInBook } from "./targets/isTargetInBook"
 import type {
   InternalNavigationEntry,
   NavigationModeController,
@@ -102,7 +103,9 @@ export class InternalNavigator extends DestroyableClass {
    * out it has neither, and this is the start of the item the navigation goes
    * to, the only place a cfi can name in content that is not laid out. It only
    * moves when the reader navigates, and once when such a navigation finds its
-   * page: a relayout reflows the page around it without changing it.
+   * page: a relayout reflows the page around it without changing it. A
+   * navigation whose target names nothing in the book, such as a cfi that
+   * can't be read, is ignored, and leaves it where it was.
    */
   public readonly readingPosition$: Observable<ReadingPosition> =
     this.navigationSubject.pipe(
@@ -129,10 +132,7 @@ export class InternalNavigator extends DestroyableClass {
      */
     protected isUserInteractionLocked$: Observable<boolean>,
     /** Where the reader opens, the start of the book by default. */
-    initialTarget: NavigationTarget = {
-      type: "position",
-      value: new SpinePosition({ x: 0, y: 0 }),
-    },
+    initialTarget?: NavigationTarget,
   ) {
     super()
 
@@ -147,23 +147,69 @@ export class InternalNavigator extends DestroyableClass {
       getNavigationVisibleArea,
     })
 
+    const isInBook = (target: NavigationTarget) =>
+      isTargetInBook(target, {
+        cfi: cfiManager,
+        spineItemsManager: spine.spineItemsManager,
+      })
+
+    /**
+     * A navigation whose target names nothing in the book, such as a cfi that
+     * can't be read, or a cfi or a spine item the book does not have, is
+     * ignored: the reader has nowhere to go, and stays where it is. It is
+     * dropped before anything hears of it, so it does not replace the first
+     * navigation either.
+     */
+    const userNavigationInBook$ = userNavigation$.pipe(
+      filter(({ target }) => {
+        if (isInBook(target)) return true
+
+        report.warn(
+          `Ignore navigation, its target names nothing in the book`,
+          target,
+        )
+
+        return false
+      }),
+      share(),
+    )
+
+    const startOfBook: NavigationTarget = {
+      type: "position",
+      value: new SpinePosition({ x: 0, y: 0 }),
+    }
+
+    const getOpeningTarget = () => {
+      if (!initialTarget) return startOfBook
+
+      if (isInBook(initialTarget)) return initialTarget
+
+      report.warn(
+        `Open at the start of the book, the target names nothing in it`,
+        initialTarget,
+      )
+
+      return startOfBook
+    }
+
     /**
      * The reader's first navigation, once its items are first laid out: its
      * target resolves against the book's layout, once every enhancer has added
-     * its hooks. A navigation asked for before then replaces it.
+     * its hooks. A target naming nothing in the book opens it at its start, as
+     * without one. A navigation asked for before then replaces it.
      */
     const firstNavigation$ = spine.itemsLayout$.pipe(
       take(1),
       map(
         (): UserNavigationEntry => ({
-          target: initialTarget,
+          target: getOpeningTarget(),
           animation: false,
         }),
       ),
-      takeUntil(userNavigation$),
+      takeUntil(userNavigationInBook$),
     )
 
-    const navigationFromUser$ = merge(firstNavigation$, userNavigation$)
+    const navigationFromUser$ = merge(firstNavigation$, userNavigationInBook$)
       .pipe(
         withLatestFrom(this.navigationSubject),
         mapUserNavigationToInternal,

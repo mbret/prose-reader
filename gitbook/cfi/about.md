@@ -111,6 +111,8 @@ function parse(cfi: string): ParsedCfi
 
 Parses a CFI string into a structured object. The parsed CFI can be either a simple path or a range.
 
+A string that is only partly a CFI is not one, so every character has to be read as part of it. `parse` throws for a character that can't be, such as text after the closing parenthesis, for an `epubcfi(` or an assertion never closed, and for a step or an offset without its number. Whitespace around the CFI is ignored. It doesn't check that the parts come in an order the specification allows.
+
 ### Resolve
 
 ```typescript

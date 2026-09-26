@@ -54,6 +54,11 @@ It is set the moment a navigation happens:
   chapter has loaded, it becomes the first character of the page the
   navigation lands on, or the element a url names, and stays there.
 
+A navigation whose target names nothing in the book, such as a cfi that
+[can't be read](../cfi/about.md) or a cfi of a chapter the book does not have,
+is ignored with a warning: the reader stays where it is, and so does the
+reading position.
+
 Its `percentageEstimateOfBook` is where the page holding the `cfi` starts,
 estimated from the `progressionWeight` of each spine item in the manifest, or
 an even share each when an item has none, and the pages of its own. It moves with the `cfi`, never apart from it. When the
@@ -86,6 +91,9 @@ opens at the start of the book. The reader goes there once its chapters are
 first laid out, with every enhancer in place, so the reading position never
 passes through the start of the book on the way, and a saved position is never
 overwritten by the cover.
+
+A saved position can go stale when the book changes, or get corrupted. One
+that names nothing in the book opens it at its start, as without a target.
 
 ```typescript
 const saved = localStorage.getItem(`reading-position-${bookId}`)

@@ -49,14 +49,16 @@ export class CfiManager {
     return parseBaseCfi(this.transformForResolve(cfi))
   }
 
+  /**
+   * The spine item a cfi names, `undefined` when it names none: an item the
+   * book does not have, or a cfi that can't be read, which names nothing.
+   */
   public getSpineItemFromCfi = (cfi: string) => {
-    const { itemIndex } = this.parseCfi(cfi)
-
-    if (itemIndex !== undefined) {
-      return this.spineItemsManager.get(itemIndex)
+    try {
+      return this.spineItemsManager.get(this.parseCfi(cfi).itemIndex)
+    } catch {
+      return undefined
     }
-
-    return undefined
   }
 
   public isRootCfi = (cfi: string) => {

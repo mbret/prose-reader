@@ -47,12 +47,20 @@ export interface CfiRange {
 export type ParsedCfi = CfiPart[][] | CfiRange
 
 /**
- * Unwrap a CFI string from the epubcfi() function
+ * Unwrap a CFI string from the epubcfi() function, which has to be closed at
+ * the end of the string
  * @param cfi The CFI string to unwrap
  * @returns The unwrapped CFI string
  */
 export function unwrapCfi(cfi: string): string {
   const match = cfi.match(isCFI)
+
+  if (!match && cfi.startsWith("epubcfi(")) {
+    throw new Error(
+      `Expected CFI "${cfi}" to end with the ")" closing its "epubcfi("`,
+    )
+  }
+
   return match ? match[1] || cfi : cfi
 }
 
@@ -61,8 +69,18 @@ export function unwrapCfi(cfi: string): string {
  */
 type CfiToken = [string, string | number]
 
+/** The characters starting a token, outside an assertion. */
+const TOKEN_START_CHARACTERS = ["/", ":", "~", "@", "[", "!", ","]
+
+/** The number of a step or of a character offset. */
+const INTEGER_TOKEN_VALUE = /^\d+$/
+
+/** The number of a temporal or of a spatial offset. */
+const DECIMAL_TOKEN_VALUE = /^\d+(\.\d+)?$/
+
 /**
- * Tokenize a CFI string into an array of tokens
+ * Tokenize a CFI string into an array of tokens. Every character is read as
+ * part of a token, or it throws: see `parse`.
  * @param cfi The CFI string to tokenize
  * @returns An array of tokens
  */
@@ -70,6 +88,7 @@ function tokenize(cfi: string): CfiToken[] {
   const tokens: CfiToken[] = []
   let state: string | null = null
   let isEscaped = false
+  let isInAssertion = false
   let value = ""
 
   const push = (token: CfiToken) => {
@@ -78,27 +97,41 @@ function tokenize(cfi: string): CfiToken[] {
     value = ""
   }
 
+  const pushNumberToken = (type: string) => {
+    const expectedNumberFormat =
+      type === "/" || type === ":" ? INTEGER_TOKEN_VALUE : DECIMAL_TOKEN_VALUE
+
+    if (!expectedNumberFormat.test(value)) {
+      throw new Error(`Expected a number after "${type}" in CFI "${cfi}"`)
+    }
+
+    push([type, Number(value)])
+  }
+
+  const closeAssertion = (token: CfiToken) => {
+    push(token)
+    isInAssertion = false
+  }
+
   const cat = (c: string) => {
     value += c
     isEscaped = false
   }
 
-  const unwrappedCfi = unwrapCfi(cfi).trim()
+  const unwrappedCfi = unwrapCfi(cfi.trim()).trim()
   const chars = Array.from(unwrappedCfi).concat("")
 
   for (let i = 0; i < chars.length; i++) {
     const char = chars[i]
 
     if (!char) {
+      if (isInAssertion) {
+        throw new Error(`Expected "]" to close an assertion in CFI "${cfi}"`)
+      }
+
       // End of string, push any pending token
-      if (state === "/" || state === ":") {
-        push([state, parseInt(value, 10)])
-      } else if (state === "~") {
-        push(["~", parseFloat(value)])
-      } else if (state === "@") {
-        push(["@", parseFloat(value)])
-      } else if (state === "[") {
-        push(["[", value])
+      if (state === "/" || state === ":" || state === "~" || state === "@") {
+        pushNumberToken(state)
       } else if (state === ";" || state?.startsWith(";")) {
         push([state, value])
       } else if (state === "!") {
@@ -123,16 +156,16 @@ function tokenize(cfi: string): CfiToken[] {
         cat(char)
         continue
       }
-      push([state, parseInt(value, 10)])
+      pushNumberToken(state)
     } else if (state === "~") {
       if (/^\d$/.test(char) || char === ".") {
         cat(char)
         continue
       }
-      push(["~", parseFloat(value)])
+      pushNumberToken("~")
     } else if (state === "@") {
       if (char === ":") {
-        push(["@", parseFloat(value)])
+        pushNumberToken("@")
         state = "@"
         continue
       }
@@ -140,17 +173,17 @@ function tokenize(cfi: string): CfiToken[] {
         cat(char)
         continue
       }
-      push(["@", parseFloat(value)])
+      pushNumberToken("@")
     } else if (state === "[") {
       if (char === ";" && !isEscaped) {
         push(["[", value])
         state = ";"
       } else if (char === "]" && !isEscaped) {
-        push(["[", value])
+        closeAssertion(["[", value])
       } else {
         cat(char)
-        continue
       }
+      continue
     } else if (state === ";") {
       // Handle extension parameter key
       if (char === "=" && !isEscaped) {
@@ -160,38 +193,35 @@ function tokenize(cfi: string): CfiToken[] {
         push([state, value])
         state = ";"
       } else if (char === "]" && !isEscaped) {
-        push([state, value])
+        closeAssertion([state, value])
       } else {
         cat(char)
-        continue
       }
+      continue
     } else if (state?.startsWith(";")) {
       // Handle extension parameter value
       if (char === ";" && !isEscaped) {
         push([state, value])
         state = ";"
       } else if (char === "]" && !isEscaped) {
-        push([state, value])
+        closeAssertion([state, value])
       } else {
         cat(char)
-        continue
       }
+      continue
     } else if (state === null && char === ";") {
       // Handle standalone extension parameters (not inside brackets)
       state = ";"
+      continue
     }
 
-    if (
-      char === "/" ||
-      char === ":" ||
-      char === "~" ||
-      char === "@" ||
-      char === "[" ||
-      char === "!" ||
-      char === ","
-    ) {
+    if (TOKEN_START_CHARACTERS.includes(char)) {
       state = char
+      isInAssertion = char === "["
+      continue
     }
+
+    throw new Error(`Unexpected character "${char}" in CFI "${cfi}"`)
   }
 
   return tokens
@@ -326,6 +356,12 @@ function parseIndirection(tokens: CfiToken[]): CfiPart[][] {
 
 /**
  * Parse a CFI string into a structured representation
+ *
+ * A string that is only partly a CFI is not one, so every character has to be
+ * read as part of it. It throws for a character that cannot be, such as text
+ * after the closing parenthesis, for an `epubcfi(` or an assertion never
+ * closed, and for a step or an offset without its number. It does not check
+ * that the parts come in an order the specification allows.
  * @param cfi The CFI string to parse
  * @returns A parsed CFI
  */

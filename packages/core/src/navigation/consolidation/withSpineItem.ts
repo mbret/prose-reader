@@ -31,25 +31,13 @@ export const withSpineItem =
       const { navigationSnapThreshold, computedPageTurnMode } = settings.values
 
       /**
-       * - valid given spine item
+       * - given spine item: a navigation naming one the book does not have is
+       *   ignored before it gets here
        */
       if (spineItem !== undefined) {
         const existingSpineItem = spineItemsManager.get(spineItem)
 
         if (existingSpineItem) return existingSpineItem
-      }
-
-      /**
-       * - invalid spine item given
-       * - number too high
-       * - number too low
-       */
-      if (typeof spineItem === "number") {
-        if (spineItem > spineItemsManager.items.length - 1) {
-          return spineItemsManager.get(spineItemsManager.items.length - 1)
-        }
-
-        return spineItemsManager.get(0)
       }
 
       /**

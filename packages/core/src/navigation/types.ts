@@ -13,14 +13,16 @@ export type NavigationVisibleArea = {
 }
 
 /**
- * Each type of target a navigation can ask for, and the value it carries.
+ * Each type of target a navigation can ask for, and the value it carries. A
+ * navigation whose target names nothing in the book, such as a spine item the
+ * book does not have, is ignored.
  */
 export type NavigationTargetValues = {
-  /** A position in the spine. */
+  /** A position in the spine, clamped to it. */
   position: SpinePosition | UnboundSpinePosition
   /** The start of a spine item, by index or id. */
   spineItem: number | string
-  /** A cfi. */
+  /** A cfi. One that can't be read names nothing in the book. */
   cfi: string
   /**
    * A place in a spine item's document, which `find` looks for once the

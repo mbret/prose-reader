@@ -111,109 +111,9 @@ describe(`Given unloaded book`, () => {
       })
     })
   })
-
-  describe("Given invalid negative navigation spine item", () => {
-    it(`should remove it`, async () => {
-      const { navigator } = createNavigatorContext()
-      const navigations: InternalNavigationEntry[] = []
-
-      const sub = navigator.internalNavigator.navigationSubject
-        .pipe(skip(1))
-        .subscribe((navigation) => {
-          navigations.push(navigation)
-        })
-
-      navigator.navigate({
-        target: { type: "spineItem", value: -1 },
-      })
-
-      await waitFor(100)
-
-      sub.unsubscribe()
-
-      expect(navigations.length).toBe(1)
-      expect(navigations[0]).toMatchObject({
-        position: { x: 0, y: 0 },
-        meta: {
-          triggeredBy: "user",
-        },
-        type: "api",
-      })
-    })
-  })
 })
 
 describe(`Given loaded book`, () => {
-  describe("Given invalid negative navigation spine item", () => {
-    it(`should fallback to 0`, async () => {
-      const { navigator, spineItemsManager, spine } = createNavigatorContext(2)
-      const navigations: InternalNavigationEntry[] = []
-
-      mockSpineItemsLayout(100, spine, spineItemsManager)
-
-      const sub = navigator.internalNavigator.navigationSubject
-        .pipe(skip(1))
-        .subscribe((navigation) => {
-          navigations.push(navigation)
-        })
-
-      navigator.navigate({
-        target: { type: "spineItem", value: -1 },
-      })
-
-      await waitFor(100)
-
-      sub.unsubscribe()
-
-      expect(navigations.length).toBe(1)
-      expect(navigations[0]).toMatchObject({
-        position: { x: 0, y: 0 },
-        spineItem: 0,
-        meta: {
-          triggeredBy: "user",
-        },
-        type: "api",
-      })
-    })
-  })
-
-  describe("Given invalid positive navigation spine item", () => {
-    it(`should fallback to length - 1`, async () => {
-      const { spine, navigator, spineItemsManager } = createNavigatorContext(2)
-      const navigations: InternalNavigationEntry[] = []
-
-      mockSpineItemsLayout(100, spine, spineItemsManager)
-
-      spine.layout()
-
-      await firstValueFrom(spine.layout$)
-
-      const sub = navigator.internalNavigator.navigationSubject
-        .pipe(skip(1))
-        .subscribe((navigation) => {
-          navigations.push(navigation)
-        })
-
-      navigator.navigate({
-        target: { type: "spineItem", value: 2 },
-      })
-
-      await waitFor(100)
-
-      sub.unsubscribe()
-
-      expect(navigations.length).toBe(1)
-      expect(navigations[0]).toMatchObject({
-        position: { x: 100, y: 0 },
-        spineItem: 1,
-        meta: {
-          triggeredBy: "user",
-        },
-        type: "api",
-      })
-    })
-  })
-
   describe("Given navigate() with a position past the end of the book", () => {
     it.each([
       ["paginated", "controlled" as const],
@@ -260,35 +160,6 @@ describe(`Given loaded book`, () => {
         })
       },
     )
-  })
-
-  describe("Given a navigation to an empty cfi", () => {
-    it("goes to the first item, like any target naming nothing, and keeps navigating", async () => {
-      const { navigator, spineItemsManager, spine } = createNavigatorContext(2)
-      const navigations: InternalNavigationEntry[] = []
-
-      mockSpineItemsLayout(100, spine, spineItemsManager)
-
-      const sub = navigator.internalNavigator.navigationSubject
-        .pipe(skip(1))
-        .subscribe((navigation) => {
-          navigations.push(navigation)
-        })
-
-      navigator.navigate({ target: { type: "cfi", value: "" } })
-      await waitFor(50)
-
-      navigator.navigate({ target: { type: "spineItem", value: 1 } })
-      await waitFor(50)
-
-      sub.unsubscribe()
-
-      expect(
-        navigations
-          .filter(({ meta }) => meta.triggeredBy === "user")
-          .map(({ spineItem }) => spineItem),
-      ).toEqual([0, 1])
-    })
   })
 
   describe("Given two consecutive user navigations resolving to the same position in scrollable mode", () => {
