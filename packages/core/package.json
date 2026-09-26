@@ -1,6 +1,6 @@
 {
   "name": "@prose-reader/core",
-  "version": "19.0.0",
+  "version": "20.0.0",
   "type": "module",
   "main": "./dist/index.cjs",
   "module": "./dist/index.js",

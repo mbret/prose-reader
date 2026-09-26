@@ -3,6 +3,20 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## [20.0.0](https://github.com/mbret/prose-reader/compare/v19.0.0...v20.0.0) (2026-09-26)
+
+### ⚠ BREAKING CHANGES
+
+* **navigation:** `ReadingPosition.isFinal` is replaced by
+  `ReadingPosition.state`, `"standIn" | "targetPlace" | "final"`;
+  `isFinal` is `state === "final"`. The `NavigationAnchor` type is removed:
+  a navigation entry's `anchor` is a `ReadingPosition`.
+
+### Features
+
+* **navigation:** give the reading position its state, not only whether it is final ([9f6afe2](https://github.com/mbret/prose-reader/commit/9f6afe280418245824b69ac6fbf0c47fe3ebb887))
+
+
 ## [19.0.0](https://github.com/mbret/prose-reader/compare/v18.0.0...v19.0.0) (2026-09-26)
 
 **Note:** Version bump only for package @prose-reader/react-native
