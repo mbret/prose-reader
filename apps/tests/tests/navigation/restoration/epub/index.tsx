@@ -31,12 +31,16 @@ async function run() {
   const query = new URLSearchParams(window.location.search)
   const cfi = query.get("cfi")
   const preload = query.get("preload")
+  const pageHorizontalMargin = query.get("pageHorizontalMargin")
 
   const reader = createReader({
     manifest,
     target: cfi ? { type: "cfi", value: cfi } : undefined,
     ...(preload !== null && {
       numberOfAdjacentSpineItemToPreLoad: Number(preload),
+    }),
+    ...(pageHorizontalMargin !== null && {
+      pageHorizontalMargin: Number(pageHorizontalMargin),
     }),
     pageTurnAnimation: "none",
     layoutLayerTransition: false,
