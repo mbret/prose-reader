@@ -56,11 +56,12 @@ jobs:
 
       # The bump comes from the commit messages rather than being hardcoded, so
       # a breaking change cannot ship as a minor. A merge that changes a
-      # published package always releases: lerna's conventionalcommits preset
-      # starts at patch and only escalates, so `chore`, `docs` and an
-      # unparseable subject still cut a release, `feat` gives a minor, and
-      # `feat!:` / a `BREAKING CHANGE:` footer gives a major. Changelogs come
-      # along with it.
+      # published package always releases: the conventionalcommits preset, as
+      # config/changelog-preset.mjs wraps it, starts at patch and only
+      # escalates, so `chore`, `docs` and an unparseable subject still cut a
+      # release, `feat` gives a minor, and `feat!:` / a `BREAKING CHANGE:`
+      # footer gives a major. Body prose that merely starts with those words
+      # does not. Changelogs come along with it.
       #
       # A release is versioned and tagged here, pushed by the step itself, and
       # published only once the push is in. `lerna publish` pushes for itself,
