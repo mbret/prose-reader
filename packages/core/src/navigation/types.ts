@@ -197,12 +197,6 @@ export type InternalNavigationEntry = {
    * until the page is laid out.
    */
   anchorPageStartProgression?: number
-  /**
-   * Whether the target names a place in a spine item that is not loaded yet.
-   * Restorations resolve the target again until it is: the place is found
-   * there then, or found to be nowhere.
-   */
-  awaitsDocument?: boolean
 } & NavigationConsolidation
 
 /**

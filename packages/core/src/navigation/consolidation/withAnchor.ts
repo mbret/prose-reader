@@ -9,6 +9,7 @@ import type { InternalNavigationEntry, InternalNavigationInput } from "../types"
 
 type Navigation = {
   navigation: InternalNavigationInput | InternalNavigationEntry
+  awaitsDocument: boolean
 }
 
 /**
@@ -26,8 +27,9 @@ type Navigation = {
  * - Until then the navigation has none, and restoration works from its
  *   position. The first restoration that lands on a layout with the page
  *   finds it.
- * - While the target awaits its document, the page at its position is not
- *   taken: it can belong to another item.
+ * - While the target awaits its document it has none either: the page at its
+ *   position can belong to another item, and would stop the target from being
+ *   resolved again.
  *
  * The progression is where the page holding the anchor starts: found with an
  * anchor taken from a page, or, for a target's anchor, once its document is
@@ -120,8 +122,11 @@ export const withAnchor =
         numberOfPages: spineItem.numberOfPages,
       })
 
-    const getAnchor = (navigation: N["navigation"]) => {
-      const { anchor, anchorPageStartProgression, awaitsDocument } = navigation
+    const getAnchor = (
+      navigation: N["navigation"],
+      awaitsDocument: N["awaitsDocument"],
+    ) => {
+      const { anchor, anchorPageStartProgression } = navigation
 
       if (awaitsDocument || anchorPageStartProgression !== undefined)
         return { anchor, anchorPageStartProgression }
@@ -156,7 +161,10 @@ export const withAnchor =
           // the other consolidation steps.
           ({
             ...rest,
-            navigation: { ...navigation, ...getAnchor(navigation) },
+            navigation: {
+              ...navigation,
+              ...getAnchor(navigation, rest.awaitsDocument),
+            },
           }) as N,
       ),
     )

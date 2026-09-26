@@ -18,7 +18,11 @@ export type TargetResolution = {
   anchor?: string
   directionFromLastNavigation: "forward" | "backward"
   snapToPage: boolean
-  /** See {@link InternalNavigationEntry.awaitsDocument}. */
+  /**
+   * Whether the target names a place in a spine item that is not loaded yet.
+   * The navigation has no anchor until it is: the page it lands on can belong
+   * to another item, and would stop the target from being resolved again.
+   */
   awaitsDocument: boolean
 }
 
