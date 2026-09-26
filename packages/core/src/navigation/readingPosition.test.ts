@@ -202,10 +202,15 @@ describe("reading position", () => {
     /**
      * In landscape the spread holding item 1 starts at item 0: the position
      * a cfi into item 1 goes to is item 0's page. The cfi is still on item
-     * 1's page, and so is how far into the book it is.
+     * 1's page, and so is how far into the book it is. The items have
+     * documents, where the cfi is found: without one, it would await a
+     * document for good, and its page would never be looked for.
      */
     const cfi = "epubcfi(/6/4[1]!/4/2)"
-    const reader = createTestReader({ target: { type: "cfi", value: cfi } })
+    const reader = createTestReader({
+      target: { type: "cfi", value: cfi },
+      getRenderer: renderTextDocuments,
+    })
 
     mountTestReader(reader)
 
