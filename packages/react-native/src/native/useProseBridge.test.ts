@@ -1,3 +1,4 @@
+import type { ReadingPosition } from "@prose-reader/core"
 import { describe, expect, it, vi } from "vitest"
 import { createProseBridge } from "./useProseBridge"
 
@@ -44,15 +45,15 @@ const readerState = ({ appBridge }: ReturnType<typeof createBridge>) => {
 
 const noReaderState = { pagination: null, context: null, readingPosition: null }
 
-const firstChapter = {
+const firstChapter: ReadingPosition = {
   cfi: "epubcfi(/6/2[1]!)",
   percentageEstimateOfBook: 0,
-  isFinal: true,
+  state: "final",
 }
-const secondChapter = {
+const secondChapter: ReadingPosition = {
   cfi: "epubcfi(/6/4[2]!)",
   percentageEstimateOfBook: 0.5,
-  isFinal: true,
+  state: "final",
 }
 
 describe("Given the native end of the bridge", () => {

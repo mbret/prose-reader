@@ -116,25 +116,34 @@ export type NavigationConsolidation = {
 
 /**
  * Where the reader is in the book: what to save, and to open the book at with
- * a cfi target.
+ * a cfi target. It is where the current navigation takes the reader, as far as
+ * the reader knows, and `state` says how much of that place it has found.
  */
 export type ReadingPosition = {
   cfi: string
   /**
    * How far into the book `cfi` is, from 0 to 1: where the page holding it
    * starts, estimated from each spine item's `progressionWeight` and the pages
-   * of its own. A position on the last page is short of 1.
+   * of its own. A position on the last page is short of 1. Until the value is
+   * final, the start of the spine item the navigation goes to.
    */
   percentageEstimateOfBook: number
   /**
-   * Whether the reader has found the page the navigation took it to. Until
-   * then the value stands in: `cfi` is the place the target names once its
-   * document shows it, or the start of the spine item the navigation goes to,
-   * and the progress is that item's start. It is still where the reader is, as
-   * far as it knows, and the value to save. A final value stays until the
-   * next navigation.
+   * How much of the place the reader has found, refined as the navigation
+   * goes. Every state is where the reader is, as far as it knows, and the
+   * value to save.
+   *
+   * - `standIn`: no place is known yet. `cfi` is the start of the spine item
+   *   the navigation goes to, while that item loads, or while the page the
+   *   navigation lands on is not laid out.
+   * - `targetPlace`: `cfi` is the place the navigation's target names, a cfi
+   *   or what a selector found, once its item's document shows it there. The
+   *   page holding it is not laid out yet.
+   * - `final`: the place the target names, or otherwise the first character
+   *   of the page the navigation lands on, and where the page holding it
+   *   starts. It stays until the next navigation.
    */
-  isFinal: boolean
+  state: "standIn" | "targetPlace" | "final"
 }
 
 /**
@@ -185,32 +194,13 @@ export type InternalNavigationEntry = {
   /** The spine item the navigation resolved to. */
   spineItem?: string | number
   /**
-   * Where this navigation takes the reader in the text, the value restoration
-   * returns to and the reading position shows. The place the target names, a
-   * cfi or what a selector found, once its document shows it there. Otherwise
-   * found by `withAnchor` for every entry, restorations included; `undefined`
-   * until the page it goes to is laid out.
+   * Where this navigation takes the reader in the text, as far as the reader
+   * knows: the reading position while it is the current navigation, and what
+   * restoration returns to once it names a place rather than stands in. Every
+   * entry with a spine item has one, restorations included.
    */
-  anchor?: NavigationAnchor
+  anchor?: ReadingPosition
 } & NavigationConsolidation
-
-/**
- * Where a navigation takes the reader in the text, as a cfi. It is final once
- * the page holding it is laid out, which tells how far into the book it is,
- * and then kept for the rest of the navigation.
- */
-export type NavigationAnchor =
-  | {
-      cfi: string
-      /** The place a target names, before the page holding it is laid out. */
-      isFinal: false
-    }
-  | {
-      cfi: string
-      isFinal: true
-      /** How far into the book the page holding `cfi` starts, from 0 to 1. */
-      pageStartProgression: number
-    }
 
 /**
  * A navigation surface describes the viewport rectangle that gives meaning to

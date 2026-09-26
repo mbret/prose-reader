@@ -1,4 +1,6 @@
 import type { CfiManager } from "../../cfi"
+import type { Context } from "../../context/Context"
+import { getSpineItemProgression } from "../../pagination/progression"
 import { Report } from "../../report"
 import type { ReaderSettingsManager } from "../../settings/ReaderSettingsManager"
 import type { SpineItemsManager } from "../../spine/SpineItemsManager"
@@ -28,12 +30,15 @@ export const createTargetResolvers = ({
   cfi,
   settings,
   spineItemsManager,
+  // The resolvers' own `context` is the navigation's.
+  context: readerContext,
   getNavigationVisibleArea,
 }: {
   navigationResolver: NavigationResolver
   cfi: CfiManager
   settings: ReaderSettingsManager
   spineItemsManager: SpineItemsManager
+  context: Context
   getNavigationVisibleArea: () => NavigationVisibleArea
 }): NavigationTargetResolvers => {
   const resolvers: NavigationTargetResolvers = {
@@ -89,16 +94,24 @@ export const createTargetResolvers = ({
         }),
         /**
          * The place the cfi names, once the item's document shows it there,
-         * as for any target naming a place in a document. A cfi naming only
-         * its item names no place, nor does one whose path leads to nothing in
-         * the document, or into an item without one: they are anchored at the
-         * page they land on. Until the item is loaded the navigation has no
-         * place, and restorations resolve the cfi again.
+         * as for any target naming a place in a document, at the item's start
+         * until its page is laid out. A cfi naming only its item names no
+         * place, and resolves to no node, nor does one whose path leads to
+         * nothing in the document, or into an item without one: they are
+         * anchored at the page they land on. Until the item is loaded the
+         * navigation's anchor stands in, and restorations resolve the cfi
+         * again.
          */
-        anchor:
-          node && !namesOnlyItsItem
-            ? { cfi: value, isFinal: false }
-            : undefined,
+        anchor: node
+          ? {
+              cfi: value,
+              percentageEstimateOfBook: getSpineItemProgression(
+                readerContext.manifest,
+                spineItem.index,
+              ).start,
+              state: "targetPlace",
+            }
+          : undefined,
         directionFromLastNavigation: "forward",
         snapToPage: false,
         awaitsDocument: !namesOnlyItsItem && !spineItem.value.isLoaded,

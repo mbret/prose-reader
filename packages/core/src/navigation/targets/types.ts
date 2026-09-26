@@ -1,10 +1,10 @@
 import type { SpinePosition, UnboundSpinePosition } from "../../spine/types"
 import type {
   InternalNavigationEntry,
-  NavigationAnchor,
   NavigationTargetType,
   NavigationTargetValues,
   NavigationVisibleArea,
+  ReadingPosition,
 } from "../types"
 
 /**
@@ -17,16 +17,16 @@ export type TargetResolution = {
   requestedPosition?: SpinePosition | UnboundSpinePosition
   requestedVisibleArea?: NavigationVisibleArea
   /**
-   * The place the target names. It is final only once the page holding it is
-   * laid out, which `withAnchor` finds.
+   * The place the target names, once its document shows it. It is final only
+   * once the page holding it is laid out, which `withAnchor` finds.
    */
-  anchor?: Extract<NavigationAnchor, { isFinal: false }>
+  anchor?: ReadingPosition & { state: "targetPlace" }
   directionFromLastNavigation: "forward" | "backward"
   snapToPage: boolean
   /**
    * Whether the target names a place in a spine item that is not loaded yet.
-   * The navigation has no anchor until it is, and restorations resolve the
-   * target again.
+   * The navigation's anchor stands in until it is, and restorations resolve
+   * the target again.
    */
   awaitsDocument: boolean
 }

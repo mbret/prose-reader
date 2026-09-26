@@ -60,6 +60,11 @@ export const restoreNavigationForControlledPageTurnMode = ({
        * Basically as long as the item itself did not change, we can recover from
        * consolidation. In case the item changed, we should be careful and try to
        * anchor back to cfi.
+       *
+       * A cfi naming only its item names no place to return to: a stand-in's,
+       * or a page's without text. It resolves to the item's start, which would
+       * take a turn back into a chapter that just loaded to its first page
+       * rather than its last.
        */
       if (cfi !== undefined && !cfiManager.isRootCfi(cfi)) {
         if (

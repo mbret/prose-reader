@@ -1,8 +1,10 @@
 import { describe, expect, it } from "vitest"
 import type { CfiManager } from "../../cfi"
+import type { Context } from "../../context/Context"
 import type { ReaderSettingsManager } from "../../settings/ReaderSettingsManager"
 import type { SpineItemsManager } from "../../spine/SpineItemsManager"
 import { SpinePosition } from "../../spine/types"
+import { createTestManifest } from "../../tests/utils"
 import type { NavigationResolver } from "../resolvers/NavigationResolver"
 import type { InternalNavigationEntry, NavigationTarget } from "../types"
 import { createTargetResolvers } from "./createTargetResolvers"
@@ -13,6 +15,13 @@ const text = "epubcfi(/6/2[0]!/4/8/1:0)"
 // A path no node of the document has, as a saved position can once the book
 // changed.
 const nothing = "epubcfi(/6/2[0]!/4/999/1:0)"
+
+/** The note's place, in the book's first item, whose start is its own. */
+const notePlace = {
+  cfi: text,
+  percentageEstimateOfBook: 0,
+  state: "targetPlace",
+}
 
 /** The item's document, holding the element a selector finds. */
 const document = new DOMParser().parseFromString(
@@ -68,6 +77,7 @@ const createResolvers = ({
     cfi: cfi as unknown as CfiManager,
     settings: settings as unknown as ReaderSettingsManager,
     spineItemsManager: spineItemsManager as unknown as SpineItemsManager,
+    context: { manifest: createTestManifest() } as unknown as Context,
     getNavigationVisibleArea: () => ({ width: 100, height: 100 }),
   })
 }
@@ -111,7 +121,7 @@ const note: NavigationTarget = {
 describe("target resolvers", () => {
   it("anchor a cfi navigation at the cfi, once its document shows it names a place", () => {
     expect(resolve({ type: "cfi", value: text })).toMatchObject({
-      anchor: { cfi: text, isFinal: false },
+      anchor: notePlace,
       awaitsDocument: false,
     })
   })
@@ -163,7 +173,7 @@ describe("target resolvers", () => {
   )
 
   it("anchor a selector navigation at the cfi of what it finds", () => {
-    expect(resolve(note).anchor).toEqual({ cfi: text, isFinal: false })
+    expect(resolve(note).anchor).toEqual(notePlace)
   })
 
   it("leave a selector awaiting the document of an item not loaded, without an anchor, for restorations to try again", () => {

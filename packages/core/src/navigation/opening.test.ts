@@ -14,24 +14,24 @@ import type { ReadingPosition } from "./types"
 installReaderTestEnvironment()
 
 /**
- * The reading positions of a navigation whose page is not laid out yet: the
- * same value, not final, then final once the page is.
+ * The reading positions of a navigation to an item's start whose page is not
+ * laid out yet: the same value, standing in, then final once the page is.
  */
-const notFinalThenFinal = ({
+const standInThenFinal = ({
   cfi,
   percentageEstimateOfBook,
-}: Omit<ReadingPosition, "isFinal">): ReadingPosition[] => [
-  { cfi, percentageEstimateOfBook, isFinal: false },
-  { cfi, percentageEstimateOfBook, isFinal: true },
+}: Omit<ReadingPosition, "state">): ReadingPosition[] => [
+  { cfi, percentageEstimateOfBook, state: "standIn" },
+  { cfi, percentageEstimateOfBook, state: "final" },
 ]
 
 /** Resolves once the reading position is final. */
 const readingPositionIsFinal = (positions: ReadingPosition[]) =>
-  vi.waitFor(() => expect(positions.at(-1)?.isFinal).toBe(true))
+  vi.waitFor(() => expect(positions.at(-1)?.state).toBe("final"))
 
 /**
  * The reading positions of opening at a cfi naming a place in the second of
- * two items, each half the book: the item's start while it loads, not final,
+ * two items, each half the book: the item's start while it loads, standing in,
  * then the cfi once its document shows it, never the start of the book.
  * Whether the cfi is final needs its node measured, which only a browser can
  * do: the browser specs check it.
@@ -51,7 +51,7 @@ const expectSecondItemStartThenCfi = async (
   expect(positions[0]).toEqual({
     cfi: reader.cfi.generateRootCfi(item.item),
     percentageEstimateOfBook: 0.5,
-    isFinal: false,
+    state: "standIn",
   })
   expect(positions[1]).toMatchObject({ cfi, percentageEstimateOfBook: 0.5 })
 }
@@ -130,7 +130,7 @@ describe("where the reader opens", () => {
        */
       expect(settled.begin.spineItemIndex).toBe(0)
       expect(positions).toEqual(
-        notFinalThenFinal({
+        standInThenFinal({
           cfi: settled.begin.cfi,
           percentageEstimateOfBook: 0,
         }),
@@ -163,7 +163,7 @@ describe("where the reader opens", () => {
     expect(settled.begin.spineItemIndex).toBe(1)
     // The second of two items, each half the book.
     expect(positions).toEqual(
-      notFinalThenFinal({
+      standInThenFinal({
         cfi: settled.begin.cfi,
         percentageEstimateOfBook: 0.5,
       }),
