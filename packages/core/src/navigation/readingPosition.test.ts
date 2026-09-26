@@ -1,5 +1,5 @@
 // @vitest-environment jsdom
-import { firstValueFrom } from "rxjs"
+import { filter, firstValueFrom } from "rxjs"
 import { describe, expect, it, onTestFinished, vi } from "vitest"
 import { SpinePosition } from "../spine/types"
 import {
@@ -316,5 +316,140 @@ describe("reading position", () => {
     await settledOn(reader, 1)
 
     expect(positions).toEqual([expected])
+  })
+})
+
+describe("reading position and settled pagination", () => {
+  type ItemNamedByStream = {
+    stream: "readingPosition" | "settledPagination"
+    itemIndex: number | undefined
+  }
+
+  /**
+   * The item each stream names, in the order they emit: the reading position's
+   * cfi, and the begin edge of every settled pagination result.
+   */
+  const recordItemsNamedByReadingPositionAndSettledPagination = (
+    reader: ReturnType<typeof createEnhancedTestReader>,
+  ) => {
+    const itemsNamedInOrder: ItemNamedByStream[] = []
+
+    reader.navigation.readingPosition$.subscribe((readingPosition) => {
+      itemsNamedInOrder.push({
+        stream: "readingPosition",
+        itemIndex: reader.cfi.parseCfi(readingPosition.cfi).itemIndex,
+      })
+    })
+    reader.pagination.state$
+      .pipe(filter((pagination) => pagination.isSettled))
+      .subscribe((pagination) => {
+        itemsNamedInOrder.push({
+          stream: "settledPagination",
+          itemIndex: pagination.begin.spineItemIndex,
+        })
+      })
+
+    return itemsNamedInOrder
+  }
+
+  /**
+   * Once the reading position names the place a navigation goes to,
+   * pagination's next settled result names it too, and none names the place
+   * the navigation left.
+   */
+  const expectSettledPaginationToFollowTheReadingPosition = (
+    itemsNamedInOrder: ItemNamedByStream[],
+    { from, to }: { from: number; to: number },
+  ) => {
+    const readingPositionMovedAt = itemsNamedInOrder.findIndex(
+      ({ stream, itemIndex }) =>
+        stream === "readingPosition" && itemIndex === to,
+    )
+    const firstSettledOnNewPlaceAt = itemsNamedInOrder.findIndex(
+      ({ stream, itemIndex }) =>
+        stream === "settledPagination" && itemIndex === to,
+    )
+    const settledOnPlaceLeftAfterwards = itemsNamedInOrder
+      .slice(readingPositionMovedAt + 1)
+      .filter(
+        ({ stream, itemIndex }) =>
+          stream === "settledPagination" && itemIndex === from,
+      )
+
+    expect(readingPositionMovedAt).toBeGreaterThan(-1)
+    expect(firstSettledOnNewPlaceAt).toBeGreaterThan(readingPositionMovedAt)
+    expect(settledOnPlaceLeftAfterwards).toEqual([])
+  }
+
+  it.each([
+    ["without animation", false],
+    ["with a page turn", "turn"],
+  ] as const)(
+    "moves before pagination settles on a navigation's place, %s",
+    async (_, animation) => {
+      const reader = createEnhancedTestReader()
+
+      mountTestReader(reader)
+      await settledOn(reader, 0)
+
+      const itemsNamedInOrder =
+        recordItemsNamedByReadingPositionAndSettledPagination(reader)
+
+      reader.navigation.goToSpineItem({ indexOrId: 1, animation })
+      await settledOn(reader, 1)
+
+      expectSettledPaginationToFollowTheReadingPosition(itemsNamedInOrder, {
+        from: 0,
+        to: 1,
+      })
+    },
+  )
+
+  it("moves before pagination settles on a navigation's place, into an item still loading", async () => {
+    const secondItem = holdItem("/page_1.jpg")
+    const reader = createEnhancedTestReader({
+      getRenderer: secondItem.getRenderer,
+    })
+
+    mountTestReader(reader)
+    await settledOn(reader, 0)
+
+    const itemsNamedInOrder =
+      recordItemsNamedByReadingPositionAndSettledPagination(reader)
+
+    reader.navigation.goToSpineItem({ indexOrId: 1, animation: false })
+    await waitFor(100)
+    secondItem.release()
+    await settledOn(reader, 1)
+
+    expectSettledPaginationToFollowTheReadingPosition(itemsNamedInOrder, {
+      from: 0,
+      to: 1,
+    })
+  })
+
+  it("moves before pagination settles on a navigation's place, when the book is laid out again before it loads", async () => {
+    const secondItem = holdItem("/page_1.jpg")
+    const reader = createEnhancedTestReader({
+      getRenderer: secondItem.getRenderer,
+    })
+
+    mountTestReader(reader)
+    await settledOn(reader, 0)
+
+    const itemsNamedInOrder =
+      recordItemsNamedByReadingPositionAndSettledPagination(reader)
+
+    reader.navigation.goToSpineItem({ indexOrId: 1, animation: false })
+    await waitFor(100)
+    reader.layout()
+    await waitFor(100)
+    secondItem.release()
+    await settledOn(reader, 1)
+
+    expectSettledPaginationToFollowTheReadingPosition(itemsNamedInOrder, {
+      from: 0,
+      to: 1,
+    })
   })
 })
