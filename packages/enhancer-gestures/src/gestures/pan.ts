@@ -1,6 +1,6 @@
 import type { HookManager, Reader } from "@prose-reader/core"
 import type { PanRecognizer } from "gesturx"
-import { filter, map, merge, of, switchMap, tap } from "rxjs"
+import { filter, finalize, map, merge, of, switchMap, tap } from "rxjs"
 import type { GesturesSettingsManager } from "../SettingsManager"
 import type { Hook } from "../types"
 
@@ -38,6 +38,22 @@ export const registerPan = ({
            */
           let lastDelta = { x: 0, y: 0 }
 
+          /**
+           * Whether this pan moves the page through the pan navigator, which
+           * holds the navigation until it is stopped. However the pan ends,
+           * it stops it, or the navigation stays held until the next pan.
+           */
+          let isPanningThePage = false
+
+          const stopPanningThePage = (delta: { x: number; y: number }) => {
+            if (!isPanningThePage) return
+
+            isPanningThePage = false
+
+            if (reader.navigation.panNavigator.value.isStarted)
+              reader.navigation.panNavigator.stop(delta)
+          }
+
           const moveAndEnd$ = merge(panMove$, panEnd$).pipe(
             tap((event) => {
               const isZooming = reader.zoom.state.isZooming
@@ -67,12 +83,20 @@ export const registerPan = ({
                   },
                 )
 
+                // A page moved before the zoom began lands where it was left.
+                if (event.type === `panEnd`)
+                  stopPanningThePage(
+                    reader.navigation.panNavigator.value.lastDelta,
+                  )
+
                 return
               }
 
               if (panNavigation !== "pan") return
 
               if (event.type === `panMove`) {
+                isPanningThePage = true
+
                 if (!reader.navigation.panNavigator.value.isStarted) {
                   reader.navigation.panNavigator.start({
                     x: event.deltaX,
@@ -90,15 +114,14 @@ export const registerPan = ({
                 return
               }
 
-              if (
-                event.type === `panEnd` &&
-                reader.navigation.panNavigator.value.isStarted
-              ) {
-                reader.navigation.panNavigator.stop({
-                  x: event.deltaX,
-                  y: event.deltaY,
-                })
-              }
+              stopPanningThePage({ x: event.deltaX, y: event.deltaY })
+            }),
+            /**
+             * Torn down before it ended, as when the gestures settings change
+             * mid-pan, the pan still lands where it was left.
+             */
+            finalize(() => {
+              stopPanningThePage(reader.navigation.panNavigator.value.lastDelta)
             }),
           )
 
