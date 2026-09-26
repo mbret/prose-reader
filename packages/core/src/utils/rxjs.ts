@@ -1,6 +1,14 @@
 import { isShallowEqual } from "@prose-reader/shared"
-import { defer, Observable, type OperatorFunction, of } from "rxjs"
-import { distinctUntilChanged, first, map, switchMap } from "rxjs/operators"
+import {
+  defer,
+  distinctUntilChanged,
+  first,
+  map,
+  Observable,
+  type OperatorFunction,
+  of,
+  switchMap,
+} from "rxjs"
 import { pick } from "./objects"
 
 export const mapKeysTo = <R extends Record<string, unknown>, K extends keyof R>(

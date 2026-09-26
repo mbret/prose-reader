@@ -1,6 +1,16 @@
 import type { Manifest } from "@prose-reader/shared"
-import { merge, type Observable, type ObservedValueOf, of, Subject } from "rxjs"
-import { distinctUntilChanged, map, skip, takeUntil, tap } from "rxjs/operators"
+import {
+  distinctUntilChanged,
+  map,
+  merge,
+  type Observable,
+  type ObservedValueOf,
+  of,
+  Subject,
+  skip,
+  takeUntil,
+  tap,
+} from "rxjs"
 import { CfiManager } from "./cfi"
 import {
   HTML_ATTRIBUTE_DATA_READER_ID,

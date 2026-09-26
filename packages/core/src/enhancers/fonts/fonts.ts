@@ -2,10 +2,11 @@ import {
   map,
   type Observable,
   type ObservedValueOf,
+  pairwise,
   Subject,
   takeUntil,
+  tap,
 } from "rxjs"
-import { pairwise, tap } from "rxjs/operators"
 import type { SettingsInterface } from "../../settings/SettingsInterface"
 import { upsertCSSToFrame } from "../../utils/frames"
 import type { EnhancerOutput, RootEnhancer } from "../types/enhancer"
