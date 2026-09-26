@@ -107,8 +107,8 @@ export class InternalNavigator extends DestroyableClass {
    * either, which only shows once the document is loaded: until then this is
    * the cfi as asked, then the first character of the page the reader landed
    * on, at the start of the item. A navigation whose target names nothing in
-   * the book at all, such as a malformed cfi, is ignored, and leaves this
-   * where it was.
+   * the book at all, such as a cfi that can't be read, is ignored, and leaves
+   * this where it was.
    *
    * It only moves when the reader navigates, and once more when such a
    * navigation finds its page, or finds that its cfi names nothing: a relayout
@@ -161,11 +161,11 @@ export class InternalNavigator extends DestroyableClass {
       })
 
     /**
-     * A navigation whose target names nothing in the book, such as a malformed
-     * cfi, or a cfi or a spine item the book does not have, is ignored: the
-     * reader has nowhere to go, and stays where it is. It is dropped before
-     * anything hears of it, so it does not replace the first navigation
-     * either.
+     * A navigation whose target names nothing in the book, such as a cfi that
+     * can't be read, or a cfi or a spine item the book does not have, is
+     * ignored: the reader has nowhere to go, and stays where it is. It is
+     * dropped before anything hears of it, so it does not replace the first
+     * navigation either.
      */
     const userNavigationInBook$ = userNavigation$.pipe(
       filter(({ target }) => {

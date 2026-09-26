@@ -60,9 +60,10 @@ It is set the moment a navigation happens:
   the chapter has loaded, it becomes the first character of the page shown, and
   stays there.
 
-A navigation whose target names nothing in the book, such as a malformed cfi or
-a cfi of a chapter the book does not have, is ignored with a warning: the reader
-stays where it is, and so does the reading position.
+A navigation whose target names nothing in the book, such as a cfi that
+[can't be read](../cfi/about.md) or a cfi of a chapter the book does not have,
+is ignored with a warning: the reader stays where it is, and so does the
+reading position.
 
 Its `percentageEstimateOfBook` is where the page holding the `cfi` starts,
 estimated from the `progressionWeight` of each spine item in the manifest, or

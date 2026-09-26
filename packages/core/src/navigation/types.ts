@@ -23,10 +23,10 @@ export type NavigationTargetValues = {
   /** The start of a spine item, by index or id. */
   spineItem: number | string
   /**
-   * A cfi. A malformed one names nothing in the book. One whose path leads to
-   * nothing in its spine item's document goes to the start of the item, and
-   * once the document is loaded, the reading position is the page landed on
-   * rather than the cfi.
+   * A cfi. One that can't be read names nothing in the book. One whose path
+   * leads to nothing in its spine item's document goes to the start of the
+   * item, and once the document is loaded, the reading position is the page
+   * landed on rather than the cfi.
    */
   cfi: string
   /**
