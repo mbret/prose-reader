@@ -49,21 +49,19 @@ export const createNavigationResolver = ({
     b: { x: number; y: number },
   ) => a.x !== b.x || a.y !== b.y
 
-  const getNavigationForCfi = (cfi: string): SpinePosition | undefined => {
-    const {
-      node,
-      offset = 0,
-      spineItem,
-    } = cfiManager.resolveCfi({
-      cfi,
-    })
-
-    if (!spineItem) {
-      Report.warn(NAMESPACE, `unable to detect item id from cfi ${cfi}`)
-
-      return undefined
-    }
-
+  /**
+   * The position of the page holding a node of a spine item, and offset in it
+   * when it is text. Without a node, the start of the item.
+   */
+  const getNavigationForNode = ({
+    spineItem,
+    node,
+    offset = 0,
+  }: {
+    spineItem: SpineItem
+    node: Node | null
+    offset?: number
+  }): SpinePosition => {
     const spineItemNavigation = node
       ? spineItemNavigator.getNavigationFromNode(spineItem, node, offset)
       : new SpineItemPosition({ x: 0, y: 0 })
@@ -77,6 +75,22 @@ export const createNavigationResolver = ({
       pageSizeWidth: viewport.pageSize.width,
       visibleAreaRectWidth: viewport.absoluteViewport.width,
     })
+  }
+
+  /**
+   * The position of the page holding the node a cfi names, or of its item's
+   * start when the node cannot be found.
+   */
+  const getNavigationForCfi = (cfi: string): SpinePosition | undefined => {
+    const { node, offset, spineItem } = cfiManager.resolveCfi({ cfi })
+
+    if (!spineItem) {
+      Report.warn(NAMESPACE, `unable to detect item id from cfi ${cfi}`)
+
+      return undefined
+    }
+
+    return getNavigationForNode({ spineItem, node, offset })
   }
 
   const getNavigationForLastPage = (spineItem: SpineItem): SpinePosition => {
@@ -193,6 +207,7 @@ export const createNavigationResolver = ({
         spineLocator: locator,
         viewport,
       }),
+    getNavigationForNode,
     getNavigationForCfi,
     getNavigationForLastPage,
     getNavigationForSpineIndexOrId,

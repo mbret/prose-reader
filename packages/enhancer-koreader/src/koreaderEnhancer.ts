@@ -168,7 +168,9 @@ export const koreaderEnhancer =
       // reading position stays the same.
       reader.navigation.navigation$,
     ]).pipe(
-      switchMap(([{ cfi }, xpointerNavigation]) => {
+      switchMap(([{ cfi, isFinal }, xpointerNavigation]) => {
+        const { target } = reader.navigation.getNavigation()
+
         /**
          * On its way to an xpointer whose chapter is loading, the reading
          * position is the chapter start. The xpointer itself is the better
@@ -176,13 +178,25 @@ export const koreaderEnhancer =
          */
         const isNavigatingToXPointer =
           xpointerNavigation !== undefined &&
-          reader.navigation.getNavigation().target ===
-            xpointerNavigation.target &&
+          target === xpointerNavigation.target &&
           reader.cfi.isRootCfi(cfi)
 
-        return isNavigatingToXPointer
-          ? of(xpointerNavigation.xpointer)
-          : readingPositionToXPointer(cfi)
+        if (isNavigatingToXPointer) return of(xpointerNavigation.xpointer)
+
+        /**
+         * On its way to a cfi naming a place, such as the one the book was
+         * reopened at, the reading position is the chapter start until the
+         * chapter's document shows where the cfi leads. Pushed, it would
+         * overwrite a better position on the server: the place, or the page
+         * shown when the cfi names none, is reported once known.
+         */
+        const isStandingInForCfiPlace =
+          !isFinal &&
+          reader.cfi.isRootCfi(cfi) &&
+          target.type === "cfi" &&
+          !reader.cfi.isRootCfi(target.value)
+
+        return isStandingInForCfiPlace ? EMPTY : readingPositionToXPointer(cfi)
       }),
       distinctUntilChanged(),
       takeUntil(reader.$.destroy$),

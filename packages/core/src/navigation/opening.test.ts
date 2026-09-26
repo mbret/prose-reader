@@ -6,6 +6,7 @@ import {
   createTestReader,
   installReaderTestEnvironment,
   mountTestReader,
+  renderTextDocuments,
   settledOn,
 } from "../tests/readerHarness"
 import type { ReadingPosition } from "./types"
@@ -27,6 +28,33 @@ const notFinalThenFinal = ({
 /** Resolves once the reading position is final. */
 const readingPositionIsFinal = (positions: ReadingPosition[]) =>
   vi.waitFor(() => expect(positions.at(-1)?.isFinal).toBe(true))
+
+/**
+ * The reading positions of opening at a cfi naming a place in the second of
+ * two items, each half the book: the item's start while it loads, not final,
+ * then the cfi once its document shows it, never the start of the book.
+ * Whether the cfi is final needs its node measured, which only a browser can
+ * do: the browser specs check it.
+ */
+const expectSecondItemStartThenCfi = async (
+  reader: ReturnType<typeof createTestReader>,
+  positions: ReadingPosition[],
+  cfi: string,
+) => {
+  await vi.waitFor(() => expect(positions.at(-1)?.cfi).toBe(cfi))
+
+  const item = reader.spineItemsManager.get(1)
+
+  if (!item) throw new Error("item 1 is missing")
+
+  expect(positions).toHaveLength(2)
+  expect(positions[0]).toEqual({
+    cfi: reader.cfi.generateRootCfi(item.item),
+    percentageEstimateOfBook: 0.5,
+    isFinal: false,
+  })
+  expect(positions[1]).toMatchObject({ cfi, percentageEstimateOfBook: 0.5 })
+}
 
 describe("where the reader opens", () => {
   it("is the start of the book without a target, as a navigation of its own", async () => {
@@ -51,7 +79,11 @@ describe("where the reader opens", () => {
 
   it("is its target, without its reading position passing through the start of the book", async () => {
     const cfi = "epubcfi(/6/4[1]!/4/2)"
-    const reader = createTestReader({ target: { type: "cfi", value: cfi } })
+    const reader = createTestReader({
+      target: { type: "cfi", value: cfi },
+      // Items with a document, where the cfi is found.
+      getRenderer: renderTextDocuments,
+    })
 
     const positions: ReadingPosition[] = []
     reader.navigation.readingPosition$.subscribe((position) => {
@@ -60,15 +92,7 @@ describe("where the reader opens", () => {
 
     mountTestReader(reader)
     await settledOn(reader, 1)
-    await readingPositionIsFinal(positions)
-
-    /**
-     * The second of two items, each half the book: the cfi from the start,
-     * final once the page holding it is laid out.
-     */
-    expect(positions).toEqual(
-      notFinalThenFinal({ cfi, percentageEstimateOfBook: 0.5 }),
-    )
+    await expectSecondItemStartThenCfi(reader, positions, cfi)
   })
 
   it.each([
@@ -152,7 +176,10 @@ describe("where the reader opens", () => {
    */
   it("is its target when a navigation asked for before it opens names nothing in the book", async () => {
     const cfi = "epubcfi(/6/4[1]!/4/2)"
-    const reader = createTestReader({ target: { type: "cfi", value: cfi } })
+    const reader = createTestReader({
+      target: { type: "cfi", value: cfi },
+      getRenderer: renderTextDocuments,
+    })
 
     const navigations: string[] = []
     reader.navigation.navigation$
@@ -176,12 +203,9 @@ describe("where the reader opens", () => {
     await vi.waitFor(() => expect(navigations[0]).toBe("user"))
 
     const settled = await settledOn(reader)
-    await readingPositionIsFinal(positions)
 
     expect(settled.begin.spineItemIndex).toBe(1)
-    expect(positions).toEqual(
-      notFinalThenFinal({ cfi, percentageEstimateOfBook: 0.5 }),
-    )
+    await expectSecondItemStartThenCfi(reader, positions, cfi)
   })
 
   it("is the place a position target names in the laid out book", async () => {
@@ -207,6 +231,7 @@ describe("where the reader opens", () => {
     const reader = createTestReader({
       target: { type: "cfi", value: cfi },
       numberOfAdjacentSpineItemToPreLoad: 0,
+      getRenderer: renderTextDocuments,
     })
 
     reader.hookManager.register("cfi.beforeResolve", ({ cfi }) =>
@@ -225,11 +250,13 @@ describe("where the reader opens", () => {
     )
 
     const settled = await settledOn(reader)
-    await readingPositionIsFinal(positions)
 
     expect(settled.begin.spineItemIndex).toBe(1)
-    expect(positions).toEqual(
-      notFinalThenFinal({ cfi, percentageEstimateOfBook: 0.5 }),
-    )
+
+    /**
+     * The cfi as given, which names the place in the book the enhancer maps
+     * onto the second item.
+     */
+    await expectSecondItemStartThenCfi(reader, positions, cfi)
   })
 })

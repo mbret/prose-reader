@@ -77,16 +77,31 @@ export const createTargetResolvers = ({
       if (!spineItem)
         return resolvers.position(context.previousNavigation.position, context)
 
+      const { node, offset } = cfi.resolveCfi({ cfi: value })
+      const namesOnlyItsItem = cfi.isRootCfi(value)
+
       return {
         spineItem: spineItem.index,
-        position: navigationResolver.getNavigationForCfi(value),
-        // A cfi naming only an item is anchored at the page it lands on.
-        anchor: cfi.isRootCfi(value)
-          ? undefined
-          : { cfi: value, isFinal: false },
+        position: navigationResolver.getNavigationForNode({
+          spineItem,
+          node,
+          offset,
+        }),
+        /**
+         * The place the cfi names, once the item's document shows it there,
+         * as for any target naming a place in a document. A cfi naming only
+         * its item names no place, nor does one whose path leads to nothing in
+         * the document, or into an item without one: they are anchored at the
+         * page they land on. Until the item is loaded the navigation has no
+         * place, and restorations resolve the cfi again.
+         */
+        anchor:
+          node && !namesOnlyItsItem
+            ? { cfi: value, isFinal: false }
+            : undefined,
         directionFromLastNavigation: "forward",
         snapToPage: false,
-        awaitsDocument: false,
+        awaitsDocument: !namesOnlyItsItem && !spineItem.value.isLoaded,
       }
     },
 

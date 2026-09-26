@@ -51,7 +51,9 @@ the position the reader is on, since pushing one would overwrite a better
 position on the server:
 
 - A position in the text is emitted once its chapter's document is loaded,
-  rather than as the chapter start in the meantime.
+  rather than as the chapter start in the meantime. On its way to a cfi naming
+  a place, such as the one the book was reopened at, nothing is emitted until
+  the chapter shows where the cfi leads.
 - While the reader is on its way to an xpointer whose chapter is loading, it
   emits that xpointer, not the chapter start shown in the meantime.
 - When an xpointer's place cannot be found once its chapter has loaded, a stale

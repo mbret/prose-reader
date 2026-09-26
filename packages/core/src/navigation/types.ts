@@ -22,7 +22,11 @@ export type NavigationTargetValues = {
   position: SpinePosition | UnboundSpinePosition
   /** The start of a spine item, by index or id. */
   spineItem: number | string
-  /** A cfi. One that can't be read names nothing in the book. */
+  /**
+   * A cfi. One that can't be read names nothing in the book. One whose path
+   * leads to nothing in its spine item's document goes to the start of the
+   * item.
+   */
   cfi: string
   /**
    * A place in a spine item's document, which `find` looks for once the
@@ -124,9 +128,9 @@ export type ReadingPosition = {
   percentageEstimateOfBook: number
   /**
    * Whether the reader has found the page the navigation took it to. Until
-   * then the value stands in: `cfi` is the place the target names, or the
-   * start of the spine item the navigation goes to when it names none, and
-   * the progress is that item's start. It is still where the reader is, as
+   * then the value stands in: `cfi` is the place the target names once its
+   * document shows it, or the start of the spine item the navigation goes to,
+   * and the progress is that item's start. It is still where the reader is, as
    * far as it knows, and the value to save. A final value stays until the
    * next navigation.
    */
@@ -182,9 +186,10 @@ export type InternalNavigationEntry = {
   spineItem?: string | number
   /**
    * Where this navigation takes the reader in the text, the value restoration
-   * returns to and the reading position shows. Named by the target when it is
-   * a cfi, otherwise found by `withAnchor` for every entry, restorations
-   * included; `undefined` until the page it goes to is laid out.
+   * returns to and the reading position shows. The place the target names, a
+   * cfi or what a selector found, once its document shows it there. Otherwise
+   * found by `withAnchor` for every entry, restorations included; `undefined`
+   * until the page it goes to is laid out.
    */
   anchor?: NavigationAnchor
 } & NavigationConsolidation
