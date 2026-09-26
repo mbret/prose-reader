@@ -1,6 +1,6 @@
 {
   "npmClient": "pnpm",
-  "version": "17.0.3",
+  "version": "17.0.4",
   "command": {
     "publish": {
       "graphType": "all"
