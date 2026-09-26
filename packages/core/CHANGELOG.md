@@ -3,6 +3,28 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## [17.0.0](https://github.com/mbret/prose-reader/compare/v16.0.1...v17.0.0) (2026-09-26)
+
+
+### ⚠ BREAKING CHANGES
+
+* **cfi:** parse throws for strings it used to read in part, such as
+a cfi with text after its closing parenthesis or without one, or with a
+step or an offset missing its number.
+
+Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
+Claude-Session: https://claude.ai/code/session_015NcxSCfPM1xnxgFqpDBeRu
+* **navigation:** a navigation to a spine item the book does not have is
+ignored rather than clamped to its first or last item, and a navigation
+to an empty cfi is ignored rather than going to the first item.
+
+### Bug Fixes
+
+* **cfi:** throw for a string that is only partly a cfi ([a071e27](https://github.com/mbret/prose-reader/commit/a071e27d351cd807139fd9bfa9a0644a95c6dfef))
+* **navigation:** ignore a navigation whose target names nothing in the book ([5203b99](https://github.com/mbret/prose-reader/commit/5203b99cab0cf2564a369e3dfa5c121d50534317)), closes [#465](https://github.com/mbret/prose-reader/issues/465)
+
+
+
 ## [16.0.0](https://github.com/mbret/prose-reader/compare/v15.0.1...v16.0.0) (2026-09-26)
 
 
