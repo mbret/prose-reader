@@ -1,12 +1,13 @@
-import { BehaviorSubject, merge } from "rxjs"
 import {
+  BehaviorSubject,
   distinctUntilChanged,
   filter,
   map,
+  merge,
   skip,
   takeUntil,
   tap,
-} from "rxjs/operators"
+} from "rxjs"
 import { HTML_PREFIX } from "../constants"
 import type { Context } from "../context/Context"
 import type { Pagination } from "../pagination/Pagination"

@@ -3,6 +3,40 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## [15.0.1](https://github.com/mbret/prose-reader/compare/v15.0.0...v15.0.1) (2026-09-26)
+
+**Note:** Version bump only for package @prose-reader/react-reader
+
+
+
+
+
+## [15.0.0](https://github.com/mbret/prose-reader/compare/v14.1.0...v15.0.0) (2026-09-26)
+
+
+### ⚠ BREAKING CHANGES
+
+* **core:** `shouldUseSpreadModeForViewport` is removed from
+`@prose-reader/core`. Call `reader.viewport.wouldSpreadAt(size)` instead,
+which reads the book and the `spreadMode` setting from the reader.
+`Context.update` accepts only `rootElement` and `hasVerticalWriting`.
+
+Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
+Claude-Session: https://claude.ai/code/session_01DBqLS9PKYZf3fPBLPYkezW
+
+### Features
+
+* **core:** ask the reader about spreads instead of free functions ([33d9b41](https://github.com/mbret/prose-reader/commit/33d9b41e4f28beb762d53da58fdeb296a97872f9))
+* **react-reader:** add a layout dialog to the quick menu ([8a3ce75](https://github.com/mbret/prose-reader/commit/8a3ce7517846534fd8832713ca4e350ebd7d2664)), closes [#424](https://github.com/mbret/prose-reader/issues/424)
+
+
+### Bug Fixes
+
+* **deps:** declare the rxjs versions each package needs ([1b31ae0](https://github.com/mbret/prose-reader/commit/1b31ae0031a7d1eb6b2d914dbbc70ebd8c88b9d1))
+* **deps:** raise the rxjs floor to 7.5.5, the first to export its types ([eecd5af](https://github.com/mbret/prose-reader/commit/eecd5af26db5fb1c999b7f1012c11ae286206288))
+
+
+
 ## [14.0.0](https://github.com/mbret/prose-reader/compare/v13.0.5...v14.0.0) (2026-09-25)
 
 **Note:** Version bump only for package @prose-reader/react-reader

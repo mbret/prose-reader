@@ -1,5 +1,4 @@
-import { BehaviorSubject, type Observable } from "rxjs"
-import { takeUntil, tap } from "rxjs/operators"
+import { BehaviorSubject, type Observable, takeUntil, tap } from "rxjs"
 import { setStylePropertyIfChanged } from "../utils/dom"
 import { upsertCSSToFrame } from "../utils/frames"
 import type { EnhancerOutput, RootEnhancer } from "./types/enhancer"
