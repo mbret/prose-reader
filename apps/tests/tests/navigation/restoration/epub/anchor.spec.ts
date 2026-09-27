@@ -1274,9 +1274,10 @@ test.describe("Given an element without text holding content over several pages"
   /**
    * A cfi into the empty character data between an element's children, or
    * after its last one, names the boundary there: the element, at a child's
-   * index. The element starts where its first child does.
+   * index. The element starts where its first child does, and a boundary
+   * after its last child is where its contents end.
    */
-  test("a place between its children is on the page of the child after it, and one after its last child where the content after it is", async ({
+  test("a place between its children is on the page of the child after it, and one after its last child on the page its contents end", async ({
     page,
   }) => {
     const chapterIndex = await getLongChapterIndex(page)
@@ -1299,7 +1300,14 @@ test.describe("Given an element without text holding content over several pages"
       const gallery = document?.getElementById("gallery")
       const [firstImage, secondImage] = Array.from(gallery?.children ?? [])
 
-      if (!spineItem || !video || !gallery || !firstImage || !secondImage)
+      if (
+        !spineItem ||
+        !document ||
+        !video ||
+        !gallery ||
+        !firstImage ||
+        !secondImage
+      )
         throw new Error("the chapter holds no gallery")
 
       const getPageIndex = (node: Node, offset: number) =>
@@ -1309,14 +1317,53 @@ test.describe("Given an element without text holding content over several pages"
           chapterIndex,
         )
 
+      /**
+       * A paragraph whose text starts on one page and ends on the next, with
+       * the pages of its first and last characters.
+       */
+      const paragraphOverPages = Array.from(document.querySelectorAll("p"))
+        .map((paragraph) => {
+          const texts = Array.from(paragraph.childNodes).filter(
+            (node): node is Text =>
+              node.nodeType === Node.TEXT_NODE && !!node.textContent?.trim(),
+          )
+          const firstText = texts[0]
+          const lastText = texts[texts.length - 1]
+
+          return firstText && lastText
+            ? {
+                paragraph,
+                firstCharacter: getPageIndex(firstText, 0),
+                lastCharacter: getPageIndex(
+                  lastText,
+                  (lastText.textContent?.length ?? 1) - 1,
+                ),
+              }
+            : undefined
+        })
+        .find(
+          (candidate) =>
+            candidate !== undefined &&
+            (candidate.lastCharacter ?? 0) > (candidate.firstCharacter ?? 0),
+        )
+
+      if (!paragraphOverPages)
+        throw new Error("no paragraph's text goes on to the next page")
+
       return {
         lastPage: spineItem.numberOfPages - 1,
         video: getPageIndex(video, 0),
+        afterVideoSource: getPageIndex(video, video.childNodes.length),
         firstImage: getPageIndex(firstImage, 0),
         secondImage: getPageIndex(secondImage, 0),
         galleryStart: getPageIndex(gallery, 0),
         betweenImages: getPageIndex(gallery, 1),
         afterLastImage: getPageIndex(gallery, 2),
+        paragraphLastCharacter: paragraphOverPages.lastCharacter,
+        afterParagraphText: getPageIndex(
+          paragraphOverPages.paragraph,
+          paragraphOverPages.paragraph.childNodes.length,
+        ),
       }
     }, chapterIndex)
 
@@ -1325,10 +1372,12 @@ test.describe("Given an element without text holding content over several pages"
     expect(pageIndexes.firstImage).toBeLessThan(pageIndexes.secondImage ?? -1)
     expect(pageIndexes).toEqual({
       ...pageIndexes,
+      // Its source lays out no box: the video's own ends it.
+      afterVideoSource: pageIndexes.video,
       galleryStart: pageIndexes.firstImage,
       betweenImages: pageIndexes.secondImage,
-      // Nothing is rendered after the gallery, at the chapter's end.
-      afterLastImage: pageIndexes.lastPage,
+      afterLastImage: pageIndexes.secondImage,
+      afterParagraphText: pageIndexes.paragraphLastCharacter,
     })
   })
 })
