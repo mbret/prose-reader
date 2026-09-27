@@ -3,6 +3,14 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## [21.0.2](https://github.com/mbret/prose-reader/compare/v21.0.1...v21.0.2) (2026-09-27)
+
+### Bug Fixes
+
+* **navigation:** measure an element without text from the offset in it ([1f49c1e](https://github.com/mbret/prose-reader/commit/1f49c1ef504a49e2e55b5861098ecb708ea9457c))
+* **navigation:** place the boundary after an element's last child where its contents end ([12fe453](https://github.com/mbret/prose-reader/commit/12fe4530e36770a1028e37674489ba74d94f2326))
+
+
 ## [21.0.1](https://github.com/mbret/prose-reader/compare/v21.0.0...v21.0.1) (2026-09-27)
 
 ### Bug Fixes
