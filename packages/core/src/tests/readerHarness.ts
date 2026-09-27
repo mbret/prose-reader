@@ -130,11 +130,7 @@ const resolvedResource = () => of(new Response("", { status: 200 }))
  */
 export class TextDocumentRenderer extends DocumentRenderer {
   onCreateDocument() {
-    const frame = this.context.document.createElement("iframe")
-
-    this.setDocumentContainer(frame)
-
-    return of(frame)
+    return of(this.context.document.createElement("iframe"))
   }
 
   onLoadDocument() {
@@ -162,9 +158,7 @@ export class TextDocumentRenderer extends DocumentRenderer {
     return EMPTY
   }
 
-  onUnload() {
-    this.detach()
-  }
+  onUnload() {}
 
   onLayout() {
     return of(undefined)

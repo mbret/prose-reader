@@ -62,10 +62,11 @@ export type CoreHook =
     }
   | {
       /**
-       * Hook called before a document is released: when it is unloaded, when
-       * its load fails, or when the reader is destroyed, and never twice for
-       * the same document. A load still in progress is cancelled first, so its
-       * `item.onDocumentLoad` hooks are aborted by the time this runs.
+       * Hook called before a document is released, once for every document
+       * `item.onDocumentCreated` ran on: when it is unloaded, when its load
+       * fails, or when the reader is destroyed. A load still in progress is
+       * cancelled first, so its `item.onDocumentLoad` hooks are aborted by the
+       * time this runs.
        *
        * Synchronous: unload also runs during a synchronous `destroy`, before the
        * document is torn down and its container detached, so the hook is

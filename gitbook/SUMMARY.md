@@ -26,6 +26,7 @@
 * [Enhancers](learn/enhancers.md)
 * [Viewport](learn/viewport.md)
 * [Hooks](learn/hooks.md)
+* [Renderers](learn/renderers.md)
 * [Pagination](learn/pagination.md)
 * [Settings](learn/settings.md)
 * [Context](learn/context.md)
