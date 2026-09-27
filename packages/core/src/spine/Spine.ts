@@ -90,6 +90,7 @@ export class Spine extends DestroyableClass {
       settings,
       this.spineLayout,
       this.viewport,
+      this.isLayoutCurrent$,
     )
 
     this.pages = new Pages(
