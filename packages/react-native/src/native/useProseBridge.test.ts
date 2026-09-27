@@ -48,12 +48,12 @@ const noReaderState = { pagination: null, context: null, readingPosition: null }
 const firstChapter: ReadingPosition = {
   cfi: "epubcfi(/6/2[1]!)",
   percentageEstimateOfBook: 0,
-  state: "final",
+  status: "success",
 }
 const secondChapter: ReadingPosition = {
   cfi: "epubcfi(/6/4[2]!)",
   percentageEstimateOfBook: 0.5,
-  state: "final",
+  status: "success",
 }
 
 describe("Given the native end of the bridge", () => {

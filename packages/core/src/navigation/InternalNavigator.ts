@@ -44,6 +44,7 @@ import { withRestoredPosition } from "./restoration/withRestoredPosition"
 import { createTargetResolvers } from "./targets/createTargetResolvers"
 import { isTargetInBook } from "./targets/isTargetInBook"
 import type {
+  InternalNavigationAnchor,
   InternalNavigationEntry,
   NavigationModeController,
   NavigationTarget,
@@ -54,6 +55,18 @@ import type {
 const NAMESPACE = `navigation/InternalNavigator`
 
 const report = Report.namespace(NAMESPACE)
+
+/**
+ * A stand-in's cfi is its item's root cfi and a target place's never is, so
+ * both can be `pending`: every state the anchor moves on to is still a new
+ * reading position.
+ */
+const readingPositionStatusOfAnchorState = {
+  standIn: "pending",
+  targetPlace: "pending",
+  final: "success",
+  error: "error",
+} satisfies Record<InternalNavigationAnchor["state"], ReadingPosition["status"]>
 
 export class InternalNavigator extends DestroyableClass {
   /**
@@ -99,11 +112,12 @@ export class InternalNavigator extends DestroyableClass {
    * Where the reader is in the book, to save and reopen at, the same way
    * whatever the target: the current navigation's anchor, which the target
    * names once its document shows the place and `withAnchor` otherwise finds.
-   * Until the anchor is final, its progression is the start of the item the
-   * navigation goes to, and so is its cfi while it stands in, such as while
-   * that item loads: the only place a cfi can name there. A target whose
-   * document shows it names nothing, such as a cfi whose path leads nowhere,
-   * ends on the first character of the page the reader landed on.
+   * Until the anchor is final, the reading position is `pending` and its
+   * progression is the start of the item the navigation goes to, and so is
+   * its cfi while it stands in, such as while that item loads: the only place
+   * a cfi can name there. A target whose document shows it names nothing,
+   * such as a cfi whose path leads nowhere, ends on the first character of the
+   * page the reader landed on. One whose item fails to load ends in `error`.
    *
    * It only moves when the reader navigates, and again each time the anchor's
    * state moves on, even when its cfi and progression stay the same: a
@@ -117,6 +131,13 @@ export class InternalNavigator extends DestroyableClass {
       // An entry without a spine item has none, such as the navigator's first.
       map(({ anchor }) => anchor),
       filter(isDefined),
+      map(
+        ({ cfi, percentageEstimateOfBook, state }): ReadingPosition => ({
+          cfi,
+          percentageEstimateOfBook,
+          status: readingPositionStatusOfAnchorState[state],
+        }),
+      ),
       distinctUntilChanged(isShallowEqual),
     )
 

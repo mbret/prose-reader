@@ -1,5 +1,13 @@
 import { isShallowEqual } from "@prose-reader/shared"
-import { distinctUntilChanged, map, merge, type Observable, share } from "rxjs"
+import {
+  distinctUntilChanged,
+  filter,
+  map,
+  merge,
+  type Observable,
+  share,
+  skip,
+} from "rxjs"
 import type { SpineItem, SpineItemState } from "../spineItem/SpineItem"
 import { DestroyableClass } from "../utils/DestroyableClass"
 import { observeResize } from "../utils/rxjs"
@@ -28,6 +36,13 @@ export class SpineItemsObserver extends DestroyableClass {
   public itemLoad$: Observable<SpineItem>
   public itemUnload$: Observable<SpineItem>
 
+  /**
+   * Emits each time an item's load fails, once its state is `isError`, with
+   * the error in `item.value.error`. The item stays in error until it is
+   * unloaded: a load does not retry it.
+   */
+  public itemLoadFailure$: Observable<SpineItem>
+
   constructor(protected spineItemsManager: SpineItemsManager) {
     super()
 
@@ -54,6 +69,17 @@ export class SpineItemsObserver extends DestroyableClass {
 
     this.itemUnload$ = merge(
       ...items.map((item) => item.unloaded$.pipe(map(() => item))),
+    ).pipe(share())
+
+    this.itemLoadFailure$ = merge(
+      ...items.map((item) =>
+        item.watch("isError").pipe(
+          // The state it has when subscribed to is not a failure happening.
+          skip(1),
+          filter(Boolean),
+          map(() => item),
+        ),
+      ),
     ).pipe(share())
   }
 }

@@ -7,7 +7,10 @@ import {
   createTestManifest,
   createTestManifestSpineItems,
 } from "../../tests/utils"
-import type { InternalNavigationEntry, ReadingPosition } from "../types"
+import type {
+  InternalNavigationAnchor,
+  InternalNavigationEntry,
+} from "../types"
 import { withAnchor } from "./withAnchor"
 
 const itemStart = "epubcfi(/6/2[0]!)"
@@ -30,19 +33,26 @@ const expectedCfiPageStartProgression = 0.375
 
 /**
  * The spine and pages this step reads, held in whatever state a test needs:
- * a layout pending or current, an item ready or not. The page at any position
- * has a first visible node, so only the step's own guards can keep it from
- * being read.
+ * a layout pending or current, an item ready or not, or in error. The page at
+ * any position has a first visible node, so only the step's own guards can
+ * keep it from being read.
  */
 const createSpine = ({
   isLayoutCurrent = true,
   isReady = true,
+  isError = false,
 }: {
   isLayoutCurrent?: boolean
   isReady?: boolean
+  isError?: boolean
 } = {}) => {
   const item = { index: 0 }
-  const spineItem = { item, index: 0, numberOfPages: 4, value: { isReady } }
+  const spineItem = {
+    item,
+    index: 0,
+    numberOfPages: 4,
+    value: { isReady, isError },
+  }
   const spine = {
     isLayoutCurrent,
     spineItemsManager: {
@@ -100,7 +110,7 @@ const consolidateAnchor = (
   ).then(({ navigation }) => navigation.anchor)
 
 /** The start of the navigation's item, the first of two, while no place is known. */
-const standIn: ReadingPosition = {
+const standIn: InternalNavigationAnchor = {
   cfi: itemStart,
   percentageEstimateOfBook: 0,
   state: "standIn",
@@ -149,7 +159,7 @@ describe("withAnchor", () => {
      * page's own first character would restore to the page before at the
      * next relayout.
      */
-    const anchor: ReadingPosition = {
+    const anchor: InternalNavigationAnchor = {
       cfi: textElsewhere,
       percentageEstimateOfBook: 0.25,
       state: "final",
@@ -164,7 +174,7 @@ describe("withAnchor", () => {
      * its item. Finding it again at every restoration would follow the
      * spread: after a rotation the page shown first can be the other one.
      */
-    const anchor: ReadingPosition = {
+    const anchor: InternalNavigationAnchor = {
       cfi: itemStart,
       percentageEstimateOfBook: 0,
       state: "final",
@@ -181,7 +191,7 @@ describe("withAnchor", () => {
      * resolves to: the navigation's position is a spread's first page, and
      * the cfi can be on the second.
      */
-    const targetPlace: ReadingPosition = {
+    const targetPlace: InternalNavigationAnchor = {
       cfi: textElsewhere,
       percentageEstimateOfBook: 0,
       state: "targetPlace",
@@ -199,6 +209,39 @@ describe("withAnchor", () => {
       cfi: textElsewhere,
       percentageEstimateOfBook: expectedCfiPageStartProgression,
       state: "final",
+    })
+  })
+
+  describe("once the item the navigation goes to has failed to load", () => {
+    // An item whose load failed is not ready.
+    const failedItem = { isReady: false, isError: true }
+
+    it("ends in error at the item's start while no place is known", async () => {
+      expect(await consolidateAnchor({}, createSpine(failedItem))).toEqual({
+        ...standIn,
+        state: "error",
+      })
+    })
+
+    it("ends in error at the target's place, found before the load failed", async () => {
+      const targetPlace: InternalNavigationAnchor = {
+        cfi: textElsewhere,
+        percentageEstimateOfBook: 0,
+        state: "targetPlace",
+      }
+
+      expect(
+        await consolidateAnchor(
+          { anchor: targetPlace },
+          createSpine(failedItem),
+        ),
+      ).toEqual({ ...targetPlace, state: "error" })
+    })
+
+    it("keeps the anchor in error for the rest of the navigation, even once the item is ready", async () => {
+      const anchor: InternalNavigationAnchor = { ...standIn, state: "error" }
+
+      expect(await consolidateAnchor({ anchor }, createSpine())).toEqual(anchor)
     })
   })
 })

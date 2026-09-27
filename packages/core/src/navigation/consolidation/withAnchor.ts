@@ -9,9 +9,9 @@ import { PAGE_VISIBILITY_THRESHOLD } from "../../spine/Pages"
 import type { Spine } from "../../spine/Spine"
 import type { SpineItem } from "../../spineItem/SpineItem"
 import type {
+  InternalNavigationAnchor,
   InternalNavigationEntry,
   InternalNavigationInput,
-  ReadingPosition,
 } from "../types"
 
 type Navigation = {
@@ -53,11 +53,15 @@ type Navigation = {
  *   next page before that one shows the most. It keeps the anchor of the
  *   navigation it replaces, where the reader still is as far as it knows;
  *   the release finds its own.
+ * - Once the item the navigation goes to has failed to load, no page of it
+ *   can be found: the anchor ends in error, where it stood in or at the
+ *   target's place. A failed load lays the spine out, which restores the
+ *   navigation, so this step sees it.
  *
- * A final anchor is kept for the rest of the navigation. Restorations land on
- * the page holding it; taking that page's own first character instead would
- * restore to the page before at the next relayout, and every resize would
- * walk the reader back.
+ * A final anchor, or one in error, is kept for the rest of the navigation.
+ * Restorations land on the page holding a final one; taking that page's own
+ * first character instead would restore to the page before at the next
+ * relayout, and every resize would walk the reader back.
  */
 export const withAnchor =
   ({
@@ -150,7 +154,7 @@ export const withAnchor =
      */
     const getStandInAnchor = (
       navigation: N["navigation"],
-    ): ReadingPosition | undefined => {
+    ): InternalNavigationAnchor | undefined => {
       const spineItem = spine.spineItemsManager.get(navigation.spineItem)
 
       if (!spineItem) return undefined
@@ -165,13 +169,25 @@ export const withAnchor =
       }
     }
 
+    /**
+     * An anchor whose page is not found yet, in error once the item the
+     * navigation goes to has failed to load: none of its pages ever will be.
+     */
+    const endInErrorOnLoadFailure = (
+      anchor: InternalNavigationAnchor | undefined,
+      navigation: N["navigation"],
+    ): InternalNavigationAnchor | undefined =>
+      anchor && spine.spineItemsManager.get(navigation.spineItem)?.value.isError
+        ? { ...anchor, state: "error" }
+        : anchor
+
     const getAnchor = (
       navigation: N["navigation"],
       awaitsDocument: N["awaitsDocument"],
-    ): ReadingPosition | undefined => {
+    ): InternalNavigationAnchor | undefined => {
       const { anchor } = navigation
 
-      if (anchor?.state === "final") return anchor
+      if (anchor?.state === "final" || anchor?.state === "error") return anchor
 
       if (anchor?.state === "targetPlace") {
         const targetPlacePage = getPageHoldingTargetAnchor(anchor.cfi)
@@ -183,14 +199,15 @@ export const withAnchor =
                 getAnchorPageStartProgression(targetPlacePage),
               state: "final",
             }
-          : anchor
+          : endInErrorOnLoadFailure(anchor, navigation)
       }
 
       const page = awaitsDocument
         ? undefined
         : getPageAtNavigationPosition(navigation)
 
-      if (!page) return getStandInAnchor(navigation)
+      if (!page)
+        return endInErrorOnLoadFailure(getStandInAnchor(navigation), navigation)
 
       return {
         cfi: cfi.generateCfiForPage(page.spineItem.item, page.page),

@@ -228,7 +228,7 @@ const SaveReadingPosition = ({ bookId }: { bookId: string }) => {
 `storage` stands for wherever your app keeps data. The first position the
 reader reports is where it opens, in the chapter of the `target` sent with
 `load` or at the start of the book, never the start of the book on the way to a
-target: until that chapter has loaded, its start, `standIn`. Every value can be
+target: until that chapter has loaded, its start, `pending`. Every value can be
 saved as it comes, as the
 [navigation guide](../learn/navigation.md#saving-it) explains. `load` clears the state
 the moment it is called, and nothing the previous book's reader reports lands

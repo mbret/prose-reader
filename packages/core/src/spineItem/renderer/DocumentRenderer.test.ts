@@ -186,7 +186,7 @@ describe(`DocumentRenderer`, () => {
   })
 
   describe(`when a load fails`, () => {
-    it(`is in error with what it created released, and loads on the next load()`, async () => {
+    it(`is in error with what it created released, stays in error on the next load(), and loads once unloaded`, async () => {
       const { renderer, hookManager, cleanup } = createHarness()
 
       const unloadedItemIds: string[] = []
@@ -219,6 +219,19 @@ describe(`DocumentRenderer`, () => {
       expect(unloadedItemIds).toEqual([`item-1`])
       expect(renderer.onUnloadCalls).toBe(1)
 
+      /**
+       * A load is a request, which a failed load does not retry: the loader
+       * asks for every item it wants loaded after each layout, and a failure
+       * lays the spine out.
+       */
+      renderer.load()
+
+      await waitFor(0)
+
+      expect(renderer.value.state).toBe(`error`)
+
+      // An unload leaves it idle, and the next load loads.
+      renderer.unload()
       renderer.load()
       renderer.onLoadDocumentSubject.next()
       renderer.onLoadDocumentSubject.complete()

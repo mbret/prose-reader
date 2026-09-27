@@ -20,7 +20,7 @@ import { PAGE_VISIBILITY_THRESHOLD } from "../spine/Pages"
 import type { Spine } from "../spine/Spine"
 import type { SpineItemsManager } from "../spine/SpineItemsManager"
 import type { SpinePosition, UnboundSpinePosition } from "../spine/types"
-import type { SpineItem } from "../spineItem/SpineItem"
+import type { SpineItem, SpineItemState } from "../spineItem/SpineItem"
 import { DestroyableClass } from "../utils/DestroyableClass"
 import { withoutSettlement } from "./edges"
 import type { Pagination } from "./Pagination"
@@ -34,6 +34,13 @@ type ResolvedEdges = {
   begin: SettledPaginationEdge<PaginationEdge>
   end: SettledPaginationEdge<PaginationEdge>
 }
+
+/**
+ * Whether an item shows what it is going to: ready, or failed to load, which
+ * it stays until it is unloaded.
+ */
+const isSpineItemSettled = ({ isReady, isError }: SpineItemState) =>
+  isReady || isError
 
 export class PaginationController extends DestroyableClass {
   constructor(
@@ -220,9 +227,10 @@ export class PaginationController extends DestroyableClass {
    * trigger cancels this one, so the result is for the latest request.
    *
    * It settles only if the visible range is known and, right now, the layout
-   * is current and the visible items are ready. An item that is loaded and
-   * laid out may legitimately resolve to its root cfi; an unloaded one is not
-   * settled merely because a root cfi can be generated for it.
+   * is current and the visible items are settled: ready, or failed to load.
+   * An item that is loaded and laid out may legitimately resolve to its root
+   * cfi; an unloaded one is not settled merely because a root cfi can be
+   * generated for it.
    */
   private resolvePositions({
     metrics,
@@ -242,18 +250,19 @@ export class PaginationController extends DestroyableClass {
     const settles =
       visibleRangeIsKnown &&
       this.spine.isLayoutCurrent &&
-      items.every((item) => item.value.isReady)
+      items.every((item) => isSpineItemSettled(item.value))
 
     if (!settles) return of({ isSettled: false, ...resolved })
 
-    return this.settledUntilReadinessDrops(resolved, items)
+    return this.settledUntilAnItemIsNoLongerSettled(resolved, items)
   }
 
   /**
-   * Settled until a visible item stops being ready, an unload for one. The
-   * layout becoming stale is a trigger of its own, which cancels this result.
+   * Settled until a visible item is no longer settled, which only an unload
+   * does. The layout becoming stale is a trigger of its own, which cancels
+   * this result.
    */
-  private settledUntilReadinessDrops(
+  private settledUntilAnItemIsNoLongerSettled(
     resolved: ResolvedEdges,
     items: SpineItem[],
   ): Observable<PaginationInfo> {
@@ -263,7 +272,10 @@ export class PaginationController extends DestroyableClass {
       of(settled),
       merge(
         ...items.map((item) =>
-          item.isReady$.pipe(filter((isReady) => !isReady)),
+          item.pipe(
+            map(isSpineItemSettled),
+            filter((isSettled) => !isSettled),
+          ),
         ),
       ).pipe(
         // An item destroyed with the reader completes without dropping.

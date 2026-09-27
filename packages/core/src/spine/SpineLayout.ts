@@ -60,11 +60,17 @@ export class SpineLayout extends DestroyableClass {
   ) {
     super()
 
-    // upstream change, meaning we need to layout again to both resize correctly each item but also to
-    // adjust positions, etc
-    // This is dispatched AFTER the spine item state has been updated.
+    /**
+     * An item's load ended, loaded, failed or unloaded: its content changed,
+     * and so can its size and the positions after it. A failed load ends a
+     * load as the other two do, with the item released as an unload leaves
+     * it, and a layout is what restores the navigation and settles pagination
+     * on the item in error. Each is dispatched after the item's state has
+     * been updated.
+     */
     const spineItemNeedsLayout$ = merge(
       spineItemsObserver.itemLoad$,
+      spineItemsObserver.itemLoadFailure$,
       spineItemsObserver.itemUnload$,
     ).pipe(
       map(
@@ -76,8 +82,8 @@ export class SpineLayout extends DestroyableClass {
 
     /**
      * A layout requested through `layout()` is a layout of the reader, whose
-     * viewport may have changed; one started because an item loaded or
-     * unloaded is not.
+     * viewport may have changed; one started because an item's load ended is
+     * not.
      */
     const request$ = merge(
       this.externalLayoutTrigger.pipe(

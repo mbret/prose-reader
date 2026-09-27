@@ -62,8 +62,8 @@ The reading position is what the
 target, xpointers included:
 
 - On the way to an xpointer whose chapter is loading, it stands in at the
-  chapter's start. Once the chapter shows the place, it is that place, final
-  once the page holding it is laid out.
+  chapter's start. Once the chapter shows the place, it is that place, a
+  `success` once the page holding it is laid out.
 - When an xpointer's place cannot be found once its chapter has loaded, a stale
   one for instance, the reader goes to the chapter's first page, and that page
   is the reading position.

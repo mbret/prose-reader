@@ -117,33 +117,66 @@ export type NavigationConsolidation = {
 /**
  * Where the reader is in the book: what to save, and to open the book at with
  * a cfi target. It is where the current navigation takes the reader, as far as
- * the reader knows, and `state` says how much of that place it has found.
+ * the reader knows, and `status` says whether the reader has found that place.
  */
 export type ReadingPosition = {
+  /**
+   * While the value is not a `success`, a cfi naming only its spine item,
+   * which `reader.cfi.isRootCfi` tells, is that item's start, standing in for
+   * a place the reader does not know.
+   */
   cfi: string
   /**
    * How far into the book `cfi` is, from 0 to 1: where the page holding it
    * starts, estimated from each spine item's `progressionWeight` and the pages
-   * of its own. A position on the last page is short of 1. Until the value is
-   * final, the start of the spine item the navigation goes to.
+   * of its own. A position on the last page is short of 1. While the value is
+   * not a `success`, the start of the spine item the navigation goes to.
    */
   percentageEstimateOfBook: number
   /**
-   * How much of the place the reader has found, refined as the navigation
-   * goes. Every state is where the reader is, as far as it knows, and the
-   * value to save.
+   * Whether the reader has found the place the navigation goes to. Every
+   * value is where the reader is, as far as it knows, and the value to save.
+   * Every navigation ends in `success` or `error`, which stays until the next
+   * navigation.
    *
-   * - `standIn`: no place is known yet. `cfi` is the start of the spine item
-   *   the navigation goes to, while that item loads, or while the page the
-   *   navigation lands on is not laid out.
-   * - `targetPlace`: `cfi` is the place the navigation's target names, a cfi
-   *   or what a selector found, once its item's document shows it there. The
-   *   page holding it is not laid out yet.
-   * - `final`: the place the target names, or otherwise the first character
+   * - `pending`: not yet. `cfi` is the start of the spine item the navigation
+   *   goes to, while that item loads, or while the page the navigation lands
+   *   on is not laid out. A target naming a place, a cfi or what a selector
+   *   found, moves it to that place once its item's document shows it there,
+   *   before the page holding it is laid out.
+   * - `success`: the place the target names, or otherwise the first character
    *   of the page the navigation lands on, and where the page holding it
-   *   starts. It stays until the next navigation.
+   *   starts.
+   * - `error`: the spine item the navigation goes to failed to load, so no
+   *   place in it can be found. `cfi` is what the reader knew by then: that
+   *   item's start, or the place the target names.
    */
-  state: "standIn" | "targetPlace" | "final"
+  status: "pending" | "success" | "error"
+}
+
+/**
+ * Where a navigation takes the reader in the text, as far as the reader knows,
+ * and how much of that place it has found, refined as the navigation goes. The
+ * current navigation's is the reading position.
+ *
+ * - `standIn`: no place is known yet. `cfi` is the start of the spine item the
+ *   navigation goes to, while that item loads, or while the page the
+ *   navigation lands on is not laid out.
+ * - `targetPlace`: `cfi` is the place the navigation's target names, a cfi or
+ *   what a selector found, once its item's document shows it there. The page
+ *   holding it is not laid out yet.
+ * - `final`: the place the target names, or otherwise the first character of
+ *   the page the navigation lands on, and where the page holding it starts. It
+ *   stays until the next navigation.
+ * - `error`: the spine item the navigation goes to failed to load while the
+ *   anchor stood in or was the target's place, which it keeps. It stays until
+ *   the next navigation.
+ */
+export type InternalNavigationAnchor = Pick<
+  ReadingPosition,
+  "cfi" | "percentageEstimateOfBook"
+> & {
+  state: "standIn" | "targetPlace" | "final" | "error"
 }
 
 /**
@@ -199,7 +232,7 @@ export type InternalNavigationEntry = {
    * restoration returns to once it names a place rather than stands in. Every
    * entry with a spine item has one, restorations included.
    */
-  anchor?: ReadingPosition
+  anchor?: InternalNavigationAnchor
 } & NavigationConsolidation
 
 /**

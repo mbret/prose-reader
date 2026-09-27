@@ -72,7 +72,7 @@ const readPosition = async (page: Page) => {
             : undefined,
         readingPosition: readingPosition?.cfi,
         readingProgression: readingPosition?.percentageEstimateOfBook,
-        readingPositionState: readingPosition?.state,
+        readingPositionStatus: readingPosition?.status,
       }
     },
     undefined,
@@ -93,11 +93,11 @@ const recordReadingPositions = async (page: Page) => {
   await page.evaluate(() => {
     // @ts-expect-error window.reader is set by this scenario's index.tsx
     const reader = window.reader as Reader
-    const recorded: Pick<ReadingPosition, "cfi" | "state">[] = []
+    const recorded: Pick<ReadingPosition, "cfi" | "status">[] = []
     let replaying = true
 
-    reader.navigation.readingPosition$.subscribe(({ cfi, state }) => {
-      if (!replaying) recorded.push({ cfi, state })
+    reader.navigation.readingPosition$.subscribe(({ cfi, status }) => {
+      if (!replaying) recorded.push({ cfi, status })
     })
     replaying = false
 
@@ -112,14 +112,14 @@ const recordReadingPositions = async (page: Page) => {
       // @ts-expect-error scratch slot for this spec
       const recorded = window.__readingPositions as Pick<
         ReadingPosition,
-        "cfi" | "state"
+        "cfi" | "status"
       >[]
 
-      return recorded.map(({ cfi, state }) => ({
+      return recorded.map(({ cfi, status }) => ({
         cfi,
         isRootCfi: reader.cfi.isRootCfi(cfi),
         itemIndex: reader.cfi.parseCfi(cfi).itemIndex,
-        state,
+        status,
       }))
     })
 }
@@ -180,12 +180,12 @@ const navigateAndReadAtOnce = (
 
     if (readingPosition === undefined) throw new Error("no reading position")
 
-    const { cfi, percentageEstimateOfBook, state } = readingPosition
+    const { cfi, percentageEstimateOfBook, status } = readingPosition
 
     return {
       cfi,
       percentageEstimateOfBook,
-      state,
+      status,
       isRootCfi: reader.cfi.isRootCfi(cfi),
       itemIndex: reader.cfi.parseCfi(cfi).itemIndex,
       wasReady,
@@ -283,13 +283,13 @@ test.describe("Given a page reached by turning pages", () => {
     expect(turned.pageIndex).toBe(1)
     expect(atOnce.isRootCfi).toBe(false)
     expect(atOnce.cfi).toBe(turned.cfi)
-    expect(atOnce.state).toBe("final")
+    expect(atOnce.status).toBe("success")
     expect(await readRecorded()).toEqual([
       {
         cfi: turned.cfi,
         isRootCfi: false,
         itemIndex: chapterIndex,
-        state: "final",
+        status: "success",
       },
     ])
   })
@@ -308,13 +308,13 @@ test.describe("Given a page reached by turning pages", () => {
 
     /**
      * The chapter was not loaded, so no text of it could be named yet: its
-     * start stands in, since the reader has left the page before. Once it
-     * has loaded, the reading position becomes its first page's first
-     * character, and stays there.
+     * start stands in, pending, since the reader has left the page before.
+     * Once it has loaded, the reading position becomes its first page's first
+     * character, a success, and stays there.
      */
     expect(atOnce.wasReady).toBe(false)
     expect(atOnce.isRootCfi).toBe(true)
-    expect(atOnce.state).toBe("standIn")
+    expect(atOnce.status).toBe("pending")
     expect(atOnce.itemIndex).toBe(chapterIndex)
     expect(atOnce.percentageEstimateOfBook).toBeCloseTo(
       settled.chapterStart,
@@ -324,19 +324,19 @@ test.describe("Given a page reached by turning pages", () => {
     expect(settled.isRootCfi).toBe(false)
     expect(settled.pageIndex).toBe(0)
     expect(settled.readingProgression).toBeCloseTo(settled.chapterStart, 10)
-    expect(settled.readingPositionState).toBe("final")
+    expect(settled.readingPositionStatus).toBe("success")
     expect(await readRecorded()).toEqual([
       {
         cfi: atOnce.cfi,
         isRootCfi: true,
         itemIndex: chapterIndex,
-        state: "standIn",
+        status: "pending",
       },
       {
         cfi: settled.cfi,
         isRootCfi: false,
         itemIndex: chapterIndex,
-        state: "final",
+        status: "success",
       },
     ])
   })
@@ -361,7 +361,7 @@ test.describe("Given a page reached by turning pages", () => {
       return new Promise<{
         isReady: boolean
         isRootCfi: boolean
-        state: ReadingPosition["state"] | undefined
+        status: ReadingPosition["status"] | undefined
       }>((resolve) => {
         let isHeld = false
         const loading = item.renderer.state$.subscribe(({ state }) => {
@@ -383,7 +383,7 @@ test.describe("Given a page reached by turning pages", () => {
           resolve({
             isReady: item.value.isReady,
             isRootCfi: reader.cfi.isRootCfi(readingPosition?.cfi ?? ""),
-            state: readingPosition?.state,
+            status: readingPosition?.status,
           })
         })
 
@@ -400,7 +400,7 @@ test.describe("Given a page reached by turning pages", () => {
     expect(held).toEqual({
       isReady: false,
       isRootCfi: true,
-      state: "standIn",
+      status: "pending",
     })
 
     await page.evaluate(() => {
@@ -417,7 +417,7 @@ test.describe("Given a page reached by turning pages", () => {
     const recorded = await readRecorded()
 
     expect(recorded.map(({ isRootCfi }) => isRootCfi)).toEqual([true, false])
-    expect(recorded.map(({ state }) => state)).toEqual(["standIn", "final"])
+    expect(recorded.map(({ status }) => status)).toEqual(["pending", "success"])
     expect(recorded.map(({ itemIndex }) => itemIndex)).toEqual([
       chapterIndex,
       chapterIndex,
@@ -431,7 +431,7 @@ test.describe("Given a page reached by turning pages", () => {
     const position = await turnToThirdPageOfLongChapter(page)
 
     expect(position.readingPosition).toBe(position.cfi)
-    expect(position.readingPositionState).toBe("final")
+    expect(position.readingPositionStatus).toBe("success")
 
     /**
      * Two pages into the chapter, the reading position is past the chapter's
@@ -532,14 +532,14 @@ test.describe("Given a page reached by turning pages", () => {
     expect(reopened.pageIndex).toBe(position.pageIndex)
     expect(reopened.readingPosition).toBe(position.cfi)
     // Found in its chapter's document, where the page holding it is measured.
-    expect(reopened.readingPositionState).toBe("final")
+    expect(reopened.readingPositionStatus).toBe("success")
     expect(reopened.readingProgression).toBeCloseTo(
       position.readingProgression ?? Number.NaN,
       10,
     )
   })
 
-  test("a book reopened at the reading position reports its chapter's start on the way, never the book's, and ends final on it", async ({
+  test("a book reopened at the reading position reports its chapter's start on the way, never the book's, and ends a success on it", async ({
     page,
   }) => {
     const position = await turnToThirdPageOfLongChapter(page)
@@ -547,8 +547,8 @@ test.describe("Given a page reached by turning pages", () => {
     await page.goto(`${url}?cfi=${encodeURIComponent(position.cfi)}`)
     await waitForSettled(page)
     await expect
-      .poll(() => readPosition(page).then((read) => read.readingPositionState))
-      .toBe("final")
+      .poll(() => readPosition(page).then((read) => read.readingPositionStatus))
+      .toBe("success")
 
     // Every value an app saving the reading position would have saved.
     const saved = await page.evaluate(() => {
@@ -568,12 +568,13 @@ test.describe("Given a page reached by turning pages", () => {
      * Until the chapter is loaded, the reader does not know where the cfi
      * takes it: the reading position stands in at the chapter's start, as for
      * any navigation into a chapter not loaded. Then it is the cfi, the place
-     * the target names, final once the page holding it is laid out. None is
+     * the target names, pending until the page holding it is laid out and a
+     * success after. None is
      * the start of the book.
      */
     const last = saved[saved.length - 1]
 
-    expect(last).toMatchObject({ cfi: position.cfi, state: "final" })
+    expect(last).toMatchObject({ cfi: position.cfi, status: "success" })
     expect(last?.percentageEstimateOfBook).toBeCloseTo(
       position.readingProgression ?? Number.NaN,
       10,
@@ -581,20 +582,20 @@ test.describe("Given a page reached by turning pages", () => {
     const chapterStart = "the chapter's start"
     const onTheWay = [
       {
-        state: "standIn",
+        status: "pending",
         itemIndex: position.spineItemIndex,
         cfi: chapterStart,
       },
       {
-        state: "targetPlace",
+        status: "pending",
         itemIndex: position.spineItemIndex,
         cfi: position.cfi,
       },
     ]
 
-    for (const { state, itemIndex, cfi, isRootCfi } of saved.slice(0, -1)) {
+    for (const { status, itemIndex, cfi, isRootCfi } of saved.slice(0, -1)) {
       expect(onTheWay).toContainEqual({
-        state,
+        status,
         itemIndex,
         cfi: isRootCfi ? chapterStart : cfi,
       })
@@ -662,7 +663,7 @@ test.describe("Given a page reached by dragging", () => {
     expect(landed.spineItemIndex).toBe(chapterIndex)
     expect(landed.isRootCfi).toBe(false)
     expect(landed.readingPosition).toBe(landed.cfi)
-    expect(landed.readingPositionState).toBe("final")
+    expect(landed.readingPositionStatus).toBe("success")
 
     /**
      * A resize restores to the reading position: the page before, were it
@@ -722,7 +723,7 @@ test.describe("Given a chapter opened at a cfi naming only the chapter", () => {
     const { atOnce, chapterStart } = await openChapterAtRootCfi(page)
 
     expect(atOnce.cfi).toBe(chapterStart)
-    expect(atOnce.state).toBe("standIn")
+    expect(atOnce.status).toBe("pending")
   })
 
   test("the reading position is the chapter's first page once it loads, not the chapter", async ({
@@ -736,7 +737,7 @@ test.describe("Given a chapter opened at a cfi naming only the chapter", () => {
     expect(settled.isRootCfi).toBe(false)
     expect(settled.readingPosition).toBe(settled.cfi)
     expect(recorded.map(({ cfi }) => cfi)).toEqual([atOnce.cfi, settled.cfi])
-    expect(recorded.map(({ state }) => state)).toEqual(["standIn", "final"])
+    expect(recorded.map(({ status }) => status)).toEqual(["pending", "success"])
   })
 })
 
@@ -778,7 +779,7 @@ test.describe("Given chapters that are not preloaded", () => {
      */
     expect(atOnce.wasReady).toBe(false)
     expect(atOnce.isRootCfi).toBe(true)
-    expect(atOnce.state).toBe("standIn")
+    expect(atOnce.status).toBe("pending")
     expect(atOnce.itemIndex).toBe(previousIndex)
     expect(atOnce.percentageEstimateOfBook).toBeCloseTo(
       settled.chapterStart,
@@ -800,13 +801,13 @@ test.describe("Given chapters that are not preloaded", () => {
         cfi: atOnce.cfi,
         isRootCfi: true,
         itemIndex: previousIndex,
-        state: "standIn",
+        status: "pending",
       },
       {
         cfi: settled.cfi,
         isRootCfi: false,
         itemIndex: previousIndex,
-        state: "final",
+        status: "success",
       },
     ])
   })
@@ -841,12 +842,13 @@ test.describe("Given a cfi naming nothing in a chapter not loaded yet", () => {
      * takes it: the reading position stands in at the chapter's start, as for
      * any navigation into a chapter not loaded, never the cfi as asked.
      * Once it has loaded, the reader is at the chapter's start, where the cfi
-     * could not take it, and the reading position is the page shown, final.
+     * could not take it, and the reading position is the page shown, a
+     * success.
      */
     expect(atOnce.wasReady).toBe(false)
     expect(atOnce.isRootCfi).toBe(true)
     expect(atOnce.itemIndex).toBe(chapterIndex)
-    expect(atOnce.state).toBe("standIn")
+    expect(atOnce.status).toBe("pending")
     expect(atOnce.percentageEstimateOfBook).toBeCloseTo(
       settled.chapterStart,
       10,
@@ -861,13 +863,13 @@ test.describe("Given a cfi naming nothing in a chapter not loaded yet", () => {
         cfi: atOnce.cfi,
         isRootCfi: true,
         itemIndex: chapterIndex,
-        state: "standIn",
+        status: "pending",
       },
       {
         cfi: settled.cfi,
         isRootCfi: false,
         itemIndex: chapterIndex,
-        state: "final",
+        status: "success",
       },
     ])
 
@@ -883,7 +885,7 @@ test.describe("Given a cfi naming nothing in a chapter not loaded yet", () => {
     expect(reopened.spineItemIndex).toBe(chapterIndex)
     expect(reopened.pageIndex).toBe(settled.pageIndex)
     expect(reopened.readingPosition).toBe(settled.cfi)
-    expect(reopened.readingPositionState).toBe("final")
+    expect(reopened.readingPositionStatus).toBe("success")
     expect(reopened.readingProgression).toBeCloseTo(
       settled.readingProgression ?? Number.NaN,
       10,
@@ -936,7 +938,7 @@ test.describe("Given pages without a horizontal margin", () => {
     await waitForSettled(page)
   })
 
-  test("a cfi on the first character of a page, at the left edge of its document, is final on that page, and a resize restores to it", async ({
+  test("a cfi on the first character of a page, at the left edge of its document, is a success on that page, and a resize restores to it", async ({
     page,
   }) => {
     const chapterIndex = await getChapterIndex(page, "ch03.xhtml")
@@ -952,25 +954,26 @@ test.describe("Given pages without a horizontal margin", () => {
 
     /**
      * Once the chapter is laid out, the reader measures the character to find
-     * the page holding it, and the reading position is final on that page.
+     * the page holding it, and the reading position is a success on that
+     * page.
      *
      * Only a chapter's first page starts at its document's left edge, each
      * next one a page further. That page starts where the chapter does, the
      * progression and the page a reader falls back to without one, so the
-     * values below would hold without the page found: its being final does
-     * not.
+     * values below would hold without the page found: its being a success
+     * does not.
      */
     await expect
       .poll(
         async () => {
-          const { readingPosition, readingPositionState } =
+          const { readingPosition, readingPositionStatus } =
             await readPosition(page)
 
-          return { readingPosition, readingPositionState }
+          return { readingPosition, readingPositionStatus }
         },
         { timeout: 10_000 },
       )
-      .toEqual({ readingPosition: cfi, readingPositionState: "final" })
+      .toEqual({ readingPosition: cfi, readingPositionStatus: "success" })
 
     const position = await readPosition(page)
 
@@ -988,7 +991,7 @@ test.describe("Given pages without a horizontal margin", () => {
     expect(restored.spineItemIndex).toBe(chapterIndex)
     expect(restored.pageIndex).toBe(0)
     expect(restored.readingPosition).toBe(cfi)
-    expect(restored.readingPositionState).toBe("final")
+    expect(restored.readingPositionStatus).toBe("success")
     expect(restored.readingProgression).toBe(position.readingProgression)
   })
 
@@ -1145,7 +1148,7 @@ test.describe("Given a cfi naming a place that isn't rendered", () => {
     await waitForSettled(page)
   })
 
-  test("the reader goes to the page of the content after it, final there, and a resize restores to it", async ({
+  test("the reader goes to the page of the content after it, a success there, and a resize restores to it", async ({
     page,
   }) => {
     const chapterIndex = await getLongChapterIndex(page)
@@ -1169,21 +1172,21 @@ test.describe("Given a cfi naming a place that isn't rendered", () => {
     /**
      * The marker has no page of its own: the place it names is where the
      * paragraph after it starts. The reader goes there, and the reading
-     * position is the marker, final on that page.
+     * position is the marker, a success on that page.
      */
     await expect
       .poll(
         async () => {
-          const { readingPosition, readingPositionState, pageIndex } =
+          const { readingPosition, readingPositionStatus, pageIndex } =
             await readPosition(page)
 
-          return { readingPosition, readingPositionState, pageIndex }
+          return { readingPosition, readingPositionStatus, pageIndex }
         },
         { timeout: 10_000 },
       )
       .toEqual({
         readingPosition: markerCfi,
-        readingPositionState: "final",
+        readingPositionStatus: "success",
         pageIndex: paragraphPageIndex,
       })
 
@@ -1200,7 +1203,7 @@ test.describe("Given a cfi naming a place that isn't rendered", () => {
     const restored = await readPosition(page)
 
     expect(restored.readingPosition).toBe(markerCfi)
-    expect(restored.readingPositionState).toBe("final")
+    expect(restored.readingPositionStatus).toBe("success")
   })
 })
 

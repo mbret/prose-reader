@@ -292,7 +292,7 @@ describe("Given a bridged webview", () => {
 
       /**
        * The chapters weigh nothing in this manifest, so each holds half the
-       * book. The chapter is not laid out yet, so the value stands in, and is
+       * book. The chapter is not laid out yet, so the value is pending, and is
        * reported all the same: it is where the reader is.
        */
       expect(reported("readingPosition")).toEqual([
@@ -301,7 +301,7 @@ describe("Given a bridged webview", () => {
           {
             cfi: secondChapterCfi,
             percentageEstimateOfBook: 0.5,
-            state: "standIn",
+            status: "pending",
           },
         ],
       ])
@@ -398,7 +398,7 @@ describe("Given a bridged webview", () => {
       readingPosition.next({
         cfi: secondChapterCfi,
         percentageEstimateOfBook: 0,
-        state: "final",
+        status: "success",
       })
 
       expect(reported("readingPosition")).not.toContainEqual([
