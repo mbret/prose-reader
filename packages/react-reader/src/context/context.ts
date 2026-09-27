@@ -31,8 +31,6 @@ export type PrivateContextType = {
   onFontSizeMenuOpenChange: (open: boolean) => void
   notificationsSubject: Subject<ReaderNotification>
   quickMenuBottomBarBoundingBoxSignal: Signal<ResizeObserverEntry | undefined>
-  fontSizeMin: number
-  fontSizeMax: number
   _quickMenuOpen: boolean
   _onQuickMenuOpenChange: Dispatch<SetStateAction<boolean>>
   selectedHighlight:
@@ -121,8 +119,6 @@ export const getDefaultValue = (): ReaderContextType => ({
   onRefitMenuOpenChange: () => {},
   fontSizeMenuOpen: false,
   onFontSizeMenuOpenChange: () => {},
-  fontSizeMin: 0.2,
-  fontSizeMax: 5,
   uncontrolledSettings: {},
   enableFloatingProgress: true,
   selectedHighlight: undefined,

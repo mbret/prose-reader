@@ -10,22 +10,15 @@ import {
   DialogRoot,
   DialogTitle,
 } from "../components/ui/dialog"
-import { Slider } from "../components/ui/slider"
 import { useReaderContextValue } from "../context/useReaderContext"
 import { SettingScopes } from "../settings/SettingScopes"
 import { useManagedSetting } from "../settings/useManagedSetting"
+import { FontScaleSlider } from "./FontScaleSlider"
 
 export const FontSizeControlsDialog = memo(() => {
-  const {
-    fontSizeMenuOpen,
-    onFontSizeMenuOpenChange,
-    fontSizeMin,
-    fontSizeMax,
-  } = useReaderContextValue([
+  const { fontSizeMenuOpen, onFontSizeMenuOpenChange } = useReaderContextValue([
     "fontSizeMenuOpen",
     "onFontSizeMenuOpenChange",
-    "fontSizeMin",
-    "fontSizeMax",
   ])
   const fontScale = useManagedSetting("fontScale")
 
@@ -49,31 +42,11 @@ export const FontSizeControlsDialog = memo(() => {
               activeScope={fontScale.activeScope}
               onActiveScopeChange={fontScale.onActiveScopeChange}
               renderScopeValue={(scope) => (
-                <Slider
-                  label={`%`}
-                  value={[(fontScale.getValueForScope(scope) ?? 1) * 100]}
-                  onValueChange={(details) => {
-                    fontScale.changeValueForScope(
-                      scope,
-                      (details.value[0] ?? 0) / 100,
-                    )
+                <FontScaleSlider
+                  fontScale={fontScale.getValueForScope(scope) ?? 1}
+                  onFontScaleChange={(changedFontScale) => {
+                    fontScale.changeValueForScope(scope, changedFontScale)
                   }}
-                  showValue={true}
-                  marks={[
-                    { value: 100, label: "Publisher" },
-                    {
-                      value: fontSizeMin * 100,
-                      label: `${fontSizeMin * 100}%`,
-                    },
-                    {
-                      value: fontSizeMax * 100,
-                      label: `${fontSizeMax * 100}%`,
-                    },
-                  ]}
-                  max={fontSizeMax * 100}
-                  min={fontSizeMin * 100}
-                  width="100%"
-                  step={0.1 * 100}
                 />
               )}
             />

@@ -147,15 +147,8 @@ describe(`SyncReaderWithManagedSettings`, () => {
     return spreadModeMenu
   }
 
-  const waitForWrites = async (durationMs: number) => {
-    await act(async () => {
-      vi.advanceTimersByTime(durationMs)
-    })
-  }
-
   beforeEach(() => {
     Object.assign(globalThis, { IS_REACT_ACT_ENVIRONMENT: true })
-    vi.useFakeTimers()
     root = createRoot(document.createElement(`div`))
   })
 
@@ -164,7 +157,6 @@ describe(`SyncReaderWithManagedSettings`, () => {
       root.unmount()
     })
     testReader.set(undefined)
-    vi.useRealTimers()
   })
 
   it(`keeps the app's values when the reader arrives holding others`, async () => {
@@ -188,7 +180,6 @@ describe(`SyncReaderWithManagedSettings`, () => {
     await act(async () => {
       testReader.set(reader)
     })
-    await waitForWrites(200)
 
     expect(reader.settings.values).toEqual({
       fontScale: 1.5,
@@ -202,21 +193,15 @@ describe(`SyncReaderWithManagedSettings`, () => {
     testReader.set(reader)
 
     await render({ reader: undefined, settings: { fontScale: 1.5 } })
-    await waitForWrites(200)
 
     expect(reader.settings.values.fontScale).toBe(1.5)
   })
 
-  it(`writes the app's spread mode into the reader once it has stayed 200 ms`, async () => {
+  it(`writes the app's spread mode into the reader at once`, async () => {
     const reader = createReaderWithSettings()
     testReader.set(reader)
 
     await render({ reader: undefined, settings: { spreadMode: `never` } })
-    await waitForWrites(150)
-
-    expect(reader.settings.values.spreadMode).toBe(`auto`)
-
-    await waitForWrites(50)
 
     expect(reader.settings.values.spreadMode).toBe(`never`)
   })
@@ -231,7 +216,6 @@ describe(`SyncReaderWithManagedSettings`, () => {
       settingsByScope: { book: { spreadMode: `always` } },
       settingsScopes: { fontScale: `book`, spreadMode: `book` },
     })
-    await waitForWrites(200)
 
     expect(reader.settings.values).toEqual({
       fontScale: 1.2,
@@ -264,7 +248,6 @@ describe(`SyncReaderWithManagedSettings`, () => {
     testReader.set(reader)
 
     await render({ reader: undefined })
-    await waitForWrites(500)
 
     expect(reader.settings.values.spreadMode).toBe(`always`)
     expect(reader.settings.update).not.toHaveBeenCalledWith({
@@ -289,7 +272,6 @@ describe(`SyncReaderWithManagedSettings`, () => {
     await act(async () => {
       spreadModeMenu.current?.changeValueForScope(`global`, `never`)
     })
-    await waitForWrites(200)
 
     expect(reader.settings.values.spreadMode).toBe(`never`)
     expect(spreadModeMenu.current?.getValueForScope(`global`)).toBe(`never`)
@@ -307,7 +289,6 @@ describe(`SyncReaderWithManagedSettings`, () => {
     await act(async () => {
       spreadModeMenu.current?.changeValueForScope(`global`, `never`)
     })
-    await waitForWrites(200)
 
     expect(reader.settings.values.spreadMode).toBe(`never`)
     expect(onSettingsChange.mock.calls).toEqual([
@@ -329,7 +310,6 @@ describe(`SyncReaderWithManagedSettings`, () => {
     await act(async () => {
       spreadModeMenu.current?.changeValueForScope(`book`, `always`)
     })
-    await waitForWrites(200)
 
     expect(onSettingsChange).toHaveBeenCalledWith(
       { spreadMode: `always` },

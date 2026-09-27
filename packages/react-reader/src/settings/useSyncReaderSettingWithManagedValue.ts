@@ -13,12 +13,6 @@ import type {
 } from "./managedSettings"
 
 /**
- * How long a value has to stay before it is written into the reader, so a
- * slider dragged across values writes once.
- */
-const WRITE_DELAY_MS = 200
-
-/**
  * Keeps one of the reader's settings on the value in effect for this book: the
  * app's, from the setting's scope or the global values, or react-reader's own
  * when the app gives none.
@@ -50,18 +44,18 @@ export const useSyncReaderSettingWithManagedValue = <
 
   useEffect(
     function writeValueInEffectIntoReader() {
-      if (!reader || valueInEffect === undefined) return
-
-      const timeout = setTimeout(function writeSettledValue() {
-        const readerSettings: Partial<ManagedSettingValues> = {}
-
-        readerSettings[name] = valueInEffect
-        reader.settings.update(readerSettings)
-      }, WRITE_DELAY_MS)
-
-      return function cancelPendingWrite() {
-        clearTimeout(timeout)
+      if (
+        !reader ||
+        valueInEffect === undefined ||
+        reader.settings.values[name] === valueInEffect
+      ) {
+        return
       }
+
+      const readerSettings: Partial<ManagedSettingValues> = {}
+
+      readerSettings[name] = valueInEffect
+      reader.settings.update(readerSettings)
     },
     [reader, name, valueInEffect],
   )
