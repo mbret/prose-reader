@@ -23,14 +23,45 @@ import type { Context } from "../../../context/Context"
 import { Report } from "../../../report"
 import type { ReaderSettingsManager } from "../../../settings/ReaderSettingsManager"
 import { ResourceHandler } from "../../../spineItem/resources/ResourceHandler"
-import { getElementsWithAssets, revokeDocumentBlobs } from "../../../utils/dom"
 
 /** Bounds a browser that never reports on a stylesheet. */
 const STYLESHEET_LOAD_TIMEOUT_MS = 5_000
 
 const CSS_URL = /url\(\s*(['"]?)(.*?)\1\s*\)/g
 
+const SVG_NAMESPACE = `http://www.w3.org/2000/svg`
+const XLINK_NAMESPACE = `http://www.w3.org/1999/xlink`
+
+const ELEMENTS_WITH_ASSET_SELECTOR = [
+  `img`,
+  `video`,
+  `audio`,
+  // within video and audio
+  `source`,
+  // stylesheets and other linked resources
+  `link`,
+  `script`,
+  // SVG pictures
+  `image`,
+].join(`,`)
+
 type DocumentView = Window & typeof globalThis
+
+/**
+ * The attribute an element references its asset with, which the asset's blob
+ * url replaces and is revoked from. An SVG `<image>` uses `href`, or the XLink
+ * `href` of SVG 1.1, which an `href` overrides.
+ * @see https://www.w3.org/TR/SVG2/linking.html#XLinkRefAttrs
+ */
+const getAssetReferenceAttribute = (element: Element) => {
+  const attribute =
+    element.namespaceURI === SVG_NAMESPACE
+      ? (element.getAttributeNodeNS(null, `href`) ??
+        element.getAttributeNodeNS(XLINK_NAMESPACE, `href`))
+      : (element.getAttributeNode(`src`) ?? element.getAttributeNode(`href`))
+
+  return attribute?.value ? attribute : undefined
+}
 
 /**
  * Archive hrefs are `file://` or bare paths, and neither resolves a relative
@@ -181,17 +212,22 @@ const loadElementAsset = ({
   view: DocumentView
   fetchAsset: FetchAsset
 }): Observable<never> => {
-  const attribute = ["src", "href"].find((name) => element.getAttribute(name))
-  const reference = attribute && element.getAttribute(attribute)
+  const referenceAttribute = getAssetReferenceAttribute(element)
 
-  if (!attribute || !reference) return EMPTY
+  if (!referenceAttribute) return EMPTY
+
+  const reference = referenceAttribute.value
 
   return defer(() => {
     const url = new URL(reference, documentUrl)
 
     return fetchAsset(url).pipe(
       switchMap((blob) => {
-        element.setAttribute(attribute, view.URL.createObjectURL(blob))
+        element.setAttributeNS(
+          referenceAttribute.namespaceURI,
+          referenceAttribute.name,
+          view.URL.createObjectURL(blob),
+        )
 
         if (!isFetchedStylesheet(element, view)) return EMPTY
 
@@ -235,19 +271,64 @@ export const loadAssets =
 
         const fetchAsset = createAssetFetcher(context.manifest, settings)
 
-        const assetLoads = getElementsWithAssets(document).map((element) =>
-          loadElementAsset({
-            element,
-            documentUrl,
-            view,
-            fetchAsset,
-          }),
+        const assetLoads = Array.from(
+          document.querySelectorAll(ELEMENTS_WITH_ASSET_SELECTOR),
+          (element) =>
+            loadElementAsset({
+              element,
+              documentUrl,
+              view,
+              fetchAsset,
+            }),
         )
 
         return merge(...assetLoads).pipe(endWith(frameElement))
       }),
     )
 
+/**
+ * Some stylesheets cannot be read, legitimately: a cross-origin one, or one
+ * the book lists but does not contain.
+ */
+const getReadableRules = (sheet: CSSStyleSheet) => {
+  try {
+    return Array.from(sheet.cssRules)
+  } catch (error) {
+    Report.warn(`Error getting rules for sheet: ${sheet.href}`, error)
+
+    return []
+  }
+}
+
+/**
+ * Revokes every blob url the frame's document references an asset or a font
+ * with: those `loadAssets` swapped in, and the picture a generated image page
+ * is written with.
+ */
 export const unloadAssets = (frameElement?: HTMLIFrameElement) => {
-  revokeDocumentBlobs(frameElement?.contentDocument)
+  const document = frameElement?.contentDocument
+  const view = document?.defaultView
+
+  if (!document || !view) return
+
+  for (const element of document.querySelectorAll(
+    ELEMENTS_WITH_ASSET_SELECTOR,
+  )) {
+    const url = getAssetReferenceAttribute(element)?.value
+
+    if (url?.startsWith(`blob:`)) view.URL.revokeObjectURL(url)
+  }
+
+  for (const sheet of document.styleSheets) {
+    for (const rule of getReadableRules(sheet)) {
+      if (!(rule instanceof view.CSSFontFaceRule)) continue
+
+      // eg: `url("font.woff2") format("woff2"), url(blob:http://example.com/1234) format("opentype")`
+      const fontUrls = rule.style
+        .getPropertyValue(`src`)
+        .match(/blob:[^,\s'")]+/g)
+
+      for (const url of fontUrls ?? []) view.URL.revokeObjectURL(url)
+    }
+  }
 }

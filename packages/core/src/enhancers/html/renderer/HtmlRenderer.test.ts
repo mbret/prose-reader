@@ -31,6 +31,9 @@ const getHappyDOMWindow = () => {
   return window
 }
 
+const SVG_NAMESPACE = `http://www.w3.org/2000/svg`
+const XLINK_NAMESPACE = `http://www.w3.org/1999/xlink`
+
 type Resource = { mediaType: string; body: string }
 
 type StylesheetRequest = { load: () => void; fail: () => void }
@@ -498,6 +501,123 @@ describe(`HtmlRenderer`, () => {
       expect(await readObjectUrl(fontUrl)).toBe(`serif`)
       expect(font).toContain(`format("opentype")`)
       expect(missing?.trim()).toBe(`url(fonts/missing.woff) format("woff")`)
+    })
+
+    describe(`of an SVG image`, () => {
+      const documentHref = `file://EPUB/Content/page.xhtml`
+      const resources = {
+        "file://EPUB/Image/a.jpg": { mediaType: `image/jpeg`, body: `a` },
+        "file://EPUB/Image/b.jpg": { mediaType: `image/jpeg`, body: `b` },
+      }
+      const svgWith = (image: string) =>
+        `<svg xmlns="${SVG_NAMESPACE}" xmlns:xlink="${XLINK_NAMESPACE}">${image}</svg>`
+
+      it(`resolves its XLink href, as SVG 1.1 writes it, and swaps the picture in there`, async () => {
+        const { load, waitForLoaded, getDocument } = setup({
+          documentHref,
+          resources,
+        })
+
+        load(documentWith(``, svgWith(`<image xlink:href="../Image/a.jpg" />`)))
+
+        await waitForLoaded()
+
+        const image = getDocument()?.querySelector(`image`)
+
+        expect(
+          await readObjectUrl(image?.getAttributeNS(XLINK_NAMESPACE, `href`)),
+        ).toBe(`a`)
+        expect(image?.hasAttributeNS(null, `href`)).toBe(false)
+      })
+
+      it(`resolves its href, as SVG 2 writes it`, async () => {
+        const { load, waitForLoaded, getDocument } = setup({
+          documentHref,
+          resources,
+        })
+
+        load(documentWith(``, svgWith(`<image href="../Image/a.jpg" />`)))
+
+        await waitForLoaded()
+
+        expect(
+          await readObjectUrl(
+            getDocument()?.querySelector(`image`)?.getAttributeNS(null, `href`),
+          ),
+        ).toBe(`a`)
+      })
+
+      it(`resolves its href rather than its XLink href, as the browser draws it`, async () => {
+        const { load, waitForLoaded, getDocument } = setup({
+          documentHref,
+          resources,
+        })
+
+        load(
+          documentWith(
+            ``,
+            svgWith(
+              `<image href="../Image/a.jpg" xlink:href="../Image/b.jpg" />`,
+            ),
+          ),
+        )
+
+        await waitForLoaded()
+
+        const image = getDocument()?.querySelector(`image`)
+
+        expect(await readObjectUrl(image?.getAttributeNS(null, `href`))).toBe(
+          `a`,
+        )
+        expect(image?.getAttributeNS(XLINK_NAMESPACE, `href`)).toBe(
+          `../Image/b.jpg`,
+        )
+      })
+    })
+  })
+
+  describe(`when it unloads`, () => {
+    it(`revokes the blob url of every asset it swapped in`, async () => {
+      const { load, waitForLoaded, getDocument, renderer } = setup({
+        documentHref: `file://EPUB/Content/page.xhtml`,
+        resources: {
+          "file://EPUB/Image/a.jpg": { mediaType: `image/jpeg`, body: `a` },
+          "file://EPUB/Image/b.jpg": { mediaType: `image/jpeg`, body: `b` },
+        },
+      })
+
+      load(
+        documentWith(
+          ``,
+          `<img src="../Image/a.jpg" />
+          <svg xmlns="${SVG_NAMESPACE}" xmlns:xlink="${XLINK_NAMESPACE}">
+            <image xlink:href="../Image/b.jpg" />
+          </svg>`,
+        ),
+      )
+
+      await waitForLoaded()
+
+      const assetUrls = [
+        getDocument()?.querySelector(`img`)?.getAttribute(`src`),
+        getDocument()
+          ?.querySelector(`image`)
+          ?.getAttributeNS(XLINK_NAMESPACE, `href`),
+      ]
+
+      expect(await Promise.all(assetUrls.map(readObjectUrl))).toEqual([
+        `a`,
+        `b`,
+      ])
+
+      renderer.unload()
+
+      await vi.waitFor(() => expect(renderer.value.state).toBe(`idle`))
+
+      expect(await Promise.all(assetUrls.map(readObjectUrl))).toEqual([
+        undefined,
+        undefined,
+      ])
     })
   })
 })
