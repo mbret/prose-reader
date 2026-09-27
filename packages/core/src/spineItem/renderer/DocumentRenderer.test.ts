@@ -9,26 +9,48 @@ import { Viewport } from "../../viewport/Viewport"
 import { ResourceHandler } from "../resources/ResourceHandler"
 import { DocumentRenderer } from "./DocumentRenderer"
 
+/**
+ * Creates a new document each time, named by the order it was created in, and
+ * attaches it once it loads and detaches it when unloaded, as the renderers
+ * do.
+ */
 class TestRenderer extends DocumentRenderer {
   /** The document load of the latest `load()`, a new one each time. */
   public onLoadDocumentSubject = new Subject<void>()
-  public onUnloadCalls = 0
+  /** Every document `onCreateDocument` created, by name, in order. */
+  public createdDocuments: string[] = []
+  /** The document each `onUnload` released, by name, in order. */
+  public releasedDocuments: Array<string | undefined> = []
+  /** Every document still held, not released yet, each time one is created. */
+  public documentsHeldOnCreation: string[] = []
+
+  get onUnloadCalls() {
+    return this.releasedDocuments.length
+  }
 
   onUnload() {
-    this.onUnloadCalls++
-
-    return EMPTY
+    this.releasedDocuments.push(this.documentContainer?.id)
+    this.detach()
   }
 
   onCreateDocument() {
+    this.documentsHeldOnCreation.push(
+      ...this.createdDocuments.filter(
+        (name) => !this.releasedDocuments.includes(name),
+      ),
+    )
+
     const element = document.createElement("div")
 
+    element.id = `document-${this.createdDocuments.length + 1}`
+    this.createdDocuments.push(element.id)
     this.setDocumentContainer(element)
 
     return of(element)
   }
 
   onLoadDocument() {
+    this.attach()
     this.onLoadDocumentSubject = new Subject<void>()
 
     return this.onLoadDocumentSubject.asObservable()
@@ -47,7 +69,14 @@ class TestRenderer extends DocumentRenderer {
   }
 }
 
-const createHarness = () => {
+/** Keeps no document container, as the default renderer does. */
+class ContainerlessRenderer extends TestRenderer {
+  onCreateDocument() {
+    return of(document.createElement("div"))
+  }
+}
+
+const createHarness = (Renderer: typeof TestRenderer = TestRenderer) => {
   const context = new Context(createTestManifest())
   const settings = new ReaderSettingsManager({}, context)
   const viewport = new Viewport(context, settings)
@@ -61,7 +90,7 @@ const createHarness = () => {
   }
   const resourcesHandler = new ResourceHandler(item, settings)
 
-  const renderer = new TestRenderer({
+  const renderer = new Renderer({
     context,
     settings,
     hookManager,
@@ -71,6 +100,13 @@ const createHarness = () => {
     viewport,
   })
 
+  /** The document each `item.onDocumentUnload` ran on, by name, in order. */
+  const documentsUnloadHooksRanOn: string[] = []
+
+  hookManager.register(`item.onDocumentUnload`, ({ documentContainer }) => {
+    documentsUnloadHooksRanOn.push(documentContainer.id)
+  })
+
   return {
     context,
     settings,
@@ -78,6 +114,20 @@ const createHarness = () => {
     hookManager,
     renderer,
     item,
+    containerElement,
+    setViewportState: (state: `free` | `busy`) => {
+      context.bridgeEvent.viewportStateSubject.next(state)
+    },
+    /**
+     * Every document the renderer created was released exactly once, by the
+     * unload hooks and `onUnload`, and none was created while another was
+     * still held.
+     */
+    expectEveryDocumentReleasedOnce: () => {
+      expect(renderer.documentsHeldOnCreation).toEqual([])
+      expect(renderer.releasedDocuments).toEqual(renderer.createdDocuments)
+      expect(documentsUnloadHooksRanOn).toEqual(renderer.createdDocuments)
+    },
     cleanup: () => {
       renderer.destroy()
       viewport.destroy()
@@ -87,13 +137,28 @@ const createHarness = () => {
   }
 }
 
+/** Completes the document load of the latest `load()`, and its load hooks. */
+const completeDocumentLoad = async (renderer: TestRenderer) => {
+  renderer.onLoadDocumentSubject.next()
+  renderer.onLoadDocumentSubject.complete()
+
+  // The load hooks run asynchronously, even when none is registered.
+  await waitFor(0)
+}
+
 describe(`DocumentRenderer`, () => {
   describe(`when unload races a pending item.onDocumentLoad hook`, () => {
-    it(`aborts the in-flight load hook execution`, async () => {
-      const { renderer, hookManager, cleanup } = createHarness()
+    it(`aborts the in-flight load hook execution, before the document is released`, async () => {
+      const {
+        renderer,
+        hookManager,
+        cleanup,
+        expectEveryDocumentReleasedOnce,
+      } = createHarness()
 
       let capturedSignal: AbortSignal | undefined
       let resolveHook: (() => void) | undefined
+      let isLoadAbortedWhenUnloadHookRan: boolean | undefined
 
       hookManager.register(
         `item.onDocumentLoad`,
@@ -103,12 +168,12 @@ describe(`DocumentRenderer`, () => {
             resolveHook = resolve
           }),
       )
+      hookManager.register(`item.onDocumentUnload`, () => {
+        isLoadAbortedWhenUnloadHookRan = capturedSignal?.aborted
+      })
 
       renderer.load()
-      renderer.onLoadDocumentSubject.next()
-      renderer.onLoadDocumentSubject.complete()
-
-      await waitFor(0)
+      await completeDocumentLoad(renderer)
 
       expect(capturedSignal).toBeDefined()
       expect(capturedSignal?.aborted).toBe(false)
@@ -118,15 +183,87 @@ describe(`DocumentRenderer`, () => {
 
       expect(capturedSignal?.aborted).toBe(true)
       expect(hookManager._hookExecutions).toHaveLength(0)
+      // A document is never released while its load still runs.
+      expect(isLoadAbortedWhenUnloadHookRan).toBe(true)
+      expect(renderer.value.state).toBe(`idle`)
 
       resolveHook?.()
       cleanup()
+      expectEveryDocumentReleasedOnce()
+    })
+  })
+
+  describe(`when the renderer is destroyed while an item.onDocumentLoad hook runs`, () => {
+    it(`aborts it, before the document is released`, async () => {
+      const {
+        renderer,
+        hookManager,
+        cleanup,
+        expectEveryDocumentReleasedOnce,
+      } = createHarness()
+
+      let capturedSignal: AbortSignal | undefined
+      let isLoadAbortedWhenUnloadHookRan: boolean | undefined
+
+      hookManager.register(
+        `item.onDocumentLoad`,
+        ({ signal }) =>
+          new Promise<void>(() => {
+            capturedSignal = signal
+          }),
+      )
+      hookManager.register(`item.onDocumentUnload`, () => {
+        isLoadAbortedWhenUnloadHookRan = capturedSignal?.aborted
+      })
+
+      renderer.load()
+      await completeDocumentLoad(renderer)
+
+      expect(capturedSignal?.aborted).toBe(false)
+
+      renderer.destroy()
+
+      expect(isLoadAbortedWhenUnloadHookRan).toBe(true)
+      expect(renderer.releasedDocuments).toEqual([`document-1`])
+
+      cleanup()
+      expectEveryDocumentReleasedOnce()
+    })
+  })
+
+  describe(`when a load is asked for again`, () => {
+    it(`goes on loading the document it has, then keeps it`, async () => {
+      const { renderer, cleanup, expectEveryDocumentReleasedOnce } =
+        createHarness()
+
+      renderer.load()
+      renderer.load()
+
+      expect(renderer.value.state).toBe(`loading`)
+
+      await completeDocumentLoad(renderer)
+
+      expect(renderer.value.state).toBe(`loaded`)
+
+      renderer.load()
+
+      expect(renderer.value.state).toBe(`loaded`)
+      expect(renderer.createdDocuments).toEqual([`document-1`])
+      expect(renderer.releasedDocuments).toEqual([])
+
+      cleanup()
+      expectEveryDocumentReleasedOnce()
     })
   })
 
   describe(`when the renderer is destroyed while loaded`, () => {
     it(`synchronously runs the unload hook before onUnload, exactly once`, async () => {
-      const { renderer, hookManager, cleanup } = createHarness()
+      const {
+        renderer,
+        hookManager,
+        cleanup,
+        expectEveryDocumentReleasedOnce,
+      } = createHarness()
 
       const unloadedItemIds: string[] = []
       let onUnloadCallsWhenHookRan: number | undefined
@@ -137,10 +274,7 @@ describe(`DocumentRenderer`, () => {
       })
 
       renderer.load()
-      renderer.onLoadDocumentSubject.next()
-      renderer.onLoadDocumentSubject.complete()
-
-      await waitFor(0)
+      await completeDocumentLoad(renderer)
 
       expect(renderer.value.state).toBe(`loaded`)
 
@@ -161,12 +295,38 @@ describe(`DocumentRenderer`, () => {
       expect(unloadedItemIds).toEqual([`item-1`])
 
       cleanup()
+      expectEveryDocumentReleasedOnce()
+    })
+  })
+
+  describe(`when a renderer that keeps no document container is destroyed while loaded`, () => {
+    it(`releases the load, as an unload does`, async () => {
+      const { renderer, cleanup } = createHarness(ContainerlessRenderer)
+
+      renderer.load()
+      await completeDocumentLoad(renderer)
+      renderer.unload()
+
+      expect(renderer.onUnloadCalls).toBe(1)
+
+      renderer.load()
+      await completeDocumentLoad(renderer)
+      renderer.destroy()
+
+      expect(renderer.onUnloadCalls).toBe(2)
+
+      cleanup()
     })
   })
 
   describe(`when the renderer is destroyed without having loaded`, () => {
     it(`does not run any unload step`, async () => {
-      const { renderer, hookManager, cleanup } = createHarness()
+      const {
+        renderer,
+        hookManager,
+        cleanup,
+        expectEveryDocumentReleasedOnce,
+      } = createHarness()
 
       const unloadedItemIds: string[] = []
 
@@ -182,12 +342,171 @@ describe(`DocumentRenderer`, () => {
       expect(unloadedItemIds).toEqual([])
 
       cleanup()
+      expectEveryDocumentReleasedOnce()
+    })
+  })
+
+  describe(`when the renderer is destroyed while an unload waits for the viewport`, () => {
+    it(`releases the document once, and not again when the viewport is free`, async () => {
+      const {
+        renderer,
+        setViewportState,
+        cleanup,
+        expectEveryDocumentReleasedOnce,
+      } = createHarness()
+
+      // Listened to, as the spine listens to every item's unloads.
+      renderer.unloaded$.subscribe()
+
+      renderer.load()
+      await completeDocumentLoad(renderer)
+
+      setViewportState(`busy`)
+      renderer.unload()
+      renderer.destroy()
+
+      expect(renderer.releasedDocuments).toEqual([`document-1`])
+
+      setViewportState(`free`)
+
+      expect(renderer.releasedDocuments).toEqual([`document-1`])
+
+      cleanup()
+      expectEveryDocumentReleasedOnce()
+    })
+  })
+
+  describe(`when a load is asked for once the renderer is destroyed`, () => {
+    it(`creates no document, whatever listens to its loads`, () => {
+      const { renderer, cleanup, expectEveryDocumentReleasedOnce } =
+        createHarness()
+
+      // Listened to, as the spine listens to every item's loads.
+      renderer.loaded$.subscribe()
+
+      renderer.destroy()
+
+      // And listened to by something that comes late.
+      renderer.loaded$.subscribe()
+
+      renderer.load()
+
+      expect(renderer.createdDocuments).toEqual([])
+
+      cleanup()
+      expectEveryDocumentReleasedOnce()
+    })
+  })
+
+  describe(`when a load is asked for while an unload waits for the viewport`, () => {
+    it(`releases the loaded document once the viewport is free, then loads a new one`, async () => {
+      const {
+        renderer,
+        setViewportState,
+        containerElement,
+        cleanup,
+        expectEveryDocumentReleasedOnce,
+      } = createHarness()
+
+      renderer.load()
+      await completeDocumentLoad(renderer)
+
+      setViewportState(`busy`)
+      renderer.unload()
+      renderer.load()
+
+      // The release waits for the viewport, and the load for the release.
+      expect(renderer.createdDocuments).toEqual([`document-1`])
+      expect(renderer.releasedDocuments).toEqual([])
+      expect(renderer.value.state).toBe(`unloading`)
+
+      setViewportState(`free`)
+
+      expect(renderer.releasedDocuments).toEqual([`document-1`])
+      expect(renderer.createdDocuments).toEqual([`document-1`, `document-2`])
+      expect(renderer.value.state).toBe(`loading`)
+
+      await completeDocumentLoad(renderer)
+
+      expect(renderer.value.state).toBe(`loaded`)
+      expect(renderer.documentContainer?.id).toBe(`document-2`)
+      expect(
+        Array.from(containerElement.children, (element) => element.id),
+      ).toEqual([`document-2`])
+
+      cleanup()
+      expectEveryDocumentReleasedOnce()
+    })
+
+    it(`releases a document whose load the unload cancelled, then loads a new one`, async () => {
+      const {
+        renderer,
+        setViewportState,
+        cleanup,
+        expectEveryDocumentReleasedOnce,
+      } = createHarness()
+
+      renderer.load()
+
+      expect(renderer.value.state).toBe(`loading`)
+
+      setViewportState(`busy`)
+      renderer.unload()
+      renderer.load()
+
+      expect(renderer.createdDocuments).toEqual([`document-1`])
+      expect(renderer.value.state).toBe(`unloading`)
+
+      setViewportState(`free`)
+
+      expect(renderer.releasedDocuments).toEqual([`document-1`])
+      expect(renderer.createdDocuments).toEqual([`document-1`, `document-2`])
+
+      await completeDocumentLoad(renderer)
+
+      expect(renderer.value.state).toBe(`loaded`)
+      expect(renderer.documentContainer?.id).toBe(`document-2`)
+
+      cleanup()
+      expectEveryDocumentReleasedOnce()
+    })
+
+    it(`does not load when an unload is asked for again before the viewport is free`, async () => {
+      const {
+        renderer,
+        setViewportState,
+        containerElement,
+        cleanup,
+        expectEveryDocumentReleasedOnce,
+      } = createHarness()
+
+      renderer.load()
+      await completeDocumentLoad(renderer)
+
+      setViewportState(`busy`)
+      renderer.unload()
+      renderer.load()
+      renderer.unload()
+      setViewportState(`free`)
+
+      expect(renderer.value.state).toBe(`idle`)
+      expect(renderer.createdDocuments).toEqual([`document-1`])
+      expect(renderer.releasedDocuments).toEqual([`document-1`])
+      expect(containerElement.children).toHaveLength(0)
+
+      cleanup()
+      expectEveryDocumentReleasedOnce()
     })
   })
 
   describe(`when a load fails`, () => {
     it(`is in error with what it created released, stays in error on the next load(), and loads once unloaded`, async () => {
-      const { renderer, hookManager, cleanup } = createHarness()
+      const {
+        renderer,
+        hookManager,
+        cleanup,
+        expectEveryDocumentReleasedOnce,
+      } = createHarness()
 
       const unloadedItemIds: string[] = []
       const loadedErrors: unknown[] = []
@@ -233,10 +552,7 @@ describe(`DocumentRenderer`, () => {
       // An unload leaves it idle, and the next load loads.
       renderer.unload()
       renderer.load()
-      renderer.onLoadDocumentSubject.next()
-      renderer.onLoadDocumentSubject.complete()
-
-      await waitFor(0)
+      await completeDocumentLoad(renderer)
 
       // `loaded$` never errors: it goes on, and reports the load that works.
       expect(renderer.value.state).toBe(`loaded`)
@@ -244,12 +560,18 @@ describe(`DocumentRenderer`, () => {
       expect(loadedErrors).toEqual([])
 
       cleanup()
+      expectEveryDocumentReleasedOnce()
     })
   })
 
   describe(`when an item whose load failed is unloaded or destroyed`, () => {
     it(`releases nothing more, and is idle once unloaded`, async () => {
-      const { renderer, hookManager, cleanup } = createHarness()
+      const {
+        renderer,
+        hookManager,
+        cleanup,
+        expectEveryDocumentReleasedOnce,
+      } = createHarness()
 
       const unloadedItemIds: string[] = []
 
@@ -285,12 +607,18 @@ describe(`DocumentRenderer`, () => {
       expect(unloadedItemIds).toEqual([`item-1`, `item-1`])
 
       cleanup()
+      expectEveryDocumentReleasedOnce()
     })
   })
 
   describe(`when the load hook completes naturally`, () => {
     it(`does not abort and leaves no pending execution`, async () => {
-      const { renderer, hookManager, cleanup } = createHarness()
+      const {
+        renderer,
+        hookManager,
+        cleanup,
+        expectEveryDocumentReleasedOnce,
+      } = createHarness()
 
       let capturedSignal: AbortSignal | undefined
 
@@ -299,15 +627,13 @@ describe(`DocumentRenderer`, () => {
       })
 
       renderer.load()
-      renderer.onLoadDocumentSubject.next()
-      renderer.onLoadDocumentSubject.complete()
-
-      await waitFor(0)
+      await completeDocumentLoad(renderer)
 
       expect(capturedSignal?.aborted).toBe(false)
       expect(hookManager._hookExecutions).toHaveLength(0)
 
       cleanup()
+      expectEveryDocumentReleasedOnce()
     })
   })
 })
