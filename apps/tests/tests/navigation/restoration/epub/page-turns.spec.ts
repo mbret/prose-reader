@@ -5,11 +5,13 @@ import {
   getLongChapterIndex,
   goToSpineItem,
   initialSize,
+  isChapterReady,
   narrowSize,
-  navigateAndReadAtOnce,
   readPosition,
   recordReadingPositions,
   resizeAndExpectAnchorVisible,
+  turnLeft,
+  turnRight,
   url,
 } from "./readingPosition"
 
@@ -28,30 +30,30 @@ test.describe("Given a page reached by turning pages", () => {
     await goToSpineItem(page, chapterIndex)
     await waitForSettled(page)
 
+    const start = await readPosition(page)
+
+    expect(start.spineItemIndex).toBe(chapterIndex)
+    expect(start.pageIndex).toBe(0)
+
     const readRecorded = await recordReadingPositions(page)
-    const atOnce = await navigateAndReadAtOnce(page, {
-      turn: "right",
-      into: chapterIndex,
-    })
+
+    await turnRight(page)
     await waitForSettled(page)
 
     const turned = await readPosition(page)
 
     /**
      * The chapter is laid out, so the page the turn goes to is known when the
-     * turn happens: the reading position is its first character straight
-     * away, the one pagination settles on afterwards, and nothing else.
+     * turn happens: the reading position moves once, straight to its first
+     * character, the one pagination settles on afterwards.
      */
-    expect(atOnce.wasReady).toBe(true)
     expect(turned.pageIndex).toBe(1)
-    expect(atOnce.isRootCfi).toBe(false)
-    expect(atOnce.cfi).toBe(turned.cfi)
-    expect(atOnce.status).toBe("success")
     expect(await readRecorded()).toEqual([
       {
         cfi: turned.cfi,
         isRootCfi: false,
         itemIndex: chapterIndex,
+        percentageEstimateOfBook: turned.readingProgression,
         status: "success",
       },
     ])
@@ -134,11 +136,11 @@ test.describe("Given chapters that are not preloaded", () => {
     await goToSpineItem(page, previousIndex + 1)
     await waitForSettled(page)
 
+    expect(await isChapterReady(page, previousIndex)).toBe(false)
+
     const readRecorded = await recordReadingPositions(page)
-    const atOnce = await navigateAndReadAtOnce(page, {
-      turn: "left",
-      into: previousIndex,
-    })
+
+    await turnLeft(page)
     await waitForSettled(page)
 
     const settled = await readPosition(page)
@@ -149,14 +151,6 @@ test.describe("Given chapters that are not preloaded", () => {
      * is its start; once it has loaded, it is the last page's first
      * character.
      */
-    expect(atOnce.wasReady).toBe(false)
-    expect(atOnce.isRootCfi).toBe(true)
-    expect(atOnce.status).toBe("pending")
-    expect(atOnce.itemIndex).toBe(previousIndex)
-    expect(atOnce.percentageEstimateOfBook).toBeCloseTo(
-      settled.chapterStart,
-      10,
-    )
     expect(settled.spineItemIndex).toBe(previousIndex)
     expect(settled.numberOfPages).toBeGreaterThan(1)
     expect(settled.pageIndex).toBe(settled.numberOfPages - 1)
@@ -170,15 +164,17 @@ test.describe("Given chapters that are not preloaded", () => {
     expect(settled.readingProgression).toBeGreaterThan(settled.chapterStart)
     expect(await readRecorded()).toEqual([
       {
-        cfi: atOnce.cfi,
+        cfi: expect.any(String),
         isRootCfi: true,
         itemIndex: previousIndex,
+        percentageEstimateOfBook: expect.closeTo(settled.chapterStart, 10),
         status: "pending",
       },
       {
         cfi: settled.cfi,
         isRootCfi: false,
         itemIndex: previousIndex,
+        percentageEstimateOfBook: settled.readingProgression,
         status: "success",
       },
     ])

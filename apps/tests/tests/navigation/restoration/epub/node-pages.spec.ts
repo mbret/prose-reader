@@ -4,10 +4,10 @@ import { waitForSettled } from "../../../utils/pagination"
 import {
   getChapterIndex,
   getLongChapterIndex,
+  goToCfi,
   goToSpineItem,
   initialSize,
   narrowSize,
-  navigateAndReadAtOnce,
   readPosition,
   resizeAndExpectAnchorVisible,
   url,
@@ -64,7 +64,7 @@ test.describe("Given pages without a horizontal margin", () => {
     const chapterIndex = await getChapterIndex(page, "ch03.xhtml")
     const cfi = getChapterTitleCfi(chapterIndex)
 
-    await navigateAndReadAtOnce(page, { cfi, into: chapterIndex })
+    await goToCfi(page, cfi)
     await waitForSettled(page)
 
     expect(await measureCharacterAtCfi(page, cfi)).toEqual({
@@ -276,7 +276,7 @@ test.describe("Given a cfi naming a place that isn't rendered", () => {
 
     expect(paragraphPageIndex).toBeGreaterThan(0)
 
-    await navigateAndReadAtOnce(page, { cfi: markerCfi, into: chapterIndex })
+    await goToCfi(page, markerCfi)
     await waitForSettled(page)
 
     /**
