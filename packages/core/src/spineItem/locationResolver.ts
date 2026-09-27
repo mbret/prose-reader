@@ -37,18 +37,44 @@ export const createSpineItemLocator = ({
    * without one still has its box, a collapsed range in text its line's.
    */
   const getRenderedRectOfNode = (node: Node, offset: number) => {
-    /**
-     * A range in an element without text, such as an `img`, is collapsed
-     * inside it and has no box, so the element is measured as a whole.
-     */
-    const elementOrRangeToMeasure =
-      isHtmlElement(node) && node.textContent === ``
-        ? node
-        : getRangeFromNode(node, offset)
+    const range = getRangeFromNode(node, offset)
 
-    return elementOrRangeToMeasure?.getClientRects().length
-      ? elementOrRangeToMeasure.getBoundingClientRect()
+    /**
+     * The boundary after an element's last child, where the range is
+     * collapsed, is where the element's contents end.
+     */
+    if (range?.collapsed && node.hasChildNodes())
+      return getRenderedEndOfContents(node)
+
+    if (range?.getClientRects().length) return range.getBoundingClientRect()
+
+    /**
+     * A range that selects no box in an element rendered all the same, such
+     * as an `img`, which has no contents, or a `video`, whose sources lay out
+     * none: the element is measured as a whole.
+     */
+    return isHtmlElement(node) && node.getClientRects().length
+      ? node.getBoundingClientRect()
       : undefined
+  }
+
+  /**
+   * The last box a node's contents lay out, or, when they lay out none, as a
+   * `video`'s sources, the last of its own: where its contents end, pages
+   * after where it starts when it spans several.
+   */
+  const getRenderedEndOfContents = (node: Node) => {
+    const contents = node.ownerDocument?.createRange()
+
+    contents?.selectNodeContents(node)
+
+    const getLastBox = (boxes: DOMRectList | undefined) =>
+      boxes?.item(boxes.length - 1) ?? undefined
+
+    return (
+      getLastBox(contents?.getClientRects()) ??
+      (isHtmlElement(node) ? getLastBox(node.getClientRects()) : undefined)
+    )
   }
 
   /**
