@@ -3,6 +3,28 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## [22.0.0](https://github.com/mbret/prose-reader/compare/v21.0.2...v22.0.0) (2026-09-27)
+
+### ⚠ BREAKING CHANGES
+
+* **navigation:** `ReadingPosition.state` is replaced by
+  `ReadingPosition.status`, `"pending" | "success"`: `"final"` is `"success"`,
+  and `"standIn"` and `"targetPlace"` are `"pending"`. A pending value stands in
+  at its spine item's start when `reader.cfi.isRootCfi` says its cfi names only
+  the item. A navigation entry's `anchor` is an `InternalNavigationAnchor`,
+  which keeps `state`.
+* **core:** `ReadingPosition.status` gains `"error"`: the navigation's
+  spine item failed to load, and the value stays until the next navigation.
+  `load()` no longer retries a renderer or spine item in error: it loads
+  again after `unload()`. `isSettled` pagination results can describe an item
+  in error.
+
+### Features
+
+* **core:** end a navigation into a spine item that fails to load in error ([0a4d495](https://github.com/mbret/prose-reader/commit/0a4d49549a47fac5571d1337d78ff0a5dd87d721))
+* **navigation:** say whether the reading position is found, not how much of it ([ed9312b](https://github.com/mbret/prose-reader/commit/ed9312bef94276f44ebeb43163fa06f9d84ad3df))
+
+
 ## [21.0.2](https://github.com/mbret/prose-reader/compare/v21.0.1...v21.0.2) (2026-09-27)
 
 ### Bug Fixes
