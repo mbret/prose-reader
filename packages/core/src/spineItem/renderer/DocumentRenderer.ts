@@ -6,7 +6,6 @@ import {
   distinctUntilChanged,
   EMPTY,
   endWith,
-  filter,
   finalize,
   first,
   ignoreElements,
@@ -15,7 +14,6 @@ import {
   type Observable,
   of,
   Subject,
-  share,
   switchMap,
   takeUntil,
 } from "rxjs"
@@ -46,9 +44,32 @@ type LayoutParams = {
   minimumWidth: number
 }
 
-type DocumentRendererState = {
-  state: `idle` | `loading` | `loaded` | `unloading` | `error`
-  error: unknown | undefined
+/**
+ * Where the load of a document stands:
+ *
+ * - `idle`: nothing loaded, as at first and once released.
+ * - `loading`: `load()` started a load.
+ * - `loaded`: the document is there.
+ * - `unloading`: `unload()` is releasing it; it is gone once `idle`.
+ * - `error`: the load failed, with what it created released. `load()` does
+ *   not retry it: it stays failed until `unload()`, which makes it `idle`.
+ */
+export type DocumentLoadStatus =
+  | `idle`
+  | `loading`
+  | `loaded`
+  | `unloading`
+  | `error`
+
+/**
+ * The load of a document: where it stands, and why it failed when it did.
+ * A `loadError` goes only with `error`, whose status holds it.
+ */
+export type DocumentLoad =
+  | { loadStatus: `error`; loadError: unknown }
+  | { loadStatus: Exclude<DocumentLoadStatus, `error`>; loadError: undefined }
+
+type DocumentRendererState = DocumentLoad & {
   documentContainer: HTMLElement | undefined
 }
 
@@ -69,13 +90,10 @@ export abstract class DocumentRenderer extends ReactiveEntity<DocumentRendererSt
   protected containerElement: HTMLElement
   protected resourcesHandler: ResourceHandler
 
-  public readonly loaded$: Observable<void>
-  public readonly unloaded$: Observable<void>
-
   constructor(params: DocumentRendererParams) {
     super({
-      state: `idle`,
-      error: undefined,
+      loadStatus: `idle`,
+      loadError: undefined,
       documentContainer: undefined,
     })
 
@@ -88,7 +106,7 @@ export abstract class DocumentRenderer extends ReactiveEntity<DocumentRendererSt
     this.viewport = params.viewport
 
     const createAndLoadDocument$ = defer(() => {
-      this.mergeCompare({ state: `loading`, error: undefined })
+      this.setLoad({ loadStatus: `loading`, loadError: undefined })
 
       return this.onCreateDocument()
     }).pipe(
@@ -116,20 +134,17 @@ export abstract class DocumentRenderer extends ReactiveEntity<DocumentRendererSt
         )
       }),
       map(() => {
-        this.mergeCompare({ state: `loaded`, error: undefined })
-
-        return `loaded` as const
+        this.setLoad({ loadStatus: `loaded`, loadError: undefined })
       }),
       /**
        * A load that fails leaves the renderer in `error`, with what it
-       * created released, and the lifecycle going on: the spine lays out on
-       * every item's `loaded$`, and one ending in an error would stop its
-       * layouts for good.
+       * created released, and the lifecycle going on: an error ending it
+       * would keep the renderer from ever loading again.
        */
       catchError((error) => {
         Report.error(`Error loading document`, error)
         this.releaseDocument()
-        this.mergeCompare({ state: `error`, error })
+        this.setLoad({ loadStatus: `error`, loadError: error })
 
         return EMPTY
       }),
@@ -142,20 +157,18 @@ export abstract class DocumentRenderer extends ReactiveEntity<DocumentRendererSt
      */
     const unload$ = defer(() => {
       if (!this.holdsDocument) {
-        this.mergeCompare({ state: `idle`, error: undefined })
+        this.setLoad({ loadStatus: `idle`, loadError: undefined })
 
         return EMPTY
       }
 
-      this.mergeCompare({ state: `unloading`, error: undefined })
+      this.setLoad({ loadStatus: `unloading`, loadError: undefined })
 
       return this.context.bridgeEvent.viewportFree$.pipe(
         first(),
         map(() => {
           this.releaseDocument()
-          this.mergeCompare({ state: `idle`, error: undefined })
-
-          return `unloaded` as const
+          this.setLoad({ loadStatus: `idle`, loadError: undefined })
         }),
       )
     })
@@ -187,22 +200,10 @@ export abstract class DocumentRenderer extends ReactiveEntity<DocumentRendererSt
        */
       switchMap((request) => (request === `load` ? load$ : unload$)),
       /**
-       * Once the requests end, what runs for the last one stops as well,
-       * whoever listens to `loaded$` or `unloaded$`: a load in progress, or a
-       * release waiting for the viewport.
+       * Once the requests end, what runs for the last one stops as well: a
+       * load in progress, or a release waiting for the viewport.
        */
       takeUntil(endOfRequests$),
-      share(),
-    )
-
-    this.loaded$ = documentLifecycle$.pipe(
-      filter((event) => event === `loaded`),
-      map(() => undefined),
-    )
-
-    this.unloaded$ = documentLifecycle$.pipe(
-      filter((event) => event === `unloaded`),
-      map(() => undefined),
     )
 
     documentLifecycle$.subscribe()
@@ -213,9 +214,21 @@ export abstract class DocumentRenderer extends ReactiveEntity<DocumentRendererSt
    * is released. A load that fails releases it at once.
    */
   private get holdsDocument() {
-    const { state } = this.value
+    const { loadStatus } = this.value
 
-    return state === `loading` || state === `loaded` || state === `unloading`
+    return (
+      loadStatus === `loading` ||
+      loadStatus === `loaded` ||
+      loadStatus === `unloading`
+    )
+  }
+
+  /**
+   * Every write of the load goes through here, the status with its error, so
+   * one can never be left standing over the other.
+   */
+  private setLoad(load: DocumentLoad) {
+    this.mergeCompare(load)
   }
 
   /**
@@ -259,10 +272,6 @@ export abstract class DocumentRenderer extends ReactiveEntity<DocumentRendererSt
   protected detach() {
     this.documentContainer?.remove()
     this.mergeCompare({ documentContainer: undefined })
-  }
-
-  public get isLoaded$() {
-    return this.state$.pipe(map((state) => state.state === `loaded`))
   }
 
   /**

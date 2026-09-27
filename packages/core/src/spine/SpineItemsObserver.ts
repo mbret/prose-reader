@@ -1,13 +1,13 @@
 import { isShallowEqual } from "@prose-reader/shared"
 import {
   distinctUntilChanged,
-  filter,
   map,
   merge,
   type Observable,
+  pairwise,
   share,
-  skip,
 } from "rxjs"
+import type { DocumentLoadStatus } from "../spineItem/renderer/DocumentRenderer"
 import type { SpineItem, SpineItemState } from "../spineItem/SpineItem"
 import { DestroyableClass } from "../utils/DestroyableClass"
 import { observeResize } from "../utils/rxjs"
@@ -33,15 +33,30 @@ export class SpineItemsObserver extends DestroyableClass {
     entries: ResizeObserverEntry[]
   }>
 
-  public itemLoad$: Observable<SpineItem>
-  public itemUnload$: Observable<SpineItem>
-
   /**
-   * Emits each time an item's load fails, once its state is `isError`, with
-   * the error in `item.value.error`. The item stays in error until it is
-   * unloaded: a load does not retry it.
+   * Emits each time an item's `loadStatus` changes, with the status it
+   * changed from:
+   *
+   * - `idle` to `loading`: a load starts.
+   * - `loading` to `loaded` or `error`: the document loaded, or failed to.
+   * - `loading` or `loaded` to `unloading`: an unload starts, cancelling a
+   *   load in progress.
+   * - `unloading` to `idle`: the document is released. A load asked for
+   *   while the release waits starts once it is done, from `idle`.
+   * - `error` to `idle`: an item in error is unloaded, with nothing left to
+   *   release since its failure did.
+   *
+   * It is delivered as the item's state changes, as `itemStateChange$` is,
+   * so `item.value` holds the new status and its `loadError`. A subscriber
+   * that changes an item's state in response must defer that change, as the
+   * spine's layout does: done during the delivery, it would reach the
+   * item's later subscribers before the status it responds to.
    */
-  public itemLoadFailure$: Observable<SpineItem>
+  public itemLoadStatusChange$: Observable<{
+    item: SpineItem
+    previousLoadStatus: DocumentLoadStatus
+    loadStatus: DocumentLoadStatus
+  }>
 
   constructor(protected spineItemsManager: SpineItemsManager) {
     super()
@@ -63,21 +78,15 @@ export class SpineItemsObserver extends DestroyableClass {
       ),
     ).pipe(share())
 
-    this.itemLoad$ = merge(
-      ...items.map((item) => item.loaded$.pipe(map(() => item))),
-    ).pipe(share())
-
-    this.itemUnload$ = merge(
-      ...items.map((item) => item.unloaded$.pipe(map(() => item))),
-    ).pipe(share())
-
-    this.itemLoadFailure$ = merge(
+    this.itemLoadStatusChange$ = merge(
       ...items.map((item) =>
-        item.watch("isError").pipe(
-          // The state it has when subscribed to is not a failure happening.
-          skip(1),
-          filter(Boolean),
-          map(() => item),
+        item.watch("loadStatus").pipe(
+          pairwise(),
+          map(([previousLoadStatus, loadStatus]) => ({
+            item,
+            previousLoadStatus,
+            loadStatus,
+          })),
         ),
       ),
     ).pipe(share())

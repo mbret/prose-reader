@@ -73,7 +73,7 @@ const resolveFirstVisibleNodeForPage = (
 ): PageEntry => {
   const { spineItem: _unused, ...rest } = page
 
-  if (!page.spineItem.value.isLoaded) {
+  if (page.spineItem.value.loadStatus !== "loaded") {
     return {
       ...rest,
       firstVisibleNode: undefined,

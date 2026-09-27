@@ -7,7 +7,7 @@ import { ReaderSettingsManager } from "../../settings/ReaderSettingsManager"
 import { createTestManifest, waitFor } from "../../tests/utils"
 import { Viewport } from "../../viewport/Viewport"
 import { ResourceHandler } from "../resources/ResourceHandler"
-import { DocumentRenderer } from "./DocumentRenderer"
+import { type DocumentLoadStatus, DocumentRenderer } from "./DocumentRenderer"
 
 /**
  * Creates a new document each time, named by the order it was created in, and
@@ -185,7 +185,7 @@ describe(`DocumentRenderer`, () => {
       expect(hookManager._hookExecutions).toHaveLength(0)
       // A document is never released while its load still runs.
       expect(isLoadAbortedWhenUnloadHookRan).toBe(true)
-      expect(renderer.value.state).toBe(`idle`)
+      expect(renderer.value.loadStatus).toBe(`idle`)
 
       resolveHook?.()
       cleanup()
@@ -239,15 +239,15 @@ describe(`DocumentRenderer`, () => {
       renderer.load()
       renderer.load()
 
-      expect(renderer.value.state).toBe(`loading`)
+      expect(renderer.value.loadStatus).toBe(`loading`)
 
       await completeDocumentLoad(renderer)
 
-      expect(renderer.value.state).toBe(`loaded`)
+      expect(renderer.value.loadStatus).toBe(`loaded`)
 
       renderer.load()
 
-      expect(renderer.value.state).toBe(`loaded`)
+      expect(renderer.value.loadStatus).toBe(`loaded`)
       expect(renderer.createdDocuments).toEqual([`document-1`])
       expect(renderer.releasedDocuments).toEqual([])
 
@@ -276,7 +276,7 @@ describe(`DocumentRenderer`, () => {
       renderer.load()
       await completeDocumentLoad(renderer)
 
-      expect(renderer.value.state).toBe(`loaded`)
+      expect(renderer.value.loadStatus).toBe(`loaded`)
 
       renderer.destroy()
 
@@ -385,9 +385,6 @@ describe(`DocumentRenderer`, () => {
         expectEveryDocumentReleasedOnce,
       } = createHarness()
 
-      // Listened to, as the spine listens to every item's unloads.
-      renderer.unloaded$.subscribe()
-
       renderer.load()
       await completeDocumentLoad(renderer)
 
@@ -431,18 +428,11 @@ describe(`DocumentRenderer`, () => {
   })
 
   describe(`when a load is asked for once the renderer is destroyed`, () => {
-    it(`creates no document, whatever listens to its loads`, () => {
+    it(`creates no document`, () => {
       const { renderer, cleanup, expectEveryDocumentReleasedOnce } =
         createHarness()
 
-      // Listened to, as the spine listens to every item's loads.
-      renderer.loaded$.subscribe()
-
       renderer.destroy()
-
-      // And listened to by something that comes late.
-      renderer.loaded$.subscribe()
-
       renderer.load()
 
       expect(renderer.createdDocuments).toEqual([])
@@ -472,17 +462,17 @@ describe(`DocumentRenderer`, () => {
       // The release waits for the viewport, and the load for the release.
       expect(renderer.createdDocuments).toEqual([`document-1`])
       expect(renderer.releasedDocuments).toEqual([])
-      expect(renderer.value.state).toBe(`unloading`)
+      expect(renderer.value.loadStatus).toBe(`unloading`)
 
       setViewportState(`free`)
 
       expect(renderer.releasedDocuments).toEqual([`document-1`])
       expect(renderer.createdDocuments).toEqual([`document-1`, `document-2`])
-      expect(renderer.value.state).toBe(`loading`)
+      expect(renderer.value.loadStatus).toBe(`loading`)
 
       await completeDocumentLoad(renderer)
 
-      expect(renderer.value.state).toBe(`loaded`)
+      expect(renderer.value.loadStatus).toBe(`loaded`)
       expect(renderer.documentContainer?.id).toBe(`document-2`)
       expect(
         Array.from(containerElement.children, (element) => element.id),
@@ -502,14 +492,14 @@ describe(`DocumentRenderer`, () => {
 
       renderer.load()
 
-      expect(renderer.value.state).toBe(`loading`)
+      expect(renderer.value.loadStatus).toBe(`loading`)
 
       setViewportState(`busy`)
       renderer.unload()
       renderer.load()
 
       expect(renderer.createdDocuments).toEqual([`document-1`])
-      expect(renderer.value.state).toBe(`unloading`)
+      expect(renderer.value.loadStatus).toBe(`unloading`)
 
       setViewportState(`free`)
 
@@ -518,7 +508,7 @@ describe(`DocumentRenderer`, () => {
 
       await completeDocumentLoad(renderer)
 
-      expect(renderer.value.state).toBe(`loaded`)
+      expect(renderer.value.loadStatus).toBe(`loaded`)
       expect(renderer.documentContainer?.id).toBe(`document-2`)
 
       cleanup()
@@ -543,7 +533,7 @@ describe(`DocumentRenderer`, () => {
       renderer.unload()
       setViewportState(`free`)
 
-      expect(renderer.value.state).toBe(`idle`)
+      expect(renderer.value.loadStatus).toBe(`idle`)
       expect(renderer.createdDocuments).toEqual([`document-1`])
       expect(renderer.releasedDocuments).toEqual([`document-1`])
       expect(containerElement.children).toHaveLength(0)
@@ -563,19 +553,13 @@ describe(`DocumentRenderer`, () => {
       } = createHarness()
 
       const unloadedItemIds: string[] = []
-      const loadedErrors: unknown[] = []
-      let loadedCount = 0
+      const loadStatuses: DocumentLoadStatus[] = []
 
       hookManager.register(`item.onDocumentUnload`, ({ itemId }) => {
         unloadedItemIds.push(itemId)
       })
-      renderer.loaded$.subscribe({
-        next: () => {
-          loadedCount++
-        },
-        error: (error) => {
-          loadedErrors.push(error)
-        },
+      renderer.watch(`loadStatus`).subscribe((loadStatus) => {
+        loadStatuses.push(loadStatus)
       })
 
       const loadError = new Error(`resource failed`)
@@ -587,8 +571,8 @@ describe(`DocumentRenderer`, () => {
 
       // The failure is the renderer's state, and what the load created is
       // released, as an unload would.
-      expect(renderer.value.state).toBe(`error`)
-      expect(renderer.value.error).toBe(loadError)
+      expect(renderer.value.loadStatus).toBe(`error`)
+      expect(renderer.value.loadError).toBe(loadError)
       expect(unloadedItemIds).toEqual([`item-1`])
       expect(renderer.onUnloadCalls).toBe(1)
 
@@ -601,17 +585,23 @@ describe(`DocumentRenderer`, () => {
 
       await waitFor(0)
 
-      expect(renderer.value.state).toBe(`error`)
+      expect(renderer.value.loadStatus).toBe(`error`)
 
       // An unload leaves it idle, and the next load loads.
       renderer.unload()
       renderer.load()
       await completeDocumentLoad(renderer)
 
-      // `loaded$` never errors: it goes on, and reports the load that works.
-      expect(renderer.value.state).toBe(`loaded`)
-      expect(loadedCount).toBe(1)
-      expect(loadedErrors).toEqual([])
+      // The failure did not end the renderer's loads: the one that works goes
+      // through, and the request made in error started none.
+      expect(loadStatuses).toEqual([
+        `idle`,
+        `loading`,
+        `error`,
+        `idle`,
+        `loading`,
+        `loaded`,
+      ])
 
       cleanup()
       expectEveryDocumentReleasedOnce()
@@ -638,7 +628,7 @@ describe(`DocumentRenderer`, () => {
 
       await waitFor(0)
 
-      expect(renderer.value.state).toBe(`error`)
+      expect(renderer.value.loadStatus).toBe(`error`)
       expect(renderer.onUnloadCalls).toBe(1)
 
       // The failed load released what it created, once: the unload and the
@@ -647,8 +637,8 @@ describe(`DocumentRenderer`, () => {
 
       await waitFor(0)
 
-      expect(renderer.value.state).toBe(`idle`)
-      expect(renderer.value.error).toBeUndefined()
+      expect(renderer.value.loadStatus).toBe(`idle`)
+      expect(renderer.value.loadError).toBeUndefined()
 
       renderer.load()
       renderer.onLoadDocumentSubject.error(new Error(`resource failed`))
