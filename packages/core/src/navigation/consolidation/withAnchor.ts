@@ -177,7 +177,9 @@ export const withAnchor =
       anchor: InternalNavigationAnchor | undefined,
       navigation: N["navigation"],
     ): InternalNavigationAnchor | undefined =>
-      anchor && spine.spineItemsManager.get(navigation.spineItem)?.value.isError
+      anchor &&
+      spine.spineItemsManager.get(navigation.spineItem)?.value.loadStatus ===
+        "error"
         ? { ...anchor, state: "error" }
         : anchor
 

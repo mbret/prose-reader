@@ -11,12 +11,14 @@ For convenience you can handle errors on a global level and just make your entir
 SpineItem instances have an error state that you can access when a problem occurs. An error can potentially occur when the resource is fetched for example, or during rendering if you have a complex document handling. That being said, the most typical issue is usually network request error when fetching resources.
 
 ```typescript
-reader.spineItemsObserver.itemLoadFailure$.subscribe((item) => {
-  console.warn(`${item.item.href} failed to load`, item.value.error)
+reader.spineItemsObserver.itemLoadStatusChange$.subscribe(({ item, loadStatus }) => {
+  if (loadStatus === "error") console.warn(`${item.item.href} failed to load`, item.value.loadError)
 })
 ```
 
-`itemLoadFailure$` emits each time a load fails, and `item.value.isError` stays `true` until the item is unloaded: asking to load it again does not retry it. The reader unloads it once the reader has moved further away than the chapters it preloads (`numberOfAdjacentSpineItemToPreLoad`), and loads it again when the reader comes back.
+`item.value.loadStatus` is where the load of a spine item's document stands: `idle`, `loading`, `loaded`, `unloading` while it is released, or `error`, with the reason in `item.value.loadError`. `itemLoadStatusChange$` emits each change, for every item, with the status it changed from as `previousLoadStatus`, as the item's state changes: `item.value` holds the new status and its `loadError`.
+
+A failed load stays `error` until the item is unloaded: asking to load it again does not retry it. The reader unloads it once the reader has moved further away than the chapters it preloads (`numberOfAdjacentSpineItemToPreLoad`), and loads it again when the reader comes back.
 
 The rest of the book keeps working. A navigation into the item ends its [reading position](navigation.md#reading-position) in `error`, and [pagination](pagination.md#settlement) settles on the item rather than waiting for it.
 

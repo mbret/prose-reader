@@ -4,11 +4,11 @@ import type { Reader } from "../../reader"
 export const handleLinks = (reader: Reader) => {
   return merge(
     ...reader.spine.spineItemsManager.items.map((item) => {
-      return item.watch("isLoaded").pipe(
-        switchMap(() => {
+      return item.watch("loadStatus").pipe(
+        switchMap((loadStatus) => {
           const frame = item.renderer.getDocumentFrame()
 
-          if (!frame?.contentDocument) return NEVER
+          if (loadStatus !== "loaded" || !frame?.contentDocument) return NEVER
 
           const anchorElements = Array.from(
             frame.contentDocument.querySelectorAll(`a`),

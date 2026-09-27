@@ -52,7 +52,11 @@ const loadFailureOf = (
 
   if (!spineItem) throw new Error(`no item ${index}`)
 
-  return firstValueFrom(spineItem.watch("isError").pipe(filter(Boolean)))
+  return firstValueFrom(
+    spineItem
+      .watch("loadStatus")
+      .pipe(filter((loadStatus) => loadStatus === "error")),
+  )
 }
 
 /**
@@ -169,7 +173,41 @@ describe("an item whose load fails", () => {
     const settled = await settledOn(reader, 1)
 
     expect(settled.begin.spineItemIndex).toBe(1)
-    expect(reader.spineItemsManager.get(0)?.value.isLoaded).toBe(false)
+    expect(reader.spineItemsManager.get(0)?.value.loadStatus).toBe("idle")
+  })
+
+  it("does not lay the spine out when unloaded, since its failure released it already", async () => {
+    const secondItem = failSecondItemLoads(Number.POSITIVE_INFINITY)
+    // The second item is preloaded next to the first.
+    const reader = createTestReader({
+      getRenderer: secondItem.getRenderer,
+      numberOfAdjacentSpineItemToPreLoad: 1,
+    })
+
+    mountTestReader(reader)
+    await loadFailureOf(reader, 1)
+    await settledOn(reader, 0)
+
+    const events: string[] = []
+    reader.spineItemsObserver.itemLoadStatusChange$.subscribe(
+      ({ item, loadStatus }) => {
+        events.push(`${item.index} ${loadStatus}`)
+      },
+    )
+    reader.spine.layout$.subscribe(() => {
+      events.push("laid out")
+    })
+
+    // Only the item at the position loads now: the second is unloaded.
+    reader.settings.update({ numberOfAdjacentSpineItemToPreLoad: 0 })
+
+    await vi.waitFor(() => expect(events).toContain("1 idle"))
+    // A layout runs 50ms after it is requested: this is past that.
+    await waitFor(200)
+
+    // Nothing changed: no layout, and pagination stays settled.
+    expect(events).toEqual(["1 idle"])
+    expect(reader.pagination.state.isSettled).toBe(true)
   })
 
   it("is loaded again once it has left the items around the position and comes back into them", async () => {

@@ -31,6 +31,6 @@ reader.hookManager.register(`item.onDocumentLoad`, ({ itemId }) => {
 ```
 
 {% hint style="danger" %}
-There is actually an `item.load$` event which you could respond to and it would work in this case because this hook is not yet asynchronous. However it might change in the future and this is why it is preferable to use hooks when you need to inject code at a specific lifecycle.
+Reacting to an item's `loadStatus` becoming `loaded`, from `reader.spineItemsObserver.itemLoadStatusChange$`, would work in this case too, because the reader lays the spine out after that change. Nothing guarantees that order, which is why a hook is preferable when you need to run code at a specific point of the lifecycle.
 {% endhint %}
 

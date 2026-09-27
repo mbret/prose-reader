@@ -161,7 +161,7 @@ const createHarness = ({
         return stylesheetRequests
       }),
     waitForLoaded: () =>
-      vi.waitFor(() => expect(renderer.value.state).toBe(`loaded`)),
+      vi.waitFor(() => expect(renderer.value.loadStatus).toBe(`loaded`)),
     cleanup: () => {
       renderer.destroy()
       viewport.destroy()
@@ -228,7 +228,7 @@ describe(`HtmlRenderer`, () => {
 
       const [stylesheet] = await waitForStylesheetRequests(1)
 
-      expect(renderer.value.state).toBe(`loading`)
+      expect(renderer.value.loadStatus).toBe(`loading`)
 
       stylesheet?.load()
 
@@ -286,7 +286,7 @@ describe(`HtmlRenderer`, () => {
 
       await vi.waitFor(() => expect(getDocument()?.styleSheets).toHaveLength(1))
 
-      expect(renderer.value.state).toBe(`loading`)
+      expect(renderer.value.loadStatus).toBe(`loading`)
 
       second?.load()
 
@@ -326,7 +326,7 @@ describe(`HtmlRenderer`, () => {
 
       await vi.advanceTimersByTimeAsync(4_000)
 
-      expect(renderer.value.state).toBe(`loading`)
+      expect(renderer.value.loadStatus).toBe(`loading`)
 
       await vi.advanceTimersByTimeAsync(1_000)
 
@@ -350,7 +350,7 @@ describe(`HtmlRenderer`, () => {
         return link
       })
 
-      expect(renderer.value.state).toBe(`loading`)
+      expect(renderer.value.loadStatus).toBe(`loading`)
 
       link?.dispatchEvent(new Event(`load`))
 
@@ -479,8 +479,8 @@ describe(`HtmlRenderer`, () => {
 
       const [stylesheet] = await waitForStylesheetRequests(1)
       const fontFaceSources = new Promise<string | undefined>((resolve) => {
-        const subscription = renderer.state$.subscribe(({ state }) => {
-          if (state !== `loaded`) return
+        const subscription = renderer.state$.subscribe(({ loadStatus }) => {
+          if (loadStatus !== `loaded`) return
 
           subscription.unsubscribe()
           resolve(
@@ -612,7 +612,7 @@ describe(`HtmlRenderer`, () => {
 
       renderer.unload()
 
-      await vi.waitFor(() => expect(renderer.value.state).toBe(`idle`))
+      await vi.waitFor(() => expect(renderer.value.loadStatus).toBe(`idle`))
 
       expect(await Promise.all(assetUrls.map(readObjectUrl))).toEqual([
         undefined,

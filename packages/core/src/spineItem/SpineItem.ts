@@ -8,21 +8,25 @@ import { ReactiveEntity } from "../utils/ReactiveEntity"
 import type { Viewport } from "../viewport/Viewport"
 import { getSpineItemNumberOfPages } from "./layout/getSpineItemNumberOfPages"
 import { DefaultRenderer } from "./renderer/DefaultRenderer"
-import type { DocumentRenderer } from "./renderer/DocumentRenderer"
+import type {
+  DocumentLoad,
+  DocumentRenderer,
+} from "./renderer/DocumentRenderer"
 import { ResourceHandler } from "./resources/ResourceHandler"
 import { SpineItemLayout } from "./SpineItemLayout"
 
 export type SpineItemReference = string | SpineItem | number
 
-export type SpineItemState = {
-  isLoaded: boolean
+/**
+ * `loadStatus` and `loadError` are the load of the item's document, its
+ * renderer's: a `loadError` goes only with `error`.
+ */
+export type SpineItemState = DocumentLoad & {
   /**
    * - Content has been loaded
    * - A first layout has been done
    */
   isReady: boolean
-  isError: boolean
-  error: unknown | undefined
   /**
    * - Layout has been requested
    * - Item layout not done yet
@@ -54,11 +58,10 @@ export class SpineItem extends ReactiveEntity<SpineItemState> {
     public viewport: Viewport,
   ) {
     super({
-      isLoaded: false,
+      loadStatus: "idle",
       isReady: false,
       isDirty: false,
-      isError: false,
-      error: undefined,
+      loadError: undefined,
     })
 
     this.containerElement = createContainerElement(item, context.document)
@@ -91,13 +94,9 @@ export class SpineItem extends ReactiveEntity<SpineItemState> {
       this.viewport,
     )
 
-    const updateStateOnLoaded$ = this.renderer.state$.pipe(
-      tap(({ state, error }) => {
-        this.updateState({
-          isLoaded: state === "loaded",
-          isError: state === "error",
-          error: state === "error" ? error : undefined,
-        })
+    const updateStateOnLoadStatus$ = this.renderer.state$.pipe(
+      tap(({ documentContainer: _documentContainer, ...load }) => {
+        this.updateState({ load })
       }),
     )
 
@@ -120,7 +119,7 @@ export class SpineItem extends ReactiveEntity<SpineItemState> {
        * is set before dispatching the layout event. Elements reacting
        * to layout changes may rely on the state value to be updated.
        */
-      updateStateOnLoaded$,
+      updateStateOnLoadStatus$,
       this.didLayout$,
     )
       .pipe(takeUntil(this.destroy$))
@@ -163,14 +162,26 @@ export class SpineItem extends ReactiveEntity<SpineItemState> {
    *
    * Readiness means the renderer is loaded *and* a layout completed for it.
    * The two halves are granted by different streams, so a writer that drops
-   * the document must not be able to leave readiness standing over it.
+   * the document must not be able to leave readiness standing over it. The
+   * load is written whole, its status with its error.
    */
-  private updateState(update: Partial<SpineItemState>) {
-    const nextState = { ...this.value, ...update }
+  private updateState(update: {
+    load?: DocumentLoad
+    isReady?: boolean
+    isDirty?: boolean
+  }) {
+    const {
+      isReady: currentIsReady,
+      isDirty: currentIsDirty,
+      ...currentLoad
+    } = this.value
+    const load = update.load ?? currentLoad
+    const isReady = update.isReady ?? currentIsReady
 
     this.mergeCompare({
-      ...nextState,
-      isReady: nextState.isReady && nextState.isLoaded,
+      ...load,
+      isDirty: update.isDirty ?? currentIsDirty,
+      isReady: isReady && load.loadStatus === "loaded",
     })
   }
 
@@ -212,20 +223,6 @@ export class SpineItem extends ReactiveEntity<SpineItemState> {
 
   isUsingVerticalWriting = () =>
     !!this.renderer.writingMode?.startsWith(`vertical`)
-
-  /**
-   * Note that this is dispatched AFTER the state has been updated.
-   */
-  get loaded$() {
-    return this.renderer.loaded$
-  }
-
-  /**
-   * Note that this is dispatched AFTER the state has been updated.
-   */
-  get unloaded$() {
-    return this.renderer.unloaded$
-  }
 
   get renditionLayout() {
     return this.renderer.renditionLayout

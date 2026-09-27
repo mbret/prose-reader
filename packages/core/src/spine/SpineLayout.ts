@@ -1,10 +1,12 @@
 import {
+  asapScheduler,
   concatMap,
   defer,
   filter,
   map,
   merge,
   type Observable,
+  observeOn,
   of,
   Subject,
   share,
@@ -16,12 +18,37 @@ import {
 } from "rxjs"
 import type { Context } from "../context/Context"
 import type { ReaderSettingsManager } from "../settings/ReaderSettingsManager"
+import type { DocumentLoadStatus } from "../spineItem/renderer/DocumentRenderer"
 import type { SpineItem } from "../spineItem/SpineItem"
 import { DestroyableClass } from "../utils/DestroyableClass"
 import type { Viewport } from "../viewport/Viewport"
 import type { SpineItemsManager } from "./SpineItemsManager"
 import type { SpineItemsObserver } from "./SpineItemsObserver"
 import { SpineItemSpineLayout } from "./types"
+
+/**
+ * Whether a change of an item's load status ends a load: its document
+ * loaded, failed to load, or was released. Its content changed, and so can
+ * its size and the positions after it.
+ *
+ * An unload of an item in error ends nothing: its failure released it
+ * already, and nothing changes.
+ */
+const endsALoad = ({
+  previousLoadStatus,
+  loadStatus,
+}: {
+  previousLoadStatus: DocumentLoadStatus
+  loadStatus: DocumentLoadStatus
+}) => {
+  const hasLoadFinished =
+    previousLoadStatus === "loading" &&
+    (loadStatus === "loaded" || loadStatus === "error")
+  const hasDocumentBeenReleased =
+    previousLoadStatus === "unloading" && loadStatus === "idle"
+
+  return hasLoadFinished || hasDocumentBeenReleased
+}
 
 export type SpineLayoutOptions = {
   immediate?: boolean
@@ -61,18 +88,18 @@ export class SpineLayout extends DestroyableClass {
     super()
 
     /**
-     * An item's load ended, loaded, failed or unloaded: its content changed,
-     * and so can its size and the positions after it. A failed load ends a
-     * load as the other two do, with the item released as an unload leaves
-     * it, and a layout is what restores the navigation and settles pagination
-     * on the item in error. Each is dispatched after the item's state has
-     * been updated.
+     * A layout is also what restores the navigation and settles pagination,
+     * on an item in error as on a loaded one.
+     *
+     * It is requested once the item's new status has reached all of its
+     * subscribers: requesting it marks every item dirty, and done while the
+     * status is still being delivered, that dirty state would reach the
+     * item's later subscribers before the status itself, and they would end
+     * on a state the item had left.
      */
-    const spineItemNeedsLayout$ = merge(
-      spineItemsObserver.itemLoad$,
-      spineItemsObserver.itemLoadFailure$,
-      spineItemsObserver.itemUnload$,
-    ).pipe(
+    const spineItemNeedsLayout$ = spineItemsObserver.itemLoadStatusChange$.pipe(
+      filter(endsALoad),
+      observeOn(asapScheduler),
       map(
         (): SpineLayoutOptions => ({
           immediate: false,
@@ -145,11 +172,12 @@ export class SpineLayout extends DestroyableClass {
   }
 
   private watchForVerticalWritingUpdate() {
-    this.spineItemsObserver.itemLoad$
+    this.spineItemsObserver.itemLoadStatusChange$
       .pipe(
-        tap((spineItem) => {
+        filter(({ loadStatus }) => loadStatus === "loaded"),
+        tap(({ item }) => {
           this.context.update({
-            hasVerticalWriting: spineItem.isUsingVerticalWriting(),
+            hasVerticalWriting: item.isUsingVerticalWriting(),
           })
         }),
         takeUntil(this.destroy$),

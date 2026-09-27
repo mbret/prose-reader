@@ -4,6 +4,7 @@ import type { Context } from "../../context/Context"
 import type { ReaderSettingsManager } from "../../settings/ReaderSettingsManager"
 import type { SpineItemsManager } from "../../spine/SpineItemsManager"
 import { SpinePosition } from "../../spine/types"
+import type { DocumentLoadStatus } from "../../spineItem/renderer/DocumentRenderer"
 import { createTestManifest } from "../../tests/utils"
 import type { NavigationResolver } from "../resolvers/NavigationResolver"
 import type { InternalNavigationEntry, NavigationTarget } from "../types"
@@ -30,13 +31,18 @@ const document = new DOMParser().parseFromString(
 )
 
 const createResolvers = ({
-  isLoaded = true,
+  loadStatus = "loaded",
   hasDocument = true,
 }: {
-  isLoaded?: boolean
+  loadStatus?: DocumentLoadStatus
   // An item rendered without a document, such as audio, has none.
   hasDocument?: boolean
 } = {}) => {
+  // Its document is there from its load until it is released.
+  const presentDocument =
+    hasDocument && (loadStatus === "loaded" || loadStatus === "unloading")
+      ? document
+      : undefined
   const navigationResolver = {
     clampPositionInSpine: (position: SpinePosition) => position,
     getNavigationForNode: () => new SpinePosition({ x: 0, y: 0 }),
@@ -44,20 +50,20 @@ const createResolvers = ({
   const spineItem = {
     item: { index: 0, href: "0.xhtml" },
     index: 0,
-    value: { isLoaded },
+    value: { loadStatus },
     renderer: {
       getDocumentFrame: () =>
-        hasDocument ? { contentDocument: document } : undefined,
+        hasDocument ? { contentDocument: presentDocument } : undefined,
     },
   }
   const cfi = {
     isRootCfi: (value: string) => value.endsWith("!)"),
     getSpineItemFromCfi: () => spineItem,
-    // `text` names the note, once its document is there to look in.
+    // `text` names the note, while its document is there to look in.
     resolveCfi: ({ cfi }: { cfi: string }) => ({
       node:
-        isLoaded && hasDocument && cfi === text
-          ? document.getElementById("note")
+        presentDocument && cfi === text
+          ? presentDocument.getElementById("note")
           : null,
     }),
     generateRootCfi: () => itemStart,
@@ -137,7 +143,7 @@ describe("target resolvers", () => {
        * selector, the navigation has no place until the item is loaded.
        */
       expect(
-        resolve({ type: "cfi", value }, { isLoaded: false }),
+        resolve({ type: "cfi", value }, { loadStatus: "loading" }),
       ).toMatchObject({
         spineItem: 0,
         anchor: undefined,
@@ -161,13 +167,13 @@ describe("target resolvers", () => {
     })
   })
 
-  it.each([true, false])(
-    "leave a cfi naming only an item to be anchored at the page it lands on, loaded: %s",
-    (isLoaded) => {
+  it.each<DocumentLoadStatus>(["loaded", "loading"])(
+    "leave a cfi naming only an item to be anchored at the page it lands on, %s",
+    (loadStatus) => {
       // A book reopened at a saved item start lands on the item's first page,
       // with nothing to look for in its document.
       expect(
-        resolve({ type: "cfi", value: itemStart }, { isLoaded }),
+        resolve({ type: "cfi", value: itemStart }, { loadStatus }),
       ).toMatchObject({ anchor: undefined, awaitsDocument: false })
     },
   )
@@ -177,7 +183,20 @@ describe("target resolvers", () => {
   })
 
   it("leave a selector awaiting the document of an item not loaded, without an anchor, for restorations to try again", () => {
-    expect(resolve(note, { isLoaded: false })).toMatchObject({
+    expect(resolve(note, { loadStatus: "loading" })).toMatchObject({
+      spineItem: 0,
+      anchor: undefined,
+      awaitsDocument: true,
+    })
+  })
+
+  it("leave a selector awaiting the document of an item being unloaded, rather than looking in the document leaving", () => {
+    /**
+     * The document is still there until it is released, and what the
+     * selector would find in it goes with it: the next load's is the one to
+     * look in.
+     */
+    expect(resolve(note, { loadStatus: "unloading" })).toMatchObject({
       spineItem: 0,
       anchor: undefined,
       awaitsDocument: true,
