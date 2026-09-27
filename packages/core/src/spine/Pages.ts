@@ -181,7 +181,7 @@ export class Pages extends ReactiveEntity<PagesState> {
 
     this.layout$ = spineLayout.lifecycle$.pipe(
       withLatestFrom(viewport),
-      switchMap(([stage, { pageSize }]) => {
+      switchMap(([{ stage }, { pageSize }]) => {
         /**
          * Resolving first visible nodes runs across animation frames. A layout
          * requested meanwhile makes the pages being computed describe a layout
