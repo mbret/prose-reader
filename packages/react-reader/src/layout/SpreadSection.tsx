@@ -1,16 +1,12 @@
 import { Fieldset, Stack } from "@chakra-ui/react"
 import type { CoreInputSettings } from "@prose-reader/core"
-import { memo, useCallback } from "react"
-import { useLiveRef, useObserve } from "reactjrx"
+import { memo } from "react"
+import { useObserve } from "reactjrx"
 import { combineLatest, map, NEVER } from "rxjs"
 import { Radio, RadioGroup } from "../components/ui/radio"
 import { useReader } from "../context/useReader"
-import {
-  useReaderContext,
-  useReaderContextValue,
-} from "../context/useReaderContext"
 import { SettingScopes } from "../settings/SettingScopes"
-import type { PROSE_REACT_READER_SETTINGS_SCOPE_REFERENCE } from "../settings/types"
+import { useManagedSetting } from "../settings/useManagedSetting"
 
 const SPREAD_MODES: CoreInputSettings["spreadMode"][] = [
   "auto",
@@ -19,29 +15,13 @@ const SPREAD_MODES: CoreInputSettings["spreadMode"][] = [
 ]
 
 /**
- * The spread mode, managed like the font size: the app's value for each scope
- * when it passes them, react-reader's own copy otherwise, and the reader
- * follows it.
+ * The spread mode, a setting react-reader manages like the font scale: the
+ * reader follows the app's value when it gives one, react-reader's own
+ * otherwise.
  */
 export const SpreadSection = memo(() => {
   const reader = useReader()
-  const context = useReaderContext()
-  const {
-    uncontrolledSpreadMode,
-    spreadMode = uncontrolledSpreadMode,
-    spreadModeScope,
-    spreadModeValues,
-    onSpreadModeChange,
-    onSpreadModeScopeChange,
-  } = useReaderContextValue([
-    "uncontrolledSpreadMode",
-    "spreadMode",
-    "spreadModeScope",
-    "spreadModeValues",
-    "onSpreadModeChange",
-    "onSpreadModeScopeChange",
-  ])
-  const onSpreadModeChangeRef = useLiveRef(onSpreadModeChange)
+  const spreadMode = useManagedSetting("spreadMode")
   const { data: spreadState } = useObserve(
     () =>
       reader
@@ -56,20 +36,6 @@ export const SpreadSection = memo(() => {
           )
         : NEVER,
     [reader],
-  )
-
-  const updateSpreadMode = useCallback(
-    (
-      scope: PROSE_REACT_READER_SETTINGS_SCOPE_REFERENCE,
-      value: CoreInputSettings["spreadMode"],
-    ) => {
-      if (onSpreadModeChangeRef.current) {
-        onSpreadModeChangeRef.current(scope, value)
-      } else {
-        context.update((old) => ({ ...old, uncontrolledSpreadMode: value }))
-      }
-    },
-    [onSpreadModeChangeRef, context],
   )
 
   if (!spreadState) return null
@@ -88,11 +54,11 @@ export const SpreadSection = memo(() => {
         <Stack gap={4}>
           <SettingScopes
             scopeHelperText="The scope to which apply the spread for this book."
-            activeScope={spreadModeScope}
-            onActiveScopeChange={onSpreadModeScopeChange}
+            activeScope={spreadMode.activeScope}
+            onActiveScopeChange={spreadMode.onActiveScopeChange}
             renderScopeValue={(scope) => (
               <RadioGroup
-                value={spreadModeValues?.[scope] ?? spreadMode}
+                value={spreadMode.getValueForScope(scope)}
                 disabled={!spreadState.isSpreadAllowed}
                 onValueChange={({ value }) => {
                   const selectedSpreadMode = SPREAD_MODES.find(
@@ -100,7 +66,7 @@ export const SpreadSection = memo(() => {
                   )
 
                   if (selectedSpreadMode) {
-                    updateSpreadMode(scope, selectedSpreadMode)
+                    spreadMode.changeValueForScope(scope, selectedSpreadMode)
                   }
                 }}
               >

@@ -1,19 +1,15 @@
-import type { CoreInputSettings } from "@prose-reader/core"
-import type { ReactReader } from "@prose-reader/react-reader"
-import { type ComponentProps, useEffect, useState } from "react"
+import { useEffect, useState } from "react"
 import { type Signal, signal, useSignal } from "reactjrx"
-
-type ReactReaderProps = ComponentProps<typeof ReactReader>
+import type {
+  ReaderSettings,
+  ReaderSettingsScopes,
+} from "./reactReaderSettings"
 
 export type BookSettings = {
-  fontSize?: number
-  fontSizeScope?: Parameters<
-    NonNullable<ReactReaderProps["onFontSizeScopeChange"]>
-  >[0]
-  spreadMode?: CoreInputSettings["spreadMode"]
-  spreadModeScope?: Parameters<
-    NonNullable<ReactReaderProps["onSpreadModeScopeChange"]>
-  >[0]
+  /** This book's values of the settings react-reader manages. */
+  readerSettings?: ReaderSettings
+  /** The scope each of them takes its value from, for this book. */
+  readerSettingsScopes?: ReaderSettingsScopes
 }
 
 export const useBookSettings = (epubKey: string) => {

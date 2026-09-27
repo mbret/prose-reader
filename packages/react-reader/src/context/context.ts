@@ -1,4 +1,4 @@
-import type { CoreInputSettings, Reader } from "@prose-reader/core"
+import type { Reader } from "@prose-reader/core"
 import type {
   Annotation,
   RuntimeAnnotation,
@@ -9,19 +9,22 @@ import { type Signal, signal } from "reactjrx"
 import { Subject } from "rxjs"
 import type { ReaderNotification } from "../notifications/types"
 import type {
+  ManagedSettingName,
+  ManagedSettingValues,
+} from "../settings/managedSettings"
+import type {
   PROSE_REACT_READER_SETTINGS_SCOPE,
   PROSE_REACT_READER_SETTINGS_SCOPE_REFERENCE,
 } from "../settings/types"
 
 export type PrivateContextType = {
   /**
-   * Internal fallback values used for uncontrolled settings. This way the
-   * Reader works as intended but:
+   * react-reader's own values for the settings the app gives no value, starting
+   * from the reader's. This way the Reader works as intended but:
    * - there are no persistent settings
    * - the settings are valid only for the current mount runtime
    */
-  uncontrolledFontSize: number
-  uncontrolledSpreadMode: CoreInputSettings["spreadMode"]
+  uncontrolledSettings: Partial<ManagedSettingValues>
   refitMenuOpen: boolean
   onRefitMenuOpenChange: (open: boolean) => void
   fontSizeMenuOpen: boolean
@@ -61,29 +64,41 @@ export type PublicContextType = {
   ) => void
   quickMenuOpen?: boolean
   onQuickMenuOpenChange?: Dispatch<SetStateAction<boolean>>
-  fontSize?: number
   zoomMaxScale?: number
-  onFontSizeChange?: (
+  /**
+   * The global values of the reader settings the user changes from
+   * react-reader's menus. They apply unless `settingsScopes` points a setting
+   * to another scope.
+   */
+  settings?: Partial<ManagedSettingValues>
+  /**
+   * The settings whose value the user chose in a menu, with the scope it was
+   * chosen for, or `"internal"` for a value set on the reader directly.
+   */
+  onSettingsChange?: (
+    changes: Partial<ManagedSettingValues>,
     from: PROSE_REACT_READER_SETTINGS_SCOPE_REFERENCE | "internal",
-    value: number,
   ) => void
-  fontSizeScope?: PROSE_REACT_READER_SETTINGS_SCOPE_REFERENCE
-  onFontSizeScopeChange?: (scope: PROSE_REACT_READER_SETTINGS_SCOPE) => void
-  fontSizeValues?: Record<
-    PROSE_REACT_READER_SETTINGS_SCOPE_REFERENCE,
-    number | undefined
+  /** The values of the scopes other than the global one. */
+  settingsByScope?: Partial<
+    Record<
+      Exclude<PROSE_REACT_READER_SETTINGS_SCOPE_REFERENCE, "global">,
+      Partial<ManagedSettingValues>
+    >
   >
-  spreadMode?: CoreInputSettings["spreadMode"]
-  onSpreadModeChange?: (
-    from: PROSE_REACT_READER_SETTINGS_SCOPE_REFERENCE | "internal",
-    value: CoreInputSettings["spreadMode"],
+  /**
+   * For this book, the scope each setting takes its value from, when it is not
+   * the global one. The menus offer the scopes once it is set.
+   */
+  settingsScopes?: Partial<
+    Record<ManagedSettingName, PROSE_REACT_READER_SETTINGS_SCOPE_REFERENCE>
+  >
+  /** The scope the user picked for a setting, for this book. */
+  onSettingsScopesChange?: (
+    changes: Partial<
+      Record<ManagedSettingName, PROSE_REACT_READER_SETTINGS_SCOPE>
+    >,
   ) => void
-  spreadModeScope?: PROSE_REACT_READER_SETTINGS_SCOPE_REFERENCE
-  onSpreadModeScopeChange?: (scope: PROSE_REACT_READER_SETTINGS_SCOPE) => void
-  spreadModeValues?: Record<
-    PROSE_REACT_READER_SETTINGS_SCOPE_REFERENCE,
-    CoreInputSettings["spreadMode"] | undefined
-  >
   annotations?: Annotation[]
   onAnnotationCreate?: (annotation: Annotation) => void
   onAnnotationUpdate?: (
@@ -108,8 +123,7 @@ export const getDefaultValue = (): ReaderContextType => ({
   onFontSizeMenuOpenChange: () => {},
   fontSizeMin: 0.2,
   fontSizeMax: 5,
-  uncontrolledFontSize: 1,
-  uncontrolledSpreadMode: "auto",
+  uncontrolledSettings: {},
   enableFloatingProgress: true,
   selectedHighlight: undefined,
 })
