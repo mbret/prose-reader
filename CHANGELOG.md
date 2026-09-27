@@ -3,6 +3,14 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## [22.0.2](https://github.com/mbret/prose-reader/compare/v22.0.1...v22.0.2) (2026-09-27)
+
+### Bug Fixes
+
+* **core:** hold one document at a time in a renderer ([bb20d76](https://github.com/mbret/prose-reader/commit/bb20d7624291f81bbcd05cd641d5671f0970c78b)), closes [#497](https://github.com/mbret/prose-reader/issues/497)
+* **core:** release on destroy while the renderer's state is still observed ([f74ff11](https://github.com/mbret/prose-reader/commit/f74ff11de42cf44d86bb900de70b3cac2bd8b313))
+
+
 ## [22.0.1](https://github.com/mbret/prose-reader/compare/v22.0.0...v22.0.1) (2026-09-27)
 
 ### Bug Fixes
