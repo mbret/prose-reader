@@ -3,6 +3,14 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## [21.0.1](https://github.com/mbret/prose-reader/compare/v21.0.0...v21.0.1) (2026-09-27)
+
+### Bug Fixes
+
+* **core:** keep a failed load in the renderer's state, not in its streams ([16512cb](https://github.com/mbret/prose-reader/commit/16512cbc52abf05bd63362a1f6c0e9d17a766a07))
+* **core:** release what a failed load created only once ([c2f5c30](https://github.com/mbret/prose-reader/commit/c2f5c30fc8a5c698de3a25f6287bd468c88efe98))
+
+
 ## [21.0.0](https://github.com/mbret/prose-reader/compare/v20.0.1...v21.0.0) (2026-09-27)
 
 ### ⚠ BREAKING CHANGES
