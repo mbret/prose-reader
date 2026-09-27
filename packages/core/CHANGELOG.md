@@ -3,6 +3,35 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## [23.0.0](https://github.com/mbret/prose-reader/compare/v22.0.2...v23.0.0) (2026-09-27)
+
+### ⚠ BREAKING CHANGES
+
+* **core:** `SpineItemState.error` and a renderer's `error` are renamed
+  `loadError`.
+* **core:** `SpineItemState.isLoaded` and `isError` are replaced by
+  `loadStatus: DocumentLoadStatus`, `"idle" | "loading" | "loaded" |
+  "unloading" | "error"`: `isLoaded` is `loadStatus === "loaded"` and `isError`
+  is `loadStatus === "error"`. A renderer's `state` is renamed `loadStatus`.
+  `SpineItemsObserver.itemLoad$`, `itemUnload$` and `itemLoadFailure$` are
+  replaced by `itemLoadStatusChange$`, emitting `{ item, loadStatus }`.
+  `SpineItem.loaded$` and `unloaded$`, and `DocumentRenderer.loaded$`,
+  `unloaded$` and `isLoaded$`, are removed: watch `loadStatus` instead.
+* **core:** `SpineItemState` and a renderer's state are unions on
+  `loadStatus`: `loadError` is `undefined` unless `loadStatus` is `error`.
+
+### Bug Fixes
+
+* **core:** deliver load status changes as they happen, and defer only the layout ([73f3721](https://github.com/mbret/prose-reader/commit/73f37215a73bf549948375b3b089bbb5d29809da))
+* **core:** lay out after a load status reaches every subscriber, on load ends only ([6a299d2](https://github.com/mbret/prose-reader/commit/6a299d2ed23a55c1300f07947b62b534f574b100))
+
+### Code Refactoring
+
+* **core:** hold a load error only with the error status, and test the selection and writing mode ([b4be71c](https://github.com/mbret/prose-reader/commit/b4be71c73ce9a119e983b3f3cd0d443d7d8ae571))
+* **core:** name the reason a load failed loadError, and what ends a load ([002f4d8](https://github.com/mbret/prose-reader/commit/002f4d8d3607b2f09b2bd27998a945ed5d980c42))
+* **core:** one load status for a spine item, not two flags and three streams ([a5656f8](https://github.com/mbret/prose-reader/commit/a5656f88e63d42ab8bc20b655c3a24588942c003))
+
+
 ## [22.0.2](https://github.com/mbret/prose-reader/compare/v22.0.1...v22.0.2) (2026-09-27)
 
 ### Bug Fixes

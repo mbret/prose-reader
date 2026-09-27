@@ -3,6 +3,24 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## [23.0.0](https://github.com/mbret/prose-reader/compare/v22.0.2...v23.0.0) (2026-09-27)
+
+### ⚠ BREAKING CHANGES
+
+* **core:** `SpineItemState.isLoaded` and `isError` are replaced by
+  `loadStatus: DocumentLoadStatus`, `"idle" | "loading" | "loaded" |
+  "unloading" | "error"`: `isLoaded` is `loadStatus === "loaded"` and `isError`
+  is `loadStatus === "error"`. A renderer's `state` is renamed `loadStatus`.
+  `SpineItemsObserver.itemLoad$`, `itemUnload$` and `itemLoadFailure$` are
+  replaced by `itemLoadStatusChange$`, emitting `{ item, loadStatus }`.
+  `SpineItem.loaded$` and `unloaded$`, and `DocumentRenderer.loaded$`,
+  `unloaded$` and `isLoaded$`, are removed: watch `loadStatus` instead.
+
+### Code Refactoring
+
+* **core:** one load status for a spine item, not two flags and three streams ([a5656f8](https://github.com/mbret/prose-reader/commit/a5656f88e63d42ab8bc20b655c3a24588942c003))
+
+
 ## [22.0.2](https://github.com/mbret/prose-reader/compare/v22.0.1...v22.0.2) (2026-09-27)
 
 **Note:** Version bump only for package @prose-reader/enhancer-koreader
