@@ -37,17 +37,23 @@ export const createSpineItemLocator = ({
    * without one still has its box, a collapsed range in text its line's.
    */
   const getRenderedRectOfNode = (node: Node, offset: number) => {
-    /**
-     * A range in an element without text, such as an `img`, is collapsed
-     * inside it and has no box, so the element is measured as a whole.
-     */
-    const elementOrRangeToMeasure =
-      isHtmlElement(node) && node.textContent === ``
-        ? node
-        : getRangeFromNode(node, offset)
+    const range = getRangeFromNode(node, offset)
 
-    return elementOrRangeToMeasure?.getClientRects().length
-      ? elementOrRangeToMeasure.getBoundingClientRect()
+    if (range?.getClientRects().length) return range.getBoundingClientRect()
+
+    /**
+     * A range that selects no box in an element rendered all the same, such
+     * as an `img`, which has no contents, or a `video`, whose sources lay out
+     * none: the element is measured as a whole. Not at the boundary after an
+     * element's last child, where the range is collapsed: the element starts
+     * where its contents do, pages before that boundary when it spans several.
+     */
+    const isBoundaryAfterContents = !!range?.collapsed && node.hasChildNodes()
+
+    return !isBoundaryAfterContents &&
+      isHtmlElement(node) &&
+      node.getClientRects().length
+      ? node.getBoundingClientRect()
       : undefined
   }
 

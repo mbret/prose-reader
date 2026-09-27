@@ -1203,3 +1203,132 @@ test.describe("Given a cfi naming a place that isn't rendered", () => {
     expect(restored.readingPositionState).toBe("final")
   })
 })
+
+/**
+ * Appends, at the end of a loaded chapter, a video with a source, which lays
+ * out no box of its own, then an element without text holding two images:
+ * each takes most of a page's height and cannot be split, so each is on a page
+ * of its own. The chapter is laid out again for them.
+ */
+const appendVideoAndGallery = async (page: Page, chapterIndex: number) => {
+  const numberOfPagesBefore = await page.evaluate((chapterIndex) => {
+    // @ts-expect-error window.reader is set by this scenario's index.tsx
+    const reader = window.reader as Reader
+    const spineItem = reader.spineItemsManager.get(chapterIndex)
+    const document = spineItem?.renderer.getDocumentFrame()?.contentDocument
+
+    if (!spineItem || !document) throw new Error("the chapter is not loaded")
+
+    const pageTall = (element: HTMLElement) => {
+      element.style.display = "block"
+      element.style.width = "10px"
+      element.style.height = "60vh"
+
+      return element
+    }
+    const image = () => {
+      const image = document.createElement("img")
+
+      image.src =
+        "data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7"
+
+      return pageTall(image)
+    }
+    const video = pageTall(document.createElement("video"))
+    const gallery = document.createElement("div")
+
+    video.id = "video"
+    video.append(document.createElement("source"))
+    gallery.id = "gallery"
+    gallery.append(image(), image())
+    document.body.append(video, gallery)
+
+    const numberOfPagesBefore = spineItem.numberOfPages
+
+    reader.layout()
+
+    return numberOfPagesBefore
+  }, chapterIndex)
+
+  await expect
+    .poll(() =>
+      page.evaluate(
+        (chapterIndex) =>
+          // @ts-expect-error window.reader is set by this scenario's index.tsx
+          (window.reader as Reader).spineItemsManager.get(chapterIndex)
+            ?.numberOfPages,
+        chapterIndex,
+      ),
+    )
+    .toBeGreaterThan(numberOfPagesBefore)
+  await waitForSettled(page)
+}
+
+test.describe("Given an element without text holding content over several pages", () => {
+  test.beforeEach(async ({ page }) => {
+    await page.setViewportSize(initialSize)
+    await page.goto(url)
+    await waitForSettled(page)
+  })
+
+  /**
+   * A cfi into the empty character data between an element's children, or
+   * after its last one, names the boundary there: the element, at a child's
+   * index. The element starts where its first child does.
+   */
+  test("a place between its children is on the page of the child after it, and one after its last child where the content after it is", async ({
+    page,
+  }) => {
+    const chapterIndex = await getLongChapterIndex(page)
+
+    await page.evaluate((indexOrId) => {
+      // @ts-expect-error window.reader is set by this scenario's index.tsx
+      const reader = window.reader as Reader
+
+      reader.navigation.goToSpineItem({ indexOrId })
+    }, chapterIndex)
+    await waitForSettled(page)
+    await appendVideoAndGallery(page, chapterIndex)
+
+    const pageIndexes = await page.evaluate((chapterIndex) => {
+      // @ts-expect-error window.reader is set by this scenario's index.tsx
+      const reader = window.reader as Reader
+      const spineItem = reader.spineItemsManager.get(chapterIndex)
+      const document = spineItem?.renderer.getDocumentFrame()?.contentDocument
+      const video = document?.getElementById("video")
+      const gallery = document?.getElementById("gallery")
+      const [firstImage, secondImage] = Array.from(gallery?.children ?? [])
+
+      if (!spineItem || !video || !gallery || !firstImage || !secondImage)
+        throw new Error("the chapter holds no gallery")
+
+      const getPageIndex = (node: Node, offset: number) =>
+        reader.spine.locator.getSpineItemPageIndexFromNode(
+          node,
+          offset,
+          chapterIndex,
+        )
+
+      return {
+        lastPage: spineItem.numberOfPages - 1,
+        video: getPageIndex(video, 0),
+        firstImage: getPageIndex(firstImage, 0),
+        secondImage: getPageIndex(secondImage, 0),
+        galleryStart: getPageIndex(gallery, 0),
+        betweenImages: getPageIndex(gallery, 1),
+        afterLastImage: getPageIndex(gallery, 2),
+      }
+    }, chapterIndex)
+
+    // Each on a page of its own, the video's measured by its own box.
+    expect(pageIndexes.video).toBeLessThan(pageIndexes.firstImage ?? -1)
+    expect(pageIndexes.firstImage).toBeLessThan(pageIndexes.secondImage ?? -1)
+    expect(pageIndexes).toEqual({
+      ...pageIndexes,
+      galleryStart: pageIndexes.firstImage,
+      betweenImages: pageIndexes.secondImage,
+      // Nothing is rendered after the gallery, at the chapter's end.
+      afterLastImage: pageIndexes.lastPage,
+    })
+  })
+})
