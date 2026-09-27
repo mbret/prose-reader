@@ -9,14 +9,14 @@ jobs:
     # docker daemon
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
 
-      - uses: docker/setup-buildx-action@v3
+      - uses: docker/setup-buildx-action@v4
 
       # Single platform and loaded into the local daemon so the smoke test can
       # actually run it — the multi-arch build only happens when publishing.
       - name: Build
-        uses: docker/build-push-action@v6
+        uses: docker/build-push-action@v7
         with:
           context: .
           file: apps/metadata-fetcher-api/Dockerfile
