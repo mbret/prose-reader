@@ -3,6 +3,21 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## [24.0.0](https://github.com/mbret/prose-reader/compare/v23.0.0...v24.0.0) (2026-09-27)
+
+### ⚠ BREAKING CHANGES
+
+* **core:** `DocumentRenderer` no longer has `setDocumentContainer()`
+  or `detach()`. A custom renderer returns its document's element from
+  `onCreateDocument()`, which becomes `documentContainer`, and no longer
+  detaches it in `onUnload()`: `DocumentRenderer` removes it from the dom
+  once `onUnload()` has run.
+
+### Bug Fixes
+
+* **core:** let the renderer's lifecycle own its document container ([45f80eb](https://github.com/mbret/prose-reader/commit/45f80ebb33e76a08966344f82f6b8d452aadde6b))
+
+
 ## [23.0.0](https://github.com/mbret/prose-reader/compare/v22.0.2...v23.0.0) (2026-09-27)
 
 ### ⚠ BREAKING CHANGES
