@@ -144,6 +144,22 @@ export const getChapterIndex = async (page: Page, href: string) => {
 export const getLongChapterIndex = (page: Page) =>
   getChapterIndex(page, "ch02.xhtml")
 
+export const goToSpineItem = (page: Page, indexOrId: number) =>
+  page.evaluate((indexOrId) => {
+    // @ts-expect-error window.reader is set by this scenario's index.tsx
+    const reader = window.reader as Reader
+
+    reader.navigation.goToSpineItem({ indexOrId })
+  }, indexOrId)
+
+export const turnRight = (page: Page) =>
+  page.evaluate(() => {
+    // @ts-expect-error window.reader is set by this scenario's index.tsx
+    const reader = window.reader as Reader
+
+    reader.navigation.turnRight()
+  })
+
 /**
  * Runs a navigation and reads the reading position in the same task, before
  * anything asynchronous has happened, along with whether its item was ready
@@ -199,21 +215,11 @@ export const navigateAndReadAtOnce = (
 export const turnToThirdPageOfLongChapter = async (page: Page) => {
   const chapterIndex = await getLongChapterIndex(page)
 
-  await page.evaluate((indexOrId) => {
-    // @ts-expect-error window.reader is set by this scenario's index.tsx
-    const reader = window.reader as Reader
-
-    reader.navigation.goToSpineItem({ indexOrId })
-  }, chapterIndex)
+  await goToSpineItem(page, chapterIndex)
   await waitForSettled(page)
 
   for (let turn = 0; turn < 2; turn++) {
-    await page.evaluate(() => {
-      // @ts-expect-error window.reader is set by this scenario's index.tsx
-      const reader = window.reader as Reader
-
-      reader.navigation.turnRight()
-    })
+    await turnRight(page)
     await waitForSettled(page)
   }
 

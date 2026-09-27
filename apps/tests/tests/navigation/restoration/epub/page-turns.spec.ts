@@ -3,6 +3,7 @@ import type { Reader } from "@prose-reader/core"
 import { waitForSettled } from "../../../utils/pagination"
 import {
   getLongChapterIndex,
+  goToSpineItem,
   initialSize,
   narrowSize,
   navigateAndReadAtOnce,
@@ -24,12 +25,7 @@ test.describe("Given a page reached by turning pages", () => {
   }) => {
     const chapterIndex = await getLongChapterIndex(page)
 
-    await page.evaluate((indexOrId) => {
-      // @ts-expect-error window.reader is set by this scenario's index.tsx
-      const reader = window.reader as Reader
-
-      reader.navigation.goToSpineItem({ indexOrId })
-    }, chapterIndex)
+    await goToSpineItem(page, chapterIndex)
     await waitForSettled(page)
 
     const readRecorded = await recordReadingPositions(page)
@@ -93,12 +89,7 @@ test.describe("Given a page reached by dragging", () => {
   }) => {
     const chapterIndex = await getLongChapterIndex(page)
 
-    await page.evaluate((indexOrId) => {
-      // @ts-expect-error window.reader is set by this scenario's index.tsx
-      const reader = window.reader as Reader
-
-      reader.navigation.goToSpineItem({ indexOrId })
-    }, chapterIndex)
+    await goToSpineItem(page, chapterIndex)
     await waitForSettled(page)
 
     const start = await readPosition(page)
@@ -140,12 +131,7 @@ test.describe("Given chapters that are not preloaded", () => {
   }) => {
     const previousIndex = await getLongChapterIndex(page)
 
-    await page.evaluate((indexOrId) => {
-      // @ts-expect-error window.reader is set by this scenario's index.tsx
-      const reader = window.reader as Reader
-
-      reader.navigation.goToSpineItem({ indexOrId })
-    }, previousIndex + 1)
+    await goToSpineItem(page, previousIndex + 1)
     await waitForSettled(page)
 
     const readRecorded = await recordReadingPositions(page)

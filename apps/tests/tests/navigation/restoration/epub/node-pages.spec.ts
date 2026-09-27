@@ -4,6 +4,7 @@ import { waitForSettled } from "../../../utils/pagination"
 import {
   getChapterIndex,
   getLongChapterIndex,
+  goToSpineItem,
   initialSize,
   narrowSize,
   navigateAndReadAtOnce,
@@ -120,12 +121,7 @@ test.describe("Given pages without a horizontal margin", () => {
     const chapterIndex = await getChapterIndex(page, "ch03.xhtml")
     const cfi = getChapterTitleCfi(chapterIndex)
 
-    await page.evaluate((indexOrId) => {
-      // @ts-expect-error window.reader is set by this scenario's index.tsx
-      const reader = window.reader as Reader
-
-      reader.navigation.goToSpineItem({ indexOrId })
-    }, chapterIndex)
+    await goToSpineItem(page, chapterIndex)
     await waitForSettled(page)
 
     expect(await measureCharacterAtCfi(page, cfi)).toEqual({
@@ -272,12 +268,7 @@ test.describe("Given a cfi naming a place that isn't rendered", () => {
   }) => {
     const chapterIndex = await getLongChapterIndex(page)
 
-    await page.evaluate((indexOrId) => {
-      // @ts-expect-error window.reader is set by this scenario's index.tsx
-      const reader = window.reader as Reader
-
-      reader.navigation.goToSpineItem({ indexOrId })
-    }, chapterIndex)
+    await goToSpineItem(page, chapterIndex)
     await waitForSettled(page)
 
     const { markerCfi, paragraphCfi, paragraphPageIndex } =
@@ -404,12 +395,7 @@ test.describe("Given an element without text holding content over several pages"
   }) => {
     const chapterIndex = await getLongChapterIndex(page)
 
-    await page.evaluate((indexOrId) => {
-      // @ts-expect-error window.reader is set by this scenario's index.tsx
-      const reader = window.reader as Reader
-
-      reader.navigation.goToSpineItem({ indexOrId })
-    }, chapterIndex)
+    await goToSpineItem(page, chapterIndex)
     await waitForSettled(page)
     await appendVideoAndGallery(page, chapterIndex)
 
