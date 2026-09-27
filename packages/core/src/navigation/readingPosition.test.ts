@@ -878,7 +878,7 @@ describe("reading position of a cfi into a document", () => {
     reader.layout()
     await firstValueFrom(reader.spine.layout$)
 
-    expect(reader.spineItemsManager.get(1)?.value.isLoaded).toBe(false)
+    expect(reader.spineItemsManager.get(1)?.value.loadStatus).not.toBe("loaded")
     expect(positions).toEqual([itemStart])
 
     secondItem.release()

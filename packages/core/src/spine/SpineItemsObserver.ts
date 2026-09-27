@@ -1,13 +1,13 @@
 import { isShallowEqual } from "@prose-reader/shared"
 import {
   distinctUntilChanged,
-  filter,
   map,
   merge,
   type Observable,
   share,
   skip,
 } from "rxjs"
+import type { DocumentLoadStatus } from "../spineItem/renderer/DocumentRenderer"
 import type { SpineItem, SpineItemState } from "../spineItem/SpineItem"
 import { DestroyableClass } from "../utils/DestroyableClass"
 import { observeResize } from "../utils/rxjs"
@@ -33,15 +33,16 @@ export class SpineItemsObserver extends DestroyableClass {
     entries: ResizeObserverEntry[]
   }>
 
-  public itemLoad$: Observable<SpineItem>
-  public itemUnload$: Observable<SpineItem>
-
   /**
-   * Emits each time an item's load fails, once its state is `isError`, with
-   * the error in `item.value.error`. The item stays in error until it is
-   * unloaded: a load does not retry it.
+   * Emits each time an item's `loadStatus` changes, once its state holds it:
+   * a load starting, a document loaded, a load failing, an unload starting,
+   * and the document released. Not the status an item has when subscribed
+   * to, which is no change.
    */
-  public itemLoadFailure$: Observable<SpineItem>
+  public itemLoadStatusChange$: Observable<{
+    item: SpineItem
+    loadStatus: DocumentLoadStatus
+  }>
 
   constructor(protected spineItemsManager: SpineItemsManager) {
     super()
@@ -63,21 +64,11 @@ export class SpineItemsObserver extends DestroyableClass {
       ),
     ).pipe(share())
 
-    this.itemLoad$ = merge(
-      ...items.map((item) => item.loaded$.pipe(map(() => item))),
-    ).pipe(share())
-
-    this.itemUnload$ = merge(
-      ...items.map((item) => item.unloaded$.pipe(map(() => item))),
-    ).pipe(share())
-
-    this.itemLoadFailure$ = merge(
+    this.itemLoadStatusChange$ = merge(
       ...items.map((item) =>
-        item.watch("isError").pipe(
-          // The state it has when subscribed to is not a failure happening.
+        item.watch("loadStatus").pipe(
           skip(1),
-          filter(Boolean),
-          map(() => item),
+          map((loadStatus) => ({ item, loadStatus })),
         ),
       ),
     ).pipe(share())

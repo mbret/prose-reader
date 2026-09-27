@@ -17,6 +17,7 @@ import { navigationEnhancer } from "../enhancers/navigation"
 import { themeEnhancer } from "../enhancers/theme"
 import { createReader } from "../reader"
 import { DefaultRenderer } from "./renderer/DefaultRenderer"
+import type { SpineItemState } from "./SpineItem"
 
 window.__PROSE_READER_DEBUG = false
 
@@ -90,9 +91,9 @@ describe("SpineItem readiness", () => {
     const item = reader.spineItemsManager.items[0]
     if (!item) throw new Error("expected a spine item")
 
-    const samples: { isLoaded: boolean; isReady: boolean }[] = []
-    item.subscribe(({ isLoaded, isReady }) =>
-      samples.push({ isLoaded, isReady }),
+    const samples: Pick<SpineItemState, "loadStatus" | "isReady">[] = []
+    item.subscribe(({ loadStatus, isReady }) =>
+      samples.push({ loadStatus, isReady }),
     )
 
     // biome-ignore lint/style/noNonNullAssertion: test
@@ -101,18 +102,20 @@ describe("SpineItem readiness", () => {
     await firstValueFrom(item.isReady$.pipe(filter(Boolean), timeout(2000)))
 
     const violations = () =>
-      samples.filter(({ isLoaded, isReady }) => isReady && !isLoaded)
+      samples.filter(
+        ({ loadStatus, isReady }) => isReady && loadStatus !== "loaded",
+      )
 
     expect(violations()).toEqual([])
     expect(item.value.isReady).toBe(true)
-    expect(item.value.isLoaded).toBe(true)
+    expect(item.value.loadStatus).toBe("loaded")
 
     // Losing the document ends readiness at once, rather than leaving it
     // standing until some later layout happens to recompute it.
     item.unload()
     await new Promise((resolve) => setTimeout(resolve, 0))
 
-    expect(item.value.isLoaded).toBe(false)
+    expect(item.value.loadStatus).not.toBe("loaded")
     expect(item.value.isReady).toBe(false)
 
     // The invariant itself, across every state the item went through.

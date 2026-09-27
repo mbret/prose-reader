@@ -107,9 +107,10 @@ export const koreaderEnhancer =
 
     const getLoadedSpineItemDocument = (spineItemIndex: number) => {
       const spineItem = reader.spineItemsManager.get(spineItemIndex)
-      const document = spineItem?.value.isLoaded
-        ? spineItem.renderer.getDocumentFrame()?.contentDocument
-        : undefined
+      const document =
+        spineItem?.value.loadStatus === "loaded"
+          ? spineItem.renderer.getDocumentFrame()?.contentDocument
+          : undefined
 
       return spineItem && document
         ? { document, id: spineItem.item.id }

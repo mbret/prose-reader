@@ -323,10 +323,10 @@ test.describe("Given an xpointer into a chapter where its place cannot be found"
           // The page's window is untyped: this scenario's index.tsx sets these.
           const { reader } = window as unknown as Scenario
 
-          return reader.spineItemsManager.get(chapterIndex)?.value.isLoaded
+          return reader.spineItemsManager.get(chapterIndex)?.value.loadStatus
         }, chapterIndex),
       )
-      .toBe(true)
+      .toBe("loaded")
 
     await expect
       .poll(async () => (await readLatestReportedPosition(page))?.status)

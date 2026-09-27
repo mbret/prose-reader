@@ -54,11 +54,12 @@ export const hotkeysEnhancer =
 
     merge(
       ...reader.spineItemsManager.items.map((item) =>
-        item.watch("isLoaded").pipe(
-          switchMap(() => {
+        item.watch("loadStatus").pipe(
+          switchMap((loadStatus) => {
             const element = item.renderer.getDocumentFrame()
 
-            return isHtmlTagElement(element, "iframe") &&
+            return loadStatus === "loaded" &&
+              isHtmlTagElement(element, "iframe") &&
               element.contentDocument
               ? navigateOnKey(element.contentDocument)
               : EMPTY

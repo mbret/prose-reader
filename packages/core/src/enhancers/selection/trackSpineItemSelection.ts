@@ -1,6 +1,7 @@
 import {
   distinctUntilChanged,
   endWith,
+  filter,
   finalize,
   map,
   merge,
@@ -11,8 +12,13 @@ import {
 import type { SpineItem } from "../../spineItem/SpineItem"
 import { FrameSelectionTracker } from "./FrameSelectionTracker"
 
+/**
+ * The selection in the item's document, from its load until the document
+ * leaves: `undefined` once it does.
+ */
 export const trackSpineItemSelection = (spineItem: SpineItem) =>
-  spineItem.watch("isLoaded").pipe(
+  spineItem.watch("loadStatus").pipe(
+    filter((loadStatus) => loadStatus === "loaded"),
     switchMap(() => {
       const frame = spineItem.renderer.getDocumentFrame()
       const frameDoc = frame?.contentDocument || frame?.contentWindow?.document
@@ -43,7 +49,11 @@ export const trackSpineItemSelection = (spineItem: SpineItem) =>
           }),
         ),
       ).pipe(
-        takeUntil(spineItem.unloaded$),
+        takeUntil(
+          spineItem
+            .watch("loadStatus")
+            .pipe(filter((loadStatus) => loadStatus !== "loaded")),
+        ),
         endWith(undefined),
         finalize(() => {
           selectionTracker.destroy()

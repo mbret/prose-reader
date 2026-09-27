@@ -90,8 +90,8 @@ export const createPlaceholderPages = (
   )
 
   const itemError$ = reader.spineItemsObserver.itemStateChange$.pipe(
-    tap(({ item, isError, error }) => {
-      if (!isError) return
+    tap(({ item, loadStatus, error }) => {
+      if (loadStatus !== "error") return
 
       const loadingElementContainer = loadingElements.get(item.containerElement)
 

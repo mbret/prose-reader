@@ -8,20 +8,24 @@ import { ReactiveEntity } from "../utils/ReactiveEntity"
 import type { Viewport } from "../viewport/Viewport"
 import { getSpineItemNumberOfPages } from "./layout/getSpineItemNumberOfPages"
 import { DefaultRenderer } from "./renderer/DefaultRenderer"
-import type { DocumentRenderer } from "./renderer/DocumentRenderer"
+import type {
+  DocumentLoadStatus,
+  DocumentRenderer,
+} from "./renderer/DocumentRenderer"
 import { ResourceHandler } from "./resources/ResourceHandler"
 import { SpineItemLayout } from "./SpineItemLayout"
 
 export type SpineItemReference = string | SpineItem | number
 
 export type SpineItemState = {
-  isLoaded: boolean
+  /** Where the load of the item's document stands, its renderer's. */
+  loadStatus: DocumentLoadStatus
   /**
    * - Content has been loaded
    * - A first layout has been done
    */
   isReady: boolean
-  isError: boolean
+  /** Why the load failed, while `loadStatus` is `error`. */
   error: unknown | undefined
   /**
    * - Layout has been requested
@@ -54,10 +58,9 @@ export class SpineItem extends ReactiveEntity<SpineItemState> {
     public viewport: Viewport,
   ) {
     super({
-      isLoaded: false,
+      loadStatus: "idle",
       isReady: false,
       isDirty: false,
-      isError: false,
       error: undefined,
     })
 
@@ -91,13 +94,9 @@ export class SpineItem extends ReactiveEntity<SpineItemState> {
       this.viewport,
     )
 
-    const updateStateOnLoaded$ = this.renderer.state$.pipe(
-      tap(({ state, error }) => {
-        this.updateState({
-          isLoaded: state === "loaded",
-          isError: state === "error",
-          error: state === "error" ? error : undefined,
-        })
+    const updateStateOnLoadStatus$ = this.renderer.state$.pipe(
+      tap(({ loadStatus, error }) => {
+        this.updateState({ loadStatus, error })
       }),
     )
 
@@ -120,7 +119,7 @@ export class SpineItem extends ReactiveEntity<SpineItemState> {
        * is set before dispatching the layout event. Elements reacting
        * to layout changes may rely on the state value to be updated.
        */
-      updateStateOnLoaded$,
+      updateStateOnLoadStatus$,
       this.didLayout$,
     )
       .pipe(takeUntil(this.destroy$))
@@ -170,7 +169,7 @@ export class SpineItem extends ReactiveEntity<SpineItemState> {
 
     this.mergeCompare({
       ...nextState,
-      isReady: nextState.isReady && nextState.isLoaded,
+      isReady: nextState.isReady && nextState.loadStatus === "loaded",
     })
   }
 
@@ -212,20 +211,6 @@ export class SpineItem extends ReactiveEntity<SpineItemState> {
 
   isUsingVerticalWriting = () =>
     !!this.renderer.writingMode?.startsWith(`vertical`)
-
-  /**
-   * Note that this is dispatched AFTER the state has been updated.
-   */
-  get loaded$() {
-    return this.renderer.loaded$
-  }
-
-  /**
-   * Note that this is dispatched AFTER the state has been updated.
-   */
-  get unloaded$() {
-    return this.renderer.unloaded$
-  }
 
   get renditionLayout() {
     return this.renderer.renditionLayout

@@ -364,9 +364,9 @@ test.describe("Given a page reached by turning pages", () => {
         status: ReadingPosition["status"] | undefined
       }>((resolve) => {
         let isHeld = false
-        const loading = item.renderer.state$.subscribe(({ state }) => {
-          // The renderer can report loading more than once.
-          if (state !== "loading" || isHeld) return
+        const loading = item.watch("loadStatus").subscribe((loadStatus) => {
+          // Held once, when the load starts.
+          if (loadStatus !== "loading" || isHeld) return
 
           isHeld = true
           // @ts-expect-error scratch slot for this spec

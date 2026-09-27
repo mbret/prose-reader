@@ -39,8 +39,8 @@ type ResolvedEdges = {
  * Whether an item shows what it is going to: ready, or failed to load, which
  * it stays until it is unloaded.
  */
-const isSpineItemSettled = ({ isReady, isError }: SpineItemState) =>
-  isReady || isError
+const isSpineItemSettled = ({ isReady, loadStatus }: SpineItemState) =>
+  isReady || loadStatus === "error"
 
 export class PaginationController extends DestroyableClass {
   constructor(

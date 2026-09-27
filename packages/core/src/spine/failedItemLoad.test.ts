@@ -52,7 +52,11 @@ const loadFailureOf = (
 
   if (!spineItem) throw new Error(`no item ${index}`)
 
-  return firstValueFrom(spineItem.watch("isError").pipe(filter(Boolean)))
+  return firstValueFrom(
+    spineItem
+      .watch("loadStatus")
+      .pipe(filter((loadStatus) => loadStatus === "error")),
+  )
 }
 
 /**
@@ -169,7 +173,7 @@ describe("an item whose load fails", () => {
     const settled = await settledOn(reader, 1)
 
     expect(settled.begin.spineItemIndex).toBe(1)
-    expect(reader.spineItemsManager.get(0)?.value.isLoaded).toBe(false)
+    expect(reader.spineItemsManager.get(0)?.value.loadStatus).toBe("idle")
   })
 
   it("is loaded again once it has left the items around the position and comes back into them", async () => {

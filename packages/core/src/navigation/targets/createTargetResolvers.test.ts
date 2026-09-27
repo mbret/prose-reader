@@ -44,7 +44,7 @@ const createResolvers = ({
   const spineItem = {
     item: { index: 0, href: "0.xhtml" },
     index: 0,
-    value: { isLoaded },
+    value: { loadStatus: isLoaded ? "loaded" : "loading" },
     renderer: {
       getDocumentFrame: () =>
         hasDocument ? { contentDocument: document } : undefined,

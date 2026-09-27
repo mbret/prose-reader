@@ -5,6 +5,7 @@ import {
   setStylePropertyIfChanged,
 } from "@prose-reader/core"
 import {
+  distinctUntilChanged,
   first,
   fromEvent,
   map,
@@ -48,7 +49,9 @@ export class SpineItemHighlight extends DestroyableClass {
       share(),
     )
 
-    this.resolvedCfi$ = this.spineItem.watch("isLoaded").pipe(
+    this.resolvedCfi$ = this.spineItem.watch("loadStatus").pipe(
+      map((loadStatus) => loadStatus === "loaded"),
+      distinctUntilChanged(),
       map(() => this.reader.cfi.resolveCfi({ cfi: this.highlight.cfi })),
       shareReplay({ refCount: true, bufferSize: 1 }),
     )
