@@ -11,15 +11,17 @@ import { DocumentRenderer } from "./DocumentRenderer"
 
 /**
  * Creates a new document each time, named by the order it was created in, and
- * attaches it once it loads and detaches it when unloaded, as the renderers
- * do.
+ * attaches it once it loads, as the renderers do.
  */
 class TestRenderer extends DocumentRenderer {
   /** The document load of the latest `load()`, a new one each time. */
   public onLoadDocumentSubject = new Subject<void>()
   /** Every document `onCreateDocument` created, by name, in order. */
   public createdDocuments: string[] = []
-  /** The document each `onUnload` released, by name, in order. */
+  /**
+   * The document container each `onUnload` ran with, by name, in order: the
+   * document it released.
+   */
   public releasedDocuments: Array<string | undefined> = []
   /** Every document still held, not released yet, each time one is created. */
   public documentsHeldOnCreation: string[] = []
@@ -30,7 +32,6 @@ class TestRenderer extends DocumentRenderer {
 
   onUnload() {
     this.releasedDocuments.push(this.documentContainer?.id)
-    this.detach()
   }
 
   onCreateDocument() {
@@ -44,7 +45,6 @@ class TestRenderer extends DocumentRenderer {
 
     element.id = `document-${this.createdDocuments.length + 1}`
     this.createdDocuments.push(element.id)
-    this.setDocumentContainer(element)
 
     return of(element)
   }
@@ -69,10 +69,12 @@ class TestRenderer extends DocumentRenderer {
   }
 }
 
-/** Keeps no document container, as the default renderer does. */
-class ContainerlessRenderer extends TestRenderer {
-  onCreateDocument() {
-    return of(document.createElement("div"))
+/** Never attaches its document, as the default renderer does. */
+class NeverAttachingRenderer extends TestRenderer {
+  onLoadDocument() {
+    this.onLoadDocumentSubject = new Subject<void>()
+
+    return this.onLoadDocumentSubject.asObservable()
   }
 }
 
@@ -121,12 +123,27 @@ const createHarness = (Renderer: typeof TestRenderer = TestRenderer) => {
     /**
      * Every document the renderer created was released exactly once, by the
      * unload hooks and `onUnload`, and none was created while another was
-     * still held.
+     * still held. A released document is neither left attached nor kept as
+     * the document container. Checked once cleaned up, when every document
+     * is released.
      */
     expectEveryDocumentReleasedOnce: () => {
-      expect(renderer.documentsHeldOnCreation).toEqual([])
-      expect(renderer.releasedDocuments).toEqual(renderer.createdDocuments)
-      expect(documentsUnloadHooksRanOn).toEqual(renderer.createdDocuments)
+      expect({
+        documentsHeldOnCreation: renderer.documentsHeldOnCreation,
+        documentsUnloadHooksRanOn,
+        documentsReleasedByOnUnload: renderer.releasedDocuments,
+        documentsStillAttached: Array.from(
+          containerElement.children,
+          (element) => element.id,
+        ),
+        documentContainer: renderer.documentContainer?.id,
+      }).toEqual({
+        documentsHeldOnCreation: [],
+        documentsUnloadHooksRanOn: renderer.createdDocuments,
+        documentsReleasedByOnUnload: renderer.createdDocuments,
+        documentsStillAttached: [],
+        documentContainer: undefined,
+      })
     },
     cleanup: () => {
       renderer.destroy()
@@ -329,23 +346,119 @@ describe(`DocumentRenderer`, () => {
     })
   })
 
-  describe(`when a renderer that keeps no document container is destroyed while loaded`, () => {
-    it(`releases the load, as an unload does`, async () => {
-      const { renderer, cleanup } = createHarness(ContainerlessRenderer)
+  describe(`when a document is created`, () => {
+    it(`is the document container, marked as one, by the time the created hooks run`, async () => {
+      const {
+        renderer,
+        hookManager,
+        cleanup,
+        expectEveryDocumentReleasedOnce,
+      } = createHarness(NeverAttachingRenderer)
+
+      const createdDocuments: Array<{
+        name: string
+        isTheDocumentContainer: boolean
+        hasTheDocumentContainerClassName: boolean
+      }> = []
+
+      hookManager.register(
+        `item.onDocumentCreated`,
+        ({ documentContainer }) => {
+          createdDocuments.push({
+            name: documentContainer.id,
+            isTheDocumentContainer:
+              renderer.documentContainer === documentContainer,
+            hasTheDocumentContainerClassName:
+              documentContainer.classList.contains(
+                DocumentRenderer.DOCUMENT_CONTAINER_CLASS_NAME,
+              ),
+          })
+        },
+      )
+
+      renderer.load()
+
+      expect(createdDocuments).toEqual([
+        {
+          name: `document-1`,
+          isTheDocumentContainer: true,
+          hasTheDocumentContainerClassName: true,
+        },
+      ])
+
+      await completeDocumentLoad(renderer)
+      cleanup()
+      expectEveryDocumentReleasedOnce()
+    })
+  })
+
+  describe(`when an attached document is unloaded`, () => {
+    it(`runs the unload hooks and onUnload while it is attached, then detaches it and lets go of it`, async () => {
+      const {
+        renderer,
+        hookManager,
+        containerElement,
+        cleanup,
+        expectEveryDocumentReleasedOnce,
+      } = createHarness()
+
+      const attachedDocuments = () =>
+        Array.from(containerElement.children, (element) => element.id)
+      const releaseSteps: Array<{ step: string; attachedDocuments: string[] }> =
+        []
+
+      hookManager.register(`item.onDocumentUnload`, () => {
+        releaseSteps.push({
+          step: `item.onDocumentUnload`,
+          attachedDocuments: attachedDocuments(),
+        })
+      })
+
+      const onUnload = renderer.onUnload.bind(renderer)
+
+      renderer.onUnload = () => {
+        releaseSteps.push({
+          step: `onUnload`,
+          attachedDocuments: attachedDocuments(),
+        })
+        onUnload()
+      }
+
+      renderer.load()
+      await completeDocumentLoad(renderer)
+
+      expect(attachedDocuments()).toEqual([`document-1`])
+
+      renderer.unload()
+
+      expect(releaseSteps).toEqual([
+        { step: `item.onDocumentUnload`, attachedDocuments: [`document-1`] },
+        { step: `onUnload`, attachedDocuments: [`document-1`] },
+      ])
+      expect(attachedDocuments()).toEqual([])
+      expect(renderer.documentContainer).toBeUndefined()
+
+      cleanup()
+      expectEveryDocumentReleasedOnce()
+    })
+  })
+
+  describe(`when a renderer that never attaches its document is unloaded, then destroyed`, () => {
+    it(`releases each document it created, as it does for the renderers that attach theirs`, async () => {
+      const { renderer, cleanup, expectEveryDocumentReleasedOnce } =
+        createHarness(NeverAttachingRenderer)
 
       renderer.load()
       await completeDocumentLoad(renderer)
       renderer.unload()
-
-      expect(renderer.onUnloadCalls).toBe(1)
-
       renderer.load()
       await completeDocumentLoad(renderer)
       renderer.destroy()
 
-      expect(renderer.onUnloadCalls).toBe(2)
+      expect(renderer.createdDocuments).toEqual([`document-1`, `document-2`])
 
       cleanup()
+      expectEveryDocumentReleasedOnce()
     })
   })
 

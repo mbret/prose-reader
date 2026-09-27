@@ -94,6 +94,11 @@ export abstract class DocumentRenderer extends ReactiveEntity<DocumentRendererSt
     }).pipe(
       first(),
       mergeMap((documentContainer) => {
+        documentContainer.classList.add(
+          DocumentRenderer.DOCUMENT_CONTAINER_CLASS_NAME,
+        )
+        this.mergeCompare({ documentContainer })
+
         this.hookManager.execute(`item.onDocumentCreated`, {
           itemId: this.item.id,
           documentContainer,
@@ -220,12 +225,13 @@ export abstract class DocumentRenderer extends ReactiveEntity<DocumentRendererSt
 
   /**
    * Runs the unload hooks on the document container, when there is one, then
-   * `onUnload`. Synchronous, so `destroy` can release a document before its
-   * caller detaches the container. A step that throws is reported, and does
-   * not keep the next one from running.
+   * `onUnload`, then removes the document container from the dom and lets go
+   * of it. Synchronous, so `destroy` can release a document before its caller
+   * detaches the item. A step that throws is reported, and does not keep the
+   * next one from running.
    */
   private releaseDocument() {
-    const documentContainer = this.value.documentContainer
+    const { documentContainer } = this.value
 
     if (documentContainer) {
       try {
@@ -243,22 +249,15 @@ export abstract class DocumentRenderer extends ReactiveEntity<DocumentRendererSt
     } catch (error) {
       Report.error(`Error unloading document`, error)
     }
-  }
 
-  protected setDocumentContainer(element: HTMLElement) {
-    element.classList.add(DocumentRenderer.DOCUMENT_CONTAINER_CLASS_NAME)
-    this.mergeCompare({ documentContainer: element })
+    documentContainer?.remove()
+    this.mergeCompare({ documentContainer: undefined })
   }
 
   protected attach() {
     if (this.documentContainer) {
       this.containerElement.appendChild(this.documentContainer)
     }
-  }
-
-  protected detach() {
-    this.documentContainer?.remove()
-    this.mergeCompare({ documentContainer: undefined })
   }
 
   public get isLoaded$() {
@@ -334,7 +333,7 @@ export abstract class DocumentRenderer extends ReactiveEntity<DocumentRendererSt
     /**
      * Then releases what is held at once, rather than once the viewport is
      * free, so resources (eg: blob urls) are released deterministically: the
-     * caller detaches the container right after, and the unload hooks still
+     * caller detaches the item right after, and the unload hooks still
      * observe the live document. The state has not completed yet, so what
      * observes it sees the document go. The spine is not laid out for it.
      */
@@ -348,15 +347,16 @@ export abstract class DocumentRenderer extends ReactiveEntity<DocumentRendererSt
   }): Observable<Document | undefined>
 
   /**
-   * Release the document and its resources. Called once for each load, to
+   * Release the resources of the document. Called once for each load, to
    * release what it created: when the document is unloaded, when its load
    * fails, or on `destroy`. A load still in progress is cancelled first, and
    * one cancelled before its document was created is released too, with
    * nothing to release.
    *
-   * Must be synchronous: unload also runs during a synchronous `destroy`,
-   * before the caller detaches the container, so any deferred work would run
-   * against a torn-down document.
+   * The document container is still the `documentContainer`, and still
+   * attached if it was, while this runs. It is removed from the dom right
+   * after, and on `destroy` the item as well, so this must be synchronous:
+   * any deferred work would run against a torn-down document.
    */
   abstract onUnload(): void
 
@@ -365,8 +365,10 @@ export abstract class DocumentRenderer extends ReactiveEntity<DocumentRendererSt
    * You can fill the layers with your document(s). You can also preload or
    * load any resources that you need as well.
    *
-   * A renderer holds one document at a time: this is only called once the
-   * previous document, if any, has been released by `onUnload`.
+   * The element emitted holds the document: it is the `documentContainer`
+   * until the document is released. A renderer holds one document at a time:
+   * this is only called once the previous document, if any, has been
+   * released.
    *
    * @important Do not attach anything to the dom yet.
    */
@@ -376,7 +378,8 @@ export abstract class DocumentRenderer extends ReactiveEntity<DocumentRendererSt
    * This lifecycle lets you load whatever you need once the document is attached to
    * the dom. Some operations can only be done at this stage (eg: loading iframe).
    *
-   * @important By the end of your stream, the layers should be attached to the dom.
+   * @important By the end of your stream, the layers should be attached to the dom,
+   * with `attach()`.
    */
   abstract onLoadDocument(): Observable<unknown>
 
@@ -389,6 +392,10 @@ export abstract class DocumentRenderer extends ReactiveEntity<DocumentRendererSt
    */
   abstract getDocumentFrame(): HTMLIFrameElement | undefined
 
+  /**
+   * The element holding the document, as `onCreateDocument` emitted it, from
+   * its creation until it is released.
+   */
   get documentContainer() {
     return this.value.documentContainer
   }

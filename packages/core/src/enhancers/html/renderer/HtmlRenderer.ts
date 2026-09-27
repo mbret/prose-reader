@@ -18,11 +18,7 @@ import { renderReflowable } from "./reflowable/renderReflowable"
 
 export class HtmlRenderer extends DocumentRenderer {
   onCreateDocument() {
-    const frameElement = createFrameElement(this.context.document)
-
-    this.setDocumentContainer(frameElement)
-
-    return of(frameElement)
+    return of(createFrameElement(this.context.document))
   }
 
   onLoadDocument() {
@@ -82,8 +78,6 @@ export class HtmlRenderer extends DocumentRenderer {
 
     unloadAssets(frameElement)
     revokeFrameObjectUrl(frameElement)
-
-    this.detach()
   }
 
   onLayout({
