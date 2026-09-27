@@ -1,6 +1,5 @@
 import { Button, Stack } from "@chakra-ui/react"
-import { memo, useCallback } from "react"
-import { useLiveRef } from "reactjrx"
+import { memo } from "react"
 import {
   DialogActionTrigger,
   DialogBody,
@@ -11,53 +10,17 @@ import {
   DialogRoot,
   DialogTitle,
 } from "../components/ui/dialog"
-import { Slider } from "../components/ui/slider"
-import {
-  useReaderContext,
-  useReaderContextValue,
-} from "../context/useReaderContext"
+import { useReaderContextValue } from "../context/useReaderContext"
 import { SettingScopes } from "../settings/SettingScopes"
-import type { PROSE_REACT_READER_SETTINGS_SCOPE_REFERENCE } from "../settings/types"
+import { useManagedSetting } from "../settings/useManagedSetting"
+import { FontScaleSlider } from "./FontScaleSlider"
 
 export const FontSizeControlsDialog = memo(() => {
-  const context = useReaderContext()
-  const {
-    fontSizeMenuOpen,
-    onFontSizeMenuOpenChange,
-    uncontrolledFontSize,
-    fontSize = uncontrolledFontSize,
-    fontSizeMin,
-    fontSizeMax,
-    fontSizeScope,
-    fontSizeValues,
-    onFontSizeChange,
-    onFontSizeScopeChange,
-  } = useReaderContextValue([
+  const { fontSizeMenuOpen, onFontSizeMenuOpenChange } = useReaderContextValue([
     "fontSizeMenuOpen",
     "onFontSizeMenuOpenChange",
-    "fontSize",
-    "fontSizeMin",
-    "fontSizeMax",
-    "fontSizeScope",
-    "onFontSizeChange",
-    "onFontSizeScopeChange",
-    "uncontrolledFontSize",
-    "fontSizeValues",
   ])
-  const onFontSizeChangeRef = useLiveRef(onFontSizeChange)
-  const onFontUpdate = useCallback(
-    (scope: PROSE_REACT_READER_SETTINGS_SCOPE_REFERENCE, value: number) => {
-      if (onFontSizeChangeRef.current) {
-        onFontSizeChangeRef.current(scope, value)
-      } else {
-        context.update((old) => ({
-          ...old,
-          uncontrolledFontSize: value,
-        }))
-      }
-    },
-    [onFontSizeChangeRef, context],
-  )
+  const fontScale = useManagedSetting("fontScale")
 
   return (
     <DialogRoot
@@ -76,31 +39,14 @@ export const FontSizeControlsDialog = memo(() => {
           <Stack gap={4} flex={1}>
             <SettingScopes
               scopeHelperText="The scope to which apply the font size for this book."
-              activeScope={fontSizeScope}
-              onActiveScopeChange={onFontSizeScopeChange}
+              activeScope={fontScale.activeScope}
+              onActiveScopeChange={fontScale.onActiveScopeChange}
               renderScopeValue={(scope) => (
-                <Slider
-                  label={`%`}
-                  value={[(fontSizeValues?.[scope] ?? fontSize ?? 1) * 100]}
-                  onValueChange={(details) => {
-                    onFontUpdate(scope, (details.value[0] ?? 0) / 100)
+                <FontScaleSlider
+                  fontScale={fontScale.getValueForScope(scope) ?? 1}
+                  onFontScaleChange={(changedFontScale) => {
+                    fontScale.changeValueForScope(scope, changedFontScale)
                   }}
-                  showValue={true}
-                  marks={[
-                    { value: 100, label: "Publisher" },
-                    {
-                      value: fontSizeMin * 100,
-                      label: `${fontSizeMin * 100}%`,
-                    },
-                    {
-                      value: fontSizeMax * 100,
-                      label: `${fontSizeMax * 100}%`,
-                    },
-                  ]}
-                  max={fontSizeMax * 100}
-                  min={fontSizeMin * 100}
-                  width="100%"
-                  step={0.1 * 100}
                 />
               )}
             />

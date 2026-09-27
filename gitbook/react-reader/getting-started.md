@@ -69,26 +69,41 @@ const useReaderInstance = (
 
 ## Settings
 
-The user changes some of the reader's settings from react-reader's menus: the font size, and the spread mode in the Layout dialog. react-reader manages both the same way, as props of the component:
-
-| Setting | Value | Change callback | Scopes | Reader setting |
-| --- | --- | --- | --- | --- |
-| Font size | `fontSize` | `onFontSizeChange` | `fontSizeScope`, `onFontSizeScopeChange`, `fontSizeValues` | `fontScale` |
-| Spread mode | `spreadMode` | `onSpreadModeChange` | `spreadModeScope`, `onSpreadModeScopeChange`, `spreadModeValues` | `spreadMode` |
-
-react-reader writes the value into the reader, so don't give it to your reader when you create it: it would be overwritten. Keep the value in your app, save it from the change callback and pass it back as a prop:
+The user changes some of the reader's settings from react-reader's menus: the font scale from the font size menu, and the spread mode from the Layout dialog. react-reader writes them into the reader, so don't give them to your reader when you create it: they would be overwritten. Keep them in your app instead. Pass them as `settings`, in the shape `reader.settings` has, and merge what `onSettingsChange` reports into them:
 
 ```tsx
+const [settings, setSettings] = useState(savedSettings)
+
 <ReactReader
   reader={reader}
-  fontSize={saved.fontSize}
-  onFontSizeChange={(_scope, fontSize) => save({ fontSize })}
-  spreadMode={saved.spreadMode}
-  onSpreadModeChange={(_scope, spreadMode) => save({ spreadMode })}
+  settings={settings}
+  onSettingsChange={(changes) =>
+    setSettings((old) => ({ ...old, ...changes }))
+  }
 />
 ```
 
-The change callback receives the scope whose value the user changed, or `"internal"` for a value set on the reader directly. Without the value prop, react-reader keeps its own copy for as long as it is mounted, starting from the value the reader was created with. Its menus offer to pick a scope only once you pass the scope props.
+| Setting | Menu |
+| --- | --- |
+| `fontScale` | Font size |
+| `spreadMode` | Layout |
+
+`onSettingsChange(changes, from)` receives only the settings that changed. `from` is the scope the user chose the value for, or `"internal"` for a value set on the reader directly, such as by a pinch.
+
+A setting you give no value keeps react-reader's own, for as long as it is mounted, starting from the value the reader was created with. A change in the menus still reaches `onSettingsChange`.
+
+### Scopes
+
+The menus can keep a value per scope: global, the book, or the screen (`mobile`, `tablet` or `desktop`). They show a tab per scope once you pass `settingsScopes`, and let the user pick the book's scope once you pass `onSettingsScopesChange`:
+
+| Prop | What it is |
+| --- | --- |
+| `settings` | The global values. |
+| `settingsByScope` | The values of the other scopes, by scope: `book`, `mobile`, `tablet` and `desktop`. |
+| `settingsScopes` | For this book, the scope each setting takes its value from, such as `{ fontScale: "book" }`. A setting it leaves out takes the global value. |
+| `onSettingsScopesChange(changes)` | The scope the user picked for a setting, such as `{ fontScale: "screen" }`. Pass it back in `settingsScopes` as the screen you are on, such as `"tablet"`. |
+
+A setting takes the value of its scope when that scope has one, and the global value otherwise. `from` tells which scope a change belongs to: merge `changes` into `settings` for `"global"`, and into `settingsByScope[from]` for the other scopes.
 
 ## Toggling features
 
