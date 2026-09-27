@@ -3,6 +3,13 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## [22.0.1](https://github.com/mbret/prose-reader/compare/v22.0.0...v22.0.1) (2026-09-27)
+
+### Bug Fixes
+
+* **core:** load the picture of an SVG image in a document loaded from a blob ([8729c53](https://github.com/mbret/prose-reader/commit/8729c535c7517a25edf64c18da7ac32b59ffa9e8)), closes [#408](https://github.com/mbret/prose-reader/issues/408)
+
+
 ## [22.0.0](https://github.com/mbret/prose-reader/compare/v21.0.2...v22.0.0) (2026-09-27)
 
 ### ⚠ BREAKING CHANGES
