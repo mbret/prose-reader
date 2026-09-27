@@ -12,14 +12,22 @@ import {
 installReaderTestEnvironment()
 
 describe("itemLoadStatusChange$", () => {
-  it("emits each change of an item's load status, for every item", async () => {
+  it("emits each change of an item's load status, for every item, as the item holds it", async () => {
     // Only the item at the position loads.
     const reader = createTestReader({ numberOfAdjacentSpineItemToPreLoad: 0 })
 
     const changes: { index: number; loadStatus: DocumentLoadStatus }[] = []
+    // A change delivered once the item has moved on: its state then says
+    // something else.
+    const changesTheItemNoLongerHolds: string[] = []
     reader.spineItemsObserver.itemLoadStatusChange$.subscribe(
       ({ item, loadStatus }) => {
         changes.push({ index: item.index, loadStatus })
+
+        if (item.value.loadStatus !== loadStatus)
+          changesTheItemNoLongerHolds.push(
+            `${item.index} ${loadStatus}, holding ${item.value.loadStatus}`,
+          )
       },
     )
     const loadStatusesOf = (index: number) =>
@@ -45,6 +53,9 @@ describe("itemLoadStatusChange$", () => {
       "idle",
     ])
     expect(loadStatusesOf(1)).toEqual(["loading", "loaded"])
+    // The release completes at once, with the viewport free: each status is
+    // still the item's as it is delivered.
+    expect(changesTheItemNoLongerHolds).toEqual([])
   })
 })
 

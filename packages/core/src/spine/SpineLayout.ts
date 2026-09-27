@@ -1,10 +1,12 @@
 import {
+  asapScheduler,
   concatMap,
   defer,
   filter,
   map,
   merge,
   type Observable,
+  observeOn,
   of,
   Subject,
   share,
@@ -86,12 +88,18 @@ export class SpineLayout extends DestroyableClass {
     super()
 
     /**
-     * A failed load ends a load as the other two do, with what it created
-     * released, and a layout is what restores the navigation and settles
-     * pagination on the item in error.
+     * A layout is also what restores the navigation and settles pagination,
+     * on an item in error as on a loaded one.
+     *
+     * It is requested once the item's new status has reached all of its
+     * subscribers: requesting it marks every item dirty, and done while the
+     * status is still being delivered, that dirty state would reach the
+     * item's later subscribers before the status itself, and they would end
+     * on a state the item had left.
      */
     const spineItemNeedsLayout$ = spineItemsObserver.itemLoadStatusChange$.pipe(
       filter(endsALoad),
+      observeOn(asapScheduler),
       map(
         (): SpineLayoutOptions => ({
           immediate: false,

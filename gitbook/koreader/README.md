@@ -19,10 +19,14 @@ everything else.
 import { cfiToXPointer, xPointerToCfi } from "@prose-reader/koreader"
 
 // The pointer names its own spine item (DocFragment[N] is spine item N - 1):
-// hand out that item's document, parsed as XHTML the way prose renders it.
+// hand out that item's document, parsed as XHTML the way prose renders it,
+// once it is loaded: not one still loading, nor one being released.
 const getSpineItem = (spineItemIndex: number) => {
   const item = reader.spineItemsManager.get(spineItemIndex)
-  const frame = item?.renderer.getDocumentFrame()
+  const frame =
+    item?.value.loadStatus === "loaded"
+      ? item.renderer.getDocumentFrame()
+      : undefined
   const document = frame instanceof HTMLIFrameElement ? frame.contentDocument : undefined
 
   return document ? { document, id: item?.item.id } : undefined

@@ -1,11 +1,9 @@
 import { isShallowEqual } from "@prose-reader/shared"
 import {
-  asapScheduler,
   distinctUntilChanged,
   map,
   merge,
   type Observable,
-  observeOn,
   pairwise,
   share,
 } from "rxjs"
@@ -37,13 +35,22 @@ export class SpineItemsObserver extends DestroyableClass {
 
   /**
    * Emits each time an item's `loadStatus` changes, with the status it
-   * changed from: a load starting, a document loaded, a load failing, an
-   * unload starting, and the document released.
+   * changed from:
    *
-   * It is delivered once the change has reached every subscriber of the
-   * item's state, so a subscriber that changes an item's state in response,
-   * as a layout does, never has it delivered out of order. By then the item
-   * may have moved on: read the change, not `item.value`.
+   * - `idle` to `loading`: a load starts.
+   * - `loading` to `loaded` or `error`: the document loaded, or failed to.
+   * - `loading` or `loaded` to `unloading`: an unload starts, cancelling a
+   *   load in progress.
+   * - `unloading` to `idle`: the document is released.
+   * - `unloading` to `loading`: a load comes while the release waits.
+   * - `error` to `idle`: an item in error is unloaded, with nothing left to
+   *   release since its failure did.
+   *
+   * It is delivered as the item's state changes, as `itemStateChange$` is,
+   * so `item.value` holds the new status and its `loadError`. A subscriber
+   * that changes an item's state in response must defer that change, as the
+   * spine's layout does: done during the delivery, it would reach the
+   * item's later subscribers before the status it responds to.
    */
   public itemLoadStatusChange$: Observable<{
     item: SpineItem
@@ -82,6 +89,6 @@ export class SpineItemsObserver extends DestroyableClass {
           })),
         ),
       ),
-    ).pipe(observeOn(asapScheduler), share())
+    ).pipe(share())
   }
 }

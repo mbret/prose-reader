@@ -16,7 +16,7 @@ reader.spineItemsObserver.itemLoadStatusChange$.subscribe(({ item, loadStatus })
 })
 ```
 
-`item.value.loadStatus` is where the load of a spine item's document stands: `idle`, `loading`, `loaded`, `unloading` while it is released, or `error`, with the reason in `item.value.loadError`. `itemLoadStatusChange$` emits each change, for every item, with the status it changed from as `previousLoadStatus`. It is delivered once the item's state has changed for every other subscriber, so an item can have changed again by then: rely on the change it carries.
+`item.value.loadStatus` is where the load of a spine item's document stands: `idle`, `loading`, `loaded`, `unloading` while it is released, or `error`, with the reason in `item.value.loadError`. `itemLoadStatusChange$` emits each change, for every item, with the status it changed from as `previousLoadStatus`, as the item's state changes: `item.value` holds the new status and its `loadError`.
 
 A failed load stays `error` until the item is unloaded: asking to load it again does not retry it. The reader unloads it once the reader has moved further away than the chapters it preloads (`numberOfAdjacentSpineItemToPreLoad`), and loads it again when the reader comes back.
 

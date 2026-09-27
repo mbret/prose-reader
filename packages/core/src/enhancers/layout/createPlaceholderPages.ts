@@ -104,9 +104,10 @@ export const createPlaceholderPages = (
 
       const { loadStatus, loadError } = item.value
 
+      // `textContent`, not `innerText`: reading it lays nothing out.
       setPropertyIfChanged(
         detailsElement,
-        `innerText`,
+        `textContent`,
         loadStatus === "error"
           ? (loadError?.toString() ?? `Unknown error`)
           : `loading ${item.item.id}`,
