@@ -87,9 +87,9 @@ document loads, or during a navigation or a layout, an edge's `cfi` can describe
 the start of an item rather than the page actually being read.
 
 `isSettled` tells the two apart. A settled result describes the visible pages of
-the current layout over content that is ready, and it is the only variant whose
-edges have their `cfi` typed as present, so TypeScript makes you establish
-settlement before reading one:
+the current layout over content that is ready, or failed to load, and it is the
+only variant whose edges have their `cfi` typed as present, so TypeScript makes
+you establish settlement before reading one:
 
 ```typescript
 reader.pagination.state$.subscribe((state) => {
@@ -100,19 +100,23 @@ reader.pagination.state$.subscribe((state) => {
 ```
 
 Settlement ends as soon as a navigation starts, a layout starts, or a visible
-item stops being ready, and returns once a replacement result has resolved over
-the new state. A layout is not only one you request: the reader lays the spine
-out again whenever an item finishes loading or unloads, so settlement can drop
-briefly while the book loads around the page being read. Page metrics such as
-`begin.pageIndexInSpineItem` stay available throughout, so navigation controls
-keep working on estimates while a result is pending.
+item stops being ready, or is unloaded after failing, and returns once a
+replacement result has resolved over the new state. A layout is not only one
+you request: the reader lays the spine out again whenever an item finishes
+loading, fails to load or unloads, so settlement can drop briefly while the
+book loads around the page being read. A visible item whose load failed does
+not keep pagination waiting: it settles on it, with the item's start as its
+edge's `cfi`, as the
+[error handling page](error-handling.md#errors-in-spine-item) explains. Page
+metrics such as `begin.pageIndexInSpineItem` stay available throughout, so
+navigation controls keep working on estimates while a result is pending.
 
 It describes the current visible position, not the loading state of the whole
 book: a settled result does not mean every item has been loaded.
 
 The reading position needs no such check: every value it takes is the closest
 known position of the reader's latest navigation, and says with `status`
-whether the reader has found its page yet, as the
+whether the reader has found its page yet, or can't, as the
 [navigation page](navigation.md#reading-position) explains.
 
 The two move in a set order. The reading position moves to where a navigation

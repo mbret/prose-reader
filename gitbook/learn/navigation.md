@@ -25,12 +25,14 @@ where to go: a bookmark, a table of contents entry, a link.
 `cfi`, the value to save and to [open the book at](#opening-the-book-somewhere)
 the next time, its `percentageEstimateOfBook`, how far into the book that is,
 to save with it for a progress shown outside the reader, and `status`, whether
-the reader has found that place yet: `pending` or `success`.
+the reader has found that place yet: `pending`, `success`, or `error` when it
+can't because the chapter failed to load.
 
 It moves when the reader navigates, and when the page that navigation goes to
 is laid out: until then the reading position, or only its progress, stands at
 the start of that page's chapter, as the cases below say, and it is `pending`.
-After that it is a `success`, and stays for the rest of the navigation. A
+After that it is a `success`, and stays for the rest of the navigation. Every
+navigation ends in `success`, or in `error` when its chapter fails to load. A
 resize, a rotation, a font size change or a chapter loading nearby lays the
 book out again and reflows the page around the reading position, but never
 changes it.
@@ -65,6 +67,12 @@ the moment a navigation happens, and refined as the reader finds out:
   pages, that is at once. The change of `status` is emitted even when the `cfi`
   and its progress stay the same, as they can after a navigation to a cfi on
   its chapter's first page.
+- **If the chapter fails to load**: `error`, and it stays for the rest of the
+  navigation, at what the reader knew by then: the chapter's start, or the
+  place the target names if the chapter showed it before failing. The reader
+  does not load the chapter again while it stays among the chapters around the
+  position, as [Error handling](error-handling.md#errors-in-spine-item)
+  explains.
 
 A navigation whose target names nothing in the book, such as a cfi that
 [can't be read](../cfi/about.md) or a cfi of a chapter the book does not have,
@@ -110,13 +118,15 @@ reader.navigation.readingPosition$.subscribe((readingPosition) => {
 ```
 
 `status` tells a value this navigation can still refine, `pending`, from a
-`success`, which stays until the next navigation, for code that treats them
-differently, such as a progress shown only once it is exact. A `pending` value
-whose `cfi` names only its chapter stands in at the chapter's start: a sync
+`success` or an `error`, which stay until the next navigation, for code that
+treats them differently, such as a progress shown only once it is exact, or a
+message that the chapter could not be shown. A value that is not a `success`
+and whose `cfi` names only its chapter stands in at the chapter's start: a sync
 client can push one only when the navigation names no better place. Within a
 navigation the value only moves forward: while `pending`, from the chapter's
-start to the place the target names, then to `success`, skipping what does not
-apply. A navigation to a place already laid out is a `success` at once.
+start to the place the target names, then to `success` or `error`, skipping
+what does not apply. A navigation to a place already laid out is a `success`
+at once.
 
 ## Opening the book somewhere
 

@@ -99,8 +99,15 @@ export abstract class DocumentRenderer extends ReactiveEntity<DocumentRendererSt
 
     this.loaded$ = loadTrigger$.pipe(
       mergeMap(() => {
+        /**
+         * A load is a request: nothing to do while the document is loaded or
+         * loading, nor once its load failed, which stays failed until an
+         * unload.
+         */
         const canBeIgnored =
-          this.value.state === `loaded` || this.value.state === `loading`
+          this.value.state === `loaded` ||
+          this.value.state === `loading` ||
+          this.value.state === `error`
 
         if (canBeIgnored) return EMPTY
 
@@ -239,6 +246,11 @@ export abstract class DocumentRenderer extends ReactiveEntity<DocumentRendererSt
     return this.state$.pipe(map((state) => state.state === `loaded`))
   }
 
+  /**
+   * Asks for the document to be loaded. It is not loaded again while it is
+   * loaded, loading, or its load failed: a failed load stays failed until
+   * `unload()`.
+   */
   public load() {
     this.triggerSubject.next({ type: `load` })
   }

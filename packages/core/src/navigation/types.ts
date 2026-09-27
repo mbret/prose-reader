@@ -121,21 +121,23 @@ export type NavigationConsolidation = {
  */
 export type ReadingPosition = {
   /**
-   * While the value is `pending`, a cfi naming only its spine item, which
-   * `reader.cfi.isRootCfi` tells, is that item's start, standing in for a
-   * place the reader does not know yet.
+   * While the value is not a `success`, a cfi naming only its spine item,
+   * which `reader.cfi.isRootCfi` tells, is that item's start, standing in for
+   * a place the reader does not know.
    */
   cfi: string
   /**
    * How far into the book `cfi` is, from 0 to 1: where the page holding it
    * starts, estimated from each spine item's `progressionWeight` and the pages
    * of its own. A position on the last page is short of 1. While the value is
-   * `pending`, the start of the spine item the navigation goes to.
+   * not a `success`, the start of the spine item the navigation goes to.
    */
   percentageEstimateOfBook: number
   /**
    * Whether the reader has found the place the navigation goes to. Every
    * value is where the reader is, as far as it knows, and the value to save.
+   * Every navigation ends in `success` or `error`, which stays until the next
+   * navigation.
    *
    * - `pending`: not yet. `cfi` is the start of the spine item the navigation
    *   goes to, while that item loads, or while the page the navigation lands
@@ -144,15 +146,18 @@ export type ReadingPosition = {
    *   before the page holding it is laid out.
    * - `success`: the place the target names, or otherwise the first character
    *   of the page the navigation lands on, and where the page holding it
-   *   starts. It stays until the next navigation.
+   *   starts.
+   * - `error`: the spine item the navigation goes to failed to load, so no
+   *   place in it can be found. `cfi` is what the reader knew by then: that
+   *   item's start, or the place the target names.
    */
-  status: "pending" | "success"
+  status: "pending" | "success" | "error"
 }
 
 /**
  * Where a navigation takes the reader in the text, as far as the reader knows,
  * and how much of that place it has found, refined as the navigation goes. The
- * current navigation's is the reading position, `pending` until it is final.
+ * current navigation's is the reading position.
  *
  * - `standIn`: no place is known yet. `cfi` is the start of the spine item the
  *   navigation goes to, while that item loads, or while the page the
@@ -163,12 +168,15 @@ export type ReadingPosition = {
  * - `final`: the place the target names, or otherwise the first character of
  *   the page the navigation lands on, and where the page holding it starts. It
  *   stays until the next navigation.
+ * - `error`: the spine item the navigation goes to failed to load while the
+ *   anchor stood in or was the target's place, which it keeps. It stays until
+ *   the next navigation.
  */
 export type InternalNavigationAnchor = Pick<
   ReadingPosition,
   "cfi" | "percentageEstimateOfBook"
 > & {
-  state: "standIn" | "targetPlace" | "final"
+  state: "standIn" | "targetPlace" | "final" | "error"
 }
 
 /**

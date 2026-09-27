@@ -33,19 +33,26 @@ const expectedCfiPageStartProgression = 0.375
 
 /**
  * The spine and pages this step reads, held in whatever state a test needs:
- * a layout pending or current, an item ready or not. The page at any position
- * has a first visible node, so only the step's own guards can keep it from
- * being read.
+ * a layout pending or current, an item ready or not, or in error. The page at
+ * any position has a first visible node, so only the step's own guards can
+ * keep it from being read.
  */
 const createSpine = ({
   isLayoutCurrent = true,
   isReady = true,
+  isError = false,
 }: {
   isLayoutCurrent?: boolean
   isReady?: boolean
+  isError?: boolean
 } = {}) => {
   const item = { index: 0 }
-  const spineItem = { item, index: 0, numberOfPages: 4, value: { isReady } }
+  const spineItem = {
+    item,
+    index: 0,
+    numberOfPages: 4,
+    value: { isReady, isError },
+  }
   const spine = {
     isLayoutCurrent,
     spineItemsManager: {
@@ -202,6 +209,39 @@ describe("withAnchor", () => {
       cfi: textElsewhere,
       percentageEstimateOfBook: expectedCfiPageStartProgression,
       state: "final",
+    })
+  })
+
+  describe("once the item the navigation goes to has failed to load", () => {
+    // An item whose load failed is not ready.
+    const failedItem = { isReady: false, isError: true }
+
+    it("ends in error at the item's start while no place is known", async () => {
+      expect(await consolidateAnchor({}, createSpine(failedItem))).toEqual({
+        ...standIn,
+        state: "error",
+      })
+    })
+
+    it("ends in error at the target's place, found before the load failed", async () => {
+      const targetPlace: InternalNavigationAnchor = {
+        cfi: textElsewhere,
+        percentageEstimateOfBook: 0,
+        state: "targetPlace",
+      }
+
+      expect(
+        await consolidateAnchor(
+          { anchor: targetPlace },
+          createSpine(failedItem),
+        ),
+      ).toEqual({ ...targetPlace, state: "error" })
+    })
+
+    it("keeps the anchor in error for the rest of the navigation, even once the item is ready", async () => {
+      const anchor: InternalNavigationAnchor = { ...standIn, state: "error" }
+
+      expect(await consolidateAnchor({ anchor }, createSpine())).toEqual(anchor)
     })
   })
 })
