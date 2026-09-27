@@ -15,51 +15,6 @@ import {
   url,
 } from "./readingPosition"
 
-test.describe("Given a page reached by turning pages", () => {
-  test.beforeEach(async ({ page }) => {
-    await page.setViewportSize(initialSize)
-    await page.goto(url)
-    await waitForSettled(page)
-  })
-
-  test("a page turn is the reading position from the moment it happens", async ({
-    page,
-  }) => {
-    const chapterIndex = await getLongChapterIndex(page)
-
-    await goToSpineItem(page, chapterIndex)
-    await waitForSettled(page)
-
-    const start = await readPosition(page)
-
-    expect(start.spineItemIndex).toBe(chapterIndex)
-    expect(start.pageIndex).toBe(0)
-
-    const readRecorded = await recordReadingPositions(page)
-
-    await turnRight(page)
-    await waitForSettled(page)
-
-    const turned = await readPosition(page)
-
-    /**
-     * The chapter is laid out, so the page the turn goes to is known when the
-     * turn happens: the reading position moves once, straight to its first
-     * character, the one pagination settles on afterwards.
-     */
-    expect(turned.pageIndex).toBe(1)
-    expect(await readRecorded()).toEqual([
-      {
-        cfi: turned.cfi,
-        isRootCfi: false,
-        itemIndex: chapterIndex,
-        percentageEstimateOfBook: turned.readingProgression,
-        status: "success",
-      },
-    ])
-  })
-})
-
 /**
  * Drags the page a fifth of the window towards the next one and lets go, with
  * the pan navigator, as a finger does. That is past the snap threshold, so the
@@ -123,9 +78,103 @@ test.describe("Given a page reached by dragging", () => {
 test.describe("Given chapters that are not preloaded", () => {
   test.beforeEach(async ({ page }) => {
     await page.setViewportSize(initialSize)
-    // Only visible chapters load, so the one before is never loaded yet.
+    // Only visible chapters load: once the chapter shown has settled, nothing
+    // loads around it, and the one before it is never loaded yet.
     await page.goto(`${url}?preload=0`)
     await waitForSettled(page)
+  })
+
+  test("a page turn is the reading position from the moment it happens", async ({
+    page,
+  }) => {
+    const chapterIndex = await getLongChapterIndex(page)
+
+    await goToSpineItem(page, chapterIndex)
+    await waitForSettled(page)
+
+    const start = await readPosition(page)
+
+    expect(start.spineItemIndex).toBe(chapterIndex)
+    expect(start.pageIndex).toBe(0)
+
+    const readRecorded = await recordReadingPositions(page)
+
+    await turnRight(page)
+    await waitForSettled(page)
+
+    const turned = await readPosition(page)
+
+    /**
+     * The chapter is laid out, and nothing loads around it to lay the spine
+     * out again, so the page the turn goes to is known when the turn happens:
+     * the reading position moves once, straight to its first character, the
+     * one pagination settles on afterwards.
+     */
+    expect(turned.pageIndex).toBe(1)
+    expect(await readRecorded()).toEqual([
+      {
+        cfi: turned.cfi,
+        isRootCfi: false,
+        itemIndex: chapterIndex,
+        percentageEstimateOfBook: turned.readingProgression,
+        status: "success",
+      },
+    ])
+  })
+
+  test("a page turn while the spine lays itself out again is its chapter's start until the layout lands, then the page it went to", async ({
+    page,
+  }) => {
+    const chapterIndex = await getLongChapterIndex(page)
+
+    await goToSpineItem(page, chapterIndex)
+    await waitForSettled(page)
+
+    const start = await readPosition(page)
+
+    expect(start.spineItemIndex).toBe(chapterIndex)
+    expect(start.pageIndex).toBe(0)
+
+    const readRecorded = await recordReadingPositions(page)
+
+    await page.evaluate(() => {
+      // @ts-expect-error window.reader is set by this scenario's index.tsx
+      const reader = window.reader as Reader
+
+      reader.layout()
+      reader.navigation.turnRight()
+    })
+    await waitForSettled(page)
+
+    const turned = await readPosition(page)
+
+    /**
+     * The layout is asked for in the task that turns, as an item ending its
+     * load nearby asks for one, so the turn happens while it is pending. The
+     * chapter is laid out, but until the layout lands its pages describe the
+     * one being replaced, so the turn names none of them: the reading position
+     * is the chapter's start, pending. The turn is not lost: once the layout
+     * lands, it is the first character of the page the turn went to, a
+     * success.
+     */
+    expect(turned.spineItemIndex).toBe(chapterIndex)
+    expect(turned.pageIndex).toBe(1)
+    expect(await readRecorded()).toEqual([
+      {
+        cfi: expect.any(String),
+        isRootCfi: true,
+        itemIndex: chapterIndex,
+        percentageEstimateOfBook: expect.closeTo(turned.chapterStart, 10),
+        status: "pending",
+      },
+      {
+        cfi: turned.cfi,
+        isRootCfi: false,
+        itemIndex: chapterIndex,
+        percentageEstimateOfBook: turned.readingProgression,
+        status: "success",
+      },
+    ])
   })
 
   test("a turn back into a previous chapter is its start at once, and its last page once it loads", async ({
