@@ -26,7 +26,10 @@ export class SpineItemHighlight extends DestroyableClass {
     event: Event
     highlight: RuntimeAnnotation
   }>
-  private resolvedCfi$: Observable<ReturnType<Reader["cfi"]["resolveCfi"]>>
+  /** Its cfi resolved into the item's document, while that is loaded. */
+  private resolvedCfi$: Observable<
+    ReturnType<Reader["cfi"]["resolveCfi"]> | undefined
+  >
 
   constructor(
     private spineItem: SpineItem,
@@ -49,10 +52,18 @@ export class SpineItemHighlight extends DestroyableClass {
       share(),
     )
 
+    /**
+     * Resolved only into a loaded document: one being released would be
+     * kept, with the range into it, until the next load.
+     */
     this.resolvedCfi$ = this.spineItem.watch("loadStatus").pipe(
       map((loadStatus) => loadStatus === "loaded"),
       distinctUntilChanged(),
-      map(() => this.reader.cfi.resolveCfi({ cfi: this.highlight.cfi })),
+      map((isLoaded) =>
+        isLoaded
+          ? this.reader.cfi.resolveCfi({ cfi: this.highlight.cfi })
+          : undefined,
+      ),
       shareReplay({ refCount: true, bufferSize: 1 }),
     )
 

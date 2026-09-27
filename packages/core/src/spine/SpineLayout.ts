@@ -61,23 +61,21 @@ export class SpineLayout extends DestroyableClass {
     super()
 
     /**
-     * An item's load ended, loaded, failed or released: its content changed,
-     * and so can its size and the positions after it. A failed load ends a
-     * load as the other two do, with the item released as an unload leaves
-     * it, and a layout is what restores the navigation and settles pagination
-     * on the item in error.
+     * An item's load ended: its document loaded, failed to load, or was
+     * released. Its content changed, and so can its size and the positions
+     * after it. A failed load ends a load as the other two do, with what it
+     * created released, and a layout is what restores the navigation and
+     * settles pagination on the item in error.
      *
-     * An unload of an item in error ends in `idle` too and lays the spine out
-     * once more, although its content does not change: its failure released
-     * it already. That layout is redundant, and kept rather than told apart
-     * from a release that changed the content.
+     * An unload of an item in error ends nothing: its failure released it
+     * already, and nothing changes to lay out again.
      */
     const spineItemNeedsLayout$ = spineItemsObserver.itemLoadStatusChange$.pipe(
       filter(
-        ({ loadStatus }) =>
-          loadStatus === "loaded" ||
-          loadStatus === "error" ||
-          loadStatus === "idle",
+        ({ previousLoadStatus, loadStatus }) =>
+          (previousLoadStatus === "loading" &&
+            (loadStatus === "loaded" || loadStatus === "error")) ||
+          (previousLoadStatus === "unloading" && loadStatus === "idle"),
       ),
       map(
         (): SpineLayoutOptions => ({

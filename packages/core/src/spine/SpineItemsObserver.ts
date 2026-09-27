@@ -1,11 +1,13 @@
 import { isShallowEqual } from "@prose-reader/shared"
 import {
+  asapScheduler,
   distinctUntilChanged,
   map,
   merge,
   type Observable,
+  observeOn,
+  pairwise,
   share,
-  skip,
 } from "rxjs"
 import type { DocumentLoadStatus } from "../spineItem/renderer/DocumentRenderer"
 import type { SpineItem, SpineItemState } from "../spineItem/SpineItem"
@@ -34,13 +36,18 @@ export class SpineItemsObserver extends DestroyableClass {
   }>
 
   /**
-   * Emits each time an item's `loadStatus` changes, once its state holds it:
-   * a load starting, a document loaded, a load failing, an unload starting,
-   * and the document released. Not the status an item has when subscribed
-   * to, which is no change.
+   * Emits each time an item's `loadStatus` changes, with the status it
+   * changed from: a load starting, a document loaded, a load failing, an
+   * unload starting, and the document released.
+   *
+   * It is delivered once the change has reached every subscriber of the
+   * item's state, so a subscriber that changes an item's state in response,
+   * as a layout does, never has it delivered out of order. By then the item
+   * may have moved on: read the change, not `item.value`.
    */
   public itemLoadStatusChange$: Observable<{
     item: SpineItem
+    previousLoadStatus: DocumentLoadStatus
     loadStatus: DocumentLoadStatus
   }>
 
@@ -67,10 +74,14 @@ export class SpineItemsObserver extends DestroyableClass {
     this.itemLoadStatusChange$ = merge(
       ...items.map((item) =>
         item.watch("loadStatus").pipe(
-          skip(1),
-          map((loadStatus) => ({ item, loadStatus })),
+          pairwise(),
+          map(([previousLoadStatus, loadStatus]) => ({
+            item,
+            previousLoadStatus,
+            loadStatus,
+          })),
         ),
       ),
-    ).pipe(share())
+    ).pipe(observeOn(asapScheduler), share())
   }
 }

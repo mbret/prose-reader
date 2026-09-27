@@ -215,7 +215,10 @@ describe("withAnchor", () => {
 
   describe("once the item the navigation goes to has failed to load", () => {
     // An item whose load failed is not ready.
-    const failedItem = { isReady: false, loadStatus: "error" } as const
+    const failedItem: Parameters<typeof createSpine>[0] = {
+      isReady: false,
+      loadStatus: "error",
+    }
 
     it("ends in error at the item's start while no place is known", async () => {
       expect(await consolidateAnchor({}, createSpine(failedItem))).toEqual({

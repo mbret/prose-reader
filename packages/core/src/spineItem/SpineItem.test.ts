@@ -115,7 +115,7 @@ describe("SpineItem readiness", () => {
     item.unload()
     await new Promise((resolve) => setTimeout(resolve, 0))
 
-    expect(item.value.loadStatus).not.toBe("loaded")
+    expect(item.value.loadStatus).toBe("idle")
     expect(item.value.isReady).toBe(false)
 
     // The invariant itself, across every state the item went through.

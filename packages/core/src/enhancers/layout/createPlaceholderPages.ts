@@ -89,24 +89,28 @@ export const createPlaceholderPages = (
     },
   )
 
-  const itemError$ = reader.spineItemsObserver.itemStateChange$.pipe(
-    tap(({ item, loadStatus, error }) => {
-      if (loadStatus !== "error") return
+  /**
+   * The placeholder says why the item's load failed while it is in error,
+   * and that it loads otherwise, such as once it loads again. It is written
+   * from the item's state at each change of its load status.
+   */
+  const itemLoadDetails$ = reader.spineItemsObserver.itemLoadStatusChange$.pipe(
+    tap(({ item }) => {
+      const detailsElement = loadingElements
+        .get(item.containerElement)
+        ?.querySelector(`[data-details-element]`)
 
-      const loadingElementContainer = loadingElements.get(item.containerElement)
+      if (!isHtmlElement(detailsElement)) return
 
-      if (!loadingElementContainer) return
+      const { loadStatus, error } = item.value
 
-      const detailsElement = loadingElementContainer.querySelector(
-        `[data-details-element]`,
+      setPropertyIfChanged(
+        detailsElement,
+        `innerText`,
+        loadStatus === "error"
+          ? (error?.toString() ?? `Unknown error`)
+          : `loading ${item.item.id}`,
       )
-      if (isHtmlElement(detailsElement)) {
-        setPropertyIfChanged(
-          detailsElement,
-          `innerText`,
-          error?.toString() ?? `Unknown error`,
-        )
-      }
     }),
   )
 
@@ -125,5 +129,5 @@ export const createPlaceholderPages = (
     }),
   )
 
-  return merge(itemError$, theme$)
+  return merge(itemLoadDetails$, theme$)
 }

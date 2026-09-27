@@ -1,25 +1,26 @@
 import {
   distinctUntilChanged,
-  endWith,
-  filter,
   finalize,
   map,
   merge,
   NEVER,
+  of,
   switchMap,
-  takeUntil,
 } from "rxjs"
 import type { SpineItem } from "../../spineItem/SpineItem"
 import { FrameSelectionTracker } from "./FrameSelectionTracker"
 
 /**
- * The selection in the item's document, from its load until the document
- * leaves: `undefined` once it does.
+ * The selection in the item's document while it is loaded, and `undefined`
+ * while it is not: before it loads, and once it starts leaving.
  */
 export const trackSpineItemSelection = (spineItem: SpineItem) =>
   spineItem.watch("loadStatus").pipe(
-    filter((loadStatus) => loadStatus === "loaded"),
-    switchMap(() => {
+    map((loadStatus) => loadStatus === "loaded"),
+    distinctUntilChanged(),
+    switchMap((isLoaded) => {
+      if (!isLoaded) return of(undefined)
+
       const frame = spineItem.renderer.getDocumentFrame()
       const frameDoc = frame?.contentDocument || frame?.contentWindow?.document
 
@@ -49,12 +50,6 @@ export const trackSpineItemSelection = (spineItem: SpineItem) =>
           }),
         ),
       ).pipe(
-        takeUntil(
-          spineItem
-            .watch("loadStatus")
-            .pipe(filter((loadStatus) => loadStatus !== "loaded")),
-        ),
-        endWith(undefined),
         finalize(() => {
           selectionTracker.destroy()
         }),

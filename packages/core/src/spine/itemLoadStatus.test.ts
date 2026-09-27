@@ -1,4 +1,5 @@
 // @vitest-environment jsdom
+import { isShallowEqual } from "@prose-reader/shared"
 import { describe, expect, it, vi } from "vitest"
 import type { DocumentLoadStatus } from "../spineItem/renderer/DocumentRenderer"
 import {
@@ -76,5 +77,42 @@ describe("the spine", () => {
       expect(events).toContain("1 idle")
       expect(events.slice(events.indexOf("1 idle"))).toContain("laid out")
     })
+  })
+
+  it("delivers every item state it lays out on to all of the item's subscribers before changing it", async () => {
+    // Both items load, the second next to the first.
+    const reader = createTestReader({ numberOfAdjacentSpineItemToPreLoad: 1 })
+
+    mountTestReader(reader)
+    await settledOn(reader, 0)
+
+    const secondItem = reader.spineItemsManager.get(1)
+
+    if (!secondItem) throw new Error("no second item")
+
+    await vi.waitFor(() => expect(secondItem.value.loadStatus).toBe("loaded"))
+
+    /**
+     * Every state a subscriber receives is the item's state at that moment.
+     * Laying out marks every item dirty: done while the item's release is
+     * still being delivered, the dirty state reaches the subscribers after it
+     * before the release does, and they end on a state the item left.
+     */
+    const outdatedStates: string[] = []
+    reader.spineItemsObserver.itemStateChange$.subscribe(
+      ({ item, ...state }) => {
+        if (!isShallowEqual(state, item.value))
+          outdatedStates.push(
+            `${item.index} ${state.loadStatus} isDirty=${state.isDirty}`,
+          )
+      },
+    )
+
+    reader.settings.update({ numberOfAdjacentSpineItemToPreLoad: 0 })
+
+    await vi.waitFor(() => expect(secondItem.value.loadStatus).toBe("idle"))
+    await settledOn(reader, 0)
+
+    expect(outdatedStates).toEqual([])
   })
 })
