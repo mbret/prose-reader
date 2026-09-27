@@ -7,8 +7,10 @@ import { DefaultRenderer } from "../spineItem/renderer/DefaultRenderer"
 import { DocumentRenderer } from "../spineItem/renderer/DocumentRenderer"
 import {
   createEnhancedTestReader,
+  createPrePaginatedManifest,
   createTestReader,
   holdItem,
+  holdItems,
   installReaderTestEnvironment,
   mountTestReader,
   renderTextDocuments,
@@ -962,5 +964,189 @@ describe("reading position of a cfi into a document", () => {
       itemStart,
       inSecondItem(cfiNamingText, "success"),
     ])
+  })
+})
+
+describe("reading position while the spine is laid out again", () => {
+  /**
+   * Three items of one page each, and `preload` items preloaded on each side
+   * of the page shown. An item in `heldHrefs` loads once the test ends its
+   * load, which lays the spine out again from that item on: an item's place
+   * depends only on the items before it.
+   */
+  const createReaderHoldingLoadsOf = (
+    heldHrefs: string[],
+    { preload = 1 }: { preload?: number } = {},
+  ) => {
+    const heldItems = holdItems(heldHrefs)
+    const reader = createTestReader({
+      manifest: createPrePaginatedManifest({
+        pageSpreads: [undefined, undefined, undefined],
+      }),
+      numberOfAdjacentSpineItemToPreLoad: preload,
+      getRenderer: heldItems.getRenderer,
+    })
+
+    const getItem = (index: number) => {
+      const item = reader.spineItemsManager.get(index)
+
+      if (!item) throw new Error(`item ${index} is missing`)
+
+      return item
+    }
+
+    return {
+      reader,
+      getItem,
+      waitForHeldItemLoading: (index: number) =>
+        vi.waitFor(() =>
+          expect(getItem(index).renderer.value.state).toBe("loading"),
+        ),
+      /** Resolves once the layout the load ends with is requested, not done. */
+      endHeldItemLoad: async (index: number) => {
+        const itemLoaded = firstValueFrom(
+          reader.spine.spineItemsObserver.itemLoad$.pipe(
+            filter((item) => item.index === index),
+          ),
+        )
+
+        heldItems.release(getItem(index).item.href)
+        await itemLoaded
+      },
+    }
+  }
+
+  it("is the page a turn goes to at once, when the layout can only move later items", async () => {
+    const { reader, getItem, waitForHeldItemLoading, endHeldItemLoad } =
+      createReaderHoldingLoadsOf(["/page_2.jpg"])
+
+    mountTestReader(reader)
+    await settledOn(reader, 0)
+
+    reader.navigation.goToSpineItem({ indexOrId: 1, animation: false })
+    await settledOn(reader, 1)
+    await waitForHeldItemLoading(2)
+
+    const positions: ReadingPosition[] = []
+    reader.navigation.readingPosition$
+      .pipe(skip(1))
+      .subscribe((position) => positions.push(position))
+
+    await endHeldItemLoad(2)
+
+    expect(reader.spine.isLayoutCurrent).toBe(false)
+    expect(reader.spine.isLayoutCurrentFor(getItem(0))).toBe(true)
+    expect(reader.spine.isLayoutCurrentFor(getItem(2))).toBe(false)
+
+    reader.navigation.turnLeft()
+
+    const settled = await settledOn(reader, 0)
+
+    /**
+     * The first item's page is the one the reader shows, whatever the third
+     * item's load does to the spine after it: the turn's place is known when
+     * the turn happens, and nothing stands in for it.
+     */
+    expect(positions).toEqual([
+      {
+        cfi: settled.begin.cfi,
+        percentageEstimateOfBook: 0,
+        status: "success",
+      },
+    ])
+  })
+
+  it("is its item's start while the layout can move that item, and its page once laid out", async () => {
+    const { reader, getItem, waitForHeldItemLoading, endHeldItemLoad } =
+      createReaderHoldingLoadsOf(["/page_1.jpg"])
+
+    mountTestReader(reader)
+    await settledOn(reader, 0)
+    await waitForHeldItemLoading(1)
+
+    reader.navigation.goToSpineItem({ indexOrId: 2, animation: false })
+    await settledOn(reader, 2)
+
+    await endHeldItemLoad(1)
+
+    expect(reader.spine.isLayoutCurrentFor(getItem(2))).toBe(false)
+
+    /**
+     * The second item, before the third, has loaded: until the spine is laid
+     * out again the third item's place, and so the page at a position in it,
+     * is not known.
+     */
+    reader.navigation.goToSpineItem({ indexOrId: 2, animation: false })
+
+    expect(await firstValueFrom(reader.navigation.readingPosition$)).toEqual({
+      cfi: reader.cfi.generateRootCfi(getItem(2).item),
+      percentageEstimateOfBook: 2 / 3,
+      status: "pending",
+    })
+
+    const settled = await settledOn(reader, 2)
+
+    expect(await firstValueFrom(reader.navigation.readingPosition$)).toEqual({
+      cfi: settled.begin.cfi,
+      percentageEstimateOfBook: 2 / 3,
+      status: "success",
+    })
+  })
+
+  it("stays stale from the earliest item while the layouts of several loads are pending", async () => {
+    const { reader, getItem, waitForHeldItemLoading, endHeldItemLoad } =
+      createReaderHoldingLoadsOf(["/page_1.jpg", "/page_2.jpg"], {
+        preload: 2,
+      })
+
+    mountTestReader(reader)
+    await settledOn(reader, 0)
+    await waitForHeldItemLoading(1)
+    await waitForHeldItemLoading(2)
+
+    /**
+     * The layout the third item's load asks for replaces the one the second's
+     * asked for before it is done, and lays the second out again with the
+     * rest: the second is no more current than before.
+     */
+    await endHeldItemLoad(1)
+    await endHeldItemLoad(2)
+
+    expect(reader.spine.isLayoutCurrentFor(getItem(0))).toBe(true)
+    expect(reader.spine.isLayoutCurrentFor(getItem(1))).toBe(false)
+  })
+
+  it("is its item's start while a layout of the reader is pending, and its page once laid out", async () => {
+    const { reader, getItem } = createReaderHoldingLoadsOf([])
+
+    mountTestReader(reader)
+    await settledOn(reader, 0)
+
+    reader.navigation.goToSpineItem({ indexOrId: 1, animation: false })
+    await settledOn(reader, 1)
+
+    /**
+     * As a resize or a setting asks for: the viewport it measures can change
+     * every page, the first item's included.
+     */
+    reader.layout()
+
+    expect(reader.spine.isLayoutCurrentFor(getItem(0))).toBe(false)
+
+    reader.navigation.turnLeft()
+
+    expect(await firstValueFrom(reader.navigation.readingPosition$)).toEqual({
+      cfi: reader.cfi.generateRootCfi(getItem(0).item),
+      percentageEstimateOfBook: 0,
+      status: "pending",
+    })
+
+    const settled = await settledOn(reader, 0)
+
+    expect(await firstValueFrom(reader.navigation.readingPosition$)).toEqual({
+      cfi: settled.begin.cfi,
+      percentageEstimateOfBook: 0,
+      status: "success",
+    })
   })
 })

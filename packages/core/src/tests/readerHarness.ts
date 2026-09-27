@@ -186,20 +186,26 @@ export const renderTextDocuments = () => (props: DocumentRendererParams) =>
   new TextDocumentRenderer(props)
 
 /**
- * Keeps one item from becoming ready: its renderer finishes loading only when
- * `release` is called. Everything else runs as usual, so the item is loading
- * for exactly as long as the test needs. Every item is rendered by `Renderer`,
- * the one held included, which loads its document once released.
+ * Keeps some items from becoming ready: the renderer of each finishes loading
+ * only once `release` is called with its href. Everything else runs as usual,
+ * so each item is loading for exactly as long as the test needs. Every item is
+ * rendered by `Renderer`, the ones held included, which load their document
+ * once released.
  */
-export const holdItem = (
-  href: string,
+export const holdItems = (
+  hrefs: string[],
   Renderer: new (
     props: DocumentRendererParams,
   ) => DocumentRenderer = DefaultRenderer,
 ) => {
-  const released = new ReplaySubject<void>(1)
+  const releasedByHref = new Map(
+    hrefs.map((href) => [href, new ReplaySubject<void>(1)]),
+  )
 
-  const loadDocumentOnceReleased = (renderer: DocumentRenderer) => {
+  const loadDocumentOnceReleased = (
+    renderer: DocumentRenderer,
+    released: ReplaySubject<void>,
+  ) => {
     const loadDocument = renderer.onLoadDocument.bind(renderer)
 
     renderer.onLoadDocument = () =>
@@ -214,14 +220,36 @@ export const holdItem = (
   return {
     getRenderer:
       (item: Manifest["spineItems"][number]) =>
-      (props: DocumentRendererParams) =>
-        item.href === href
-          ? loadDocumentOnceReleased(new Renderer(props))
-          : new Renderer(props),
-    release: () => {
+      (props: DocumentRendererParams) => {
+        const released = releasedByHref.get(item.href)
+
+        return released
+          ? loadDocumentOnceReleased(new Renderer(props), released)
+          : new Renderer(props)
+      },
+    release: (href: string) => {
+      const released = releasedByHref.get(href)
+
+      if (!released) throw new Error(`${href} is not held`)
+
       released.next()
       released.complete()
     },
+  }
+}
+
+/** Keeps one item from becoming ready, see {@link holdItems}. */
+export const holdItem = (
+  href: string,
+  Renderer: new (
+    props: DocumentRendererParams,
+  ) => DocumentRenderer = DefaultRenderer,
+) => {
+  const heldItems = holdItems([href], Renderer)
+
+  return {
+    getRenderer: heldItems.getRenderer,
+    release: () => heldItems.release(href),
   }
 }
 

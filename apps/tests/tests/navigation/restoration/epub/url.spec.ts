@@ -1,6 +1,12 @@
 import { expect, type Page, test } from "@playwright/test"
 import type { Reader } from "@prose-reader/core"
+import { expectDocumentsLoadedWith } from "../../../utils"
 import { resizeAndSettle, waitForSettled } from "../../../utils/pagination"
+import {
+  describeResourceLoading,
+  RESOURCE_LOADINGS,
+  withResourceLoading,
+} from "../../../utils/resourceLoading"
 import { isElementStartOnScreen } from "../../../utils/visibility"
 
 /**
@@ -198,40 +204,45 @@ test.describe("Given a url with a fragment", () => {
   })
 })
 
-test.describe("Given a link to another chapter", () => {
-  test.beforeEach(async ({ page }) => {
-    await page.setViewportSize(initialSize)
-    await page.goto(url)
-    await waitForSettled(page)
-  })
-
-  test("a click shows the page of the element its fragment names", async ({
-    page,
-  }) => {
-    const contents = await getItem(page, "bk01-toc.xhtml")
-    const item = await getItem(page, chapter)
-
-    await goToSpineItem(page, contents.index)
-    await clickLink(page, contents.index, `${chapter}#${fragment}`)
-    await waitForSettled(page)
-
-    await expect
-      .poll(() => isElementStartOnScreen(page, item.index, fragment))
-      .toBe(true)
-  })
-
-  test("a click on an element inside the link follows it", async ({ page }) => {
-    const contents = await getItem(page, "bk01-toc.xhtml")
-    const item = await getItem(page, chapter)
-
-    await goToSpineItem(page, contents.index)
-    await clickLink(page, contents.index, `${chapter}#${fragment}`, {
-      onChild: true,
+for (const resourceLoading of RESOURCE_LOADINGS) {
+  test.describe(`Given a link to another chapter, ${describeResourceLoading(resourceLoading)}`, () => {
+    test.beforeEach(async ({ page }) => {
+      await page.setViewportSize(initialSize)
+      await page.goto(withResourceLoading(url, resourceLoading))
+      await waitForSettled(page)
+      await expectDocumentsLoadedWith(page, resourceLoading)
     })
-    await waitForSettled(page)
 
-    await expect
-      .poll(() => isElementStartOnScreen(page, item.index, fragment))
-      .toBe(true)
+    test("a click shows the page of the element its fragment names", async ({
+      page,
+    }) => {
+      const contents = await getItem(page, "bk01-toc.xhtml")
+      const item = await getItem(page, chapter)
+
+      await goToSpineItem(page, contents.index)
+      await clickLink(page, contents.index, `${chapter}#${fragment}`)
+      await waitForSettled(page)
+
+      await expect
+        .poll(() => isElementStartOnScreen(page, item.index, fragment))
+        .toBe(true)
+    })
+
+    test("a click on an element inside the link follows it", async ({
+      page,
+    }) => {
+      const contents = await getItem(page, "bk01-toc.xhtml")
+      const item = await getItem(page, chapter)
+
+      await goToSpineItem(page, contents.index)
+      await clickLink(page, contents.index, `${chapter}#${fragment}`, {
+        onChild: true,
+      })
+      await waitForSettled(page)
+
+      await expect
+        .poll(() => isElementStartOnScreen(page, item.index, fragment))
+        .toBe(true)
+    })
   })
-})
+}

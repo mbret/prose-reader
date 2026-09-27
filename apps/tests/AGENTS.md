@@ -16,6 +16,22 @@ state back the same way. Fixtures live in `public/epubs`: reflowable and
 pre-paginated epubs, a cbz and a pdf. Shared helpers live in `tests/utils`;
 add to them rather than copying a wait or a locator into a second spec.
 
+## Loading the book
+
+A scenario opens a fixture with `openFixtureBook` (`tests/fixtureBook.ts`) and
+passes what it returns to the reader. By default the test app's server streams
+the book over http on the page's origin, as an app's service worker or server
+does, and the reader loads each document straight from its url. That is how
+most apps run, so it is what most specs cover.
+
+With `?resources=blob` the page streams the book itself and hands the reader
+each resource as a `Response`, as the getting-started guide does: the reader
+then loads each document from a blob and resolves its assets itself. A spec
+whose subject can differ between the two, such as a document's references to
+its assets or its links, runs once each way over `RESOURCE_LOADINGS`
+(`tests/utils/resourceLoading.ts`), and asserts with
+`expectDocumentsLoadedWith` that its documents came in the way it asked.
+
 ## Waiting
 
 A timer is a guess about how fast a machine is. A wrong guess fails on a slower

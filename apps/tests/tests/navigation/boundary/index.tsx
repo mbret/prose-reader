@@ -1,41 +1,16 @@
-import { createArchiveFromJszip } from "@prose-reader/archive-reader/archives/createArchiveFromJszip"
 import { createReader } from "@prose-reader/core"
 import { gesturesEnhancer } from "@prose-reader/enhancer-gestures"
-import { Streamer } from "@prose-reader/streamer"
-import { loadAsync } from "jszip"
-import { from } from "rxjs"
-
-async function createStreamer() {
-  const streamer = new Streamer({
-    getArchive: async () => {
-      const epubResponse = await fetch("http://localhost:3333/epubs/sample.cbz")
-      const epubBlob = await epubResponse.blob()
-      const epubJszip = await loadAsync(epubBlob)
-      const archive = await createArchiveFromJszip(epubJszip)
-
-      return archive
-    },
-  })
-
-  return streamer
-}
+import { openFixtureBook } from "../../fixtureBook"
 
 async function run() {
-  const streamer = await createStreamer()
-  const manifestResponse = await streamer.fetchManifest({
-    key: `_`,
-  })
-  const manifest = await manifestResponse.json()
+  const book = await openFixtureBook("sample.cbz")
 
   const createReaderWithEnhancers = gesturesEnhancer(createReader)
 
   const reader = createReaderWithEnhancers({
-    manifest,
+    ...book,
     pageTurnAnimation: "none",
     layoutLayerTransition: false,
-    getResource: (item) => {
-      return from(streamer.fetchResource({ key: `_`, resourcePath: item.href }))
-    },
   })
 
   // Hidden marker the spec asserts against. `data-count` is the total

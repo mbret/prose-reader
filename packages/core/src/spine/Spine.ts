@@ -4,6 +4,7 @@ import {
   filter,
   map,
   merge,
+  scan,
   skip,
   takeUntil,
   tap,
@@ -22,7 +23,11 @@ import { createSpineLocator, type SpineLocator } from "./locator/SpineLocator"
 import { Pages } from "./Pages"
 import type { SpineItemsManager } from "./SpineItemsManager"
 import { SpineItemsObserver } from "./SpineItemsObserver"
-import { SpineLayout, type SpineLayoutOptions } from "./SpineLayout"
+import {
+  SpineLayout,
+  type SpineLayoutOptions,
+  type SpineLayoutStage,
+} from "./SpineLayout"
 
 export class Spine extends DestroyableClass {
   protected elementSubject = new BehaviorSubject<HTMLElement | undefined>(
@@ -36,7 +41,14 @@ export class Spine extends DestroyableClass {
   public pages: Pages
   public element$ = this.elementSubject.asObservable()
 
-  protected isLayoutCurrentSubject = new BehaviorSubject(true)
+  /**
+   * The first item the pages no longer describe as the latest layout requested
+   * lays it out, `undefined` while they describe every item. Pending requests
+   * leave stale the first item any of them affects and every item after it.
+   */
+  protected firstStaleItemIndexSubject = new BehaviorSubject<
+    number | undefined
+  >(undefined)
 
   /**
    * Whether the pages describe the latest layout requested. A request makes
@@ -50,7 +62,8 @@ export class Spine extends DestroyableClass {
    * Item flags cannot tell this: a pass clears an item's dirty flag as soon as
    * it lays that item out, long before the pages are recomputed.
    */
-  public readonly isLayoutCurrent$ = this.isLayoutCurrentSubject.pipe(
+  public readonly isLayoutCurrent$ = this.firstStaleItemIndexSubject.pipe(
+    map((firstStaleItemIndex) => firstStaleItemIndex === undefined),
     distinctUntilChanged(),
   )
 
@@ -90,6 +103,7 @@ export class Spine extends DestroyableClass {
       settings,
       this.spineLayout,
       this.viewport,
+      this.isLayoutCurrent$,
     )
 
     this.pages = new Pages(
@@ -103,16 +117,30 @@ export class Spine extends DestroyableClass {
 
     merge(
       this.spineLayout.lifecycle$.pipe(
-        filter((stage) => stage === "requested"),
-        map(() => false),
+        filter(
+          (stage): stage is Extract<SpineLayoutStage, { stage: "requested" }> =>
+            stage.stage === "requested",
+        ),
       ),
       this.pages.state$.pipe(
         skip(1),
-        map(() => true),
+        map(() => "pagesPublished" as const),
       ),
     )
-      .pipe(takeUntil(this.destroy$))
-      .subscribe(this.isLayoutCurrentSubject)
+      .pipe(
+        scan(
+          (firstStaleItemIndex: number | undefined, event) =>
+            event === "pagesPublished"
+              ? undefined
+              : Math.min(
+                  firstStaleItemIndex ?? event.firstAffectedItemIndex,
+                  event.firstAffectedItemIndex,
+                ),
+          undefined,
+        ),
+        takeUntil(this.destroy$),
+      )
+      .subscribe(this.firstStaleItemIndexSubject)
 
     const spineElementUpdate$ = context.watch(`rootElement`).pipe(
       filter(isDefined),
@@ -148,7 +176,22 @@ export class Spine extends DestroyableClass {
 
   /** {@link isLayoutCurrent$} now. */
   public get isLayoutCurrent() {
-    return this.isLayoutCurrentSubject.getValue()
+    return this.firstStaleItemIndexSubject.getValue() === undefined
+  }
+
+  /**
+   * Whether the pages still describe this item as the latest layout requested
+   * lays it out: while no layout is pending, and while the pending ones can
+   * only change items after it, as one started by a later item loading does.
+   * Otherwise its place, and so the page at a position, can already follow a
+   * layout its pages do not.
+   */
+  public isLayoutCurrentFor(spineItem: SpineItem) {
+    const firstStaleItemIndex = this.firstStaleItemIndexSubject.getValue()
+
+    return (
+      firstStaleItemIndex === undefined || spineItem.index < firstStaleItemIndex
+    )
   }
 
   public layout(options?: SpineLayoutOptions) {

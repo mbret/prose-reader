@@ -33,16 +33,19 @@ const expectedCfiPageStartProgression = 0.375
 
 /**
  * The spine and pages this step reads, held in whatever state a test needs:
- * a layout pending or current, an item ready or not, or in error. The page at
- * any position has a first visible node, so only the step's own guards can
- * keep it from being read.
+ * a layout pending or current, and if pending, able to change the item or
+ * only later ones, an item ready or not, or in error. The page at any
+ * position has a first visible node, so only the step's own guards can keep
+ * it from being read.
  */
 const createSpine = ({
   isLayoutCurrent = true,
+  isLayoutCurrentForItem = isLayoutCurrent,
   isReady = true,
   isError = false,
 }: {
   isLayoutCurrent?: boolean
+  isLayoutCurrentForItem?: boolean
   isReady?: boolean
   isError?: boolean
 } = {}) => {
@@ -55,6 +58,7 @@ const createSpine = ({
   }
   const spine = {
     isLayoutCurrent,
+    isLayoutCurrentFor: () => isLayoutCurrentForItem,
     spineItemsManager: {
       get: () => spineItem,
     },
@@ -125,7 +129,7 @@ describe("withAnchor", () => {
     })
   })
 
-  it("stands in at its item's start while a layout is pending, rather than taking a page of the one being replaced", async () => {
+  it("stands in at its item's start while a pending layout can change its item, rather than taking a page of the one being replaced", async () => {
     /**
      * Pages are published a few frames after a layout pass. Until then they
      * still describe the layout being replaced, while positions already
@@ -134,6 +138,42 @@ describe("withAnchor", () => {
     expect(
       await consolidateAnchor({}, createSpine({ isLayoutCurrent: false })),
     ).toEqual(standIn)
+  })
+
+  it("is the page at the navigation's position while a pending layout can only change later items", async () => {
+    /**
+     * A later item loading lays the spine out again, but cannot move this
+     * item or change its pages: they are the ones the reader shows.
+     */
+    expect(
+      await consolidateAnchor(
+        {},
+        createSpine({ isLayoutCurrent: false, isLayoutCurrentForItem: true }),
+      ),
+    ).toEqual({
+      cfi: pageText,
+      percentageEstimateOfBook: expectedPageStartProgression,
+      state: "final",
+    })
+  })
+
+  it("keeps a target's place unresolved while any layout is pending, even one that cannot change its item", async () => {
+    /**
+     * Its page is measured in the item's document, which every pass lays out
+     * again.
+     */
+    const targetPlace: InternalNavigationAnchor = {
+      cfi: textElsewhere,
+      percentageEstimateOfBook: 0,
+      state: "targetPlace",
+    }
+
+    expect(
+      await consolidateAnchor(
+        { anchor: targetPlace },
+        createSpine({ isLayoutCurrent: false, isLayoutCurrentForItem: true }),
+      ),
+    ).toEqual(targetPlace)
   })
 
   it("stands in at its item's start while the item is not ready", async () => {

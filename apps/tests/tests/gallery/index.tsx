@@ -1,26 +1,7 @@
-import { createArchiveFromJszip } from "@prose-reader/archive-reader/archives/createArchiveFromJszip"
 import { createReader } from "@prose-reader/core"
 import { galleryEnhancer } from "@prose-reader/enhancer-gallery"
-import { Streamer } from "@prose-reader/streamer"
-import { loadAsync } from "jszip"
 import type { Subscription } from "rxjs"
-import { from } from "rxjs"
-
-async function createStreamer() {
-  const streamer = new Streamer({
-    getArchive: async () => {
-      const comicResponse = await fetch(
-        "http://localhost:3333/epubs/sample.cbz",
-      )
-      const comicBlob = await comicResponse.blob()
-      const comicJszip = await loadAsync(comicBlob)
-
-      return createArchiveFromJszip(comicJszip)
-    },
-  })
-
-  return streamer
-}
+import { openFixtureBook } from "../fixtureBook"
 
 const getElementById = (id: string) => {
   const element = document.getElementById(id)
@@ -33,20 +14,13 @@ const getElementById = (id: string) => {
 }
 
 async function run() {
-  const streamer = await createStreamer()
-  const manifestResponse = await streamer.fetchManifest({
-    key: `_`,
-  })
-  const manifest = await manifestResponse.json()
+  const book = await openFixtureBook("sample.cbz")
   const createReaderWithEnhancers = galleryEnhancer(createReader)
   const reader = createReaderWithEnhancers({
-    manifest,
+    ...book,
     numberOfAdjacentSpineItemToPreLoad: 0,
     pageTurnAnimation: "none",
     layoutLayerTransition: false,
-    getResource: (item) => {
-      return from(streamer.fetchResource({ key: `_`, resourcePath: item.href }))
-    },
   })
   const galleryElement = getElementById(`gallery`)
   const galleryGridElement = getElementById(`gallery-grid`)
