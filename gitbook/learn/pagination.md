@@ -58,7 +58,7 @@ reader.mount(document.getElementById("reader")!)
 
 The [navigation page](navigation.md#reading-position) says exactly when the
 reading position changes, and why every value is the one to
-[save](navigation.md#saving-it), whatever its `state`.
+[save](navigation.md#saving-it), whatever its `status`.
 
 The reading position carries its own `percentageEstimateOfBook`, the progress
 to save for a library screen: it moves with the position it describes, where
@@ -111,7 +111,7 @@ It describes the current visible position, not the loading state of the whole
 book: a settled result does not mean every item has been loaded.
 
 The reading position needs no such check: every value it takes is the closest
-known position of the reader's latest navigation, and says with `state`
+known position of the reader's latest navigation, and says with `status`
 whether the reader has found its page yet, as the
 [navigation page](navigation.md#reading-position) explains.
 

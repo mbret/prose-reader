@@ -9,9 +9,9 @@ import { PAGE_VISIBILITY_THRESHOLD } from "../../spine/Pages"
 import type { Spine } from "../../spine/Spine"
 import type { SpineItem } from "../../spineItem/SpineItem"
 import type {
+  InternalNavigationAnchor,
   InternalNavigationEntry,
   InternalNavigationInput,
-  ReadingPosition,
 } from "../types"
 
 type Navigation = {
@@ -150,7 +150,7 @@ export const withAnchor =
      */
     const getStandInAnchor = (
       navigation: N["navigation"],
-    ): ReadingPosition | undefined => {
+    ): InternalNavigationAnchor | undefined => {
       const spineItem = spine.spineItemsManager.get(navigation.spineItem)
 
       if (!spineItem) return undefined
@@ -168,7 +168,7 @@ export const withAnchor =
     const getAnchor = (
       navigation: N["navigation"],
       awaitsDocument: N["awaitsDocument"],
-    ): ReadingPosition | undefined => {
+    ): InternalNavigationAnchor | undefined => {
       const { anchor } = navigation
 
       if (anchor?.state === "final") return anchor

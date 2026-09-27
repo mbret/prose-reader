@@ -55,7 +55,7 @@ const loadFailureOf = (
 }
 
 describe("an item whose load fails", () => {
-  it("does not keep the item next to it from settling, nor its reading position from being final", async () => {
+  it("does not keep the item next to it from settling, nor its reading position from being a success", async () => {
     const secondItem = failSecondItemLoads(Number.POSITIVE_INFINITY)
     // The second item is preloaded next to the first.
     const reader = createTestReader({ getRenderer: secondItem.getRenderer })
@@ -74,7 +74,7 @@ describe("an item whose load fails", () => {
     expect(await readingPositionOf(reader)).toEqual({
       cfi: settled.begin.cfi,
       percentageEstimateOfBook: 0,
-      state: "final",
+      status: "success",
     } satisfies ReadingPosition)
   })
 
@@ -94,11 +94,11 @@ describe("an item whose load fails", () => {
     await loadFailureOf(reader, 1)
 
     // Nothing shows where the cfi leads: the reading position stands in at the
-    // item's start, and pagination does not settle on an item that is not
-    // ready.
+    // item's start, pending, and pagination does not settle on an item that is
+    // not ready.
     expect(await readingPositionOf(reader)).toMatchObject({
       cfi: "epubcfi(/6/4[1]!)",
-      state: "standIn",
+      status: "pending",
     })
     expect(reader.pagination.state.isSettled).toBe(false)
 

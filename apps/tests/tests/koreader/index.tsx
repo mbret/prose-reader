@@ -51,13 +51,13 @@ async function run() {
   // comes, the way a sync client converts what it pushes.
   const readingPositionsAsXPointers: {
     xpointer: string | undefined
-    state: ReadingPosition["state"]
+    status: ReadingPosition["status"]
   }[] = []
 
-  reader.navigation.readingPosition$.subscribe(({ cfi, state }) => {
+  reader.navigation.readingPosition$.subscribe(({ cfi, status }) => {
     readingPositionsAsXPointers.push({
       xpointer: reader.koreader.cfiToXPointer(cfi),
-      state,
+      status,
     })
   })
 
