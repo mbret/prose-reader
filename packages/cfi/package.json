@@ -23,10 +23,5 @@
     "build": "tsc && vite build",
     "preview": "vite preview",
     "test": "vitest run"
-  },
-  "devDependencies": {
-    "jsdom": "^29.0.0",
-    "typescript": "*",
-    "vite": "^8"
   }
 }

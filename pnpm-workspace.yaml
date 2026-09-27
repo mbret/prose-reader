@@ -11,14 +11,6 @@ allowBuilds:
   '@parcel/watcher': false
   nx: false
 
-# pnpm refuses versions published less than a day ago (minimumReleaseAge).
-# gesturx comes from the same author as prose and is released by its own CI,
-# so a release prose needs can be taken as soon as it is out. Entries name an
-# exact version, so each one is let through deliberately, and one does
-# nothing once its version is a day old.
-minimumReleaseAgeExclude:
-  - gesturx@1.11.1
-
 # lerna pins js-yaml and pacote, and nx pins smol-toml, to exact versions below
 # a security fix, so an in-range update cannot move them. Each override stays
 # inside the major its consumers ask for, and goes once lerna or nx pins a

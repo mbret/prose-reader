@@ -25,11 +25,6 @@
     "preview": "vite preview",
     "test": "vitest run"
   },
-  "devDependencies": {
-    "jsdom": "^29.0.0",
-    "typescript": "*",
-    "vite": "^8"
-  },
   "peerDependencies": {
     "@prose-reader/archive-reader": "workspace:^",
     "@prose-reader/cfi": "workspace:^",

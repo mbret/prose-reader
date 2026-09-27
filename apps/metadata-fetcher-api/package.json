@@ -19,7 +19,6 @@
   "devDependencies": {
     "@prose-reader/archive-reader": "workspace:*",
     "@types/express": "^5.0.6",
-    "@zip.js/zip.js": "^2.8.51",
-    "typescript": "*"
+    "@zip.js/zip.js": "^2.8.51"
   }
 }

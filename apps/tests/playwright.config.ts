@@ -80,5 +80,12 @@ export default defineConfig({
     command: "pnpm run dev",
     url: "http://localhost:3333/",
     reuseExistingServer: !process.env.CI,
+    /*
+     * pnpm runs the script in a process group of its own when it has no
+     * terminal, so the default SIGKILL to the command's group misses the dev
+     * server, which keeps its output open and the run from ever ending. pnpm
+     * forwards a SIGTERM to it.
+     */
+    gracefulShutdown: { signal: "SIGTERM", timeout: 5000 },
   },
 })

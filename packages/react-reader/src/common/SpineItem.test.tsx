@@ -47,8 +47,6 @@ describe(`SpineItem`, () => {
     container = document.createElement(`div`)
     document.body.appendChild(container)
     root = createRoot(container)
-    createPortalMock.mockClear()
-    audioSpineItemMock.mockClear()
   })
 
   afterEach(() => {

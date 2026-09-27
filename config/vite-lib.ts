@@ -1,6 +1,6 @@
 import { resolve } from "node:path"
+import ts from "@typescript/typescript6"
 import externals from "rollup-plugin-node-externals"
-import ts from "typescript"
 import {
   type ConfigEnv,
   type LibraryFormats,
@@ -49,13 +49,16 @@ const TEST_FILES = ["src/**/*.test.ts", "src/**/*.test.tsx", "src/tests/**/*"]
  * `dist` — react-native once shipped a `useCreateReader` consumers saw as
  * `any`, with the build green. `tsc --noEmit` cannot catch that class: errors
  * like TS2883 only exist when declarations are emitted.
+ *
+ * TypeScript 7 has no compiler API, so the plugin emits with TypeScript 6's,
+ * which it loads from `@typescript/typescript6` when `typescript` has none.
  */
 export const dtsPlugin = (options: DtsOptions = {}) =>
   dts({
     entryRoot: "src",
     include: ["src/**/*"],
     exclude: TEST_FILES,
-    afterDiagnostic: (diagnostics) => {
+    afterDiagnostic: (diagnostics: readonly ts.Diagnostic[]) => {
       const errors = diagnostics.filter(
         (diagnostic) => diagnostic.category === ts.DiagnosticCategory.Error,
       )
