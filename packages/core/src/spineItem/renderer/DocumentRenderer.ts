@@ -410,6 +410,15 @@ export abstract class DocumentRenderer extends ReactiveEntity<DocumentRendererSt
     return undefined
   }
 
+  /**
+   * Whether the document is laid out as one column, as tall as its content,
+   * rather than on pages. Only a renderer that lays a document out that way,
+   * when the reader scrolls, says so.
+   */
+  get isLaidOutAsOneColumn(): boolean {
+    return false
+  }
+
   get renditionLayout() {
     const itemRenditionLayout = this.item.renditionLayout
 

@@ -38,10 +38,17 @@ export class SpineItemLayout extends DestroyableClass {
     edgeY: number
   }>()
 
+  /**
+   * The size the item was last laid out at, and what it was laid out for: it
+   * stands in for an item without a size of its own only for the same page
+   * size and page turn mode, since an item scrolled through is not shaped as
+   * a paginated one.
+   */
   private lastLayout: {
     width: number
     height: number
     pageSize: { width: number; height: number }
+    computedPageTurnMode: ReaderSettingsManager["values"]["computedPageTurnMode"]
   } | null = null
 
   public readonly didLayout$: Observable<{ width: number; height: number }>
@@ -262,12 +269,12 @@ export class SpineItemLayout extends DestroyableClass {
     (stream: Observable<{ width: number; height: number } | undefined>) =>
       stream.pipe(
         map((dims) => {
-          const trustableLastLayout = isShallowEqual(
-            this.lastLayout?.pageSize,
-            this.viewport.pageSize,
-          )
-            ? this.lastLayout
-            : undefined
+          const { computedPageTurnMode } = this.settings.values
+          const trustableLastLayout =
+            isShallowEqual(this.lastLayout?.pageSize, this.viewport.pageSize) &&
+            this.lastLayout?.computedPageTurnMode === computedPageTurnMode
+              ? this.lastLayout
+              : undefined
 
           const { width: previousWidth, height: previousHeight } =
             trustableLastLayout ?? {}
@@ -281,7 +288,7 @@ export class SpineItemLayout extends DestroyableClass {
             minimumWidth,
           )
           const safeHeight =
-            this.settings.values.computedPageTurnMode === "scrollable"
+            computedPageTurnMode === "scrollable"
               ? (height ?? pageSizeHeight)
               : this.validateDimension(
                   height ?? pageSizeHeight,
@@ -293,6 +300,7 @@ export class SpineItemLayout extends DestroyableClass {
             width: safeWidth,
             height: safeHeight,
             pageSize: this.viewport.pageSize,
+            computedPageTurnMode,
           }
 
           setStylePropertyIfChanged(

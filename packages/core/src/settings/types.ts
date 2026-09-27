@@ -26,7 +26,8 @@ export type CoreInputSettings = {
    * How the reader moves through the book.
    * - `controlled`: page by page.
    * - `scrollable`: by scrolling down, reflowable text laid out as one column
-   *   per chapter, as tall as its content.
+   *   per chapter, as tall as its content. Text written vertically stays
+   *   paginated, its pages running downward.
    *
    * A book whose `rendition:flow` is `scrolled-continuous` is always scrolled.
    * What the reader does is `computedPageTurnMode`.

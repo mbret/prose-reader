@@ -17,11 +17,19 @@ export const getSpineItemNumberOfPages = ({
   pageTurnDirection: "vertical" | "horizontal"
   pageTurnMode: "scrollable" | "controlled"
 }) => {
+  /**
+   * Written vertically, a document is paginated whatever the mode, its pages
+   * running downward.
+   */
+  if (isUsingVerticalWriting) {
+    return calculateNumberOfPagesForItem(itemHeight, pageHeight)
+  }
+
   if (pageTurnDirection === `vertical` && pageTurnMode === `scrollable`) {
     return 1
   }
 
-  if (isUsingVerticalWriting || pageTurnDirection === `vertical`) {
+  if (pageTurnDirection === `vertical`) {
     return calculateNumberOfPagesForItem(itemHeight, pageHeight)
   }
 

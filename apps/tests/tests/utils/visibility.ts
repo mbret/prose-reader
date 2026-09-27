@@ -2,11 +2,10 @@ import type { Page } from "@playwright/test"
 import type { Reader } from "@prose-reader/core"
 
 /**
- * Whether the exact position a cfi points to is inside the window, so a
- * restored page is judged by where the anchored character ended up rather
- * than by whichever element happens to contain it.
+ * Where, in the window, the exact position a cfi points to is, or why it is
+ * nowhere.
  */
-export const isCfiPositionVisible = (page: Page, cfi: string) =>
+export const getCfiPositionInWindow = (page: Page, cfi: string) =>
   page.evaluate((cfi) => {
     // @ts-expect-error window.reader is set by this scenario's index.tsx
     const reader = window.reader as Reader
@@ -30,11 +29,29 @@ export const isCfiPositionVisible = (page: Page, cfi: string) =>
 
     const rect = range.getBoundingClientRect()
     const frameRect = frame.getBoundingClientRect()
-    const x = frameRect.left + rect.left
-    const y = frameRect.top + rect.top
 
-    return x >= 0 && x < window.innerWidth && y >= 0 && y < window.innerHeight
+    return {
+      x: frameRect.left + rect.left,
+      y: frameRect.top + rect.top,
+      windowWidth: window.innerWidth,
+      windowHeight: window.innerHeight,
+    }
   }, cfi)
+
+/**
+ * Whether the exact position a cfi points to is inside the window, so a
+ * restored page is judged by where the anchored character ended up rather
+ * than by whichever element happens to contain it.
+ */
+export const isCfiPositionVisible = async (page: Page, cfi: string) => {
+  const position = await getCfiPositionInWindow(page, cfi)
+
+  if (typeof position === "string") return position
+
+  const { x, y, windowWidth, windowHeight } = position
+
+  return x >= 0 && x < windowWidth && y >= 0 && y < windowHeight
+}
 
 /** Whether the start of an element of a spine item is inside the window. */
 export const isElementStartOnScreen = (

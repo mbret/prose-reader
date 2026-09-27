@@ -12,7 +12,6 @@ import {
 } from "./helpers"
 import { getSpineItemPageIndexFromSpineItemPosition } from "./layout/getSpineItemPageIndexFromSpineItemPosition"
 import { getSpineItemPositionFromPageIndex } from "./layout/getSpineItemPositionFromPageIndex"
-import { isLaidOutAsOneColumn } from "./layout/isLaidOutAsOneColumn"
 import type { SpineItem } from "./SpineItem"
 import { SpineItemPosition, UnboundSpineItemPagePosition } from "./types"
 
@@ -115,28 +114,31 @@ export const createSpineItemLocator = ({
    * An item laid out as one column is scrolled through, not paginated: the
    * node is where it is down the column, and past everything shown is the
    * column's last screen. The item and its document start together, and the
-   * document never scrolls within its frame.
+   * document never scrolls within its frame. Until the item is ready, its
+   * document has not been laid out as one column since it loaded, and nothing
+   * in it is where it will be: the node is at the item's start.
    */
   const getSpineItemPositionFromNode = (
     node: Node,
     offset: number,
     spineItem: SpineItem,
   ) => {
-    const renderedRect =
-      getRenderedRectOfNode(node, offset) ?? getRenderedRectAfterNode(node)
-    const isInOneColumn = isLaidOutAsOneColumn({
-      computedPageTurnMode: settings.values.computedPageTurnMode,
-      renditionLayout: spineItem.renditionLayout,
-      isUsingVerticalWriting: !!spineItem.isUsingVerticalWriting(),
-    })
+    if (spineItem.renderer.isLaidOutAsOneColumn) {
+      if (!spineItem.value.isReady) return new SpineItemPosition({ x: 0, y: 0 })
 
-    if (isInOneColumn)
+      const renderedRect =
+        getRenderedRectOfNode(node, offset) ?? getRenderedRectAfterNode(node)
+
       return new SpineItemPosition({
         x: 0,
         y:
           renderedRect?.y ??
           Math.max(0, spineItem.layoutInfo.height - viewport.pageSize.height),
       })
+    }
+
+    const renderedRect =
+      getRenderedRectOfNode(node, offset) ?? getRenderedRectAfterNode(node)
 
     if (!renderedRect)
       return getSpineItemPositionFromPageIndex({

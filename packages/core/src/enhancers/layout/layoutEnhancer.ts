@@ -14,7 +14,6 @@ import {
 } from "rxjs"
 import type { SettingsInterface } from "../../settings/SettingsInterface"
 import type { Pages } from "../../spine/Pages"
-import { isLaidOutAsOneColumn } from "../../spineItem/layout/isLaidOutAsOneColumn"
 import {
   setAttributeIfChanged,
   setStylePropertyIfChanged,
@@ -141,13 +140,7 @@ export const layoutEnhancer =
        * One column, as tall as its content, only takes the margins: at the
        * sides of the text, and before and after it.
        */
-      if (
-        isLaidOutAsOneColumn({
-          computedPageTurnMode: reader.settings.values.computedPageTurnMode,
-          renditionLayout: spineItem.renditionLayout,
-          isUsingVerticalWriting: !!spineItem.isUsingVerticalWriting(),
-        })
-      ) {
+      if (spineItem.renderer.isLaidOutAsOneColumn) {
         upsertCSSToFrame(
           frame,
           `prose-layout-enhancer-css`,

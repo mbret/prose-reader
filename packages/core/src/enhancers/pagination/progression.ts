@@ -80,7 +80,11 @@ export const getPercentageEstimate = (
       let totalProgress = estimateBeforeThisItem + progressWithinThisItem
 
       if (reader.settings.values.computedPageTurnMode === `scrollable`) {
-        if (itemIsReady) {
+        /**
+         * A reflowable item that is not ready does not have its size yet. A
+         * pre-paginated one always has.
+         */
+        if (itemIsReady || currentItem.renditionLayout === `pre-paginated`) {
           progressWithinThisItem = getScrollPercentageWithinItem(
             reader,
             currentPosition,

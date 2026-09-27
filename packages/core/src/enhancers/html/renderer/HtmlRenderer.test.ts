@@ -150,6 +150,9 @@ const createHarness = ({
   return {
     renderer,
     getDocument,
+    setViewportState: (state: `free` | `busy`) => {
+      context.bridgeEvent.viewportStateSubject.next(state)
+    },
     load: (body: string) => {
       served[documentHref] = { mediaType: `application/xhtml+xml`, body }
       renderer.load()
@@ -293,13 +296,14 @@ describe(`HtmlRenderer`, () => {
       await waitForLoaded()
     })
 
-    it(`gives no size of its own to lay out until it is loaded, although it is in the frame before`, async () => {
+    it(`gives a size of its own to lay out only while it is loaded, although it is in the frame while it loads and while it leaves`, async () => {
       const {
         load,
         waitForStylesheetRequests,
         waitForLoaded,
         renderer,
         getDocument,
+        setViewportState,
       } = setup({ documentHref: `file://EPUB/chapter.xhtml`, resources })
       const layOut = () =>
         firstValueFrom(
@@ -325,6 +329,14 @@ describe(`HtmlRenderer`, () => {
       await waitForLoaded()
 
       expect(await layOut()).toBeDefined()
+
+      // A busy viewport keeps the document leaving in the frame.
+      setViewportState(`busy`)
+      renderer.unload()
+
+      expect(renderer.value.loadStatus).toBe(`unloading`)
+      expect(getDocument()?.querySelector(`p`)?.textContent).toBe(`content`)
+      expect(await layOut()).toBeUndefined()
     })
 
     it(`loads without one that fails`, async () => {

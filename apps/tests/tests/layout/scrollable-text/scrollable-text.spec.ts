@@ -1,11 +1,14 @@
 import { expect, type Page, test } from "@playwright/test"
-import type { Reader } from "@prose-reader/core"
+import type { Reader, ReadingPosition } from "@prose-reader/core"
 import {
   navigateToSpineItem,
   updateSettings,
   waitForSpineItemReady,
 } from "../../utils"
-import { isCfiPositionVisible } from "../../utils/visibility"
+import {
+  getCfiPositionInWindow,
+  isCfiPositionVisible,
+} from "../../utils/visibility"
 
 /**
  * `accessible_epub_3`, whose second chapter (`ch02.xhtml`) runs for many
@@ -53,34 +56,48 @@ const getLongChapterLayout = (page: Page) =>
     }
   }, longChapterIndex)
 
-/** The chapter's last paragraph, which only one column several screens tall holds far down. */
-const getLastParagraphOfLongChapter = (page: Page) =>
-  page.evaluate((index) => {
-    // @ts-expect-error window.reader is set by the scenario's index.tsx
-    const reader = window.reader as Reader
-    const spineItem = reader.spineItemsManager.get(index)
-    const frame = spineItem?.renderer.getDocumentFrame()
-    const paragraphs = frame?.contentDocument?.querySelectorAll("p")
-    const lastParagraph = paragraphs?.item(paragraphs.length - 1)
-    const text = Array.from(lastParagraph?.childNodes ?? []).find(
-      (node) => node.nodeType === Node.TEXT_NODE && node.textContent?.trim(),
-    )
+/**
+ * A paragraph of the chapter, with the cfi of its text and how far down the
+ * chapter it starts: its last one, or the first one past the chapter's middle,
+ * screens away from both of its ends.
+ */
+const getParagraphOfLongChapter = (page: Page, which: "last" | "middle") =>
+  page.evaluate(
+    ({ index, which }) => {
+      // @ts-expect-error window.reader is set by the scenario's index.tsx
+      const reader = window.reader as Reader
+      const spineItem = reader.spineItemsManager.get(index)
+      const frame = spineItem?.renderer.getDocumentFrame()
+      const paragraphs = Array.from(
+        frame?.contentDocument?.querySelectorAll("p") ?? [],
+      )
+      const middle = (frame?.getBoundingClientRect().height ?? 0) / 2
+      const paragraph =
+        which === "last"
+          ? paragraphs[paragraphs.length - 1]
+          : paragraphs.find(
+              (paragraph) => paragraph.getBoundingClientRect().top > middle,
+            )
+      const text = Array.from(paragraph?.childNodes ?? []).find(
+        (node) => node.nodeType === Node.TEXT_NODE && node.textContent?.trim(),
+      )
 
-    if (!spineItem || !frame || !lastParagraph || !text)
-      throw new Error("the long chapter has no last paragraph with text")
+      if (!spineItem || !paragraph || !text)
+        throw new Error(`the long chapter has no ${which} paragraph with text`)
 
-    const cfi = reader.cfi.generateCfiForSpineItemPage({
-      spineItem: spineItem.item,
-      pageNode: { node: text, offset: 0 },
-    })
+      const cfi = reader.cfi.generateCfiForSpineItemPage({
+        spineItem: spineItem.item,
+        pageNode: { node: text, offset: 0 },
+      })
 
-    return {
-      cfi,
-      isRootCfi: reader.cfi.isRootCfi(cfi),
-      // Down the chapter, in the frame's document.
-      top: lastParagraph.getBoundingClientRect().top,
-    }
-  }, longChapterIndex)
+      return {
+        cfi,
+        isRootCfi: reader.cfi.isRootCfi(cfi),
+        top: paragraph.getBoundingClientRect().top,
+      }
+    },
+    { index: longChapterIndex, which },
+  )
 
 /** Scrolls the reader by the given distance, as a user does. */
 const scrollBy = (page: Page, distance: number) =>
@@ -93,6 +110,37 @@ const scrollBy = (page: Page, distance: number) =>
 
     scroller.scrollTop += distance
   }, distance)
+
+/**
+ * Whether the reader has made where it is scrolled to its navigation, and the
+ * status of the reading position it reports from it.
+ */
+const getScrollNavigation = (page: Page) =>
+  page.evaluate(() => {
+    // @ts-expect-error window.reader is set by the scenario's index.tsx
+    const reader = window.reader as Reader
+    // @ts-expect-error window.readingPositions is set by the scenario's index.tsx
+    const readingPositions = window.readingPositions as ReadingPosition[]
+    const scroller = reader.navigation.scrollNavigationController.value.element
+
+    return {
+      isScrollNavigated:
+        Math.abs(
+          reader.navigation.getNavigation().position.y -
+            (scroller?.scrollTop ?? Number.NaN),
+        ) < 1,
+      readingPositionStatus:
+        readingPositions[readingPositions.length - 1]?.status,
+    }
+  })
+
+const getPercentageEstimateOfBook = (page: Page) =>
+  page.evaluate(() => {
+    // @ts-expect-error window.reader is set by the scenario's index.tsx
+    const reader = window.reader as Reader
+
+    return reader.pagination.state.percentageEstimateOfBook
+  })
 
 /**
  * Only the chapter at the position loads. The chapters before it keep their
@@ -112,7 +160,7 @@ const openLongChapter = async (page: Page, query: string) => {
 
 for (const { way, query } of waysToScroll) {
   test.describe(`Given ${way}`, () => {
-    test("Then a chapter is one column as tall as its content", async ({
+    test("Then a chapter is one column as tall as its content, and one page", async ({
       page,
     }) => {
       await openLongChapter(page, query)
@@ -122,12 +170,20 @@ for (const { way, query } of waysToScroll) {
       expect(layout.frameWidth).toBe(layout.pageWidth)
       expect(layout.frameHeight).toBe(layout.documentHeight)
       expect(layout.frameHeight).toBeGreaterThan(layout.pageHeight * 5)
+      expect(layout.numberOfPages).toBe(1)
     })
 
-    test("Then scrolling reaches the end of a chapter", async ({ page }) => {
+    test("Then scrolling reaches the end of a chapter, and the reading position and progress follow", async ({
+      page,
+    }) => {
       await openLongChapter(page, query)
 
-      const { cfi, isRootCfi, top } = await getLastParagraphOfLongChapter(page)
+      const { cfi, isRootCfi, top } = await getParagraphOfLongChapter(
+        page,
+        "last",
+      )
+      const percentageAtTheChapterStart =
+        await getPercentageEstimateOfBook(page)
 
       expect(isRootCfi).toBe(false)
       expect(await isCfiPositionVisible(page, cfi)).toBe(false)
@@ -136,14 +192,21 @@ for (const { way, query } of waysToScroll) {
       await scrollBy(page, top - viewportSize.height / 2)
 
       await expect.poll(() => isCfiPositionVisible(page, cfi)).toBe(true)
+      // The reading position names the chapter's start (#467), final all the same.
+      await expect
+        .poll(() => getScrollNavigation(page))
+        .toEqual({ isScrollNavigated: true, readingPositionStatus: "success" })
+      await expect
+        .poll(() => getPercentageEstimateOfBook(page))
+        .toBeGreaterThan(percentageAtTheChapterStart)
     })
 
-    test("Then a navigation to a place far down a loaded chapter shows it", async ({
+    test("Then a navigation to a place far down a loaded chapter brings it to the top of the screen", async ({
       page,
     }) => {
       await openLongChapter(page, query)
 
-      const { cfi, isRootCfi } = await getLastParagraphOfLongChapter(page)
+      const { cfi, isRootCfi } = await getParagraphOfLongChapter(page, "middle")
 
       expect(isRootCfi).toBe(false)
       expect(await isCfiPositionVisible(page, cfi)).toBe(false)
@@ -155,7 +218,15 @@ for (const { way, query } of waysToScroll) {
         reader.navigation.goToCfi(cfi, { animate: false })
       }, cfi)
 
-      await expect.poll(() => isCfiPositionVisible(page, cfi)).toBe(true)
+      await expect
+        .poll(async () => {
+          const position = await getCfiPositionInWindow(page, cfi)
+
+          return typeof position === "string"
+            ? position
+            : Math.abs(position.y) < 1
+        })
+        .toBe(true)
     })
   })
 }
@@ -197,5 +268,44 @@ test.describe("Given a paginated book with a chapter loaded", () => {
         frameHeight: paginated.pageHeight,
         numberOfPages: paginated.numberOfPages,
       })
+  })
+})
+
+test.describe("Given a chapter read by scrolling, then released", () => {
+  test("When scrolling is turned off, then the chapter is laid out as a page rather than as the column it was", async ({
+    page,
+  }) => {
+    await openLongChapter(page, "pageTurnMode=scrollable")
+
+    const getLongChapter = () =>
+      page.evaluate((index) => {
+        // @ts-expect-error window.reader is set by the scenario's index.tsx
+        const reader = window.reader as Reader
+        const spineItem = reader.spineItemsManager.get(index)
+
+        if (!spineItem) throw new Error("no long chapter")
+
+        return {
+          loadStatus: spineItem.value.loadStatus,
+          height: spineItem.layoutInfo.height,
+          pageHeight: reader.viewport.pageSize.height,
+        }
+      }, longChapterIndex)
+
+    const { pageHeight } = await getLongChapter()
+
+    expect((await getLongChapter()).height).toBeGreaterThan(pageHeight * 5)
+
+    // Only the chapter at the position loads: the long one is released.
+    await navigateToSpineItem({ page, index: longChapterIndex + 2 })
+    await expect
+      .poll(async () => (await getLongChapter()).loadStatus)
+      .toBe("idle")
+
+    await updateSettings({ page, settings: { pageTurnMode: "controlled" } })
+
+    await expect
+      .poll(getLongChapter)
+      .toEqual({ loadStatus: "idle", height: pageHeight, pageHeight })
   })
 })

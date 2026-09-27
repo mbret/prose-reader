@@ -87,11 +87,18 @@ export const createTargetResolvers = ({
 
       return {
         spineItem: spineItem.index,
-        position: navigationResolver.getNavigationForNode({
-          spineItem,
-          node,
-          offset,
-        }),
+        /**
+         * Clamped as a requested position is: down one column, the node can
+         * be in the book's last screen, where the viewport stops before it.
+         */
+        position: navigationResolver.clampPositionInSpine(
+          navigationResolver.getNavigationForNode({
+            spineItem,
+            node,
+            offset,
+          }),
+          getNavigationVisibleArea(),
+        ),
         /**
          * The place the cfi names, once the item's document shows it there,
          * as for any target naming a place in a document, at the item's start

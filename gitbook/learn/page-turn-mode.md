@@ -26,11 +26,11 @@ reader.settings.values.computedPageTurnMode // "controlled" or "scrollable"
 * **Reflowable text** is one column per chapter, as wide as the page and as tall as its content. The page margins (`pageHorizontalMargin`, `pageVerticalMargin`) are at the sides of the text, and before and after each chapter.
 * **Text written vertically** stays paginated, its pages one below the other: one column of it would have to scroll sideways.
 * **Reflowable images**, such as the pages of a webtoon, take the page's width at their own height.
-* **Pre-paginated pages** keep their page size, one below the other.
+* **Pre-paginated pages**, and documents with a viewport of their own, keep their page size, one below the other.
 
 The whole book follows the reader's mode. A chapter that declares its own `rendition:flow` is laid out like the others.
 
-A chapter counts as one page, whatever its height: a turn to the next page scrolls one screen down, and pagination reports one page per chapter.
+A chapter laid out as one column counts as one page, whatever its height, and so does a pre-paginated page. Text written vertically counts the pages it runs over. A turn to the next page scrolls one screen down. Pagination's `percentageEstimateOfBook` follows how far the chapter on screen is scrolled through.
 
 ## Known limitations
 

@@ -1,9 +1,9 @@
 import { detectMimeTypeFromName } from "@prose-reader/shared"
 import { from, map, of, switchMap, tap } from "rxjs"
-import { isLaidOutAsOneColumn } from "../../../spineItem/layout/isLaidOutAsOneColumn"
 import { DocumentRenderer } from "../../../spineItem/renderer/DocumentRenderer"
 import { isHtmlTagElement, setAttributeIfChanged } from "../../../utils/dom"
 import {
+  getFrameViewportInfo,
   upsertCSSToFrame,
   waitForFrameLoad,
   waitForFrameReady,
@@ -155,11 +155,7 @@ export class HtmlRenderer extends DocumentRenderer {
       pageWidth,
       frameElement,
       manifest: this.context.manifest,
-      isLaidOutAsOneColumn: isLaidOutAsOneColumn({
-        computedPageTurnMode: this.settings.values.computedPageTurnMode,
-        renditionLayout: this.renditionLayout,
-        isUsingVerticalWriting,
-      }),
+      isLaidOutAsOneColumn: this.isLaidOutAsOneColumn,
       blankPagePosition,
       isUsingVerticalWriting,
       isRTL: this.context.isRTL(),
@@ -259,6 +255,25 @@ export class HtmlRenderer extends DocumentRenderer {
     if (body) {
       return frame?.contentWindow?.getComputedStyle(body)
     }
+  }
+
+  /**
+   * A reflowable document the reader scrolls through, whatever makes it
+   * scroll: a book declaring `rendition:flow` `scrolled-continuous`, or an app
+   * setting `pageTurnMode` to `scrollable`. A document with a viewport of its
+   * own is laid out as a page, scaled to fit, and one written vertically stays
+   * paginated, its pages running downward: one column of it would scroll
+   * horizontally.
+   *
+   * @see https://www.w3.org/TR/epub-rs-33/#flow
+   */
+  get isLaidOutAsOneColumn() {
+    return (
+      this.settings.values.computedPageTurnMode === `scrollable` &&
+      !this.isPrePaginated() &&
+      !getFrameViewportInfo(this.getFrameElement()).hasViewport &&
+      !this.writingMode?.startsWith(`vertical`)
+    )
   }
 
   get writingMode() {

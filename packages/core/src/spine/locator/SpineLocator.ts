@@ -125,6 +125,13 @@ export const createSpineLocator = ({
       }
     | undefined => {
     const numberOfPages = spineItem.numberOfPages
+    /**
+     * An item laid out as one column is one page, as tall as the item: it is
+     * on screen wherever the item is.
+     */
+    const pageHeight = spineItem.renderer.isLaidOutAsOneColumn
+      ? spineLayout.getSpineItemSpineLayoutInfo(spineItem).height
+      : viewport.pageSize.height
 
     const pages = Array.from(Array(numberOfPages)).map((_, index) => {
       const spineItemPosition =
@@ -142,10 +149,10 @@ export const createSpineLocator = ({
         index,
         absolutePosition: {
           width: viewport.pageSize.width,
-          height: viewport.pageSize.height,
+          height: pageHeight,
           left: spinePosition.x,
           top: spinePosition.y,
-          bottom: spinePosition.y + viewport.pageSize.height,
+          bottom: spinePosition.y + pageHeight,
           right: spinePosition.x + viewport.pageSize.width,
         },
       }

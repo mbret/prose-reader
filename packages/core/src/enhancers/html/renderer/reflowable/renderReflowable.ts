@@ -1,8 +1,5 @@
 import type { Manifest } from "@prose-reader/shared"
-import {
-  removeStylePropertyIfPresent,
-  setStylePropertyIfChanged,
-} from "../../../../utils/dom"
+import { setStylePropertyIfChanged } from "../../../../utils/dom"
 import { upsertCSSToFrame } from "../../../../utils/frames"
 import { getViewPortInformation } from "../viewport"
 import {
@@ -91,11 +88,12 @@ export const renderReflowable = ({
 
   /**
    * A document laid out as one column takes the height of its content, which
-   * can be less or more than a page: the frame has none of its own while it is
-   * measured.
+   * can be less or more than a page. It is measured in a frame with no height,
+   * rather than the browser's default one or whatever the host's CSS gives an
+   * iframe: the height of its scrolling element is at least the frame's.
    */
   if (isLaidOutAsOneColumn) {
-    removeStylePropertyIfPresent(frameElement.style, `height`)
+    setStylePropertyIfChanged(frameElement.style, `height`, `0px`)
   } else {
     setStylePropertyIfChanged(frameElement.style, `height`, `${pageHeight}px`)
   }
@@ -190,10 +188,8 @@ export const renderReflowable = ({
          * The height of everything the document shows, its margins and those
          * of its content included: that of its scrolling element, the root in
          * standards mode and the body in quirks mode, where the page generated
-         * for an image is. The frame has no height of its own at this point,
-         * only the browser's default one, so the height is the content's
-         * whatever the frame had before, or that default for a shorter
-         * document.
+         * for an image is. The frame has no height at this point, so it is the
+         * content's.
          */
         const { scrollingElement, documentElement } =
           frameElement.contentDocument
