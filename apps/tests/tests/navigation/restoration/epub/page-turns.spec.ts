@@ -3,64 +3,17 @@ import type { Reader } from "@prose-reader/core"
 import { waitForSettled } from "../../../utils/pagination"
 import {
   getLongChapterIndex,
+  goToSpineItem,
   initialSize,
+  isChapterReady,
   narrowSize,
-  navigateAndReadAtOnce,
   readPosition,
   recordReadingPositions,
   resizeAndExpectAnchorVisible,
+  turnLeft,
+  turnRight,
   url,
 } from "./readingPosition"
-
-test.describe("Given a page reached by turning pages", () => {
-  test.beforeEach(async ({ page }) => {
-    await page.setViewportSize(initialSize)
-    await page.goto(url)
-    await waitForSettled(page)
-  })
-
-  test("a page turn is the reading position from the moment it happens", async ({
-    page,
-  }) => {
-    const chapterIndex = await getLongChapterIndex(page)
-
-    await page.evaluate((indexOrId) => {
-      // @ts-expect-error window.reader is set by this scenario's index.tsx
-      const reader = window.reader as Reader
-
-      reader.navigation.goToSpineItem({ indexOrId })
-    }, chapterIndex)
-    await waitForSettled(page)
-
-    const readRecorded = await recordReadingPositions(page)
-    const atOnce = await navigateAndReadAtOnce(page, {
-      turn: "right",
-      into: chapterIndex,
-    })
-    await waitForSettled(page)
-
-    const turned = await readPosition(page)
-
-    /**
-     * The chapter is laid out, so the page the turn goes to is known when the
-     * turn happens: the reading position is its first character straight
-     * away, the one pagination settles on afterwards, and nothing else.
-     */
-    expect(atOnce.wasReady).toBe(true)
-    expect(turned.pageIndex).toBe(1)
-    expect(atOnce.isRootCfi).toBe(false)
-    expect(atOnce.cfi).toBe(turned.cfi)
-    expect(atOnce.status).toBe("success")
-    expect(await readRecorded()).toEqual([
-      {
-        cfi: turned.cfi,
-        isRootCfi: false,
-        itemIndex: chapterIndex,
-        status: "success",
-      },
-    ])
-  })
-})
 
 /**
  * Drags the page a fifth of the window towards the next one and lets go, with
@@ -93,12 +46,7 @@ test.describe("Given a page reached by dragging", () => {
   }) => {
     const chapterIndex = await getLongChapterIndex(page)
 
-    await page.evaluate((indexOrId) => {
-      // @ts-expect-error window.reader is set by this scenario's index.tsx
-      const reader = window.reader as Reader
-
-      reader.navigation.goToSpineItem({ indexOrId })
-    }, chapterIndex)
+    await goToSpineItem(page, chapterIndex)
     await waitForSettled(page)
 
     const start = await readPosition(page)
@@ -130,9 +78,103 @@ test.describe("Given a page reached by dragging", () => {
 test.describe("Given chapters that are not preloaded", () => {
   test.beforeEach(async ({ page }) => {
     await page.setViewportSize(initialSize)
-    // Only visible chapters load, so the one before is never loaded yet.
+    // Only visible chapters load: once the chapter shown has settled, nothing
+    // loads around it, and the one before it is never loaded yet.
     await page.goto(`${url}?preload=0`)
     await waitForSettled(page)
+  })
+
+  test("a page turn is the reading position from the moment it happens", async ({
+    page,
+  }) => {
+    const chapterIndex = await getLongChapterIndex(page)
+
+    await goToSpineItem(page, chapterIndex)
+    await waitForSettled(page)
+
+    const start = await readPosition(page)
+
+    expect(start.spineItemIndex).toBe(chapterIndex)
+    expect(start.pageIndex).toBe(0)
+
+    const readRecorded = await recordReadingPositions(page)
+
+    await turnRight(page)
+    await waitForSettled(page)
+
+    const turned = await readPosition(page)
+
+    /**
+     * The chapter is laid out, and nothing loads around it to lay the spine
+     * out again, so the page the turn goes to is known when the turn happens:
+     * the reading position moves once, straight to its first character, the
+     * one pagination settles on afterwards.
+     */
+    expect(turned.pageIndex).toBe(1)
+    expect(await readRecorded()).toEqual([
+      {
+        cfi: turned.cfi,
+        isRootCfi: false,
+        itemIndex: chapterIndex,
+        percentageEstimateOfBook: turned.readingProgression,
+        status: "success",
+      },
+    ])
+  })
+
+  test("a page turn while the spine lays itself out again is its chapter's start until the layout lands, then the page it went to", async ({
+    page,
+  }) => {
+    const chapterIndex = await getLongChapterIndex(page)
+
+    await goToSpineItem(page, chapterIndex)
+    await waitForSettled(page)
+
+    const start = await readPosition(page)
+
+    expect(start.spineItemIndex).toBe(chapterIndex)
+    expect(start.pageIndex).toBe(0)
+
+    const readRecorded = await recordReadingPositions(page)
+
+    await page.evaluate(() => {
+      // @ts-expect-error window.reader is set by this scenario's index.tsx
+      const reader = window.reader as Reader
+
+      reader.layout()
+      reader.navigation.turnRight()
+    })
+    await waitForSettled(page)
+
+    const turned = await readPosition(page)
+
+    /**
+     * The layout is asked for in the task that turns, as an item ending its
+     * load nearby asks for one, so the turn happens while it is pending. The
+     * chapter is laid out, but until the layout lands its pages describe the
+     * one being replaced, so the turn names none of them: the reading position
+     * is the chapter's start, pending. The turn is not lost: once the layout
+     * lands, it is the first character of the page the turn went to, a
+     * success.
+     */
+    expect(turned.spineItemIndex).toBe(chapterIndex)
+    expect(turned.pageIndex).toBe(1)
+    expect(await readRecorded()).toEqual([
+      {
+        cfi: expect.any(String),
+        isRootCfi: true,
+        itemIndex: chapterIndex,
+        percentageEstimateOfBook: expect.closeTo(turned.chapterStart, 10),
+        status: "pending",
+      },
+      {
+        cfi: turned.cfi,
+        isRootCfi: false,
+        itemIndex: chapterIndex,
+        percentageEstimateOfBook: turned.readingProgression,
+        status: "success",
+      },
+    ])
   })
 
   test("a turn back into a previous chapter is its start at once, and its last page once it loads", async ({
@@ -140,19 +182,14 @@ test.describe("Given chapters that are not preloaded", () => {
   }) => {
     const previousIndex = await getLongChapterIndex(page)
 
-    await page.evaluate((indexOrId) => {
-      // @ts-expect-error window.reader is set by this scenario's index.tsx
-      const reader = window.reader as Reader
-
-      reader.navigation.goToSpineItem({ indexOrId })
-    }, previousIndex + 1)
+    await goToSpineItem(page, previousIndex + 1)
     await waitForSettled(page)
 
+    expect(await isChapterReady(page, previousIndex)).toBe(false)
+
     const readRecorded = await recordReadingPositions(page)
-    const atOnce = await navigateAndReadAtOnce(page, {
-      turn: "left",
-      into: previousIndex,
-    })
+
+    await turnLeft(page)
     await waitForSettled(page)
 
     const settled = await readPosition(page)
@@ -163,14 +200,6 @@ test.describe("Given chapters that are not preloaded", () => {
      * is its start; once it has loaded, it is the last page's first
      * character.
      */
-    expect(atOnce.wasReady).toBe(false)
-    expect(atOnce.isRootCfi).toBe(true)
-    expect(atOnce.status).toBe("pending")
-    expect(atOnce.itemIndex).toBe(previousIndex)
-    expect(atOnce.percentageEstimateOfBook).toBeCloseTo(
-      settled.chapterStart,
-      10,
-    )
     expect(settled.spineItemIndex).toBe(previousIndex)
     expect(settled.numberOfPages).toBeGreaterThan(1)
     expect(settled.pageIndex).toBe(settled.numberOfPages - 1)
@@ -184,15 +213,17 @@ test.describe("Given chapters that are not preloaded", () => {
     expect(settled.readingProgression).toBeGreaterThan(settled.chapterStart)
     expect(await readRecorded()).toEqual([
       {
-        cfi: atOnce.cfi,
+        cfi: expect.any(String),
         isRootCfi: true,
         itemIndex: previousIndex,
+        percentageEstimateOfBook: expect.closeTo(settled.chapterStart, 10),
         status: "pending",
       },
       {
         cfi: settled.cfi,
         isRootCfi: false,
         itemIndex: previousIndex,
+        percentageEstimateOfBook: settled.readingProgression,
         status: "success",
       },
     ])

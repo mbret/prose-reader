@@ -88,42 +88,35 @@ export const readPosition = async (page: Page) => {
 }
 
 /**
- * Records every reading position from now on, leaving out the current one
- * that subscribing replays. Returns a reader of what was recorded so far.
+ * The reading positions this scenario's index.tsx records from now on, in the
+ * order they were emitted. A navigation that moves the reading position does
+ * so before it returns, so the first one recorded after it is its reading
+ * position at once. Returns a reader of what was recorded so far.
  */
 export const recordReadingPositions = async (page: Page) => {
-  await page.evaluate(() => {
-    // @ts-expect-error window.reader is set by this scenario's index.tsx
-    const reader = window.reader as Reader
-    const recorded: Pick<ReadingPosition, "cfi" | "status">[] = []
-    let replaying = true
-
-    reader.navigation.readingPosition$.subscribe(({ cfi, status }) => {
-      if (!replaying) recorded.push({ cfi, status })
-    })
-    replaying = false
-
-    // @ts-expect-error scratch slot for this spec
-    window.__readingPositions = recorded
-  })
+  const numberOfEarlierReadingPositions = await page.evaluate(
+    () =>
+      // @ts-expect-error window.readingPositions is set by this scenario's index.tsx
+      (window.readingPositions as ReadingPosition[]).length,
+  )
 
   return () =>
-    page.evaluate(() => {
+    page.evaluate((numberOfEarlierReadingPositions) => {
       // @ts-expect-error window.reader is set by this scenario's index.tsx
       const reader = window.reader as Reader
-      // @ts-expect-error scratch slot for this spec
-      const recorded = window.__readingPositions as Pick<
-        ReadingPosition,
-        "cfi" | "status"
-      >[]
+      // @ts-expect-error window.readingPositions is set by this scenario's index.tsx
+      const readingPositions = window.readingPositions as ReadingPosition[]
 
-      return recorded.map(({ cfi, status }) => ({
-        cfi,
-        isRootCfi: reader.cfi.isRootCfi(cfi),
-        itemIndex: reader.cfi.parseCfi(cfi).itemIndex,
-        status,
-      }))
-    })
+      return readingPositions
+        .slice(numberOfEarlierReadingPositions)
+        .map(({ cfi, percentageEstimateOfBook, status }) => ({
+          cfi,
+          isRootCfi: reader.cfi.isRootCfi(cfi),
+          itemIndex: reader.cfi.parseCfi(cfi).itemIndex,
+          percentageEstimateOfBook,
+          status,
+        }))
+    }, numberOfEarlierReadingPositions)
 }
 
 export const getChapterIndex = async (page: Page, href: string) => {
@@ -144,76 +137,57 @@ export const getChapterIndex = async (page: Page, href: string) => {
 export const getLongChapterIndex = (page: Page) =>
   getChapterIndex(page, "ch02.xhtml")
 
-/**
- * Runs a navigation and reads the reading position in the same task, before
- * anything asynchronous has happened, along with whether its item was ready
- * when the navigation started.
- */
-export const navigateAndReadAtOnce = (
-  page: Page,
-  navigation:
-    | { turn: "left" | "right"; into: number }
-    | { cfi: string; into: number }
-    | { spineItem: number },
-) =>
-  page.evaluate((navigation) => {
+export const goToSpineItem = (page: Page, indexOrId: number) =>
+  page.evaluate((indexOrId) => {
     // @ts-expect-error window.reader is set by this scenario's index.tsx
     const reader = window.reader as Reader
-    const target =
-      "spineItem" in navigation ? navigation.spineItem : navigation.into
-    const wasReady =
-      reader.spineItemsManager.get(target)?.value.isReady ?? false
 
-    if ("spineItem" in navigation) {
-      reader.navigation.goToSpineItem({ indexOrId: navigation.spineItem })
-    } else if ("cfi" in navigation) {
-      reader.navigation.goToCfi(navigation.cfi)
-    } else if (navigation.turn === "left") {
-      reader.navigation.turnLeft()
-    } else {
-      reader.navigation.turnRight()
-    }
+    reader.navigation.goToSpineItem({ indexOrId })
+  }, indexOrId)
 
-    let readingPosition: ReadingPosition | undefined
-    reader.navigation.readingPosition$
-      .subscribe((value) => {
-        readingPosition = value
-      })
-      .unsubscribe()
+export const goToCfi = (page: Page, cfi: string) =>
+  page.evaluate((cfi) => {
+    // @ts-expect-error window.reader is set by this scenario's index.tsx
+    const reader = window.reader as Reader
 
-    if (readingPosition === undefined) throw new Error("no reading position")
+    reader.navigation.goToCfi(cfi)
+  }, cfi)
 
-    const { cfi, percentageEstimateOfBook, status } = readingPosition
+export const turnRight = (page: Page) =>
+  page.evaluate(() => {
+    // @ts-expect-error window.reader is set by this scenario's index.tsx
+    const reader = window.reader as Reader
 
-    return {
-      cfi,
-      percentageEstimateOfBook,
-      status,
-      isRootCfi: reader.cfi.isRootCfi(cfi),
-      itemIndex: reader.cfi.parseCfi(cfi).itemIndex,
-      wasReady,
-    }
-  }, navigation)
+    reader.navigation.turnRight()
+  })
+
+export const turnLeft = (page: Page) =>
+  page.evaluate(() => {
+    // @ts-expect-error window.reader is set by this scenario's index.tsx
+    const reader = window.reader as Reader
+
+    reader.navigation.turnLeft()
+  })
+
+/** Whether a chapter's document is loaded and laid out. */
+export const isChapterReady = (page: Page, chapterIndex: number) =>
+  page.evaluate(
+    (chapterIndex) =>
+      // @ts-expect-error window.reader is set by this scenario's index.tsx
+      (window.reader as Reader).spineItemsManager.get(chapterIndex)?.value
+        .isReady ?? false,
+    chapterIndex,
+  )
 
 /** Third page of a long chapter, reached by turning pages. */
 export const turnToThirdPageOfLongChapter = async (page: Page) => {
   const chapterIndex = await getLongChapterIndex(page)
 
-  await page.evaluate((indexOrId) => {
-    // @ts-expect-error window.reader is set by this scenario's index.tsx
-    const reader = window.reader as Reader
-
-    reader.navigation.goToSpineItem({ indexOrId })
-  }, chapterIndex)
+  await goToSpineItem(page, chapterIndex)
   await waitForSettled(page)
 
   for (let turn = 0; turn < 2; turn++) {
-    await page.evaluate(() => {
-      // @ts-expect-error window.reader is set by this scenario's index.tsx
-      const reader = window.reader as Reader
-
-      reader.navigation.turnRight()
-    })
+    await turnRight(page)
     await waitForSettled(page)
   }
 

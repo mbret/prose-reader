@@ -4,9 +4,11 @@ import { waitForSettled } from "../../../utils/pagination"
 import {
   getChapterIndex,
   getLongChapterIndex,
+  goToCfi,
+  goToSpineItem,
   initialSize,
+  isChapterReady,
   narrowSize,
-  navigateAndReadAtOnce,
   readPosition,
   recordReadingPositions,
   resizeAndExpectAnchorVisible,
@@ -24,10 +26,12 @@ test.describe("Given a chapter not loaded yet", () => {
     page,
   }) => {
     const chapterIndex = await getChapterIndex(page, "ch03.xhtml")
+
+    expect(await isChapterReady(page, chapterIndex)).toBe(false)
+
     const readRecorded = await recordReadingPositions(page)
-    const atOnce = await navigateAndReadAtOnce(page, {
-      spineItem: chapterIndex,
-    })
+
+    await goToSpineItem(page, chapterIndex)
     await waitForSettled(page)
 
     const settled = await readPosition(page)
@@ -38,14 +42,6 @@ test.describe("Given a chapter not loaded yet", () => {
      * Once it has loaded, the reading position becomes its first page's first
      * character, a success, and stays there.
      */
-    expect(atOnce.wasReady).toBe(false)
-    expect(atOnce.isRootCfi).toBe(true)
-    expect(atOnce.status).toBe("pending")
-    expect(atOnce.itemIndex).toBe(chapterIndex)
-    expect(atOnce.percentageEstimateOfBook).toBeCloseTo(
-      settled.chapterStart,
-      10,
-    )
     expect(settled.spineItemIndex).toBe(chapterIndex)
     expect(settled.isRootCfi).toBe(false)
     expect(settled.pageIndex).toBe(0)
@@ -53,15 +49,17 @@ test.describe("Given a chapter not loaded yet", () => {
     expect(settled.readingPositionStatus).toBe("success")
     expect(await readRecorded()).toEqual([
       {
-        cfi: atOnce.cfi,
+        cfi: expect.any(String),
         isRootCfi: true,
         itemIndex: chapterIndex,
+        percentageEstimateOfBook: expect.closeTo(settled.chapterStart, 10),
         status: "pending",
       },
       {
         cfi: settled.cfi,
         isRootCfi: false,
         itemIndex: chapterIndex,
+        percentageEstimateOfBook: settled.readingProgression,
         status: "success",
       },
     ])
@@ -155,7 +153,7 @@ test.describe("Given a chapter not loaded yet", () => {
 /**
  * Opens a chapter that is not loaded yet at a cfi naming only the chapter,
  * written as another tool can write it: without the id assertion the reader
- * adds. Reads the reading position at once, then once the chapter settles.
+ * adds. Reads the reading positions from then on, once the chapter settles.
  */
 const openChapterAtRootCfi = async (page: Page) => {
   const chapterIndex = await getChapterIndex(page, "ch03.xhtml")
@@ -173,17 +171,16 @@ const openChapterAtRootCfi = async (page: Page) => {
   }, chapterIndex)
 
   expect(chapterStart).not.toBe(cfi)
+  expect(await isChapterReady(page, chapterIndex)).toBe(false)
 
   const readRecorded = await recordReadingPositions(page)
-  const atOnce = await navigateAndReadAtOnce(page, { cfi, into: chapterIndex })
-  await waitForSettled(page)
 
-  expect(atOnce.wasReady).toBe(false)
+  await goToCfi(page, cfi)
+  await waitForSettled(page)
 
   return {
     chapterIndex,
     chapterStart,
-    atOnce,
     settled: await readPosition(page),
     recorded: await readRecorded(),
   }
@@ -199,23 +196,22 @@ test.describe("Given a chapter opened at a cfi naming only the chapter", () => {
   test("the reading position is the chapter start as the reader names it, while the chapter loads", async ({
     page,
   }) => {
-    const { atOnce, chapterStart } = await openChapterAtRootCfi(page)
+    const { recorded, chapterStart } = await openChapterAtRootCfi(page)
 
-    expect(atOnce.cfi).toBe(chapterStart)
-    expect(atOnce.status).toBe("pending")
+    expect(recorded[0]).toMatchObject({ cfi: chapterStart, status: "pending" })
   })
 
   test("the reading position is the chapter's first page once it loads, not the chapter", async ({
     page,
   }) => {
-    const { atOnce, settled, recorded, chapterIndex } =
+    const { chapterStart, settled, recorded, chapterIndex } =
       await openChapterAtRootCfi(page)
 
     // A cfi naming only the chapter names no text to reopen at.
     expect(settled.spineItemIndex).toBe(chapterIndex)
     expect(settled.isRootCfi).toBe(false)
     expect(settled.readingPosition).toBe(settled.cfi)
-    expect(recorded.map(({ cfi }) => cfi)).toEqual([atOnce.cfi, settled.cfi])
+    expect(recorded.map(({ cfi }) => cfi)).toEqual([chapterStart, settled.cfi])
     expect(recorded.map(({ status }) => status)).toEqual(["pending", "success"])
   })
 })
@@ -235,11 +231,12 @@ test.describe("Given a cfi naming nothing in a chapter not loaded yet", () => {
     // A path no node of the chapter has, as a saved position can once the
     // book changed.
     const cfi = `epubcfi(/6/${(chapterIndex + 1) * 2}!/4/2/999/1:0)`
+
+    expect(await isChapterReady(page, chapterIndex)).toBe(false)
+
     const readRecorded = await recordReadingPositions(page)
-    const atOnce = await navigateAndReadAtOnce(page, {
-      cfi,
-      into: chapterIndex,
-    })
+
+    await goToCfi(page, cfi)
     await waitForSettled(page)
 
     const settled = await readPosition(page)
@@ -252,14 +249,6 @@ test.describe("Given a cfi naming nothing in a chapter not loaded yet", () => {
      * could not take it, and the reading position is the page shown, a
      * success.
      */
-    expect(atOnce.wasReady).toBe(false)
-    expect(atOnce.isRootCfi).toBe(true)
-    expect(atOnce.itemIndex).toBe(chapterIndex)
-    expect(atOnce.status).toBe("pending")
-    expect(atOnce.percentageEstimateOfBook).toBeCloseTo(
-      settled.chapterStart,
-      10,
-    )
     expect(settled.spineItemIndex).toBe(chapterIndex)
     expect(settled.pageIndex).toBe(0)
     expect(settled.isRootCfi).toBe(false)
@@ -267,15 +256,17 @@ test.describe("Given a cfi naming nothing in a chapter not loaded yet", () => {
     expect(settled.readingProgression).toBeCloseTo(settled.chapterStart, 10)
     expect(await readRecorded()).toEqual([
       {
-        cfi: atOnce.cfi,
+        cfi: expect.any(String),
         isRootCfi: true,
         itemIndex: chapterIndex,
+        percentageEstimateOfBook: expect.closeTo(settled.chapterStart, 10),
         status: "pending",
       },
       {
         cfi: settled.cfi,
         isRootCfi: false,
         itemIndex: chapterIndex,
+        percentageEstimateOfBook: settled.readingProgression,
         status: "success",
       },
     ])
