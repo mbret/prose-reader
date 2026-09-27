@@ -11,7 +11,8 @@ export type PaginationEdge = {
 
 /**
  * An edge whose cfi describes the page actually visible, rather than standing
- * in with the start of its item.
+ * in with the start of its item. An item that failed to load shows no page of
+ * its own, so its edge's cfi is the item's start.
  */
 export type SettledPaginationEdge<TEdge extends PaginationEdge> = TEdge & {
   cfi: string
@@ -22,13 +23,13 @@ export type SettledPaginationEdge<TEdge extends PaginationEdge> = TEdge & {
  * resolved. `isSettled` is what tells those two states apart.
  *
  * A settled range describes the visible pages of the current layout over
- * content that is ready. That is the whole difference between the two
- * variants: a settled range's edges have resolved positions, so their cfis
- * are typed as present, and establishing settlement is what gives a consumer
- * access to them. It describes how the current layout cuts the pages, so it
- * moves when the book is laid out again; to save progress, use the
- * navigator's `readingPosition$`, which does not. Page metrics stay on both,
- * so navigation controls keep working on estimates while a range is pending.
+ * content that is ready, or failed to load. That is the whole difference
+ * between the two variants: a settled range's edges have resolved positions, so
+ * their cfis are typed as present, and establishing settlement is what gives a
+ * consumer access to them. It describes how the current layout cuts the pages,
+ * so it moves when the book is laid out again; to save progress, use the
+ * navigator's `readingPosition$`, which does not. Page metrics stay on both, so
+ * navigation controls keep working on estimates while a range is pending.
  *
  * It is generic over the edge so the enhancer's enriched edge discriminates
  * the same way, rather than restating the union one layer up.
