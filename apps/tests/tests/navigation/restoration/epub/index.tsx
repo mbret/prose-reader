@@ -1,32 +1,8 @@
-import { createArchiveFromJszip } from "@prose-reader/archive-reader/archives/createArchiveFromJszip"
 import { createReader, type ReadingPosition } from "@prose-reader/core"
-import { Streamer } from "@prose-reader/streamer"
-import { loadAsync } from "jszip"
-import { from } from "rxjs"
-
-async function createStreamer() {
-  const streamer = new Streamer({
-    getArchive: async () => {
-      const epubResponse = await fetch(
-        "http://localhost:3333/epubs/accessible_epub_3.epub",
-      )
-      const epubBlob = await epubResponse.blob()
-      const epubJszip = await loadAsync(epubBlob)
-      const archive = await createArchiveFromJszip(epubJszip)
-
-      return archive
-    },
-  })
-
-  return streamer
-}
+import { openFixtureBook } from "../../../fixtureBook"
 
 async function run() {
-  const streamer = await createStreamer()
-  const manifestResponse = await streamer.fetchManifest({
-    key: `_`,
-  })
-  const manifest = await manifestResponse.json()
+  const book = await openFixtureBook("accessible_epub_3.epub")
 
   const query = new URLSearchParams(window.location.search)
   const cfi = query.get("cfi")
@@ -34,7 +10,7 @@ async function run() {
   const pageHorizontalMargin = query.get("pageHorizontalMargin")
 
   const reader = createReader({
-    manifest,
+    ...book,
     target: cfi ? { type: "cfi", value: cfi } : undefined,
     ...(preload !== null && {
       numberOfAdjacentSpineItemToPreLoad: Number(preload),
@@ -44,9 +20,6 @@ async function run() {
     }),
     pageTurnAnimation: "none",
     layoutLayerTransition: false,
-    getResource: (item) => {
-      return from(streamer.fetchResource({ key: `_`, resourcePath: item.href }))
-    },
   })
 
   // Every reading position from the reader's creation on, earlier than a spec

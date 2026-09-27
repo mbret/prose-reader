@@ -4,6 +4,10 @@ import type {
   Reader,
   UserNavigationEntry,
 } from "@prose-reader/core"
+import {
+  DOCUMENT_PROTOCOL_BY_RESOURCE_LOADING,
+  type ResourceLoading,
+} from "./resourceLoading"
 
 export async function waitForSpineItemReady(page: Page, indexes: number[]) {
   for (const index of indexes) {
@@ -173,4 +177,38 @@ export const getScrollNavigationMetadata = async ({ page }: { page: Page }) => {
 
     return { scrollLeft, scrollbarWidth, scrollTop }
   })
+}
+
+/** The protocol of each loaded spine item's document, as it came in. */
+const getLoadedDocumentProtocols = (page: Page) =>
+  page.evaluate(() => {
+    // @ts-expect-error window.reader is set by the scenario's index.tsx
+    const reader = window.reader as Reader
+
+    return reader.spineItemsManager.items
+      .filter((item) => item.value.isLoaded)
+      .map(
+        (item) =>
+          new URL(
+            item.renderer.getDocumentFrame()?.contentDocument?.URL ??
+              "about:blank",
+          ).protocol,
+      )
+  })
+
+/**
+ * Every loaded spine item's document came in the way the scenario was asked
+ * to load its book, so a spec run both ways cannot run the same way twice.
+ * It waits for a document to have loaded: a frame shows its text before its
+ * item counts as loaded.
+ */
+export const expectDocumentsLoadedWith = async (
+  page: Page,
+  resourceLoading: ResourceLoading,
+) => {
+  await expect.poll(() => getLoadedDocumentProtocols(page)).not.toHaveLength(0)
+
+  expect(new Set(await getLoadedDocumentProtocols(page))).toEqual(
+    new Set([DOCUMENT_PROTOCOL_BY_RESOURCE_LOADING[resourceLoading]]),
+  )
 }
