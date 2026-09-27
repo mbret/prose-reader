@@ -3,6 +3,15 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## [21.0.0](https://github.com/mbret/prose-reader/compare/v20.0.1...v21.0.0) (2026-09-27)
+
+### Bug Fixes
+
+* **navigation:** find the page holding text at the left edge of its document ([e4d68fc](https://github.com/mbret/prose-reader/commit/e4d68fc11ab812cd383eaffd244dc23afd5573ca))
+* **navigation:** place a node that isn't rendered where the content after it is ([6d5cbd5](https://github.com/mbret/prose-reader/commit/6d5cbd5f66a3d050421298ba34a46d48a7bc2dda))
+* **navigation:** release the lock of a pan stopped while it takes it ([1ce57d0](https://github.com/mbret/prose-reader/commit/1ce57d05bf343be3e857453b3abe2bb266a2acda))
+
+
 ## [20.0.1](https://github.com/mbret/prose-reader/compare/v20.0.0...v20.0.1) (2026-09-26)
 
 ### Bug Fixes

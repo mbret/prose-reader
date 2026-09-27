@@ -3,6 +3,17 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## [21.0.0](https://github.com/mbret/prose-reader/compare/v20.0.1...v21.0.0) (2026-09-27)
+
+### Features
+
+* **react-reader:** manage the spread mode through props, as the font size ([80f3b02](https://github.com/mbret/prose-reader/commit/80f3b027133dfbb7999d323dc0a44f638f1c08dd))
+
+### Bug Fixes
+
+* **react-reader:** keep the app's setting value over the one the reader holds when met ([d747b4e](https://github.com/mbret/prose-reader/commit/d747b4e56c7bcb19e9ba68c4fa6dc84bf54d24ff))
+
+
 ## [20.0.1](https://github.com/mbret/prose-reader/compare/v20.0.0...v20.0.1) (2026-09-26)
 
 **Note:** Version bump only for package @prose-reader/react-reader

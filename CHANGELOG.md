@@ -3,6 +3,31 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## [21.0.0](https://github.com/mbret/prose-reader/compare/v20.0.1...v21.0.0) (2026-09-27)
+
+### ⚠ BREAKING CHANGES
+
+* **enhancer-koreader:** `reader.navigation.readingPositionXPointer$` is removed.
+  Convert `readingPosition$`'s `cfi` with `reader.koreader.cfiToXPointer`, which
+  returns `undefined` for a place in a chapter that is not loaded, or a cfi
+  naming nothing in the book. `rxjs` is no longer a peer dependency of
+  `@prose-reader/enhancer-koreader`.
+
+### Features
+
+* **enhancer-koreader:** convert a cfi to an xpointer on demand, not the reading position as a stream ([3c8d019](https://github.com/mbret/prose-reader/commit/3c8d019c15056ced3da16f59a49129ccbd174f50))
+* **front:** offer the spread mode's scopes in the demo, as the font size's ([b4da63b](https://github.com/mbret/prose-reader/commit/b4da63bf49009529b3723d4127ff9d46f86123df))
+* **react-reader:** manage the spread mode through props, as the font size ([80f3b02](https://github.com/mbret/prose-reader/commit/80f3b027133dfbb7999d323dc0a44f638f1c08dd))
+
+### Bug Fixes
+
+* **gestures:** release the navigation however a pan that moved the page ends ([e05f5b8](https://github.com/mbret/prose-reader/commit/e05f5b8210090224d2906f4420e13918e0db6fab))
+* **navigation:** find the page holding text at the left edge of its document ([e4d68fc](https://github.com/mbret/prose-reader/commit/e4d68fc11ab812cd383eaffd244dc23afd5573ca))
+* **navigation:** place a node that isn't rendered where the content after it is ([6d5cbd5](https://github.com/mbret/prose-reader/commit/6d5cbd5f66a3d050421298ba34a46d48a7bc2dda))
+* **navigation:** release the lock of a pan stopped while it takes it ([1ce57d0](https://github.com/mbret/prose-reader/commit/1ce57d05bf343be3e857453b3abe2bb266a2acda))
+* **react-reader:** keep the app's setting value over the one the reader holds when met ([d747b4e](https://github.com/mbret/prose-reader/commit/d747b4e56c7bcb19e9ba68c4fa6dc84bf54d24ff))
+
+
 ## [20.0.1](https://github.com/mbret/prose-reader/compare/v20.0.0...v20.0.1) (2026-09-26)
 
 ### Bug Fixes

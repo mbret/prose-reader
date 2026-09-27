@@ -3,6 +3,21 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## [21.0.0](https://github.com/mbret/prose-reader/compare/v20.0.1...v21.0.0) (2026-09-27)
+
+### ⚠ BREAKING CHANGES
+
+* **enhancer-koreader:** `reader.navigation.readingPositionXPointer$` is removed.
+  Convert `readingPosition$`'s `cfi` with `reader.koreader.cfiToXPointer`, which
+  returns `undefined` for a place in a chapter that is not loaded, or a cfi
+  naming nothing in the book. `rxjs` is no longer a peer dependency of
+  `@prose-reader/enhancer-koreader`.
+
+### Features
+
+* **enhancer-koreader:** convert a cfi to an xpointer on demand, not the reading position as a stream ([3c8d019](https://github.com/mbret/prose-reader/commit/3c8d019c15056ced3da16f59a49129ccbd174f50))
+
+
 ## [20.0.1](https://github.com/mbret/prose-reader/compare/v20.0.0...v20.0.1) (2026-09-26)
 
 **Note:** Version bump only for package @prose-reader/enhancer-koreader

@@ -3,6 +3,14 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## [21.0.0](https://github.com/mbret/prose-reader/compare/v20.0.1...v21.0.0) (2026-09-27)
+
+### Bug Fixes
+
+* **gestures:** release the navigation however a pan that moved the page ends ([e05f5b8](https://github.com/mbret/prose-reader/commit/e05f5b8210090224d2906f4420e13918e0db6fab))
+* **navigation:** release the lock of a pan stopped while it takes it ([1ce57d0](https://github.com/mbret/prose-reader/commit/1ce57d05bf343be3e857453b3abe2bb266a2acda))
+
+
 ## [20.0.1](https://github.com/mbret/prose-reader/compare/v20.0.0...v20.0.1) (2026-09-26)
 
 **Note:** Version bump only for package @prose-reader/enhancer-gestures
