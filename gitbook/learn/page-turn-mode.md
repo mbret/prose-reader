@@ -34,6 +34,8 @@ A chapter counts as one page, whatever its height: a turn to the next page scrol
 
 ## Known limitations
 
+* A chapter above the screen that finishes loading while you scroll changes height, and the text under you moves by as much ([#508](https://github.com/mbret/prose-reader/issues/508)). Once you stop scrolling, a chapter loading above keeps the text in place.
+
 These come from a chapter counting as one page:
 
 * The reading position and pagination name the start of the chapter at the top of the screen, however far into it you have scrolled ([#467](https://github.com/mbret/prose-reader/issues/467)). A position saved there reopens at the chapter's start.
