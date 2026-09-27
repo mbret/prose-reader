@@ -74,10 +74,8 @@ describe(`AudioSpineItem`, () => {
     container = document.createElement(`div`)
     document.body.appendChild(container)
     root = createRoot(container)
-    createPortalMock.mockClear()
     useObserveMock.mockReset()
     useReaderMock.mockReset()
-    audioWaveCanvasMock.mockClear()
   })
 
   afterEach(() => {

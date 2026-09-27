@@ -67,7 +67,6 @@ describe(`useFullscreen`, () => {
     })
     screenfullMock.isEnabled = false
     screenfullMock.isFullscreen = false
-    vi.clearAllMocks()
     container = document.createElement(`div`)
     document.body.appendChild(container)
     root = createRoot(container)

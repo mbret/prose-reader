@@ -17,18 +17,18 @@
   ],
   "scripts": {
     "start": "vite build --watch --mode development",
-    "build": "node ./scripts/check-enhancer-imports.mjs && tsc -b && vite build",
-    "check:enhancers": "node ./scripts/check-enhancers.mjs",
+    "build": "tsc -b && vite build",
     "test": "vitest run --coverage"
   },
   "devDependencies": {
+    "@babel/core": "^7.29.0",
+    "@rolldown/plugin-babel": "^0.2.3",
     "@types/react": "^19.0.0",
     "@types/react-dom": "^19.0.0",
     "@vitejs/plugin-react": "^6.0.2",
+    "babel-plugin-react-compiler": "^1.0.0",
     "react": "^19.2.7",
-    "react-dom": "^19.2.7",
-    "typescript": "*",
-    "vite": "^8"
+    "react-dom": "^19.2.7"
   },
   "peerDependencies": {
     "@chakra-ui/react": "3.x",
