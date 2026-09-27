@@ -10,7 +10,8 @@ import { ResourceHandler } from "../resources/ResourceHandler"
 import { DocumentRenderer } from "./DocumentRenderer"
 
 class TestRenderer extends DocumentRenderer {
-  public readonly onLoadDocumentSubject = new Subject<void>()
+  /** The document load of the latest `load()`, a new one each time. */
+  public onLoadDocumentSubject = new Subject<void>()
   public onUnloadCalls = 0
 
   onUnload() {
@@ -28,6 +29,8 @@ class TestRenderer extends DocumentRenderer {
   }
 
   onLoadDocument() {
+    this.onLoadDocumentSubject = new Subject<void>()
+
     return this.onLoadDocumentSubject.asObservable()
   }
 
@@ -177,6 +180,96 @@ describe(`DocumentRenderer`, () => {
 
       expect(renderer.onUnloadCalls).toBe(0)
       expect(unloadedItemIds).toEqual([])
+
+      cleanup()
+    })
+  })
+
+  describe(`when a load fails`, () => {
+    it(`is in error with what it created released, and loads on the next load()`, async () => {
+      const { renderer, hookManager, cleanup } = createHarness()
+
+      const unloadedItemIds: string[] = []
+      const loadedErrors: unknown[] = []
+      let loadedCount = 0
+
+      hookManager.register(`item.onDocumentUnload`, ({ itemId }) => {
+        unloadedItemIds.push(itemId)
+      })
+      renderer.loaded$.subscribe({
+        next: () => {
+          loadedCount++
+        },
+        error: (error) => {
+          loadedErrors.push(error)
+        },
+      })
+
+      const loadError = new Error(`resource failed`)
+
+      renderer.load()
+      renderer.onLoadDocumentSubject.error(loadError)
+
+      await waitFor(0)
+
+      // The failure is the renderer's state, and what the load created is
+      // released, as an unload would.
+      expect(renderer.value.state).toBe(`error`)
+      expect(renderer.value.error).toBe(loadError)
+      expect(unloadedItemIds).toEqual([`item-1`])
+      expect(renderer.onUnloadCalls).toBe(1)
+
+      renderer.load()
+      renderer.onLoadDocumentSubject.next()
+      renderer.onLoadDocumentSubject.complete()
+
+      await waitFor(0)
+
+      // `loaded$` never errors: it goes on, and reports the load that works.
+      expect(renderer.value.state).toBe(`loaded`)
+      expect(loadedCount).toBe(1)
+      expect(loadedErrors).toEqual([])
+
+      cleanup()
+    })
+  })
+
+  describe(`when an item whose load failed is unloaded or destroyed`, () => {
+    it(`releases nothing more, and is idle once unloaded`, async () => {
+      const { renderer, hookManager, cleanup } = createHarness()
+
+      const unloadedItemIds: string[] = []
+
+      hookManager.register(`item.onDocumentUnload`, ({ itemId }) => {
+        unloadedItemIds.push(itemId)
+      })
+
+      renderer.load()
+      renderer.onLoadDocumentSubject.error(new Error(`resource failed`))
+
+      await waitFor(0)
+
+      expect(renderer.value.state).toBe(`error`)
+      expect(renderer.onUnloadCalls).toBe(1)
+
+      // The failed load released what it created, once: the unload and the
+      // destroy that follow have nothing left to release.
+      renderer.unload()
+
+      await waitFor(0)
+
+      expect(renderer.value.state).toBe(`idle`)
+      expect(renderer.value.error).toBeUndefined()
+
+      renderer.load()
+      renderer.onLoadDocumentSubject.error(new Error(`resource failed`))
+
+      await waitFor(0)
+
+      renderer.destroy()
+
+      expect(renderer.onUnloadCalls).toBe(2)
+      expect(unloadedItemIds).toEqual([`item-1`, `item-1`])
 
       cleanup()
     })
