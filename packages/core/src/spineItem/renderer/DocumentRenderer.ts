@@ -164,6 +164,13 @@ export abstract class DocumentRenderer extends ReactiveEntity<DocumentRendererSt
 
         if (canBeIgnored) return EMPTY
 
+        // A failed load released what it created: nothing is left to unload.
+        if (this.value.state === `error`) {
+          this.mergeCompare({ state: `idle`, error: undefined })
+
+          return EMPTY
+        }
+
         this.mergeCompare({ state: `unloading`, error: undefined })
 
         return this.context.bridgeEvent.viewportFree$.pipe(
@@ -287,9 +294,11 @@ export abstract class DocumentRenderer extends ReactiveEntity<DocumentRendererSt
      * document down, so it still observes the live document even though the
      * caller detaches the container right after destroy returns. If an unload
      * was already in flight, hooks may be notified twice, which they already
-     * have to tolerate (see unloaded$).
+     * have to tolerate (see unloaded$). A failed load released what it
+     * created already.
      */
-    if (this.value.documentContainer) this.releaseDocument()
+    if (this.value.documentContainer && this.value.state !== `error`)
+      this.releaseDocument()
 
     super.destroy()
   }

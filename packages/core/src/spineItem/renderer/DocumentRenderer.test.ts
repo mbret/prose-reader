@@ -234,6 +234,47 @@ describe(`DocumentRenderer`, () => {
     })
   })
 
+  describe(`when an item whose load failed is unloaded or destroyed`, () => {
+    it(`releases nothing more, and is idle once unloaded`, async () => {
+      const { renderer, hookManager, cleanup } = createHarness()
+
+      const unloadedItemIds: string[] = []
+
+      hookManager.register(`item.onDocumentUnload`, ({ itemId }) => {
+        unloadedItemIds.push(itemId)
+      })
+
+      renderer.load()
+      renderer.onLoadDocumentSubject.error(new Error(`resource failed`))
+
+      await waitFor(0)
+
+      expect(renderer.value.state).toBe(`error`)
+      expect(renderer.onUnloadCalls).toBe(1)
+
+      // The failed load released what it created, once: the unload and the
+      // destroy that follow have nothing left to release.
+      renderer.unload()
+
+      await waitFor(0)
+
+      expect(renderer.value.state).toBe(`idle`)
+      expect(renderer.value.error).toBeUndefined()
+
+      renderer.load()
+      renderer.onLoadDocumentSubject.error(new Error(`resource failed`))
+
+      await waitFor(0)
+
+      renderer.destroy()
+
+      expect(renderer.onUnloadCalls).toBe(2)
+      expect(unloadedItemIds).toEqual([`item-1`, `item-1`])
+
+      cleanup()
+    })
+  })
+
   describe(`when the load hook completes naturally`, () => {
     it(`does not abort and leaves no pending execution`, async () => {
       const { renderer, hookManager, cleanup } = createHarness()
