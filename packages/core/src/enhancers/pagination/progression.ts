@@ -79,7 +79,7 @@ export const getPercentageEstimate = (
 
       let totalProgress = estimateBeforeThisItem + progressWithinThisItem
 
-      if (manifest.renditionFlow === `scrolled-continuous`) {
+      if (reader.settings.values.computedPageTurnMode === `scrollable`) {
         if (itemIsReady) {
           progressWithinThisItem = getScrollPercentageWithinItem(
             reader,

@@ -12,6 +12,7 @@ import {
 } from "./helpers"
 import { getSpineItemPageIndexFromSpineItemPosition } from "./layout/getSpineItemPageIndexFromSpineItemPosition"
 import { getSpineItemPositionFromPageIndex } from "./layout/getSpineItemPositionFromPageIndex"
+import { isLaidOutAsOneColumn } from "./layout/isLaidOutAsOneColumn"
 import type { SpineItem } from "./SpineItem"
 import { SpineItemPosition, UnboundSpineItemPagePosition } from "./types"
 
@@ -110,6 +111,11 @@ export const createSpineItemLocator = ({
    * content after it is: a hidden page-break marker is on the page it breaks
    * to. With nothing rendered after it, it is past everything shown, on the
    * item's last page.
+   *
+   * An item laid out as one column is scrolled through, not paginated: the
+   * node is where it is down the column, and past everything shown is the
+   * column's last screen. The item and its document start together, and the
+   * document never scrolls within its frame.
    */
   const getSpineItemPositionFromNode = (
     node: Node,
@@ -118,6 +124,19 @@ export const createSpineItemLocator = ({
   ) => {
     const renderedRect =
       getRenderedRectOfNode(node, offset) ?? getRenderedRectAfterNode(node)
+    const isInOneColumn = isLaidOutAsOneColumn({
+      computedPageTurnMode: settings.values.computedPageTurnMode,
+      renditionLayout: spineItem.renditionLayout,
+      isUsingVerticalWriting: !!spineItem.isUsingVerticalWriting(),
+    })
+
+    if (isInOneColumn)
+      return new SpineItemPosition({
+        x: 0,
+        y:
+          renderedRect?.y ??
+          Math.max(0, spineItem.layoutInfo.height - viewport.pageSize.height),
+      })
 
     if (!renderedRect)
       return getSpineItemPositionFromPageIndex({
@@ -177,7 +196,7 @@ export const createSpineItemLocator = ({
       pageWidth: viewport.pageSize.width,
       pageHeight: viewport.pageSize.height,
       pageTurnDirection: settings.values.computedPageTurnDirection,
-      pageTurnMode: settings.values.pageTurnMode,
+      pageTurnMode: settings.values.computedPageTurnMode,
     })
   }
 
@@ -251,7 +270,7 @@ export const createSpineItemLocator = ({
         pageWidth: viewport.pageSize.width,
         pageHeight: viewport.pageSize.height,
         pageTurnDirection: settings.values.computedPageTurnDirection,
-        pageTurnMode: settings.values.pageTurnMode,
+        pageTurnMode: settings.values.computedPageTurnMode,
       }),
     getSpineItemPageIndexFromNode,
     getSpineItemClosestPositionFromUnsafePosition,

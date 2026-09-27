@@ -9,6 +9,7 @@ import {
   buildStyleForReflowableImageOnly,
   buildStyleForViewportFrame,
   buildStyleWithMultiColumn,
+  buildStyleWithOneColumn,
 } from "./styles"
 
 const getDimensionsForReflowableContent = ({
@@ -55,11 +56,11 @@ const staticLayout = (
 }
 
 export const renderReflowable = ({
-  pageHeight: pageSizeHeight,
+  pageHeight,
   pageWidth,
   frameElement,
   manifest,
-  renditionFlow,
+  isLaidOutAsOneColumn,
   minPageSpread,
   isRTL,
   blankPagePosition,
@@ -72,7 +73,11 @@ export const renderReflowable = ({
   pageHeight: number
   frameElement: HTMLIFrameElement
   manifest: Manifest
-  renditionFlow?: Manifest["renditionFlow"]
+  /**
+   * Read by scrolling: one column as tall as its content, rather than
+   * paginated.
+   */
+  isLaidOutAsOneColumn: boolean
   minPageSpread: number
   isRTL: boolean
   isImageType: boolean
@@ -80,36 +85,19 @@ export const renderReflowable = ({
   isUsingVerticalWriting: boolean
 }) => {
   const minimumWidth = minPageSpread * pageWidth
-  const continuousScrollableReflowableItem =
-    manifest.renditionLayout === "reflowable" &&
-    renditionFlow === "scrolled-continuous"
-
-  /**
-   * In case of reflowable with continuous scrolling, we don't know if the content is
-   * bigger or smaller than the page size, therefore we find a middle ground to have
-   * a pre-load page that is not too big nor too small to prevent weird jumping
-   * once the frame load.
-   *
-   * We also use a minimum height still because we don't want all of the items to
-   * preload since they would be in the current viewport.
-   *
-   * @todo make it a setting
-   */
-  const pageHeight = continuousScrollableReflowableItem
-    ? Math.min(400, pageSizeHeight)
-    : pageSizeHeight
 
   // reset width of iframe to be able to retrieve real size later
   setStylePropertyIfChanged(frameElement.style, `width`, `${pageWidth}px`)
 
   /**
-   * In case of reflowable with continuous scrolling, we let the frame takes whatever height
-   * it needs since it could be less or more than page size and we want a continuous reading
+   * A document laid out as one column takes the height of its content, which
+   * can be less or more than a page: the frame has none of its own while it is
+   * measured.
    */
-  if (!continuousScrollableReflowableItem) {
-    setStylePropertyIfChanged(frameElement.style, `height`, `${pageHeight}px`)
-  } else {
+  if (isLaidOutAsOneColumn) {
     removeStylePropertyIfPresent(frameElement.style, `height`)
+  } else {
+    setStylePropertyIfChanged(frameElement.style, `height`, `${pageHeight}px`)
   }
 
   const { viewportDimensions, computedScale = 1 } =
@@ -170,17 +158,19 @@ export const renderReflowable = ({
     } else {
       const frameStyle = isImageType
         ? buildStyleForReflowableImageOnly({
-            isScrollable: renditionFlow === `scrolled-continuous`,
+            isScrollable: isLaidOutAsOneColumn,
             enableTouch,
           })
-        : buildStyleWithMultiColumn(
-            getDimensionsForReflowableContent({
-              isUsingVerticalWriting: isUsingVerticalWriting,
-              minimumWidth,
-              pageHeight,
-              pageWidth,
-            }),
-          )
+        : isLaidOutAsOneColumn
+          ? buildStyleWithOneColumn()
+          : buildStyleWithMultiColumn(
+              getDimensionsForReflowableContent({
+                isUsingVerticalWriting: isUsingVerticalWriting,
+                minimumWidth,
+                pageHeight,
+                pageWidth,
+              }),
+            )
 
       upsertCSSToFrame(frameElement, `prose-reader-css`, frameStyle, true)
 
@@ -195,17 +185,24 @@ export const renderReflowable = ({
           width: minimumWidth,
           height: contentHeight,
         })
-      } else if (renditionFlow === `scrolled-continuous`) {
+      } else if (isLaidOutAsOneColumn) {
         /**
-         * We take body content here because the frame body might be smaller after
-         * layout due to possible image content and image ratio. We need to be able
-         * to retrieve the actual real body height. The window height is probably the same
-         * as the current frame set height which may be wrong after resize.
+         * The height of everything the document shows, its margins and those
+         * of its content included: that of its scrolling element, the root in
+         * standards mode and the body in quirks mode, where the page generated
+         * for an image is. The frame has no height of its own at this point,
+         * only the browser's default one, so the height is the content's
+         * whatever the frame had before, or that default for a shorter
+         * document.
          */
-        contentHeight = frameElement.contentDocument.body.scrollHeight
+        const { scrollingElement, documentElement } =
+          frameElement.contentDocument
+
+        contentWidth = minimumWidth
+        contentHeight = (scrollingElement ?? documentElement).scrollHeight
 
         staticLayout(frameElement, {
-          width: minimumWidth,
+          width: contentWidth,
           height: contentHeight,
         })
       } else {

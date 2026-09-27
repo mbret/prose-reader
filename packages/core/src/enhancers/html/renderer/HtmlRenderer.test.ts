@@ -4,7 +4,7 @@ import {
   Document as HappyDOMDocument,
   type Window as HappyDOMWindow,
 } from "happy-dom"
-import { of } from "rxjs"
+import { firstValueFrom, of } from "rxjs"
 import {
   afterAll,
   afterEach,
@@ -291,6 +291,40 @@ describe(`HtmlRenderer`, () => {
       second?.load()
 
       await waitForLoaded()
+    })
+
+    it(`gives no size of its own to lay out until it is loaded, although it is in the frame before`, async () => {
+      const {
+        load,
+        waitForStylesheetRequests,
+        waitForLoaded,
+        renderer,
+        getDocument,
+      } = setup({ documentHref: `file://EPUB/chapter.xhtml`, resources })
+      const layOut = () =>
+        firstValueFrom(
+          renderer.layout({
+            minPageSpread: 1,
+            blankPagePosition: `none`,
+            spreadPosition: `none`,
+            minimumWidth: 0,
+          }),
+        )
+
+      load(documentWith(head))
+
+      const [first, second] = await waitForStylesheetRequests(2)
+
+      expect(getDocument()?.querySelector(`p`)?.textContent).toBe(`content`)
+      expect(renderer.value.loadStatus).toBe(`loading`)
+      expect(await layOut()).toBeUndefined()
+
+      first?.load()
+      second?.load()
+
+      await waitForLoaded()
+
+      expect(await layOut()).toBeDefined()
     })
 
     it(`loads without one that fails`, async () => {

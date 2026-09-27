@@ -14,6 +14,7 @@ import {
 } from "rxjs"
 import type { SettingsInterface } from "../../settings/SettingsInterface"
 import type { Pages } from "../../spine/Pages"
+import { isLaidOutAsOneColumn } from "../../spineItem/layout/isLaidOutAsOneColumn"
 import {
   setAttributeIfChanged,
   setStylePropertyIfChanged,
@@ -129,46 +130,67 @@ export const layoutEnhancer =
         settingsManager.values
       const pageSize = reader.viewport.pageSize
 
-      if (spineItem?.renditionLayout === `reflowable` && !isImageType) {
-        let columnWidth = pageSize.width - pageHorizontalMargin * 2
-        const columnHeight = pageSize.height - pageVerticalMargin * 2
-        let width = pageSize.width - pageHorizontalMargin * 2
-        let columnGap = pageHorizontalMargin * 2
+      const frame = spineItem?.renderer.getDocumentFrame()
 
-        if (spineItem.isUsingVerticalWriting()) {
-          width = pageSize.width - pageHorizontalMargin * 2
-          columnWidth = columnHeight
-          columnGap = pageVerticalMargin * 2
-        }
+      if (spineItem?.renditionLayout !== `reflowable` || isImageType || !frame)
+        return
 
-        const frame = spineItem?.renderer.getDocumentFrame()
+      const margin = `${pageVerticalMargin}px ${pageHorizontalMargin}px`
 
-        if (frame) {
-          upsertCSSToFrame(
-            frame,
-            `prose-layout-enhancer-css`,
-            `
-              body {
-                width: ${width}px !important;
-                margin: ${pageVerticalMargin}px ${pageHorizontalMargin}px !important;
-                column-gap: ${columnGap}px !important;
-                column-width: ${columnWidth}px !important;
-                height: ${columnHeight}px !important;
-              }
-              img, video, audio, object, svg {
-                -max-width: ${columnWidth}px !important;
-                -max-height: ${columnHeight}px !important;
-              }
-              table {
-                max-width: ${columnWidth}px !important;
-              }
-              td {
-                max-width: ${columnWidth}px;
-              }
-            `,
-          )
-        }
+      /**
+       * One column, as tall as its content, only takes the margins: at the
+       * sides of the text, and before and after it.
+       */
+      if (
+        isLaidOutAsOneColumn({
+          computedPageTurnMode: reader.settings.values.computedPageTurnMode,
+          renditionLayout: spineItem.renditionLayout,
+          isUsingVerticalWriting: !!spineItem.isUsingVerticalWriting(),
+        })
+      ) {
+        upsertCSSToFrame(
+          frame,
+          `prose-layout-enhancer-css`,
+          `
+            body {
+              margin: ${margin} !important;
+            }
+          `,
+        )
+
+        return
       }
+
+      let columnWidth = pageSize.width - pageHorizontalMargin * 2
+      const columnHeight = pageSize.height - pageVerticalMargin * 2
+      let width = pageSize.width - pageHorizontalMargin * 2
+      let columnGap = pageHorizontalMargin * 2
+
+      if (spineItem.isUsingVerticalWriting()) {
+        width = pageSize.width - pageHorizontalMargin * 2
+        columnWidth = columnHeight
+        columnGap = pageVerticalMargin * 2
+      }
+
+      upsertCSSToFrame(
+        frame,
+        `prose-layout-enhancer-css`,
+        `
+          body {
+            width: ${width}px !important;
+            margin: ${margin} !important;
+            column-gap: ${columnGap}px !important;
+            column-width: ${columnWidth}px !important;
+            height: ${columnHeight}px !important;
+          }
+          table {
+            max-width: ${columnWidth}px !important;
+          }
+          td {
+            max-width: ${columnWidth}px;
+          }
+        `,
+      )
     })
 
     fixReflowable(reader)

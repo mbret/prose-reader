@@ -22,6 +22,15 @@ export type CoreInputSettings = {
   pageTurnAnimation: `none` | `fade` | `slide`
   pageTurnAnimationDuration: undefined | number
   pageTurnDirection: `vertical` | `horizontal`
+  /**
+   * How the reader moves through the book.
+   * - `controlled`: page by page.
+   * - `scrollable`: by scrolling down, reflowable text laid out as one column
+   *   per chapter, as tall as its content.
+   *
+   * A book whose `rendition:flow` is `scrolled-continuous` is always scrolled.
+   * What the reader does is `computedPageTurnMode`.
+   */
   pageTurnMode: `controlled` | `scrollable`
   snapAnimationDuration: number
   navigationSnapThreshold:

@@ -18,6 +18,11 @@ export type InputSettings = {
    * for example.
    */
   pageTurnDirection: `vertical` | `horizontal`
+  /**
+   * How the reader moves through the book: `controlled` page by page,
+   * `scrollable` by scrolling down. A book whose `rendition:flow` is
+   * `scrolled-continuous` is always scrolled.
+   */
   pageTurnMode: `controlled` | `scrollable`
   snapAnimationDuration: number
   navigationSnapThreshold:

@@ -1,5 +1,6 @@
 import { detectMimeTypeFromName } from "@prose-reader/shared"
 import { from, map, of, switchMap, tap } from "rxjs"
+import { isLaidOutAsOneColumn } from "../../../spineItem/layout/isLaidOutAsOneColumn"
 import { DocumentRenderer } from "../../../spineItem/renderer/DocumentRenderer"
 import { isHtmlTagElement, setAttributeIfChanged } from "../../../utils/dom"
 import {
@@ -98,7 +99,14 @@ export class HtmlRenderer extends DocumentRenderer {
     const { width: pageWidth, height: pageHeight } = this.viewport.pageSize
     const frameElement = this.getFrameElement()
 
-    if (!frameElement) return of(undefined)
+    /**
+     * Only a loaded document is measured. Before, the frame holds the blank
+     * one it starts with, or part of it, and a document leaving is about to
+     * go: the item keeps the size it had rather than take theirs. The spine is
+     * laid out again once a load ends.
+     */
+    if (!frameElement || this.value.loadStatus !== `loaded`)
+      return of(undefined)
 
     /**
      * When we have scrollable content, we use "native" touch event from the frame instead of
@@ -147,8 +155,11 @@ export class HtmlRenderer extends DocumentRenderer {
       pageWidth,
       frameElement,
       manifest: this.context.manifest,
-      renditionFlow:
-        this.item.renditionFlow ?? this.context.manifest.renditionFlow,
+      isLaidOutAsOneColumn: isLaidOutAsOneColumn({
+        computedPageTurnMode: this.settings.values.computedPageTurnMode,
+        renditionLayout: this.renditionLayout,
+        isUsingVerticalWriting,
+      }),
       blankPagePosition,
       isUsingVerticalWriting,
       isRTL: this.context.isRTL(),

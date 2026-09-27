@@ -240,7 +240,7 @@ export class SpineItem extends ReactiveEntity<SpineItemState> {
       pageWidth: this.viewport.pageSize.width,
       pageHeight: this.viewport.pageSize.height,
       pageTurnDirection: this.settings.values.computedPageTurnDirection,
-      pageTurnMode: this.settings.values.pageTurnMode,
+      pageTurnMode: this.settings.values.computedPageTurnMode,
     })
   }
 

@@ -1,5 +1,9 @@
 import { createArchiveFromJszip } from "@prose-reader/archive-reader/archives/createArchiveFromJszip"
-import { createReader, type ReadingPosition } from "@prose-reader/core"
+import {
+  createReader,
+  type Manifest,
+  type ReadingPosition,
+} from "@prose-reader/core"
 import { Streamer } from "@prose-reader/streamer"
 import { loadAsync } from "jszip"
 import { from } from "rxjs"
@@ -26,12 +30,20 @@ async function run() {
   const manifestResponse = await streamer.fetchManifest({
     key: `_`,
   })
-  const manifest = await manifestResponse.json()
+  const bookManifest: Manifest = await manifestResponse.json()
 
   const query = new URLSearchParams(window.location.search)
   const cfi = query.get("cfi")
   const preload = query.get("preload")
   const pageHorizontalMargin = query.get("pageHorizontalMargin")
+  const pageTurnMode = query.get("pageTurnMode")
+  const renditionFlow = query.get("renditionFlow")
+
+  // The book as if it declared `rendition:flow` `scrolled-continuous`.
+  const manifest: Manifest =
+    renditionFlow === "scrolled-continuous"
+      ? { ...bookManifest, renditionFlow }
+      : bookManifest
 
   const reader = createReader({
     manifest,
@@ -42,6 +54,7 @@ async function run() {
     ...(pageHorizontalMargin !== null && {
       pageHorizontalMargin: Number(pageHorizontalMargin),
     }),
+    ...(pageTurnMode === "scrollable" && { pageTurnMode }),
     pageTurnAnimation: "none",
     layoutLayerTransition: false,
     getResource: (item) => {

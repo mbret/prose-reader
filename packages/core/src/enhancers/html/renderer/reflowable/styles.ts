@@ -104,6 +104,57 @@ export const buildStyleForReflowableImageOnly = ({
  * Item is:
  * - regular html document
  * - does not contain defined width/height viewport
+ * - read by scrolling
+ *
+ * It is laid out as one column, as tall as its content. The frame takes the
+ * document's height, so the document never scrolls within it. Nothing blocks
+ * touch: the frame is scrolled natively.
+ *
+ * @important
+ * The style here does not take margins into account, we assume everything is 0.
+ * It is being handled by enhancer.
+ */
+export const buildStyleWithOneColumn = () => {
+  return `
+      parsererror {
+        display: none !important;
+      }
+      html, body {
+        margin: 0;
+        padding: 0 !important;
+        height: auto !important;
+      }
+      body {
+        word-wrap: break-word;
+        box-sizing: border-box;
+      }
+      body:focus-visible {
+        ${
+          /*
+          we make sure that there are no outline when we focus something inside the iframe
+        */ ``
+        }
+        outline: none;
+      }
+      img, video, audio, object, svg {
+        max-width: 100%;
+      }
+      img {
+        object-fit: contain;
+        box-sizing: border-box;
+      }
+      table {
+        max-width: 100% !important;
+        table-layout: fixed;
+      }
+    `
+}
+
+/**
+ * Item is:
+ * - regular html document
+ * - does not contain defined width/height viewport
+ * - read by turning pages
  *
  * We use css multi column to paginate it
  *
