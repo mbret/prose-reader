@@ -102,13 +102,13 @@ export const createPlaceholderPages = (
 
       if (!isHtmlElement(detailsElement)) return
 
-      const { loadStatus, error } = item.value
+      const { loadStatus, loadError } = item.value
 
       setPropertyIfChanged(
         detailsElement,
         `innerText`,
         loadStatus === "error"
-          ? (error?.toString() ?? `Unknown error`)
+          ? (loadError?.toString() ?? `Unknown error`)
           : `loading ${item.item.id}`,
       )
     }),

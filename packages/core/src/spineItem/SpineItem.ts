@@ -26,7 +26,7 @@ export type SpineItemState = {
    */
   isReady: boolean
   /** Why the load failed, while `loadStatus` is `error`. */
-  error: unknown | undefined
+  loadError: unknown | undefined
   /**
    * - Layout has been requested
    * - Item layout not done yet
@@ -61,7 +61,7 @@ export class SpineItem extends ReactiveEntity<SpineItemState> {
       loadStatus: "idle",
       isReady: false,
       isDirty: false,
-      error: undefined,
+      loadError: undefined,
     })
 
     this.containerElement = createContainerElement(item, context.document)
@@ -95,8 +95,8 @@ export class SpineItem extends ReactiveEntity<SpineItemState> {
     )
 
     const updateStateOnLoadStatus$ = this.renderer.state$.pipe(
-      tap(({ loadStatus, error }) => {
-        this.updateState({ loadStatus, error })
+      tap(({ loadStatus, loadError }) => {
+        this.updateState({ loadStatus, loadError })
       }),
     )
 

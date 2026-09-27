@@ -16,12 +16,37 @@ import {
 } from "rxjs"
 import type { Context } from "../context/Context"
 import type { ReaderSettingsManager } from "../settings/ReaderSettingsManager"
+import type { DocumentLoadStatus } from "../spineItem/renderer/DocumentRenderer"
 import type { SpineItem } from "../spineItem/SpineItem"
 import { DestroyableClass } from "../utils/DestroyableClass"
 import type { Viewport } from "../viewport/Viewport"
 import type { SpineItemsManager } from "./SpineItemsManager"
 import type { SpineItemsObserver } from "./SpineItemsObserver"
 import { SpineItemSpineLayout } from "./types"
+
+/**
+ * Whether a change of an item's load status ends a load: its document
+ * loaded, failed to load, or was released. Its content changed, and so can
+ * its size and the positions after it.
+ *
+ * An unload of an item in error ends nothing: its failure released it
+ * already, and nothing changes.
+ */
+const endsALoad = ({
+  previousLoadStatus,
+  loadStatus,
+}: {
+  previousLoadStatus: DocumentLoadStatus
+  loadStatus: DocumentLoadStatus
+}) => {
+  const hasLoadFinished =
+    previousLoadStatus === "loading" &&
+    (loadStatus === "loaded" || loadStatus === "error")
+  const hasDocumentBeenReleased =
+    previousLoadStatus === "unloading" && loadStatus === "idle"
+
+  return hasLoadFinished || hasDocumentBeenReleased
+}
 
 export type SpineLayoutOptions = {
   immediate?: boolean
@@ -61,22 +86,12 @@ export class SpineLayout extends DestroyableClass {
     super()
 
     /**
-     * An item's load ended: its document loaded, failed to load, or was
-     * released. Its content changed, and so can its size and the positions
-     * after it. A failed load ends a load as the other two do, with what it
-     * created released, and a layout is what restores the navigation and
-     * settles pagination on the item in error.
-     *
-     * An unload of an item in error ends nothing: its failure released it
-     * already, and nothing changes to lay out again.
+     * A failed load ends a load as the other two do, with what it created
+     * released, and a layout is what restores the navigation and settles
+     * pagination on the item in error.
      */
     const spineItemNeedsLayout$ = spineItemsObserver.itemLoadStatusChange$.pipe(
-      filter(
-        ({ previousLoadStatus, loadStatus }) =>
-          (previousLoadStatus === "loading" &&
-            (loadStatus === "loaded" || loadStatus === "error")) ||
-          (previousLoadStatus === "unloading" && loadStatus === "idle"),
-      ),
+      filter(endsALoad),
       map(
         (): SpineLayoutOptions => ({
           immediate: false,

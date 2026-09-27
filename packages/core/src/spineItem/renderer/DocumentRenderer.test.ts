@@ -572,7 +572,7 @@ describe(`DocumentRenderer`, () => {
       // The failure is the renderer's state, and what the load created is
       // released, as an unload would.
       expect(renderer.value.loadStatus).toBe(`error`)
-      expect(renderer.value.error).toBe(loadError)
+      expect(renderer.value.loadError).toBe(loadError)
       expect(unloadedItemIds).toEqual([`item-1`])
       expect(renderer.onUnloadCalls).toBe(1)
 
@@ -638,7 +638,7 @@ describe(`DocumentRenderer`, () => {
       await waitFor(0)
 
       expect(renderer.value.loadStatus).toBe(`idle`)
-      expect(renderer.value.error).toBeUndefined()
+      expect(renderer.value.loadError).toBeUndefined()
 
       renderer.load()
       renderer.onLoadDocumentSubject.error(new Error(`resource failed`))

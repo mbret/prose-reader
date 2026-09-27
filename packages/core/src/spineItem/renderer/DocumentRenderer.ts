@@ -64,7 +64,7 @@ export type DocumentLoadStatus =
 type DocumentRendererState = {
   loadStatus: DocumentLoadStatus
   /** Why the load failed, while `loadStatus` is `error`. */
-  error: unknown | undefined
+  loadError: unknown | undefined
   documentContainer: HTMLElement | undefined
 }
 
@@ -88,7 +88,7 @@ export abstract class DocumentRenderer extends ReactiveEntity<DocumentRendererSt
   constructor(params: DocumentRendererParams) {
     super({
       loadStatus: `idle`,
-      error: undefined,
+      loadError: undefined,
       documentContainer: undefined,
     })
 
@@ -101,7 +101,7 @@ export abstract class DocumentRenderer extends ReactiveEntity<DocumentRendererSt
     this.viewport = params.viewport
 
     const createAndLoadDocument$ = defer(() => {
-      this.mergeCompare({ loadStatus: `loading`, error: undefined })
+      this.mergeCompare({ loadStatus: `loading`, loadError: undefined })
 
       return this.onCreateDocument()
     }).pipe(
@@ -129,7 +129,7 @@ export abstract class DocumentRenderer extends ReactiveEntity<DocumentRendererSt
         )
       }),
       map(() => {
-        this.mergeCompare({ loadStatus: `loaded`, error: undefined })
+        this.mergeCompare({ loadStatus: `loaded`, loadError: undefined })
       }),
       /**
        * A load that fails leaves the renderer in `error`, with what it
@@ -139,7 +139,7 @@ export abstract class DocumentRenderer extends ReactiveEntity<DocumentRendererSt
       catchError((error) => {
         Report.error(`Error loading document`, error)
         this.releaseDocument()
-        this.mergeCompare({ loadStatus: `error`, error })
+        this.mergeCompare({ loadStatus: `error`, loadError: error })
 
         return EMPTY
       }),
@@ -152,18 +152,18 @@ export abstract class DocumentRenderer extends ReactiveEntity<DocumentRendererSt
      */
     const unload$ = defer(() => {
       if (!this.holdsDocument) {
-        this.mergeCompare({ loadStatus: `idle`, error: undefined })
+        this.mergeCompare({ loadStatus: `idle`, loadError: undefined })
 
         return EMPTY
       }
 
-      this.mergeCompare({ loadStatus: `unloading`, error: undefined })
+      this.mergeCompare({ loadStatus: `unloading`, loadError: undefined })
 
       return this.context.bridgeEvent.viewportFree$.pipe(
         first(),
         map(() => {
           this.releaseDocument()
-          this.mergeCompare({ loadStatus: `idle`, error: undefined })
+          this.mergeCompare({ loadStatus: `idle`, loadError: undefined })
         }),
       )
     })
