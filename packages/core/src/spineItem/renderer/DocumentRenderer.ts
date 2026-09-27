@@ -9,6 +9,7 @@ import {
   filter,
   finalize,
   first,
+  ignoreElements,
   map,
   mergeMap,
   type Observable,
@@ -54,7 +55,10 @@ type DocumentRendererState = {
 export abstract class DocumentRenderer extends ReactiveEntity<DocumentRendererState> {
   static readonly DOCUMENT_CONTAINER_CLASS_NAME =
     `prose-reader-document-container`
-  /** Every `load()` and `unload()`, in the order they are asked for. */
+  /**
+   * Every `load()` and `unload()`, in the order they are asked for, until
+   * `destroy()` ends them.
+   */
   private documentRequestSubject = new Subject<`load` | `unload`>()
 
   protected viewport: Viewport
@@ -65,18 +69,10 @@ export abstract class DocumentRenderer extends ReactiveEntity<DocumentRendererSt
   protected containerElement: HTMLElement
   protected resourcesHandler: ResourceHandler
 
-  public loaded$: Observable<void>
-  public unloaded$: Observable<void>
+  public readonly loaded$: Observable<void>
+  public readonly unloaded$: Observable<void>
 
-  constructor(params: {
-    context: Context
-    settings: ReaderSettingsManager
-    hookManager: HookManager
-    item: Manifest[`spineItems`][number]
-    containerElement: HTMLElement
-    resourcesHandler: ResourceHandler
-    viewport: Viewport
-  }) {
+  constructor(params: DocumentRendererParams) {
     super({
       state: `idle`,
       error: undefined,
@@ -90,24 +86,6 @@ export abstract class DocumentRenderer extends ReactiveEntity<DocumentRendererSt
     this.containerElement = params.containerElement
     this.resourcesHandler = params.resourcesHandler
     this.viewport = params.viewport
-
-    /**
-     * Releases the document once the viewport is free, so the release does
-     * not compete with a navigation.
-     */
-    const releaseDocumentWhenViewportFree$ = defer(() => {
-      this.mergeCompare({ state: `unloading`, error: undefined })
-
-      return this.context.bridgeEvent.viewportFree$.pipe(
-        first(),
-        map(() => {
-          this.releaseDocument()
-          this.mergeCompare({ state: `idle`, error: undefined })
-
-          return `unloaded` as const
-        }),
-      )
-    })
 
     const createAndLoadDocument$ = defer(() => {
       this.mergeCompare({ state: `loading`, error: undefined })
@@ -158,27 +136,42 @@ export abstract class DocumentRenderer extends ReactiveEntity<DocumentRendererSt
     )
 
     /**
-     * A renderer holds one document at a time: a load asked for while the
-     * document waits for the viewport to release it waits for that release,
-     * then creates a new one.
-     */
-    const load$ = defer(() =>
-      this.holdsDocument
-        ? concat(releaseDocumentWhenViewportFree$, createAndLoadDocument$)
-        : createAndLoadDocument$,
-    )
-
-    /**
-     * Without a document there is nothing to release: none was loaded, or its
-     * failed load released it.
+     * Releases the document once the viewport is free, so the release does
+     * not compete with a navigation. Without a document there is nothing to
+     * release: none was loaded, or its failed load released it.
      */
     const unload$ = defer(() => {
-      if (this.holdsDocument) return releaseDocumentWhenViewportFree$
+      if (!this.holdsDocument) {
+        this.mergeCompare({ state: `idle`, error: undefined })
 
-      this.mergeCompare({ state: `idle`, error: undefined })
+        return EMPTY
+      }
 
-      return EMPTY
+      this.mergeCompare({ state: `unloading`, error: undefined })
+
+      return this.context.bridgeEvent.viewportFree$.pipe(
+        first(),
+        map(() => {
+          this.releaseDocument()
+          this.mergeCompare({ state: `idle`, error: undefined })
+
+          return `unloaded` as const
+        }),
+      )
     })
+
+    /**
+     * A renderer holds one document at a time: a load unloads what is held
+     * first, so a load asked for while the document waits for the viewport to
+     * release it waits for that release, then creates a new one.
+     */
+    const load$ = concat(unload$, createAndLoadDocument$)
+
+    /** Emits once `destroy()` has ended the requests. */
+    const endOfRequests$ = this.documentRequestSubject.pipe(
+      ignoreElements(),
+      endWith(null),
+    )
 
     const documentLifecycle$ = this.documentRequestSubject.pipe(
       /**
@@ -194,10 +187,11 @@ export abstract class DocumentRenderer extends ReactiveEntity<DocumentRendererSt
        */
       switchMap((request) => (request === `load` ? load$ : unload$)),
       /**
-       * Before `share`, so the lifecycle ends with the renderer even while
-       * something listens to its `loaded$` or `unloaded$`.
+       * Once the requests end, what runs for the last one stops as well,
+       * whoever listens to `loaded$` or `unloaded$`: a load in progress, or a
+       * release waiting for the viewport.
        */
-      takeUntil(this.destroy$),
+      takeUntil(endOfRequests$),
       share(),
     )
 
@@ -331,20 +325,22 @@ export abstract class DocumentRenderer extends ReactiveEntity<DocumentRendererSt
   public destroy() {
     if (this.isDestroyed) return
 
-    const holdsDocument = this.holdsDocument
-
     /**
-     * The lifecycle ends first: a load in progress, or a release waiting for
-     * the viewport, stops there. Destroy then releases what is held itself,
-     * synchronously, so resources (eg: blob urls) are released
-     * deterministically. The unload hook runs before onUnload tears the
-     * document down, so it still observes the live document even though the
-     * caller detaches the container right after destroy returns.
+     * Ends the requests first: a load in progress, or a release waiting for
+     * the viewport, stops, and a request made from here on changes nothing.
      */
-    super.destroy()
     this.documentRequestSubject.complete()
 
-    if (holdsDocument) this.releaseDocument()
+    /**
+     * Then releases what is held at once, rather than once the viewport is
+     * free, so resources (eg: blob urls) are released deterministically: the
+     * caller detaches the container right after, and the unload hooks still
+     * observe the live document. The state has not completed yet, so what
+     * observes it sees the document go. The spine is not laid out for it.
+     */
+    if (this.holdsDocument) this.releaseDocument()
+
+    super.destroy()
   }
 
   abstract onRenderHeadless(params: {

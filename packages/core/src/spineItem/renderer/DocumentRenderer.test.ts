@@ -297,6 +297,36 @@ describe(`DocumentRenderer`, () => {
       cleanup()
       expectEveryDocumentReleasedOnce()
     })
+
+    it(`lets what observes the document container see it go, before the state completes`, async () => {
+      const { renderer, cleanup, expectEveryDocumentReleasedOnce } =
+        createHarness()
+
+      renderer.load()
+      await completeDocumentLoad(renderer)
+
+      const observedDocumentContainers: Array<string | undefined> = []
+      let isDocumentContainerWatchComplete = false
+
+      renderer.watch(`documentContainer`).subscribe({
+        next: (documentContainer) => {
+          observedDocumentContainers.push(documentContainer?.id)
+        },
+        complete: () => {
+          isDocumentContainerWatchComplete = true
+        },
+      })
+
+      renderer.destroy()
+
+      // A view rendered into the container, as react-reader's audio items
+      // are, is removed rather than left in a released container.
+      expect(observedDocumentContainers).toEqual([`document-1`, undefined])
+      expect(isDocumentContainerWatchComplete).toBe(true)
+
+      cleanup()
+      expectEveryDocumentReleasedOnce()
+    })
   })
 
   describe(`when a renderer that keeps no document container is destroyed while loaded`, () => {
@@ -370,6 +400,30 @@ describe(`DocumentRenderer`, () => {
       setViewportState(`free`)
 
       expect(renderer.releasedDocuments).toEqual([`document-1`])
+
+      cleanup()
+      expectEveryDocumentReleasedOnce()
+    })
+  })
+
+  describe(`when a load is asked for while destroy releases the document`, () => {
+    it(`creates no document, and releases the document once`, async () => {
+      const {
+        renderer,
+        hookManager,
+        cleanup,
+        expectEveryDocumentReleasedOnce,
+      } = createHarness()
+
+      hookManager.register(`item.onDocumentUnload`, () => {
+        renderer.load()
+      })
+
+      renderer.load()
+      await completeDocumentLoad(renderer)
+      renderer.destroy()
+
+      expect(renderer.createdDocuments).toEqual([`document-1`])
 
       cleanup()
       expectEveryDocumentReleasedOnce()
