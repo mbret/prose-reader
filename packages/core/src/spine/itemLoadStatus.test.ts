@@ -1,13 +1,19 @@
 // @vitest-environment jsdom
 import { isShallowEqual } from "@prose-reader/shared"
+import { filter, first } from "rxjs"
 import { describe, expect, it, vi } from "vitest"
-import type { DocumentLoadStatus } from "../spineItem/renderer/DocumentRenderer"
+import type {
+  DocumentLoadStatus,
+  DocumentRendererParams,
+} from "../spineItem/renderer/DocumentRenderer"
 import {
   createTestReader,
   installReaderTestEnvironment,
   mountTestReader,
   settledOn,
+  TextDocumentRenderer,
 } from "../tests/readerHarness"
+import { isDefined } from "../utils/isDefined"
 
 installReaderTestEnvironment()
 
@@ -125,5 +131,53 @@ describe("the spine", () => {
     await settledOn(reader, 0)
 
     expect(outdatedStates).toEqual([])
+  })
+
+  it("reads an item's writing mode from its document as it loads, even when the document is released at once", async () => {
+    /**
+     * Written vertically. The writing mode is read from the document, as the
+     * html renderer reads its computed style, so there is none once the
+     * document is released.
+     */
+    class VerticalTextDocumentRenderer extends TextDocumentRenderer {
+      get writingMode(): "vertical-rl" | undefined {
+        return this.getDocumentFrame() ? "vertical-rl" : undefined
+      }
+    }
+
+    // Only the item at the position loads.
+    const reader = createTestReader({
+      getRenderer: () => (props: DocumentRendererParams) =>
+        new VerticalTextDocumentRenderer(props),
+      numberOfAdjacentSpineItemToPreLoad: 0,
+    })
+    const item = reader.spineItemsManager.get(0)
+
+    if (!item) throw new Error("no first item")
+
+    const verticalWritingFlags: boolean[] = []
+    reader.context
+      .watch("hasVerticalWriting")
+      .pipe(filter(isDefined))
+      .subscribe((hasVerticalWriting) => {
+        verticalWritingFlags.push(hasVerticalWriting)
+      })
+
+    // Released as soon as it loads, in the same task: anything reading the
+    // document later finds none.
+    item
+      .watch("loadStatus")
+      .pipe(first((loadStatus) => loadStatus === "loaded"))
+      .subscribe(() => {
+        item.unload()
+      })
+
+    mountTestReader(reader)
+
+    await vi.waitFor(() =>
+      expect(verticalWritingFlags.length).toBeGreaterThan(0),
+    )
+
+    expect(verticalWritingFlags[0]).toBe(true)
   })
 })

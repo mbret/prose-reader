@@ -41,8 +41,8 @@ export class SpineItemsObserver extends DestroyableClass {
    * - `loading` to `loaded` or `error`: the document loaded, or failed to.
    * - `loading` or `loaded` to `unloading`: an unload starts, cancelling a
    *   load in progress.
-   * - `unloading` to `idle`: the document is released.
-   * - `unloading` to `loading`: a load comes while the release waits.
+   * - `unloading` to `idle`: the document is released. A load asked for
+   *   while the release waits starts once it is done, from `idle`.
    * - `error` to `idle`: an item in error is unloaded, with nothing left to
    *   release since its failure did.
    *

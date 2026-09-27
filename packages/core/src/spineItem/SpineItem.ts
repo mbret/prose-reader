@@ -9,7 +9,7 @@ import type { Viewport } from "../viewport/Viewport"
 import { getSpineItemNumberOfPages } from "./layout/getSpineItemNumberOfPages"
 import { DefaultRenderer } from "./renderer/DefaultRenderer"
 import type {
-  DocumentLoadStatus,
+  DocumentLoad,
   DocumentRenderer,
 } from "./renderer/DocumentRenderer"
 import { ResourceHandler } from "./resources/ResourceHandler"
@@ -17,16 +17,16 @@ import { SpineItemLayout } from "./SpineItemLayout"
 
 export type SpineItemReference = string | SpineItem | number
 
-export type SpineItemState = {
-  /** Where the load of the item's document stands, its renderer's. */
-  loadStatus: DocumentLoadStatus
+/**
+ * `loadStatus` and `loadError` are the load of the item's document, its
+ * renderer's: a `loadError` goes only with `error`.
+ */
+export type SpineItemState = DocumentLoad & {
   /**
    * - Content has been loaded
    * - A first layout has been done
    */
   isReady: boolean
-  /** Why the load failed, while `loadStatus` is `error`. */
-  loadError: unknown | undefined
   /**
    * - Layout has been requested
    * - Item layout not done yet
@@ -95,8 +95,8 @@ export class SpineItem extends ReactiveEntity<SpineItemState> {
     )
 
     const updateStateOnLoadStatus$ = this.renderer.state$.pipe(
-      tap(({ loadStatus, loadError }) => {
-        this.updateState({ loadStatus, loadError })
+      tap(({ documentContainer: _documentContainer, ...load }) => {
+        this.updateState({ load })
       }),
     )
 
@@ -162,14 +162,26 @@ export class SpineItem extends ReactiveEntity<SpineItemState> {
    *
    * Readiness means the renderer is loaded *and* a layout completed for it.
    * The two halves are granted by different streams, so a writer that drops
-   * the document must not be able to leave readiness standing over it.
+   * the document must not be able to leave readiness standing over it. The
+   * load is written whole, its status with its error.
    */
-  private updateState(update: Partial<SpineItemState>) {
-    const nextState = { ...this.value, ...update }
+  private updateState(update: {
+    load?: DocumentLoad
+    isReady?: boolean
+    isDirty?: boolean
+  }) {
+    const {
+      isReady: currentIsReady,
+      isDirty: currentIsDirty,
+      ...currentLoad
+    } = this.value
+    const load = update.load ?? currentLoad
+    const isReady = update.isReady ?? currentIsReady
 
     this.mergeCompare({
-      ...nextState,
-      isReady: nextState.isReady && nextState.loadStatus === "loaded",
+      ...load,
+      isDirty: update.isDirty ?? currentIsDirty,
+      isReady: isReady && load.loadStatus === "loaded",
     })
   }
 

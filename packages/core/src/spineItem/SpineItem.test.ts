@@ -124,3 +124,24 @@ describe("SpineItem readiness", () => {
     reader.destroy()
   })
 })
+
+describe("SpineItemState", () => {
+  it("holds a load error only with the error status", () => {
+    const failed: SpineItemState = {
+      loadStatus: "error",
+      loadError: new Error("resource failed"),
+      isReady: false,
+      isDirty: false,
+    }
+    // @ts-expect-error a load error goes only with the `error` status
+    const loadedWithAnError: SpineItemState = {
+      loadStatus: "loaded",
+      loadError: new Error("resource failed"),
+      isReady: false,
+      isDirty: false,
+    }
+
+    // The type check is the test: both values only exist to be checked.
+    expect([failed, loadedWithAnError]).toHaveLength(2)
+  })
+})
