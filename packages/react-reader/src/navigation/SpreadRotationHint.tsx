@@ -28,8 +28,6 @@ const ANIMATION_NAME_IN_OUT = {
 }
 const ANIMATION_DURATION_IN_OUT = { base: "moderate", _motionReduce: "0ms" }
 
-type ViewportState = `busy` | `free`
-
 /**
  * Only these four values matter here, so they are projected flat and compared
  * as one object rather than as edges rebuilt on every result.
@@ -42,37 +40,6 @@ type HintPagination = {
 }
 
 type ReaderWithSpreadHintStreams = NonNullable<ReturnType<typeof useReader>>
-
-export const getSpreadRotationHintTargetKey = ({
-  pagination,
-  isSpread,
-  viewportState,
-  wouldSpreadWhenRotated,
-  isPanorama,
-}: {
-  pagination: HintPagination
-  /** Whether the viewport shows a spread now. */
-  isSpread: boolean
-  viewportState: ViewportState
-  /** Whether rotating the device would show one. */
-  wouldSpreadWhenRotated: boolean
-  isPanorama: boolean
-}) => {
-  if (viewportState !== `free`) return undefined
-  if (isSpread) return undefined
-  if (!wouldSpreadWhenRotated) return undefined
-
-  if (!isPanorama) return undefined
-
-  return [
-    pagination.beginSpineItemIndex,
-    pagination.beginPageIndexInSpineItem,
-    pagination.endSpineItemIndex,
-    pagination.endPageIndexInSpineItem,
-  ]
-    .map((value) => value ?? `none`)
-    .join(`:`)
-}
 
 const observeHintPagination = (reader: ReaderWithSpreadHintStreams) =>
   reader.pagination.state$.pipe(
@@ -113,15 +80,22 @@ const observeBeginSpineItem = ({
     ),
   )
 
+/**
+ * Identifies the pages the hint is shown for, so it shows once per page, and is
+ * `undefined` while it should not show. Only a cbz splits a double-page drawing
+ * into two panorama halves, so without its enhancer the hint never shows and
+ * nothing is observed.
+ */
 const observeSpreadRotationHintTargetKey = (
   reader: ReaderWithSpreadHintStreams,
-) => {
+): Observable<string | undefined> => {
+  if (!hasCbzEnhancer(reader)) return of(undefined)
+
   const pagination$ = observeHintPagination(reader)
   const beginSpineItem$ = observeBeginSpineItem({
     pagination$,
     reader,
   })
-  const cbzReader = hasCbzEnhancer(reader) ? reader : undefined
 
   return combineLatest([
     pagination$,
@@ -136,27 +110,31 @@ const observeSpreadRotationHintTargetKey = (
       ([
         pagination,
         viewportState,
-        { isSpread, ...viewport },
+        { isSpread, width, height },
         _spreadMode,
         { spineItem, isReady },
       ]) => {
-        const isPanorama =
-          isReady &&
-          cbzReader !== undefined &&
-          spineItem !== undefined &&
-          cbzReader.cbz.isPanoramaSpineItem(spineItem)
+        if (viewportState !== `free`) return undefined
+        if (isSpread) return undefined
 
-        return getSpreadRotationHintTargetKey({
-          pagination,
-          isSpread,
-          viewportState,
-          // the viewport's own size turned a quarter
-          wouldSpreadWhenRotated: reader.viewport.wouldSpreadAt({
-            width: viewport.height,
-            height: viewport.width,
-          }),
-          isPanorama,
+        // the viewport's own size turned a quarter
+        const wouldSpreadWhenRotated = reader.viewport.wouldSpreadAt({
+          width: height,
+          height: width,
         })
+
+        if (!wouldSpreadWhenRotated) return undefined
+        if (!isReady || !spineItem) return undefined
+        if (!reader.cbz.isPanoramaSpineItem(spineItem)) return undefined
+
+        return [
+          pagination.beginSpineItemIndex,
+          pagination.beginPageIndexInSpineItem,
+          pagination.endSpineItemIndex,
+          pagination.endPageIndexInSpineItem,
+        ]
+          .map((value) => value ?? `none`)
+          .join(`:`)
       },
     ),
     distinctUntilChanged(),
