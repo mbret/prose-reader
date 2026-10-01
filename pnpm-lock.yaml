@@ -265,8 +265,8 @@ importers:
         specifier: ^6.0.3
         version: 6.0.3
       gesturx:
-        specifier: ^1.11.1
-        version: 1.11.1(rxjs@7.8.2)
+        specifier: ^2.0.0
+        version: 2.0.0(rxjs@7.8.2)
       jszip:
         specifier: ^3.10.0
         version: 3.10.2
@@ -555,7 +555,7 @@ importers:
     devDependencies:
       gesturx:
         specifier: '*'
-        version: 1.11.1(rxjs@7.8.2)
+        version: 2.0.0(rxjs@7.8.2)
       rxjs:
         specifier: ^7.5.5
         version: 7.8.2
@@ -4383,8 +4383,8 @@ packages:
     resolution: {integrity: sha512-3hN7NaskYvMDLQY55gnW3NQ+mesEAepTqlg+VEbj7zzqEMBVNhzcGYYeqFo/TlYz6eQiFcp1HcsCZO+nGgS8zg==}
     engines: {node: '>=6.9.0'}
 
-  gesturx@1.11.1:
-    resolution: {integrity: sha512-5QHHE5htkLJRUbbdbvdUH06Q0WTwmrRdM68vESVaZvJ06Ex4KBN0DjU4vGVZwflt9EVEm0O4ZacDbBDmopEXDQ==}
+  gesturx@2.0.0:
+    resolution: {integrity: sha512-UtzDvorVuUqgOTX1Wz1CUB86/M9jkT6ufjlg0GkssoR/TKhptnH5PzP+aFvh8A0PgBmfrKlr0SnTLkzlVehp0w==}
     peerDependencies:
       rxjs: 7.x
 
@@ -9775,7 +9775,7 @@ snapshots:
 
   '@types/ws@8.18.1':
     dependencies:
-      '@types/node': 25.9.5
+      '@types/node': 26.6.2
 
   '@types/yargs-parser@21.0.3': {}
 
@@ -10835,7 +10835,7 @@ snapshots:
 
   buffer-image-size@0.6.4:
     dependencies:
-      '@types/node': 25.9.5
+      '@types/node': 26.6.2
 
   buffer@5.7.1:
     dependencies:
@@ -11745,7 +11745,7 @@ snapshots:
 
   gensync@1.0.0-beta.2: {}
 
-  gesturx@1.11.1(rxjs@7.8.2):
+  gesturx@2.0.0(rxjs@7.8.2):
     dependencies:
       rxjs: 7.8.2
 
@@ -11829,7 +11829,7 @@ snapshots:
 
   happy-dom@20.14.5:
     dependencies:
-      '@types/node': 25.9.5
+      '@types/node': 26.6.2
       '@types/whatwg-mimetype': 3.0.2
       '@types/ws': 8.18.1
       buffer-image-size: 0.6.4
