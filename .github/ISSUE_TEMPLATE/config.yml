@@ -1,5 +1,8 @@
 blank_issues_enabled: true
 contact_links:
+  - name: Report a security vulnerability
+    url: https://github.com/mbret/prose-reader/security/advisories/new
+    about: Report it privately, never in a public issue.
   - name: Chat on Discord
     url: https://discord.gg/dffDEgwNc5
     about: Quick questions on the oboku & prose Discord server.

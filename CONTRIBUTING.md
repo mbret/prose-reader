@@ -9,6 +9,9 @@ Open a [GitHub issue](https://github.com/mbret/prose-reader/issues) for a bug,
 a feature request or a question. For a quick chat, join the
 [oboku & prose Discord server](https://discord.gg/dffDEgwNc5).
 
+Report a security vulnerability privately instead, as
+[SECURITY.md](SECURITY.md) explains.
+
 A bug report needs:
 
 - the `@prose-reader/*` packages you use, with their versions;
