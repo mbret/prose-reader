@@ -1,4 +1,4 @@
-import { md5HexDigest } from "./md5"
+import { md5HexDigest } from "@prose-reader/shared"
 
 /** Bytes `util.partialMD5` reads at each of its offsets. */
 const PARTIAL_MD5_SAMPLE_SIZE = 1024

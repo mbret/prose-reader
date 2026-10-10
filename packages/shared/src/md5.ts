@@ -1,7 +1,4 @@
-/**
- * MD5 (RFC 1321): KOReader names books by MD5 digests, and Web Crypto has no
- * MD5.
- */
+/** MD5 (RFC 1321), which Web Crypto does not provide. */
 
 /** `[k, s, T[i]]` of RFC 1321, section 3.4: the block word added, the left rotation and the sine constant. */
 type Md5Operation = readonly [
