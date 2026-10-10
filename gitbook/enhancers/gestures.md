@@ -1,12 +1,22 @@
 # Gestures
 
+{% hint style="warning" %}
+On Node, this package requires `>=22.12`. It recognizes gestures with
+[`gesturx`](https://www.npmjs.com/package/gesturx), which is ESM-only from version 2,
+so reaching this package through `require()` needs the `require(esm)` support that
+landed unflagged in Node 22.12. `import` and bundler builds are unaffected.
+{% endhint %}
+
 This enhancer implements common gesture patterns using [https://github.com/mbret/gesturx](https://github.com/mbret/gesturx). Tap on edge  or swipe to turn pages, pinch to change font scale, etc. It implements the most common gestures while trying to stay generic and configurable.
 
 ## Getting Started
 
 ```bash
-npm install @prose-reader/enhancer-gestures
+npm install @prose-reader/enhancer-gestures gesturx rxjs
 ```
+
+Both are peer dependencies: the enhancer needs gesturx 2 (`^2.0.0`) and rxjs
+7.5.5 or any later 7.x (`^7.5.5`).
 
 Connect the enhancer to your reader:
 
