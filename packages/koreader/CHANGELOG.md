@@ -3,6 +3,14 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## [25.1.0](https://github.com/mbret/prose-reader/compare/v25.0.1...v25.1.0) (2026-10-10)
+
+### Features
+
+* **koreader:** compute the digests KOReader files reading positions under ([c550d66](https://github.com/mbret/prose-reader/commit/c550d66055a22fe697d6ed7d5587e7fab649dcb9))
+* **shared:** move the md5 out of @prose-reader/koreader ([a7f37ee](https://github.com/mbret/prose-reader/commit/a7f37ee864f33d9232f8eb05cae4bcf5b2d1cab5))
+
+
 ## [25.0.1](https://github.com/mbret/prose-reader/compare/v25.0.0...v25.0.1) (2026-10-10)
 
 **Note:** Version bump only for package @prose-reader/koreader
