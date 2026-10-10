@@ -5,6 +5,8 @@ body:
   - type: markdown
     attributes:
       value: |
+        Found a security vulnerability? Don't report it here, and don't attach the book that triggers it: [report it privately](https://github.com/mbret/prose-reader/security/advisories/new), as the [security policy](https://github.com/mbret/prose-reader/security/policy) explains.
+
         Search the [existing issues](https://github.com/mbret/prose-reader/issues) before opening a new one. Try the book in the [live demo](https://prose-reader.com/demo) too, and say below whether the problem shows there.
   - type: textarea
     id: what-happened
