@@ -1,0 +1,54 @@
+name: Bug report
+description: Something in prose-reader doesn't work as expected
+labels: ["bug"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Search the [existing issues](https://github.com/mbret/prose-reader/issues) before opening a new one. Try the book in the [live demo](https://prose-reader.com/demo) too, and say below whether the problem shows there.
+  - type: textarea
+    id: what-happened
+    attributes:
+      label: What happened?
+      description: The steps, what you expected and what happened instead.
+    validations:
+      required: true
+  - type: textarea
+    id: packages
+    attributes:
+      label: Packages and versions
+      description: The `@prose-reader/*` packages you use, with their versions.
+      placeholder: |
+        @prose-reader/core 25.0.1
+        @prose-reader/streamer 25.0.0
+      render: text
+    validations:
+      required: true
+  - type: input
+    id: platform
+    attributes:
+      label: Browser and OS, or React Native platform
+      placeholder: Chrome on macOS, Safari on iOS, React Native on Android…
+    validations:
+      required: true
+  - type: input
+    id: book
+    attributes:
+      label: Book
+      description: The book that shows the problem, or a public one that does. Attach it or link to it.
+  - type: dropdown
+    id: demo
+    attributes:
+      label: Does the problem show in the live demo?
+      options:
+        - "Yes"
+        - "No"
+        - "I didn't try"
+    validations:
+      required: true
+  - type: textarea
+    id: logs
+    attributes:
+      label: Errors or logs
+      description: Errors from the browser console or the React Native logs.
+      render: text
