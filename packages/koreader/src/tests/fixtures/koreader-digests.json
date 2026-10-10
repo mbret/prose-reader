@@ -1,0 +1,35 @@
+{
+  "koreader": "v2026.07.1",
+  "files": [
+    {"name": "synthetic.epub", "digest": "90bf29d684354cd0c52d028e0505d4be"},
+    {"name": "accessible-epub-3.epub", "digest": "a3ae64d82d1670fc4d2c03db70370aac"},
+    {"name": "alice-pg11.epub", "digest": "b2fcc047b7255dece28b166a932dc5b1"},
+    {"name": "frankenstein-pg84.epub", "digest": "38062a81cedd5b6e49c28806e94fa007"},
+    {"name": "cc-shared-culture.epub", "digest": "3806fcbdcef3ab228e26322428d15978"},
+    {"name": "haruko.epub", "digest": "2d4b17ae62f6cea7af75b82246f61a1e"},
+    {"name": "mathematics.epub", "digest": "32ea80df346755a94a1d24260cb7bd36"},
+    {"name": "0.bin", "digest": "d41d8cd98f00b204e9800998ecf8427e"},
+    {"name": "1.bin", "digest": "55a54008ad1ba589aa210d2629c1df41"},
+    {"name": "1023.bin", "digest": "fff9361d9ec0d8b26758a55b25798fe4"},
+    {"name": "1024.bin", "digest": "cb5f0affe2bcbda40521890061ddbb0e"},
+    {"name": "1025.bin", "digest": "8e0b01460077afd78b3d57d87b1a3f80"},
+    {"name": "2048.bin", "digest": "8af088f52ab24281a07da920e3bafa29"},
+    {"name": "4096.bin", "digest": "8af088f52ab24281a07da920e3bafa29"},
+    {"name": "4097.bin", "digest": "f6ee46309e04fd7d691c9f7df7ffc0e7"},
+    {"name": "5121.bin", "digest": "aedc9bd794367a689e9083f7f639fb85"},
+    {"name": "262244.bin", "digest": "7ab3231123607e198193cf112e9b320d"},
+    {"name": "1073741823.bin", "digest": "a103a7cd68a030cb2906e2d78af494ec"},
+    {"name": "1073741824.bin", "digest": "a103a7cd68a030cb2906e2d78af494ec"},
+    {"name": "1073741825.bin", "digest": "eab58aa2a43d348d3251af84c08610c9"},
+    {"name": "1073742848.bin", "digest": "acdba8b2f5ef82627414e06f5583ed2b"},
+    {"name": "1073742849.bin", "digest": "acdba8b2f5ef82627414e06f5583ed2b"},
+    {"name": "4294967303.bin", "digest": "acdba8b2f5ef82627414e06f5583ed2b"}
+  ],
+  "fileNames": [
+    {"fileName": "Alice's Adventures in Wonderland.epub", "digest": "618b7daa6ce3db03f36f673423fb874b"},
+    {"fileName": "Les Misérables.epub", "digest": "b52243e30c4613e8e83d76d2e7e671e4"},
+    {"fileName": "Les Misérables.epub", "digest": "80ce3a792df2b1865c834bc6475837f1"},
+    {"fileName": "日本語の本.cbz", "digest": "41c3d5deeb951e7f9222f3bc72b25fa2"},
+    {"fileName": "📚 library.epub", "digest": "89a4817a617be9075c87208acd845a82"}
+  ]
+}

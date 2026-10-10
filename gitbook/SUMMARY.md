@@ -91,6 +91,7 @@
 ## KOReader
 
 * [KOReader positions](koreader/README.md)
+* [Document digests](koreader/document-digests.md)
 
 ## React Reader
 

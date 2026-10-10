@@ -1,8 +1,8 @@
 # KOReader positions
 
-**`@prose-reader/koreader`** converts reading positions between prose's EPUB CFIs and the **crengine XPointer** dialect that KOReader and the KOReader-sync ecosystem exchange (KOReader itself, Readest, Crosspoint, Kavita, Komga, Calibre-Web Automated, …). Both formats name the same three things: a spine item, a DOM node inside it and an offset. The conversion is a DOM walk in each direction plus the handful of normalisation rules crengine applies when it parses a spine item.
+**`@prose-reader/koreader`** converts reading positions between prose's EPUB CFIs and the **crengine XPointer** dialect that KOReader and the KOReader-sync ecosystem exchange (KOReader itself, Readest, Crosspoint, Kavita, Komga, Calibre-Web Automated, …). Both formats name the same three things: a spine item, a DOM node inside it and an offset. The conversion is a DOM walk in each direction plus the handful of normalisation rules crengine applies when it parses a spine item. The package also computes the digest a KOReader sync server files a book's positions under: see [Document digests](document-digests.md).
 
-The package is pure: it takes strings and `Document` / `Node` objects and returns strings. No reader instance, no I/O, no sync client. It never throws on bad input: whatever cannot be converted comes back as `undefined`, so a caller can fall back to the spine item alone or to a percentage.
+The conversions are pure: they take strings and `Document` / `Node` objects and return strings. The package has no reader instance, no network and no sync client: the one function that reads, `getKoreaderFileDigest`, reads at most 12 KiB of a `Blob` it is given. The conversions never throw on bad input: whatever cannot be converted comes back as `undefined`, so a caller can fall back to the spine item alone or to a percentage.
 
 ```bash
 npm install @prose-reader/koreader
@@ -79,6 +79,8 @@ serializeXPointer(parsed) === "/body/DocFragment[14]/body/div/p[3]/text().42"
 | `generateXPointer(position, spineItemIndex)` | The pointer crengine itself writes for a DOM position, or `undefined` for positions crengine has no node for. |
 | `xPointerToCfi(pointer, getSpineItem)` | The CFI prose generates for that position, built with `@prose-reader/cfi`. |
 | `cfiToXPointer(cfi, getSpineItem)` | The pointer of a CFI's start; a root CFI (`epubcfi(/6/28[chap05]!)`) becomes the start of the item. |
+| `getKoreaderFileDigest(file)` | The `document` digest of KOReader's default "Binary" matching method for a `Blob`. See [Document digests](document-digests.md). |
+| `getKoreaderFileNameDigest(fileName)` | The `document` digest of KOReader's "Filename" matching method. See [Document digests](document-digests.md). |
 | `toCfiPosition(position)` | The position a CFI can point to for a `DomPosition`: a child index on an element becomes the start of that child. |
 
 ```typescript
