@@ -3,6 +3,20 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## [25.0.0](https://github.com/mbret/prose-reader/compare/v24.0.0...v25.0.0) (2026-10-10)
+
+### ⚠ BREAKING CHANGES
+
+* **gestures:** @prose-reader/enhancer-gestures requires gesturx 2,
+  and Node >=22.12 when loaded on Node. Apps on gesturx 1 upgrade it
+  alongside; its API is unchanged. `import` and bundler builds are
+  unaffected.
+
+### Features
+
+* **gestures:** require gesturx 2 ([4697012](https://github.com/mbret/prose-reader/commit/46970125ff1de1ca15c523db53b057cb4e2b79d9))
+
+
 ## [24.0.0](https://github.com/mbret/prose-reader/compare/v23.0.0...v24.0.0) (2026-09-27)
 
 ### ⚠ BREAKING CHANGES
