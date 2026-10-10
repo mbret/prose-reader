@@ -6,6 +6,7 @@ export {
   xPointerToCfi,
 } from "./cfi"
 export { CRENGINE_TEXT_SPLIT_SIZE } from "./crengine/text"
+export { getKoreaderFileDigest, getKoreaderFileNameDigest } from "./digest"
 export { generateXPointer } from "./generate"
 export { parseXPointer, XPOINTER_BOXING_ELEMENT_NAMES } from "./parse"
 export { resolveXPointer } from "./resolve"

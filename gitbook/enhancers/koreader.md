@@ -57,6 +57,10 @@ chapter's document, which is loaded by the time the reading position names
 that place. It returns `undefined` when it cannot convert: a place in a
 chapter that is not loaded, or a cfi naming nothing in the book.
 
+A sync server files the position under the book's `document` digest, which
+`@prose-reader/koreader` computes from the book file: see
+[Document digests](../koreader/document-digests.md).
+
 The reading position is what the
 [navigation guide](../learn/navigation.md#reading-position) says, whatever the
 target, xpointers included:

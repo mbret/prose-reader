@@ -6,6 +6,10 @@ a sample of every spine item's words, and `<name>.crengine-check.json`, its
 verdict on the pointers this package emits for the book. The suites in
 `src/fixtures.test.ts` and `src/crengineCheck.test.ts` read them.
 
+`koreader-digests.json` holds the digests KOReader computes for every book
+here, for generated files of every edge size and for a few file names.
+`src/digest.test.ts` reads it.
+
 The books other than the synthetic one are reduced by `tools/strip_epub.py`
 to their package, navigation and content documents: images, fonts and media
 are removed, since only the markup matters here.
