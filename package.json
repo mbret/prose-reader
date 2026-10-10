@@ -8,7 +8,7 @@
   "packageManager": "pnpm@12.5.1",
   "scripts": {
     "start": "lerna run start --stream",
-    "start:lib": "lerna run start --stream --scope @prose-reader/* --concurrency 15",
+    "start:lib": "lerna run start --stream --scope @prose-reader/*",
     "start:front": "lerna run start --stream --scope prose-reader-front",
     "start:metadata-fetcher": "docker compose -f apps/metadata-fetcher-api/docker-compose.yml up --build",
     "stop:metadata-fetcher": "docker compose -f apps/metadata-fetcher-api/docker-compose.yml down",
