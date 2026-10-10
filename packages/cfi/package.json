@@ -2,6 +2,7 @@
   "name": "@prose-reader/cfi",
   "version": "25.0.0",
   "type": "module",
+  "license": "MIT",
   "files": [
     "/dist"
   ],

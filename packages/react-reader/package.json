@@ -12,6 +12,7 @@
     ".": "./dist/index.js",
     "./index.css": "./dist/index.css"
   },
+  "license": "MIT",
   "files": [
     "/dist"
   ],

@@ -15,6 +15,7 @@
       "require": "./dist/index.cjs"
     }
   },
+  "license": "MIT",
   "files": [
     "/dist"
   ],

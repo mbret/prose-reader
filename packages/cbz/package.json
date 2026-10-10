@@ -2,6 +2,7 @@
   "name": "@prose-reader/cbz",
   "version": "25.0.0",
   "type": "module",
+  "license": "MIT",
   "files": [
     "/dist"
   ],
