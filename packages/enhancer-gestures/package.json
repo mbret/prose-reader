@@ -28,12 +28,15 @@
     "@prose-reader/core": "workspace:^"
   },
   "devDependencies": {
-    "gesturx": "*",
+    "gesturx": "^2.0.0",
     "rxjs": "^7.5.5"
   },
   "peerDependencies": {
-    "gesturx": "^1.11.1",
+    "gesturx": "^2.0.0",
     "rxjs": "^7.5.5"
+  },
+  "engines": {
+    "node": ">=22.12"
   },
   "gitHead": "4601e14dcacf50b2295cb343582a7ef2c7e1eedc"
 }
