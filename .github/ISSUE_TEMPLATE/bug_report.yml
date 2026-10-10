@@ -31,11 +31,13 @@ body:
       placeholder: Chrome on macOS, Safari on iOS, React Native on Android…
     validations:
       required: true
-  - type: input
+  - type: textarea
     id: book
     attributes:
       label: Book
-      description: The book that shows the problem, or a public one that does. Attach it or link to it.
+      description: The book that shows the problem, or a public one that does. Link to it, or attach it here; GitHub accepts PDF and ZIP files, so zip an EPUB or a CBZ first. If the problem doesn't depend on a book, say so.
+    validations:
+      required: true
   - type: dropdown
     id: demo
     attributes:
