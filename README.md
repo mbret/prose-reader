@@ -63,7 +63,7 @@ Issues and pull requests are welcome — see [the issues page](https://github.co
 
 ## License
 
-MIT © Maxime Bret
+[MIT](LICENSE) © Maxime Bret
 
 <p align="center">
   Built with prose: <a href="https://oboku.me/">oboku</a>, a modern and free reading app. Come take a look!

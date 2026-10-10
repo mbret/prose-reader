@@ -42,7 +42,7 @@ export const LandingScreen = () => {
             prose is a library licensed under <b>MIT license</b>. It&apos;s{" "}
             <Link
               variant="underline"
-              href="https://github.com/mbret/prose-reader/blob/master/LICENCE"
+              href="https://github.com/mbret/prose-reader/blob/master/LICENSE"
             >
               free of use <LuExternalLink />
             </Link>{" "}
