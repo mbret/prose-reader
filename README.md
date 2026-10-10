@@ -50,16 +50,7 @@ Ready to build? Follow the **[Getting started guide](https://doc.prose-reader.co
 
 ## Contributing
 
-This is a [Lerna](https://lerna.js.org/) monorepo.
-
-```bash
-pnpm install
-pnpm run build:lib   # build all packages
-pnpm run start:front # run the website (landing page + demo) locally
-pnpm test            # run the test suites
-```
-
-Issues and pull requests are welcome — see [the issues page](https://github.com/mbret/prose-reader/issues) to get started.
+Issues and pull requests are welcome. [CONTRIBUTING.md](CONTRIBUTING.md) covers the setup, the build and test commands, and how pull requests are merged and released. Everyone taking part follows the [code of conduct](CODE_OF_CONDUCT.md).
 
 ## License
 
