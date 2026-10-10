@@ -23,104 +23,9 @@ Before a large change, open an issue to agree on the approach.
 
 ## Set up the repository
 
-The repository is a pnpm workspace, with lerna on top to run tasks and cut
-releases:
-
-- `packages/`: the libraries, published to npm as `@prose-reader/*`.
-- `apps/front`: the website, with the demo under `/demo`.
-- `apps/tests`: the browser test suite, on Playwright.
-- `apps/metadata-fetcher-api`: the metadata fetcher as an HTTP service, also
-  published as a Docker image.
-- `gitbook/`: the documentation.
-- `prose-react-native-demo/`: an Expo app. It is not a workspace member: it
-  installs with npm, from its own lockfile, the way an app consuming the
-  libraries would.
-
-Use the Node version in `.nvmrc` and the pnpm version in the `packageManager`
-field of the root `package.json`. CI reads the same two pins.
-
-```sh
-nvm install
-nvm use
-npm install --global "$(node -p "require('./package.json').packageManager")"
-pnpm install
-pnpm run build:lib
-```
-
-Build the libraries before you run a test or an app. Workspace packages resolve
-each other to their build output, so a fresh checkout fails on unresolved
-`@prose-reader/*` imports until the libraries are built. After you change a
-library, rebuild it, or keep `pnpm run start:lib` running to rebuild them on
-every change.
-
-`pnpm install` also sets up a pre-commit hook. It runs `biome check --write` on
-the staged files: it formats them, applies safe lint fixes, and stops the
-commit on a lint error it cannot fix.
-
-## Build, run and test
-
-| Task                                            | Command                                                |
-| ----------------------------------------------- | ------------------------------------------------------ |
-| Build the libraries                             | `pnpm run build:lib`                                   |
-| Build every project, the website included       | `pnpm run build`                                       |
-| Rebuild the libraries on every change           | `pnpm run start:lib`                                   |
-| Run the website and the demo, on port 9000      | `pnpm run start:front`                                 |
-| Run every test suite, unit and browser          | `pnpm test`                                            |
-| Run the unit tests                              | `pnpm exec lerna run test --ignore prose-reader-tests` |
-| Run one package's unit tests                    | `pnpm --filter @prose-reader/core test`                |
-| Check formatting                                | `pnpm run format`                                      |
-| Lint                                            | `pnpm run lint`                                        |
-| Format, and apply safe lint fixes               | `pnpm exec biome check --write .`                      |
-| Typecheck every project, after `pnpm run build` | `pnpm run tsc`                                         |
-
-### Browser tests
-
-The unit tests run in happy-dom or jsdom, which have no layout engine. A
-behaviour that depends on layout needs a spec in `apps/tests`: pagination, a
-CFI resolving to visible content, restoring a position after a resize,
-scrolling. [apps/tests/AGENTS.md](apps/tests/AGENTS.md) explains how the suite
-is built.
-
-Install the browser builds that Playwright pins, once:
-
-```sh
-pnpm --filter prose-reader-tests exec playwright install --with-deps
-```
-
-Chromium alone is enough while you work on one spec:
-
-```sh
-pnpm --filter prose-reader-tests exec playwright install chromium
-pnpm --filter prose-reader-tests test --project=chromium tests/<path>.spec.ts
-```
-
-- The suite imports `@prose-reader/*` from `dist/`. Rebuild the library you
-  changed before you run a spec again.
-- Run it on the browsers Playwright installs, not on one your machine already
-  has. A pass on another build is not a pass in CI.
-- The screenshot baselines are rendered on macOS. On another OS, the specs that
-  compare screenshots fail locally, and CI runs them on macOS.
-
-## Checks
-
-These are the checks CI runs. Run the ones your change touches before you open
-a pull request:
-
-- `pnpm run format` and `pnpm run lint`.
-- `pnpm run check:agent-docs`: every `AGENTS.md` has a `CLAUDE.md` beside it
-  that imports it, and every skill in `.agents/skills/` has a symlink in
-  `.claude/skills/`.
-- `pnpm run check:internal-ranges`: the `@prose-reader/*` dependency ranges,
-  described under [Dependencies](#dependencies).
-- `pnpm run check:expo-sdk`: `@prose-reader/react-native` depends on the
-  versions its Expo SDK expects.
-- `pnpm run tsc`, after `pnpm run build`.
-- The unit tests, and the browser suite on Chromium, Firefox, WebKit and two
-  mobile profiles.
-- The React Native demo typechecks and bundles. After `pnpm run build:lib`, run
-  `npm ci`, `npm run typecheck` and `npm run bundle` in
-  `prose-react-native-demo/`.
-- The metadata fetcher API's Docker image builds and starts.
+The README's [Contributing section](README.md#contributing) covers the
+repository layout, the pinned toolchain, the commands to build and run the
+code, and the [checks](README.md#checks) CI runs.
 
 ## Code guidelines
 
@@ -144,7 +49,8 @@ writes, and TypeScript `as`. Read it before you write code.
 
 Guidelines for a single package go in its own `AGENTS.md`, with a `CLAUDE.md`
 beside it whose body is `@AGENTS.md`. A skill goes in `.agents/skills/<name>`,
-with a symlink to it at `.claude/skills/<name>`.
+with a symlink to it at `.claude/skills/<name>`. `pnpm run check:agent-docs`
+enforces both.
 
 ### Tests
 
@@ -163,11 +69,14 @@ with a symlink to it at `.claude/skills/<name>`.
   on a sibling needs no devDependency beside it.
 - Regenerate `pnpm-lock.yaml` only with the pinned pnpm.
 
+`pnpm run check:internal-ranges` enforces the two rules on siblings.
+
 ## Pull requests
 
 1. Fork the repository, and branch off `master`.
 2. Make the change, with its tests and its documentation.
-3. Run the checks your change touches.
+3. Run the [checks](README.md#checks) your change touches. CI runs all of
+   them on your pull request.
 4. Open a pull request against `master`. Say what changed and why. List the
    public names it adds, renames or removes, and say whether it breaks the
    API.
