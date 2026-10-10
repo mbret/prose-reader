@@ -3,6 +3,13 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## [25.0.1](https://github.com/mbret/prose-reader/compare/v25.0.0...v25.0.1) (2026-10-10)
+
+### Bug Fixes
+
+* declare the MIT license in every published package ([fefd424](https://github.com/mbret/prose-reader/commit/fefd424c2bf8aba9e925ffb1022fa9ef3a08b15d))
+
+
 ## [25.0.0](https://github.com/mbret/prose-reader/compare/v24.0.0...v25.0.0) (2026-10-10)
 
 **Note:** Version bump only for package @prose-reader/cfi
