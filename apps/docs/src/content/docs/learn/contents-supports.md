@@ -2,22 +2,22 @@
 title: "Contents Supports"
 ---
 
-## :white\_check\_mark: Epub&#x20;
+## ✅ Epub&#x20; { #epub }
 
 The [Streamer](/learn/streamer) exposes a few methods to help integrate it.
 
-## :white\_check\_mark: Comics&#x20;
+## ✅ Comics&#x20; { #comics }
 
 The [Streamer](/learn/streamer) exposes a few methods to help integrate it.
 
-## :white\_check\_mark: Text&#x20;
+## ✅ Text&#x20; { #text }
 
 The [Streamer](/learn/streamer) exposes a few methods to help integrate it.
 
-## :white\_check\_mark: PDF&#x20;
+## ✅ PDF&#x20; { #pdf }
 
 Visit the [PDF](/learn/pdf) section
 
-## :white\_check\_mark: Audiobooks&#x20;
+## ✅ Audiobooks&#x20; { #audiobooks }
 
 Visit the [Audio](/enhancers/audio) section

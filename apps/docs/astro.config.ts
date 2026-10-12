@@ -1,11 +1,23 @@
+import { satteri } from "@astrojs/markdown-satteri"
 import starlight from "@astrojs/starlight"
 import { defineConfig } from "astro/config"
 import mermaid from "astro-mermaid"
 import starlightLinksValidator from "starlight-links-validator"
+import starlightLlmsTxt from "starlight-llms-txt"
 
 export default defineConfig({
   site: "https://doc.prose-reader.com",
   trailingSlash: "never",
+  markdown: {
+    processor: satteri({
+      features: {
+        // Prose quotes values a reader copies, such as "auto", so quotes stay straight
+        smartPunctuation: false,
+        // `{ #id }` keeps the anchor GitBook gave a heading, which published links point to
+        headingAttributes: true,
+      },
+    }),
+  },
   integrations: [
     // astro-mermaid has to run before Starlight turns code blocks into Expressive Code
     mermaid({ enableLog: false }),
@@ -23,7 +35,10 @@ export default defineConfig({
         baseUrl: "https://github.com/mbret/prose-reader/edit/master/apps/docs/",
       },
       customCss: ["./src/styles/figures.css"],
-      plugins: [starlightLinksValidator()],
+      components: {
+        PageTitle: "./src/components/PageTitle.astro",
+      },
+      plugins: [starlightLinksValidator(), starlightLlmsTxt()],
       sidebar: [
         {
           label: "Get Started",

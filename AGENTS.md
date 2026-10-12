@@ -250,4 +250,5 @@ Writing a page:
 - Callouts are Starlight asides: `:::note`, `:::tip`, `:::caution` or `:::danger`, closed by `:::`.
 - Images go in `apps/docs/public/images/`, referenced as `/images/<name>.png`.
 - A published URL stays valid: when you move or rename a page, add a permanent redirect from its old path to `redirects` in `apps/docs/vercel.json`. Published npm READMEs and older releases link to these pages.
+- A heading that ends in `{ #id }` keeps the anchor the GitBook site gave it, which published links point to. Keep the `{ #id }` when you reword the heading.
 - `pnpm run start:docs` serves the site while you write.

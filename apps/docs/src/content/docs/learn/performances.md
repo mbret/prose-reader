@@ -6,7 +6,7 @@ A reading system can be heavy both in terms of its internal code but also the co
 
 ## Book rendering
 
-### `<iframe>`
+### `<iframe>` { #less-than-iframe-greater-than }
 
 Not much to do about it but each spine item of a book is rendered within an iframe. Although browsers improved significantly, this still adds some overhead when you have a lot of iframes. Using iframe is very important in order to sandbox and keep the book original publisher design.&#x20;
 

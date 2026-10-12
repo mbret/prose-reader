@@ -8,7 +8,7 @@ In prose you can implement annotations with [CFI](https://idpf.org/epub/linking/
 
 We do however provide the enhancer [Annotations](/enhancers/annotations) to help you implement it.
 
-## Bookmark, Notes, Highlights ...
+## Bookmark, Notes, Highlights ... { #bookmark-notes-highlights }
 
 Although they represent different things in term of user experience they can all take their roots from the annotation base interface. That is:
 
@@ -48,7 +48,7 @@ Notes can be defined by a bookmark with a user content, meaning no text selectio
 
 Ultimately it can be confusing for the user to have different things that can intertwine. What happens when the user bookmarks a word, is it a highlight without color ? what if they wanted to later put a color on this word bookmark ? Does it become an annotation ?
 
-What we recommend is to reduce confusion and have as few components as possible. This is why the [Annotations](/enhancers/annotations) make an opinionated decision and only assume two interfaces:
+What we recommend is to reduce confusion and have as few components as possible. This is why the [React Reader](/react-reader/introduction) make an opinionated decision and only assume two interfaces:
 
 * Page bookmark: a single unique annotation pointing to the first node of a page, no notes, no highlight color or anything.
 * Annotation: Everything else

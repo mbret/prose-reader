@@ -42,7 +42,7 @@ Some settings have their `computed` counterpart. When you read the settings you 
 
 `spreadMode` has no `computed` counterpart in the settings, because whether a spread is shown also depends on the viewport's size. The viewport resolves it in every layout, and `reader.viewport.value.isSpread` is what the reader shows. See [Spread mode](/learn/viewport#spread-mode).
 
-## `settings.values$`
+## `settings.values$` { #settings.valuesusd }
 
 ```typescript
 Observable<OutputSettings>

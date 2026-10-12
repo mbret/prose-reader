@@ -19,7 +19,7 @@ Many books are unfortunately broken from the publisher and therefore should be f
 
 Let's take a few examples:
 
-### Adding a "download" button next to all `<tables>`
+### Adding a "download" button next to all `<tables>` { #adding-a-download-button-next-to-all-less-than-tables-greater-than }
 
 Let's say you want the user to be able to download as an excel spreadsheet all tables in the book. You can do it by injecting a \<button> element inside the content but if you do so make sure that the button is never selectable and does not break the flow of the book.
 

@@ -78,7 +78,7 @@ Toggle between play and pause.
 reader.audio.toggle()
 ```
 
-#### `.setCurrentTime(value)`
+#### `.setCurrentTime(value)` { #setcurrenttime-value }
 
 Seek to a specific position in the current track.
 
@@ -86,7 +86,7 @@ Seek to a specific position in the current track.
 reader.audio.setCurrentTime(30) // seek to 30 seconds
 ```
 
-#### `.select(trackId, options?)`
+#### `.select(trackId, options?)` { #select-trackid-options }
 
 Select and load a specific audio track by its spine item id.
 
@@ -110,7 +110,7 @@ type SelectAudioTrackOptions = {
 reader.audio.select("track-3", { play: true, navigate: true })
 ```
 
-#### `.isAudioRenderer(renderer)`
+#### `.isAudioRenderer(renderer)` { #isaudiorenderer-renderer }
 
 Type guard to check whether a given `DocumentRenderer` is an `AudioRenderer`.
 
@@ -120,7 +120,7 @@ if (reader.audio.isAudioRenderer(renderer)) {
 }
 ```
 
-#### `.state` / `.state$`
+#### `.state` / `.state$` { #state-.stateusd }
 
 Access the current playback state synchronously or as an RxJS observable.
 
@@ -157,7 +157,7 @@ reader.audio.state$.subscribe((state) => {
 })
 ```
 
-#### `.visualizer` / `.visualizer$`
+#### `.visualizer` / `.visualizer$` { #visualizer-.visualizerusd }
 
 Access the audio frequency visualizer state synchronously or as an observable. The visualizer uses the Web Audio API to provide real-time frequency levels that can drive visual representations like waveforms or spectrum bars.
 
@@ -181,7 +181,7 @@ reader.audio.visualizer$.subscribe(({ levels, isActive }) => {
 })
 ```
 
-#### `.visibleTrackIds$`
+#### `.visibleTrackIds$` { #visibletrackidsusd }
 
 Observable that emits the audio track ids at the current pagination boundaries.
 

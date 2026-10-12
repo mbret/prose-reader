@@ -26,9 +26,9 @@ The streamer *consumes* archives, it does not create or understand them: the `Ar
 
 Generic string helpers previously exported here (`createXmlSafeId`, `createUniqueXmlSafeId`, `createXmlSafeIdFactory`, `sortByTitleComparator`, `removeTrailingSlash`, `getUriBasename`, `getUriBasePath`) moved to **`@prose-reader/shared`**.
 
-## Manifest & resource generation
+## Manifest & resource generation { #manifest-and-resource-generation }
 
-### `generateManifestFromArchive(archive, options?)`
+### `generateManifestFromArchive(archive, options?)` { #generatemanifestfromarchive-archive-options }
 
 ```typescript
 generateManifestFromArchive(
@@ -47,7 +47,7 @@ const archive = await createArchiveFromJszip(zip)
 const manifest = await generateManifestFromArchive(archive)
 ```
 
-### `generateResourceFromArchive(archive, resourcePath, options?)`
+### `generateResourceFromArchive(archive, resourcePath, options?)` { #generateresourcefromarchive-archive-resourcepath-options }
 
 ```typescript
 generateResourceFromArchive(
@@ -59,7 +59,7 @@ generateResourceFromArchive(
 
 Resolves a single archive resource by URI, running it through the resource hook pipeline (default / self-closing-tags / css / calibre fixes, plus any user hooks) and falling back to the raw file blob when no hook sets a body.
 
-### `createManifestResourceHref({ baseUrl?, resourcePath })`
+### `createManifestResourceHref({ baseUrl?, resourcePath })` { #createmanifestresourcehref-baseurl-resourcepath }
 
 ```typescript
 createManifestResourceHref(params: {
@@ -122,7 +122,7 @@ A `Streamer` subclass for service-worker `fetch` events. `getUriInfo` maps a req
 
 Internal `Report` logging auto-configures from the `globalThis.__PROSE_READER_DEBUG` flag (set it to `true` or `"true"`). The flag is read from `globalThis`, so it also works where `window` does not exist — service workers, web workers, node — as long as it is set before the prose-reader modules evaluate (e.g. an early side-effect import in a worker bundle). This is how every package's logging is enabled, `@prose-reader/archive-reader` included.
 
-### `configure(options?)`
+### `configure(options?)` { #configure-options }
 
 ```typescript
 configure(options?: { enableReport?: boolean }): void

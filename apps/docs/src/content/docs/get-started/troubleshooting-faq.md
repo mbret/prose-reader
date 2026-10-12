@@ -8,13 +8,13 @@ Between the many standards, use cases, non standard books and the one containing
 
 If you find yourself in a situation where a book does not look right on prose you have several options to help you:
 
-### Opening an issue / PR
+### Opening an issue / PR { #opening-an-issue-pr }
 
 If the book is following a known or popular standard such as epub you may want to open an issue. The engine aims to fully support all standards so it should be part of the core and needs to be fixed. You are also free to open a PR if you know how to fix it by yourself.
 
 Go to [https://github.com/mbret/prose-reader/issues/new](https://github.com/mbret/prose-reader/issues/new) to open a new issue.
 
-### Develop your own hook / enhancer to add support
+### Develop your own hook / enhancer to add support { #develop-your-own-hook-enhancer-to-add-support }
 
 :::note
 If you think the book should be supported by default with prose we still encourage you to open an issue or PR anyway.

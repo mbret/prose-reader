@@ -10,7 +10,7 @@ Whether a page can be turned or another spine item reached is not part of
 pagination: it is on `reader.navigation.state$`, under
 [Observing navigation](/core-api/navigation#observing-navigation).
 
-## `.state$`
+## `.state$` { #stateusd }
 
 ```typescript
 Observable<EnhancerPaginationInfo>
@@ -20,7 +20,7 @@ The current result as soon as you subscribe, then every new one. The stream is
 smoothed, so it can briefly lag behind the reader: the guide's
 [Reading the stream](/learn/pagination#reading-the-stream) explains how.
 
-## `.state`
+## `.state` { #state }
 
 ```typescript
 EnhancerPaginationInfo

@@ -14,7 +14,7 @@ Internally, prose will use the absolute viewport (without transformation) for mo
 This API will manipulate and apply various transforms (eg: scale) to the viewport. Make sure your viewport is stable during zooming
 :::
 
-## Zoom & Thumbnails
+## Zoom & Thumbnails { #zoom-and-thumbnails }
 
 Zooming is not constrained to one direction. By zooming out (scale < 1) you can achieve a "thumbnails" effect:
 

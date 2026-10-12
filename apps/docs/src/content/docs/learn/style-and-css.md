@@ -9,7 +9,7 @@ For convenience with CSS, prose reader defines some constants that will **NEVER*
 * `data-prose-reader-container` data attributes placed on each reader container. Note that without the ID, it targets all reader containers.
 * `data-prose-reader-viewport` data attributes placed on the viewport element.
 
-## Reader instance & Considerations
+## Reader instance & Considerations { #reader-instance-and-considerations }
 
 When you want to add or override some styles, be careful whether you want to target all readers or the specific one the enhancer is attached to. All data-attributes used have an ID attached to it. You need to target the specific ID together with the data attribute if you want to apply your style to a specific reader instance.
 
@@ -17,7 +17,7 @@ You can retrieve the reader id with `reader.id` .&#x20;
 
 You will not be able to use this statically inside .css files since it is not possible to use variables in selectors. Check the next sections to see the strategies on how to add your styles.
 
-## Adding / Overriding styles strategies
+## Adding / Overriding styles strategies { #adding-overriding-styles-strategies }
 
 ### Global vs Per Instance
 

@@ -54,7 +54,7 @@ In this situation the user is using the reader in only a certain part of the web
 
 Gestures start on a press of the primary button: a left click, a finger or a pen's tip. A right click, which opens the context menu, and a middle click start none: they tap, pan and swipe nothing, turn no page and are not reported on `gestures$`.
 
-### Zooming (in/out)
+### Zooming (in/out) { #zooming-in-out }
 
 * **Pinch** to start zooming
 * **Pan** to move zoom position (When zooming)
@@ -112,7 +112,7 @@ type Hook = {
 }
 ```
 
-### `.gestures$`
+### `.gestures$` { #gesturesusd }
 
 ```typescript
 Observable<{

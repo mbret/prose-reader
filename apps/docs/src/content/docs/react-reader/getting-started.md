@@ -125,7 +125,7 @@ See [Annotations](/enhancers/annotations) to install enhancer
 
 See [Annotations](/enhancers/annotations) to install enhancer
 
-### Audio / Audiobooks
+### Audio / Audiobooks { #audio-audiobooks }
 
 See [Audio](/enhancers/audio) to install enhancer
 
@@ -139,7 +139,7 @@ See [Gallery](/enhancers/gallery) to install enhancer
 
 See [Refit](/enhancers/refit) to install enhancer
 
-### CBZ & comics archives
+### CBZ & comics archives { #cbz-and-comics-archives }
 
 See [CBZ & comics archives](/enhancers/cbz-and-comics-archives) to install enhancer
 

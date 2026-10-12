@@ -146,7 +146,7 @@ When several sources are present, `resolveMetadata` merges field-wise:
 
 These mirror the compile-enforced tables shipped next to each resolver — the losslessness audit trail. Dotted paths address the scoped corners; `readingOrder`/`toc` mean the field feeds a sibling part of the resolved entity; `cover` is the `metadata.cover` field (resolved against the container by `resolveArchive`); `guide` is a reserved home still only reachable through `sources`.
 
-### ComicInfo → metadata
+### ComicInfo → metadata { #comicinfo-metadata }
 
 | ComicInfo field | Home | Notes |
 | --- | --- | --- |
@@ -186,7 +186,7 @@ These mirror the compile-enforced tables shipped next to each resolver — the l
 | `Teams` | `comicInfo.teams` | comma-split |
 | `Locations` | `comicInfo.locations` | comma-split |
 
-### OPF → metadata
+### OPF → metadata { #opf-metadata }
 
 | OPF field | Home | Notes |
 | --- | --- | --- |
@@ -213,7 +213,7 @@ These mirror the compile-enforced tables shipped next to each resolver — the l
 | cover heuristics (`coverHref`) | `cover` | the `metadata.cover` field; `basePath`-resolved by `resolveArchive`, `confidence: "derived"` |
 | `<guide>` | `guide` | reserved — `sources.opf` only today |
 
-### Apple / Kobo → metadata
+### Apple / Kobo → metadata { #apple-kobo-metadata }
 
 | Source field | Home | Notes |
 | --- | --- | --- |
@@ -221,6 +221,6 @@ These mirror the compile-enforced tables shipped next to each resolver — the l
 | Apple display options (all) | `apple.options` | verbatim, lossless |
 | Kobo `fixed-layout` option | `kobo.fixedLayout` + `renditionLayout` | `true` → `pre-paginated` |
 
-## Error policy & versioning
+## Error policy & versioning { #error-policy-and-versioning }
 
 Per-source parse failures are swallowed and logged via the debug `Report` (books in the wild are dirty): a malformed `ComicInfo.xml` never fails a resolve, it just doesn't contribute. The `ResolvedArchive` entity carries a `version` field for consumers persisting it — currently `3`, reflecting the normalized identifier model. It is bumped only when the shape or meaning of existing fields changes incompatibly; additive vocabulary growth does not bump it.

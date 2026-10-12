@@ -137,6 +137,8 @@ exports.
   their file. The docs build fails on a broken link or anchor.
 - When you move or rename a page, redirect its old path in
   `apps/docs/vercel.json`.
+- A heading that ends in `{ #id }` keeps the anchor older links point to. Keep
+  it when you reword the heading.
 - `pnpm run start:docs` serves the site while you write.
 - If the change is internal, say in the pull request that you checked the
   documentation.

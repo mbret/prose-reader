@@ -31,7 +31,7 @@ type SelectionOver = {
 type SelectionValue = SelectionChange | SelectionOver | undefined
 ```
 
-### `selection.selection$`
+### `selection.selection$` { #selection.selectionusd }
 
 ```typescript
 Observable<SelectionValue>
@@ -39,7 +39,7 @@ Observable<SelectionValue>
 
 Emits the current selection
 
-### `selection.selectionStart$`
+### `selection.selectionStart$` { #selection.selectionstartusd }
 
 ```typescript
 Observable<void>
@@ -47,7 +47,7 @@ Observable<void>
 
 Emits when the user starts a selection
 
-### `selection.selectionEnd$`
+### `selection.selectionEnd$` { #selection.selectionendusd }
 
 ```typescript
 Observable<void>
@@ -55,7 +55,7 @@ Observable<void>
 
 Emits when the user ends a selection
 
-### `selection.selectionOver$`
+### `selection.selectionOver$` { #selection.selectionoverusd }
 
 ```typescript
 Observable<SelectionOver>
@@ -63,7 +63,7 @@ Observable<SelectionOver>
 
 Emits when user releases the pointer after a selection
 
-### `selection.lastSelectionOnPointerDown$`
+### `selection.lastSelectionOnPointerDown$` { #selection.lastselectiononpointerdownusd }
 
 ```typescript
 Observable<SelectionValue>
@@ -71,7 +71,7 @@ Observable<SelectionValue>
 
 Useful to know about the selection state before a pointerdown event. For example if you want to prevent certain action on click if user is discarding a selection. A good example is delaying the opening of a reader menu by discarding the current selection before toggling the menu.
 
-### `selection.getSelection()`
+### `selection.getSelection()` { #selection.getselection }
 
 ```typescript
 function getSelection(): SelectionValue
@@ -79,7 +79,7 @@ function getSelection(): SelectionValue
 
 Return the current selection synchronously.
 
-### `selection.createOrderedRangeFromSelection()`
+### `selection.createOrderedRangeFromSelection()` { #selection.createorderedrangefromselection }
 
 ```typescript
 function createOrderedRangeFromSelection(params: {

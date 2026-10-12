@@ -94,7 +94,7 @@ const zip = await loadAsync(await (await fetch("book.epub")).blob())
 const archive = await createArchiveFromJszip(zip, { name: "book.epub" })
 ```
 
-### From a zip.js archive (browser/worker)
+### From a zip.js archive (browser/worker) { #from-a-zip.js-archive-browser-worker }
 
 [zip.js](https://github.com/gildas-lormeau/zip.js) supports multi-core compression, web streams and zip64, which makes it a good fit for large containers in the browser or a service worker.
 
@@ -117,7 +117,7 @@ const directory = await unzipper.Open.file("book.cbz")
 const archive = await createArchiveFromUnzipper(directory, { name: "book.cbz" })
 ```
 
-### From a RAR/CBR archive (node-unrar-js)
+### From a RAR/CBR archive (node-unrar-js) { #from-a-rar-cbr-archive-node-unrar-js }
 
 ```typescript
 import { createArchiveFromNodeUnrarJs } from "@prose-reader/archive-reader/archives/createArchiveFromNodeUnrarJs"
@@ -182,7 +182,7 @@ const resolved = await resolveArchive(archive)
 
 Everything is **container-relative** (reading-order `uri`s, toc `containerHref`s): the entity carries no serving concern, consumers rebase into their own space.
 
-### Projection tokens & cost classes
+### Projection tokens & cost classes { #projection-tokens-and-cost-classes }
 
 `include` picks which parts to resolve and return — the tokens are simply the result keys, and they follow I/O cost classes:
 
@@ -210,7 +210,7 @@ const resolved = await resolveArchive(archive, {
 
 `layoutScan` (default `false`) does not change the return type — it changes how hard the resolver works: it reads and XML-parses **every** reading-order document to apply the industry viewport heuristic (an explicitly-reflowable publication whose spine documents all declare `head > meta[name=viewport]` is promoted to `pre-paginated`, metadata and per-item). The refinement is merged into the result inside the resolver; you never re-implement the merge. The streamer's `generateManifestFromArchive` enables it.
 
-### Metadata, sources & error policy
+### Metadata, sources & error policy { #metadata-sources-and-error-policy }
 
 `metadata` is the cross-format union vocabulary — see [Resolved metadata](/archive-reader/resolved-metadata) for the vocabulary, the per-format mapping tables and the precedence rules. `sources` carries the verbatim parser outputs (`opf` with its `basePath`, `comicInfo`, `apple`, `kobo`); everything in `sources` is also represented, normalized, in `metadata`. Per-source parse failures are swallowed (logged via the debug `Report`): a malformed source — a sidecar or the package document (OPF) itself — never fails the resolve. A book whose OPF won't parse still resolves: it simply doesn't contribute to `metadata`/`toc`, and the reading order degrades to the archive's file listing (see [Resolving the reading order](#resolving-the-reading-order)).
 

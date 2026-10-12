@@ -8,7 +8,7 @@ happens around a pan or a relayout.
 
 ## Reading position
 
-### `.readingPosition$`
+### `.readingPosition$` { #readingpositionusd }
 
 ```typescript
 Observable<ReadingPosition>
@@ -198,7 +198,7 @@ reader.navigation.navigate({
 
 ## Observing navigation
 
-### `.navigation$`
+### `.navigation$` { #navigationusd }
 
 ```typescript
 Observable<{
@@ -215,7 +215,7 @@ the one to where the reader opens included, or a `"restoration"` of the current
 one onto a new layout or when a pan ends.
 A restoration is emitted even when it lands where the navigation already was.
 
-### `.position$`
+### `.position$` { #positionusd }
 
 ```typescript
 Observable<SpinePosition | UnboundSpinePosition>
@@ -223,7 +223,7 @@ Observable<SpinePosition | UnboundSpinePosition>
 
 The position of the latest navigation, only when it changes.
 
-### `.navigationState$`
+### `.navigationState$` { #navigationstateusd }
 
 ```typescript
 Observable<"busy" | "free">
@@ -232,7 +232,7 @@ Observable<"busy" | "free">
 `"busy"` while the viewport is moving, while a `lock()` is held, and while the
 reader restores the navigation after one is released; `"free"` otherwise.
 
-### `.state$`
+### `.state$` { #stateusd }
 
 ```typescript
 Observable<{
@@ -246,7 +246,7 @@ Observable<{
 Whether there is a spine item in each direction to go to. Emits as soon as you
 subscribe to it.
 
-### `.outOfSpineBoundary$`
+### `.outOfSpineBoundary$` { #outofspineboundaryusd }
 
 Emits when a navigation request targets a position outside the spine's current
 extent. Pure geometric primitive, with no content-lifecycle semantics. For "end
@@ -287,7 +287,7 @@ the navigation is held until every one is released, and calling a release
 twice releases it once. A navigation made while it is held lands once it is
 released: it snaps to a page then, and only then moves the reading position.
 
-### `.isLocked$`
+### `.isLocked$` { #islockedusd }
 
 ```typescript
 Observable<boolean>

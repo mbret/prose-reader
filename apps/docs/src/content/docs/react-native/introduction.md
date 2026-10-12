@@ -20,7 +20,7 @@ We don't provide a native plugin directly so you will need to run prose on the w
 
 You will need some minimal web assets (html, js) to serve to the webview. At the very least they will have a simple document on which the prose engine can start rendering. The process of developing, building and serving the assets on the native side is straightforward and can be done in several ways. This is even possible to have hot reloading on React Native side when you change your web assets.
 
-### Bridge web :left\_right\_arrow: native
+### Bridge web ↔️ native { #bridge-web-native }
 
 Having prose in a webview does not mean you have to design your reader inside that webview. In fact we recommend having the engine only and make your UX on the native side. To help bridging prose API with your native side you can use [@prose-reader/react-native](/react-native/prose-reader-react-native). This will create an API wrapper between the react native and prose inside the webview.
 
@@ -51,7 +51,7 @@ If your content is not accessible through a server, for example if you download 
 
 If you need to stream your content locally but cannot pass it directly to the webview for various reasons, you can run an HTTP server directly into your react native application and let prose listen to it. Packages such as [https://github.com/simonsturge/expo-http-server](https://github.com/simonsturge/expo-http-server) can solve this use case.
 
-## Limitations / Considerations
+## Limitations / Considerations { #limitations-considerations }
 
 ### Native streaming with large content
 
