@@ -85,7 +85,7 @@ export default defineConfig({
           ],
         },
         {
-          label: "CORE API",
+          label: "Core API",
           items: [
             "core-api/introduction",
             {
@@ -105,7 +105,7 @@ export default defineConfig({
           ],
         },
         {
-          label: "enhancers",
+          label: "Enhancers",
           items: [
             "enhancers/pdf",
             "enhancers/gestures",
