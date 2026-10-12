@@ -1,17 +1,16 @@
-import type { CoreInputSettings } from "@prose-reader/core"
 import { signal, useSignal } from "reactjrx"
+import type {
+  ReaderSettings,
+  ScreenScopeReference,
+} from "./reactReaderSettings"
 
 export type LocalSettings = {
   navigationGestures: "pan" | "swipe" | "none"
   navigationSnapThreshold: { type: "pixels"; value: number } | undefined
-  fontSizeGlobal?: number
-  fontSizeScreenMobile?: number
-  fontSizeScreenTablet?: number
-  fontSizeScreenDesktop?: number
-  spreadModeGlobal?: CoreInputSettings["spreadMode"]
-  spreadModeScreenMobile?: CoreInputSettings["spreadMode"]
-  spreadModeScreenTablet?: CoreInputSettings["spreadMode"]
-  spreadModeScreenDesktop?: CoreInputSettings["spreadMode"]
+  /** The global values of the settings react-reader manages. */
+  readerSettings: ReaderSettings
+  /** Their values for each screen. */
+  readerSettingsByScreen: Partial<Record<ScreenScopeReference, ReaderSettings>>
 }
 
 const hydratedSettings = ((): Partial<LocalSettings> => {
@@ -31,17 +30,8 @@ const settings = signal<LocalSettings>({
     navigationGestures: hydratedSettings.navigationGestures ?? "pan",
     navigationSnapThreshold:
       hydratedSettings.navigationSnapThreshold ?? undefined,
-    fontSizeGlobal: hydratedSettings.fontSizeGlobal ?? undefined,
-    fontSizeScreenMobile: hydratedSettings.fontSizeScreenMobile ?? undefined,
-    fontSizeScreenTablet: hydratedSettings.fontSizeScreenTablet ?? undefined,
-    fontSizeScreenDesktop: hydratedSettings.fontSizeScreenDesktop ?? undefined,
-    spreadModeGlobal: hydratedSettings.spreadModeGlobal ?? undefined,
-    spreadModeScreenMobile:
-      hydratedSettings.spreadModeScreenMobile ?? undefined,
-    spreadModeScreenTablet:
-      hydratedSettings.spreadModeScreenTablet ?? undefined,
-    spreadModeScreenDesktop:
-      hydratedSettings.spreadModeScreenDesktop ?? undefined,
+    readerSettings: hydratedSettings.readerSettings ?? {},
+    readerSettingsByScreen: hydratedSettings.readerSettingsByScreen ?? {},
   },
 })
 
