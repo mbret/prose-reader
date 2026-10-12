@@ -38,6 +38,7 @@ export default defineConfig({
       components: {
         PageTitle: "./src/components/PageTitle.astro",
       },
+      routeMiddleware: "./src/routeData.ts",
       plugins: [starlightLinksValidator(), starlightLlmsTxt()],
       sidebar: [
         {
