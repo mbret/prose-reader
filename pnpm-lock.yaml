@@ -352,7 +352,7 @@ importers:
         version: 5.0.6
       '@zip.js/zip.js':
         specifier: ^2.8.51
-        version: 2.17.0
+        version: 2.23.0
       typescript:
         specifier: '*'
         version: 6.0.3
@@ -437,7 +437,7 @@ importers:
         version: 0.10.11
       '@zip.js/zip.js':
         specifier: ^2.8.51
-        version: 2.17.0
+        version: 2.23.0
       buffer:
         specifier: ^6.0.3
         version: 6.0.3
@@ -3269,8 +3269,8 @@ packages:
   '@zag-js/utils@1.43.3':
     resolution: {integrity: sha512-9P9fvFFxuiDcLqX0BYgGNkf0/a/id32nHvQpwgv/Xv3b9n5yeyw2U8nKefpWr+1VfFsrpf2XMXiA2CDSWZgt2g==}
 
-  '@zip.js/zip.js@2.17.0':
-    resolution: {integrity: sha512-WxvSsJvlI+5v4f1gWjGfqvzOB8XkAIughO+iJUPOJR6OSpUkFauBzi1G4xS2MmK1fxHGuDAqq9Lnpq/ri7BWuw==}
+  '@zip.js/zip.js@2.23.0':
+    resolution: {integrity: sha512-K5obAqfrO7zhycnCupM9aaoZ9kx0SA0kv7+Z2oOUsdpWquv4s/Z4zyD7AdTqxrK3pgPM+ozaUi8kdRQbCWaIrQ==}
     engines: {bun: '>=0.7.0', deno: '>=1.0.0', node: '>=18.0.0'}
 
   '@zkochan/js-yaml@0.0.7':
@@ -9778,7 +9778,7 @@ snapshots:
 
   '@types/ws@8.18.1':
     dependencies:
-      '@types/node': 25.9.5
+      '@types/node': 26.6.2
 
   '@types/yargs-parser@21.0.3': {}
 
@@ -10473,7 +10473,7 @@ snapshots:
 
   '@zag-js/utils@1.43.3': {}
 
-  '@zip.js/zip.js@2.17.0': {}
+  '@zip.js/zip.js@2.23.0': {}
 
   '@zkochan/js-yaml@0.0.7':
     dependencies:
@@ -10838,7 +10838,7 @@ snapshots:
 
   buffer-image-size@0.6.4:
     dependencies:
-      '@types/node': 25.9.5
+      '@types/node': 26.6.2
 
   buffer@5.7.1:
     dependencies:
@@ -11832,7 +11832,7 @@ snapshots:
 
   happy-dom@20.14.5:
     dependencies:
-      '@types/node': 25.9.5
+      '@types/node': 26.6.2
       '@types/whatwg-mimetype': 3.0.2
       '@types/ws': 8.18.1
       buffer-image-size: 0.6.4
