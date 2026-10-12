@@ -59,9 +59,9 @@ surroundings do not travel with it.
 
 Anything a consumer can reach: what a package's entry point exports, what the
 reader and its namespaces carry, options, streams, hook names, types, anything
-`gitbook/` documents. Start from the internal bar. Soften it only when the fully
-explicit name gets convoluted: it repeats its namespace, strings qualifiers
-together, or reads as a sentence. Then:
+the documentation covers. Start from the internal bar. Soften it only when the
+fully explicit name gets convoluted: it repeats its namespace, strings
+qualifiers together, or reads as a sentence. Then:
 
 - **Lean on the namespace.** In `reader.navigation.goToXPointer`, `navigation`
   already says what it is for.
@@ -69,8 +69,8 @@ together, or reads as a sentence. Then:
   `goToSpineItem`. A consistent surface is easier to learn than a locally more
   precise name.
 - **Let the doc comment carry what the name cannot.** A consumer reads a public
-  name with its doc comment, in the editor and in `gitbook/`. `goToXPointer`
-  never animates: that is in its doc comment, not in
+  name with its doc comment, in the editor and in the documentation.
+  `goToXPointer` never animates: that is in its doc comment, not in
   `goToXPointerWithoutAnimation`.
 - **Soften, never blur.** Drop only what the context already says, never what a
   consumer would have to guess. `cfiToXPointer` stays whole: on

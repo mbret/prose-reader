@@ -1,0 +1,79 @@
+{
+  "$schema": "https://openapi.vercel.sh/vercel.json",
+  "installCommand": "npx --yes \"$(node -p \"require('../../package.json').packageManager\")\" install --frozen-lockfile",
+  "buildCommand": "npx --yes \"$(node -p \"require('../../package.json').packageManager\")\" --filter \"prose-reader-docs...\" run build",
+  "outputDirectory": "dist",
+  "trailingSlash": false,
+  "redirects": [
+    {
+      "source": "/archive-reader/archive-reader",
+      "destination": "/archive-reader",
+      "permanent": true
+    },
+    {
+      "source": "/archive-reader/archive-reader/doi",
+      "destination": "/archive-reader/doi",
+      "permanent": true
+    },
+    {
+      "source": "/archive-reader/archive-reader/google-books",
+      "destination": "/archive-reader/google-books",
+      "permanent": true
+    },
+    {
+      "source": "/archive-reader/archive-reader/identifiers",
+      "destination": "/archive-reader/identifiers",
+      "permanent": true
+    },
+    {
+      "source": "/archive-reader/archive-reader/open-library",
+      "destination": "/archive-reader/open-library",
+      "permanent": true
+    },
+    {
+      "source": "/archive-reader/archive-reader/project-gutenberg",
+      "destination": "/archive-reader/project-gutenberg",
+      "permanent": true
+    },
+    {
+      "source": "/archive-reader/archive-reader/resolved-metadata",
+      "destination": "/archive-reader/resolved-metadata",
+      "permanent": true
+    },
+    {
+      "source": "/koreader/koreader",
+      "destination": "/koreader",
+      "permanent": true
+    },
+    {
+      "source": "/metadata-fetcher/metadata-fetcher",
+      "destination": "/metadata-fetcher",
+      "permanent": true
+    },
+    {
+      "source": "/cfi/about",
+      "destination": "/cfi",
+      "permanent": true
+    },
+    {
+      "source": "/core-api/.navigation",
+      "destination": "/core-api/navigation",
+      "permanent": true
+    },
+    {
+      "source": "/core-api/.pagination",
+      "destination": "/core-api/pagination",
+      "permanent": true
+    },
+    {
+      "source": "/core-api/.viewport",
+      "destination": "/core-api/viewport",
+      "permanent": true
+    },
+    {
+      "source": "/core-api/.zoom",
+      "destination": "/core-api/zoom",
+      "permanent": true
+    }
+  ]
+}

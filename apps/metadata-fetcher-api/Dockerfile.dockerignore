@@ -24,8 +24,7 @@
 
 # workspaces this image has no use for (the demo and e2e fixtures alone are
 # ~80 MB of epubs, comics and pdfs)
-apps/demo
+apps/docs
 apps/front
 apps/tests
 prose-react-native-demo
-gitbook

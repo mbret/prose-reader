@@ -1,0 +1,311 @@
+---
+title: ".navigation"
+---
+
+The reference for `reader.navigation`. The [navigation guide](/learn/navigation)
+explains how to use it: which navigation to pick, what to save, and what
+happens around a pan or a relayout.
+
+## Reading position
+
+### `.readingPosition$`
+
+```typescript
+Observable<ReadingPosition>
+
+type ReadingPosition = {
+  cfi: string
+  percentageEstimateOfBook: number
+  status: "pending" | "success" | "error"
+}
+```
+
+Where the reader is in the book: the value to save, and whose `cfi` to pass
+back as `createReader`'s `target`, `{ type: "cfi", value }`, to reopen the book
+there. Replays the current one on subscription, and emits nothing until the
+first navigation has a position. The guide's
+[Reading position](/learn/navigation#reading-position) says when it
+changes, and [Saving it](/learn/navigation#saving-it) why a value that
+is not a `success` is saved all the same.
+
+| Field | Meaning |
+| --- | --- |
+| `cfi` | The place in the text: the place the target names once its spine item's document shows it, or the first character of the page landed on. While no place is known, such as while the spine item the navigation goes to loads, it stands in: it is that item's start, a cfi naming only the item, which `reader.cfi.isRootCfi(cfi)` tells |
+| `percentageEstimateOfBook` | How far into the book `cfi` is, from `0` to `1`: where the page holding it starts, estimated from the `progressionWeight` of each spine item in the manifest and the pages of its own. A position on the last page is short of `1`. While the value is not a `success`, it is the start of its spine item. When a spine item has no `progressionWeight`, or the weights add up to nothing, every item counts as an even share |
+| `status` | Whether the reader has found the place the navigation goes to: `pending` while it is still finding it, `success` once the page holding the place the target names is laid out, or once the page landed on is when the target names no place, and `error` once the spine item the navigation goes to has failed to load, at its start or at the place the target names if the item showed it first. Every navigation ends in `success` or `error`, which stays until the next navigation |
+
+All three come from the same navigation, so a value never pairs a position
+with the progress of another.
+
+## Turning pages
+
+```typescript
+() => void
+```
+
+| Method | Turns one page, or one spread |
+| --- | --- |
+| `.turnLeft()`, `.turnTop()`, `.turnLeftOrTop()` | to the left, or up when pages turn vertically |
+| `.turnRight()`, `.turnBottom()`, `.turnRightOrBottom()` | to the right, or down when pages turn vertically |
+
+The three names in each row are the same method. They follow the screen, not
+the reading direction: in a right-to-left book `.turnLeft()` goes forward. At
+the edge of the book the page stays, and `.outOfSpineBoundary$` emits.
+
+## Going to a place
+
+`animation`, where a method takes it, is how the viewport gets there:
+
+```typescript
+type Animation = boolean | "turn" | "snap"
+```
+
+### `.goToCfi()`
+
+```typescript
+(cfi: string, options?: { animate: boolean }) => void
+```
+
+Goes to the page holding `cfi`. Animates unless `animate` is `false`. Does
+nothing when the cfi names nothing in the book: when it can't be read, or names
+a spine item the book does not have. A cfi whose path leads to nothing in its
+spine item goes to the start of the item.
+
+### `.goToUrl()`
+
+```typescript
+(url: string | URL) => void
+```
+
+Goes to the spine item an absolute url points to, and to the element its
+fragment names when it has one. Never animates. Does nothing when the url is
+outside the book. Links between the book's documents go through it when
+clicked.
+
+### `.goToSpineItem()`
+
+```typescript
+(params: { indexOrId: number | string; animation?: Animation }) => void
+```
+
+Goes to the start of a spine item, by index or by id. Does nothing when the item
+does not exist.
+
+### `.goToPageOfSpineItem()`
+
+```typescript
+(params: {
+  pageIndex: number
+  spineItemId: number | string
+  animation?: Animation
+}) => void
+```
+
+Goes to a page of a spine item.
+
+### `.goToAbsolutePageIndex()`
+
+```typescript
+(params: { absolutePageIndex: number; animation?: Animation }) => void
+```
+
+Goes to a page counted from the start of the book. Does nothing when no such
+page is laid out.
+
+### Spine item to spine item
+
+```typescript
+() => void
+```
+
+| Method | Goes to |
+| --- | --- |
+| `.goToNextSpineItem()` | the item after the last one visible |
+| `.goToPreviousSpineItem()` | the item before the first one visible |
+| `.goToLeftSpineItem()` | the item to the left: previous, or next in a right-to-left book. Horizontal only |
+| `.goToRightSpineItem()` | the item to the right: next, or previous in a right-to-left book. Horizontal only |
+| `.goToTopSpineItem()` | the previous item. Vertical only |
+| `.goToBottomSpineItem()` | the next item. Vertical only |
+| `.goToLeftOrTopSpineItem()` | the item to the left, or above when pages turn vertically |
+| `.goToRightOrBottomSpineItem()` | the item to the right, or below when pages turn vertically |
+
+A method called in the direction it does not support warns and does nothing.
+
+### `.navigate()`
+
+```typescript
+(to: {
+  target: NavigationTarget
+  animation?: Animation
+  type?: "api" | "scroll"
+}) => void
+
+type NavigationTarget =
+  | { type: "position"; value: SpinePosition | UnboundSpinePosition }
+  | { type: "spineItem"; value: number | string }
+  | { type: "cfi"; value: string }
+  | {
+      type: "selector"
+      value: {
+        spineItem: number | string
+        find: (document: Document) => NodePosition | undefined
+      }
+    }
+
+type NodePosition = { node: Node; offset?: number }
+```
+
+The navigation every method above is built on. Prefer them: this is for
+gestures and positions the others cannot express.
+
+A navigation asks for exactly one target. One whose target names nothing in the
+book is ignored, with a warning: a cfi that can't be read, or a `cfi`,
+`spineItem` or `selector` naming a spine item the book does not have. A position
+is clamped to the book, so it always names a place.
+
+Enhancers can add target types: the
+reader `createReader` returns also takes `{ type: "url"; value: string | URL }`,
+from its navigation enhancer. `NavigationTargetOf<typeof reader>` is every
+target a reader takes.
+[Enhancers](/learn/enhancers#adding-a-navigation-target) explains how to
+add one.
+
+A `selector` target is a place in a spine item's document that only `find`
+knows how to look for, such as an element by id. Until the item's document is
+loaded, the navigation goes to the item's start, and it looks again each time
+the book is laid out. Once found, the place is the navigation's reading
+position, like a cfi.
+
+`find` runs synchronously inside the navigation, and may be called several
+times, or not at all when the reader navigates elsewhere first. Keep it quick
+and free of side effects, and do not modify the document. A `find` that throws
+finds nothing: the navigation stays at the item's start.
+
+`NavigationTarget` is exported by core, with `NavigationTargetType`, the union
+of its types, and `NavigationTargetValues`, the value each type carries.
+`NavigationTarget<Type>` narrows it to some of its types.
+
+`createReader`'s `target` option takes the same targets, url included: it is
+the reader's first navigation, where the book opens. A target naming nothing in
+the book opens it at its start, as without one.
+
+```typescript
+reader.navigation.navigate({
+  target: { type: "position", value: new SpinePosition({ x: 0, y: 400 }) },
+  animation: false,
+})
+```
+
+## Observing navigation
+
+### `.navigation$`
+
+```typescript
+Observable<{
+  id: symbol
+  position: SpinePosition | UnboundSpinePosition
+  requestedPosition: SpinePosition | UnboundSpinePosition | undefined
+  requestedVisibleArea: { width: number; height: number } | undefined
+  triggeredBy: "user" | "restoration"
+}>
+```
+
+Every navigation as it happens: a `"user"` one that you or a gesture asked for,
+the one to where the reader opens included, or a `"restoration"` of the current
+one onto a new layout or when a pan ends.
+A restoration is emitted even when it lands where the navigation already was.
+
+### `.position$`
+
+```typescript
+Observable<SpinePosition | UnboundSpinePosition>
+```
+
+The position of the latest navigation, only when it changes.
+
+### `.navigationState$`
+
+```typescript
+Observable<"busy" | "free">
+```
+
+`"busy"` while the viewport is moving, while a `lock()` is held, and while the
+reader restores the navigation after one is released; `"free"` otherwise.
+
+### `.state$`
+
+```typescript
+Observable<{
+  canGoLeftSpineItem: boolean
+  canGoRightSpineItem: boolean
+  canGoTopSpineItem: boolean
+  canGoBottomSpineItem: boolean
+}>
+```
+
+Whether there is a spine item in each direction to go to. Emits as soon as you
+subscribe to it.
+
+### `.outOfSpineBoundary$`
+
+Emits when a navigation request targets a position outside the spine's current
+extent. Pure geometric primitive, with no content-lifecycle semantics. For "end
+of book reached" with lazy-load awareness, compose with readiness signals (see
+`observeBookBoundaryReached`).
+
+```typescript
+reader.navigation.outOfSpineBoundary$
+```
+
+## Panning
+
+### `.panNavigator`
+
+```typescript
+{
+  start: (delta: { x: number; y: number }) => void
+  panMoveTo: (delta: { x: number; y: number } | undefined) => void
+  stop: (delta: { x: number; y: number }) => void
+}
+```
+
+Drives a pan from the deltas of a gesture: `start()` when it begins, then
+`panMoveTo()` for each move, and `stop()` when the user lets go. It holds a
+`lock()` from `start()` to `stop()`. Controlled page turn mode only: in
+scrollable mode it warns and does nothing.
+
+## Holding the navigation
+
+### `.lock()`
+
+```typescript
+() => () => void
+```
+
+Holds the navigation, and returns the function that releases it. Locks add up:
+the navigation is held until every one is released, and calling a release
+twice releases it once. A navigation made while it is held lands once it is
+released: it snaps to a page then, and only then moves the reading position.
+
+### `.isLocked$`
+
+```typescript
+Observable<boolean>
+```
+
+`true` while a `lock()` is held.
+
+### `.throttleLock()`
+
+```typescript
+<T>(params: { duration: number; trigger: Observable<T> }) => Observable<T>
+```
+
+Create and hold a lock on the navigation that will release periodically only
+when the duration is reached. This is useful when letting users navigate with a
+scrubber for example. This will make sure the reader will not re-layout too
+often even if the user play with the scrubber too fast.
+
+This does not prevent navigation, only the heavy recalculation that can occurs
+after (layout, pagination calculation, etc). The reading position moves at each
+release, to where the latest navigation lands.

@@ -10,6 +10,7 @@
     "includes": [
       "**",
       "!**/.nx",
+      "!**/.astro",
       "!**/.test",
       "!**/test-results",
       "!**/coverage",

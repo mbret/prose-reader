@@ -58,9 +58,9 @@ prose is a pnpm workspace, with [Lerna](https://lerna.js.org/) on top to run tas
 
 - `packages/`: the libraries, published to npm as `@prose-reader/*`.
 - `apps/front`: the website, with the demo under `/demo`.
+- `apps/docs`: the documentation, built with [Starlight](https://starlight.astro.build/) and published at [doc.prose-reader.com](https://doc.prose-reader.com/).
 - `apps/tests`: the browser test suite, on Playwright.
 - `apps/metadata-fetcher-api`: the metadata fetcher as an HTTP service, also published as a Docker image.
-- `gitbook/`: the documentation, published at [doc.prose-reader.com](https://doc.prose-reader.com/).
 - `prose-react-native-demo/`: an Expo app. It is not a workspace member: it installs with npm, from its own lockfile, the way an app consuming the libraries would.
 
 ### Setup
@@ -81,13 +81,14 @@ Build the libraries before you run a test or an app. Workspace packages resolve 
 
 ### Build and run
 
-| Task                                              | Command                |
-| ------------------------------------------------- | ---------------------- |
-| Build the libraries                               | `pnpm run build:lib`   |
-| Build every project, the website included         | `pnpm run build`       |
-| Rebuild the libraries on every change             | `pnpm run start:lib`   |
-| Run the website and the demo, on port 9000        | `pnpm run start:front` |
-| Run the library watchers and the website together | `pnpm start`           |
+| Task                                                                 | Command                |
+| -------------------------------------------------------------------- | ---------------------- |
+| Build the libraries                                                  | `pnpm run build:lib`   |
+| Build every project, the website and the documentation included      | `pnpm run build`       |
+| Rebuild the libraries on every change                                | `pnpm run start:lib`   |
+| Run the website and the demo, on port 9000                           | `pnpm run start:front` |
+| Run the documentation, on port 4321                                  | `pnpm run start:docs`  |
+| Run the library watchers, the website and the documentation together | `pnpm start`           |
 
 ### Checks
 
@@ -101,6 +102,7 @@ CI runs these on every pull request, and also builds the metadata fetcher API's 
 | Internal `@prose-reader/*` dependency ranges                   | `pnpm run check:internal-ranges`                                              |
 | `@prose-reader/react-native` against its Expo SDK              | `pnpm run check:expo-sdk`                                                     |
 | Types, after `pnpm run build`                                  | `pnpm run tsc`                                                                |
+| Documentation links and anchors                                | `pnpm --filter prose-reader-docs build`                                       |
 | Unit tests                                                     | `pnpm exec lerna run test --ignore prose-reader-tests`                        |
 | Browser tests, set up as described below                       | `pnpm --filter prose-reader-tests test`                                       |
 | React Native demo, after `pnpm run build:lib`                  | `cd prose-react-native-demo && npm ci && npm run typecheck && npm run bundle` |
