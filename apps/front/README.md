@@ -5,7 +5,7 @@ The prose website. It serves both:
 - `/` — the landing page.
 - `/demo` — the official demo, a reader made with React that showcases the
   capabilities of the engine and its enhancers. It doubles as an integration
-  example, see [the demo docs](../../gitbook/get-started/demo-and-showcase.md).
+  example, see [the demo docs](../docs/src/content/docs/get-started/demo-and-showcase.md).
 
 The demo bundle is loaded lazily so that visiting the landing page does not
 download the reading engine.

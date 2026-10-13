@@ -1,3 +1,0 @@
-# Service Worker
-
-TODO

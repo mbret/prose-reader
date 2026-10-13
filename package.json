@@ -10,6 +10,7 @@
     "start": "lerna run start --stream",
     "start:lib": "lerna run start --stream --scope @prose-reader/*",
     "start:front": "lerna run start --stream --scope prose-reader-front",
+    "start:docs": "lerna run start --stream --scope prose-reader-docs",
     "start:metadata-fetcher": "docker compose -f apps/metadata-fetcher-api/docker-compose.yml up --build",
     "stop:metadata-fetcher": "docker compose -f apps/metadata-fetcher-api/docker-compose.yml down",
     "build": "lerna run build --stream",

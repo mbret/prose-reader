@@ -120,7 +120,8 @@ The commits decide the release of the packages they change:
 
 ## Documentation
 
-`gitbook/` holds the user documentation, published at
+The user documentation is the Markdown in `apps/docs/src/content/docs/`,
+built with [Starlight](https://starlight.astro.build/) and published at
 [doc.prose-reader.com](https://doc.prose-reader.com/). Update it in the same
 pull request as any change to the public API or its documented behaviour:
 exports, signatures, options, types, defaults, peer dependencies, subpath
@@ -131,7 +132,14 @@ exports.
   the lines you touch.
 - Add a new item to the list or table it belongs to (creators, enhancers,
   hooks, settings), with a short example next to its siblings.
-- Register a new page in `gitbook/SUMMARY.md`.
+- Add a new page to the `sidebar` in `apps/docs/astro.config.ts`.
+- Link pages by their path on the site, such as `/learn/navigation`, not by
+  their file. The docs build fails on a broken link or anchor.
+- When you move or rename a page, redirect its old path in
+  `apps/docs/vercel.json`.
+- A heading that ends in `{ #id }` keeps the anchor older links point to. Keep
+  it when you reword the heading.
+- `pnpm run start:docs` serves the site while you write.
 - If the change is internal, say in the pull request that you checked the
   documentation.
 

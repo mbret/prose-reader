@@ -19,4 +19,4 @@ Title it as a Conventional Commit, such as `fix(core): hold one document at a ti
 
 - [ ] Ran the [checks](https://github.com/mbret/prose-reader/blob/master/README.md#checks) this change touches
 - [ ] Added or updated tests
-- [ ] Updated `gitbook/`, or checked that the documentation still holds
+- [ ] Updated the docs in `apps/docs`, or checked that the documentation still holds

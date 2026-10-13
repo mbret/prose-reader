@@ -1,6 +1,6 @@
 # metadata-fetcher-api
 
-A small HTTP service over [`@prose-reader/metadata-fetcher`](../../gitbook/metadata-fetcher/README.md): post a compact book lookup input, get back what the catalogs know.
+A small HTTP service over [`@prose-reader/metadata-fetcher`](../docs/src/content/docs/metadata-fetcher/index.md): post a compact book lookup input, get back what the catalogs know.
 
 It exists for two reasons — it is the development harness for the fetcher and its providers (hit a real catalog without wiring a script every time), and it is the easy way to run metadata lookups as a service without depending on the JavaScript package at all.
 
@@ -102,7 +102,7 @@ Supported fields are `title`, `authors`, `identifiers`, `series`, `publisher`, `
 | `includeRaw` | `false` | keep each provider's own record on `match.raw` |
 | `providers` | all | comma-separated provider ids to narrow the lookup |
 
-Both answer with the `FetchedMetadata` entity verbatim — ranked `matches` with the per-field signals behind each score, per-provider `sources`, and `failedProviders`. Matches are alternatives and are not consolidated into a synthetic metadata record. See the [package documentation](../../gitbook/metadata-fetcher/README.md) for the entity and the matching rules.
+Both answer with the `FetchedMetadata` entity verbatim — ranked `matches` with the per-field signals behind each score, per-provider `sources`, and `failedProviders`. Matches are alternatives and are not consolidated into a synthetic metadata record. See the [package documentation](../docs/src/content/docs/metadata-fetcher/index.md) for the entity and the matching rules.
 
 ### Status codes
 

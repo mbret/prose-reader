@@ -10,6 +10,7 @@
     "includes": [
       "**",
       "!**/.nx",
+      "!**/.astro",
       "!**/.test",
       "!**/test-results",
       "!**/coverage",
@@ -78,6 +79,17 @@
         "rules": {
           "a11y": {
             "noSvgWithoutTitle": "off"
+          }
+        }
+      }
+    },
+    {
+      "includes": ["**/*.astro"],
+      "linter": {
+        "rules": {
+          "correctness": {
+            "noUnusedImports": "off",
+            "noUnusedVariables": "off"
           }
         }
       }
