@@ -79,6 +79,51 @@
       "source": "/core-api/.zoom",
       "destination": "/core-api/zoom",
       "permanent": true
+    },
+    {
+      "source": "/learn/archive-reader",
+      "destination": "/archive-reader",
+      "permanent": true
+    },
+    {
+      "source": "/learn/archive-reader/resolved-metadata",
+      "destination": "/archive-reader/resolved-metadata",
+      "permanent": true
+    },
+    {
+      "source": "/learn/streamer/archives",
+      "destination": "/archive-reader",
+      "permanent": true
+    },
+    {
+      "source": "/get-started",
+      "destination": "/get-started/demo-and-showcase",
+      "permanent": true
+    },
+    {
+      "source": "/learn",
+      "destination": "/learn/contract",
+      "permanent": true
+    },
+    {
+      "source": "/core-api",
+      "destination": "/core-api/introduction",
+      "permanent": true
+    },
+    {
+      "source": "/enhancers",
+      "destination": "/enhancers/pdf",
+      "permanent": true
+    },
+    {
+      "source": "/react-reader",
+      "destination": "/react-reader/introduction",
+      "permanent": true
+    },
+    {
+      "source": "/react-native",
+      "destination": "/react-native/introduction",
+      "permanent": true
     }
   ]
 }
