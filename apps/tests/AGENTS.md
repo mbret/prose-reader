@@ -15,6 +15,8 @@ Each scenario is a folder under `tests/` with three files: an `index.html`, an
 state back the same way. Fixtures live in `public/epubs`: reflowable and
 pre-paginated epubs, a cbz and a pdf. Shared helpers live in `tests/utils`;
 add to them rather than copying a wait or a locator into a second spec.
+Helpers only one scenario's specs share, because they depend on its page or
+fixture, live in a module next to those specs.
 
 ## Waiting
 
