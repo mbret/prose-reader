@@ -3,5 +3,12 @@
   "installCommand": "npx --yes \"$(node -p \"require('../../package.json').packageManager\")\" install --frozen-lockfile",
   "buildCommand": "npx --yes \"$(node -p \"require('../../package.json').packageManager\")\" --filter \"prose-reader-front...\" run build",
   "outputDirectory": "dist",
-  "rewrites": [{ "source": "/(.*)", "destination": "/" }]
+  "rewrites": [{ "source": "/(.*)", "destination": "/" }],
+  "git": {
+    "deploymentEnabled": {
+      "claude/**": false,
+      "codex/**": false,
+      "dependabot/**": false
+    }
+  }
 }

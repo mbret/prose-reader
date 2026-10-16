@@ -80,5 +80,12 @@
       "destination": "/core-api/zoom",
       "permanent": true
     }
-  ]
+  ],
+  "git": {
+    "deploymentEnabled": {
+      "claude/**": false,
+      "codex/**": false,
+      "dependabot/**": false
+    }
+  }
 }
