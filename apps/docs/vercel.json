@@ -80,5 +80,11 @@
       "destination": "/core-api/zoom",
       "permanent": true
     }
-  ]
+  ],
+  "git": {
+    "deploymentEnabled": {
+      "**": false,
+      "master": true
+    }
+  }
 }
