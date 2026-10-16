@@ -6,9 +6,8 @@
   "rewrites": [{ "source": "/(.*)", "destination": "/" }],
   "git": {
     "deploymentEnabled": {
-      "claude/**": false,
-      "codex/**": false,
-      "dependabot/**": false
+      "**": false,
+      "master": true
     }
   }
 }
