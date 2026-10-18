@@ -9,11 +9,11 @@ import {
 } from "../utils/visibility"
 
 /**
- * A KOReader sync client pulls an xpointer, goes to it, and pushes the reading
- * position back as an xpointer, converting each value as it comes. Going to one
- * must reach its place even in a chapter that is not loaded yet. Every reading
- * position converts on arrival: pending at the chapter's start while the
- * chapter loads, then the place, a success.
+ * A KOReader sync client on an EPUB pulls an xpointer as the book's progress,
+ * goes to it, and pushes the reading position back as an xpointer, converting
+ * each value as it comes. Going to one must reach its place even in a chapter
+ * that is not loaded yet. Every reading position converts on arrival: pending
+ * at the chapter's start while the chapter loads, then the place, a success.
  */
 
 const url = "http://localhost:3333/tests/koreader/index.html"
@@ -148,7 +148,7 @@ const openAtXPointerInUnloadedChapter = async (page: Page) => {
     // The page's window is untyped: this scenario's index.tsx sets these.
     const { reader } = window as unknown as Scenario
 
-    reader.navigation.goToXPointer(xpointer)
+    reader.navigation.goToKoreaderProgress(xpointer)
   }, xpointer)
   await waitForSettled(page)
 
@@ -313,7 +313,7 @@ test.describe("Given an xpointer into a chapter where its place cannot be found"
       // The page's window is untyped: this scenario's index.tsx sets these.
       const { reader } = window as unknown as Scenario
 
-      reader.navigation.goToXPointer(xpointer)
+      reader.navigation.goToKoreaderProgress(xpointer)
     }, xpointer)
     await waitForSettled(page)
 

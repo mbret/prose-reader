@@ -45,8 +45,9 @@ async function run() {
     },
   })
 
-  // Every reading position from the start, converted to an xpointer as it
-  // comes, the way a sync client converts what it pushes.
+  // Every reading position from the start, converted to KOReader's progress
+  // as it comes, the way a sync client converts what it pushes: an xpointer,
+  // for an EPUB.
   const readingPositionsAsXPointers: {
     xpointer: string | undefined
     status: ReadingPosition["status"]
@@ -54,7 +55,7 @@ async function run() {
 
   reader.navigation.readingPosition$.subscribe(({ cfi, status }) => {
     readingPositionsAsXPointers.push({
-      xpointer: reader.koreader.cfiToXPointer(cfi),
+      xpointer: reader.koreader.cfiToProgress(cfi),
       status,
     })
   })
