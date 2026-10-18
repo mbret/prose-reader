@@ -1,6 +1,6 @@
-import type { Archive } from "@prose-reader/archive-reader"
 import {
   detectMimeTypeFromName,
+  getUriBasename,
   type Manifest,
   parseContentType,
 } from "@prose-reader/shared"
@@ -14,32 +14,27 @@ export const normalizeFilenameAsTitle = (filename: string) =>
     .replace(/\s+/g, " ")
     .trim()
 
-export const buildAudiobookToc = (
-  manifest: Manifest,
-  archive: Archive,
-): Toc | undefined => {
+/**
+ * One entry per track for a book made only of audio, each titled after the
+ * archive record it plays.
+ */
+export const buildAudiobookToc = (manifest: Manifest): Toc | undefined => {
   if (manifest.spineItems.length === 0) return undefined
 
   const allAudio = manifest.spineItems.every((item) => {
     const mimeType =
       parseContentType(item.mediaType ?? "") ||
-      detectMimeTypeFromName(item.href)
+      detectMimeTypeFromName(item.containerUri)
 
     return mimeType?.startsWith("audio/")
   })
 
   if (!allAudio) return undefined
 
-  return manifest.spineItems.map((item) => {
-    const record = archive.records.find(
-      (r) => !r.dir && decodeURI(item.href).endsWith(r.uri),
-    )
-
-    return {
-      title: normalizeFilenameAsTitle(record?.basename ?? item.href),
-      href: item.href,
-      path: record?.uri ?? item.href,
-      contents: [],
-    }
-  })
+  return manifest.spineItems.map((item) => ({
+    title: normalizeFilenameAsTitle(getUriBasename(item.containerUri)),
+    href: item.href,
+    path: item.containerUri,
+    contents: [],
+  }))
 }

@@ -161,7 +161,7 @@ const recordsManifest = (
     })),
   }
 
-  const audiobookToc = buildAudiobookToc(manifest, archive)
+  const audiobookToc = buildAudiobookToc(manifest)
   const toc = audiobookToc ?? resolved.toc?.map(toManifestTocItem(baseUrl))
 
   return toc !== undefined ? { ...manifest, nav: { toc } } : manifest
