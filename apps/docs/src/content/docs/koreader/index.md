@@ -2,7 +2,7 @@
 title: "KOReader positions"
 ---
 
-**`@prose-reader/koreader`** converts reading positions between prose's EPUB CFIs and the **crengine XPointer** dialect that KOReader and the KOReader-sync ecosystem exchange (KOReader itself, Readest, Crosspoint, Kavita, Komga, Calibre-Web Automated, …). Both formats name the same three things: a spine item, a DOM node inside it and an offset. The conversion is a DOM walk in each direction plus the handful of normalisation rules crengine applies when it parses a spine item. The package also computes the digest a KOReader sync server files a book's positions under: see [Document digests](/koreader/document-digests).
+**`@prose-reader/koreader`** converts reading positions between prose's EPUB CFIs and the **crengine XPointer** dialect that KOReader and the KOReader-sync ecosystem exchange (KOReader itself, Readest, Crosspoint, Kavita, Komga, Calibre-Web Automated, …). Both formats name the same three things: a spine item, a DOM node inside it and an offset. The conversion is a DOM walk in each direction plus the handful of normalisation rules crengine applies when it parses a spine item. A sync server stores an XPointer as the `progress` of an EPUB only, a PDF's or a comic's being a page number: `getKoreaderProgressKind` tells which form a book takes. The package also computes the digest a KOReader sync server files a book's positions under: see [Document digests](/koreader/document-digests).
 
 The conversions are pure: they take strings and `Document` / `Node` objects and return strings. The package has no reader instance, no network and no sync client: the one function that reads, `getKoreaderFileDigest`, reads at most 12 KiB of a `Blob` it is given. The conversions never throw on bad input: whatever cannot be converted comes back as `undefined`, so a caller can fall back to the spine item alone or to a percentage.
 
@@ -13,9 +13,9 @@ npm install @prose-reader/koreader
 ## Usage
 
 With a prose reader, the [KOReader enhancer](/enhancers/koreader) does
-this for you: it navigates to xpointers, even in chapters that are not loaded
-yet, and reports the reading position as one. The functions below are for
-everything else.
+this for you: it picks the form of the book's `progress`, navigates to one,
+xpointers even in chapters that are not loaded yet, and converts the reading
+position to one. The functions below are for everything else.
 
 ```typescript
 import { cfiToXPointer, xPointerToCfi } from "@prose-reader/koreader"
@@ -81,6 +81,7 @@ serializeXPointer(parsed) === "/body/DocFragment[14]/body/div/p[3]/text().42"
 | `generateXPointer(position, spineItemIndex)` | The pointer crengine itself writes for a DOM position, or `undefined` for positions crengine has no node for. |
 | `xPointerToCfi(pointer, getSpineItem)` | The CFI prose generates for that position, built with `@prose-reader/cfi`. |
 | `cfiToXPointer(cfi, getSpineItem)` | The pointer of a CFI's start; a root CFI (`epubcfi(/6/28[chap05]!)`) becomes the start of the item. |
+| `getKoreaderProgressKind(mediaType)` | The form of a book's `progress` from the media type of its file: `"xpointer"` for an EPUB, `"page"` for a PDF, a CBZ, CBR or CBT, `undefined` otherwise (plain text, a plain ZIP and `application/octet-stream` included). See [the enhancer](/enhancers/koreader#what-a-books-progress-is). |
 | `getKoreaderFileDigest(file)` | The `document` digest of KOReader's default "Binary" matching method for a `Blob`. See [Document digests](/koreader/document-digests). |
 | `getKoreaderFileNameDigest(fileName)` | The `document` digest of KOReader's "Filename" matching method. See [Document digests](/koreader/document-digests). |
 | `toCfiPosition(position)` | The position a CFI can point to for a `DomPosition`: a child index on an element becomes the start of that child. |
