@@ -52,7 +52,7 @@
     "@vitejs/plugin-react": "^6.0.2",
     "typescript": "*",
     "vite": "^8",
-    "vite-plugin-pwa": "^1.0.0",
+    "vite-plugin-pwa": "^2.0.0",
     "vite-plugin-svgr": "^5.2.0"
   }
 }
