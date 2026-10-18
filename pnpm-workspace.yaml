@@ -18,18 +18,3 @@ allowBuilds:
 # nothing once its version is a day old.
 minimumReleaseAgeExclude:
   - gesturx@1.11.1
-
-# lerna pins js-yaml and pacote, and nx pins smol-toml, to exact versions below
-# a security fix, so an in-range update cannot move them. Each override stays
-# inside the major its consumers ask for, and goes once lerna or nx pins a
-# version at or past its floor.
-#
-# Each floor is the first release that fixes its advisory, not the newest
-# release. pnpm refuses versions published less than a day ago
-# (minimumReleaseAge), so an override that only a brand-new version satisfies
-# fails every install until that version ages; a floor lets pnpm take the
-# newest version old enough.
-overrides:
-  js-yaml: ^4.3.2
-  pacote: ^21.5.1
-  smol-toml: ^1.7.1
