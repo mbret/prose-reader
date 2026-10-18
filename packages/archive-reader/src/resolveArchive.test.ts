@@ -1,5 +1,6 @@
 import { describe, expect, expectTypeOf, it } from "vitest"
 import { createArchive } from "./archives/createArchive"
+import { createArchiveFromUrls } from "./archives/createArchiveFromUrls"
 import { blobFileAccessors } from "./archives/fileAccessors"
 import type { ResolvedArchive } from "./resolveArchive"
 import { resolveArchive } from "./resolveArchive"
@@ -76,7 +77,8 @@ describe(`Given an EPUB`, () => {
     const resolved = await resolveArchive(epubArchive())
 
     expect(resolved).toEqual({
-      version: 3,
+      version: 4,
+      mediaType: `application/epub+zip`,
       unreadableSources: [],
       metadata: {
         titles: [{ value: `My Book` }],
@@ -111,10 +113,13 @@ describe(`Given an EPUB`, () => {
     })
 
     expectTypeOf(resolved).toEqualTypeOf<
-      Pick<ResolvedArchive, `sources` | `version` | `unreadableSources`>
+      Pick<
+        ResolvedArchive,
+        `sources` | `version` | `mediaType` | `unreadableSources`
+      >
     >()
 
-    expect(resolved.version).toBe(3)
+    expect(resolved.version).toBe(4)
     expect(resolved.sources.opf?.opf.titles[0]?.value).toBe(`My Book`)
     expect(resolved.sources.opf?.basePath).toBe(`OEBPS`)
     expect(`metadata` in resolved).toBe(false)
@@ -128,6 +133,125 @@ describe(`Given an EPUB`, () => {
     })
 
     expect(structuredClone(resolved)).toEqual(resolved)
+  })
+})
+
+describe(`Given the file a book was opened from`, () => {
+  const imageRecord = textRecord(`001.jpg`)
+  const opfRecord = textRecord(`OEBPS/content.opf`)
+
+  const resolveMediaType = async (
+    archive: Parameters<typeof resolveArchive>[0],
+  ) => (await resolveArchive(archive, { include: [] })).mediaType
+
+  it(`the media type the archive declares wins, without its parameters`, async () => {
+    const archive = createArchive({
+      filename: `book.epub`,
+      encodingFormat: `application/x-cbz; charset=binary`,
+      records: [opfRecord],
+      close: () => Promise.resolve(),
+    })
+
+    expect(await resolveMediaType(archive)).toBe(`application/x-cbz`)
+  })
+
+  it(`a declared type naming no book format gives way to the file name's extension`, async () => {
+    // what a server declares for a file it knows no better, as GitHub serves
+    // any binary file
+    for (const encodingFormat of [
+      `application/octet-stream`,
+      `binary/octet-stream`,
+      `application/zip`,
+    ]) {
+      const archive = createArchive({
+        filename: `book.epub`,
+        encodingFormat,
+        records: [opfRecord],
+        close: () => Promise.resolve(),
+      })
+
+      expect(await resolveMediaType(archive), encodingFormat).toBe(
+        `application/epub+zip`,
+      )
+    }
+
+    const comic = createArchive({
+      filename: `comic.cbr`,
+      encodingFormat: `application/vnd.rar`,
+      records: [imageRecord],
+      close: () => Promise.resolve(),
+    })
+
+    expect(await resolveMediaType(comic)).toBe(`application/vnd.comicbook-rar`)
+  })
+
+  it(`and to an EPUB container, a declared archive format standing when nothing else tells`, async () => {
+    const declared = (
+      encodingFormat: string,
+      records: ReturnType<typeof textRecord>[],
+    ) =>
+      createArchive({
+        encodingFormat,
+        records,
+        close: () => Promise.resolve(),
+      })
+
+    expect(
+      await resolveMediaType(
+        declared(`application/zip`, [
+          textRecord(`META-INF/container.xml`),
+          opfRecord,
+        ]),
+      ),
+    ).toBe(`application/epub+zip`)
+    expect(
+      await resolveMediaType(declared(`application/zip`, [imageRecord])),
+    ).toBe(`application/zip`)
+    expect(
+      await resolveMediaType(declared(`binary/octet-stream`, [imageRecord])),
+    ).toBe(`application/octet-stream`)
+  })
+
+  it(`else the file name's extension tells it, in any case`, async () => {
+    expect(await resolveMediaType(archiveWith([imageRecord], `Book.CBZ`))).toBe(
+      `application/vnd.comicbook+zip`,
+    )
+    expect(await resolveMediaType(archiveWith([imageRecord], `a.pdf`))).toBe(
+      `application/pdf`,
+    )
+    expect(await resolveMediaType(archiveWith([opfRecord], `comic.zip`))).toBe(
+      `application/zip`,
+    )
+  })
+
+  it(`else an OCF container file makes it an EPUB`, async () => {
+    expect(
+      await resolveMediaType(
+        archiveWith([textRecord(`META-INF/container.xml`), opfRecord]),
+      ),
+    ).toBe(`application/epub+zip`)
+  })
+
+  it(`a list of URLs is the book the app declares it to be, and data of an unknown type otherwise`, async () => {
+    const urls = [`https://cdn.example.com/page-1.jpg`]
+
+    expect(
+      await resolveMediaType(
+        await createArchiveFromUrls(urls, {
+          encodingFormat: `application/vnd.comicbook+zip`,
+        }),
+      ),
+    ).toBe(`application/vnd.comicbook+zip`)
+    // Its package document, which prose writes, makes it no EPUB.
+    expect(await resolveMediaType(await createArchiveFromUrls(urls))).toBe(
+      `application/octet-stream`,
+    )
+  })
+
+  it(`else it is data of an unknown type, even with a package document`, async () => {
+    expect(await resolveMediaType(archiveWith([opfRecord, imageRecord]))).toBe(
+      `application/octet-stream`,
+    )
   })
 })
 
@@ -156,8 +280,13 @@ describe(`Given a projection that needs nothing read from the book`, () => {
       include: [`version`],
     })
 
-    // nothing was read, so nothing can be reported broken
-    expect(resolved).toEqual({ version: 3, unreadableSources: [] })
+    // nothing was read, so nothing can be reported broken; the media type
+    // comes from the file name alone
+    expect(resolved).toEqual({
+      version: 4,
+      mediaType: `application/epub+zip`,
+      unreadableSources: [],
+    })
     expect(reads()).toBe(0)
   })
 
