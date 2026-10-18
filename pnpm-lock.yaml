@@ -185,9 +185,15 @@ importers:
       conventional-changelog-conventionalcommits:
         specifier: ~10.3.0
         version: 10.3.0
+      happy-dom:
+        specifier: ^20.0.0
+        version: 20.14.5
       husky:
         specifier: ^9.1.7
         version: 9.1.7
+      jsdom:
+        specifier: ^29.0.0
+        version: 29.1.1
       lerna:
         specifier: ^10.0.1
         version: 10.1.1(@types/node@26.6.5)(babel-plugin-macros@3.1.0)(supports-color@7.2.0)(typescript@6.0.3)
@@ -511,9 +517,6 @@ importers:
         specifier: workspace:^
         version: link:../streamer
     devDependencies:
-      jsdom:
-        specifier: ^29.0.0
-        version: 29.1.1
       typescript:
         specifier: '*'
         version: 6.0.3
@@ -523,9 +526,6 @@ importers:
 
   packages/cfi:
     devDependencies:
-      jsdom:
-        specifier: ^29.0.0
-        version: 29.1.1
       typescript:
         specifier: '*'
         version: 6.0.3
@@ -657,9 +657,6 @@ importers:
         specifier: workspace:^
         version: link:../shared
     devDependencies:
-      jsdom:
-        specifier: ^29.0.0
-        version: 29.1.1
       jszip:
         specifier: ^3.10.1
         version: 3.10.2
@@ -715,9 +712,6 @@ importers:
       expo:
         specifier: ^57.0.24
         version: 57.0.30(@babel/core@7.29.7(supports-color@8.1.1))(@expo/dom-webview@57.0.1)(react-dom@19.2.3(react@19.2.3))(react-native-webview@13.16.1(react-native@0.86.3(@babel/core@7.29.7(supports-color@8.1.1))(@types/react@19.3.0)(react@19.2.3)(supports-color@8.1.1))(react@19.2.3))(react-native@0.86.3(@babel/core@7.29.7(supports-color@8.1.1))(@types/react@19.3.0)(react@19.2.3)(supports-color@8.1.1))(react@19.2.3)(supports-color@8.1.1)(typescript@6.0.3)
-      jsdom:
-        specifier: ^29.0.0
-        version: 29.1.1
       react:
         specifier: 19.2.3
         version: 19.2.3

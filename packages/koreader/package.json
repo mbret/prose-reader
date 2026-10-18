@@ -32,7 +32,6 @@
     "@prose-reader/shared": "workspace:^"
   },
   "devDependencies": {
-    "jsdom": "^29.0.0",
     "jszip": "^3.10.1",
     "typescript": "*",
     "vite": "^8"
