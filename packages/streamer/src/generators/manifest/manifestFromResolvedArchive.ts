@@ -89,10 +89,12 @@ const epubManifest = (
       id: item.id ?? createSafeId(item.uri),
       index,
       // remote resources pass through; local ones get the serving base, or
-      // the file:// scheme when the manifest is not served from anywhere
+      // the file:// scheme when the manifest is not served from anywhere, and
+      // the reference the book makes to them, which its navigation and links
+      // match as written
       href: isHttpUrl(item.uri)
         ? item.uri
-        : `${baseUrl || `file://`}${item.uri}`,
+        : `${baseUrl || `file://`}${item.containerHref ?? item.uri}`,
       containerUri: item.uri,
       renditionLayout: item.renditionLayout,
       ...(item.renditionFlow !== undefined

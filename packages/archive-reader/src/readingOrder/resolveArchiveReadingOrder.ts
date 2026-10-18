@@ -11,7 +11,7 @@ import { KOBO_DISPLAY_OPTIONS_FILENAME } from "../metadata/kobo/parse.ts"
 import type { ArchiveOpfParsed } from "../metadata/opf/readArchiveOpf.ts"
 import { readArchiveOpf } from "../metadata/opf/readArchiveOpf.ts"
 import { omitUndefined } from "../utils/omitUndefined.ts"
-import { toContainerUri } from "../utils/toContainerUri.ts"
+import { toContainerHref, toContainerUri } from "../utils/toContainerUri.ts"
 
 /**
  * One resource of the publication's default reading sequence, in the
@@ -22,6 +22,13 @@ import { toContainerUri } from "../utils/toContainerUri.ts"
  */
 export type ArchiveReadingOrderItem = {
   readonly uri: string
+  /**
+   * The reference the package document makes to the resource, rebased onto
+   * the container and still escaped, to join onto a base URL: the book's own
+   * navigation and links reference it the same way. Absent without a package
+   * document, where the record's `uri` is all there is.
+   */
+  readonly containerHref?: string
   /** OPF manifest item id, when the container has a package document. */
   readonly id?: string
   readonly mediaType?: string
@@ -79,6 +86,7 @@ const readingOrderFromOpf = (
   return rows.map(({ row, uri, record }) =>
     omitUndefined({
       uri,
+      containerHref: toContainerHref(row.href, basePath),
       id: row.id,
       mediaType: row.mediaType ?? record?.encodingFormat,
       size: record?.size,

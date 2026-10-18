@@ -51,6 +51,7 @@ describe(`Given an EPUB with the OPF in a subfolder`, () => {
     expect(await resolveArchiveReadingOrder(archive)).toEqual([
       {
         uri: `OEBPS/page1.xhtml`,
+        containerHref: `OEBPS/page1.xhtml`,
         id: `p1`,
         mediaType: `application/xhtml+xml`,
         size: 100,
@@ -60,6 +61,7 @@ describe(`Given an EPUB with the OPF in a subfolder`, () => {
       },
       {
         uri: `OEBPS/page2.xhtml`,
+        containerHref: `OEBPS/page2.xhtml`,
         id: `p2`,
         mediaType: `application/xhtml+xml`,
         size: 300,
@@ -130,6 +132,7 @@ describe(`Given an EPUB whose spine records are missing sizes`, () => {
     // a dangling spine href still yields an entry, without record knowledge
     expect(readingOrder[1]).toEqual({
       uri: `missing.xhtml`,
+      containerHref: `missing.xhtml`,
       id: `p2`,
       mediaType: `application/xhtml+xml`,
       progressionWeight: 0.5,
@@ -155,6 +158,7 @@ describe(`Given an EPUB authored over absolute urls`, () => {
     expect(await resolveArchiveReadingOrder(archive)).toEqual([
       {
         uri: `https://cdn.example.com/page-1.jpg`,
+        containerHref: `https://cdn.example.com/page-1.jpg`,
         id: `p1`,
         mediaType: `image/jpg`,
         size: 1,
