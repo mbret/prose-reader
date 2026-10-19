@@ -79,19 +79,21 @@ describe("SpineItem loaded document", () => {
     const describeItem = () => ({
       loadStatus: item.value.loadStatus,
       frameHoldsDocument: getFrameDocument() !== undefined,
-      loadedDocument: nameDocument(item.loadedDocument),
+      loadedDocument: nameDocument(item.value.loadedDocument),
     })
 
-    const emitted: {
+    // Every state the item goes through, and each loaded document watched.
+    const states: {
       loadStatus: DocumentLoadStatus
       loadedDocument: string | undefined
     }[] = []
+    const watched: (string | undefined)[] = []
 
-    item.loadedDocument$.subscribe((loadedDocument) => {
-      emitted.push({
-        loadStatus: item.value.loadStatus,
-        loadedDocument: nameDocument(loadedDocument),
-      })
+    item.subscribe(({ loadStatus, loadedDocument }) => {
+      states.push({ loadStatus, loadedDocument: nameDocument(loadedDocument) })
+    })
+    item.watch("loadedDocument").subscribe((loadedDocument) => {
+      watched.push(nameDocument(loadedDocument))
     })
 
     reader.navigation.goToSpineItem({ indexOrId: 1, animation: false })
@@ -132,14 +134,18 @@ describe("SpineItem loaded document", () => {
         loadedDocument: undefined,
       },
     ])
-    expect(emitted).toEqual([
-      { loadStatus: "idle", loadedDocument: undefined },
-      { loadStatus: "loaded", loadedDocument: "the frame's document" },
-      { loadStatus: "unloading", loadedDocument: undefined },
-    ])
+    // The invariant, across every state the item went through.
+    expect(
+      states.filter(
+        ({ loadStatus, loadedDocument }) =>
+          (loadStatus === "loaded") !==
+          (loadedDocument === "the frame's document"),
+      ),
+    ).toEqual([])
+    expect(watched).toEqual([undefined, "the frame's document", undefined])
   })
 
-  it("is none from the moment the item is destroyed, before its document is released", async () => {
+  it("holds none once the item is destroyed, its document released before its state completes", async () => {
     const reader = createTestReader({ getRenderer: renderTextDocuments })
 
     mountTestReader(reader)
@@ -151,30 +157,32 @@ describe("SpineItem loaded document", () => {
 
     const events: string[] = []
 
-    item.loadedDocument$.subscribe({
+    item.watch("loadedDocument").subscribe({
       next: (loadedDocument) =>
         events.push(loadedDocument ? "loaded document" : "no loaded document"),
       complete: () => events.push("complete"),
     })
     reader.hookManager.register("item.onDocumentUnload", ({ itemId }) => {
-      if (itemId !== "0") return
-
-      events.push(
-        item.loadedDocument
-          ? "released, still the loaded document"
-          : "released, no loaded document",
-      )
+      if (itemId === "0") events.push("released")
     })
 
-    // The release on destroy leaves the item `loaded`, its state completing.
+    /**
+     * A destroy releases the document at once, without an unload: the item
+     * stays `loaded`, and its document goes once released, before the state
+     * completes. What watches it lets go of it, and nothing holds it after.
+     */
     reader.destroy()
 
     expect(events).toEqual([
       "loaded document",
+      "released",
       "no loaded document",
       "complete",
-      "released, no loaded document",
     ])
+    expect(item.value).toMatchObject({
+      loadStatus: "loaded",
+      loadedDocument: undefined,
+    })
   })
 
   it("is none for a loaded item rendered without a document frame", async () => {
@@ -184,10 +192,10 @@ describe("SpineItem loaded document", () => {
     mountTestReader(reader)
     await settledOn(reader, 0)
 
-    const item = reader.spineItemsManager.get(0)
-
-    expect(item?.value.loadStatus).toBe("loaded")
-    expect(item?.loadedDocument).toBeUndefined()
+    expect(reader.spineItemsManager.get(0)?.value).toMatchObject({
+      loadStatus: "loaded",
+      loadedDocument: undefined,
+    })
   })
 })
 
@@ -196,6 +204,7 @@ describe("SpineItemState", () => {
     const failed: SpineItemState = {
       loadStatus: "error",
       loadError: new Error("resource failed"),
+      loadedDocument: undefined,
       isReady: false,
       isDirty: false,
     }
@@ -203,6 +212,7 @@ describe("SpineItemState", () => {
     const loadedWithAnError: SpineItemState = {
       loadStatus: "loaded",
       loadError: new Error("resource failed"),
+      loadedDocument: undefined,
       isReady: false,
       isDirty: false,
     }

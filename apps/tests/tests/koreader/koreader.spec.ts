@@ -70,7 +70,7 @@ const getElementXPointer = async (
       const { koreader } = window as unknown as ScenarioHelpers
       const element = reader.spineItemsManager
         .get(spineItemIndex)
-        ?.loadedDocument?.getElementById(id)
+        ?.value.loadedDocument?.getElementById(id)
 
       if (!element) throw new Error(`no #${id} in a loaded document`)
 
@@ -105,7 +105,7 @@ const getXPointerCfi = async (page: Page, xpointer: string) =>
 
     return koreader.xPointerToCfi(xpointer, (spineItemIndex) => {
       const spineItem = reader.spineItemsManager.get(spineItemIndex)
-      const document = spineItem?.loadedDocument
+      const document = spineItem?.value.loadedDocument
 
       return spineItem && document
         ? { document, id: spineItem.item.id }

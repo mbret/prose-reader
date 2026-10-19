@@ -1047,7 +1047,7 @@ const hideMarkerBeforeParagraphPastFirstPage = async (
 ) =>
   (await getReader(page)).evaluate((reader, chapterIndex) => {
     const spineItem = reader.spineItemsManager.get(chapterIndex)
-    const document = spineItem?.loadedDocument
+    const document = spineItem?.value.loadedDocument
 
     if (!spineItem || !document) throw new Error("the chapter is not loaded")
 
@@ -1161,7 +1161,7 @@ const appendVideoAndGallery = async (page: Page, chapterIndex: number) => {
   const reader = await getReader(page)
   const numberOfPagesBefore = await reader.evaluate((reader, chapterIndex) => {
     const spineItem = reader.spineItemsManager.get(chapterIndex)
-    const document = spineItem?.loadedDocument
+    const document = spineItem?.value.loadedDocument
 
     if (!spineItem || !document) throw new Error("the chapter is not loaded")
 
@@ -1233,7 +1233,7 @@ test.describe("Given an element without text holding content over several pages"
     const reader = await getReader(page)
     const pageIndexes = await reader.evaluate((reader, chapterIndex) => {
       const spineItem = reader.spineItemsManager.get(chapterIndex)
-      const document = spineItem?.loadedDocument
+      const document = spineItem?.value.loadedDocument
       const video = document?.getElementById("video")
       const gallery = document?.getElementById("gallery")
       const [firstImage, secondImage] = Array.from(gallery?.children ?? [])

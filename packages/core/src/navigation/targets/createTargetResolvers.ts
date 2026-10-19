@@ -127,7 +127,7 @@ export const createTargetResolvers = ({
       if (!item)
         return resolvers.position(context.previousNavigation.position, context)
 
-      const loadedDocument = item.loadedDocument
+      const { loadedDocument } = item.value
       const found = loadedDocument ? tryFind(find, loadedDocument) : undefined
 
       /**

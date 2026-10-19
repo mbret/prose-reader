@@ -53,11 +53,13 @@ export const hotkeysEnhancer =
 
     merge(
       ...reader.spineItemsManager.items.map((item) =>
-        item.loadedDocument$.pipe(
-          switchMap((loadedDocument) =>
-            loadedDocument ? navigateOnKey(loadedDocument) : EMPTY,
+        item
+          .watch("loadedDocument")
+          .pipe(
+            switchMap((loadedDocument) =>
+              loadedDocument ? navigateOnKey(loadedDocument) : EMPTY,
+            ),
           ),
-        ),
       ),
     )
       .pipe(takeUntil(reader.$.destroy$))

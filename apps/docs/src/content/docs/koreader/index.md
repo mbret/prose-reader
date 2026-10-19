@@ -25,7 +25,7 @@ import { cfiToXPointer, xPointerToCfi } from "@prose-reader/koreader"
 // once it is loaded: not one still loading, nor one being released.
 const getSpineItem = (spineItemIndex: number) => {
   const item = reader.spineItemsManager.get(spineItemIndex)
-  const document = item?.loadedDocument
+  const document = item?.value.loadedDocument
 
   return item && document ? { document, id: item.item.id } : undefined
 }

@@ -7,7 +7,7 @@ import { FrameSelectionTracker } from "./FrameSelectionTracker"
  * none: before it loads, and once it starts leaving.
  */
 export const trackSpineItemSelection = (spineItem: SpineItem) =>
-  spineItem.loadedDocument$.pipe(
+  spineItem.watch("loadedDocument").pipe(
     switchMap((loadedDocument) => {
       // The frame holding it, which the tracker watches being removed.
       const frame = spineItem.renderer.getDocumentFrame()

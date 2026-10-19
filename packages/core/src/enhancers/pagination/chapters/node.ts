@@ -103,7 +103,7 @@ export const resolveChapterInfoFromVisibleNode = ({
   if (!node || offset === undefined || !spineItem) return undefined
   if (candidates.length === 0) return undefined
 
-  const doc = spineItem.loadedDocument
+  const doc = spineItem.value.loadedDocument
   if (!doc || node.ownerDocument !== doc) return undefined
 
   const nextPageNode = nextPageEntry?.firstVisibleNode?.node

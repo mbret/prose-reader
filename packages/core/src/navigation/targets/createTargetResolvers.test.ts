@@ -42,13 +42,13 @@ const createResolvers = ({
     clampPositionInSpine: (position: SpinePosition) => position,
     getNavigationForNode: () => new SpinePosition({ x: 0, y: 0 }),
   }
+  // Its document is shown once loaded, and no longer while it unloads.
+  const loadedDocument =
+    hasDocument && loadStatus === "loaded" ? document : undefined
   const spineItem = {
     item: { index: 0, href: "0.xhtml" },
     index: 0,
-    value: { loadStatus },
-    // Its document is shown once loaded, and no longer while it unloads.
-    loadedDocument:
-      hasDocument && loadStatus === "loaded" ? document : undefined,
+    value: { loadStatus, loadedDocument },
   }
   const cfi = {
     isRootCfi: (value: string) => value.endsWith("!)"),
@@ -56,8 +56,8 @@ const createResolvers = ({
     // `text` names the note, in the document the item shows.
     resolveCfi: ({ cfi }: { cfi: string }) => ({
       node:
-        spineItem.loadedDocument && cfi === text
-          ? spineItem.loadedDocument.getElementById("note")
+        loadedDocument && cfi === text
+          ? loadedDocument.getElementById("note")
           : null,
     }),
     generateRootCfi: () => itemStart,
