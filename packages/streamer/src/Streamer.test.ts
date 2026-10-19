@@ -1,6 +1,68 @@
 import { blobFileAccessors, createArchive } from "@prose-reader/archive-reader"
-import { describe, expect, it } from "vitest"
+import { describe, expect, it, vi } from "vitest"
 import { Streamer } from "."
+
+const createArchiveWithOnePage = ({
+  body,
+  close = () => Promise.resolve(),
+}: {
+  body: string
+  close?: () => Promise<void>
+}) =>
+  createArchive({
+    close,
+    filename: "",
+    records: [
+      {
+        ...blobFileAccessors(() =>
+          Promise.resolve(new Blob([body], { type: "image/jpeg" })),
+        ),
+        basename: "page.jpg",
+        dir: false,
+        encodingFormat: "image/jpeg",
+        size: body.length,
+        uri: "page.jpg",
+      },
+    ],
+  })
+
+describe("Given a streamer serving a single book", () => {
+  it("should serve the manifest and its resources without a key", async () => {
+    const getArchive = vi.fn(async () =>
+      createArchiveWithOnePage({ body: "page-body" }),
+    )
+    const streamer = new Streamer({ cleanArchiveAfter: Infinity, getArchive })
+
+    const manifestResponse = await streamer.fetchManifest()
+    const manifest = await manifestResponse.json()
+    const resourceResponse = await streamer.fetchResource({
+      resourcePath: manifest.spineItems[0].href,
+    })
+
+    expect(manifestResponse.status).toBe(200)
+    expect(await resourceResponse.text()).toBe("page-body")
+    expect(getArchive).toHaveBeenCalledTimes(1)
+  })
+
+  it("should close that book once a book is asked for by its key", async () => {
+    const closeBookWithoutKey = vi.fn(() => Promise.resolve())
+    const bookWithoutKey = createArchiveWithOnePage({
+      body: "book without key",
+      close: closeBookWithoutKey,
+    })
+    const bookWithKey = createArchiveWithOnePage({ body: "book with key" })
+    const streamer = new Streamer({
+      cleanArchiveAfter: Infinity,
+      getArchive: async (key) =>
+        key === "book-with-key" ? bookWithKey : bookWithoutKey,
+    })
+
+    await streamer.fetchResource({ resourcePath: "page.jpg" })
+    await streamer.fetchManifest({ key: "book-with-key" })
+
+    expect(closeBookWithoutKey).toHaveBeenCalledTimes(1)
+  })
+})
 
 describe("Given custom error on get Archive", () => {
   it("should return correct error", async () => {

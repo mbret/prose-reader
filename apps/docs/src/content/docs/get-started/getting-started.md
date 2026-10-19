@@ -120,15 +120,12 @@ async function createStreamer() {
 async function run() {
   const streamer = await createStreamer()
 
-  const manifestResponse = await streamer.fetchManifest({
-    /**
-     * The streamer is designed to manage several archives that's why
-     * it requires a key to be passed to identify which archive to use.
-     *
-     * In this case we only have one archive so we can use `_` as key.
-     */
-    key: `_`,
-  })
+  /**
+   * A streamer can serve several archives, each under its own key, which
+   * `getArchive` receives. We only serve one book here, so we leave the key
+   * out and the streamer uses its default one.
+   */
+  const manifestResponse = await streamer.fetchManifest()
 
   const manifest = await manifestResponse.json()
 
@@ -155,7 +152,7 @@ async function run() {
      * We tried to create streamers that simplify the friction as much as possible.
      */
     getResource: (item) => {
-      return from(streamer.fetchResource({ key: `_`, resourcePath: item.href }))
+      return from(streamer.fetchResource({ resourcePath: item.href }))
     },
   })
 

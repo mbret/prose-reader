@@ -88,21 +88,33 @@ The streaming classes turn manifest and resource requests into HTTP `Response`s.
 
 ```typescript
 new Streamer(options: {
-  // archive loader options (how archives are created/cached by key)
+  getArchive: (key: string) => Promise<Archive>
+  cleanArchiveAfter?: number // ms an unused archive stays loaded, default 5 minutes
   hooks?: StreamerHooks
   onError?: (error: unknown) => Response
   onManifestSuccess?: (params: { manifest: Manifest; archive: Archive })
     => Observable<Manifest> | Promise<Manifest>
 })
 
-streamer.fetchManifest(params: { key: string; baseUrl?: string }): Promise<Response>
-streamer.fetchResource(params: { key: string; resourcePath: string; request?: Request }): Promise<Response>
-streamer.accessArchive(key: string): Observable<{ archive: Archive; release: () => void }>
-streamer.accessArchiveWithoutLock(key: string): Observable<Archive>
+streamer.fetchManifest(params?: { key?: string; baseUrl?: string }): Promise<Response>
+streamer.fetchResource(params: { key?: string; resourcePath: string; request?: Request }): Promise<Response>
+streamer.accessArchive(key?: string): Observable<{ archive: Archive; release: () => void }>
+streamer.accessArchiveWithoutLock(key?: string): Observable<Archive>
 streamer.prune(): void
 ```
 
-Core archive-serving engine: it loads and caches archives by `key` and generates the matching `Response`s. `fetchManifest` / `fetchResource` produce the manifest and resource responses (resource responses support HTTP range requests); `accessArchive` acquires a locked archive handle you release with `release()`; `accessArchiveWithoutLock` yields just the archive and releases immediately; `prune` purges the archive cache.
+Core archive-serving engine: it loads archives by `key` through `getArchive`, keeps them loaded while they are in use, and generates the matching `Response`s. `fetchManifest` / `fetchResource` produce the manifest and resource responses (resource responses support HTTP range requests); `accessArchive` acquires a locked archive handle you release with `release()`; `accessArchiveWithoutLock` yields just the archive and releases immediately; `prune` purges the archive cache.
+
+The streamer keeps the archive of the last key it was asked for: asking for another key closes the previous archive once nothing uses it. A call without a `key` uses a default one, so a streamer serving a single book can leave keys out:
+
+```typescript
+const streamer = new Streamer({ getArchive: async () => archive })
+
+const manifest = await streamer.fetchManifest().then((response) => response.json())
+const resourceResponse = await streamer.fetchResource({ resourcePath: manifest.spineItems[0].href })
+```
+
+To serve another book from the same streamer, give each book its own key, or call `prune()` before asking for the next one.
 
 ### `ServiceWorkerStreamer`
 
