@@ -182,7 +182,7 @@ const resolved = await resolveArchive(archive)
 // }
 ```
 
-Everything is **container-relative** (reading-order `uri`s, toc `containerHref`s): the entity carries no serving concern, consumers rebase into their own space. A reading-order or cover `uri` is the `uri` of the record itself, which `getArchiveFileRecordByUri` finds: the href a package document escapes, `Text/Chapter%201.xhtml`, is the record `Text/Chapter 1.xhtml`. A `containerHref`, on a toc entry or on a reading-order item a package document references, stays the reference the book makes, rebased and still escaped, to join onto a base URL: the book's own navigation and links reference the resource the same way.
+Everything is **container-relative** (reading-order `uri`s, toc `containerHref`s): the entity carries no serving concern, consumers rebase into their own space. A reading-order or cover `uri` is the `uri` of the record itself, which `getArchiveFileRecordByUri` finds: the href a package document escapes, `Text/Chapter%201.xhtml`, is the record `Text/Chapter 1.xhtml`. A `containerHref`, on a toc entry or on a reading-order item a package document references, stays the reference the book makes, rebased onto the container and still escaped, to join onto a base URL: the book's own navigation and links reference the resource the same way. Rebasing resolves its `.` and `..` segments as a browser does, escaped dots (`%2E%2E`) included, so a toc entry names its chapter as the reading order does wherever the toc document sits, and a `..` past the root of the container stays in it.
 
 `mediaType` is the media type of the file the book was opened from: the archive's `encodingFormat` as declared (parameters dropped, so an alias such as `application/x-cbz` stays one), else what its `filename`'s extension registers (`.epub`, `.pdf`, `.cbz`, `.cbr`, `.cbt`, `.cb7`, `.zip`, `.rar`, `.tar`, `.txt`), else `application/epub+zip` for a container holding `META-INF/container.xml`, which every EPUB has, else `application/octet-stream`, the type of data of an unknown type. A package document alone does not make an EPUB: the archives prose synthesizes for a PDF, a text or a list of URLs hold one. Give the archive its `filename` or `encodingFormat` when you create it, so that it tells.
 
@@ -306,7 +306,7 @@ const toc = await resolveArchiveToc(archive)
 ```typescript
 type ArchiveTocItem = {
   title: string
-  /** Reference as authored in the source (may carry a `#fragment`), or the raw record `uri` for folder-derived TOCs. */
+  /** The link as the source escapes it (may carry a `#fragment`), rebased onto the container, or the raw record `uri` for folder-derived TOCs. */
   path: string
   /** URI reference in the container's coordinate space (no serving base baked in), safe to join onto a base URL. Empty when the entry has no target. */
   containerHref: string

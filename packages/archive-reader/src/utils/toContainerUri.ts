@@ -50,12 +50,13 @@ const resolveReference = (
 }
 
 /**
- * Rebases an OPF manifest-relative `href` (spine item, cover image…) onto the
- * package document's `basePath`, resolving its dot segments (`OEBPS/Text` +
- * `../Images/cover.jpg` → `OEBPS/Images/cover.jpg`) and keeping its escapes:
- * the reference the book makes, in the container's coordinate space, to join
- * onto a base URL. Absolute http(s) urls (the URL-list pseudo-archives author
- * these) pass through untouched.
+ * Rebases a reference the book makes (an OPF manifest `href`, a table of
+ * contents link…) onto `basePath`, the folder of the document making it,
+ * resolving its dot segments (`OEBPS/Text` + `../Images/cover.jpg` →
+ * `OEBPS/Images/cover.jpg`) and keeping its escapes: the reference, in the
+ * container's coordinate space, to join onto a base URL. A table of contents
+ * and the spine spell a resource alike this way. Absolute http(s) urls (the
+ * URL-list pseudo-archives author these) pass through untouched.
  */
 export const toContainerHref = (href: string, basePath: string): string => {
   if (isHttpUrl(href)) return href

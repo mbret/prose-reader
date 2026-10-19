@@ -1,9 +1,10 @@
-import { getUriBasePath, urlJoin } from "@prose-reader/shared"
+import { getUriBasePath } from "@prose-reader/shared"
 import { XmlDocument, XmlElement, type XmlNodeBase } from "xmldoc"
 import { readRecordAsText } from "../archives/readRecordAsText.ts"
 import type { Archive } from "../archives/types.ts"
 import type { OpfMetadata } from "../metadata/opf/parse.ts"
 import { getXmlElementInnerText } from "../utils/getXmlElementInnerText.ts"
+import { toContainerHref } from "../utils/toContainerUri.ts"
 import { tokenizeXmlSpaceSeparatedList } from "../utils/tokenizeXmlSpaceSeparatedList.ts"
 import type { ArchiveTocItem } from "./types.ts"
 
@@ -43,7 +44,7 @@ const extractNavChapter = (
   }
 
   if (node === `a` && contentNode?.attr.href) {
-    chp.path = urlJoin(basePath, contentNode.attr.href)
+    chp.path = toContainerHref(contentNode.attr.href, basePath)
     chp.containerHref = chp.path
   }
   const sublistNode = li.childNamed(`ol`)

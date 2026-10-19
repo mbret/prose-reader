@@ -1,8 +1,9 @@
-import { getUriBasePath, urlJoin } from "@prose-reader/shared"
+import { getUriBasePath } from "@prose-reader/shared"
 import { XmlDocument, type XmlElement } from "xmldoc"
 import { readRecordAsText } from "../archives/readRecordAsText.ts"
 import type { Archive } from "../archives/types.ts"
 import type { OpfMetadata } from "../metadata/opf/parse.ts"
+import { toContainerHref } from "../utils/toContainerUri.ts"
 import type { ArchiveTocItem } from "./types.ts"
 
 const mapNcxChapter = (
@@ -10,7 +11,7 @@ const mapNcxChapter = (
   { basePath, prefix }: { basePath: string; prefix: string },
 ) => {
   const src = point?.childNamed(`${prefix}content`)?.attr.src || ``
-  const path = urlJoin(basePath, src)
+  const path = src ? toContainerHref(src, basePath) : ``
 
   const out: ArchiveTocItem = {
     title:
