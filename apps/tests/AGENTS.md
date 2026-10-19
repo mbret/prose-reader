@@ -14,7 +14,8 @@ Each scenario is a folder under `tests/` with three files: an `index.html`, an
 (`?cfi=`), the keyboard, or the reader, which `getReader(page)` from
 `tests/utils/reader.ts` hands it typed, and reads state back the same way.
 Fixtures live in `public/epubs`: reflowable and pre-paginated epubs, a cbz and
-a pdf. Shared helpers live in `tests/utils`; add to them rather than copying a
+PDFs. A fixture a script in `tools/` builds is rebuilt with that script, not
+edited. Shared helpers live in `tests/utils`; add to them rather than copying a
 wait or a locator into a second spec.
 
 ## Waiting

@@ -4,9 +4,9 @@ import { getReader } from "../utils/reader"
 
 /**
  * One spine item per page of the PDF, each rendering its own page. The
- * fixture's page `N` reads "Page N" (generated with PyMuPDF), and it has more
- * than ten pages, so a page's file name (`11.pdf`) ends with another's
- * (`1.pdf`).
+ * fixture's page `N` reads "Page N" (`tools/build_twelve_pages_pdf.py` builds
+ * it), and it has more than ten pages, so a page's file name (`11.pdf`) ends
+ * with another's (`1.pdf`).
  */
 
 const url = "http://localhost:3333/tests/pdf/index.html?file=twelve-pages.pdf"
