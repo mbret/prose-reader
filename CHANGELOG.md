@@ -3,6 +3,33 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## [30.0.0](https://github.com/mbret/prose-reader/compare/v29.0.0...v30.0.0) (2026-10-19)
+
+### ⚠ BREAKING CHANGES
+
+* **enhancer-koreader:** `reader.koreader.cfiToXPointer(cfi)` is replaced by
+  `reader.koreader.cfiToProgress(cfi)`, which returns the same xpointer for
+  an EPUB and a page number, such as "12", for a PDF or a comic archive.
+  `reader.navigation.goToXPointer(xpointer)` is replaced by
+  `reader.navigation.goToKoreaderProgress(progress)`, and the
+  `{ type: "xpointer" }` navigation target and `XPointerNavigationTarget` by
+  `{ type: "koreaderProgress" }` and `KoreaderProgressNavigationTarget`.
+  The form follows the manifest's `mediaType`: a book of unknown type,
+  `application/octet-stream`, such as one opened from an archive with no
+  `filename`, no `encodingFormat` and no `META-INF/container.xml`, has no
+  progress, nor has a plain ZIP the app does not give a comic's media type.
+
+### Features
+
+* **enhancer-koreader:** give the KOReader progress of any book ([4c10a15](https://github.com/mbret/prose-reader/commit/4c10a15b1f5701b732f59b2ae9f34f178131f424)), references [#535](https://github.com/mbret/prose-reader/issues/535)
+* **koreader:** tell the form of a book's progress ([3c169c5](https://github.com/mbret/prose-reader/commit/3c169c5cf442abe6c46962237fb3ce9437b2885f))
+
+### Bug Fixes
+
+* **front:** center the landing footer on a phone ([f76f438](https://github.com/mbret/prose-reader/commit/f76f4381cc999fd502d61c9cdb60985a9732b896))
+* **front:** set the landing footer's name and license on one baseline ([4b01cd2](https://github.com/mbret/prose-reader/commit/4b01cd222c72a268066d204f1dc99efd616e26e3))
+
+
 ## [29.0.0](https://github.com/mbret/prose-reader/compare/v28.2.0...v29.0.0) (2026-10-19)
 
 ### ⚠ BREAKING CHANGES

@@ -3,6 +3,27 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## [30.0.0](https://github.com/mbret/prose-reader/compare/v29.0.0...v30.0.0) (2026-10-19)
+
+### ⚠ BREAKING CHANGES
+
+* **enhancer-koreader:** `reader.koreader.cfiToXPointer(cfi)` is replaced by
+  `reader.koreader.cfiToProgress(cfi)`, which returns the same xpointer for
+  an EPUB and a page number, such as "12", for a PDF or a comic archive.
+  `reader.navigation.goToXPointer(xpointer)` is replaced by
+  `reader.navigation.goToKoreaderProgress(progress)`, and the
+  `{ type: "xpointer" }` navigation target and `XPointerNavigationTarget` by
+  `{ type: "koreaderProgress" }` and `KoreaderProgressNavigationTarget`.
+  The form follows the manifest's `mediaType`: a book of unknown type,
+  `application/octet-stream`, such as one opened from an archive with no
+  `filename`, no `encodingFormat` and no `META-INF/container.xml`, has no
+  progress, nor has a plain ZIP the app does not give a comic's media type.
+
+### Features
+
+* **enhancer-koreader:** give the KOReader progress of any book ([4c10a15](https://github.com/mbret/prose-reader/commit/4c10a15b1f5701b732f59b2ae9f34f178131f424)), references [#535](https://github.com/mbret/prose-reader/issues/535)
+
+
 ## [29.0.0](https://github.com/mbret/prose-reader/compare/v28.2.0...v29.0.0) (2026-10-19)
 
 **Note:** Version bump only for package @prose-reader/enhancer-koreader
