@@ -43,7 +43,7 @@ Gesture recognitions are done relative to the reader container by default. This 
 
 For example, we detect taps on edge of screen to navigate pages. If we were using `window` object as reference, tapping on the side of the book would not work in this situation:
 
-<figure><img src="/images/gestures-container.png" alt=""></figure>
+<figure><img src="/images/gestures-container.png" alt="A reader in the middle of a wider page: the edge of the book, where a tap turns the page, is far from the edge of the window"></figure>
 
 In this situation the user is using the reader in only a certain part of the web page and therefore the gestures should work relative to the reader container.
 

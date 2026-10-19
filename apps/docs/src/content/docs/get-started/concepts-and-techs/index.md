@@ -15,7 +15,7 @@ It is also fully compatible with native apps. You can use the library inside any
 
 ### How does it work?
 
-![image](https://user-images.githubusercontent.com/1911240/121635379-1aad5c80-cac1-11eb-9ceb-ea39b1adb281.png)
+![Diagram: the app drives the reader and the streamer, the reader requests the manifest, resources and pages from the streamer and renders the documents](https://user-images.githubusercontent.com/1911240/121635379-1aad5c80-cac1-11eb-9ceb-ea39b1adb281.png)
 
 The project is composed of two main parts, the **reader** and the **streamer**. The reader lets you display and read books, the streamer provides the content to the reader itself.
 
