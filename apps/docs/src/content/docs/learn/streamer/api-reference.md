@@ -57,7 +57,7 @@ generateResourceFromArchive(
 ): Promise<HookResource> // resolved resource with a guaranteed `body` (string | Blob)
 ```
 
-Resolves a single archive resource by URI, running it through the resource hook pipeline (default / self-closing-tags / css / calibre fixes, plus any user hooks) and falling back to the raw file blob when no hook sets a body.
+Resolves a single archive resource by URI, running it through the resource hook pipeline (default / self-closing-tags / css / calibre fixes, plus any user hooks) and falling back to the raw file blob when no hook sets a body. A resource the package document lists is served with the media type its manifest item declares, the item whose `href` names that record.
 
 ### `createManifestResourceHref({ baseUrl?, resourcePath })` { #createmanifestresourcehref-baseurl-resourcepath }
 

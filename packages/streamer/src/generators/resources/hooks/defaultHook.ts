@@ -2,6 +2,7 @@ import {
   type Archive,
   getArchiveFileRecordByUri,
   readArchiveOpf,
+  toContainerUri,
 } from "@prose-reader/archive-reader"
 import type { HookResource } from "./types"
 
@@ -16,14 +17,10 @@ const getMetadata = async (archive: Archive, resourcePath: string) => {
   if (parsed) {
     const { opf, basePath } = parsed
 
-    // we are comparing opf items container-relative path in epub archive
-    // against resourcePath (which is an absolute path in archive).
-    // They should in theory match.
-    const foundMediaType = opf.manifestItems.find((item) => {
-      const containerHref = basePath ? `${basePath}/${item.href}` : item.href
-
-      return resourcePath.endsWith(containerHref)
-    })?.mediaType
+    // the manifest item whose href names the requested record
+    const foundMediaType = opf.manifestItems.find(
+      (item) => toContainerUri(item.href, basePath) === resourcePath,
+    )?.mediaType
 
     if (foundMediaType) {
       return {

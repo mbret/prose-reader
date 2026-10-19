@@ -498,6 +498,60 @@ describe("Given an epub whose package document escapes its hrefs", () => {
   })
 })
 
+describe("Given an epub whose package document references files out of its folder", () => {
+  const opf = `<?xml version="1.0" encoding="UTF-8"?>
+<package xmlns="http://www.idpf.org/2007/opf" version="3.0">
+  <metadata xmlns:dc="http://purl.org/dc/elements/1.1/">
+    <dc:title>Test</dc:title>
+  </metadata>
+  <manifest>
+    <item id="ch1" href="../Text/chapter1.xhtml" media-type="application/xhtml+xml"/>
+    <item id="img" href="../Images/picture.jpg" media-type="image/jpeg"/>
+  </manifest>
+  <spine>
+    <itemref idref="ch1"/>
+  </spine>
+</package>`
+
+  const archive = createArchive({
+    filename: "book.epub",
+    records: [
+      {
+        ...blobFileAccessors(() => Promise.resolve(new Blob([opf]))),
+        basename: "content.opf",
+        uri: "OEBPS/Package/content.opf",
+        dir: false,
+        size: opf.length,
+      },
+      {
+        ...fakeContent,
+        basename: "chapter1.xhtml",
+        uri: "OEBPS/Text/chapter1.xhtml",
+        dir: false,
+        size: 1,
+      },
+      {
+        ...fakeContent,
+        basename: "picture.jpg",
+        uri: "OEBPS/Images/picture.jpg",
+        dir: false,
+        size: 1,
+      },
+    ],
+    close: () => Promise.resolve(),
+  })
+
+  it("should give each manifest item the href its spine item has", async () => {
+    const manifest = await generateManifestFromArchive(archive)
+
+    expect(manifest.items.map(({ id, href }) => ({ id, href }))).toEqual([
+      { id: "ch1", href: "file://OEBPS/Text/chapter1.xhtml" },
+      { id: "img", href: "file://OEBPS/Images/picture.jpg" },
+    ])
+    expect(manifest.spineItems[0]?.href).toBe(manifest.items[0]?.href)
+  })
+})
+
 describe("Given archive with folders", () => {
   it("should run consumer hooks on the mapped manifest, before the final defaults", async () => {
     const archive = createArchive({

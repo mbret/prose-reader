@@ -52,3 +52,42 @@ describe("generateResourceFromArchive", () => {
     expect(resource.body).toBe(source)
   })
 })
+
+describe("Given a resource its package document lists", () => {
+  // EPUB 2 books commonly name chapters `.html` and declare them XHTML.
+  const opf =
+    `<?xml version="1.0"?><package xmlns="http://www.idpf.org/2007/opf" version="2.0"><metadata/><manifest>` +
+    `<item id="c1" href="../Text/chapter1.html" media-type="application/xhtml+xml"/>` +
+    `<item id="c2" href="Chapter%202.html" media-type="application/xhtml+xml"/>` +
+    `</manifest><spine><itemref idref="c1"/><itemref idref="c2"/></spine></package>`
+
+  const textRecord = (uri: string, content = "") => ({
+    ...blobFileAccessors(() => Promise.resolve(new Blob([content]))),
+    basename: uri.split("/").pop() ?? uri,
+    dir: false as const,
+    size: content.length,
+    uri,
+  })
+
+  const archive = createArchive({
+    filename: "book.epub",
+    records: [
+      textRecord("OEBPS/Package/content.opf", opf),
+      textRecord("OEBPS/Text/chapter1.html"),
+      textRecord("OEBPS/Package/Chapter 2.html"),
+    ],
+    close: () => Promise.resolve(),
+  })
+
+  it.each([
+    ["by an href out of its folder", "OEBPS/Text/chapter1.html"],
+    ["by an escaped href", "OEBPS/Package/Chapter 2.html"],
+  ])(
+    "serves one listed %s with the media type it declares",
+    async (_, resourcePath) => {
+      const resource = await generateResourceFromArchive(archive, resourcePath)
+
+      expect(resource.params.contentType).toBe("application/xhtml+xml")
+    },
+  )
+})

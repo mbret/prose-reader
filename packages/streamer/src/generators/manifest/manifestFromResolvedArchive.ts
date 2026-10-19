@@ -3,6 +3,7 @@ import {
   type ArchiveTocItem,
   mainTitle,
   type ResolvedArchive,
+  toContainerHref,
 } from "@prose-reader/archive-reader"
 import type { Manifest } from "@prose-reader/shared"
 import { createXmlSafeIdFactory, urlJoin } from "@prose-reader/shared"
@@ -107,9 +108,10 @@ const epubManifest = (
     })),
     items: opf.opf.manifestItems.map((item) => ({
       id: item.id,
+      // rebased as the spine item of the same resource is
       href: isHttpUrl(item.href)
         ? item.href
-        : `${baseUrl || `file://`}${opfBasePath ? `${opfBasePath}/` : ``}${item.href}`,
+        : `${baseUrl || `file://`}${toContainerHref(item.href, opfBasePath)}`,
       mediaType: item.mediaType,
     })),
     guide: guide.length > 0 ? guide : undefined,
