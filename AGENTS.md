@@ -84,7 +84,7 @@ pnpm exec lerna run build --stream --scope "@prose-reader/*"
 
 `nvm install`/`nvm use` read `.nvmrc` from the repo root, and CI reads the same `.nvmrc` and `packageManager`, so both follow whatever is pinned — no version numbers to keep in sync. Regenerate `pnpm-lock.yaml` only with that pinned pnpm: another major can rewrite the lockfile's format.
 
-pnpm gives each package only what its own manifest declares. Declare a dependency in the package that imports it: anything the published code or its types import in `dependencies` or `peerDependencies`, a test-only import in `devDependencies`. Build tooling shared by every package (vite, vitest, the dts and externals plugins) is declared once at the root. The React Native demo is the exception to the workspace: it is not a member, and installs with npm from its own lockfile, the way an app consuming the libraries would.
+pnpm gives each package only what its own manifest declares. Declare a dependency in the package that imports it: anything the published code or its types import in `dependencies` or `peerDependencies`, a test-only import in `devDependencies`. Build tooling shared by every package (vite, vitest, the dts and externals plugins) is declared once at the root. That includes happy-dom and jsdom: vitest loads the test environment through its own peer, which pnpm resolves at the root, so a package's declaration does not choose the version its tests run in. A package declares one only when a test imports it. The React Native demo is the exception to the workspace: it is not a member, and installs with npm from its own lockfile, the way an app consuming the libraries would.
 
 ## Browser tests
 

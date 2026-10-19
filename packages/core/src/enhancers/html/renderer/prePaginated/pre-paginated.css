@@ -10,6 +10,13 @@ body {
   width: 100%;
 }
 
+/* @see https://hammerjs.github.io/touch-action/
+  It needs to be disabled when using free scroll */
+:not(html.prose-reader-html-renderer-touch-enabled),
+:not(html.prose-reader-html-renderer-touch-enabled) body {
+  touch-action: none;
+}
+
 html[data-prose-reader-html-renderer-has-viewport-dimensions="false"] body {
   display: flex;
 }
@@ -27,13 +34,6 @@ html[data-prose-reader-html-renderer-has-viewport-dimensions="false"][data-prose
 html[data-prose-reader-html-renderer-has-viewport-dimensions="false"][data-prose-reader-html-renderer-spread-position="none"]
   body {
   justify-content: center;
-}
-
-/* @see https://hammerjs.github.io/touch-action/
-  It needs to be disabled when using free scroll */
-:not(html.prose-reader-html-renderer-touch-enabled),
-:not(html.prose-reader-html-renderer-touch-enabled) body {
-  touch-action: none;
 }
 
 /* This one is important for preventing 100% img to resize above

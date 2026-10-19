@@ -26,7 +26,6 @@
     "test": "vitest run"
   },
   "devDependencies": {
-    "jsdom": "^29.0.0",
     "typescript": "*",
     "vite": "^8"
   }
