@@ -3,6 +3,22 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## [29.0.0](https://github.com/mbret/prose-reader/compare/v28.2.0...v29.0.0) (2026-10-19)
+
+### ⚠ BREAKING CHANGES
+
+* **archive-reader:** `getArchiveOpfInfo(archive)`, which returned the first
+  `.opf` record as `{ data, basePath }`, is replaced by the asynchronous
+  `getArchiveOpfRecord(archive)`, which returns the record of the package
+  document the container file lists. `readArchiveOpf(archive)` still
+  gives the parsed package document with its `basePath`.
+
+### Bug Fixes
+
+* **archive-reader:** leave out a container file's elements of other namespaces ([ddd22c4](https://github.com/mbret/prose-reader/commit/ddd22c47819e6280d3289ae9466824b659fc6142))
+* **archive-reader:** read the package document the container file lists ([1c7145a](https://github.com/mbret/prose-reader/commit/1c7145aeee46b978e80b9e0216372e9732e94b35))
+
+
 ## [28.1.0](https://github.com/mbret/prose-reader/compare/v28.0.0...v28.1.0) (2026-10-19)
 
 ### Features

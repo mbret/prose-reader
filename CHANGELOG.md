@@ -3,6 +3,29 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## [29.0.0](https://github.com/mbret/prose-reader/compare/v28.2.0...v29.0.0) (2026-10-19)
+
+### ⚠ BREAKING CHANGES
+
+* **archive-reader:** `getArchiveOpfInfo(archive)`, which returned the first
+  `.opf` record as `{ data, basePath }`, is replaced by the asynchronous
+  `getArchiveOpfRecord(archive)`, which returns the record of the package
+  document the container file lists. `readArchiveOpf(archive)` still
+  gives the parsed package document with its `basePath`.
+
+### Features
+
+* **front:** renovate the landing page, as a page of its own ([afd7827](https://github.com/mbret/prose-reader/commit/afd782753357f4f5a772b63ad6794f40bea6d5d1))
+
+### Bug Fixes
+
+* **archive-reader:** leave out a container file's elements of other namespaces ([ddd22c4](https://github.com/mbret/prose-reader/commit/ddd22c47819e6280d3289ae9466824b659fc6142))
+* **archive-reader:** read the package document the container file lists ([1c7145a](https://github.com/mbret/prose-reader/commit/1c7145aeee46b978e80b9e0216372e9732e94b35))
+* **front:** center the mark on the name in the landing header and footer ([8e477d9](https://github.com/mbret/prose-reader/commit/8e477d98a20b9872a78c2e9781b2079228b9d579))
+* **front:** draw the landing wordmark from the brand logo ([323f278](https://github.com/mbret/prose-reader/commit/323f278c511ed7ac822b5c87b229ce67d493be1f))
+* **front:** show the reader setup without getResource on the landing page ([2829e49](https://github.com/mbret/prose-reader/commit/2829e49d4083f968f62126524ddd809306848243))
+
+
 ## [28.2.0](https://github.com/mbret/prose-reader/compare/v28.1.0...v28.2.0) (2026-10-19)
 
 ### Features

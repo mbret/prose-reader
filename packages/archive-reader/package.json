@@ -1,6 +1,6 @@
 {
   "name": "@prose-reader/archive-reader",
-  "version": "28.1.0",
+  "version": "29.0.0",
   "type": "module",
   "main": "./dist/index/index.cjs",
   "module": "./dist/index/index.js",
