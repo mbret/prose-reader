@@ -1,6 +1,21 @@
 {
   "name": "@prose-reader/cfi",
   "version": "30.0.0",
+  "description": "Parse, resolve, generate, compare and serialize EPUB Canonical Fragment Identifiers (EPUB CFI 1.1).",
+  "keywords": [
+    "prose-reader",
+    "epub",
+    "epubcfi",
+    "cfi",
+    "canonical-fragment-identifier",
+    "ebook"
+  ],
+  "homepage": "https://doc.prose-reader.com/cfi",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/mbret/prose-reader.git",
+    "directory": "packages/cfi"
+  },
   "type": "module",
   "license": "MIT",
   "files": [

@@ -1,6 +1,21 @@
 {
   "name": "@prose-reader/enhancer-gallery",
   "version": "30.0.0",
+  "description": "Page thumbnails for prose: snapshot the first page of any spine item to build a gallery of a book's pages.",
+  "keywords": [
+    "prose-reader",
+    "thumbnails",
+    "gallery",
+    "epub",
+    "comics",
+    "ebook"
+  ],
+  "homepage": "https://doc.prose-reader.com/enhancers/gallery",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/mbret/prose-reader.git",
+    "directory": "packages/enhancer-gallery"
+  },
   "type": "module",
   "main": "./dist/index.cjs",
   "module": "./dist/index.js",

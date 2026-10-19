@@ -1,6 +1,27 @@
 {
   "name": "@prose-reader/core",
   "version": "30.0.0",
+  "description": "The prose reading engine: render EPUB, comics and PDF in the browser, with pagination, spreads and navigation, and build your own reader.",
+  "keywords": [
+    "prose-reader",
+    "epub",
+    "epub3",
+    "ebook",
+    "ebook-reader",
+    "epub-reader",
+    "reader",
+    "comics",
+    "manga",
+    "pdf",
+    "pagination",
+    "reading-system"
+  ],
+  "homepage": "https://prose-reader.com",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/mbret/prose-reader.git",
+    "directory": "packages/core"
+  },
   "type": "module",
   "main": "./dist/index.cjs",
   "module": "./dist/index.js",

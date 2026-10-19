@@ -1,6 +1,23 @@
 {
   "name": "@prose-reader/cbz",
   "version": "30.0.0",
+  "description": "Comic archives in prose: streamer hooks and a reader enhancer for CBZ files, with spread splitting and right-to-left manga.",
+  "keywords": [
+    "prose-reader",
+    "cbz",
+    "cbr",
+    "comics",
+    "manga",
+    "comic-book",
+    "ebook",
+    "reader"
+  ],
+  "homepage": "https://doc.prose-reader.com/enhancers/cbz-and-comics-archives",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/mbret/prose-reader.git",
+    "directory": "packages/cbz"
+  },
   "type": "module",
   "license": "MIT",
   "files": [

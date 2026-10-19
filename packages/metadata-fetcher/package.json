@@ -1,6 +1,22 @@
 {
   "name": "@prose-reader/metadata-fetcher",
   "version": "30.0.0",
+  "description": "Look up a book's metadata in Google Books, Open Library and Project Gutenberg, and rank the matches, in Node or as an HTTP service.",
+  "keywords": [
+    "prose-reader",
+    "book-metadata",
+    "google-books",
+    "open-library",
+    "project-gutenberg",
+    "isbn",
+    "ebook"
+  ],
+  "homepage": "https://doc.prose-reader.com/metadata-fetcher",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/mbret/prose-reader.git",
+    "directory": "packages/metadata-fetcher"
+  },
   "type": "module",
   "main": "./dist/index.cjs",
   "module": "./dist/index.js",
