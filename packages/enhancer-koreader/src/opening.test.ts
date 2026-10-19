@@ -273,6 +273,33 @@ describe("where the reader opens", () => {
     expect(getSpineItemIndexes(opened)).toEqual(opened.positions.map(() => 1))
   })
 
+  /**
+   * A pulled progress goes stale when the book changes. Its chapter is still
+   * the closest place to where the reader was, as for a stale cfi.
+   */
+  it("is the chapter of an xpointer whose place the chapter no longer has", async () => {
+    const opened = openReader({
+      manifest: epubManifest,
+      // The chapter has two paragraphs.
+      target: {
+        type: "koreaderProgress",
+        value: "/body/DocFragment[2]/body/p[9]",
+      },
+    })
+
+    expect(await openingReadingPosition(opened)).toEqual(
+      standingInAtSpineItemStart(opened, 1),
+    )
+
+    opened.releaseSecondItemLoad()
+
+    await vi.waitFor(() =>
+      expect(opened.positions.at(-1)?.status).toBe("success"),
+    )
+
+    expect(getSpineItemIndexes(opened)).toEqual(opened.positions.map(() => 1))
+  })
+
   it("is the spine item showing the page a page number names", async () => {
     const opened = openReader({
       manifest: comicManifest,

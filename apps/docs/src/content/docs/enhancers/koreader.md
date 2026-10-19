@@ -99,9 +99,11 @@ const reader = createAppReader({
 The reader opens there the way it
 [opens at any target](/learn/navigation#opening-the-book-somewhere): its
 reading position never passes through the start of the book, even for an
-xpointer into a chapter that is not loaded yet. A `progress` the reader would
-ignore when going to it, such as a page the book does not have, opens the book
-at its start.
+xpointer into a chapter that is not loaded yet. A stale xpointer whose chapter
+is still there opens that chapter, as a stale cfi does: once the chapter has
+loaded without its place, the reading position is its first page. A `progress`
+the reader would ignore when going to it, such as a page the book does not
+have, opens the book at its start.
 
 ## The reading position as a progress
 
