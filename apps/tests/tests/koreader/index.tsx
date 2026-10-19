@@ -30,11 +30,17 @@ async function run() {
 
   const query = new URLSearchParams(window.location.search)
   const cfi = query.get("cfi")
+  // A KOReader `progress` to open at, as a sync client opens at a pulled one.
+  const progress = query.get("progress")
   const preload = query.get("preload")
 
   const reader = koreaderEnhancer(createReader)({
     manifest,
-    target: cfi ? { type: "cfi", value: cfi } : undefined,
+    target: progress
+      ? { type: "koreaderProgress", value: progress }
+      : cfi
+        ? { type: "cfi", value: cfi }
+        : undefined,
     ...(preload !== null && {
       numberOfAdjacentSpineItemToPreLoad: Number(preload),
     }),
