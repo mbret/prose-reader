@@ -49,10 +49,10 @@ export const HomeScreen = () => {
         </Button>
         <OrDivider opacity={0.5} />
         <Button size="lg" width="100%" asChild mt={2}>
-          <Link to="/">
+          <a href="/">
             <FaArrowLeft />
             landing page
-          </Link>
+          </a>
         </Button>
       </Stack>
       <Box as="footer" paddingBottom={8} textAlign="center">

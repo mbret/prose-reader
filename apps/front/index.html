@@ -2,33 +2,29 @@
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <link rel="icon" href="/favicon.ico" sizes="32x32" />
     <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
     <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 
-    <title>Prose</title>
-    <meta name="description" content="Next generation reading engine" />
-    <meta name="creator" content="Maxime Bret" />
-    <meta name="keywords" content="prose, reading, engine, library, next, generation, open source, MIT, license" />
+    <title>prose, the open-source engine for building reading apps</title>
+    <meta
+      name="description"
+      content="Render EPUB 3, comics and PDF with a single, framework-agnostic SDK, and ship your own reader, your way."
+    />
+    <meta name="author" content="Maxime Bret" />
+    <link rel="canonical" href="https://prose-reader.com/" />
 
-    <!-- OpenGraph tags -->
-    <meta property="og:title" content="Prose" />
-    <meta property="og:description" content="Next generation reading engine" />
-
-    <script>
-      window.__PROSE_READER_DEBUG = '%MODE%' === 'development';
-    </script>
-
-    <link rel="preconnect" href="https://fonts.googleapis.com" />
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    <link
-      href="https://fonts.googleapis.com/css2?family=Dancing+Script:wght@400..700&family=Roboto:ital,wght@0,100;0,300;0,400;0,500;0,700;0,900;1,100;1,300;1,400;1,500;1,700;1,900&display=swap"
-      rel="stylesheet"
+    <meta property="og:type" content="website" />
+    <meta property="og:url" content="https://prose-reader.com/" />
+    <meta property="og:title" content="prose" />
+    <meta
+      property="og:description"
+      content="The open-source engine for building reading apps in the browser."
     />
   </head>
   <body>
     <div id="root"></div>
-    <script type="module" src="/src/main.tsx"></script>
+    <script type="module" src="/src/landing/main.tsx"></script>
   </body>
 </html>

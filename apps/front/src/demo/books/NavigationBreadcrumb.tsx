@@ -9,9 +9,7 @@ import { DEMO_BASE_PATH } from "../../constants"
 export const NavigationBreadcrumb = () => {
   return (
     <BreadcrumbRoot>
-      <BreadcrumbLink asChild>
-        <Link to="/">Home</Link>
-      </BreadcrumbLink>
+      <BreadcrumbLink href="/">Home</BreadcrumbLink>
 
       <BreadcrumbLink asChild>
         <Link to={DEMO_BASE_PATH}>Demo</Link>

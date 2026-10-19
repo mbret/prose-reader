@@ -23,7 +23,7 @@ const queryClient = new QueryClient({
  * Every demo route is relative to `DEMO_BASE_PATH`, the app mounts them under
  * a splat route.
  */
-const DemoRoutes = memo(() => {
+export const DemoRoutes = memo(() => {
   useRegisterServiceWorker()
 
   return (
@@ -40,5 +40,3 @@ const DemoRoutes = memo(() => {
     </QueryClientProvider>
   )
 })
-
-export default DemoRoutes
