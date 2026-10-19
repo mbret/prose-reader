@@ -11,7 +11,7 @@ pixels at 16 and 32 px.
 | `logo-wordmark-dark.svg` | The mark beside the name, on dark backgrounds |
 | `logo-512.png` | The mark as a 512 px PNG, where an SVG is not accepted |
 
-## Colours
+## Colors
 
 - Page: `#E5482B`
 - Page underneath the turned corner: `#993723`
