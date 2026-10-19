@@ -46,6 +46,7 @@ class EmptyRenderer extends DocumentRenderer {
 /** Two single pages, so what is visible is unambiguous. */
 const manifest: Manifest = {
   filename: "test",
+  mediaType: "application/vnd.comicbook+zip",
   title: "test",
   readingDirection: "ltr",
   renditionLayout: "pre-paginated",

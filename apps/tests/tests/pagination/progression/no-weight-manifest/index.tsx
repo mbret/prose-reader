@@ -13,6 +13,7 @@ pdfjsLib.GlobalWorkerOptions.workerSrc = new URL(
 async function run() {
   const manifest: Manifest = {
     filename: "sample",
+    mediaType: "text/plain",
     title: "sample",
     renditionLayout: "reflowable",
     renditionSpread: "none",

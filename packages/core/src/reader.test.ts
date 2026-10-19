@@ -1,5 +1,4 @@
 // @vitest-environment jsdom
-import type { Manifest } from "@prose-reader/shared"
 import { of } from "rxjs"
 import {
   afterAll,
@@ -18,17 +17,15 @@ import {
   HTML_STYLE_PREFIX,
 } from "./constants"
 import { createReader } from "./reader"
-import { waitFor } from "./tests/utils"
+import { createTestManifest, waitFor } from "./tests/utils"
 
 window.__PROSE_READER_DEBUG = false
 
 const CONTAINER_CLASS = `${HTML_PREFIX}-reader`
 const CONTAINER_ATTRIBUTE = `data-prose-reader-container`
 
-const MANIFEST: Manifest = {
+const MANIFEST = createTestManifest({
   filename: "",
-  items: [],
-  readingDirection: "ltr",
   renditionLayout: "pre-paginated",
   renditionSpread: "auto",
   spineItems: [
@@ -43,7 +40,7 @@ const MANIFEST: Manifest = {
     },
   ],
   title: "",
-}
+})
 
 const createTestReader = () =>
   createReader({

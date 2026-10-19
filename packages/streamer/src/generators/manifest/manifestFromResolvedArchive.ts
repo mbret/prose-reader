@@ -54,7 +54,7 @@ const firstDirectoryTitle = (archive: Archive): string | undefined =>
  */
 type ResolvedArchiveForManifest = Pick<
   ResolvedArchive,
-  "metadata" | "readingOrder" | "toc" | "sources"
+  "mediaType" | "metadata" | "readingOrder" | "toc" | "sources"
 >
 
 const epubManifest = (
@@ -79,6 +79,7 @@ const epubManifest = (
 
   return {
     filename: archive.filename ?? ``,
+    mediaType: resolved.mediaType,
     title: mainTitle(metadata) || firstDirectoryTitle(archive) || ``,
     renditionLayout: metadata.renditionLayout,
     renditionFlow: metadata.renditionFlow ?? `auto`,
@@ -131,6 +132,7 @@ const recordsManifest = (
 
   const manifest: Manifest = {
     filename: archive.filename ?? ``,
+    mediaType: resolved.mediaType,
     title:
       mainTitle(metadata) ||
       firstDirectoryTitle(archive) ||

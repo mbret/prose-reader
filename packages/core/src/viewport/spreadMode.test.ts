@@ -8,6 +8,7 @@ const createManifest = (
   overrides: Partial<Pick<Manifest, "renditionFlow" | "renditionSpread">> = {},
 ): Manifest => ({
   filename: `book.epub`,
+  mediaType: `application/epub+zip`,
   items: [],
   readingDirection: `ltr`,
   renditionFlow: `paginated`,

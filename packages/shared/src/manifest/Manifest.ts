@@ -8,6 +8,13 @@ export type TocItem = {
 export type Manifest = {
   filename: string
   /**
+   * The media type of the file the book was opened from:
+   * `application/epub+zip`, `application/pdf`,
+   * `application/vnd.comicbook+zip`… `application/octet-stream`, the type of
+   * data of an unknown type, when nothing tells it.
+   */
+  mediaType: string
+  /**
    * @see https://www.w3.org/publishing/epub3/epub-packages.html#sec-nav-toc
    */
   nav?: {

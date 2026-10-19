@@ -78,7 +78,7 @@ A few rules of thumb:
 | `createArchiveFromNodeUnrarJs` | `@prose-reader/archive-reader/archives/createArchiveFromNodeUnrarJs` | a `node-unrar-js` `Extractor` (rar, cbr) | optional peer dep `node-unrar-js`; WASM-based |
 | `createArchiveFromArrayBufferList` | `@prose-reader/archive-reader` | a list of `{ name, size, isDir, data() }` | environment-agnostic |
 | `createArchiveFromText` | `@prose-reader/archive-reader` | a `string` or `Blob` of text | wraps plain text as a single-page reflowable book |
-| `createArchiveFromUrls` | `@prose-reader/archive-reader` | a list of image URLs | pre-paginated; URLs must be same-origin or CORS-enabled |
+| `createArchiveFromUrls` | `@prose-reader/archive-reader` | a list of image URLs | pre-paginated; URLs must be same-origin or CORS-enabled; declare the type of book the list stands for as `encodingFormat` |
 | `createArchiveFromPdf` | `@prose-reader/enhancer-pdf` | a PDF `Blob` | see [PDF enhancer](/enhancers/pdf) |
 | `createArchiveFromExpoFileSystemNext` | `@prose-reader/react-native` | an `expo-file-system` `Directory` | see [React Native](/learn/streamer/react-native) |
 
@@ -140,10 +140,11 @@ const archive = await createArchiveFromText("Hello world", { direction: "ltr" })
 ```typescript
 import { createArchiveFromUrls } from "@prose-reader/archive-reader"
 
-const archive = await createArchiveFromUrls([
-  "https://cdn.example.com/page-1.jpg",
-  "https://cdn.example.com/page-2.jpg",
-])
+const archive = await createArchiveFromUrls(
+  ["https://cdn.example.com/page-1.jpg", "https://cdn.example.com/page-2.jpg"],
+  // a list of urls is no file: say what it stands for, here a comic
+  { encodingFormat: "application/vnd.comicbook+zip" },
+)
 ```
 
 ## Helpers
@@ -172,7 +173,8 @@ import { resolveArchive } from "@prose-reader/archive-reader"
 
 const resolved = await resolveArchive(archive)
 // {
-//   version: 3,
+//   version: 4,
+//   mediaType: "application/vnd.comicbook+zip",
 //   metadata: { title, cover?, numberOfPages?, contributors, renditionLayout, belongsTo, … },
 //   readingOrder: [{ uri, id?, mediaType?, size?, renditionLayout?, progressionWeight, … }],
 //   toc: [{ title, path, containerHref, contents }],
@@ -181,6 +183,10 @@ const resolved = await resolveArchive(archive)
 ```
 
 Everything is **container-relative** (reading-order `uri`s, toc `containerHref`s): the entity carries no serving concern, consumers rebase into their own space.
+
+`mediaType` is the media type of the file the book was opened from: the archive's `encodingFormat` as declared (parameters dropped, so an alias such as `application/x-cbz` stays one), else what its `filename`'s extension registers (`.epub`, `.pdf`, `.cbz`, `.cbr`, `.cbt`, `.cb7`, `.zip`, `.rar`, `.tar`, `.txt`), else `application/epub+zip` for a container holding `META-INF/container.xml`, which every EPUB has, else `application/octet-stream`, the type of data of an unknown type. A package document alone does not make an EPUB: the archives prose synthesizes for a PDF, a text or a list of URLs hold one. Give the archive its `filename` or `encodingFormat` when you create it, so that it tells.
+
+A declared type that names no book format gives way to the extension and the container: `application/octet-stream`, which a server declares for a file it has no type for (GitHub serves every binary file that way), and a bare archive format such as `application/zip` or `application/vnd.rar`, which an EPUB or a comic also is. So a `Blob` fetched from such a server can pass its `type` as the `encodingFormat`. A declared archive format still stands when neither the extension nor the container tells.
 
 ### Projection tokens & cost classes { #projection-tokens-and-cost-classes }
 
@@ -192,7 +198,7 @@ Everything is **container-relative** (reading-order `uri`s, toc `containerHref`s
 | `readingOrder` | the OPF read at most — cheap |
 | `toc` | one nav or NCX document read+parse on top — medium |
 | `sources` | same reads as `metadata` — the verbatim parser outputs, for provenance and single-format needs |
-| `version`, `unreadableSources` | free, always present |
+| `version`, `mediaType`, `unreadableSources` | free, always present |
 
 The default is `["metadata", "readingOrder", "toc"]`: **the default costs O(sidecar files); anything that reads the whole book is opt-in.** `sources` is deliberately not in the default set — it roughly doubles the persisted entity.
 

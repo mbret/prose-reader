@@ -145,6 +145,7 @@ describe(`Given a reflowable EPUB with OPF in a subfolder, NCX toc, guide and a 
 
     expect(manifest).toEqual({
       filename: `characterization.epub`,
+      mediaType: `application/epub+zip`,
       title: `Characterization Book`,
       renditionLayout: `reflowable`,
       renditionFlow: `scrolled-doc`,
@@ -255,6 +256,7 @@ describe(`Given an explicitly pre-paginated (FXL) EPUB with page spreads and a p
 
     expect(manifest).toEqual({
       filename: `fxl.epub`,
+      mediaType: `application/epub+zip`,
       title: `FXL Book`,
       renditionLayout: `pre-paginated`,
       renditionFlow: `auto`,
@@ -342,6 +344,7 @@ describe(`Given a reflowable EPUB whose spine documents all declare a viewport`,
 
     expect(manifest).toEqual({
       filename: `viewport.epub`,
+      mediaType: `application/epub+zip`,
       title: `Viewport Book`,
       renditionLayout: `pre-paginated`,
       renditionFlow: `auto`,
@@ -452,6 +455,7 @@ describe(`Given an EPUB that also contains a ComicInfo.xml`, () => {
 
     expect(manifest).toEqual({
       filename: `epub-with-comicinfo.epub`,
+      mediaType: `application/epub+zip`,
       title: `Epub With ComicInfo`,
       renditionLayout: `pre-paginated`,
       renditionFlow: `auto`,
@@ -524,6 +528,7 @@ describe(`Given a flat CBZ with a ComicInfo.xml`, () => {
 
     expect(manifest).toEqual({
       filename: `my comic.cbz`,
+      mediaType: `application/vnd.comicbook+zip`,
       // deliberate change with the resolveArchive migration: the ComicInfo
       // Title now feeds the manifest title instead of the filename
       title: `Vol 1`,
@@ -601,6 +606,7 @@ describe(`Given an EPUB with a Kobo display-options sidecar`, () => {
 
     expect(manifest).toEqual({
       filename: `kobo.epub`,
+      mediaType: `application/epub+zip`,
       title: `Kobo Flagged Book`,
       renditionLayout: `pre-paginated`,
       renditionFlow: `auto`,
@@ -690,6 +696,7 @@ describe(`Given an EPUB with an Apple display-options sidecar`, () => {
 
     expect(manifest).toEqual({
       filename: `apple.epub`,
+      mediaType: `application/epub+zip`,
       title: `Apple Flagged Book`,
       renditionLayout: `pre-paginated`,
       renditionFlow: `auto`,
@@ -762,6 +769,7 @@ describe(`Given a flat audiobook archive`, () => {
 
     expect(manifest).toEqual({
       filename: `audiobook.zip`,
+      mediaType: `application/zip`,
       title: `audiobook.zip`,
       renditionLayout: undefined,
       renditionSpread: `auto`,
@@ -821,6 +829,7 @@ describe(`Given text content`, () => {
 
     expect(manifest).toEqual({
       filename: `content.txt`,
+      mediaType: `text/plain`,
       title: ``,
       renditionLayout: `reflowable`,
       renditionFlow: `auto`,
@@ -864,6 +873,7 @@ describe(`Given a folder comic with a .db file`, () => {
 
     expect(manifest).toEqual({
       filename: `comic.cbz`,
+      mediaType: `application/vnd.comicbook+zip`,
       // title comes from the first directory record
       title: `Album`,
       renditionLayout: undefined,

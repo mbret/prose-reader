@@ -36,8 +36,10 @@ const createImageRecord = (basename: string): Archive["records"][number] => ({
 
 const createManifest = (
   readingDirection: Manifest["readingDirection"] = undefined,
+  mediaType = "application/vnd.comicbook+zip",
 ): Manifest => ({
   filename: "",
+  mediaType,
   items: [],
   readingDirection,
   renditionLayout: "pre-paginated",
@@ -113,7 +115,7 @@ describe("detectReadingDirectionManifest", () => {
       filename: "book.epub",
       records: [createImageRecord("001.jpg")],
     })
-    const manifest = createManifest(undefined)
+    const manifest = createManifest(undefined, "application/epub+zip")
 
     await expect(runHook(archive, manifest)).resolves.toBe(manifest)
   })

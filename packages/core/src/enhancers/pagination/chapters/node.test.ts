@@ -3,21 +3,19 @@ import type { Manifest } from "@prose-reader/shared"
 import { describe, expect, it } from "vitest"
 import type { PageEntry } from "../../../spine/Pages"
 import type { SpineItem } from "../../../spineItem/SpineItem"
+import { createTestManifest } from "../../../tests/utils"
 import {
   buildTocCandidatesBySpineHref,
   buildTocIndex,
   resolveChapterInfoFromVisibleNode,
 } from "./index"
 
-const BASE_MANIFEST: Manifest = {
+const BASE_MANIFEST = createTestManifest({
   filename: "",
-  items: [],
-  readingDirection: "ltr",
+  title: "",
   renditionLayout: "pre-paginated",
   renditionSpread: "auto",
-  spineItems: [],
-  title: "",
-}
+})
 
 const createSpineItemForDoc = ({
   id,

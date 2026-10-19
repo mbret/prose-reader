@@ -1,5 +1,4 @@
 // @vitest-environment jsdom
-import type { Manifest } from "@prose-reader/shared"
 import { filter, firstValueFrom, of, timeout } from "rxjs"
 import {
   afterAll,
@@ -16,20 +15,18 @@ import { layoutEnhancer } from "../enhancers/layout/layoutEnhancer"
 import { navigationEnhancer } from "../enhancers/navigation"
 import { themeEnhancer } from "../enhancers/theme"
 import { createReader } from "../reader"
+import { createTestManifest } from "../tests/utils"
 import { DefaultRenderer } from "./renderer/DefaultRenderer"
 import type { SpineItemState } from "./SpineItem"
 
 window.__PROSE_READER_DEBUG = false
 
-const BASE_MANIFEST: Manifest = {
+const BASE_MANIFEST = createTestManifest({
   filename: "",
-  items: [],
-  readingDirection: "ltr",
+  title: "",
   renditionLayout: "pre-paginated",
   renditionSpread: "auto",
-  spineItems: [],
-  title: "",
-}
+})
 
 beforeAll(() => {
   vi.stubGlobal(

@@ -44,6 +44,7 @@ export const createPrePaginatedManifest = ({
   pageSpreads?: ("left" | "right" | undefined)[]
 } = {}): Manifest =>
   createTestManifest({
+    mediaType: "application/vnd.comicbook+zip",
     renditionLayout: "pre-paginated",
     renditionSpread: "auto",
     spineItems: pageSpreads.map((pageSpread, index) => ({

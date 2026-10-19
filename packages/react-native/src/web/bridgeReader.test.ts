@@ -64,6 +64,7 @@ vi.mock("@webview-bridge/web", () => ({
 
 const manifest: Manifest = {
   filename: "",
+  mediaType: "application/vnd.comicbook+zip",
   items: [],
   readingDirection: "ltr",
   renditionLayout: "pre-paginated",

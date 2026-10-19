@@ -1,6 +1,7 @@
 import type { Archive } from "./archives/types.ts"
 import { resolveArchiveCover } from "./cover/resolveArchiveCover.ts"
 import { readingOrderDocumentsAllHaveViewport } from "./layout/scanReadingOrderDocumentsViewport.ts"
+import { resolveArchiveMediaType } from "./mediaType/resolveArchiveMediaType.ts"
 import type { AppleMetadata } from "./metadata/apple/parse.ts"
 import { readArchiveApple } from "./metadata/apple/readArchiveApple.ts"
 import type { ComicInfo } from "./metadata/comicInfo/parse.ts"
@@ -56,6 +57,18 @@ export type ResolvedArchive = {
    */
   readonly version: number
   /**
+   * The media type of the file the book was opened from
+   * (`application/epub+zip`, `application/pdf`,
+   * `application/vnd.comicbook+zip`…): what the archive declares as its
+   * `encodingFormat`, else what its `filename`'s extension registers, else
+   * `application/epub+zip` for a container holding `META-INF/container.xml`,
+   * else `application/octet-stream`, the type of data of an unknown type. A
+   * declared `application/octet-stream`, or a bare archive format such as
+   * `application/zip`, gives way to the extension and the container.
+   * Always present, whatever the projection: it reads nothing from the book.
+   */
+  readonly mediaType: string
+  /**
    * Cross-format normalized metadata (see {@link ResolvedMetadata}),
    * including the resolved `cover` — metadata is resolved for the whole
    * container, not just its descriptive sidecars.
@@ -106,8 +119,8 @@ export type ResolvedArchive = {
  *   fallback.
  * - `readingOrder`: the OPF read at most — cheap.
  * - `toc`: one nav or NCX document read+parse on top — medium.
- * - `version`, `unreadableSources`: free, and always present regardless of
- *   projection.
+ * - `version`, `mediaType`, `unreadableSources`: free, and always present
+ *   regardless of projection.
  *
  * The default (`metadata`, `readingOrder`, `toc`) costs O(sidecar files) +
  * one navigation document: anything that reads the whole book is opt-in
@@ -221,7 +234,7 @@ const collectUnreadableSources = ({
   return unreadable
 }
 
-const RESOLVED_ARCHIVE_VERSION = 3
+const RESOLVED_ARCHIVE_VERSION = 4
 
 /**
  * Resolves a book container into a single enriched, plain-JSON entity:
@@ -262,7 +275,10 @@ export const resolveArchive = async <
   archive: Archive,
   options: ResolveArchiveOptions<T> = {},
 ): Promise<
-  Pick<ResolvedArchive, T[number] | "version" | "unreadableSources">
+  Pick<
+    ResolvedArchive,
+    T[number] | "version" | "mediaType" | "unreadableSources"
+  >
 > => {
   const tokens = new Set<ResolveArchiveToken>(
     options.include ?? DEFAULT_INCLUDE,
@@ -350,8 +366,9 @@ export const resolveArchive = async <
 
   const result: {
     -readonly [K in keyof ResolvedArchive]?: ResolvedArchive[K]
-  } & Pick<ResolvedArchive, "version" | "unreadableSources"> = {
+  } & Pick<ResolvedArchive, "version" | "mediaType" | "unreadableSources"> = {
     version: RESOLVED_ARCHIVE_VERSION,
+    mediaType: resolveArchiveMediaType(archive),
     unreadableSources: collectUnreadableSources({
       archive,
       opf: opfRead,
@@ -373,6 +390,6 @@ export const resolveArchive = async <
   // computed Pick keys.
   return result as Pick<
     ResolvedArchive,
-    T[number] | "version" | "unreadableSources"
+    T[number] | "version" | "mediaType" | "unreadableSources"
   >
 }

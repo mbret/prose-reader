@@ -1,5 +1,4 @@
 // @vitest-environment jsdom
-import type { Manifest } from "@prose-reader/shared"
 import { type ObservedValueOf, of, skip } from "rxjs"
 import {
   afterAll,
@@ -13,6 +12,7 @@ import {
 } from "vitest"
 import { createReader } from "../../reader"
 import { DefaultRenderer } from "../../spineItem/renderer/DefaultRenderer"
+import { createTestManifest } from "../../tests/utils"
 import { htmlEnhancer } from "../html/enhancer"
 import { layoutEnhancer } from "../layout/layoutEnhancer"
 import { navigationEnhancer } from "../navigation"
@@ -21,15 +21,12 @@ import { paginationEnhancer } from "./enhancer"
 
 window.__PROSE_READER_DEBUG = false
 
-const BASE_MANIFEST: Manifest = {
+const BASE_MANIFEST = createTestManifest({
   filename: "",
-  items: [],
-  readingDirection: "ltr",
+  title: "",
   renditionLayout: "pre-paginated",
   renditionSpread: "auto",
-  spineItems: [],
-  title: "",
-}
+})
 
 beforeAll(() => {
   vi.stubGlobal(

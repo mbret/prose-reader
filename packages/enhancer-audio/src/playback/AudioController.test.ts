@@ -55,6 +55,7 @@ const createManifestSpineItem = ({
 
 const createManifest = (spineItems: Manifest["spineItems"] = []): Manifest => ({
   filename: ``,
+  mediaType: `application/zip`,
   title: ``,
   renditionLayout: undefined,
   renditionSpread: undefined,

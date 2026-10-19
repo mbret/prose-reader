@@ -20,6 +20,8 @@ describe(`Given a list of urls archive`, () => {
 
     expect(manifest).toEqual({
       filename: ``,
+      // a list of urls declared as nothing is data of an unknown type
+      mediaType: `application/octet-stream`,
       items: [
         {
           href: imageUrl,
@@ -63,6 +65,8 @@ describe(`Given a list of urls with rendition flow archive`, () => {
 
     expect(manifest).toEqual({
       filename: ``,
+      // a list of urls declared as nothing is data of an unknown type
+      mediaType: `application/octet-stream`,
       items: [
         {
           href: imageUrl,

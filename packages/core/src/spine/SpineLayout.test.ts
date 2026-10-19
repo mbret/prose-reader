@@ -16,15 +16,15 @@ import { SpineLayout } from "./SpineLayout"
 const createPrePaginatedManifest = (
   readingDirection: Manifest["readingDirection"],
   items: Array<Partial<Manifest["spineItems"][number]> | undefined>,
-): Manifest => ({
-  filename: "",
-  items: [],
-  readingDirection,
-  renditionLayout: "pre-paginated",
-  renditionSpread: "auto",
-  spineItems: createTestManifestSpineItems(items),
-  title: "",
-})
+): Manifest =>
+  createTestManifest({
+    filename: "",
+    title: "",
+    readingDirection,
+    renditionLayout: "pre-paginated",
+    renditionSpread: "auto",
+    spineItems: createTestManifestSpineItems(items),
+  })
 
 const createSpreadModeTestEnvironment = ({
   pageHeight,

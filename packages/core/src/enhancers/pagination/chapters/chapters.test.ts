@@ -137,6 +137,7 @@ describe("buildChaptersInfo (template-b)", () => {
 describe("buildChaptersInfo (anchor-only toc href)", () => {
   const manifestWithAnchorOnlyHref: Manifest = {
     filename: "",
+    mediaType: "application/epub+zip",
     items: [],
     readingDirection: "ltr",
     renditionLayout: "pre-paginated",
