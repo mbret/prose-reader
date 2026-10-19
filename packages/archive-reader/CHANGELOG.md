@@ -3,6 +3,13 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## [26.0.0](https://github.com/mbret/prose-reader/compare/v25.1.0...v26.0.0) (2026-10-19)
+
+### Features
+
+* **archive-reader:** resolve the media type of the book file ([cfd4a08](https://github.com/mbret/prose-reader/commit/cfd4a08e56a06633c4cc2d97c5f427be39c4a7f8))
+
+
 ## [25.1.0](https://github.com/mbret/prose-reader/compare/v25.0.1...v25.1.0) (2026-10-10)
 
 **Note:** Version bump only for package @prose-reader/archive-reader
