@@ -4,6 +4,7 @@ import type {
   Reader,
   UserNavigationEntry,
 } from "@prose-reader/core"
+import { getReader } from "./reader"
 
 export async function waitForSpineItemReady(page: Page, indexes: number[]) {
   for (const index of indexes) {
@@ -108,6 +109,18 @@ export const navigateToSpineItem = async ({
     },
     [index],
   )
+}
+
+/**
+ * Goes to the next spine item, whichever way the book reads: a comic reads
+ * right to left unless it says otherwise.
+ */
+export const goToNextSpineItem = async ({ page }: { page: Page }) => {
+  const reader = await getReader(page)
+
+  await reader.evaluate((reader) => {
+    reader.navigation.goToNextSpineItem()
+  })
 }
 
 export const navigateTo = async ({
