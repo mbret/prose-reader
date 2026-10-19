@@ -1,5 +1,6 @@
 ---
 title: "Publication identifiers"
+description: "Read an ISBN, GTIN, DOI or catalog id out of EPUB and ComicInfo metadata with identifierValue(), and see how each identifier gets its scheme."
 ---
 
 Archive-reader normalizes identifiers from supported publication metadata into a shared shape:

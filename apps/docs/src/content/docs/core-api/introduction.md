@@ -1,6 +1,8 @@
 ---
-title: "Introduction"
-description: The reading system core functionalities
+title: "Core API"
+description: "What @prose-reader/core covers, what it leaves to enhancers such as gestures, search and annotations, and when a feature belongs in the core."
+sidebar:
+  label: "Introduction"
 ---
 
 The core package is all you need to display content into a web page. This contains all the foundations and bases you need.

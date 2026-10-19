@@ -1,5 +1,6 @@
 ---
 title: "Archive Reader"
+description: "Turn an EPUB, CBZ, CBR, PDF or text file into an archive, then resolve its metadata, cover, reading order and table of contents with resolveArchive()."
 ---
 
 :::caution

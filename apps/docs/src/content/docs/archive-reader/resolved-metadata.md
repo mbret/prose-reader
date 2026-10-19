@@ -1,5 +1,6 @@
 ---
 title: "Resolved metadata"
+description: "Titles, contributors, series, identifiers, dates, ratings and covers in one metadata shape for EPUB and comic books, and where each value comes from."
 ---
 
 `resolveArchive` (and the lower-level `resolveMetadata`) normalize every metadata source a container can carry into one cross-format vocabulary: `ResolvedMetadata`. This page is the reference for that vocabulary, the per-format mapping tables, and the precedence rules when several sources speak.

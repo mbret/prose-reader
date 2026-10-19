@@ -1,5 +1,6 @@
 ---
 title: "Contact / Community / Links"
+description: "Where to find prose online: the GitHub repository, the website, the live demo reader and the community Discord server."
 ---
 
 * [Repository of the project](https://github.com/mbret/prose-reader)

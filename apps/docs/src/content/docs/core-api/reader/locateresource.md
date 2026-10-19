@@ -1,5 +1,8 @@
 ---
-title: "locateResource()"
+title: "reader.locateResource()"
+description: "Map CFIs and spine items to page indexes, DOM nodes and ranges with reader.locateResource(): its parameters, its shallow and load modes, and the live result."
+sidebar:
+  label: "locateResource()"
 ---
 
 Locate a given resource and give you extra information such as absolute page index, relevant nodes, offset etc. This is most useful when you want to locate resources such as CFI.

@@ -1,5 +1,6 @@
 ---
 title: "Alternatives"
+description: "How prose compares with Colibrio, foliate-js and epub.js, other ebook libraries that run in a browser, with the pros and cons of each."
 ---
 
 These alternatives will be compared to prose to help you navigate more choices and help you make your decision. We only mention libraries that can run in a browser. We are only listing the relevant pros and cons compared to prose, not an exhaustive list of all the capabilities of each library.
@@ -23,7 +24,7 @@ If you are a library author who wants to be showcased here, please [contact us](
 | ---------- | ---- |
 | Easy setup |      |
 
-## [epubjs](https://github.com/futurepress/epub.js/)
+## [epub.js](https://github.com/futurepress/epub.js/)
 
 | ✅ PROS | CONS         |
 | ------ | ------------ |

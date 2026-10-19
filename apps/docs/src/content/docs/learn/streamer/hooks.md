@@ -1,5 +1,8 @@
 ---
-title: "Hooks"
+title: "Streamer hooks"
+description: "Manifest and resource hooks for @prose-reader/streamer: when they run, what each factory receives, and examples that force spreads or rewrite a content type."
+sidebar:
+  label: "Hooks"
 ---
 
 Streamer hooks let you transform what the streamer produces without forking its pipeline. There are two hook points, both passed wherever the streamer is set up (`new Streamer({ hooks })`, `new ServiceWorkerStreamer({ hooks })`, or directly to `generateManifestFromArchive` / `generateResourceFromArchive`):

@@ -1,5 +1,6 @@
 ---
-title: "Performances"
+title: "Performance"
+description: "Keep a prose reader fast: the cost of one iframe per spine item, oversized media in comics, and how many pages to keep loaded for comics and for novels."
 ---
 
 A reading system can be heavy both in terms of its internal code but also the content itself. Prose is written completely with rxjs, although it significantly helps for development and reliability it adds a certain overhead. In the majority of situations, you should have no performance issues but here are some considerations important to know for good performances.

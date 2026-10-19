@@ -1,5 +1,8 @@
 ---
-title: "renderHeadless()"
+title: "reader.renderHeadless()"
+description: "Get the Document of a spine item, by index or id, without displaying it in the reader, along with a release() function to call when you are done."
+sidebar:
+  label: "renderHeadless()"
 ---
 
 Render a specific spine item document headless. Spine items can have more than one document iframe rendered (PDF for example render an extra canvas to show the page) but the document that matters to you is the one containing the actual content.

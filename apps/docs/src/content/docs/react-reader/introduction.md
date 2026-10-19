@@ -1,5 +1,8 @@
 ---
-title: "Introduction"
+title: "React Reader"
+description: "A ready-made reading interface for React, built on prose and themed with Chakra UI, and what to weigh first: its peer dependencies and how far it customizes."
+sidebar:
+  label: "Introduction"
 ---
 
 React Reader is a package that offers a plug\&play reader interface for your React project that works seamlessly with prose. The intent is to have a drop in reader that you can use as is or customize to suit your app need.

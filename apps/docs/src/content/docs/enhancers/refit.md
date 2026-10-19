@@ -1,5 +1,8 @@
 ---
-title: "Refit"
+title: "Refit enhancer"
+description: "Install @prose-reader/enhancer-refit and set refit.viewportFit when you create the reader, to narrow the viewport of a scrolled book to a tablet width."
+sidebar:
+  label: "Refit"
 ---
 
 This enhancer gives you a convenient way to let the user refit the viewport for better reading experience. For example by reducing the viewport width to see more pages at once on scrolling mode.

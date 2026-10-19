@@ -1,5 +1,8 @@
 ---
-title: "Node"
+title: "Streamer on Node"
+description: "Run @prose-reader/streamer on Node 22.12 or later: open an EPUB or CBZ with unzipper, then generate its manifest and resources from the archive."
+sidebar:
+  label: "Node"
 ---
 
 :::caution

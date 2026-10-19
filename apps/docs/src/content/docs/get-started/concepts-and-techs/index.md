@@ -1,5 +1,6 @@
 ---
 title: "Concepts & Techs"
+description: "How prose splits the work between the reader, which renders a book from its manifest, and the streamer, which serves that manifest and the book's resources."
 ---
 
 :::danger

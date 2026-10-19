@@ -1,5 +1,8 @@
 ---
-title: "Document digests"
+title: "KOReader document digests"
+description: "Compute the Binary and Filename digests KOReader's sync plugin matches books by, with getKoreaderFileDigest() and getKoreaderFileNameDigest()."
+sidebar:
+  label: "Document digests"
 ---
 
 A KOReader sync server files reading positions by user and by `document`, a digest each client computes from the book. Two clients share a position only when they compute the same digest for the same book. `@prose-reader/koreader` computes the two digests KOReader uses, exactly as KOReader does.

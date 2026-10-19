@@ -1,5 +1,6 @@
 ---
 title: "Annotations"
+description: "Model bookmarks, highlights and notes as one annotation shape anchored by a CFI, and persist references that stay stable across devices and reading settings."
 ---
 
 Annotations are common amongst readers and allow the user to annotate information on a document. There are no standards as to what an annotation is or how it can be implemented but usually it is defined by a location on a book that can have metadata (highlight color, notes, etc).

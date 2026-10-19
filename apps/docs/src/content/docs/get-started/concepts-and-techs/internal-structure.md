@@ -1,5 +1,6 @@
 ---
 title: "Internal structure"
+description: "A diagram of the layers inside a prose reader, from the context through the navigators and the viewport down to the spine and its items."
 ---
 
 Simplified representation of the internal components structure. This can help you understand the flow of data and how to retrieve specific parts of the reader. There are more components internally but these are the important layers you need to be familiar with.

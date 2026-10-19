@@ -1,5 +1,8 @@
 ---
-title: "Context"
+title: "Reader context"
+description: "The fields of reader.context, such as the manifest, the rendition layout and whether a spread is allowed, and how to read or watch them."
+sidebar:
+  label: "Context"
 ---
 
 The context holds the book and the state of the reader that the rest of the engine builds on. The manifest is fixed for the lifetime of the reader; everything else is runtime state.

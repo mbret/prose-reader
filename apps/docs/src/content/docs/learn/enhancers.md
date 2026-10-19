@@ -1,5 +1,6 @@
 ---
 title: "Enhancers"
+description: "Wrap createReader with official enhancers, or write your own to give the reader new options, an API namespace or new navigation targets."
 ---
 
 Enhancers are the official and conventional way of adding functionalities to the reader. prose reader core tries to stay agnostic and focus on the minimum support of books. Things like bookmarks, highlighting, gesture navigation etc are not part of the core. That's when enhancers come into play.
