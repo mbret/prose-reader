@@ -1,8 +1,9 @@
 import { expect, type Page, test } from "@playwright/test"
-import type { Reader, ReadingPosition } from "@prose-reader/core"
-import type { koreaderEnhancer } from "@prose-reader/enhancer-koreader"
+import type { ReadingPosition } from "@prose-reader/core"
 import type { generateXPointer, xPointerToCfi } from "@prose-reader/koreader"
+import { goToKoreaderProgress } from "../utils/koreader"
 import { waitForSettled } from "../utils/pagination"
+import { getReader } from "../utils/reader"
 import {
   isCfiPositionVisible,
   isElementStartOnScreen,
@@ -22,10 +23,8 @@ const chapter = "ch02.xhtml"
 // Near the end of a long chapter, many pages after its start.
 const fragment = "_page_numbering"
 
-type KoreaderReader = ReturnType<ReturnType<typeof koreaderEnhancer>> & Reader
-
-type Scenario = {
-  reader: KoreaderReader
+/** What this scenario's index.tsx exposes on the window beside the reader. */
+type ScenarioHelpers = {
   readingPositionsAsXPointers: {
     xpointer: string | undefined
     status: ReadingPosition["status"]
@@ -36,10 +35,8 @@ type Scenario = {
   }
 }
 
-const getChapterIndex = (page: Page) =>
-  page.evaluate((href) => {
-    // The page's window is untyped: this scenario's index.tsx sets these.
-    const { reader } = window as unknown as Scenario
+const getChapterIndex = async (page: Page) =>
+  (await getReader(page)).evaluate((reader, href) => {
     const index = reader.context.manifest.spineItems.findIndex((item) =>
       item.href.endsWith(href),
     )
@@ -54,21 +51,22 @@ const chapterStart = (spineItemIndex: number) =>
   `/body/DocFragment[${spineItemIndex + 1}]/body`
 
 const goToSpineItem = async (page: Page, indexOrId: number) => {
-  await page.evaluate((indexOrId) => {
-    // The page's window is untyped: this scenario's index.tsx sets these.
-    const { reader } = window as unknown as Scenario
-
+  await (await getReader(page)).evaluate((reader, indexOrId) => {
     reader.navigation.goToSpineItem({ indexOrId, animation: false })
   }, indexOrId)
   await waitForSettled(page)
 }
 
 /** The xpointer of an element of a loaded spine item. */
-const getElementXPointer = (page: Page, spineItemIndex: number, id: string) =>
-  page.evaluate(
-    ({ spineItemIndex, id }) => {
+const getElementXPointer = async (
+  page: Page,
+  spineItemIndex: number,
+  id: string,
+) =>
+  (await getReader(page)).evaluate(
+    (reader, { spineItemIndex, id }) => {
       // The page's window is untyped: this scenario's index.tsx sets these.
-      const { reader, koreader } = window as unknown as Scenario
+      const { koreader } = window as unknown as ScenarioHelpers
       const element = reader.spineItemsManager
         .get(spineItemIndex)
         ?.renderer.getDocumentFrame()
@@ -91,7 +89,7 @@ const getElementXPointer = (page: Page, spineItemIndex: number, id: string) =>
 const readReportedPositions = (page: Page) =>
   page.evaluate(() => {
     // The page's window is untyped: this scenario's index.tsx sets these.
-    const { readingPositionsAsXPointers } = window as unknown as Scenario
+    const { readingPositionsAsXPointers } = window as unknown as ScenarioHelpers
 
     return [...readingPositionsAsXPointers]
   })
@@ -100,10 +98,10 @@ const readLatestReportedPosition = async (page: Page) =>
   (await readReportedPositions(page)).slice(-1)[0]
 
 /** The cfi an xpointer resolves to in its loaded spine item. */
-const getXPointerCfi = (page: Page, xpointer: string) =>
-  page.evaluate((xpointer) => {
+const getXPointerCfi = async (page: Page, xpointer: string) =>
+  (await getReader(page)).evaluate((reader, xpointer) => {
     // The page's window is untyped: this scenario's index.tsx sets these.
-    const { reader, koreader } = window as unknown as Scenario
+    const { koreader } = window as unknown as ScenarioHelpers
 
     return koreader.xPointerToCfi(xpointer, (spineItemIndex) => {
       const spineItem = reader.spineItemsManager.get(spineItemIndex)
@@ -135,22 +133,15 @@ const openAtXPointerInUnloadedChapter = async (page: Page) => {
   await waitForSettled(page)
 
   const before = (await readReportedPositions(page)).length
-  const isChapterReady = await page.evaluate((chapterIndex) => {
-    // The page's window is untyped: this scenario's index.tsx sets these.
-    const { reader } = window as unknown as Scenario
-
-    return reader.spineItemsManager.get(chapterIndex)?.value.isReady
-  }, chapterIndex)
+  const isChapterReady = await (await getReader(page)).evaluate(
+    (reader, chapterIndex) =>
+      reader.spineItemsManager.get(chapterIndex)?.value.isReady,
+    chapterIndex,
+  )
 
   expect(isChapterReady).toBe(false)
 
-  await page.evaluate((xpointer) => {
-    // The page's window is untyped: this scenario's index.tsx sets these.
-    const { reader } = window as unknown as Scenario
-
-    reader.navigation.goToKoreaderProgress(xpointer)
-  }, xpointer)
-  await waitForSettled(page)
+  await goToKoreaderProgress(page, xpointer)
 
   await expect
     .poll(() => isElementStartOnScreen(page, chapterIndex, fragment))
@@ -209,10 +200,7 @@ test.describe("Given pages turned in a chapter", () => {
     await goToSpineItem(page, chapterIndex)
 
     for (let turn = 0; turn < 2; turn++) {
-      await page.evaluate(() => {
-        // The page's window is untyped: this scenario's index.tsx sets these.
-        const { reader } = window as unknown as Scenario
-
+      await (await getReader(page)).evaluate((reader) => {
         reader.navigation.turnRight()
       })
       await waitForSettled(page)
@@ -240,17 +228,12 @@ test.describe("Given a book reopened at a cfi inside a chapter not loaded yet", 
     const chapterIndex = await getChapterIndex(page)
 
     await goToSpineItem(page, chapterIndex)
-    await page.evaluate(() => {
-      // The page's window is untyped: this scenario's index.tsx sets these.
-      const { reader } = window as unknown as Scenario
-
+    await (await getReader(page)).evaluate((reader) => {
       reader.navigation.turnRight()
     })
     await waitForSettled(page)
 
-    const cfi = await page.evaluate(() => {
-      // The page's window is untyped: this scenario's index.tsx sets these.
-      const { reader } = window as unknown as Scenario
+    const cfi = await (await getReader(page)).evaluate((reader) => {
       let value: string | undefined
 
       reader.navigation.readingPosition$
@@ -309,22 +292,15 @@ test.describe("Given an xpointer into a chapter where its place cannot be found"
     // A path no element of the chapter has, as a stale pointer can.
     const xpointer = `${chapterStart(chapterIndex)}/div[999]/p[3]/text().0`
 
-    await page.evaluate((xpointer) => {
-      // The page's window is untyped: this scenario's index.tsx sets these.
-      const { reader } = window as unknown as Scenario
-
-      reader.navigation.goToKoreaderProgress(xpointer)
-    }, xpointer)
-    await waitForSettled(page)
+    await goToKoreaderProgress(page, xpointer)
 
     await expect
-      .poll(() =>
-        page.evaluate((chapterIndex) => {
-          // The page's window is untyped: this scenario's index.tsx sets these.
-          const { reader } = window as unknown as Scenario
-
-          return reader.spineItemsManager.get(chapterIndex)?.value.loadStatus
-        }, chapterIndex),
+      .poll(async () =>
+        (await getReader(page)).evaluate(
+          (reader, chapterIndex) =>
+            reader.spineItemsManager.get(chapterIndex)?.value.loadStatus,
+          chapterIndex,
+        ),
       )
       .toBe("loaded")
 
