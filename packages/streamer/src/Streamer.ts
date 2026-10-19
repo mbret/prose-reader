@@ -26,6 +26,12 @@ type WithArchiveResponse = (
   archive: Archive,
 ) => Observable<Response> | Promise<Response>
 
+/**
+ * The key a call that names no archive is served under, so a streamer serving
+ * a single book never has to make one up.
+ */
+const defaultArchiveKey = `prose-reader-default-archive`
+
 const fileProtocol = `file://`
 const httpProtocolPattern = /^https?:\/\//
 
@@ -85,7 +91,7 @@ export class Streamer {
     this.archiveLoader.purge()
   }
 
-  public accessArchive(key: string) {
+  public accessArchive(key = defaultArchiveKey) {
     if (this.lastAccessedKey !== undefined && this.lastAccessedKey !== key) {
       this.archiveLoader.purge()
     }
@@ -95,7 +101,7 @@ export class Streamer {
     return this.archiveLoader.access(key)
   }
 
-  public accessArchiveWithoutLock(key: string) {
+  public accessArchiveWithoutLock(key = defaultArchiveKey) {
     return this.accessArchive(key).pipe(
       map(({ archive, release }) => {
         release()
@@ -128,7 +134,13 @@ export class Streamer {
     return lastValueFrom(response$)
   }
 
-  public fetchManifest({ key, baseUrl }: { key: string; baseUrl?: string }) {
+  public fetchManifest({
+    key = defaultArchiveKey,
+    baseUrl,
+  }: {
+    key?: string
+    baseUrl?: string
+  } = {}) {
     return this.withArchiveResponse({
       key,
       getResponse: (archive) => {
@@ -155,11 +167,11 @@ export class Streamer {
   }
 
   public fetchResource({
-    key,
+    key = defaultArchiveKey,
     resourcePath,
     request,
   }: {
-    key: string
+    key?: string
     resourcePath: string
     request?: Request
   }) {

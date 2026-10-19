@@ -17,7 +17,7 @@ async function run() {
       return createArchiveFromJszip(archive)
     },
   })
-  const manifestResponse = await streamer.fetchManifest({ key: `_` })
+  const manifestResponse = await streamer.fetchManifest()
   const manifest = await manifestResponse.json()
 
   const reader = createReader({
@@ -25,7 +25,7 @@ async function run() {
     pageTurnAnimation: "none",
     layoutLayerTransition: false,
     getResource: (item) =>
-      from(streamer.fetchResource({ key: `_`, resourcePath: item.href })),
+      from(streamer.fetchResource({ resourcePath: item.href })),
   })
 
   // biome-ignore lint/style/noNonNullAssertion: the page always has #app
