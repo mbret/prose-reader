@@ -3,6 +3,13 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## [28.2.0](https://github.com/mbret/prose-reader/compare/v28.1.0...v28.2.0) (2026-10-19)
+
+### Features
+
+* **streamer:** make the archive key optional ([e8fad96](https://github.com/mbret/prose-reader/commit/e8fad96c724b54eac8a63db8de288110cb570bd3))
+
+
 ## [28.1.0](https://github.com/mbret/prose-reader/compare/v28.0.0...v28.1.0) (2026-10-19)
 
 ### Features
