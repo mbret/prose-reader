@@ -224,6 +224,106 @@ describe(`Given an EPUB whose package document escapes its hrefs`, () => {
   })
 })
 
+describe(`Given a table of contents in another folder than its chapters`, () => {
+  // As sous-le-vent.epub lays its nav out: the links climb out of the
+  // navigation folder, one with escaped dots, which a URL parser reads alike.
+  const opf = (toc: { nav: string } | { ncx: string }) =>
+    `<?xml version="1.0"?><package xmlns="http://www.idpf.org/2007/opf" version="3.0">` +
+    `<metadata xmlns:dc="http://purl.org/dc/elements/1.1/"><dc:title>x</dc:title></metadata>` +
+    `<manifest>` +
+    (`nav` in toc
+      ? `<item id="toc" href="${toc.nav}" media-type="application/xhtml+xml" properties="nav"/>`
+      : `<item id="toc" href="${toc.ncx}" media-type="application/x-dtbncx+xml"/>`) +
+    `<item id="c1" href="Content/chapter1.xhtml" media-type="application/xhtml+xml"/>` +
+    `<item id="c2" href="Content/chapter2.xhtml" media-type="application/xhtml+xml"/>` +
+    `</manifest><spine${`ncx` in toc ? ` toc="toc"` : ``}>` +
+    `<itemref idref="c1"/><itemref idref="c2"/></spine></package>`
+
+  const nav =
+    `<?xml version="1.0"?><html xmlns="http://www.w3.org/1999/xhtml" xmlns:epub="http://www.idpf.org/2007/ops"><body>` +
+    `<nav epub:type="toc"><ol>` +
+    `<li><a href="../Content/chapter1.xhtml">Chapter 1</a>` +
+    `<ol><li><a href="../Content/chapter1.xhtml#s1">Section 1.1</a></li></ol></li>` +
+    `<li><a href="%2E%2E/Content/chapter2.xhtml">Chapter 2</a></li>` +
+    `</ol></nav></body></html>`
+
+  const ncx =
+    `<?xml version="1.0"?><ncx xmlns="http://www.daisy.org/z3986/2005/ncx/" version="2005-1"><navMap>` +
+    `<navPoint id="n1"><navLabel><text>Chapter 1</text></navLabel><content src="../Content/chapter1.xhtml"/>` +
+    `<navPoint id="n2"><navLabel><text>Section 1.1</text></navLabel><content src="../Content/chapter1.xhtml#s1"/></navPoint></navPoint>` +
+    `<navPoint id="n3"><navLabel><text>Chapter 2</text></navLabel><content src="%2E%2E/Content/chapter2.xhtml"/></navPoint>` +
+    `</navMap></ncx>`
+
+  const getTocContainerHrefs = (toc: ResolvedArchive[`toc`]): string[] =>
+    (toc ?? []).flatMap((entry) => [
+      entry.containerHref,
+      ...getTocContainerHrefs(entry.contents),
+    ])
+
+  it.each([
+    [
+      `nav document`,
+      textRecord(`EPUB/package.opf`, opf({ nav: `Navigation/nav.xhtml` })),
+      textRecord(`EPUB/Navigation/nav.xhtml`, nav),
+    ],
+    [
+      `NCX`,
+      textRecord(`EPUB/package.opf`, opf({ ncx: `Navigation/toc.ncx` })),
+      textRecord(`EPUB/Navigation/toc.ncx`, ncx),
+    ],
+  ])(
+    `each entry of its %s names its chapter as the spine does`,
+    async (_, opfRecord, tocRecord) => {
+      const resolved = await resolveArchive(
+        archiveWith(
+          [
+            opfRecord,
+            tocRecord,
+            textRecord(`EPUB/Content/chapter1.xhtml`, xhtml(false)),
+            textRecord(`EPUB/Content/chapter2.xhtml`, xhtml(false)),
+          ],
+          `book.epub`,
+        ),
+      )
+
+      expect(getTocContainerHrefs(resolved.toc)).toEqual([
+        `EPUB/Content/chapter1.xhtml`,
+        `EPUB/Content/chapter1.xhtml#s1`,
+        `EPUB/Content/chapter2.xhtml`,
+      ])
+
+      // the spine item each entry points to spells the same href
+      const spineHrefs = resolved.readingOrder.map(
+        ({ containerHref }) => containerHref,
+      )
+      for (const containerHref of getTocContainerHrefs(resolved.toc)) {
+        expect(spineHrefs).toContain(containerHref.split(`#`)[0])
+      }
+    },
+  )
+
+  it(`an NCX entry without content names no target`, async () => {
+    const resolved = await resolveArchive(
+      archiveWith(
+        [
+          textRecord(`EPUB/package.opf`, opf({ ncx: `Navigation/toc.ncx` })),
+          textRecord(
+            `EPUB/Navigation/toc.ncx`,
+            `<?xml version="1.0"?><ncx xmlns="http://www.daisy.org/z3986/2005/ncx/" version="2005-1"><navMap>` +
+              `<navPoint id="n1"><navLabel><text>Part 1</text></navLabel></navPoint>` +
+              `</navMap></ncx>`,
+          ),
+        ],
+        `book.epub`,
+      ),
+    )
+
+    expect(resolved.toc).toEqual([
+      { title: `Part 1`, path: ``, containerHref: ``, contents: [] },
+    ])
+  })
+})
+
 describe(`Given the file a book was opened from`, () => {
   const imageRecord = textRecord(`001.jpg`)
   const opfRecord = textRecord(`OEBPS/content.opf`)

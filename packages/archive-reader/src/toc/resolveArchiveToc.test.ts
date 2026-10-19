@@ -76,6 +76,61 @@ describe(`Given an ncx located in a different directory than the opf`, () => {
   })
 })
 
+describe(`Given the toc document a package document references`, () => {
+  const chapterLink = (link: string) =>
+    `<?xml version="1.0"?><html xmlns="http://www.w3.org/1999/xhtml" xmlns:epub="http://www.idpf.org/2007/ops"><body>` +
+    `<nav epub:type="toc"><ol><li><a href="${link}">Chapter 1</a></li></ol></nav></body></html>`
+
+  it(`the nav document is the record its href names, not one whose path ends with it`, async () => {
+    const opf = `<?xml version="1.0"?><package xmlns="http://www.idpf.org/2007/opf" version="3.0"><manifest><item id="nav" href="nav.xhtml" media-type="application/xhtml+xml" properties="nav"/><item id="toc" href="Text/toc-nav.xhtml" media-type="application/xhtml+xml"/><item id="ch1" href="Text/chapter1.xhtml" media-type="application/xhtml+xml"/></manifest><spine><itemref idref="toc"/><itemref idref="ch1"/></spine></package>`
+
+    const archive = createArchive({
+      filename: `archive`,
+      records: [
+        textRecord(`OEBPS/content.opf`, opf),
+        // a page of the book listing its chapters, not the nav document
+        textRecord(`OEBPS/Text/toc-nav.xhtml`, `<html><body></body></html>`),
+        textRecord(`OEBPS/nav.xhtml`, chapterLink(`Text/chapter1.xhtml`)),
+        textRecord(`OEBPS/Text/chapter1.xhtml`),
+      ],
+      close: () => Promise.resolve(),
+    })
+
+    expect(await resolveArchiveToc(archive)).toEqual([
+      {
+        title: `Chapter 1`,
+        path: `OEBPS/Text/chapter1.xhtml`,
+        containerHref: `OEBPS/Text/chapter1.xhtml`,
+        contents: [],
+      },
+    ])
+  })
+
+  it(`the NCX is the record its escaped href names`, async () => {
+    const opf = `<?xml version="1.0"?><package xmlns="http://www.idpf.org/2007/opf" version="2.0"><manifest><item id="ncx" href="Table%20of%20Contents.ncx" media-type="application/x-dtbncx+xml"/><item id="ch1" href="chapter1.xhtml" media-type="application/xhtml+xml"/></manifest><spine toc="ncx"><itemref idref="ch1"/></spine></package>`
+    const ncx = `<?xml version="1.0" encoding="UTF-8"?><ncx xmlns="http://www.daisy.org/z3986/2005/ncx/" version="2005-1"><navMap><navPoint id="np1" playOrder="1"><navLabel><text>Chapter 1</text></navLabel><content src="chapter1.xhtml"/></navPoint></navMap></ncx>`
+
+    const archive = createArchive({
+      filename: `archive`,
+      records: [
+        textRecord(`OEBPS/content.opf`, opf),
+        textRecord(`OEBPS/Table of Contents.ncx`, ncx),
+        textRecord(`OEBPS/chapter1.xhtml`),
+      ],
+      close: () => Promise.resolve(),
+    })
+
+    expect(await resolveArchiveToc(archive)).toEqual([
+      {
+        title: `Chapter 1`,
+        path: `OEBPS/chapter1.xhtml`,
+        containerHref: `OEBPS/chapter1.xhtml`,
+        contents: [],
+      },
+    ])
+  })
+})
+
 describe(`Given an epub without nav document nor ncx`, () => {
   it(`should resolve an explicit empty toc instead of guessing from folders`, async () => {
     const archive = createArchive({

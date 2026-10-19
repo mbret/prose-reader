@@ -31,7 +31,11 @@ export const resolveArchiveToc = async (
   const archiveOpf = opf ?? (await readArchiveOpf(archive))
 
   if (archiveOpf) {
-    const tocFromNav = await resolveTocFromNav(archiveOpf.opf, archive)
+    const tocFromNav = await resolveTocFromNav({
+      opf: archiveOpf.opf,
+      opfBasePath: archiveOpf.basePath,
+      archive,
+    })
 
     if (tocFromNav) return tocFromNav
 
