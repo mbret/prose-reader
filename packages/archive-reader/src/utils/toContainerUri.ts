@@ -23,21 +23,33 @@ const decodeUrlPathSegment = (segment: string): string => {
 const isHttpUrl = (href: string) => /^https?:\/\//.test(href)
 
 /**
- * Rebases a reference onto `basePath`, the folder of the document making it,
- * and resolves its dot segments (RFC 3986 §5.2.4 "remove dot segments") as a
- * browser does, escaped dots included: the path a browser requests for the
- * reference joined onto a base URL. A `..` past the root is clamped, matching
- * URL resolution. Each segment of the reference that is kept goes through
- * `toSegment`.
+ * A reference's path, and its query and fragment, which a URL parser keeps out
+ * of the path: a `/` or a dot in them separates no segment.
  */
-const resolveReference = (
-  href: string,
+const splitReferencePath = (href: string) => {
+  const pathEnd = href.search(/[?#]/)
+
+  return pathEnd < 0
+    ? { path: href, queryAndFragment: "" }
+    : { path: href.slice(0, pathEnd), queryAndFragment: href.slice(pathEnd) }
+}
+
+/**
+ * Rebases a reference's path onto `basePath`, the folder of the document
+ * making it, and resolves its dot segments (RFC 3986 §5.2.4 "remove dot
+ * segments") as a browser does, escaped dots included: the path a browser
+ * requests for the reference joined onto a base URL. A `..` past the root is
+ * clamped, matching URL resolution. Each segment of the path that is kept goes
+ * through `toSegment`.
+ */
+const resolveReferencePath = (
+  path: string,
   basePath: string,
   toSegment: (segment: string) => string,
 ): string => {
   const segments = basePath ? basePath.split("/") : []
 
-  for (const segment of href.split("/")) {
+  for (const segment of path.split("/")) {
     if (SINGLE_DOT_SEGMENT.test(segment)) continue
     if (DOUBLE_DOT_SEGMENT.test(segment)) {
       segments.pop()
@@ -61,7 +73,12 @@ const resolveReference = (
 export const toContainerHref = (href: string, basePath: string): string => {
   if (isHttpUrl(href)) return href
 
-  return resolveReference(href, basePath, (segment) => segment)
+  const { path, queryAndFragment } = splitReferencePath(href)
+
+  return (
+    resolveReferencePath(path, basePath, (segment) => segment) +
+    queryAndFragment
+  )
 }
 
 /**
@@ -69,10 +86,15 @@ export const toContainerHref = (href: string, basePath: string): string => {
  * names, the coordinate space every resolved archive part addresses. As
  * {@link toContainerHref}, with each segment then percent-decoded, since the
  * reference is a URL: `Text/Chapter%201.xhtml` names the record
- * `Text/Chapter 1.xhtml`. An absolute http(s) url is its own record uri.
+ * `Text/Chapter 1.xhtml`. Its query and fragment name no part of the record.
+ * An absolute http(s) url is its own record uri.
  */
 export const toContainerUri = (href: string, basePath: string): string => {
   if (isHttpUrl(href)) return href
 
-  return resolveReference(href, basePath, decodeUrlPathSegment)
+  return resolveReferencePath(
+    splitReferencePath(href).path,
+    basePath,
+    decodeUrlPathSegment,
+  )
 }
