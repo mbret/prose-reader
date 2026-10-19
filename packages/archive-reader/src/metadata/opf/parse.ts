@@ -6,13 +6,12 @@ import {
   childrenNamedLocal,
   elementLocalName,
 } from "../../utils/xmlLocalNames.ts"
-import { opfIdentifierSchemeAttribute } from "./identifierScheme.ts"
 import {
-  opfNamespacedAttribute,
-  opfNamespacePrefixes,
   type XmlNamespaceScope,
   xmlNamespaceScope,
-} from "./opfNamespace.ts"
+} from "../../utils/xmlNamespaceScope.ts"
+import { opfIdentifierSchemeAttribute } from "./identifierScheme.ts"
+import { opfNamespacedAttribute, opfNamespacePrefixes } from "./opfNamespace.ts"
 import { layoutHintsFromItemrefProperties } from "./spineItemrefProperties.ts"
 
 export type OpfSpineManifestItem = {

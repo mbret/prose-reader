@@ -109,6 +109,45 @@ describe(`getArchiveOpfRecord`, () => {
 
   it.each([
     [
+      `rootfiles`,
+      `<ext:rootfiles xmlns:ext="https://example.com/ext"><ext:rootfile full-path="backup/old.opf" media-type="application/oebps-package+xml"/></ext:rootfiles>` +
+        `<rootfiles>${rootfile(`OEBPS/content.opf`)}</rootfiles>`,
+    ],
+    [
+      `rootfile`,
+      `<rootfiles xmlns:ext="https://example.com/ext"><ext:rootfile full-path="backup/old.opf" media-type="application/oebps-package+xml"/>${rootfile(`OEBPS/content.opf`)}</rootfiles>`,
+    ],
+  ])(
+    `leaves out a %s of another namespace, as EPUB 3.3 reads the container file without them`,
+    async (_, content) => {
+      expect(
+        await findPackageDocumentUri([
+          textRecord(
+            `META-INF/container.xml`,
+            `<?xml version="1.0"?><container version="1.0" xmlns="urn:oasis:names:tc:opendocument:xmlns:container">${content}</container>`,
+          ),
+          strayOpf,
+          textRecord(`OEBPS/content.opf`),
+        ]),
+      ).toBe(`OEBPS/content.opf`)
+    },
+  )
+
+  it(`reads a container file that declares no namespace`, async () => {
+    expect(
+      await findPackageDocumentUri([
+        strayOpf,
+        textRecord(
+          `META-INF/container.xml`,
+          `<?xml version="1.0"?><container version="1.0"><rootfiles>${rootfile(`OEBPS/content.opf`)}</rootfiles></container>`,
+        ),
+        textRecord(`OEBPS/content.opf`),
+      ]),
+    ).toBe(`OEBPS/content.opf`)
+  })
+
+  it.each([
+    [
       `without a container file, as the archive prose makes of a PDF`,
       [textRecord(`content.opf`), textRecord(`0.pdf`)],
       `content.opf`,

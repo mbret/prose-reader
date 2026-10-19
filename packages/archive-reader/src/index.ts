@@ -84,12 +84,10 @@ export {
   opfIdentifierTypeScheme,
 } from "./metadata/opf/identifierScheme.ts"
 export { isArchiveEpub } from "./metadata/opf/isArchiveEpub.ts"
-export type { XmlNamespaceScope } from "./metadata/opf/opfNamespace.ts"
 export {
   OPF_NAMESPACE,
   opfNamespacedAttribute,
   opfNamespacePrefixes,
-  xmlNamespaceScope,
 } from "./metadata/opf/opfNamespace.ts"
 export type {
   OpfContributor,
@@ -163,3 +161,5 @@ export { normalizeIsbn } from "./utils/normalizeIsbn.ts"
 export { parseW3cDtfDate } from "./utils/parseW3cDtfDate.ts"
 export { toContainerHref, toContainerUri } from "./utils/toContainerUri.ts"
 export { tokenizeXmlSpaceSeparatedList } from "./utils/tokenizeXmlSpaceSeparatedList.ts"
+export type { XmlNamespaceScope } from "./utils/xmlNamespaceScope.ts"
+export { xmlNamespaceScope } from "./utils/xmlNamespaceScope.ts"
