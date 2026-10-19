@@ -11,10 +11,11 @@ to install the browsers; this file says how the suite is built.
 Each scenario is a folder under `tests/` with three files: an `index.html`, an
 `index.tsx` that creates a reader from a fixture and exposes it as
 `window.reader`, and a `*.spec.ts`. A spec drives the page through the URL
-(`?cfi=`), the keyboard, or `page.evaluate` against `window.reader`, and reads
-state back the same way. Fixtures live in `public/epubs`: reflowable and
-pre-paginated epubs, a cbz and a pdf. Shared helpers live in `tests/utils`;
-add to them rather than copying a wait or a locator into a second spec.
+(`?cfi=`), the keyboard, or the reader, which `getReader(page)` from
+`tests/utils/reader.ts` hands it typed, and reads state back the same way.
+Fixtures live in `public/epubs`: reflowable and pre-paginated epubs, a cbz and
+a pdf. Shared helpers live in `tests/utils`; add to them rather than copying a
+wait or a locator into a second spec.
 
 ## Waiting
 

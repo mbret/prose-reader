@@ -1,6 +1,9 @@
 import { expect, test } from "@playwright/test"
-import type { Reader } from "@prose-reader/core"
-import { getScrollNavigationMetadata, waitForSpineItemReady } from "../../utils"
+import {
+  getScrollNavigationMetadata,
+  waitForSpineItemReady,
+  zoomAt,
+} from "../../utils"
 
 const pageWidth = 300
 const pageHeight = 400
@@ -17,12 +20,7 @@ test.describe("Given a zoom in", () => {
 
       await waitForSpineItemReady(page, [0])
 
-      await page.evaluate(() => {
-        // @ts-expect-error
-        const reader = window.reader as Reader
-        reader.zoom.enter()
-        reader.zoom.scaleAt(2)
-      })
+      await zoomAt({ page, scale: 2 })
 
       const { scrollLeft, scrollbarWidth, scrollTop } =
         await getScrollNavigationMetadata({ page })

@@ -1,6 +1,6 @@
-import { expect, test } from "@playwright/test"
-import type { Reader } from "@prose-reader/core"
-import { locateSpineItems, waitForSpineItemReady } from "../utils"
+import { expect, type Page, test } from "@playwright/test"
+import { locateSpineItemFrame, waitForSpineItemReady } from "../utils"
+import { getReader } from "../utils/reader"
 
 /**
  * One spine item per page of the PDF, each rendering its own page. The
@@ -11,23 +11,10 @@ import { locateSpineItems, waitForSpineItemReady } from "../utils"
 
 const url = "http://localhost:3333/tests/pdf/index.html?file=twelve-pages.pdf"
 
-const goToSpineItem = (page: import("@playwright/test").Page, index: number) =>
-  page.evaluate((index) => {
-    // @ts-expect-error window.reader is set by this scenario's index.tsx
-    const reader = window.reader as Reader
-
-    reader.navigation.goToSpineItem({ indexOrId: index, animation: false })
+const goToSpineItem = async (page: Page, index: number) =>
+  (await getReader(page)).evaluate((reader, indexOrId) => {
+    reader.navigation.goToSpineItem({ indexOrId, animation: false })
   }, index)
-
-const readSpineItemText = async (
-  page: import("@playwright/test").Page,
-  index: number,
-) => {
-  const [spineItem] = await locateSpineItems({ page, indexes: [index] })
-  const frame = spineItem?.locator("iframe").contentFrame()
-
-  return frame?.locator("body")
-}
 
 test.beforeEach(async ({ page }) => {
   await page.setViewportSize({ width: 400, height: 600 })
@@ -44,9 +31,9 @@ test("each spine item renders its own page, past the tenth", async ({
     await goToSpineItem(page, index)
     await waitForSpineItemReady(page, [index])
 
-    const body = await readSpineItemText(page, index)
+    const frame = await locateSpineItemFrame(page, index)
 
-    await expect(body ?? page.locator("missing")).toContainText(
+    await expect(frame.contentFrame().locator("body")).toContainText(
       new RegExp(`^\\s*Page ${pageNumber}\\s*$`),
     )
   }

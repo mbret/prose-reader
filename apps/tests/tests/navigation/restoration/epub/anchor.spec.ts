@@ -1,6 +1,8 @@
 import { expect, type Page, test } from "@playwright/test"
-import type { Reader, ReadingPosition } from "@prose-reader/core"
+import type { ReadingPosition } from "@prose-reader/core"
+import { navigateToSpineItem } from "../../../utils"
 import { resizeAndSettle, waitForSettled } from "../../../utils/pagination"
+import { getReader } from "../../../utils/reader"
 import { isCfiPositionVisible } from "../../../utils/visibility"
 
 /**
@@ -18,10 +20,9 @@ const url = "http://localhost:3333/tests/navigation/restoration/epub/index.html"
  * result and reads it in the same evaluation.
  */
 const readPosition = async (page: Page) => {
+  const reader = await getReader(page)
   const handle = await page.waitForFunction(
-    () => {
-      // @ts-expect-error window.reader is set by this scenario's index.tsx
-      const reader = window.reader as Reader
+    (reader) => {
       const pagination = reader.pagination.state
 
       if (!pagination.isSettled) return undefined
@@ -75,7 +76,7 @@ const readPosition = async (page: Page) => {
         readingPositionStatus: readingPosition?.status,
       }
     },
-    undefined,
+    reader,
     { timeout: 10_000 },
   )
   const position = await handle.jsonValue()
@@ -90,9 +91,8 @@ const readPosition = async (page: Page) => {
  * that subscribing replays. Returns a reader of what was recorded so far.
  */
 const recordReadingPositions = async (page: Page) => {
-  await page.evaluate(() => {
-    // @ts-expect-error window.reader is set by this scenario's index.tsx
-    const reader = window.reader as Reader
+  const reader = await getReader(page)
+  const recorded = await reader.evaluateHandle((reader) => {
     const recorded: Pick<ReadingPosition, "cfi" | "status">[] = []
     let replaying = true
 
@@ -101,34 +101,25 @@ const recordReadingPositions = async (page: Page) => {
     })
     replaying = false
 
-    // @ts-expect-error scratch slot for this spec
-    window.__readingPositions = recorded
+    return recorded
   })
 
   return () =>
-    page.evaluate(() => {
-      // @ts-expect-error window.reader is set by this scenario's index.tsx
-      const reader = window.reader as Reader
-      // @ts-expect-error scratch slot for this spec
-      const recorded = window.__readingPositions as Pick<
-        ReadingPosition,
-        "cfi" | "status"
-      >[]
-
-      return recorded.map(({ cfi, status }) => ({
-        cfi,
-        isRootCfi: reader.cfi.isRootCfi(cfi),
-        itemIndex: reader.cfi.parseCfi(cfi).itemIndex,
-        status,
-      }))
-    })
+    recorded.evaluate(
+      (recorded, reader) =>
+        recorded.map(({ cfi, status }) => ({
+          cfi,
+          isRootCfi: reader.cfi.isRootCfi(cfi),
+          itemIndex: reader.cfi.parseCfi(cfi).itemIndex,
+          status,
+        })),
+      reader,
+    )
 }
 
 const getChapterIndex = async (page: Page, href: string) => {
-  const chapterIndex = await page.evaluate((href) => {
-    // @ts-expect-error window.reader is set by this scenario's index.tsx
-    const reader = window.reader as Reader
-
+  const reader = await getReader(page)
+  const chapterIndex = await reader.evaluate((reader, href) => {
     return reader.context.manifest.spineItems.findIndex((item) =>
       item.href.endsWith(href),
     )
@@ -146,16 +137,14 @@ const getLongChapterIndex = (page: Page) => getChapterIndex(page, "ch02.xhtml")
  * anything asynchronous has happened, along with whether its item was ready
  * when the navigation started.
  */
-const navigateAndReadAtOnce = (
+const navigateAndReadAtOnce = async (
   page: Page,
   navigation:
     | { turn: "left" | "right"; into: number }
     | { cfi: string; into: number }
     | { spineItem: number },
 ) =>
-  page.evaluate((navigation) => {
-    // @ts-expect-error window.reader is set by this scenario's index.tsx
-    const reader = window.reader as Reader
+  (await getReader(page)).evaluate((reader, navigation) => {
     const target =
       "spineItem" in navigation ? navigation.spineItem : navigation.into
     const wasReady =
@@ -196,19 +185,11 @@ const navigateAndReadAtOnce = (
 const turnToThirdPageOfLongChapter = async (page: Page) => {
   const chapterIndex = await getLongChapterIndex(page)
 
-  await page.evaluate((indexOrId) => {
-    // @ts-expect-error window.reader is set by this scenario's index.tsx
-    const reader = window.reader as Reader
-
-    reader.navigation.goToSpineItem({ indexOrId })
-  }, chapterIndex)
+  await navigateToSpineItem({ page, index: chapterIndex })
   await waitForSettled(page)
 
   for (let turn = 0; turn < 2; turn++) {
-    await page.evaluate(() => {
-      // @ts-expect-error window.reader is set by this scenario's index.tsx
-      const reader = window.reader as Reader
-
+    await (await getReader(page)).evaluate((reader) => {
       reader.navigation.turnRight()
     })
     await waitForSettled(page)
@@ -257,12 +238,7 @@ test.describe("Given a page reached by turning pages", () => {
   }) => {
     const chapterIndex = await getLongChapterIndex(page)
 
-    await page.evaluate((indexOrId) => {
-      // @ts-expect-error window.reader is set by this scenario's index.tsx
-      const reader = window.reader as Reader
-
-      reader.navigation.goToSpineItem({ indexOrId })
-    }, chapterIndex)
+    await navigateToSpineItem({ page, index: chapterIndex })
     await waitForSettled(page)
 
     const readRecorded = await recordReadingPositions(page)
@@ -351,14 +327,16 @@ test.describe("Given a page reached by turning pages", () => {
      * The user goes to a chapter that is not loaded, and grabs the page as
      * soon as it starts loading, the way a pan would.
      */
-    const held = await page.evaluate((indexOrId) => {
-      // @ts-expect-error window.reader is set by this scenario's index.tsx
-      const reader = window.reader as Reader
+    const reader = await getReader(page)
+    // Wrapped in an object, so that the handle comes back with the grab still
+    // pending, along with the way to let go.
+    const grab = await reader.evaluateHandle((reader, indexOrId) => {
       const item = reader.spineItemsManager.get(indexOrId)
 
       if (!item || item.value.isReady) throw new Error("chapter already ready")
 
-      return new Promise<{
+      let letGo = () => {}
+      const held = new Promise<{
         isReady: boolean
         isRootCfi: boolean
         status: ReadingPosition["status"] | undefined
@@ -369,8 +347,7 @@ test.describe("Given a page reached by turning pages", () => {
           if (loadStatus !== "loading" || isHeld) return
 
           isHeld = true
-          // @ts-expect-error scratch slot for this spec
-          window.__letGo = reader.navigation.lock()
+          letGo = reader.navigation.lock()
           queueMicrotask(() => loading.unsubscribe())
 
           let readingPosition: ReadingPosition | undefined
@@ -389,7 +366,10 @@ test.describe("Given a page reached by turning pages", () => {
 
         reader.navigation.goToSpineItem({ indexOrId })
       })
+
+      return { held, letGo: () => letGo() }
     }, chapterIndex)
+    const held = await grab.evaluate(({ held }) => held)
 
     /**
      * A held page loads nothing: the chapter finishes loading once the user
@@ -403,10 +383,7 @@ test.describe("Given a page reached by turning pages", () => {
       status: "pending",
     })
 
-    await page.evaluate(() => {
-      // @ts-expect-error scratch slot for this spec
-      window.__letGo()
-    })
+    await grab.evaluate(({ letGo }) => letGo())
 
     const settled = await readPosition(page)
 
@@ -454,10 +431,7 @@ test.describe("Given a page reached by turning pages", () => {
     // A navigation to the position already shown is a new one. It starts
     // without an anchor, and restoration only reads the current navigation's
     // anchor, so it needs one of its own even though nothing moved.
-    await page.evaluate(() => {
-      // @ts-expect-error window.reader is set by this scenario's index.tsx
-      const reader = window.reader as Reader
-
+    await (await getReader(page)).evaluate((reader) => {
       reader.navigation.navigate({
         target: {
           type: "position",
@@ -551,9 +525,7 @@ test.describe("Given a page reached by turning pages", () => {
       .toBe("success")
 
     // Every value an app saving the reading position would have saved.
-    const saved = await page.evaluate(() => {
-      // @ts-expect-error window.reader is set by this scenario's index.tsx
-      const reader = window.reader as Reader
+    const saved = await (await getReader(page)).evaluate((reader) => {
       // @ts-expect-error window.readingPositions is set by this scenario's index.tsx
       const values = window.readingPositions as ReadingPosition[]
 
@@ -614,10 +586,8 @@ test.describe("Given a page reached by turning pages", () => {
  * page turns once let go, and short of half the page, so while held the page
  * before is the one that shows the most.
  */
-const dragTowardsTheNextPage = (page: Page) =>
-  page.evaluate(() => {
-    // @ts-expect-error window.reader is set by this scenario's index.tsx
-    const reader = window.reader as Reader
+const dragTowardsTheNextPage = async (page: Page) =>
+  (await getReader(page)).evaluate((reader) => {
     const { panNavigator } = reader.navigation
     // A finger moving left pulls the next page in.
     const delta = { x: -window.innerWidth / 5, y: 0 }
@@ -639,12 +609,7 @@ test.describe("Given a page reached by dragging", () => {
   }) => {
     const chapterIndex = await getLongChapterIndex(page)
 
-    await page.evaluate((indexOrId) => {
-      // @ts-expect-error window.reader is set by this scenario's index.tsx
-      const reader = window.reader as Reader
-
-      reader.navigation.goToSpineItem({ indexOrId })
-    }, chapterIndex)
+    await navigateToSpineItem({ page, index: chapterIndex })
     await waitForSettled(page)
 
     const start = await readPosition(page)
@@ -680,9 +645,8 @@ test.describe("Given a page reached by dragging", () => {
  */
 const openChapterAtRootCfi = async (page: Page) => {
   const chapterIndex = await getChapterIndex(page, "ch03.xhtml")
-  const { cfi, chapterStart } = await page.evaluate((index) => {
-    // @ts-expect-error window.reader is set by this scenario's index.tsx
-    const reader = window.reader as Reader
+  const reader = await getReader(page)
+  const { cfi, chapterStart } = await reader.evaluate((reader, index) => {
     const item = reader.context.manifest.spineItems[index]
 
     if (!item) throw new Error("no chapter")
@@ -754,12 +718,7 @@ test.describe("Given chapters that are not preloaded", () => {
   }) => {
     const previousIndex = await getLongChapterIndex(page)
 
-    await page.evaluate((indexOrId) => {
-      // @ts-expect-error window.reader is set by this scenario's index.tsx
-      const reader = window.reader as Reader
-
-      reader.navigation.goToSpineItem({ indexOrId })
-    }, previousIndex + 1)
+    await navigateToSpineItem({ page, index: previousIndex + 1 })
     await waitForSettled(page)
 
     const readRecorded = await recordReadingPositions(page)
@@ -904,10 +863,8 @@ const getChapterTitleCfi = (chapterIndex: number) =>
  * Where the character a cfi points to is laid out in its own document, and
  * whether it is text.
  */
-const measureCharacterAtCfi = (page: Page, cfi: string) =>
-  page.evaluate((cfi) => {
-    // @ts-expect-error window.reader is set by this scenario's index.tsx
-    const reader = window.reader as Reader
+const measureCharacterAtCfi = async (page: Page, cfi: string) =>
+  (await getReader(page)).evaluate((reader, cfi) => {
     const { node, offset = 0 } = reader.cfi.resolveCfi({ cfi })
 
     if (!node?.ownerDocument) return "cfi did not resolve to a node"
@@ -1001,12 +958,7 @@ test.describe("Given pages without a horizontal margin", () => {
     const chapterIndex = await getChapterIndex(page, "ch03.xhtml")
     const cfi = getChapterTitleCfi(chapterIndex)
 
-    await page.evaluate((indexOrId) => {
-      // @ts-expect-error window.reader is set by this scenario's index.tsx
-      const reader = window.reader as Reader
-
-      reader.navigation.goToSpineItem({ indexOrId })
-    }, chapterIndex)
+    await navigateToSpineItem({ page, index: chapterIndex })
     await waitForSettled(page)
 
     expect(await measureCharacterAtCfi(page, cfi)).toEqual({
@@ -1014,10 +966,9 @@ test.describe("Given pages without a horizontal margin", () => {
       x: 0,
     })
 
-    const pageIndexes = await page.evaluate(
-      ({ cfi, chapterIndex }) => {
-        // @ts-expect-error window.reader is set by this scenario's index.tsx
-        const reader = window.reader as Reader
+    const reader = await getReader(page)
+    const pageIndexes = await reader.evaluate(
+      (reader, { cfi, chapterIndex }) => {
         const { node: title } = reader.cfi.resolveCfi({ cfi })
         const document = title?.ownerDocument
 
@@ -1090,13 +1041,11 @@ test.describe("Given pages without a horizontal margin", () => {
  * place that isn't rendered, and the paragraph after it is where that place
  * is. Returns both cfis, and the page the paragraph starts on.
  */
-const hideMarkerBeforeParagraphPastFirstPage = (
+const hideMarkerBeforeParagraphPastFirstPage = async (
   page: Page,
   chapterIndex: number,
 ) =>
-  page.evaluate((chapterIndex) => {
-    // @ts-expect-error window.reader is set by this scenario's index.tsx
-    const reader = window.reader as Reader
+  (await getReader(page)).evaluate((reader, chapterIndex) => {
     const spineItem = reader.spineItemsManager.get(chapterIndex)
     const document = spineItem?.renderer.getDocumentFrame()?.contentDocument
 
@@ -1153,12 +1102,7 @@ test.describe("Given a cfi naming a place that isn't rendered", () => {
   }) => {
     const chapterIndex = await getLongChapterIndex(page)
 
-    await page.evaluate((indexOrId) => {
-      // @ts-expect-error window.reader is set by this scenario's index.tsx
-      const reader = window.reader as Reader
-
-      reader.navigation.goToSpineItem({ indexOrId })
-    }, chapterIndex)
+    await navigateToSpineItem({ page, index: chapterIndex })
     await waitForSettled(page)
 
     const { markerCfi, paragraphCfi, paragraphPageIndex } =
@@ -1214,9 +1158,8 @@ test.describe("Given a cfi naming a place that isn't rendered", () => {
  * of its own. The chapter is laid out again for them.
  */
 const appendVideoAndGallery = async (page: Page, chapterIndex: number) => {
-  const numberOfPagesBefore = await page.evaluate((chapterIndex) => {
-    // @ts-expect-error window.reader is set by this scenario's index.tsx
-    const reader = window.reader as Reader
+  const reader = await getReader(page)
+  const numberOfPagesBefore = await reader.evaluate((reader, chapterIndex) => {
     const spineItem = reader.spineItemsManager.get(chapterIndex)
     const document = spineItem?.renderer.getDocumentFrame()?.contentDocument
 
@@ -1255,11 +1198,9 @@ const appendVideoAndGallery = async (page: Page, chapterIndex: number) => {
 
   await expect
     .poll(() =>
-      page.evaluate(
-        (chapterIndex) =>
-          // @ts-expect-error window.reader is set by this scenario's index.tsx
-          (window.reader as Reader).spineItemsManager.get(chapterIndex)
-            ?.numberOfPages,
+      reader.evaluate(
+        (reader, chapterIndex) =>
+          reader.spineItemsManager.get(chapterIndex)?.numberOfPages,
         chapterIndex,
       ),
     )
@@ -1285,18 +1226,12 @@ test.describe("Given an element without text holding content over several pages"
   }) => {
     const chapterIndex = await getLongChapterIndex(page)
 
-    await page.evaluate((indexOrId) => {
-      // @ts-expect-error window.reader is set by this scenario's index.tsx
-      const reader = window.reader as Reader
-
-      reader.navigation.goToSpineItem({ indexOrId })
-    }, chapterIndex)
+    await navigateToSpineItem({ page, index: chapterIndex })
     await waitForSettled(page)
     await appendVideoAndGallery(page, chapterIndex)
 
-    const pageIndexes = await page.evaluate((chapterIndex) => {
-      // @ts-expect-error window.reader is set by this scenario's index.tsx
-      const reader = window.reader as Reader
+    const reader = await getReader(page)
+    const pageIndexes = await reader.evaluate((reader, chapterIndex) => {
       const spineItem = reader.spineItemsManager.get(chapterIndex)
       const document = spineItem?.renderer.getDocumentFrame()?.contentDocument
       const video = document?.getElementById("video")

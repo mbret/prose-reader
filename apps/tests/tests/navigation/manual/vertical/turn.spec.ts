@@ -1,10 +1,11 @@
 import { test } from "@playwright/test"
-import type { Reader, SpinePosition } from "@prose-reader/core"
+import type { SpinePosition } from "@prose-reader/core"
 import {
   expectSpineItemsInViewport,
   navigateTo,
   waitForSpineItemReady,
 } from "../../../utils"
+import { getReader } from "../../../utils/reader"
 
 test.describe(`Given vertical controlled book`, () => {
   test.describe("When the user turns bottom", () => {
@@ -21,12 +22,9 @@ test.describe(`Given vertical controlled book`, () => {
       // Wait for both spine items to be ready
       await waitForSpineItemReady(page, [0])
 
-      await page.evaluate(() => {
-        // @ts-expect-error
-        const reader = window.reader as Reader
-
+      await (await getReader(page)).evaluate((reader) => {
         reader.navigation.turnRightOrBottom()
-      }, [])
+      })
 
       await expectSpineItemsInViewport({
         page,

@@ -1,6 +1,6 @@
 import { expect, type Page, test } from "@playwright/test"
-import type { Reader } from "@prose-reader/core"
 import { resizeAndSettle, waitForSettled } from "../../../utils/pagination"
+import { getReader } from "../../../utils/reader"
 import { isElementStartOnScreen } from "../../../utils/visibility"
 
 /**
@@ -18,10 +18,8 @@ const fragment = "_page_numbering"
 const initialSize = { width: 690, height: 1294 }
 const narrowSize = { width: 375, height: 667 }
 
-const getItem = (page: Page, href: string) =>
-  page.evaluate((href) => {
-    // @ts-expect-error window.reader is set by this scenario's index.tsx
-    const reader = window.reader as Reader
+const getItem = async (page: Page, href: string) =>
+  (await getReader(page)).evaluate((reader, href) => {
     const item = reader.context.manifest.spineItems.find((item) =>
       item.href.endsWith(href),
     )
@@ -36,30 +34,22 @@ const getItem = (page: Page, href: string) =>
   }, href)
 
 const goToSpineItem = async (page: Page, indexOrId: number) => {
-  await page.evaluate((indexOrId) => {
-    // @ts-expect-error window.reader is set by this scenario's index.tsx
-    const reader = window.reader as Reader
-
+  await (await getReader(page)).evaluate((reader, indexOrId) => {
     reader.navigation.goToSpineItem({ indexOrId, animation: false })
   }, indexOrId)
   await waitForSettled(page)
 }
 
 const goToUrl = async (page: Page, value: string) => {
-  await page.evaluate((value) => {
-    // @ts-expect-error window.reader is set by this scenario's index.tsx
-    const reader = window.reader as Reader
-
+  await (await getReader(page)).evaluate((reader, value) => {
     reader.navigation.goToUrl(value)
   }, value)
   await waitForSettled(page)
 }
 
 /** The id of the element the reading position resolves to. */
-const getReadingPositionElementId = (page: Page) =>
-  page.evaluate(() => {
-    // @ts-expect-error window.reader is set by this scenario's index.tsx
-    const reader = window.reader as Reader
+const getReadingPositionElementId = async (page: Page) =>
+  (await getReader(page)).evaluate((reader) => {
     let cfi: string | undefined
 
     // Replays the current one, synchronously.
@@ -82,16 +72,14 @@ const getReadingPositionElementId = (page: Page) =>
  * Clicks the link to `href` in a spine item's document, or an element inside
  * it, such as a footnote number wrapped in a link.
  */
-const clickLink = (
+const clickLink = async (
   page: Page,
   spineItemIndex: number,
   href: string,
   { onChild = false } = {},
 ) =>
-  page.evaluate(
-    ({ spineItemIndex, href, onChild }) => {
-      // @ts-expect-error window.reader is set by this scenario's index.tsx
-      const reader = window.reader as Reader
+  (await getReader(page)).evaluate(
+    (reader, { spineItemIndex, href, onChild }) => {
       const document = reader.spineItemsManager
         .get(spineItemIndex)
         ?.renderer.getDocumentFrame()?.contentDocument

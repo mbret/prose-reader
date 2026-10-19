@@ -1,6 +1,6 @@
 import { expect, test } from "@playwright/test"
-import type { Reader } from "@prose-reader/core"
 import { waitForSpineItemReady } from "../utils"
+import { getReader } from "../utils/reader"
 
 test.describe("Given headless rendering", () => {
   /**
@@ -18,10 +18,7 @@ test.describe("Given headless rendering", () => {
 
     await waitForSpineItemReady(page, [0])
 
-    const cfi = await page.evaluate(async () => {
-      // biome-ignore lint/suspicious/noExplicitAny: TODO
-      const reader = (window as any).reader as Reader
-
+    const cfi = await (await getReader(page)).evaluate(async (reader) => {
       const spineItem = reader.spine.spineItemsManager.get(0)
 
       if (!spineItem) throw new Error("Spine item not found")

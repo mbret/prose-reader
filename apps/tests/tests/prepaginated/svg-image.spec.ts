@@ -1,11 +1,11 @@
 import { expect, test } from "@playwright/test"
-import type { Reader } from "@prose-reader/core"
 import {
   locateSpineItemFrame,
   navigateToSpineItem,
   waitForSpineItemReady,
 } from "../utils"
 import { waitForSettled } from "../utils/pagination"
+import { getReader } from "../utils/reader"
 
 /**
  * `pageNum-10.xhtml`, whose page is an SVG `<image>` referencing its picture,
@@ -18,12 +18,10 @@ test.describe("Given a prepaginated book with a page drawn as an SVG image", () 
     await page.goto("http://localhost:3333/tests/prepaginated/index.html")
     await waitForSettled(page)
 
-    const pageHref = await page.evaluate((index) => {
-      // @ts-expect-error window.reader is set by this scenario's index.tsx
-      const reader = window.reader as Reader
-
-      return reader.context.manifest.spineItems[index]?.href
-    }, SVG_IMAGE_PAGE_SPINE_ITEM_INDEX)
+    const pageHref = await (await getReader(page)).evaluate(
+      (reader, index) => reader.context.manifest.spineItems[index]?.href,
+      SVG_IMAGE_PAGE_SPINE_ITEM_INDEX,
+    )
 
     expect(pageHref).toMatch(/\/pageNum-10\.xhtml$/)
 
