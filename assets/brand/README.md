@@ -32,3 +32,6 @@ shows `apps/docs/src/assets/logo.svg`. Update them when the mark changes:
 - `favicon.ico` holds 16, 32 and 48 px renders of `logo.svg`.
 - `apple-touch-icon.png` is a 180 px render of the mark without its rounded
   corners, which iOS draws itself.
+
+The landing page's header and footer import `logo.svg` itself, so they follow
+the mark without a copy.
