@@ -11,10 +11,11 @@ import {
 
 /**
  * A KOReader sync client on an EPUB pulls an xpointer as the book's progress,
- * goes to it, and pushes the reading position back as an xpointer, converting
- * each value as it comes. Going to one must reach its place even in a chapter
- * that is not loaded yet. Every reading position converts on arrival: pending
- * at the chapter's start while the chapter loads, then the place, a success.
+ * opens the book at it or goes to it, and pushes the reading position back as
+ * an xpointer, converting each value as it comes. Opening at one, or going to
+ * one, must reach its place even in a chapter that is not loaded yet. Every
+ * reading position converts on arrival: pending at the chapter's start while
+ * the chapter loads, then the place, a success.
  */
 
 const url = "http://localhost:3333/tests/koreader/index.html"
@@ -114,11 +115,10 @@ const getXPointerCfi = async (page: Page, xpointer: string) =>
   }, xpointer)
 
 /**
- * The xpointer of an element deep in the chapter, read in one session, then a
- * fresh reader where the chapter is not loaded, recording the positions
- * reported from there on, once the last one is a success.
+ * The xpointer of an element deep in the chapter, read in a session showing
+ * the chapter, as a sync client would pull one.
  */
-const openAtXPointerInUnloadedChapter = async (page: Page) => {
+const readFragmentXPointer = async (page: Page) => {
   await page.goto(url)
   await waitForSettled(page)
 
@@ -127,6 +127,22 @@ const openAtXPointerInUnloadedChapter = async (page: Page) => {
   await goToSpineItem(page, chapterIndex)
 
   const xpointer = await getElementXPointer(page, chapterIndex, fragment)
+
+  // A place far into a chapter other than the first: neither the chapter's
+  // start nor the book's.
+  expect(chapterIndex).toBeGreaterThan(0)
+  expect(xpointer).not.toBe(chapterStart(chapterIndex))
+
+  return { chapterIndex, xpointer }
+}
+
+/**
+ * The xpointer of an element deep in the chapter, read in one session, then a
+ * fresh reader where the chapter is not loaded, going to it, recording the
+ * positions reported from there on, once the last one is a success.
+ */
+const goToXPointerInUnloadedChapter = async (page: Page) => {
+  const { chapterIndex, xpointer } = await readFragmentXPointer(page)
 
   // Only visible chapters load.
   await page.goto(`${url}?preload=0`)
@@ -165,7 +181,7 @@ test.describe("Given an xpointer into a chapter not loaded yet", () => {
   test("going to it shows its place once the chapter loads", async ({
     page,
   }) => {
-    const { reported } = await openAtXPointerInUnloadedChapter(page)
+    const { reported } = await goToXPointerInUnloadedChapter(page)
 
     expect(reported.length).toBeGreaterThan(0)
   })
@@ -174,7 +190,7 @@ test.describe("Given an xpointer into a chapter not loaded yet", () => {
     page,
   }) => {
     const { chapterIndex, xpointer, reported } =
-      await openAtXPointerInUnloadedChapter(page)
+      await goToXPointerInUnloadedChapter(page)
 
     expect(reported.slice(-1)[0]).toEqual({ xpointer, status: "success" })
 
@@ -187,6 +203,40 @@ test.describe("Given an xpointer into a chapter not loaded yet", () => {
       xpointer: chapterStart(chapterIndex),
       status: "pending",
     })
+  })
+})
+
+test.describe("Given a book opened at an xpointer into a chapter not loaded yet", () => {
+  test("it is reported pending at the chapter start while the chapter loads, never at the start of the book, and ends a success on the xpointer, its place shown", async ({
+    page,
+  }) => {
+    const { chapterIndex, xpointer } = await readFragmentXPointer(page)
+
+    // Only visible chapters load.
+    await page.goto(`${url}?preload=0&progress=${encodeURIComponent(xpointer)}`)
+    await waitForSettled(page)
+
+    // The first position reported, from the reader's creation on.
+    expect((await readReportedPositions(page))[0]).toEqual({
+      xpointer: chapterStart(chapterIndex),
+      status: "pending",
+    })
+
+    await expect
+      .poll(() => isElementStartOnScreen(page, chapterIndex, fragment))
+      .toBe(true)
+    await expect
+      .poll(async () => (await readLatestReportedPosition(page))?.status)
+      .toBe("success")
+
+    const reported = await readReportedPositions(page)
+
+    expect(reported.slice(-1)[0]).toEqual({ xpointer, status: "success" })
+
+    for (const value of reported.slice(0, -1)) {
+      expect(value.status).toBe("pending")
+      expect([chapterStart(chapterIndex), xpointer]).toContain(value.xpointer)
+    }
   })
 })
 
