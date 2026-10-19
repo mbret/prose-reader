@@ -3,6 +3,13 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## [30.1.0](https://github.com/mbret/prose-reader/compare/v30.0.0...v30.1.0) (2026-10-19)
+
+### Features
+
+* **enhancer-koreader:** open a reader at a KOReader progress ([66aa7cc](https://github.com/mbret/prose-reader/commit/66aa7cc79ac1ad4894dcd391daf2ef73ab76606c)), closes [#567](https://github.com/mbret/prose-reader/issues/567)
+
+
 ## [30.0.0](https://github.com/mbret/prose-reader/compare/v29.0.0...v30.0.0) (2026-10-19)
 
 ### ⚠ BREAKING CHANGES
