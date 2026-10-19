@@ -40,23 +40,17 @@ const serveDemoPage = (): Plugin => {
   }
 }
 
-export default defineConfig(({ mode, isSsrBuild }) => ({
+export default defineConfig(({ mode }) => ({
   build: {
     sourcemap: true,
     minify: mode !== "development",
     emptyOutDir: true,
-    /**
-     * `vite build --ssr src/landing/prerender.tsx` builds the renderer that
-     * scripts/prerender-landing.mjs runs, from that entry alone.
-     */
-    rollupOptions: isSsrBuild
-      ? undefined
-      : {
-          input: {
-            main: "index.html",
-            demo: "demo.html",
-          },
-        },
+    rollupOptions: {
+      input: {
+        main: "index.html",
+        demo: "demo.html",
+      },
+    },
   },
   /**
    * require('events') uses package events which is a web polyfill
@@ -71,26 +65,25 @@ export default defineConfig(({ mode, isSsrBuild }) => ({
     /**
      * The service worker streams the demo books. It is registered at the root
      * scope so that its `/streamer` routes stay reachable from the `/demo`
-     * pages. The landing page renderer has no use for it.
+     * pages.
      */
-    !isSsrBuild &&
-      VitePWA({
-        base: "/",
-        minify: false,
-        injectRegister: false,
-        strategies: "injectManifest",
-        manifest: false,
-        injectManifest: {
-          injectionPoint: undefined,
+    VitePWA({
+      base: "/",
+      minify: false,
+      injectRegister: false,
+      strategies: "injectManifest",
+      manifest: false,
+      injectManifest: {
+        injectionPoint: undefined,
+      },
+      srcDir: "src/demo/serviceWorker",
+      filename: "service-worker.ts",
+      ...(mode === "development" && {
+        devOptions: {
+          enabled: true,
         },
-        srcDir: "src/demo/serviceWorker",
-        filename: "service-worker.ts",
-        ...(mode === "development" && {
-          devOptions: {
-            enabled: true,
-          },
-        }),
       }),
+    }),
     react(),
     babel({
       presets: [reactCompilerPreset()],

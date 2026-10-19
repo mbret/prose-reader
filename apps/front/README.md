@@ -2,9 +2,7 @@
 
 The prose website, made of two pages:
 
-- `/`, from `index.html`: the landing page. The build renders it to HTML with
-  `src/landing/prerender.tsx`, and `scripts/prerender-landing.mjs` writes that
-  HTML into the built `index.html`. React then hydrates it in the browser.
+- `/`, from `index.html`: the landing page.
 - `/demo`, from `demo.html`: the official demo, a reader made with React that
   showcases the capabilities of the engine and its enhancers. It doubles as an
   integration example, see [the demo docs](../docs/src/content/docs/get-started/demo-and-showcase.md).
