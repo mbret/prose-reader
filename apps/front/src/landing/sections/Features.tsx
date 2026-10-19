@@ -1,4 +1,11 @@
-import { Box, Flex, Heading, SimpleGrid, Text } from "@chakra-ui/react"
+import {
+  Box,
+  Flex,
+  Heading,
+  SimpleGrid,
+  Text,
+  VisuallyHidden,
+} from "@chakra-ui/react"
 import type { IconType } from "react-icons"
 import {
   LuBookOpen,
@@ -21,8 +28,11 @@ const features: {
   title: string
   description: string
   href: string
-  /** Names the link for screen readers, where every card says "Learn more". */
-  linkLabel: string
+  /**
+   * Ends the card's "Learn more" for screen readers and search engines, which
+   * would otherwise read the same text for every card.
+   */
+  linkTopic: string
 }[] = [
   {
     icon: LuBookOpen,
@@ -30,7 +40,7 @@ const features: {
     description:
       "Reflowable and fixed-layout books, following the EPUB 3.3 specification.",
     href: links.epub,
-    linkLabel: "Learn more about EPUB support",
+    linkTopic: "EPUB support",
   },
   {
     icon: LuLayoutGrid,
@@ -38,7 +48,7 @@ const features: {
     description:
       "CBZ and CBR archives, right-to-left pages and webtoon scrolling.",
     href: links.comics,
-    linkLabel: "Learn more about comics support",
+    linkTopic: "comics support",
   },
   {
     icon: LuFileText,
@@ -46,7 +56,7 @@ const features: {
     description:
       "PDF documents, rendered page by page through the PDF enhancer.",
     href: links.pdf,
-    linkLabel: "Learn more about PDF support",
+    linkTopic: "PDF support",
   },
   {
     icon: LuColumns2,
@@ -54,7 +64,7 @@ const features: {
     description:
       "Single pages, two-page spreads or continuous scrolling, in any direction.",
     href: links.pagination,
-    linkLabel: "Learn more about pagination",
+    linkTopic: "pagination",
   },
   {
     icon: LuLayers,
@@ -62,7 +72,7 @@ const features: {
     description:
       "Add gestures, search, annotations or your own features to the reader.",
     href: links.enhancers,
-    linkLabel: "Learn more about enhancers",
+    linkTopic: "enhancers",
   },
   {
     icon: LuPencilLine,
@@ -70,7 +80,7 @@ const features: {
     description:
       "Highlights, notes and bookmarks, anchored to the text with CFIs.",
     href: links.annotations,
-    linkLabel: "Learn more about annotations",
+    linkTopic: "annotations",
   },
   {
     icon: LuServer,
@@ -78,7 +88,7 @@ const features: {
     description:
       "Serve books from a service worker, from Node or from React Native.",
     href: links.streamer,
-    linkLabel: "Learn more about the streamer",
+    linkTopic: "the streamer",
   },
   {
     icon: LuCode,
@@ -86,7 +96,7 @@ const features: {
     description:
       "Plain TypeScript at the core, with packages for React and React Native.",
     href: links.reactNative,
-    linkLabel: "Learn more about framework support",
+    linkTopic: "framework support",
   },
 ]
 
@@ -133,7 +143,7 @@ export const Features = () => (
         titleId="features-title"
       />
       <SimpleGrid columns={{ base: 1, md: 2, lg: 3 }} gap="5" mt="12">
-        {features.map(({ icon, title, description, href, linkLabel }) => (
+        {features.map(({ icon, title, description, href, linkTopic }) => (
           <Flex
             as="article"
             key={title}
@@ -152,8 +162,8 @@ export const Features = () => (
             <Text color="fg.muted" fontSize="15px" lineHeight="1.55">
               {description}
             </Text>
-            <ArrowLink href={href} aria-label={linkLabel} mt="auto">
-              Learn more
+            <ArrowLink href={href} mt="auto">
+              Learn more<VisuallyHidden> about {linkTopic}</VisuallyHidden>
             </ArrowLink>
           </Flex>
         ))}
