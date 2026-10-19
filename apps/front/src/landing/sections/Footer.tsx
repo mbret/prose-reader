@@ -29,7 +29,7 @@ export const Footer = () => (
     >
       <Flex
         wrap="wrap"
-        align="center"
+        align="baseline"
         columnGap="3"
         rowGap="2"
         color="fg.muted"
