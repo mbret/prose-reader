@@ -1,15 +1,13 @@
 import type { Page } from "@playwright/test"
-import type { Reader } from "@prose-reader/core"
+import { getReader } from "./reader"
 
 /**
  * Whether the exact position a cfi points to is inside the window, so a
  * restored page is judged by where the anchored character ended up rather
  * than by whichever element happens to contain it.
  */
-export const isCfiPositionVisible = (page: Page, cfi: string) =>
-  page.evaluate((cfi) => {
-    // @ts-expect-error window.reader is set by this scenario's index.tsx
-    const reader = window.reader as Reader
+export const isCfiPositionVisible = async (page: Page, cfi: string) =>
+  (await getReader(page)).evaluate((reader, cfi) => {
     const { node, offset } = reader.cfi.resolveCfi({ cfi })
 
     if (!node) return "cfi did not resolve to a node"
@@ -37,15 +35,13 @@ export const isCfiPositionVisible = (page: Page, cfi: string) =>
   }, cfi)
 
 /** Whether the start of an element of a spine item is inside the window. */
-export const isElementStartOnScreen = (
+export const isElementStartOnScreen = async (
   page: Page,
   spineItemIndex: number,
   id: string,
 ) =>
-  page.evaluate(
-    ({ spineItemIndex, id }) => {
-      // @ts-expect-error window.reader is set by this scenario's index.tsx
-      const reader = window.reader as Reader
+  (await getReader(page)).evaluate(
+    (reader, { spineItemIndex, id }) => {
       const frame = reader.spineItemsManager
         .get(spineItemIndex)
         ?.renderer.getDocumentFrame()

@@ -1,7 +1,7 @@
 import { expect, test } from "@playwright/test"
-import type { Reader } from "@prose-reader/core"
 import { waitForSpineItemReady } from "../utils"
 import { waitForSettled } from "../utils/pagination"
+import { getReader } from "../utils/reader"
 
 test.describe("Given a prepaginated book with first page on spread right", () => {
   test.describe("and numberOfAdjacentSpineItemToPreLoad as 0", () => {
@@ -45,9 +45,8 @@ test.describe("Given a prepaginated book with first page on spread right", () =>
       await page.keyboard.press("ArrowRight")
       await waitForSettled(page)
 
-      const visibleItems = await page.evaluate(() => {
-        // @ts-expect-error window.reader is set by this scenario's index.tsx
-        const { begin, end } = (window.reader as Reader).pagination.state
+      const visibleItems = await (await getReader(page)).evaluate((reader) => {
+        const { begin, end } = reader.pagination.state
 
         return [begin.spineItemIndex, end.spineItemIndex]
       })

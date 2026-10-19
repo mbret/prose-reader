@@ -1,6 +1,6 @@
 import { expect, type Page, test } from "@playwright/test"
-import type { Reader } from "@prose-reader/core"
 import { resizeAndSettle, waitForSettled } from "../../../utils/pagination"
+import { getReader } from "../../../utils/reader"
 
 /**
  * A spread shows two items at once, and its result only settles once both are
@@ -19,10 +19,9 @@ const portrait = { width: 400, height: 671 }
  * settled result and reads it in the same evaluation.
  */
 const readVisibleRange = async (page: Page) => {
+  const reader = await getReader(page)
   const handle = await page.waitForFunction(
-    () => {
-      // @ts-expect-error window.reader is set by this scenario's index.tsx
-      const reader = window.reader as Reader
+    (reader) => {
       const pagination = reader.pagination.state
 
       if (!pagination.isSettled) return undefined
@@ -63,7 +62,7 @@ const readVisibleRange = async (page: Page) => {
         itemStarts,
       }
     },
-    undefined,
+    reader,
     { timeout: 10_000 },
   )
   const range = await handle.jsonValue()

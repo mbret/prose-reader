@@ -1,7 +1,7 @@
 import { expect, test } from "@playwright/test"
-import type { Reader } from "@prose-reader/core"
 import {
   locateSpineItems,
+  navigateToSpineItem,
   waitForSpineItemReady,
   waitForSpineItemUnloaded,
 } from "../../utils"
@@ -84,10 +84,7 @@ test.describe("Given a scroll scroll to bottom", () => {
       await waitForSpineItemReady(page, [0])
 
       // Scroll to the bottom of the page
-      await page.evaluate(() => {
-        // @ts-expect-error
-        ;(window.reader as Reader).navigation.goToSpineItem({ indexOrId: 9 })
-      })
+      await navigateToSpineItem({ page, index: 9 })
 
       await waitForSpineItemReady(page, [9])
       await waitForSpineItemUnloaded(page, [0])

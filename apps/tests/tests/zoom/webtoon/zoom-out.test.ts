@@ -1,7 +1,11 @@
 import { expect, test } from "@playwright/test"
-import type { Reader } from "@prose-reader/core"
-import { getScrollNavigationMetadata, waitForSpineItemReady } from "../../utils"
+import {
+  getScrollNavigationMetadata,
+  waitForSpineItemReady,
+  zoomAt,
+} from "../../utils"
 import { waitForSettled } from "../../utils/pagination"
+import { getReader } from "../../utils/reader"
 
 const scales = [0.2, 0.5, 1]
 const height = 1294
@@ -23,20 +27,13 @@ test.describe("Given a scroll mid page", () => {
 
           await waitForSpineItemReady(page, [0])
 
-          await page.evaluate(
-            ([_scrollTop = 0]) => {
-              // @ts-expect-error
-              const reader = window.reader as Reader
+          const reader = await getReader(page)
 
-              reader.navigation.scrollNavigationController.value.element?.scrollTo(
-                {
-                  top: _scrollTop,
-                  left: 0,
-                },
-              )
-            },
-            [scrollTop],
-          )
+          await reader.evaluate((reader, top) => {
+            reader.navigation.scrollNavigationController.value.element?.scrollTo(
+              { top, left: 0 },
+            )
+          }, scrollTop)
 
           await waitForSpineItemReady(page, [0, 1, 2, 3, 4, 5])
 
@@ -48,16 +45,7 @@ test.describe("Given a scroll mid page", () => {
 
           // Scaling re-centers the scroll position with a navigation, and
           // lays out again.
-          await page.evaluate(
-            ([_scale = 1]) => {
-              // @ts-expect-error
-              const reader = window.reader as Reader
-
-              reader.zoom.enter()
-              reader.zoom.scaleAt(_scale)
-            },
-            [scale],
-          )
+          await zoomAt({ page, scale })
 
           await waitForSettled(page)
 
@@ -70,10 +58,7 @@ test.describe("Given a scroll mid page", () => {
             (scrollTop + height / 2) * scale - height / 2,
           )
 
-          await page.evaluate(() => {
-            // @ts-expect-error
-            const reader = window.reader as Reader
-
+          await reader.evaluate((reader) => {
             reader.zoom.exit()
           })
 
