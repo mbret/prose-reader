@@ -20,6 +20,7 @@ const createSpineItem = ({
 }) => ({
   id,
   href: href ?? `${id}.mp3`,
+  containerUri: href ?? `${id}.mp3`,
   index,
   mediaType,
 })

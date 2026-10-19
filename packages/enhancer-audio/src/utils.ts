@@ -21,7 +21,9 @@ const getExtensionFromHref = (href: string) => {
   return extension?.toLowerCase()
 }
 
-export const isAudioSpineItem = (item: Manifest["spineItems"][number]) => {
+export const isAudioSpineItem = (
+  item: Pick<Manifest["spineItems"][number], "href" | "mediaType">,
+) => {
   const mediaType = item.mediaType?.split(`;`).at(0)?.trim().toLowerCase()
 
   if (mediaType?.startsWith(`audio/`)) {

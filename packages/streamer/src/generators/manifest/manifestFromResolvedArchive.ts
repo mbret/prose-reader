@@ -93,6 +93,7 @@ const epubManifest = (
       href: isHttpUrl(item.uri)
         ? item.uri
         : `${baseUrl || `file://`}${item.uri}`,
+      containerUri: item.uri,
       renditionLayout: item.renditionLayout,
       ...(item.renditionFlow !== undefined
         ? { renditionFlow: item.renditionFlow }
@@ -145,6 +146,7 @@ const recordsManifest = (
       id: idByUri.get(item.uri) ?? createSafeId(item.uri),
       index,
       href: createManifestResourceHref({ baseUrl, resourcePath: item.uri }),
+      containerUri: item.uri,
       renditionLayout: item.renditionLayout,
       progressionWeight: item.progressionWeight,
       pageSpreadLeft: undefined,

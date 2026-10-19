@@ -49,6 +49,7 @@ const createManifestSpineItem = ({
 } = {}) => ({
   id,
   href,
+  containerUri: href,
   index,
   mediaType,
 })

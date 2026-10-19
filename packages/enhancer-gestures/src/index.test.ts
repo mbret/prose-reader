@@ -54,6 +54,7 @@ const manifest: Manifest = {
   items: [],
   spineItems: [0, 1].map((index) => ({
     href: `/page_${index}.jpg`,
+    containerUri: `page_${index}.jpg`,
     id: `${index}`,
     index,
     mediaType: "image/jpeg",

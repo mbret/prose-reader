@@ -32,6 +32,7 @@ const createManifest = ({
   spineItems: [
     {
       href,
+      containerUri: href.replace(/^file:\/\//, ""),
       id,
       index: 0,
       mediaType,
@@ -61,6 +62,7 @@ const createManifestFromResourceNames = ({
   renditionSpread: undefined,
   spineItems: resourceNames.map((resourceName, index) => ({
     href: `file://${resourceName}`,
+    containerUri: resourceName,
     id: resourceName,
     index,
     mediaType: "image/jpeg",

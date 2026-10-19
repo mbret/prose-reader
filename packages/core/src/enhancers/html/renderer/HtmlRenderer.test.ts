@@ -91,6 +91,7 @@ const createHarness = ({
     id: `document`,
     index: 0,
     href: documentHref,
+    containerUri: `EPUB/Content/page.xhtml`,
     mediaType: `application/xhtml+xml`,
   }
   const context = new Context(

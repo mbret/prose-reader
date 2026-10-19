@@ -13,7 +13,7 @@ type StreamerHooks = {
 
 ## Manifest hooks
 
-An ordered list of `Manifest` transforms. All book-format understanding (OPF/ComicInfo/Apple/Kobo precedence, the viewport layout scan, spine rules) happens in `@prose-reader/archive-reader`'s `resolveArchive` before your hooks run, so there is a single hook point: your hooks receive the **fully mapped manifest** (hrefs rebased onto the `baseUrl`, toc attached) and run just **before the final defaults** — an unset `readingDirection` only falls back to `ltr` after every hook ran, so a hook can still detect "no source decided it".
+An ordered list of `Manifest` transforms. All book-format understanding (OPF/ComicInfo/Apple/Kobo precedence, the viewport layout scan, spine rules) happens in `@prose-reader/archive-reader`'s `resolveArchive` before your hooks run, so there is a single hook point: your hooks receive the **fully mapped manifest** (hrefs rebased onto the `baseUrl`, toc attached, each spine item's `containerUri` naming its archive record) and run just **before the final defaults** — an unset `readingDirection` only falls back to `ltr` after every hook ran, so a hook can still detect "no source decided it".
 
 ```typescript
 import type { StreamerManifestHookFactory } from "@prose-reader/streamer"
@@ -31,7 +31,7 @@ const streamer = new Streamer({
 })
 ```
 
-Each factory receives `{ archive, baseUrl }` and returns the transform; transforms may be async and run in list order. The `@prose-reader/cbz` package ships ready-made ones (reading-direction detection, panorama splitting) as `streamerHooks.manifest`.
+Each factory receives `{ archive, baseUrl }` and returns the transform; transforms may be async and run in list order. Find a spine item's record with `getArchiveFileRecordByUri(archive, spineItem.containerUri)` rather than from its `href`, and give an item you derive from a record, as the panorama split does, that record's `containerUri`. The `@prose-reader/cbz` package ships ready-made ones (reading-direction detection, panorama splitting) as `streamerHooks.manifest`.
 
 :::caution
 Before v2 of the streamer, manifest hooks were split into `content`/`spine`/`presentation`/`navigation` phases interleaved with built-in format hooks. That taxonomy is gone — pass a single ordered array instead.

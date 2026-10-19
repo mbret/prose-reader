@@ -11,13 +11,18 @@ export const createTestManifestSpineItems = (
       ? Array.from({ length: items }, () => undefined)
       : items
 
-  return itemsOverrides.map((overrides, index) => ({
-    href: `item-${index}.xhtml`,
-    id: `item-${index}`,
-    mediaType: `application/xhtml+xml`,
-    ...overrides,
-    index,
-  }))
+  return itemsOverrides.map((overrides, index) => {
+    const href = overrides?.href ?? `item-${index}.xhtml`
+
+    return {
+      id: `item-${index}`,
+      mediaType: `application/xhtml+xml`,
+      ...overrides,
+      href,
+      containerUri: overrides?.containerUri ?? href,
+      index,
+    }
+  })
 }
 
 export const createTestManifest = (

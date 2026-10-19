@@ -67,6 +67,13 @@ export type Manifest = {
      */
     href: string
     /**
+     * The archive record the item shows, by its path in the book's container,
+     * with no serving base (`OEBPS/ch01.xhtml`, `chapter 1/001.jpg`), or a
+     * remote resource's absolute URL. An item made from a record, such as
+     * half of a split panorama, names that record.
+     */
+    containerUri: string
+    /**
      * @see https://www.w3.org/TR/epub-33/#property-layout-global
      */
     renditionLayout?: `reflowable` | `pre-paginated`

@@ -88,6 +88,7 @@ const createHarness = (Renderer: typeof TestRenderer = TestRenderer) => {
     id: `item-1`,
     index: 0,
     href: `item-1.xhtml`,
+    containerUri: `item-1.xhtml`,
     mediaType: `application/xhtml+xml`,
   }
   const resourcesHandler = new ResourceHandler(item, settings)

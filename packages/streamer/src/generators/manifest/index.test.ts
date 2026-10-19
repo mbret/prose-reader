@@ -38,6 +38,7 @@ describe(`Given a list of urls archive`, () => {
       spineItems: [
         {
           href: imageUrl,
+          containerUri: imageUrl,
           id: imageId,
           progressionWeight: 1,
           renditionLayout: "pre-paginated",
@@ -83,6 +84,7 @@ describe(`Given a list of urls with rendition flow archive`, () => {
       spineItems: [
         {
           href: imageUrl,
+          containerUri: imageUrl,
           id: imageId,
           progressionWeight: 1,
           renditionLayout: "reflowable",
@@ -127,6 +129,7 @@ describe("Given archive with a folder containing a space", () => {
     expect(manifest.spineItems).toEqual([
       {
         href: "file://Chapter%201/page_1.jpg",
+        containerUri: "Chapter 1/page_1.jpg",
         id: createXmlSafeId("Chapter 1/page_1.jpg"),
         index: 0,
         // detected from the filename when the record has no encodingFormat
@@ -248,6 +251,7 @@ describe("Given non-epub image archive items with encodingFormat", () => {
     expect(manifest.spineItems).toEqual([
       {
         href: "file://page_1.jpeg",
+        containerUri: "page_1.jpeg",
         id: "page_1.jpeg",
         index: 0,
         mediaType: "image/jpeg",
@@ -283,6 +287,7 @@ describe("Given a non-epub image archive with a two-page spread filename", () =>
     expect(manifest.spineItems).toEqual([
       {
         href: "file://p006-007.jpg",
+        containerUri: "p006-007.jpg",
         id: "p006-007.jpg",
         index: 0,
         mediaType: "image/jpeg",
@@ -317,6 +322,7 @@ describe("Given non-epub audio archive items with encodingFormat", () => {
     expect(manifest.spineItems).toEqual([
       {
         href: "file://track_1.mp3",
+        containerUri: "track_1.mp3",
         id: "track_1.mp3",
         index: 0,
         mediaType: "audio/mpeg",
