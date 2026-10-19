@@ -361,10 +361,11 @@ Regarding this part, you are free to use a different strategy, especially if it 
 
 ### Adding a navigation target
 
-An enhancer can teach `navigate` a target of its own. It widens `navigate` to
-take it, translates it into a target core knows, and hands every other target
-to the `navigate` it received. The type flows through the enhancers like any
-other output, so only a reader built with the enhancer takes the new target.
+An enhancer can teach a reader a target of its own, both to `navigate` to and
+to open at. It widens `navigate` and `createReader`'s `target` option to take
+it, translates it into a target core knows, and hands every other target on
+unchanged. The type flows through the enhancers like any other output, so only
+a reader built with the enhancer takes the new target.
 
 A place that can only be found in a spine item's document, such as an element
 by id or a text offset, translates into a `selector` target. Core calls
@@ -374,7 +375,11 @@ Core's own url support is built this way: its navigation enhancer turns
 `#notes` in `ch02.xhtml`.
 
 ```typescript
-import type { Reader, UserNavigationEntry } from "@prose-reader/core"
+import type {
+  NavigationTarget,
+  Reader,
+  UserNavigationEntry,
+} from "@prose-reader/core"
 
 type NoteTarget = { type: "note"; value: string }
 
@@ -387,9 +392,24 @@ type NotesEnhancerOutput<InheritTarget> = {
 const isNoteTarget = (target: { type: string }): target is NoteTarget =>
   target.type === "note"
 
+/** The element a note's id names, in the `notes` spine item. */
+const noteToSelector = ({
+  value,
+}: NoteTarget): NavigationTarget<"selector"> => ({
+  type: "selector",
+  value: {
+    spineItem: "notes",
+    find: (document) => {
+      const node = document.getElementById(value)
+
+      return node ? { node } : undefined
+    },
+  },
+})
+
 export const notesEnhancer =
   <
-    InheritOptions,
+    InheritOptions extends { target?: { type: string } },
     InheritTarget extends { type: string },
     InheritOutput extends Reader,
   >(
@@ -398,9 +418,20 @@ export const notesEnhancer =
     },
   ) =>
   (
-    options: InheritOptions,
+    options: Omit<InheritOptions, "target"> & {
+      target?: InheritOptions["target"] | NoteTarget
+    },
   ): InheritOutput & NotesEnhancerOutput<InheritTarget> => {
-    const reader = next(options)
+    const { target: openingTarget, ...rest } = options
+    const reader = next({
+      ...rest,
+      target:
+        openingTarget && isNoteTarget(openingTarget)
+          ? noteToSelector(openingTarget)
+          : openingTarget,
+      // Only `target` changed; TypeScript cannot rebuild generic options
+      // from `Omit`.
+    } as InheritOptions)
 
     const navigate = (to: UserNavigationEntry<InheritTarget | NoteTarget>) => {
       const { target } = to
@@ -408,20 +439,7 @@ export const notesEnhancer =
       if (!isNoteTarget(target))
         return reader.navigation.navigate({ ...to, target })
 
-      reader.navigation.navigate({
-        ...to,
-        target: {
-          type: "selector",
-          value: {
-            spineItem: "notes",
-            find: (document) => {
-              const node = document.getElementById(target.value)
-
-              return node ? { node } : undefined
-            },
-          },
-        },
-      })
+      reader.navigation.navigate({ ...to, target: noteToSelector(target) })
     }
 
     return { ...reader, navigation: { ...reader.navigation, navigate } }
@@ -435,11 +453,20 @@ type guard, because a `target.type !== "note"` check cannot narrow a union that
 contains `InheritTarget`. The explicit return type keeps TypeScript from
 serializing the whole reader when the enhancer is exported.
 
-To open the book at such a target, widen `createReader`'s `target` option the
-same way, and translate it before handing the options to `next`. The navigation
-enhancer does so for urls. Widened options no longer satisfy a constraint on the
-narrower ones, so an enhancer applied after yours should constrain its options
-only to what it reads, such as `Pick<CreateReaderOptions, "getRenderer">`.
+The `target` option is translated before the options reach `next`, as the
+navigation enhancer does for urls, so the reader opens at the selector the way
+it [opens at any target](/learn/navigation#opening-the-book-somewhere): once
+the book is laid out and every enhancer has added its hooks, without its
+reading position passing through the start of the book. Navigating to the note
+once `next` has returned would run before the enhancers applied after yours
+have added theirs. A translation that needs the book reads `options.manifest`:
+the reader does not exist yet.
+
+The option takes what the options of the reader below take,
+`InheritOptions["target"]`, and notes. Widened options no longer satisfy a
+constraint on the narrower ones, so an enhancer applied after yours should
+constrain its options only to what it reads, such as
+`{ target?: { type: string } }` here, or `Pick<CreateReaderOptions, "getRenderer">`.
 
 ### Custom CSS in enhancers
 
