@@ -1,4 +1,5 @@
 import { Flex, type FlexProps, Image } from "@chakra-ui/react"
+import logo from "../../../../../assets/brand/logo.svg"
 
 /**
  * The prose mark beside the name, sized from the font size it is given. A
@@ -7,8 +8,6 @@ import { Flex, type FlexProps, Image } from "@chakra-ui/react"
  * high. Half of Literata's ascent minus its descent and x-height is 0.18em:
  * moving the mark down that much centers it on the lowercase letters, as in
  * assets/brand/logo-wordmark.svg.
- *
- * The mark is the favicon file, so the page and its tab show the same drawing.
  */
 export const ProseWordmark = (props: FlexProps) => (
   <Flex
@@ -21,7 +20,7 @@ export const ProseWordmark = (props: FlexProps) => (
     {...props}
   >
     <Image
-      src="/favicon.svg"
+      src={logo}
       alt=""
       htmlWidth={32}
       htmlHeight={32}
