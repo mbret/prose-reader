@@ -31,6 +31,8 @@ pages render in the browser:
 the pages to index, and `public/robots.txt` points to it. So that each page has
 one URL, `vercel.json` redirects `www.prose-reader.com` to `prose-reader.com`,
 and its `cleanUrls` redirects `/index.html` and `/demo.html` to `/` and `/demo`.
+`demo.prose-reader.com`, where the demo used to live, redirects each of its
+paths to its place under `/demo`.
 
 The demo's Chakra UI snippets live in `src/demo/components/ui`. The Chakra CLI
 writes to `src/components/ui` unless told otherwise, so add one with:
