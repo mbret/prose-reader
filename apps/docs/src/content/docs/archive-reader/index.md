@@ -235,7 +235,7 @@ if (unreadableSources.includes("opf")) {
 
 It is always present (empty when every carried source parsed) whatever the projection, so rejecting a corrupt publication costs neither the `sources` payload nor a container-format probe of your own: `sources.opf === undefined` cannot tell a broken package document from a container that has none (a CBZ), and testing the archive records yourself (`isArchiveEpub`) re-derives what the resolver already knows. Its entries are the `sources` keys (`ResolvedArchiveSourceKind`), but the two fields stay separate on purpose: `sources` holds what parsed, `unreadableSources` holds what didn't.
 
-A source counts as unreadable when its document is there and reading or parsing it produced nothing — for the package document, that includes any `.opf` record the OPF discovery never reaches. A projection that reads nothing from the book (`include: ["version"]`) reports nothing.
+A source counts as unreadable when its document is there and reading or parsing it produced nothing. A projection that reads nothing from the book (`include: ["version"]`) reports nothing.
 
 :::note
 This is the metadata the file carries. For the metadata online catalogs hold about it, [metadata-fetcher](/metadata-fetcher) takes the resolved entity straight in and returns the same `ResolvedMetadata` vocabulary back.
@@ -260,6 +260,8 @@ import {
 const comicInfo = await readArchiveComicInfo(archive)
 ```
 
+The package document is the one `META-INF/container.xml` lists first: an EPUB lists one per rendition, and the first is the default rendition (EPUB 3.3, "Container file"). A listed one the archive does not hold is passed over. An archive without a container file, as prose synthesizes for a PDF, a text or a list of URLs, or one whose container file lists nothing it holds, reads its first `.opf` record instead. `readArchiveOpf` returns it parsed, with `basePath`, the folder its hrefs are relative to.
+
 The parsed objects mirror their source document (`ComicInfo.Writer`, `OpfMetadata.spineRows`, …) and carry a `kind` discriminator. `resolveArchiveMetadata` normalizes a single one of them into the [`ResolvedMetadata`](/archive-reader/resolved-metadata) vocabulary, and `resolveMetadata` merges several with the documented precedence:
 
 ```typescript
@@ -275,7 +277,7 @@ if (comicInfo) {
 `resolveArchiveMetadata` and `resolveMetadata` see only parsed source documents, so they never populate the container-derived fields — `metadata.cover` and the counted `numberOfPages` fallback. Those need the file listing and come from `resolveArchive` (or `resolveArchiveCover`).
 :::
 
-Malformed documents throw from the single-file readers (`readArchiveComicInfo`, `readArchiveApple`, `readArchiveOpf`) so you decide how lenient to be; `readArchiveKobo` merges every matching sidecar and skips unparseable ones. The lower-level pieces (`parseOpf`, `parseComicInfo`, `getArchiveOpfInfo`, `getArchiveHasComicInfo`, …) stay exported for advanced use.
+Malformed documents throw from the single-file readers (`readArchiveComicInfo`, `readArchiveApple`, `readArchiveOpf`) so you decide how lenient to be; `readArchiveKobo` merges every matching sidecar and skips unparseable ones. The lower-level pieces (`parseOpf`, `parseComicInfo`, `getArchiveOpfRecord`, which finds the package document without parsing it, `getArchiveHasComicInfo`, …) stay exported for advanced use.
 
 ## Resolving the reading order
 

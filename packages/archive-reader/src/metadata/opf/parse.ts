@@ -1,13 +1,17 @@
-import type { XmlElement, XmlNodeBase } from "xmldoc"
+import type { XmlElement } from "xmldoc"
 import { XmlDocument } from "xmldoc"
 import { tokenizeXmlSpaceSeparatedList } from "../../utils/tokenizeXmlSpaceSeparatedList.ts"
-import { opfIdentifierSchemeAttribute } from "./identifierScheme.ts"
 import {
-  opfNamespacedAttribute,
-  opfNamespacePrefixes,
+  childNamedLocal,
+  childrenNamedLocal,
+  elementLocalName,
+} from "../../utils/xmlLocalNames.ts"
+import {
   type XmlNamespaceScope,
   xmlNamespaceScope,
-} from "./opfNamespace.ts"
+} from "../../utils/xmlNamespaceScope.ts"
+import { opfIdentifierSchemeAttribute } from "./identifierScheme.ts"
+import { opfNamespacedAttribute, opfNamespacePrefixes } from "./opfNamespace.ts"
 import { layoutHintsFromItemrefProperties } from "./spineItemrefProperties.ts"
 
 export type OpfSpineManifestItem = {
@@ -93,38 +97,6 @@ export type OpfContributor = {
   readonly roles: ReadonlyArray<string>
   /** EPUB 2 `opf:file-as` attribute, or the `file-as` refines when absent. */
   readonly fileAs?: string
-}
-
-const elementLocalName = (name: string): string =>
-  name.includes(":") ? name.slice(name.lastIndexOf(":") + 1) : name
-
-const localNameEq = (elementName: string, wantLocal: string): boolean =>
-  elementLocalName(elementName).toLowerCase() === wantLocal.toLowerCase()
-
-const isXmlElement = (node: XmlNodeBase): node is XmlElement =>
-  node.type === "element"
-
-const childNamedLocal = (
-  parent: XmlElement,
-  localName: string,
-): XmlElement | undefined => {
-  for (const node of parent.children) {
-    if (!isXmlElement(node)) continue
-    if (localNameEq(node.name, localName)) return node
-  }
-  return undefined
-}
-
-const childrenNamedLocal = (
-  parent: XmlElement,
-  localName: string,
-): XmlElement[] => {
-  const out: XmlElement[] = []
-  for (const node of parent.children) {
-    if (!isXmlElement(node)) continue
-    if (localNameEq(node.name, localName)) out.push(node)
-  }
-  return out
 }
 
 const identifiersFromMetadata = (
