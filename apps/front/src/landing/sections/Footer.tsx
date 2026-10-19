@@ -21,8 +21,8 @@ export const Footer = () => (
     <PageContainer
       display="flex"
       flexWrap="wrap"
-      alignItems="center"
-      justifyContent="space-between"
+      alignItems="baseline"
+      justifyContent={{ base: "center", md: "space-between" }}
       columnGap="8"
       rowGap="4"
       py="8"
@@ -30,6 +30,7 @@ export const Footer = () => (
       <Flex
         wrap="wrap"
         align="baseline"
+        justify={{ base: "center", md: "flex-start" }}
         columnGap="3"
         rowGap="2"
         color="fg.muted"
@@ -47,7 +48,14 @@ export const Footer = () => (
           </Link>
         </Text>
       </Flex>
-      <Flex as="nav" aria-label="Footer" wrap="wrap" gap="1" mx="-2.5">
+      <Flex
+        as="nav"
+        aria-label="Footer"
+        wrap="wrap"
+        justify="center"
+        gap="1"
+        mx="-2.5"
+      >
         <FooterLink href={links.docs}>Docs</FooterLink>
         <FooterLink href={DEMO_BASE_PATH}>Demo</FooterLink>
         <FooterLink href={links.github}>GitHub</FooterLink>
