@@ -1,5 +1,6 @@
 import {
   distinctUntilChanged,
+  endWith,
   map,
   merge,
   type Observable,
@@ -204,23 +205,29 @@ export class SpineItem extends ReactiveEntity<SpineItemState> {
   /**
    * The item's document while it is `loaded`, and `undefined` otherwise:
    * before it loads, while it loads though its frame may already hold it,
-   * from the moment it starts unloading, after a failed load, and for an item
-   * rendered without a document frame, such as audio. Read the book's content
-   * here, a cfi's node or what a selector looks for: a document still being
-   * set up or already leaving is not the one the reader shows. An
-   * `item.onDocumentLoad` hook, which sets the document up while it loads,
-   * reaches it through the renderer's frame instead.
+   * from the moment it starts unloading or is destroyed, after a failed load,
+   * and for an item rendered without a document frame, such as audio. Read
+   * the book's content here, a cfi's node or what a selector looks for: a
+   * document still being set up or already leaving is not the one the reader
+   * shows. An `item.onDocumentLoad` hook, which sets the document up while it
+   * loads, reaches it through the renderer's frame instead.
    */
   public get loadedDocument(): Document | undefined {
-    if (this.value.loadStatus !== `loaded`) return undefined
+    // A destroyed item releases its document without leaving `loaded`.
+    if (this.isDestroyed || this.value.loadStatus !== `loaded`) return undefined
 
     return this.renderer.getDocumentFrame()?.contentDocument ?? undefined
   }
 
-  /** `loadedDocument` as it changes, from its current value on. */
+  /**
+   * `loadedDocument` as it changes, from its current value on. It ends with
+   * `undefined` once the item is destroyed, before its document is released.
+   */
   public get loadedDocument$(): Observable<Document | undefined> {
     return this.watch(`loadStatus`).pipe(
       map(() => this.loadedDocument),
+      // The state completes when the item is destroyed, `loaded` as it was.
+      endWith(undefined),
       distinctUntilChanged(),
     )
   }

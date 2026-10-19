@@ -139,6 +139,44 @@ describe("SpineItem loaded document", () => {
     ])
   })
 
+  it("is none from the moment the item is destroyed, before its document is released", async () => {
+    const reader = createTestReader({ getRenderer: renderTextDocuments })
+
+    mountTestReader(reader)
+    await settledOn(reader, 0)
+
+    const item = reader.spineItemsManager.get(0)
+
+    if (!item) throw new Error("item 0 is missing")
+
+    const events: string[] = []
+
+    item.loadedDocument$.subscribe({
+      next: (loadedDocument) =>
+        events.push(loadedDocument ? "loaded document" : "no loaded document"),
+      complete: () => events.push("complete"),
+    })
+    reader.hookManager.register("item.onDocumentUnload", ({ itemId }) => {
+      if (itemId !== "0") return
+
+      events.push(
+        item.loadedDocument
+          ? "released, still the loaded document"
+          : "released, no loaded document",
+      )
+    })
+
+    // The release on destroy leaves the item `loaded`, its state completing.
+    reader.destroy()
+
+    expect(events).toEqual([
+      "loaded document",
+      "no loaded document",
+      "complete",
+      "released, no loaded document",
+    ])
+  })
+
   it("is none for a loaded item rendered without a document frame", async () => {
     // The default renderer has no document, as an audio item has none.
     const reader = createTestReader()
