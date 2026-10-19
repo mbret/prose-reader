@@ -6,9 +6,9 @@
   "trailingSlash": false,
   "redirects": [
     {
-      "source": "/:path*",
+      "source": "/:path(.*)",
       "has": [{ "type": "host", "value": "prose-reader-docs.vercel.app" }],
-      "destination": "https://doc.prose-reader.com/:path*",
+      "destination": "https://doc.prose-reader.com/:path",
       "permanent": true
     },
     {

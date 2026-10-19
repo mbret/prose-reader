@@ -6,9 +6,9 @@
   "cleanUrls": true,
   "redirects": [
     {
-      "source": "/:path*",
+      "source": "/:path(.*)",
       "has": [{ "type": "host", "value": "www.prose-reader.com" }],
-      "destination": "https://prose-reader.com/:path*",
+      "destination": "https://prose-reader.com/:path",
       "permanent": true
     }
   ],
