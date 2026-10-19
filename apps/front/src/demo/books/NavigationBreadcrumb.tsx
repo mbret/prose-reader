@@ -1,10 +1,10 @@
 import { Link } from "react-router"
+import { DEMO_BASE_PATH } from "../../constants"
 import {
   BreadcrumbCurrentLink,
   BreadcrumbLink,
   BreadcrumbRoot,
-} from "../../components/ui/breadcrumb"
-import { DEMO_BASE_PATH } from "../../constants"
+} from "../components/ui/breadcrumb"
 
 export const NavigationBreadcrumb = () => {
   return (

@@ -1,9 +1,9 @@
 import { Fieldset } from "@chakra-ui/react"
-import { Field } from "../../components/ui/field"
+import { Field } from "../components/ui/field"
 import {
   NumberInputField,
   NumberInputRoot,
-} from "../../components/ui/number-input"
+} from "../components/ui/number-input"
 import { useReaderSettings } from "../reader/settings/useReaderSettings"
 import { useReader } from "../reader/useReader"
 

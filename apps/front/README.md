@@ -10,7 +10,15 @@ The prose website, made of two pages:
   production, and a middleware in `vite.config.ts` in development and preview.
 
 The landing page loads none of the demo's code, so visiting it does not
-download the reading engine.
+download the reading engine. Each page keeps its code in its own folder,
+`src/landing` and `src/demo`.
+
+The demo's Chakra UI snippets live in `src/demo/components/ui`. The Chakra CLI
+writes to `src/components/ui` unless told otherwise, so add one with:
+
+```bash
+npx @chakra-ui/cli snippet add <name> --outdir src/demo/components/ui
+```
 
 ## Development
 

@@ -8,11 +8,11 @@ import {
   IoMdArrowRoundForward,
   IoMdArrowUp,
 } from "react-icons/io"
-import { Field } from "../../../components/ui/field"
-import { Radio, RadioGroup } from "../../../components/ui/radio"
-import { Slider } from "../../../components/ui/slider"
 import { NavigationSettings } from "../../common/NavigationSettings"
 import { OtherSettings } from "../../common/OtherSettings"
+import { Field } from "../../components/ui/field"
+import { Radio, RadioGroup } from "../../components/ui/radio"
+import { Slider } from "../../components/ui/slider"
 import { useReader } from "../useReader"
 import { useReaderSettings } from "./useReaderSettings"
 import type { LocalSettings } from "./useSettings"

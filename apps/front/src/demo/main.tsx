@@ -2,8 +2,8 @@ import { StrictMode } from "react"
 import { createRoot } from "react-dom/client"
 import { BrowserRouter, Navigate, Route, Routes } from "react-router"
 import "./index.css"
-import { Provider } from "../components/ui/provider"
 import { DEMO_BASE_PATH } from "../constants"
+import { Provider } from "./components/ui/provider"
 import { DemoRoutes } from "./DemoRoutes"
 
 const container = document.getElementById("root")

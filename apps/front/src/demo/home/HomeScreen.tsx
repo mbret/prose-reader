@@ -1,9 +1,9 @@
 import { Box, Link as ChakraLink, Heading, Stack, Text } from "@chakra-ui/react"
 import { FaArrowLeft } from "react-icons/fa"
 import { Link } from "react-router"
-import { OrDivider } from "../../components/OrDivider"
-import { Button } from "../../components/ui/button"
 import { DEMO_BASE_PATH } from "../../constants"
+import { OrDivider } from "../components/OrDivider"
+import { Button } from "../components/ui/button"
 import { useDocumentTitle } from "../useDocumentTitle"
 
 export const HomeScreen = () => {

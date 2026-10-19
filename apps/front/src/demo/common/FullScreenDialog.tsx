@@ -5,7 +5,7 @@ import {
   DialogBackdrop,
   DialogContent,
   DialogRoot,
-} from "../../components/ui/dialog"
+} from "../components/ui/dialog"
 import { AppBar } from "./AppBar"
 
 export const FullScreenDialog: FC<{
