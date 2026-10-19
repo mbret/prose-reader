@@ -14,6 +14,9 @@
   "dependencies": {
     "@chakra-ui/react": "^3.5.0",
     "@emotion/react": "^11.14.0",
+    "@fontsource-variable/geist": "^5.3.0",
+    "@fontsource-variable/geist-mono": "^5.3.0",
+    "@fontsource-variable/literata": "^5.3.0",
     "@prose-reader/archive-reader": "workspace:*",
     "@prose-reader/cbz": "workspace:*",
     "@prose-reader/core": "workspace:*",

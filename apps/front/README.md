@@ -1,14 +1,24 @@
 # prose-reader-front
 
-The prose website. It serves both:
+The prose website, made of two pages:
 
-- `/` — the landing page.
-- `/demo` — the official demo, a reader made with React that showcases the
-  capabilities of the engine and its enhancers. It doubles as an integration
-  example, see [the demo docs](../docs/src/content/docs/get-started/demo-and-showcase.md).
+- `/`, from `index.html`: the landing page.
+- `/demo`, from `demo.html`: the official demo, a reader made with React that
+  showcases the capabilities of the engine and its enhancers. It doubles as an
+  integration example, see [the demo docs](../docs/src/content/docs/get-started/demo-and-showcase.md).
+  Every path under `/demo` serves this page: `vercel.json` routes it in
+  production, and a middleware in `vite.config.ts` in development and preview.
 
-The demo bundle is loaded lazily so that visiting the landing page does not
-download the reading engine.
+The landing page loads none of the demo's code, so visiting it does not
+download the reading engine. Each page keeps its code in its own folder,
+`src/landing` and `src/demo`.
+
+The demo's Chakra UI snippets live in `src/demo/components/ui`. The Chakra CLI
+writes to `src/components/ui` unless told otherwise, so add one with:
+
+```bash
+npx @chakra-ui/cli snippet add <name> --outdir src/demo/components/ui
+```
 
 ## Development
 
