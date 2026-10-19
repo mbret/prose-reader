@@ -34,47 +34,27 @@ const decodeURISafe = (value: string) => {
   }
 }
 
-const parseVirtualPanoramaFromHref = (href: string) => {
-  const virtualResource =
-    parseVirtualPanoramaResourcePath(href) ??
-    parseVirtualPanoramaResourcePath(decodeURISafe(href))
-
-  if (!virtualResource) return undefined
-
-  return {
-    ...virtualResource,
-    originalUri: decodeURIComponentSafe(virtualResource.originalUri),
-  }
-}
-
 /**
  * A cbz panorama is a continuous double-page drawing that the streamer split
  * into two virtual portrait spine items. A spine item is therefore a panorama
  * half iff its href is one of those virtual split resources.
  */
-const isPanoramaSpineItem = (spineItem: { item: { href: string } }) =>
-  parseVirtualPanoramaFromHref(spineItem.item.href) !== undefined
+const isPanoramaHalf = ({ href }: Pick<SpineItem, "href">) =>
+  (parseVirtualPanoramaResourcePath(href) ??
+    parseVirtualPanoramaResourcePath(decodeURISafe(href))) !== undefined
 
-const getOriginalSpineIndex = (reader: Reader, originalUri: string) => {
-  const seenVirtualOriginalUris = new Set<string>()
-  let originalSpineIndex = 0
+/**
+ * The place of a record among the records the book shows, in reading order:
+ * a panorama's spine index in the book before the streamer split it, since
+ * both of its halves name its record.
+ */
+const getOriginalSpineIndex = (reader: Reader, containerUri: string) => {
+  const containerUrisBefore = new Set<string>()
 
-  for (const spineItem of reader.spineItemsManager.items) {
-    const virtualResource = parseVirtualPanoramaFromHref(spineItem.item.href)
+  for (const { item } of reader.spineItemsManager.items) {
+    if (item.containerUri === containerUri) return containerUrisBefore.size
 
-    if (!virtualResource) {
-      originalSpineIndex++
-      continue
-    }
-
-    if (virtualResource.originalUri === originalUri) {
-      return originalSpineIndex
-    }
-
-    if (!seenVirtualOriginalUris.has(virtualResource.originalUri)) {
-      seenVirtualOriginalUris.add(virtualResource.originalUri)
-      originalSpineIndex++
-    }
+    containerUrisBefore.add(item.containerUri)
   }
 
   return undefined
@@ -85,13 +65,11 @@ const restoreOriginalSpineReference = (
   cfi: string,
   spineItem: SpineItem,
 ) => {
-  const virtualResource = parseVirtualPanoramaFromHref(spineItem.href)
-
-  if (!virtualResource) return undefined
+  if (!isPanoramaHalf(spineItem)) return undefined
 
   const originalSpineIndex = getOriginalSpineIndex(
     reader,
-    virtualResource.originalUri,
+    spineItem.containerUri,
   )
 
   if (originalSpineIndex === undefined) return undefined
@@ -100,7 +78,7 @@ const restoreOriginalSpineReference = (
     extensions: {
       [VIRTUAL_SPINE_ID_EXTENSION]: encodeURIComponent(spineItem.id),
     },
-    spineId: createXmlSafeId(virtualResource.originalUri),
+    spineId: createXmlSafeId(spineItem.containerUri),
     spineIndex: originalSpineIndex,
   })
 }
@@ -115,10 +93,7 @@ const restoreVirtualSpineReference = (reader: Reader, cfi: string) => {
     decodeURIComponentSafe(virtualSpineId),
   )
 
-  if (
-    !virtualSpineItem ||
-    !parseVirtualPanoramaFromHref(virtualSpineItem.item.href)
-  ) {
+  if (!virtualSpineItem || !isPanoramaHalf(virtualSpineItem.item)) {
     return undefined
   }
 
@@ -159,7 +134,7 @@ export const cbzEnhancer =
       ...reader,
       __PROSE_READER_ENHANCER_CBZ: true,
       cbz: {
-        isPanoramaSpineItem,
+        isPanoramaSpineItem: (spineItem) => isPanoramaHalf(spineItem.item),
       },
       destroy,
     }
