@@ -111,10 +111,10 @@ const generateComicManifest = () =>
 
 /** Every spine item's cfi, paired with the entry it shows. */
 const getSpineItemCfis = (reader: {
-  context: { manifest?: Manifest }
+  context: { manifest: Manifest }
   cfi: { generateRootCfi: (item: Manifest["spineItems"][number]) => string }
 }) =>
-  (reader.context.manifest?.spineItems ?? []).map((item) => ({
+  reader.context.manifest.spineItems.map((item) => ({
     containerUri: item.containerUri,
     cfi: reader.cfi.generateRootCfi(item),
   }))

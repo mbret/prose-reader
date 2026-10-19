@@ -632,6 +632,9 @@ importers:
       '@prose-reader/streamer':
         specifier: workspace:^
         version: link:../streamer
+      rxjs:
+        specifier: ^7.5.5
+        version: 7.8.2
 
   packages/enhancer-pdf:
     dependencies:

@@ -65,12 +65,93 @@ const isKoreaderProgressTarget = (target: {
 const PAGE_PROGRESS_PATTERN = /^\s*\d+\s*$/
 
 /**
- * Lets a reader navigate to a KOReader `progress`, and convert a cfi, such as
- * its reading position, to one.
+ * The pointer names its spine item, which is known at once, and a place in its
+ * document, found once the document is loaded.
+ */
+const xpointerToNavigationTarget = (
+  manifest: Manifest,
+  xpointer: string,
+): NavigationTarget<"selector"> | undefined => {
+  const parsed = parseXPointer(xpointer)
+
+  if (!parsed || !manifest.spineItems[parsed.spineItemIndex]) return undefined
+
+  return {
+    type: "selector",
+    value: {
+      spineItem: parsed.spineItemIndex,
+      find: (document) => {
+        const position = resolveXPointer(parsed, document)
+
+        return position && toCfiPosition(position)
+      },
+    },
+  }
+}
+
+const pageProgressToNavigationTarget = (
+  manifest: Manifest,
+  progress: string,
+): NavigationTarget<"spineItem"> | undefined => {
+  if (!PAGE_PROGRESS_PATTERN.test(progress)) return undefined
+
+  const spineItemIndex = getKoreaderPages(manifest).getSpineItemIndexOfPage(
+    Number(progress),
+  )
+
+  return spineItemIndex === undefined
+    ? undefined
+    : { type: "spineItem", value: spineItemIndex }
+}
+
+/**
+ * The target core goes to for a KOReader `progress`, `undefined` for one that
+ * names nothing in the book. It reads the manifest alone, so the target a
+ * reader opens at converts before the reader exists.
+ */
+const koreaderProgressToNavigationTarget = (
+  manifest: Manifest,
+  progress: string,
+) => {
+  switch (getKoreaderProgressKind(manifest.mediaType)) {
+    case "xpointer":
+      return xpointerToNavigationTarget(manifest, progress)
+    case "page":
+      return pageProgressToNavigationTarget(manifest, progress)
+    case undefined:
+      return undefined
+  }
+}
+
+/**
+ * Converted before the reader is created, rather than navigated to once it is:
+ * core goes to the target it opens at once the book is laid out and every
+ * enhancer has registered its hooks, such as the cbz enhancer's cfi hooks. A
+ * progress naming nothing in the book opens it at its start.
+ */
+const koreaderProgressToOpeningTarget = (
+  manifest: Manifest,
+  progress: string,
+) => {
+  const navigationTarget = koreaderProgressToNavigationTarget(
+    manifest,
+    progress,
+  )
+
+  if (!navigationTarget) {
+    report.warn(`Open at the start of the book, ${progress} is not in it`)
+  }
+
+  return navigationTarget
+}
+
+/**
+ * Lets a reader navigate to a KOReader `progress`, open at one, and convert a
+ * cfi, such as its reading position, to one.
  */
 export const koreaderEnhancer =
   <
-    InheritOptions,
+    InheritOptions extends { manifest: Manifest; target?: { type: string } },
     InheritTarget extends { type: string },
     InheritOutput extends EnhancerOutput<RootEnhancer>,
   >(
@@ -81,64 +162,28 @@ export const koreaderEnhancer =
     },
   ) =>
   (
-    options: InheritOptions,
+    options: Omit<InheritOptions, "target"> & {
+      /**
+       * Where the reader opens: any target the reader it enhances opens at, or
+       * a KOReader `progress`. A progress naming nothing in the book opens it
+       * at its start, as any such target does.
+       */
+      target?: InheritOptions["target"] | KoreaderProgressNavigationTarget
+    },
   ): InheritOutput & KoreaderEnhancerOutput<InheritTarget> => {
-    const reader = next(options)
-
-    /**
-     * The pointer names its spine item, which is known at once, and a place
-     * in its document, found once the document is loaded.
-     */
-    const xpointerToNavigationTarget = (
-      xpointer: string,
-    ): NavigationTarget<"selector"> | undefined => {
-      const parsed = parseXPointer(xpointer)
-
-      if (!parsed || !reader.spineItemsManager.get(parsed.spineItemIndex))
-        return undefined
-
-      return {
-        type: "selector",
-        value: {
-          spineItem: parsed.spineItemIndex,
-          find: (document) => {
-            const position = resolveXPointer(parsed, document)
-
-            return position && toCfiPosition(position)
-          },
-        },
-      }
-    }
-
-    const pageProgressToNavigationTarget = (
-      manifest: Manifest,
-      progress: string,
-    ): NavigationTarget<"spineItem"> | undefined => {
-      if (!PAGE_PROGRESS_PATTERN.test(progress)) return undefined
-
-      const spineItemIndex = getKoreaderPages(manifest).getSpineItemIndexOfPage(
-        Number(progress),
-      )
-
-      return spineItemIndex === undefined
-        ? undefined
-        : { type: "spineItem", value: spineItemIndex }
-    }
-
-    const koreaderProgressToNavigationTarget = (progress: string) => {
-      const manifest = reader.context.manifest
-
-      if (!manifest) return undefined
-
-      switch (getKoreaderProgressKind(manifest.mediaType)) {
-        case "xpointer":
-          return xpointerToNavigationTarget(progress)
-        case "page":
-          return pageProgressToNavigationTarget(manifest, progress)
-        case undefined:
-          return undefined
-      }
-    }
+    const { target: openingTarget, ...rest } = options
+    const reader = next({
+      ...rest,
+      target:
+        openingTarget && isKoreaderProgressTarget(openingTarget)
+          ? koreaderProgressToOpeningTarget(
+              options.manifest,
+              openingTarget.value,
+            )
+          : openingTarget,
+      // Only `target` changed, to one the reader it enhances takes; TS cannot
+      // rebuild the generic options from `Omit`.
+    } as InheritOptions)
 
     const navigate = (
       to: UserNavigationEntry<InheritTarget | KoreaderProgressNavigationTarget>,
@@ -148,7 +193,10 @@ export const koreaderEnhancer =
       if (!isKoreaderProgressTarget(target))
         return reader.navigation.navigate({ ...to, target })
 
-      const navigationTarget = koreaderProgressToNavigationTarget(target.value)
+      const navigationTarget = koreaderProgressToNavigationTarget(
+        reader.context.manifest,
+        target.value,
+      )
 
       if (!navigationTarget) {
         report.warn(`Ignore navigation to ${target.value}, not in the book`)
@@ -185,8 +233,6 @@ export const koreaderEnhancer =
 
     const cfiToProgress = (cfi: string) => {
       const manifest = reader.context.manifest
-
-      if (!manifest) return undefined
 
       switch (getKoreaderProgressKind(manifest.mediaType)) {
         case "xpointer":

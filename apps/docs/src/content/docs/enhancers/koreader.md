@@ -2,9 +2,9 @@
 title: "KOReader"
 ---
 
-This enhancer connects a reader to the KOReader ecosystem: it navigates to the
-**`progress`** a KOReader sync server stores for a book, and converts a cfi,
-such as the reading position, to one. The `progress` is a crengine xpointer
+This enhancer connects a reader to the KOReader ecosystem: it opens a reader
+at, or navigates to, the **`progress`** a KOReader sync server stores for a
+book, and converts a cfi, such as the reading position, to one. The `progress` is a crengine xpointer
 for an EPUB and a page number for a PDF or a comic archive, the form
 KOReader's own sync plugin uses for the same file, and the enhancer picks it
 from the book, so a sync client never has to. The conversions themselves come
@@ -83,6 +83,25 @@ the chapter was not loaded when the navigation started. A page number goes to
 the spine item showing that page. A value of the other form than the book's,
 a page the book does not have, or a pointer outside the book is ignored.
 `goToKoreaderProgress` never animates.
+
+### Opening at a progress
+
+A sync client opens a book at the `progress` it pulled. Give it as the
+reader's `target`:
+
+```typescript
+const reader = createAppReader({
+  manifest,
+  target: { type: "koreaderProgress", value: progress },
+})
+```
+
+The reader opens there the way it
+[opens at any target](/learn/navigation#opening-the-book-somewhere): its
+reading position never passes through the start of the book, even for an
+xpointer into a chapter that is not loaded yet. A `progress` the reader would
+ignore when going to it, such as a page the book does not have, opens the book
+at its start.
 
 ## The reading position as a progress
 
