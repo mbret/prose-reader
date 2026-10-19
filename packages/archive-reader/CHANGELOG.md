@@ -3,6 +3,13 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## [27.0.0](https://github.com/mbret/prose-reader/compare/v26.0.0...v27.0.0) (2026-10-19)
+
+### Bug Fixes
+
+* **archive-reader:** resolve an escaped href to the record it names ([36886cf](https://github.com/mbret/prose-reader/commit/36886cf05007bcb816ed35139f58c172c3f04d61))
+
+
 ## [26.0.0](https://github.com/mbret/prose-reader/compare/v25.1.0...v26.0.0) (2026-10-19)
 
 ### Features

@@ -3,6 +3,13 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## [27.0.0](https://github.com/mbret/prose-reader/compare/v26.0.0...v27.0.0) (2026-10-19)
+
+### Bug Fixes
+
+* **enhancer-pdf:** render the page each spine item names, past the tenth ([8008a98](https://github.com/mbret/prose-reader/commit/8008a98db02fb5bb114b3193ae24249a260f82af))
+
+
 ## [26.0.0](https://github.com/mbret/prose-reader/compare/v25.1.0...v26.0.0) (2026-10-19)
 
 **Note:** Version bump only for package @prose-reader/enhancer-pdf
