@@ -16,14 +16,26 @@ This package only uses peerDependencies, all of them required, so don't hesitate
 
 [https://github.com/mbret/reactjrx](https://github.com/mbret/reactjrx) is specifically very useful if you use `rxjs`.
 
+react-reader needs a reader created with the [Gestures](/enhancers/gestures) enhancer: its quick menu, bookmarks and zoom are driven by `reader.gestures`.
+
 ```typescript
+import { createReader } from "@prose-reader/core"
+import { gesturesEnhancer } from "@prose-reader/enhancer-gestures"
+
+export const createAppReader = gesturesEnhancer(createReader)
+```
+
+```tsx
+import type { Manifest } from "@prose-reader/core"
 import { ReactReader } from "@prose-reader/react-reader"
+import { useRef } from "react"
 // Don't forget to import the package css
 import "@prose-reader/react-reader/index.css"
 
-const MyAppReader = () => {
+const MyAppReader = ({ manifest }: { manifest: Manifest | undefined }) => {
   const containerRef = useRef<HTMLDivElement | null>(null)
-  // You own the creation of your reader instance
+  // You own the creation of your reader instance,
+  // see `useReaderInstance` below
   const readerInstance = useReaderInstance(manifest, containerRef)
   
   // Then we handle the rendering
@@ -87,24 +99,27 @@ react-reader writes the value into the reader, so don't give it to your reader w
   onFontSizeChange={(_scope, fontSize) => save({ fontSize })}
   spreadMode={saved.spreadMode}
   onSpreadModeChange={(_scope, spreadMode) => save({ spreadMode })}
-/>
+>
+  <div ref={containerRef} style={{ height: "100%", width: "100%" }} />
+</ReactReader>
 ```
 
 The change callback receives the scope whose value the user changed, or `"internal"` for a value set on the reader directly. Without the value prop, react-reader keeps its own copy for as long as it is mounted, starting from the value the reader was created with. Its menus offer to pick a scope only once you pass the scope props.
 
 ## Toggling features
 
-By default, the reader will use the bare core reader. If you want to unlock more features you can enhance your reader with automatically supported enhancers.
+With the gestures enhancer alone, react-reader offers what the core reader supports. If you want to unlock more features you can enhance your reader with automatically supported enhancers.
 
-For example adding the enhancer [Search](/react-reader/getting-started#search) will unlock this menu:
+For example adding the enhancer [Search](/enhancers/search) will unlock this menu:
 
 <figure><img src="/images/react-reader-search-menu.png" alt=""></figure>
 
 ```typescript
-import { searchEnhancer } from "@prose-reader/enhancer-search"
 import { createReader } from "@prose-reader/core"
+import { gesturesEnhancer } from "@prose-reader/enhancer-gestures"
+import { searchEnhancer } from "@prose-reader/enhancer-search"
 
-export const createAppReader = searchEnhancer(createReader)
+export const createAppReader = searchEnhancer(gesturesEnhancer(createReader))
 ```
 
 :::caution

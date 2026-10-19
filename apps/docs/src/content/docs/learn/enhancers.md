@@ -8,26 +8,30 @@ Enhancers are the official and conventional way of adding functionalities to the
 
 ### Official enhancers
 
-There are already several official enhancers which cover common use cases (bookmark, gesture, search, etc). Before trying to make your own take a look to see if it does not already exist. The list is available in the packages section of the documentation.
+There are already several official enhancers which cover common use cases (annotations and bookmarks, gestures, search, etc). Before trying to make your own take a look to see if it does not already exist. Each one has its page under [Enhancers](/enhancers/annotations) in the sidebar.
 
 Example:
 
 ```typescript
 import { createReader } from "@prose-reader/core"
-import { bookmarksEnhancer } from "@prose-reader/enhancer-bookmarks"
-import { searchEnhancer } from "@prose-reader/enhancer-search"
 import { annotationsEnhancer } from "@prose-reader/enhancer-annotations"
+import { gesturesEnhancer } from "@prose-reader/enhancer-gestures"
+import { searchEnhancer } from "@prose-reader/enhancer-search"
 
-const reader = annotationsEnhancer(
-  bookmarksEnhancer(
+const createAppReader = annotationsEnhancer(
+  gesturesEnhancer(
     searchEnhancer(
       createReader
     )
   )
 )
 
+const reader = createAppReader({ manifest })
+
 // enhancers have usually their own namespace by convention
-reader.bookmarks.load(...)
+reader.search.search("whale").subscribe((results) => {
+  console.log(results)
+})
 ```
 
 ### Paid enhancers
@@ -90,11 +94,31 @@ Anyway, let's now add some features to our enhancer
 
 ### Add functionalities to the reader
 
-We want our enhancer to deal with the links being clicked in the book. This is not something natively implemented by prose since it's specific to how the end user wants to react.
+We want our enhancer to deal with the links being clicked in the book. prose follows a link to a place in the book on its own, but what to do with a link to a website is specific to how the end user wants to react. [`reader.links$`](/core-api/reader/linksusd) emits the click events of the book's links.
 
-Let's say we want to show a confirm dialog to the user and if they confirm we navigate them to the link:
+Let's say we want to show a confirm dialog to the user and if they confirm we open the link:
 
 ```typescript
+import { createReader, isHtmlTagElement } from "@prose-reader/core"
+import { takeUntil } from "rxjs"
+
+/**
+ * The url a click leads to when it is on a link to a website. A book links
+ * its own documents with relative hrefs: only an absolute http(s) url
+ * leaves it.
+ */
+const getExternalUrl = (event: MouseEvent) => {
+  // The link listened to, rather than what was clicked inside it.
+  const link = event.currentTarget
+  const href = isHtmlTagElement(link, "a") ? link.getAttribute("href") : null
+
+  if (!href || !URL.canParse(href)) return undefined
+
+  const url = new URL(href)
+
+  return url.protocol === "http:" || url.protocol === "https:" ? url : undefined
+}
+
 type CreateReader = typeof createReader
 type ReaderOutput = ReturnType<CreateReader>
 
@@ -103,7 +127,7 @@ export const myEnhancer =
   (options: InheritOptions): InheritOutput => {
     const reader = next(options)
 
-    reader.$.links$
+    reader.links$
       .pipe(
         // we don't forget to unsubscribe
         // reader.$.destroy$ is a good way stop.
@@ -111,15 +135,10 @@ export const myEnhancer =
         takeUntil(reader.$.destroy$),
       )
       .subscribe((event) => {
-        if (event.event === "linkClicked") {
-          // not related to book navigation
-          if (!event.isNavigable) {
-            const response = confirm(`You are going to be redirected to external link`)
+        const url = getExternalUrl(event)
 
-            if (response) {
-              window.open(event.data.href, "__blank")
-            }
-          }
+        if (url && confirm(`You are going to be redirected to external link`)) {
+          window.open(url, "_blank")
         }
       })
 
@@ -127,7 +146,7 @@ export const myEnhancer =
   }
 ```
 
-For now it's pretty basic but we have an active subscription to the links being clicked and we unsubscribe at the right moment.
+For now it's pretty basic but we have an active subscription to the links being clicked and we unsubscribe at the right moment. The examples that follow reuse `getExternalUrl` and these imports.
 
 Now let's add an option to our enhancer to let the user customize the confirm message:
 
@@ -149,7 +168,7 @@ export const myEnhancer =
     } = options
     const reader = next(options)
 
-    reader.$.links$
+    reader.links$
       .pipe(
         // we don't forget to unsubscribe
         // reader.$.destroy$ is a good way stop.
@@ -157,14 +176,10 @@ export const myEnhancer =
         takeUntil(reader.$.destroy$),
       )
       .subscribe((event) => {
-        if (event.event === "linkClicked") {
-          if (!event.isNavigable) {
-            const response = confirm(confirmMessage)
+        const url = getExternalUrl(event)
 
-            if (response) {
-              window.open(event.data.href, "__blank")
-            }
-          }
+        if (url && confirm(confirmMessage)) {
+          window.open(url, "_blank")
         }
       })
 
@@ -218,7 +233,7 @@ export const myEnhancer =
     } = options
     const reader = next(options)
 
-    reader.$.links$
+    reader.links$
       .pipe(
         // we don't forget to unsubscribe
         // reader.$.destroy$ is a good way stop.
@@ -226,14 +241,10 @@ export const myEnhancer =
         takeUntil(reader.$.destroy$),
       )
       .subscribe((event) => {
-        if (event.event === "linkClicked") {
-          if (!event.isNavigable) {
-            const response = confirm(confirmMessage)
+        const url = getExternalUrl(event)
 
-            if (response) {
-              window.open(event.data.href, "__blank")
-            }
-          }
+        if (url && confirm(confirmMessage)) {
+          window.open(url, "_blank")
         }
       })
 
@@ -259,7 +270,7 @@ const reader = createAppReader({
 reader.myEnhancer.setConfirmMessage(`My new message`)
 ```
 
-Here we added new typing on the output of our enhancer and implemented a new function to update our message.&#x20;
+Here we added new typing on the output of our enhancer and implemented a new function to update our message.
 
 This may not seem like much but we already know how to:
 
@@ -327,15 +338,11 @@ export const linkEnhancer =
   (options: InheritOptions): InheritOutput => {
     const reader = next(options)
 
-    reader.$.links$.pipe(takeUntil(reader.$.destroy$)).subscribe((event) => {
-      if (event.event === "linkClicked") {
-        if (!event.isNavigable) {
-          const response = reader.dialog.confirm(options.dialog.confirmMessage)
+    reader.links$.pipe(takeUntil(reader.$.destroy$)).subscribe((event) => {
+      const url = getExternalUrl(event)
 
-          if (response) {
-            window.open(event.data.href, "__blank")
-          }
-        }
+      if (url && reader.dialog.confirm(options.dialog.confirmMessage)) {
+        window.open(url, "_blank")
       }
     })
 
@@ -478,19 +485,15 @@ You can very much do whatever you want and distribute a package that adds featur
 
 Here is an example of how to do things differently:
 
-We are creating a "plugin" which handles click on links and redirect the user after confirmation. This will work and is rather simple to use.
+We are creating a "plugin" which handles click on links and redirect the user after confirmation, with the `getExternalUrl` helper from [Add functionalities to the reader](#add-functionalities-to-the-reader). This will work and is rather simple to use.
 
 ```typescript
 export const linkHandlerPlugin = (reader: Reader) => {
-  const sub = reader.$.links$.pipe().subscribe((event) => {
-    if (event.event === "linkClicked") {
-      if (!event.isNavigable) {
-        const response = confirm(`You are going to be redirected to external link`)
+  const sub = reader.links$.subscribe((event) => {
+    const url = getExternalUrl(event)
 
-        if (response) {
-          window.open(event.data.href, "__blank")
-        }
-      }
+    if (url && confirm(`You are going to be redirected to external link`)) {
+      window.open(url, "_blank")
     }
   })
 
@@ -508,15 +511,11 @@ export const linkHandlerEnhancer =
   (options: InheritOptions): InheritOutput => {
     const reader = next(options)
 
-    reader.$.links$.pipe(takeUntil(reader.$.destroy$)).subscribe((event) => {
-      if (event.event === "linkClicked") {
-        if (!event.isNavigable) {
-          const response = confirm(`You are going to be redirected to external link`)
+    reader.links$.pipe(takeUntil(reader.$.destroy$)).subscribe((event) => {
+      const url = getExternalUrl(event)
 
-          if (response) {
-            window.open(event.data.href, "__blank")
-          }
-        }
+      if (url && confirm(`You are going to be redirected to external link`)) {
+        window.open(url, "_blank")
       }
     })
 

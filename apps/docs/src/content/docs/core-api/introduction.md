@@ -5,7 +5,7 @@ description: The reading system core functionalities
 
 The core package is all you need to display content into a web page. This contains all the foundations and bases you need.
 
-At some point you will realize that you need to add things like gestures, search, annotations etc. They are not part of the core because they can be opinionated and different between reading systems. However they can be built easily upon the core. That is by design but we also provide ready to use [Enhancers](/enhancers/pdf) to implement the common features.
+At some point you will realize that you need to add things like gestures, search, annotations etc. They are not part of the core because they can be opinionated and different between reading systems. However they can be built easily upon the core. That is by design but we also provide ready to use [Enhancers](/learn/enhancers) to implement the common features.
 
 ## Design principles
 
@@ -17,7 +17,7 @@ When a feature is common or basic enough it may go into the core package. Otherw
 
 If it answers all the questions by YES, it should be in the core:
 
-* Is it standard practice ?&#x20;
+* Is it standard practice ?
 * Is it likely needed by all developers ?
 * Is it following strictly browser API ?
 

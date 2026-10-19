@@ -223,4 +223,4 @@ These mirror the compile-enforced tables shipped next to each resolver — the l
 
 ## Error policy & versioning { #error-policy-and-versioning }
 
-Per-source parse failures are swallowed and logged via the debug `Report` (books in the wild are dirty): a malformed `ComicInfo.xml` never fails a resolve, it just doesn't contribute. The `ResolvedArchive` entity carries a `version` field for consumers persisting it — currently `3`, reflecting the normalized identifier model. It is bumped only when the shape or meaning of existing fields changes incompatibly; additive vocabulary growth does not bump it.
+Per-source parse failures are swallowed and logged via the debug `Report` (books in the wild are dirty): a malformed `ComicInfo.xml` never fails a resolve, it just doesn't contribute. The `ResolvedArchive` entity carries a `version` field for consumers persisting it — currently `5`. It is bumped only when the shape or meaning of existing fields changes incompatibly; additive vocabulary growth does not bump it.

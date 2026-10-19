@@ -74,6 +74,7 @@ type Options = {
   fontScaleMaxScale?: number
   fontScaleMinScale?: number
   fontScalePinchThrottleTime?: number
+  zoomMaxScale?: number
   pinchCancelPan?: boolean
   /**
    * List of selectors that will be tested to ignore gestures.
