@@ -324,6 +324,40 @@ describe(`Given a table of contents in another folder than its chapters`, () => 
   })
 })
 
+describe(`Given an EPUB with several renditions`, () => {
+  const packageDocument = (title: string) =>
+    `<?xml version="1.0"?><package xmlns="http://www.idpf.org/2007/opf" version="3.0">` +
+    `<metadata xmlns:dc="http://purl.org/dc/elements/1.1/"><dc:title>${title}</dc:title></metadata>` +
+    `<manifest><item id="p1" href="page1.xhtml" media-type="application/xhtml+xml"/></manifest>` +
+    `<spine><itemref idref="p1"/></spine></package>`
+
+  it(`reads the default rendition, the first its container file lists`, async () => {
+    const resolved = await resolveArchive(
+      archiveWith(
+        [
+          textRecord(`fixed/package.opf`, packageDocument(`Fixed layout`)),
+          textRecord(`fixed/page1.xhtml`, xhtml(true)),
+          textRecord(`reflowable/package.opf`, packageDocument(`Reflowable`)),
+          textRecord(`reflowable/page1.xhtml`, xhtml(false)),
+          textRecord(
+            `META-INF/container.xml`,
+            `<?xml version="1.0"?><container version="1.0" xmlns="urn:oasis:names:tc:opendocument:xmlns:container"><rootfiles>` +
+              `<rootfile full-path="reflowable/package.opf" media-type="application/oebps-package+xml"/>` +
+              `<rootfile full-path="fixed/package.opf" media-type="application/oebps-package+xml"/>` +
+              `</rootfiles></container>`,
+          ),
+        ],
+        `book.epub`,
+      ),
+    )
+
+    expect(resolved.metadata.titles?.[0]?.value).toBe(`Reflowable`)
+    expect(resolved.readingOrder.map(({ uri }) => uri)).toEqual([
+      `reflowable/page1.xhtml`,
+    ])
+  })
+})
+
 describe(`Given the file a book was opened from`, () => {
   const imageRecord = textRecord(`001.jpg`)
   const opfRecord = textRecord(`OEBPS/content.opf`)
@@ -547,10 +581,7 @@ describe(`Given an EPUB with a malformed OPF`, () => {
     expect(resolved.unreadableSources).toEqual([`opf`])
   })
 
-  it(`should report an OPF record the package discovery cannot reach`, async () => {
-    // carried, well-formed, yet never parsed: OPF discovery matches the
-    // lowercase extension only, so nothing reaches the parser and no read
-    // throws — the container still declares a package document we cannot use
+  it(`should read a package document whose extension is in capitals`, async () => {
     const resolved = await resolveArchive(
       archiveWith(
         [
@@ -559,9 +590,11 @@ describe(`Given an EPUB with a malformed OPF`, () => {
         ],
         `book.epub`,
       ),
+      { include: [`sources`] },
     )
 
-    expect(resolved.unreadableSources).toEqual([`opf`])
+    expect(resolved.sources.opf?.basePath).toBe(`OEBPS`)
+    expect(resolved.unreadableSources).toEqual([])
   })
 })
 

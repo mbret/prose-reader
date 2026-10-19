@@ -8,7 +8,6 @@ import type { ComicInfo } from "./metadata/comicInfo/parse.ts"
 import { readArchiveComicInfo } from "./metadata/comicInfo/readArchiveComicInfo.ts"
 import type { KoboMetadata } from "./metadata/kobo/parse.ts"
 import { readArchiveKobo } from "./metadata/kobo/readArchiveKobo.ts"
-import { isArchiveEpub } from "./metadata/opf/isArchiveEpub.ts"
 import type { ArchiveOpfParsed } from "./metadata/opf/readArchiveOpf.ts"
 import { readArchiveOpf } from "./metadata/opf/readArchiveOpf.ts"
 import type { ArchiveReadingOrderItem } from "./readingOrder/resolveArchiveReadingOrder.ts"
@@ -201,21 +200,17 @@ const countPages = (
 }
 
 /**
- * A sidecar reader returns `undefined` only when the container does not carry
- * the document at all, so a throw is the whole broken signal. The package
- * document has one more broken shape: a container carrying an `.opf` record
- * whose package document never reaches the parser (a name the OPF discovery
- * does not match, a directory record). `isArchiveEpub` is the carrier test
- * there, which is exactly what consumers had to reach for themselves.
+ * A reader returns `undefined` only when the container does not carry the
+ * document at all, so a throw is the whole broken signal. That holds for the
+ * package document too: it is found whenever the archive holds an `.opf`
+ * record, whatever the container file lists.
  */
 const collectUnreadableSources = ({
-  archive,
   opf,
   comicInfo,
   apple,
   kobo,
 }: {
-  archive: Archive
   opf: SafeRead<ArchiveOpfParsed | undefined> | undefined
   comicInfo: SafeRead<ComicInfo | undefined> | undefined
   apple: SafeRead<AppleMetadata | undefined> | undefined
@@ -223,10 +218,7 @@ const collectUnreadableSources = ({
 }): ResolvedArchiveSourceKind[] => {
   const unreadable: ResolvedArchiveSourceKind[] = []
 
-  if (opf !== undefined && opf.value === undefined) {
-    if (opf.failed || isArchiveEpub(archive)) unreadable.push("opf")
-  }
-
+  if (opf?.failed) unreadable.push("opf")
   if (comicInfo?.failed) unreadable.push("comicInfo")
   if (apple?.failed) unreadable.push("apple")
   if (kobo?.failed) unreadable.push("kobo")
@@ -370,7 +362,6 @@ export const resolveArchive = async <
     version: RESOLVED_ARCHIVE_VERSION,
     mediaType: resolveArchiveMediaType(archive),
     unreadableSources: collectUnreadableSources({
-      archive,
       opf: opfRead,
       comicInfo: comicInfoRead,
       apple: appleRead,

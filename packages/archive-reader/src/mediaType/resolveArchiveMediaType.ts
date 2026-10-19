@@ -1,5 +1,6 @@
 import { getUrlExtension, parseContentType } from "@prose-reader/shared"
 import type { Archive } from "../archives/types.ts"
+import { getArchiveOcfContainerRecord } from "../metadata/ocf/container.ts"
 
 /**
  * Book file extensions and their media type: the IANA-registered one where
@@ -18,19 +19,6 @@ const BOOK_MEDIA_TYPE_BY_EXTENSION: ReadonlyMap<string, string> = new Map([
   ["tar", "application/x-tar"],
   ["txt", "text/plain"],
 ])
-
-/**
- * Every EPUB container holds it (EPUB 3.3, OCF, "Container file"), and no
- * archive prose synthesizes does: those for a PDF, a text or a list of URLs
- * hold a package document, so one is no sign of an EPUB.
- */
-const OCF_CONTAINER_FILE_URI = "meta-inf/container.xml"
-
-const hasOcfContainerFile = (archive: Archive) =>
-  archive.records.some(
-    (record) =>
-      !record.dir && record.uri.toLowerCase() === OCF_CONTAINER_FILE_URI,
-  )
 
 /**
  * The media type of the file a book was opened from, when nothing tells it:
@@ -87,7 +75,8 @@ export const resolveArchiveMediaType = (archive: Archive): string => {
 
   if (fromFilename) return fromFilename
 
-  if (hasOcfContainerFile(archive)) return "application/epub+zip"
+  // Every EPUB holds one, and no archive prose synthesizes does.
+  if (getArchiveOcfContainerRecord(archive)) return "application/epub+zip"
 
   return declared || UNKNOWN_BOOK_MEDIA_TYPE
 }

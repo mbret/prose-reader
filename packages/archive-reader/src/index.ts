@@ -75,7 +75,7 @@ export {
   parseKoboXml,
 } from "./metadata/kobo/parse.ts"
 export { readArchiveKobo } from "./metadata/kobo/readArchiveKobo.ts"
-export { getArchiveOpfInfo } from "./metadata/opf/getArchiveOpfInfo.ts"
+export { getArchiveOpfRecord } from "./metadata/opf/getArchiveOpfRecord.ts"
 export type { OpfIdentifierTypeMeta } from "./metadata/opf/identifierScheme.ts"
 export {
   OPF_IDENTIFIER_SCHEME_ATTRIBUTES,

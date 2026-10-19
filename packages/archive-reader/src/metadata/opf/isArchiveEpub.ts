@@ -1,11 +1,5 @@
 import type { Archive } from "../../archives/types.ts"
+import { isOpfRecord } from "./getArchiveOpfRecord.ts"
 
-const hasOpfExtension = (path: string) => path.toLowerCase().endsWith(`.opf`)
-
-export const isArchiveEpub = (archive: Archive) => {
-  return archive.records.some(
-    (file) =>
-      !file.dir &&
-      (hasOpfExtension(file.basename) || hasOpfExtension(file.uri)),
-  )
-}
+export const isArchiveEpub = (archive: Archive) =>
+  archive.records.some(isOpfRecord)
