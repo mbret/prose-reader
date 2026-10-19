@@ -419,6 +419,9 @@ importers:
       '@prose-reader/archive-reader':
         specifier: workspace:*
         version: link:../../packages/archive-reader
+      '@prose-reader/cbz':
+        specifier: workspace:*
+        version: link:../../packages/cbz
       '@prose-reader/core':
         specifier: workspace:*
         version: link:../../packages/core
@@ -619,6 +622,16 @@ importers:
       '@prose-reader/shared':
         specifier: workspace:^
         version: link:../shared
+    devDependencies:
+      '@prose-reader/archive-reader':
+        specifier: workspace:^
+        version: link:../archive-reader
+      '@prose-reader/cbz':
+        specifier: workspace:^
+        version: link:../cbz
+      '@prose-reader/streamer':
+        specifier: workspace:^
+        version: link:../streamer
 
   packages/enhancer-pdf:
     dependencies:

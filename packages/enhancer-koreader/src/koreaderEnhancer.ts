@@ -6,43 +6,67 @@ import type {
 } from "@prose-reader/core"
 import {
   cfiToXPointer,
+  getKoreaderProgressKind,
   parseXPointer,
   resolveXPointer,
   toCfiPosition,
 } from "@prose-reader/koreader"
-import { Report } from "@prose-reader/shared"
+import { type Manifest, Report } from "@prose-reader/shared"
+import { getKoreaderPages } from "./koreaderPages"
 
 const report = Report.namespace(`@prose-reader/enhancer-koreader`)
 
-/** A KOReader (crengine) xpointer, such as `/body/DocFragment[14]/body/div/p[3]/text().42`. */
-export type XPointerNavigationTarget = { type: "xpointer"; value: string }
+/**
+ * A KOReader `progress`, the reading position a KOReader sync server stores:
+ * a crengine xpointer for an EPUB, such as
+ * `/body/DocFragment[14]/body/div/p[3]/text().42`, a 1-based page number for a
+ * PDF or a comic archive, such as `"12"`.
+ */
+export type KoreaderProgressNavigationTarget = {
+  type: "koreaderProgress"
+  value: string
+}
 
 export type KoreaderEnhancerOutput<InheritTarget> = {
   navigation: {
     navigate: (
-      to: UserNavigationEntry<InheritTarget | XPointerNavigationTarget>,
+      to: UserNavigationEntry<InheritTarget | KoreaderProgressNavigationTarget>,
     ) => void
-    /** Goes to the place an xpointer names. Never animates. */
-    goToXPointer: (xpointer: string) => void
+    /**
+     * Goes to the place a KOReader `progress` names: an xpointer for an EPUB,
+     * a page number for a PDF or a comic archive. A value of the other form,
+     * or one naming nothing in the book, is ignored. Never animates.
+     */
+    goToKoreaderProgress: (progress: string) => void
   }
   koreader: {
     /**
-     * The xpointer of a cfi, such as the reading position's, for a KOReader
-     * sync client to push. A cfi naming a spine item converts at once; one
-     * naming a place in its text needs the item's document loaded, and is
-     * `undefined` otherwise, as for a cfi that names nothing in the book.
+     * The KOReader `progress` of a cfi, such as the reading position's, for a
+     * KOReader sync client to push: an xpointer for an EPUB, a page number
+     * for a PDF or a comic archive, the form KOReader's sync plugin pushes for
+     * the same file.
+     *
+     * A page converts at once. An xpointer naming a chapter converts at once;
+     * one naming a place in its text needs the chapter's document loaded.
+     * `undefined` otherwise, as for a cfi that names nothing in the book, and
+     * any cfi of a book prose has no KOReader progress for, such as a text
+     * file.
      */
-    cfiToXPointer: (cfi: string) => string | undefined
+    cfiToProgress: (cfi: string) => string | undefined
   }
 }
 
-const isXPointerTarget = (target: {
+const isKoreaderProgressTarget = (target: {
   type: string
-}): target is XPointerNavigationTarget => target.type === "xpointer"
+}): target is KoreaderProgressNavigationTarget =>
+  target.type === "koreaderProgress"
+
+/** A page number as KOReader writes one, `"12"`. */
+const PAGE_PROGRESS_PATTERN = /^\s*\d+\s*$/
 
 /**
- * Lets a reader navigate to KOReader xpointers, and convert a cfi, such as its
- * reading position, to one.
+ * Lets a reader navigate to a KOReader `progress`, and convert a cfi, such as
+ * its reading position, to one.
  */
 export const koreaderEnhancer =
   <
@@ -86,23 +110,53 @@ export const koreaderEnhancer =
       }
     }
 
+    const pageProgressToNavigationTarget = (
+      manifest: Manifest,
+      progress: string,
+    ): NavigationTarget<"spineItem"> | undefined => {
+      if (!PAGE_PROGRESS_PATTERN.test(progress)) return undefined
+
+      const spineItemIndex = getKoreaderPages(manifest).getSpineItemIndexOfPage(
+        Number(progress),
+      )
+
+      return spineItemIndex === undefined
+        ? undefined
+        : { type: "spineItem", value: spineItemIndex }
+    }
+
+    const koreaderProgressToNavigationTarget = (progress: string) => {
+      const manifest = reader.context.manifest
+
+      if (!manifest) return undefined
+
+      switch (getKoreaderProgressKind(manifest.mediaType)) {
+        case "xpointer":
+          return xpointerToNavigationTarget(progress)
+        case "page":
+          return pageProgressToNavigationTarget(manifest, progress)
+        case undefined:
+          return undefined
+      }
+    }
+
     const navigate = (
-      to: UserNavigationEntry<InheritTarget | XPointerNavigationTarget>,
+      to: UserNavigationEntry<InheritTarget | KoreaderProgressNavigationTarget>,
     ) => {
       const { target } = to
 
-      if (!isXPointerTarget(target))
+      if (!isKoreaderProgressTarget(target))
         return reader.navigation.navigate({ ...to, target })
 
-      const selector = xpointerToNavigationTarget(target.value)
+      const navigationTarget = koreaderProgressToNavigationTarget(target.value)
 
-      if (!selector) {
+      if (!navigationTarget) {
         report.warn(`Ignore navigation to ${target.value}, not in the book`)
 
         return
       }
 
-      reader.navigation.navigate({ ...to, target: selector })
+      reader.navigation.navigate({ ...to, target: navigationTarget })
     }
 
     const getLoadedSpineItemDocument = (spineItemIndex: number) => {
@@ -117,19 +171,46 @@ export const koreaderEnhancer =
         : undefined
     }
 
+    const cfiToPageProgress = (manifest: Manifest, cfi: string) => {
+      // Through the reader, so the cfi hooks apply: the cbz enhancer's cfis
+      // name a panorama's record rather than the half shown.
+      const spineItem = reader.cfi.getSpineItemFromCfi(cfi)
+
+      if (!spineItem) return undefined
+
+      const page = getKoreaderPages(manifest).getPageOfSpineItem(spineItem.item)
+
+      return page === undefined ? undefined : String(page)
+    }
+
+    const cfiToProgress = (cfi: string) => {
+      const manifest = reader.context.manifest
+
+      if (!manifest) return undefined
+
+      switch (getKoreaderProgressKind(manifest.mediaType)) {
+        case "xpointer":
+          return cfiToXPointer(cfi, getLoadedSpineItemDocument)
+        case "page":
+          return cfiToPageProgress(manifest, cfi)
+        case undefined:
+          return undefined
+      }
+    }
+
     return {
       ...reader,
       navigation: {
         ...reader.navigation,
         navigate,
-        goToXPointer: (xpointer) =>
+        goToKoreaderProgress: (progress) =>
           navigate({
-            target: { type: "xpointer", value: xpointer },
+            target: { type: "koreaderProgress", value: progress },
             animation: false,
           }),
       },
       koreader: {
-        cfiToXPointer: (cfi) => cfiToXPointer(cfi, getLoadedSpineItemDocument),
+        cfiToProgress,
       },
     }
   }

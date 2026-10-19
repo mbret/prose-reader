@@ -70,3 +70,18 @@ EPUB 2 fixture built to exercise every crengine rule (block probes for every
 HTML element, whitespace runs, entities, emoji, CJK, `pre`, tables, lists,
 MathML, ruby, inline and standalone SVG, CRLF files, text nodes longer than
 8192 characters).
+
+## Page fixtures of the browser suite
+
+`build_page_fixtures.py <prose-reader>/apps/tests/public/epubs` builds the
+comic and the PDF the browser suite's KOReader page specs open
+(`apps/tests/tests/koreader/{comic,pdf}`), and prints the pages MuPDF, which
+KOReader opens comics with, makes of the comic. The enhancer takes prose's
+reading order for KOReader's page order, which holds for this comic: its
+images are named so that MuPDF and prose sort them alike, and it holds
+nothing KOReader skips (#535).
+
+```sh
+python3 -m venv /tmp/mupdf && /tmp/mupdf/bin/pip install pymupdf pillow
+/tmp/mupdf/bin/python -I build_page_fixtures.py <prose-reader>/apps/tests/public/epubs
+```

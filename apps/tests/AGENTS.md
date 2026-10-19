@@ -13,10 +13,11 @@ Each scenario is a folder under `tests/` with three files: an `index.html`, an
 `window.reader`, and a `*.spec.ts`. A spec drives the page through the URL
 (`?cfi=`), the keyboard, or the reader, which `getReader(page)` from
 `tests/utils/reader.ts` hands it typed, and reads state back the same way.
-Fixtures live in `public/epubs`: reflowable and pre-paginated epubs, a cbz and
-PDFs. A fixture a script in `tools/` builds is rebuilt with that script, not
-edited. Shared helpers live in `tests/utils`; add to them rather than copying a
-wait or a locator into a second spec.
+Fixtures live in `public/epubs`: reflowable and pre-paginated epubs, comics and
+PDFs. A fixture a script builds is rebuilt with that script, not edited: the
+scripts are in `tools/`, and those of the KOReader page fixtures in
+`packages/koreader/tools/`. Shared helpers live in `tests/utils`; add to them
+rather than copying a wait or a locator into a second spec.
 
 ## Waiting
 

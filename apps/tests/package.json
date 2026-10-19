@@ -13,6 +13,7 @@
   "devDependencies": {
     "@playwright/test": "^1.48.2",
     "@prose-reader/archive-reader": "workspace:*",
+    "@prose-reader/cbz": "workspace:*",
     "@prose-reader/core": "workspace:*",
     "@prose-reader/enhancer-annotations": "workspace:*",
     "@prose-reader/enhancer-audio": "workspace:*",

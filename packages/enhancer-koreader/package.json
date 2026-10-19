@@ -23,7 +23,8 @@
   "scripts": {
     "start": "vite build --watch --mode development",
     "build": "tsc && vite build",
-    "tsc": "tsc"
+    "tsc": "tsc",
+    "test": "vitest run"
   },
   "dependencies": {
     "@prose-reader/koreader": "workspace:^",
@@ -31,5 +32,10 @@
   },
   "peerDependencies": {
     "@prose-reader/core": "workspace:^"
+  },
+  "devDependencies": {
+    "@prose-reader/archive-reader": "workspace:^",
+    "@prose-reader/cbz": "workspace:^",
+    "@prose-reader/streamer": "workspace:^"
   }
 }
