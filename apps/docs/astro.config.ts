@@ -23,7 +23,18 @@ export default defineConfig({
     mermaid({ enableLog: false }),
     starlight({
       title: "prose",
-      favicon: "/favicon.ico",
+      logo: { src: "./src/assets/logo.svg" },
+      // Starlight links /favicon.svg itself; the .ico is the fallback for browsers without SVG favicons
+      head: [
+        {
+          tag: "link",
+          attrs: { rel: "icon", href: "/favicon.ico", sizes: "32x32" },
+        },
+        {
+          tag: "link",
+          attrs: { rel: "apple-touch-icon", href: "/apple-touch-icon.png" },
+        },
+      ],
       social: [
         {
           icon: "github",
