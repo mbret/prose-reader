@@ -20,6 +20,7 @@ describe("buildAudiobookToc", () => {
 
   const baseManifest = {
     filename: "",
+    mediaType: "application/zip",
     items: [],
     readingDirection: "ltr" as const,
     renditionLayout: "pre-paginated" as const,

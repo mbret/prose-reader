@@ -24,6 +24,7 @@ export const createTestManifest = (
   manifest: Partial<Manifest> = {},
 ): Manifest => ({
   filename: "test",
+  mediaType: "application/epub+zip",
   title: "test",
   renditionLayout: undefined,
   renditionSpread: undefined,

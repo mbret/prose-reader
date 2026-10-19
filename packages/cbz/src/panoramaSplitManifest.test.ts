@@ -24,6 +24,7 @@ const createManifest = ({
   mediaType: string | undefined
 }): Manifest => ({
   filename: "",
+  mediaType: "application/vnd.comicbook+zip",
   items: [{ href, id, mediaType }],
   readingDirection: "ltr",
   renditionLayout: "pre-paginated",
@@ -49,6 +50,7 @@ const createManifestFromResourceNames = ({
   resourceNames: string[]
 }): Manifest => ({
   filename: "",
+  mediaType: "application/vnd.comicbook+zip",
   items: resourceNames.map((resourceName) => ({
     href: `file://${resourceName}`,
     id: resourceName,
