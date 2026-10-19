@@ -18,7 +18,7 @@ async function run() {
     manifest,
     pageTurnAnimation: "none",
     getResource: (item) =>
-      from(streamer.fetchResource({ key: `_`, resourcePath: item.href })),
+      from(streamer.fetchResource({ resourcePath: item.href })),
     layoutLayerTransition: false,
   })
 
