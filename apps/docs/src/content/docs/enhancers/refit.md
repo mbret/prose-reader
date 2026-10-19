@@ -28,4 +28,4 @@ const reader = createAppReader({
 })
 ```
 
-<div class="figures"><figure><img src="/images/viewport-fit-32.png" alt="The demo's viewport fit setting at a maximum width of 32%, with the comic narrowed behind it"></figure> <figure><img src="/images/viewport-fit-76.png" alt="The same setting at 76%, with the comic wider"></figure></div>
+<div class="figures"><figure><img src="/images/viewport-fit-32.webp" alt="The demo's viewport fit setting at a maximum width of 32%, with the comic narrowed behind it" width="750" height="1334"></figure> <figure><img src="/images/viewport-fit-76.webp" alt="The same setting at 76%, with the comic wider" width="750" height="1334"></figure></div>
