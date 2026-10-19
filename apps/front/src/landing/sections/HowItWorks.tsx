@@ -6,8 +6,10 @@ import { SectionIntro } from "../components/SectionHeading"
 import { links } from "../links"
 
 /**
- * The getting started guide, cut down to its three moves. Each line of code
- * stays short enough to fit a phone without scrolling.
+ * The setup the docs recommend: a streamer in a service worker or on a server,
+ * which gives every resource a URL, so the reader fetches them itself and
+ * needs no `getResource`. Each line of code stays short enough to fit a phone
+ * without scrolling.
  */
 const steps = [
   {
@@ -21,10 +23,10 @@ const steps = [
   {
     title: "Serve the book",
     description:
-      "A streamer turns an EPUB, a comic archive or a PDF into a manifest and the resources it lists.",
-    code: `const manifest = await streamer
-  .fetchManifest()
-  .then((res) => res.json())`,
+      "A streamer, in a service worker or on your server, turns an EPUB, a comic archive or a PDF into a manifest and the resources it lists.",
+    code: `const manifest = await fetch(
+  "/streamer/my-book/manifest",
+).then((res) => res.json())`,
   },
   {
     title: "Render it",
@@ -32,7 +34,6 @@ const steps = [
       "Create a reader for that manifest and mount it in your page. Enhancers add gestures, search or annotations.",
     code: `const reader = createReader({
   manifest,
-  getResource,
 })
 reader.mount(container)`,
   },
