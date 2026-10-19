@@ -29,7 +29,7 @@ const createSpineItemForDoc = ({
   // The lookup reads only these members of a loaded item.
   return {
     item: { id, href },
-    value: { loadedDocument: doc },
+    loadedDocument: doc,
   } as unknown as SpineItem
 }
 

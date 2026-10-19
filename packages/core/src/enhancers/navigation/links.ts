@@ -28,7 +28,7 @@ export const handleLinksNavigation = (
 
       const href = link.getAttribute("href")
       const spineItem = reader.spineItemsManager.items.find(
-        (item) => item.value.loadedDocument === link.ownerDocument,
+        (item) => item.loadedDocument === link.ownerDocument,
       )
 
       if (href === null || !spineItem) return

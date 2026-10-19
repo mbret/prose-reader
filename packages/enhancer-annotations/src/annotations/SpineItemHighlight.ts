@@ -56,9 +56,9 @@ export class SpineItemHighlight extends DestroyableClass {
      * the item has none: one being released would otherwise be kept, with
      * the range into it, until the next load.
      */
-    this.resolvedCfi$ = this.spineItem.watch("loadedDocument").pipe(
-      map((loadedDocument) =>
-        loadedDocument
+    this.resolvedCfi$ = this.spineItem.watch("loadStatus").pipe(
+      map(() =>
+        this.spineItem.loadedDocument
           ? this.reader.cfi.resolveCfi({ cfi: this.highlight.cfi })
           : undefined,
       ),

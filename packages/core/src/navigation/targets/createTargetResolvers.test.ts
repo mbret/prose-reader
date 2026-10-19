@@ -48,7 +48,8 @@ const createResolvers = ({
   const spineItem = {
     item: { index: 0, href: "0.xhtml" },
     index: 0,
-    value: { loadStatus, loadedDocument },
+    value: { loadStatus },
+    loadedDocument,
   }
   const cfi = {
     isRootCfi: (value: string) => value.endsWith("!)"),

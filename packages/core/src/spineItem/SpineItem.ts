@@ -23,20 +23,6 @@ export type SpineItemReference = string | SpineItem | number
  */
 export type SpineItemState = DocumentLoad & {
   /**
-   * The item's document while it is `loaded`, and `undefined` otherwise:
-   * before it loads, while it loads though its frame may already hold it,
-   * from the moment it starts unloading, after a failed load, and for an item
-   * rendered without a document frame, such as audio. Destroying the item
-   * releases the document without an unload: it is held here until released,
-   * and gone before the state completes.
-   *
-   * Read the book's content here, a cfi's node or what a selector looks for:
-   * a document still being set up or already leaving is not the one the
-   * reader shows. An `item.onDocumentLoad` hook, which sets the document up
-   * while it loads, reaches it through the renderer's frame instead.
-   */
-  loadedDocument: Document | undefined
-  /**
    * - Content has been loaded
    * - A first layout has been done
    */
@@ -73,7 +59,6 @@ export class SpineItem extends ReactiveEntity<SpineItemState> {
   ) {
     super({
       loadStatus: "idle",
-      loadedDocument: undefined,
       isReady: false,
       isDirty: false,
       loadError: undefined,
@@ -178,9 +163,7 @@ export class SpineItem extends ReactiveEntity<SpineItemState> {
    * Readiness means the renderer is loaded *and* a layout completed for it.
    * The two halves are granted by different streams, so a writer that drops
    * the document must not be able to leave readiness standing over it. The
-   * load is written whole, its status with its error, and the loaded
-   * document with it: the frame's while loaded, read again on each change of
-   * the renderer, which is how its release on destroy reaches the state.
+   * load is written whole, its status with its error.
    */
   private updateState(update: {
     load?: DocumentLoad
@@ -190,20 +173,15 @@ export class SpineItem extends ReactiveEntity<SpineItemState> {
     const {
       isReady: currentIsReady,
       isDirty: currentIsDirty,
-      loadedDocument: _currentLoadedDocument,
       ...currentLoad
     } = this.value
     const load = update.load ?? currentLoad
     const isReady = update.isReady ?? currentIsReady
-    const isLoaded = load.loadStatus === "loaded"
 
     this.mergeCompare({
       ...load,
-      loadedDocument: isLoaded
-        ? (this.renderer.getDocumentFrame()?.contentDocument ?? undefined)
-        : undefined,
       isDirty: update.isDirty ?? currentIsDirty,
-      isReady: isReady && isLoaded,
+      isReady: isReady && load.loadStatus === "loaded",
     })
   }
 
@@ -215,20 +193,36 @@ export class SpineItem extends ReactiveEntity<SpineItemState> {
     return this.watch(`isReady`)
   }
 
+  /**
+   * The item's document while it is `loaded`, and `undefined` otherwise:
+   * before it loads, while it loads though its frame may already hold it,
+   * from the moment it starts unloading, after a failed load, once a destroy
+   * has released it, and for an item rendered without a document frame, such
+   * as audio. Read the book's content here, a cfi's node or what a selector
+   * looks for: a document still being set up or already leaving is not the
+   * one the reader shows. An `item.onDocumentLoad` hook, which sets the
+   * document up while it loads, reaches it through the renderer's frame
+   * instead.
+   *
+   * Derived on each read from the item's state and its renderer's frame, and
+   * held nowhere: code reacting to it follows `watch("loadStatus")` and reads
+   * it there.
+   */
+  public get loadedDocument(): Document | undefined {
+    if (this.value.loadStatus !== `loaded`) return undefined
+
+    return this.renderer.getDocumentFrame()?.contentDocument ?? undefined
+  }
+
   public destroy = () => {
     if (this.isDestroyed) return
-
-    /**
-     * The renderer releases its document first, while the item's state still
-     * follows it, so the state's last value holds no document. It needs the
-     * container attached to release its resources (eg: revoking blobs
-     * requires a live frame document).
-     */
-    this.renderer.destroy()
 
     super.destroy()
 
     this._layout.destroy()
+    // the renderer needs the container attached to release its resources
+    // (eg: revoking blobs requires a live frame document)
+    this.renderer.destroy()
     this.containerElement.remove()
   }
 

@@ -40,7 +40,7 @@ A renderer extends `DocumentRenderer`, which runs the lifecycle of its document:
 | `onLayout(params)` | Lays the document out for the viewport's page size, and emits its size. The item's width is rounded up to whole pages. `undefined` keeps the size of the last layout at the same page size, or one page. |
 | `onUnload()` | Releases what the document holds, such as object urls or render tasks. Synchronous. |
 | `onRenderHeadless()` | Emits the item's document, built without displaying it, for [renderHeadless()](/core-api/reader/renderheadless), or `undefined` when the item has none. |
-| `getDocumentFrame()` | The frame the document is in, when there is one. The `item.onDocumentLoad` hooks set the document up through it. Once the spine item is loaded, its state holds the document as `loadedDocument`, which is where to read the book's content. |
+| `getDocumentFrame()` | The frame the document is in, when there is one. The `item.onDocumentLoad` hooks set the document up through it. Once the spine item is loaded, the document is its `loadedDocument`, which is where to read the book's content. |
 
 It can also override the `renditionLayout`, `writingMode` and `readingDirection` getters when it knows them from its document. The spine item is `this.item`, its resource is fetched with `this.resourcesHandler`, and the reader's `this.context`, `this.settings` and `this.viewport` are at hand.
 

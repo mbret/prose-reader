@@ -38,7 +38,7 @@ export const resolveCfi = ({
       node: null,
     }
 
-  const doc = spineItem.value.loadedDocument
+  const doc = spineItem.loadedDocument
 
   if (doc) {
     try {

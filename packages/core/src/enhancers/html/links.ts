@@ -4,8 +4,10 @@ import type { Reader } from "../../reader"
 export const handleLinks = (reader: Reader) => {
   return merge(
     ...reader.spine.spineItemsManager.items.map((item) => {
-      return item.watch("loadedDocument").pipe(
-        switchMap((loadedDocument) => {
+      return item.watch("loadStatus").pipe(
+        switchMap(() => {
+          const loadedDocument = item.loadedDocument
+
           if (!loadedDocument) return NEVER
 
           const anchorElements = Array.from(

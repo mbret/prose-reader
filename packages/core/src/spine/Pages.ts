@@ -72,7 +72,7 @@ const resolveFirstVisibleNodeForPage = (
   page: UnresolvedPageEntry,
 ): PageEntry => {
   const { spineItem, ...rest } = page
-  const { loadedDocument } = spineItem.value
+  const loadedDocument = spineItem.loadedDocument
 
   if (!loadedDocument || loadedDocument.body === null) {
     return {
