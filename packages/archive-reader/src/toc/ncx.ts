@@ -1,9 +1,9 @@
 import { getUriBasePath } from "@prose-reader/shared"
 import { XmlDocument, type XmlElement } from "xmldoc"
 import { readRecordAsText } from "../archives/readRecordAsText.ts"
-import type { Archive } from "../archives/types.ts"
+import { type Archive, getArchiveFileRecordByUri } from "../archives/types.ts"
 import type { OpfMetadata } from "../metadata/opf/parse.ts"
-import { toContainerHref } from "../utils/toContainerUri.ts"
+import { toContainerHref, toContainerUri } from "../utils/toContainerUri.ts"
 import type { ArchiveTocItem } from "./types.ts"
 
 const mapNcxChapter = (
@@ -65,19 +65,20 @@ export const resolveTocFromNcx = async ({
     const ncxItem = opf.manifestItems.find((item) => item.id === ncxId)
 
     if (ncxItem) {
-      const ncxPath = `${opfBasePath}${opfBasePath === `` ? `` : `/`}${ncxItem.href}`
+      const ncxRecord = getArchiveFileRecordByUri(
+        archive,
+        toContainerUri(ncxItem.href, opfBasePath),
+      )
 
-      const file = archive.records.find((item) => item.uri.endsWith(ncxPath))
-
-      if (file && !file.dir) {
-        const ncxData = new XmlDocument(await readRecordAsText(file))
+      if (ncxRecord) {
+        const ncxData = new XmlDocument(await readRecordAsText(ncxRecord))
 
         /**
          * content src inside the ncx are relative to the ncx file,
          * not the opf file
          */
         return buildTocFromNcxDocument(ncxData, {
-          basePath: getUriBasePath(file.uri),
+          basePath: getUriBasePath(ncxRecord.uri),
         })
       }
     }
