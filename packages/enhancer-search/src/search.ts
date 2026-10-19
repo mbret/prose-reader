@@ -1,11 +1,12 @@
-import type { Reader, SpineItem } from "@prose-reader/core"
-import { type Observable, of } from "rxjs"
-import type { ResultItem } from "./types"
-
-export type SearchResult = ResultItem[]
+/**
+ * The search text is matched literally, so every character a RegExp would read
+ * as syntax is escaped. Built-in `RegExp.escape` is too recent to rely on.
+ */
+const escapeRegExpSyntax = (text: string) =>
+  text.replace(/[.*+?^${}()|[\]\\]/g, `\\$&`)
 
 /**
- * Walk the subtree accumulating ranges for every match of `regexp`.
+ * Walk the subtree accumulating a range for every match of `regexp`.
  *
  * A full-book search runs this over the rendered document of *every* spine
  * item, so the text-node loop below is the hot path (thousands of text nodes
@@ -15,72 +16,61 @@ export type SearchResult = ResultItem[]
  *   node (only its `lastIndex` is reset), instead of recompiling per text node,
  * - matches are pushed into a single shared array instead of allocating a new
  *   array at each node and spreading child results upward.
+ *
+ * `regexp` must be global and unable to match an empty string: `exec` does not
+ * advance past an empty match, so the loop would never end.
  */
 const collectMatchingRanges = (
   node: Node,
   regexp: RegExp,
-  matchLength: number,
   rangeList: Range[],
 ) => {
-  if (node.nodeName === `head`) return
+  // `head` in an XHTML document, `HEAD` in an HTML one.
+  if (node.nodeName.toLowerCase() === `head`) return
 
-  const nodeList = node.childNodes
-
-  for (let i = 0; i < nodeList.length; i++) {
-    const subNode = nodeList[i]
-
-    if (!subNode) {
-      continue
-    }
-
+  for (const subNode of node.childNodes) {
     if (subNode.hasChildNodes()) {
-      collectMatchingRanges(subNode, regexp, matchLength, rangeList)
+      collectMatchingRanges(subNode, regexp, rangeList)
     }
 
-    if (subNode.nodeType === 3) {
-      const content = (subNode as Text).data.toLowerCase()
-      if (content) {
-        let match: RegExpExecArray | null = null
-        regexp.lastIndex = 0
+    if (subNode.nodeType === Node.TEXT_NODE && subNode.ownerDocument) {
+      // Matched as is, not lowercased: the `i` flag handles case, and
+      // lowercasing can change the length of the string (`İ` becomes two code
+      // units), which would shift every offset after it.
+      const content = subNode.textContent ?? ``
 
-        // biome-ignore lint/suspicious/noAssignInExpressions: TODO
-        while ((match = regexp.exec(content)) !== null) {
-          if (match.index >= 0 && subNode.ownerDocument) {
-            const range = subNode.ownerDocument.createRange()
-            range.setStart(subNode, match.index)
-            range.setEnd(subNode, match.index + matchLength)
+      regexp.lastIndex = 0
 
-            rangeList.push(range)
-          }
-        }
+      for (
+        let match = regexp.exec(content);
+        match;
+        match = regexp.exec(content)
+      ) {
+        const range = subNode.ownerDocument.createRange()
+        range.setStart(subNode, match.index)
+        range.setEnd(subNode, match.index + match[0].length)
+
+        rangeList.push(range)
       }
     }
   }
 }
 
-const searchNodeContainingText = (node: Node, text: string) => {
+/**
+ * Ranges of every case-insensitive, literal occurrence of `text` in `node`.
+ * An occurrence has to be within a single text node.
+ */
+export const searchTextRangesInNode = (node: Node, text: string) => {
   const rangeList: Range[] = []
 
-  collectMatchingRanges(node, RegExp(`(${text})`, `gi`), text.length, rangeList)
+  // An empty text occurs everywhere and nowhere useful.
+  if (text === ``) return rangeList
+
+  collectMatchingRanges(
+    node,
+    new RegExp(escapeRegExpSyntax(text), `gi`),
+    rangeList,
+  )
 
   return rangeList
-}
-
-export const searchInDocument = (
-  reader: Reader,
-  item: SpineItem,
-  doc: Document,
-  text: string,
-): Observable<SearchResult> => {
-  const ranges = searchNodeContainingText(doc, text)
-
-  const newResults = ranges.map((range) => {
-    const cfi = reader.cfi.generateCfiFromRange(range, item.item)
-
-    return {
-      cfi,
-    } satisfies ResultItem
-  })
-
-  return of(newResults)
 }
