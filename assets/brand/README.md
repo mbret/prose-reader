@@ -10,6 +10,7 @@ pixels at 16 and 32 px.
 | `logo-wordmark.svg` | The mark beside the name, on light backgrounds |
 | `logo-wordmark-dark.svg` | The mark beside the name, on dark backgrounds |
 | `logo-512.png` | The mark as a 512 px PNG, where an SVG is not accepted |
+| `social-card.html` | The source of the website's link preview, see below |
 
 ## Colors
 
@@ -35,3 +36,16 @@ shows `apps/docs/src/assets/logo.svg`. Update them when the mark changes:
 
 The landing page's header and footer import `logo.svg` itself, so they follow
 the mark without a copy.
+
+`apps/front/public/social-card.jpg` is the website's link preview, 1200 × 630
+px: the mark and the name, the landing page's headline and the demo in a browser
+and on a phone, as in the landing page's hero. `social-card.html` is its source,
+which loads the fonts from `apps/front/node_modules` and the screenshots from
+the landing page's assets. Render it again when the mark, the headline or the
+hero changes, with the browsers of the browser tests, and keep the JPEG under
+300 KB, the most some link previews, such as WhatsApp's, accept:
+
+```sh
+pnpm --filter prose-reader-tests exec playwright screenshot --viewport-size=1200,630 \
+  "file://$PWD/assets/brand/social-card.html" "$PWD/apps/front/public/social-card.jpg"
+```

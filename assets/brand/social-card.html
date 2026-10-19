@@ -1,0 +1,44 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<style>
+@font-face { font-family: "Literata Variable"; font-weight: 200 900; src: url("../../apps/front/node_modules/@fontsource-variable/literata/files/literata-latin-opsz-normal.woff2") format("woff2-variations"); }
+@font-face { font-family: "Geist Variable"; font-weight: 100 900; src: url("../../apps/front/node_modules/@fontsource-variable/geist/files/geist-latin-wght-normal.woff2") format("woff2-variations"); }
+@font-face { font-family: "Geist Mono Variable"; font-weight: 100 900; src: url("../../apps/front/node_modules/@fontsource-variable/geist-mono/files/geist-mono-latin-wght-normal.woff2") format("woff2-variations"); }
+html, body { margin: 0; }
+body { position: relative; width: 1200px; height: 630px; overflow: hidden; background: #fff; color: #1C1A17; font-family: "Geist Variable", sans-serif; }
+.glow { position: absolute; top: -220px; right: -220px; width: 1100px; height: 900px; background: radial-gradient(closest-side, rgba(229, 72, 43, 0.17), rgba(229, 72, 43, 0.06) 55%, rgba(229, 72, 43, 0)); }
+.copy { position: absolute; left: 72px; top: 60px; width: 540px; }
+.wordmark { display: flex; align-items: center; gap: 14px; font-family: "Literata Variable", serif; font-weight: 600; font-size: 40px; letter-spacing: -0.01em; }
+.wordmark img { width: 50px; height: 50px; }
+h1 { margin: 64px 0 0; font-family: "Literata Variable", serif; font-weight: 600; font-size: 56px; line-height: 1.06; letter-spacing: -0.02em; }
+p { margin: 26px 0 0; font-size: 26px; line-height: 1.45; color: #5E5850; }
+.url { position: absolute; left: 72px; bottom: 54px; font-family: "Geist Mono Variable", monospace; font-size: 22px; font-weight: 500; color: #C2391F; }
+.screens { position: absolute; left: 700px; top: 92px; width: 640px; }
+.window { overflow: hidden; border: 1px solid #E9E2D7; border-radius: 14px; background: #fff; box-shadow: 0 40px 80px -32px rgba(28, 26, 23, 0.35), 0 12px 24px -12px rgba(28, 26, 23, 0.18); }
+.bar { display: flex; align-items: center; gap: 7px; height: 34px; padding: 0 14px; border-bottom: 1px solid #EFE8DD; background: #FAF6EF; }
+.dot { width: 11px; height: 11px; border-radius: 50%; background: #E2D9CC; }
+.address { margin-left: 10px; padding: 2px 12px; border: 1px solid #EFE8DD; border-radius: 6px; background: #fff; color: #6F685F; font-size: 13px; }
+.window img { display: block; width: 100%; height: auto; }
+.phone { position: absolute; left: -72px; top: 150px; width: 168px; overflow: hidden; border: 6px solid #1C1A17; border-radius: 24px; background: #fff; box-shadow: 0 30px 50px -20px rgba(28, 26, 23, 0.45); }
+.phone img { display: block; width: 100%; height: auto; }
+</style>
+</head>
+<body>
+<div class="glow"></div>
+<div class="copy">
+  <div class="wordmark"><img src="logo.svg" alt="">prose</div>
+  <h1>The open-source engine for building reading apps</h1>
+  <p>Render EPUB 3, comics and PDF in the browser with one framework-agnostic SDK.</p>
+</div>
+<div class="url">prose-reader.com</div>
+<div class="screens">
+  <div class="window">
+    <div class="bar"><span class="dot"></span><span class="dot"></span><span class="dot"></span><span class="address">prose-reader.com/demo</span></div>
+    <img src="../../apps/front/src/landing/assets/hero-spread-1600.webp" alt="">
+  </div>
+  <div class="phone"><img src="../../apps/front/src/landing/assets/hero-phone.webp" alt=""></div>
+</div>
+</body>
+</html>
