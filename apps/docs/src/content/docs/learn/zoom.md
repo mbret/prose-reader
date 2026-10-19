@@ -19,7 +19,7 @@ This API will manipulate and apply various transforms (eg: scale) to the viewpor
 
 Zooming is not constrained to one direction. By zooming out (scale < 1) you can achieve a "thumbnails" effect:
 
-<figure><img src="/images/zoom-thumbnails.png" alt=""></figure>
+<figure><img src="/images/zoom-thumbnails.png" alt="A manga zoomed out, with three of its pages side by side at a fraction of their size"></figure>
 
 This is not recommended to use this mode as a mean to "refit" the reading experience. You can use this [Refit](/enhancers/refit) enhancer to do so.
 
