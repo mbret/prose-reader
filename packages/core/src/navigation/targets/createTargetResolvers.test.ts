@@ -38,11 +38,6 @@ const createResolvers = ({
   // An item rendered without a document, such as audio, has none.
   hasDocument?: boolean
 } = {}) => {
-  // Its document is there from its load until it is released.
-  const presentDocument =
-    hasDocument && (loadStatus === "loaded" || loadStatus === "unloading")
-      ? document
-      : undefined
   const navigationResolver = {
     clampPositionInSpine: (position: SpinePosition) => position,
     getNavigationForNode: () => new SpinePosition({ x: 0, y: 0 }),
@@ -52,16 +47,17 @@ const createResolvers = ({
     index: 0,
     value: { loadStatus },
     // Its document is shown once loaded, and no longer while it unloads.
-    loadedDocument: loadStatus === "loaded" ? presentDocument : undefined,
+    loadedDocument:
+      hasDocument && loadStatus === "loaded" ? document : undefined,
   }
   const cfi = {
     isRootCfi: (value: string) => value.endsWith("!)"),
     getSpineItemFromCfi: () => spineItem,
-    // `text` names the note, while its document is there to look in.
+    // `text` names the note, in the document the item shows.
     resolveCfi: ({ cfi }: { cfi: string }) => ({
       node:
-        presentDocument && cfi === text
-          ? presentDocument.getElementById("note")
+        spineItem.loadedDocument && cfi === text
+          ? spineItem.loadedDocument.getElementById("note")
           : null,
     }),
     generateRootCfi: () => itemStart,
@@ -130,19 +126,19 @@ describe("target resolvers", () => {
     })
   })
 
-  it.each([
-    ["one naming a place", text],
-    ["one naming nothing", nothing],
+  it.each<[string, string, DocumentLoadStatus]>([
+    ["one naming a place", text, "loading"],
+    ["one naming nothing", nothing, "loading"],
+    ["one naming a place", text, "unloading"],
   ])(
-    "leave a cfi into an item not loaded without an anchor, %s, awaiting the item for restorations to resolve it again",
-    (_, value) => {
+    "leave a cfi into an item not loaded without an anchor, %s, while it is %s, awaiting the item for restorations to resolve it again",
+    (_, value, loadStatus) => {
       /**
-       * Nothing shows yet where the cfi leads, to a place or nowhere: as for a
-       * selector, the navigation has no place until the item is loaded.
+       * Nothing shows yet where the cfi leads, to a place or nowhere, and
+       * the document leaving no longer shows it: as for a selector, the
+       * navigation has no place until the item is loaded.
        */
-      expect(
-        resolve({ type: "cfi", value }, { loadStatus: "loading" }),
-      ).toMatchObject({
+      expect(resolve({ type: "cfi", value }, { loadStatus })).toMatchObject({
         spineItem: 0,
         anchor: undefined,
         awaitsDocument: true,
