@@ -159,12 +159,3 @@ still completes.
   words is.
 - Whitespace has to match the document as written: a space in the text does
   not match a line break or a non-breaking space.
-
-:::caution
-The text becomes a regular expression without escaping. Characters that have a
-meaning in a regular expression, such as `.`, `?`, `*`, `+`, `|`, `(` or `[`,
-are read as pattern syntax rather than matched. `s.me` also finds "some",
-`C++` finds nothing, and a text that can match an empty string, such as `a?`
-or `|`, makes the search loop forever and freezes the page. Search for words,
-digits and spaces.
-:::
