@@ -99,15 +99,23 @@ We want our enhancer to deal with the links being clicked in the book. prose fol
 Let's say we want to show a confirm dialog to the user and if they confirm we open the link:
 
 ```typescript
-import { createReader, isHtmlTagElement } from "@prose-reader/core"
+import { createReader, isHtmlTagElement, type Reader } from "@prose-reader/core"
 import { takeUntil } from "rxjs"
 
+const withoutFragment = (url: URL) => {
+  const copy = new URL(url)
+
+  copy.hash = ""
+
+  return copy.href
+}
+
 /**
- * The url a click leads to when it is on a link to a website. A book links
- * its own documents with relative hrefs: only an absolute http(s) url
- * leaves it.
+ * The url a click leads to when it is on a link to a website. A relative
+ * href stays in the book, and so does an absolute one that names a spine
+ * item: prose navigates to those itself.
  */
-const getExternalUrl = (event: MouseEvent) => {
+const getExternalUrl = (reader: Reader, event: MouseEvent) => {
   // The link listened to, rather than what was clicked inside it.
   const link = event.currentTarget
   const href = isHtmlTagElement(link, "a") ? link.getAttribute("href") : null
@@ -115,8 +123,14 @@ const getExternalUrl = (event: MouseEvent) => {
   if (!href || !URL.canParse(href)) return undefined
 
   const url = new URL(href)
+  const isInBook = reader.context.manifest?.spineItems.some(
+    (item) =>
+      URL.canParse(item.href) &&
+      withoutFragment(new URL(item.href)) === withoutFragment(url),
+  )
+  const isWebsite = url.protocol === "http:" || url.protocol === "https:"
 
-  return url.protocol === "http:" || url.protocol === "https:" ? url : undefined
+  return isWebsite && !isInBook ? url : undefined
 }
 
 type CreateReader = typeof createReader
@@ -135,7 +149,7 @@ export const myEnhancer =
         takeUntil(reader.$.destroy$),
       )
       .subscribe((event) => {
-        const url = getExternalUrl(event)
+        const url = getExternalUrl(reader, event)
 
         if (url && confirm(`You are going to be redirected to external link`)) {
           window.open(url, "_blank")
@@ -176,7 +190,7 @@ export const myEnhancer =
         takeUntil(reader.$.destroy$),
       )
       .subscribe((event) => {
-        const url = getExternalUrl(event)
+        const url = getExternalUrl(reader, event)
 
         if (url && confirm(confirmMessage)) {
           window.open(url, "_blank")
@@ -241,7 +255,7 @@ export const myEnhancer =
         takeUntil(reader.$.destroy$),
       )
       .subscribe((event) => {
-        const url = getExternalUrl(event)
+        const url = getExternalUrl(reader, event)
 
         if (url && confirm(confirmMessage)) {
           window.open(url, "_blank")
@@ -339,7 +353,7 @@ export const linkEnhancer =
     const reader = next(options)
 
     reader.links$.pipe(takeUntil(reader.$.destroy$)).subscribe((event) => {
-      const url = getExternalUrl(event)
+      const url = getExternalUrl(reader, event)
 
       if (url && reader.dialog.confirm(options.dialog.confirmMessage)) {
         window.open(url, "_blank")
@@ -490,7 +504,7 @@ We are creating a "plugin" which handles click on links and redirect the user af
 ```typescript
 export const linkHandlerPlugin = (reader: Reader) => {
   const sub = reader.links$.subscribe((event) => {
-    const url = getExternalUrl(event)
+    const url = getExternalUrl(reader, event)
 
     if (url && confirm(`You are going to be redirected to external link`)) {
       window.open(url, "_blank")
@@ -512,7 +526,7 @@ export const linkHandlerEnhancer =
     const reader = next(options)
 
     reader.links$.pipe(takeUntil(reader.$.destroy$)).subscribe((event) => {
-      const url = getExternalUrl(event)
+      const url = getExternalUrl(reader, event)
 
       if (url && confirm(`You are going to be redirected to external link`)) {
         window.open(url, "_blank")
