@@ -1,2 +1,4 @@
 User-agent: *
 Allow: /
+
+Sitemap: https://prose-reader.com/sitemap.xml
