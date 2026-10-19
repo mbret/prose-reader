@@ -3,6 +3,27 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## [28.0.0](https://github.com/mbret/prose-reader/compare/v27.0.0...v28.0.0) (2026-10-19)
+
+### ⚠ BREAKING CHANGES
+
+* **archive-reader:** `getSpineItemFilesFromArchive` is removed from
+  `@prose-reader/archive-reader`. Resolve the reading order with
+  `resolveArchiveReadingOrder(archive)` and find each item's record with
+  `getArchiveFileRecordByUri(archive, item.uri)`.
+
+### Bug Fixes
+
+* **archive-reader:** find the nav document and the NCX by their record ([cbb391b](https://github.com/mbret/prose-reader/commit/cbb391b2edf2dcc7a816af6429f18d48827bfe3a))
+* **archive-reader:** keep a reference's query and fragment out of its path ([939001f](https://github.com/mbret/prose-reader/commit/939001f92a7339f4775771ea2cca1ebed0c4f209))
+* **archive-reader:** resolve escaped dot segments as a browser does ([07b9cd6](https://github.com/mbret/prose-reader/commit/07b9cd6d09970b20b5227d68a089e9c67296fdd2))
+* **archive-reader:** resolve the dot segments of toc links ([7dbdae7](https://github.com/mbret/prose-reader/commit/7dbdae71229748c77cd40adb398ee84afd11ed47))
+
+### Code Refactoring
+
+* **archive-reader:** remove getSpineItemFilesFromArchive ([a21d1fe](https://github.com/mbret/prose-reader/commit/a21d1fe0bbeff2528874250b3b7bae0234fa18ac))
+
+
 ## [27.0.0](https://github.com/mbret/prose-reader/compare/v26.0.0...v27.0.0) (2026-10-19)
 
 ### ⚠ BREAKING CHANGES
