@@ -1,6 +1,6 @@
 <p align="center">
   <a href="https://prose-reader.com/">
-    <img src="https://user-images.githubusercontent.com/1911240/99893449-bca35e00-2cc3-11eb-88c1-80b3190eb620.png" alt="prose logo" width="75" height="75">
+    <img src="./assets/brand/logo.svg" alt="prose logo" width="75" height="75">
   </a>
 </p>
 

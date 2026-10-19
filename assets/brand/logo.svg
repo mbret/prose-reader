@@ -1,0 +1,6 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32">
+  <title>prose</title>
+  <rect width="32" height="32" rx="7" fill="#E5482B"/>
+  <path fill="#993723" d="M0 21 11 32H7a7 7 0 0 1-7-7Z"/>
+  <path fill="#FBF7EF" d="M0 21 11 32q-1-6-2.5-8.5Q6 22 0 21ZM12 6h14v20h-4V10h-4v16h-4v-7.5h-2a6.25 6.25 0 0 1 0-12.5Z"/>
+</svg>
