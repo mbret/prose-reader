@@ -12,6 +12,11 @@
       "permanent": true
     },
     {
+      "source": "/images/:name.png",
+      "destination": "/images/:name.webp",
+      "permanent": true
+    },
+    {
       "source": "/sitemap.xml",
       "destination": "/sitemap-index.xml",
       "permanent": true

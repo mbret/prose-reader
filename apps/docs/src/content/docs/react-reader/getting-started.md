@@ -115,7 +115,7 @@ With the gestures enhancer alone, react-reader offers what the core reader suppo
 
 For example adding the enhancer [Search](/enhancers/search) will unlock this menu:
 
-<figure><img src="/images/react-reader-search-menu.png" alt="The search button, highlighted in the menu of React Reader"></figure>
+<figure><img src="/images/react-reader-search-menu.webp" alt="The search button, highlighted in the menu of React Reader" width="193" height="82"></figure>
 
 ```typescript
 import { createReader } from "@prose-reader/core"
@@ -149,7 +149,7 @@ See [Audio](/enhancers/audio) to install enhancer
 
 ### Gallery
 
-<div class="figures"><figure><img src="/images/react-reader-gallery-ipad-pro.png" alt="The gallery of React Reader on a tablet, with thumbnails of the pages of an EPUB" width="188"></figure> <figure><img src="/images/react-reader-gallery-iphone-se.png" alt="The gallery of React Reader on a phone, with thumbnails of the pages of a manga" width="188"></figure></div>
+<div class="figures"><figure><img src="/images/react-reader-gallery-ipad-pro.webp" alt="The gallery of React Reader on a tablet, with thumbnails of the pages of an EPUB" width="188" height="251"></figure> <figure><img src="/images/react-reader-gallery-iphone-se.webp" alt="The gallery of React Reader on a phone, with thumbnails of the pages of a manga" width="188" height="334"></figure></div>
 
 See [Gallery](/enhancers/gallery) to install enhancer
 
