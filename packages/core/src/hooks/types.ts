@@ -51,6 +51,10 @@ export type CoreHook =
        * update things around such as the dom etc. Note that the document is already
        * attached to the dom at this stage. If your operations can be done on the prepared layers
        * you should try to do so as much as possible.
+       *
+       * The item is `loading` until every one of these hooks is done, and its
+       * `loadedDocument` is undefined meanwhile: reach the document through
+       * the renderer's frame.
        */
       name: `item.onDocumentLoad`
       runFn: (

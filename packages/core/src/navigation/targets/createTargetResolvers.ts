@@ -127,11 +127,8 @@ export const createTargetResolvers = ({
       if (!item)
         return resolvers.position(context.previousNavigation.position, context)
 
-      const document =
-        item.value.loadStatus === "loaded"
-          ? item.renderer.getDocumentFrame()?.contentDocument
-          : undefined
-      const found = document ? tryFind(find, document) : undefined
+      const loadedDocument = item.loadedDocument
+      const found = loadedDocument ? tryFind(find, loadedDocument) : undefined
 
       /**
        * Found, it is the cfi of what was found. Otherwise it is the item

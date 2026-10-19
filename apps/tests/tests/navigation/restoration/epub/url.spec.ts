@@ -80,9 +80,8 @@ const clickLink = async (
 ) =>
   (await getReader(page)).evaluate(
     (reader, { spineItemIndex, href, onChild }) => {
-      const document = reader.spineItemsManager
-        .get(spineItemIndex)
-        ?.renderer.getDocumentFrame()?.contentDocument
+      const document =
+        reader.spineItemsManager.get(spineItemIndex)?.loadedDocument
       const link = Array.from(document?.querySelectorAll("a") ?? []).find(
         (link) => link.getAttribute("href") === href,
       )

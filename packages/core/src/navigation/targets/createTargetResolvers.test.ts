@@ -51,10 +51,8 @@ const createResolvers = ({
     item: { index: 0, href: "0.xhtml" },
     index: 0,
     value: { loadStatus },
-    renderer: {
-      getDocumentFrame: () =>
-        hasDocument ? { contentDocument: presentDocument } : undefined,
-    },
+    // Its document is shown once loaded, and no longer while it unloads.
+    loadedDocument: loadStatus === "loaded" ? presentDocument : undefined,
   }
   const cfi = {
     isRootCfi: (value: string) => value.endsWith("!)"),
@@ -192,7 +190,7 @@ describe("target resolvers", () => {
 
   it("leave a selector awaiting the document of an item being unloaded, rather than looking in the document leaving", () => {
     /**
-     * The document is still there until it is released, and what the
+     * The document leaving is no longer the one the item shows, and what the
      * selector would find in it goes with it: the next load's is the one to
      * look in.
      */

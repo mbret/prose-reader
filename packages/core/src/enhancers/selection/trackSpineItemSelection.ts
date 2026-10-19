@@ -1,30 +1,18 @@
-import {
-  distinctUntilChanged,
-  finalize,
-  map,
-  merge,
-  NEVER,
-  of,
-  switchMap,
-} from "rxjs"
+import { distinctUntilChanged, finalize, map, merge, of, switchMap } from "rxjs"
 import type { SpineItem } from "../../spineItem/SpineItem"
 import { FrameSelectionTracker } from "./FrameSelectionTracker"
 
 /**
- * The selection in the item's document while it is loaded, and `undefined`
- * while it is not: before it loads, and once it starts leaving.
+ * The selection in the item's loaded document, and `undefined` while there is
+ * none: before it loads, and once it starts leaving.
  */
 export const trackSpineItemSelection = (spineItem: SpineItem) =>
-  spineItem.watch("loadStatus").pipe(
-    map((loadStatus) => loadStatus === "loaded"),
-    distinctUntilChanged(),
-    switchMap((isLoaded) => {
-      if (!isLoaded) return of(undefined)
-
+  spineItem.loadedDocument$.pipe(
+    switchMap((loadedDocument) => {
+      // The frame holding it, which the tracker watches being removed.
       const frame = spineItem.renderer.getDocumentFrame()
-      const frameDoc = frame?.contentDocument || frame?.contentWindow?.document
 
-      if (!frame || !frameDoc) return NEVER
+      if (!loadedDocument || !frame) return of(undefined)
 
       const selectionTracker = new FrameSelectionTracker(frame)
 

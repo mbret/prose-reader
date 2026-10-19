@@ -1,5 +1,4 @@
 import { EMPTY, fromEvent, map, merge, switchMap, takeUntil } from "rxjs"
-import { isHtmlTagElement } from "../utils/dom"
 import type { NavigationEnhancerOutput } from "./navigation/types"
 import type { EnhancerOutput, RootEnhancer } from "./types/enhancer"
 
@@ -54,16 +53,10 @@ export const hotkeysEnhancer =
 
     merge(
       ...reader.spineItemsManager.items.map((item) =>
-        item.watch("loadStatus").pipe(
-          switchMap((loadStatus) => {
-            const element = item.renderer.getDocumentFrame()
-
-            return loadStatus === "loaded" &&
-              isHtmlTagElement(element, "iframe") &&
-              element.contentDocument
-              ? navigateOnKey(element.contentDocument)
-              : EMPTY
-          }),
+        item.loadedDocument$.pipe(
+          switchMap((loadedDocument) =>
+            loadedDocument ? navigateOnKey(loadedDocument) : EMPTY,
+          ),
         ),
       ),
     )

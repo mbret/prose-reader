@@ -1,4 +1,12 @@
-import { merge, share, takeUntil, tap } from "rxjs"
+import {
+  distinctUntilChanged,
+  map,
+  merge,
+  type Observable,
+  share,
+  takeUntil,
+  tap,
+} from "rxjs"
 import type { Manifest } from ".."
 import { HTML_PREFIX_SPINE_ITEM } from "../constants"
 import type { Context } from "../context/Context"
@@ -191,6 +199,30 @@ export class SpineItem extends ReactiveEntity<SpineItemState> {
    */
   public get isReady$() {
     return this.watch(`isReady`)
+  }
+
+  /**
+   * The item's document while it is `loaded`, and `undefined` otherwise:
+   * before it loads, while it loads though its frame may already hold it,
+   * from the moment it starts unloading, after a failed load, and for an item
+   * rendered without a document frame, such as audio. Read the book's content
+   * here, a cfi's node or what a selector looks for: a document still being
+   * set up or already leaving is not the one the reader shows. An
+   * `item.onDocumentLoad` hook, which sets the document up while it loads,
+   * reaches it through the renderer's frame instead.
+   */
+  public get loadedDocument(): Document | undefined {
+    if (this.value.loadStatus !== `loaded`) return undefined
+
+    return this.renderer.getDocumentFrame()?.contentDocument ?? undefined
+  }
+
+  /** `loadedDocument` as it changes, from its current value on. */
+  public get loadedDocument$(): Observable<Document | undefined> {
+    return this.watch(`loadStatus`).pipe(
+      map(() => this.loadedDocument),
+      distinctUntilChanged(),
+    )
   }
 
   public destroy = () => {

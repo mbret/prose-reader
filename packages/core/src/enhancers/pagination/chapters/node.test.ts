@@ -26,13 +26,10 @@ const createSpineItemForDoc = ({
   href: string
   doc: Document
 }) => {
-  const frame = { contentDocument: doc } as unknown as HTMLIFrameElement
-
+  // The lookup reads only these members of a loaded item.
   return {
     item: { id, href },
-    renderer: {
-      getDocumentFrame: () => frame,
-    },
+    loadedDocument: doc,
   } as unknown as SpineItem
 }
 

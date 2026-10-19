@@ -32,6 +32,8 @@ reader.hookManager.register(`item.onDocumentLoad`, ({ itemId }) => {
 })
 ```
 
+The item is `loading` until its `item.onDocumentLoad` hooks are done, so the hook reaches the document through the renderer's frame. Code that reads the book's content, outside the load, reads the item's `loadedDocument` instead: it is the document only while the item is `loaded`, not while hooks still set it up, nor once it starts unloading.
+
 :::danger
 Reacting to an item's `loadStatus` becoming `loaded`, from `reader.spineItemsObserver.itemLoadStatusChange$`, would work in this case too, because the reader lays the spine out after that change. Nothing guarantees that order, which is why a hook is preferable when you need to run code at a specific point of the lifecycle.
 :::

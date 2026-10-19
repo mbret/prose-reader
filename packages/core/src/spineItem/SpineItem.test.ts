@@ -1,86 +1,18 @@
 // @vitest-environment jsdom
-import { filter, firstValueFrom, of, timeout } from "rxjs"
+import { filter, firstValueFrom, timeout } from "rxjs"
+import { describe, expect, it, vi } from "vitest"
 import {
-  afterAll,
-  afterEach,
-  beforeAll,
-  beforeEach,
-  describe,
-  expect,
-  it,
-  vi,
-} from "vitest"
-import { htmlEnhancer } from "../enhancers/html/enhancer"
-import { layoutEnhancer } from "../enhancers/layout/layoutEnhancer"
-import { navigationEnhancer } from "../enhancers/navigation"
-import { themeEnhancer } from "../enhancers/theme"
-import { createReader } from "../reader"
-import { createTestManifest } from "../tests/utils"
-import { DefaultRenderer } from "./renderer/DefaultRenderer"
+  createTestReader,
+  holdItemDocumentLoadHooks,
+  installReaderTestEnvironment,
+  mountTestReader,
+  renderTextDocuments,
+  settledOn,
+} from "../tests/readerHarness"
+import type { DocumentLoadStatus } from "./renderer/DocumentRenderer"
 import type { SpineItemState } from "./SpineItem"
 
-window.__PROSE_READER_DEBUG = false
-
-const BASE_MANIFEST = createTestManifest({
-  filename: "",
-  title: "",
-  renditionLayout: "pre-paginated",
-  renditionSpread: "auto",
-})
-
-beforeAll(() => {
-  vi.stubGlobal(
-    "ResizeObserver",
-    class {
-      observe() {}
-      unobserve() {}
-      disconnect() {}
-    },
-  )
-  Object.defineProperty(HTMLElement.prototype, "clientWidth", {
-    configurable: true,
-    get: () => 100,
-  })
-  Object.defineProperty(HTMLElement.prototype, "clientHeight", {
-    configurable: true,
-    get: () => 200,
-  })
-})
-
-afterAll(() => vi.unstubAllGlobals())
-
-beforeEach(() => {
-  const element = document.createElement("div")
-  element.id = "test-container"
-  document.body.appendChild(element)
-})
-
-afterEach(() => {
-  document.getElementById("test-container")?.remove()
-})
-
-const createTestReader = () =>
-  navigationEnhancer(htmlEnhancer(layoutEnhancer(themeEnhancer(createReader))))(
-    {
-      getRenderer: () => (props) => new DefaultRenderer(props),
-      getResource: () => of(new Response("", { status: 200 })),
-      manifest: {
-        ...BASE_MANIFEST,
-        spineItems: [
-          {
-            href: "/page_1.jpg",
-            containerUri: "page_1.jpg",
-            id: "1",
-            pageSpreadLeft: true,
-            pageSpreadRight: true,
-            progressionWeight: 1,
-            renditionLayout: "pre-paginated",
-            index: 0,
-          },
-        ],
-      },
-    },
-  )
+installReaderTestEnvironment()
 
 describe("SpineItem readiness", () => {
   it("never reports readiness without a loaded document", async () => {
@@ -94,8 +26,7 @@ describe("SpineItem readiness", () => {
       samples.push({ loadStatus, isReady }),
     )
 
-    // biome-ignore lint/style/noNonNullAssertion: test
-    reader.mount(document.getElementById("test-container")!)
+    mountTestReader(reader)
 
     await firstValueFrom(item.isReady$.pipe(filter(Boolean), timeout(2000)))
 
@@ -118,8 +49,107 @@ describe("SpineItem readiness", () => {
 
     // The invariant itself, across every state the item went through.
     expect(violations()).toEqual([])
+  })
+})
 
-    reader.destroy()
+describe("SpineItem loaded document", () => {
+  it("is the document its frame holds only while the item is loaded: not while hooks set it up, nor from the moment it starts leaving", async () => {
+    // Item 1 loads only once the reader goes there, and leaves once it goes
+    // back.
+    const reader = createTestReader({
+      getRenderer: renderTextDocuments,
+      numberOfAdjacentSpineItemToPreLoad: 0,
+    })
+    const documentLoadHooks = holdItemDocumentLoadHooks(reader, "1")
+
+    mountTestReader(reader)
+    await settledOn(reader, 0)
+
+    const item = reader.spineItemsManager.get(1)
+
+    if (!item) throw new Error("item 1 is missing")
+
+    const getFrameDocument = () =>
+      item.renderer.getDocumentFrame()?.contentDocument ?? undefined
+    const nameDocument = (document: Document | undefined) =>
+      document &&
+      (document === getFrameDocument()
+        ? "the frame's document"
+        : "another document")
+    const describeItem = () => ({
+      loadStatus: item.value.loadStatus,
+      frameHoldsDocument: getFrameDocument() !== undefined,
+      loadedDocument: nameDocument(item.loadedDocument),
+    })
+
+    const emitted: {
+      loadStatus: DocumentLoadStatus
+      loadedDocument: string | undefined
+    }[] = []
+
+    item.loadedDocument$.subscribe((loadedDocument) => {
+      emitted.push({
+        loadStatus: item.value.loadStatus,
+        loadedDocument: nameDocument(loadedDocument),
+      })
+    })
+
+    reader.navigation.goToSpineItem({ indexOrId: 1, animation: false })
+    await vi.waitFor(() =>
+      expect(getFrameDocument()?.body.textContent).toBe("A paragraph of text."),
+    )
+
+    // Its frame holds the document, which the hooks are still setting up.
+    expect(describeItem()).toEqual({
+      loadStatus: "loading",
+      frameHoldsDocument: true,
+      loadedDocument: undefined,
+    })
+
+    documentLoadHooks.release()
+    await settledOn(reader, 1)
+
+    expect(describeItem()).toEqual({
+      loadStatus: "loaded",
+      frameHoldsDocument: true,
+      loadedDocument: "the frame's document",
+    })
+
+    // Its frame holds the document until it is released, once leaving.
+    const describedWhileReleased: ReturnType<typeof describeItem>[] = []
+
+    reader.hookManager.register("item.onDocumentUnload", ({ itemId }) => {
+      if (itemId === "1") describedWhileReleased.push(describeItem())
+    })
+
+    reader.navigation.goToSpineItem({ indexOrId: 0, animation: false })
+    await vi.waitFor(() => expect(item.value.loadStatus).toBe("idle"))
+
+    expect(describedWhileReleased).toEqual([
+      {
+        loadStatus: "unloading",
+        frameHoldsDocument: true,
+        loadedDocument: undefined,
+      },
+    ])
+    expect(emitted).toEqual([
+      { loadStatus: "idle", loadedDocument: undefined },
+      { loadStatus: "loaded", loadedDocument: "the frame's document" },
+      { loadStatus: "unloading", loadedDocument: undefined },
+    ])
+  })
+
+  it("is none for a loaded item rendered without a document frame", async () => {
+    // The default renderer has no document, as an audio item has none.
+    const reader = createTestReader()
+
+    mountTestReader(reader)
+    await settledOn(reader, 0)
+
+    const item = reader.spineItemsManager.get(0)
+
+    expect(item?.value.loadStatus).toBe("loaded")
+    expect(item?.loadedDocument).toBeUndefined()
   })
 })
 
