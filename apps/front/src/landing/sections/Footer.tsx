@@ -1,7 +1,7 @@
 import { Box, Flex, Link, type LinkProps, Text } from "@chakra-ui/react"
 import { DEMO_BASE_PATH } from "../../constants"
 import { PageContainer } from "../components/PageContainer"
-import { ProseMark } from "../components/ProseMark"
+import { ProseWordmark } from "../components/ProseWordmark"
 import { links } from "../links"
 
 const FooterLink = (props: LinkProps) => (
@@ -35,17 +35,7 @@ export const Footer = () => (
         color="fg.muted"
         fontSize="sm"
       >
-        <Flex
-          align="center"
-          gap="2"
-          color="fg"
-          fontFamily="heading"
-          fontSize="lg"
-          fontWeight="semibold"
-        >
-          <ProseMark boxSize="22px" />
-          prose
-        </Flex>
+        <ProseWordmark color="fg" fontSize="lg" />
         <Text>
           MIT license · ©{" "}
           <Link
