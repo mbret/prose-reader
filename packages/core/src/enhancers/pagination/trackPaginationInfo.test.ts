@@ -68,6 +68,7 @@ describe("Given a book that has not been laid out yet", () => {
         spineItems: [
           {
             href: "/chapter_1/page_1.jpg",
+            containerUri: "chapter_1/page_1.jpg",
             id: "1",
             pageSpreadLeft: true,
             pageSpreadRight: true,
@@ -121,6 +122,7 @@ describe("Given a book with one chapter", () => {
           spineItems: [
             {
               href: "/chapter_1/page_1.jpg",
+              containerUri: "chapter_1/page_1.jpg",
               id: "1",
               pageSpreadLeft: true,
               pageSpreadRight: true,
@@ -175,6 +177,7 @@ describe("Given a book with one chapter", () => {
           spineItems: [
             {
               href: "/chapter_1/page_1.jpg",
+              containerUri: "chapter_1/page_1.jpg",
               id: "1",
               pageSpreadLeft: true,
               pageSpreadRight: true,
@@ -184,6 +187,7 @@ describe("Given a book with one chapter", () => {
             },
             {
               href: "/chapter_1/page_2.jpg",
+              containerUri: "chapter_1/page_2.jpg",
               id: "2",
               pageSpreadLeft: true,
               pageSpreadRight: true,
@@ -249,6 +253,7 @@ describe("Given a book with one chapter", () => {
               spineItems: [
                 {
                   href: "http://localhost:9000/streamer/book/OEBPS/part0006.xhtml",
+                  containerUri: "OEBPS/part0006.xhtml",
                   id: "part0006.xhtml",
                   pageSpreadLeft: true,
                   pageSpreadRight: true,
@@ -258,6 +263,7 @@ describe("Given a book with one chapter", () => {
                 },
                 {
                   href: "http://localhost:9000/streamer/book/OEBPS/part0007.xhtml",
+                  containerUri: "OEBPS/part0007.xhtml",
                   id: "part0007.xhtml",
                   pageSpreadLeft: true,
                   pageSpreadRight: true,
@@ -322,6 +328,7 @@ describe("Given a book with two chapters", () => {
           spineItems: [
             {
               href: "/OPS/page_1.jpg",
+              containerUri: "OPS/page_1.jpg",
               id: "1",
               pageSpreadLeft: true,
               pageSpreadRight: true,
@@ -331,6 +338,7 @@ describe("Given a book with two chapters", () => {
             },
             {
               href: "/OPS/page_2.jpg",
+              containerUri: "OPS/page_2.jpg",
               id: "2",
               pageSpreadLeft: true,
               pageSpreadRight: true,

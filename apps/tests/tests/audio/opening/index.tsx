@@ -15,6 +15,7 @@ const manifest: Manifest = {
     id,
     index,
     href: `${id}.mp3`,
+    containerUri: `${id}.mp3`,
     mediaType: `audio/mpeg`,
   })),
   items: trackIds.map((id) => ({

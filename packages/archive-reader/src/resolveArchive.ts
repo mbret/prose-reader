@@ -234,7 +234,7 @@ const collectUnreadableSources = ({
   return unreadable
 }
 
-const RESOLVED_ARCHIVE_VERSION = 4
+const RESOLVED_ARCHIVE_VERSION = 5
 
 /**
  * Resolves a book container into a single enriched, plain-JSON entity:

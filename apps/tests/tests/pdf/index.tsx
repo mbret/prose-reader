@@ -13,9 +13,12 @@ pdfjsLib.GlobalWorkerOptions.workerSrc = new URL(
 ).toString()
 
 async function run() {
-  const response = await fetch("http://localhost:3333/epubs/sample-3.pdf")
+  // `?file=` opens another fixture than the default one
+  const file =
+    new URLSearchParams(window.location.search).get("file") ?? "sample-3.pdf"
+  const response = await fetch(`http://localhost:3333/epubs/${file}`)
   const pdfBlob = await response.blob()
-  const archive = await createArchiveFromPdf(pdfBlob, "sample.pdf")
+  const archive = await createArchiveFromPdf(pdfBlob, file)
   const manifest = await generateManifestFromArchive(archive)
 
   const createReaderWithEnhancers = gesturesEnhancer(pdfEnhancer(createReader))

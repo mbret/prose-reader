@@ -77,7 +77,7 @@ describe(`Given an EPUB`, () => {
     const resolved = await resolveArchive(epubArchive())
 
     expect(resolved).toEqual({
-      version: 4,
+      version: 5,
       mediaType: `application/epub+zip`,
       unreadableSources: [],
       metadata: {
@@ -87,6 +87,7 @@ describe(`Given an EPUB`, () => {
       readingOrder: [
         {
           uri: `OEBPS/page1.xhtml`,
+          containerHref: `OEBPS/page1.xhtml`,
           id: `p1`,
           mediaType: `application/xhtml+xml`,
           size: 100,
@@ -94,6 +95,7 @@ describe(`Given an EPUB`, () => {
         },
         {
           uri: `OEBPS/page2.xhtml`,
+          containerHref: `OEBPS/page2.xhtml`,
           id: `p2`,
           mediaType: `application/xhtml+xml`,
           size: 300,
@@ -119,7 +121,7 @@ describe(`Given an EPUB`, () => {
       >
     >()
 
-    expect(resolved.version).toBe(4)
+    expect(resolved.version).toBe(5)
     expect(resolved.sources.opf?.opf.titles[0]?.value).toBe(`My Book`)
     expect(resolved.sources.opf?.basePath).toBe(`OEBPS`)
     expect(`metadata` in resolved).toBe(false)
@@ -133,6 +135,92 @@ describe(`Given an EPUB`, () => {
     })
 
     expect(structuredClone(resolved)).toEqual(resolved)
+  })
+})
+
+describe(`Given an EPUB whose package document escapes its hrefs`, () => {
+  // An href is a URL, so it escapes a space or a non-ASCII letter of the
+  // file name it references.
+  const opf = (hrefs: { chapters: string[]; cover?: string }) =>
+    `<?xml version="1.0"?><package xmlns="http://www.idpf.org/2007/opf" version="3.0">` +
+    `<metadata xmlns:dc="http://purl.org/dc/elements/1.1/"><dc:title>x</dc:title></metadata>` +
+    `<manifest>` +
+    (hrefs.cover === undefined
+      ? ``
+      : `<item id="c" href="${hrefs.cover}" media-type="image/jpeg" properties="cover-image"/>`) +
+    hrefs.chapters
+      .map(
+        (href, index) =>
+          `<item id="p${index}" href="${href}" media-type="application/xhtml+xml"/>`,
+      )
+      .join(``) +
+    `</manifest><spine>` +
+    hrefs.chapters.map((_, index) => `<itemref idref="p${index}"/>`).join(``) +
+    `</spine></package>`
+
+  it(`each spine item and the cover are the record their href names, and a spine item keeps the href`, async () => {
+    const resolved = await resolveArchive(
+      archiveWith(
+        [
+          textRecord(
+            `OEBPS/content.opf`,
+            opf({
+              chapters: [`Text/Chapter%201.xhtml`, `Text/%C3%89pilogue.xhtml`],
+              cover: `Images/Cover%20Art.jpg`,
+            }),
+          ),
+          textRecord(`OEBPS/Text/Chapter 1.xhtml`, xhtml(false), { size: 100 }),
+          textRecord(`OEBPS/Text/Épilogue.xhtml`, xhtml(false), { size: 300 }),
+          textRecord(`OEBPS/Images/Cover Art.jpg`, ``, {
+            encodingFormat: `image/jpeg`,
+          }),
+        ],
+        `book.epub`,
+      ),
+    )
+
+    // the records' sizes weigh the chapters
+    expect(
+      resolved.readingOrder.map(
+        ({ uri, containerHref, progressionWeight }) => ({
+          uri,
+          containerHref,
+          progressionWeight,
+        }),
+      ),
+    ).toEqual([
+      {
+        uri: `OEBPS/Text/Chapter 1.xhtml`,
+        containerHref: `OEBPS/Text/Chapter%201.xhtml`,
+        progressionWeight: 0.25,
+      },
+      {
+        uri: `OEBPS/Text/Épilogue.xhtml`,
+        containerHref: `OEBPS/Text/%C3%89pilogue.xhtml`,
+        progressionWeight: 0.75,
+      },
+    ])
+    expect(resolved.metadata.cover).toEqual({
+      uri: `OEBPS/Images/Cover Art.jpg`,
+      mediaType: `image/jpeg`,
+      confidence: `derived`,
+    })
+  })
+
+  it(`an href with a bare percent sign, no URL, still names its record as written`, async () => {
+    const resolved = await resolveArchive(
+      archiveWith(
+        [
+          textRecord(`OEBPS/content.opf`, opf({ chapters: [`100%.xhtml`] })),
+          textRecord(`OEBPS/100%.xhtml`, xhtml(false)),
+        ],
+        `book.epub`,
+      ),
+    )
+
+    expect(resolved.readingOrder.map(({ uri }) => uri)).toEqual([
+      `OEBPS/100%.xhtml`,
+    ])
   })
 })
 
@@ -283,7 +371,7 @@ describe(`Given a projection that needs nothing read from the book`, () => {
     // nothing was read, so nothing can be reported broken; the media type
     // comes from the file name alone
     expect(resolved).toEqual({
-      version: 4,
+      version: 5,
       mediaType: `application/epub+zip`,
       unreadableSources: [],
     })

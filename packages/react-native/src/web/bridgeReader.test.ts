@@ -72,6 +72,7 @@ const manifest: Manifest = {
   spineItems: [
     {
       href: "/chapter_1/page_1.jpg",
+      containerUri: "chapter_1/page_1.jpg",
       id: "1",
       pageSpreadLeft: true,
       pageSpreadRight: true,
@@ -81,6 +82,7 @@ const manifest: Manifest = {
     },
     {
       href: "/chapter_2/page_1.jpg",
+      containerUri: "chapter_2/page_1.jpg",
       id: "2",
       pageSpreadLeft: true,
       pageSpreadRight: true,

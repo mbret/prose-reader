@@ -32,6 +32,7 @@ const manifest: Manifest = {
       id: `track`,
       index: 0,
       href: `track.mp3`,
+      containerUri: `track.mp3`,
       mediaType: `audio/mpeg`,
     },
   ],

@@ -74,6 +74,7 @@ describe("resolveChapterInfoFromVisibleNode", () => {
       spineItems: [
         {
           href: chapterHref,
+          containerUri: "EPUB/ch02.xhtml",
           id: "ch02",
           pageSpreadLeft: true,
           pageSpreadRight: true,
@@ -154,6 +155,7 @@ describe("resolveChapterInfoFromVisibleNode", () => {
       spineItems: [
         {
           href: chapterHref,
+          containerUri: "EPUB/ch02.xhtml",
           id: "ch02",
           pageSpreadLeft: true,
           pageSpreadRight: true,
@@ -234,6 +236,7 @@ describe("resolveChapterInfoFromVisibleNode", () => {
       spineItems: [
         {
           href: chapterHref,
+          containerUri: "EPUB/ch02.xhtml",
           id: "ch02",
           pageSpreadLeft: true,
           pageSpreadRight: true,

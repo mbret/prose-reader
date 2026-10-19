@@ -725,6 +725,7 @@ describe("reading position and settled pagination", () => {
         renditionLayout: "reflowable",
         spineItems: [0, 1].map((index) => ({
           href: `/chapter_${index}.xhtml`,
+          containerUri: `chapter_${index}.xhtml`,
           id: `${index}`,
           index,
           progressionWeight: 0.5,

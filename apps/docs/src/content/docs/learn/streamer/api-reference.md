@@ -37,7 +37,7 @@ generateManifestFromArchive(
 ): Promise<Manifest>
 ```
 
-Produces a reader [`Manifest`](/learn/contract): the archive is resolved by `@prose-reader/archive-reader`'s [`resolveArchive`](/archive-reader#resolving-a-publication) (with the viewport `layoutScan` enabled), mapped into serving space (`baseUrl` rebasing, XML-safe ids, guide passthrough, audiobook/folder toc), then handed to any user [hooks](/learn/streamer/hooks) before the final defaults. The manifest keeps the media type of the book file as `mediaType`, as [`resolveArchive`](/archive-reader#resolving-a-publication) resolves it.
+Produces a reader [`Manifest`](/learn/contract): the archive is resolved by `@prose-reader/archive-reader`'s [`resolveArchive`](/archive-reader#resolving-a-publication) (with the viewport `layoutScan` enabled), mapped into serving space (`baseUrl` rebasing, XML-safe ids, guide passthrough, audiobook/folder toc), then handed to any user [hooks](/learn/streamer/hooks) before the final defaults. The manifest keeps two facts from the container: its `mediaType`, the media type of the book file as [`resolveArchive`](/archive-reader#resolving-a-publication) resolves it, and each spine item's `containerUri`, the path of the archive record it shows, with no serving base.
 
 ```typescript
 import { createArchiveFromJszip } from "@prose-reader/archive-reader/archives/createArchiveFromJszip"

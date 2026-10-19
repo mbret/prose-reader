@@ -31,6 +31,7 @@ const MANIFEST = createTestManifest({
   spineItems: [
     {
       href: "/chapter_1/page_1.jpg",
+      containerUri: "chapter_1/page_1.jpg",
       id: "1",
       pageSpreadLeft: true,
       pageSpreadRight: true,

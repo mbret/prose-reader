@@ -61,7 +61,8 @@ For example, `p006-007.jpg` can produce:
 
 * a virtual XHTML item for page `006`;
 * a virtual XHTML item for page `007`;
-* CFI mappings that still point back to `p006-007.jpg` externally.
+* CFI mappings that still point back to `p006-007.jpg` externally;
+* the same `containerUri`, `p006-007.jpg`, on both, the record they show.
 
 The generated XHTML references the original image and crops it with CSS. This keeps the archive unchanged while giving the reader separate page resources to layout and navigate. Additionally the generated CFI is valid for the archive and can be used in other readers.
 

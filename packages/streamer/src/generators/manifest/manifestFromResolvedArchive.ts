@@ -89,10 +89,13 @@ const epubManifest = (
       id: item.id ?? createSafeId(item.uri),
       index,
       // remote resources pass through; local ones get the serving base, or
-      // the file:// scheme when the manifest is not served from anywhere
+      // the file:// scheme when the manifest is not served from anywhere, and
+      // the reference the book makes to them, which its navigation and links
+      // match as written
       href: isHttpUrl(item.uri)
         ? item.uri
-        : `${baseUrl || `file://`}${item.uri}`,
+        : `${baseUrl || `file://`}${item.containerHref ?? item.uri}`,
+      containerUri: item.uri,
       renditionLayout: item.renditionLayout,
       ...(item.renditionFlow !== undefined
         ? { renditionFlow: item.renditionFlow }
@@ -145,6 +148,7 @@ const recordsManifest = (
       id: idByUri.get(item.uri) ?? createSafeId(item.uri),
       index,
       href: createManifestResourceHref({ baseUrl, resourcePath: item.uri }),
+      containerUri: item.uri,
       renditionLayout: item.renditionLayout,
       progressionWeight: item.progressionWeight,
       pageSpreadLeft: undefined,
@@ -159,7 +163,7 @@ const recordsManifest = (
     })),
   }
 
-  const audiobookToc = buildAudiobookToc(manifest, archive)
+  const audiobookToc = buildAudiobookToc(manifest)
   const toc = audiobookToc ?? resolved.toc?.map(toManifestTocItem(baseUrl))
 
   return toc !== undefined ? { ...manifest, nav: { toc } } : manifest

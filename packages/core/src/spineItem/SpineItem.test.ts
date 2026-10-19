@@ -69,6 +69,7 @@ const createTestReader = () =>
         spineItems: [
           {
             href: "/page_1.jpg",
+            containerUri: "page_1.jpg",
             id: "1",
             pageSpreadLeft: true,
             pageSpreadRight: true,

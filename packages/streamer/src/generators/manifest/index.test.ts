@@ -2,6 +2,7 @@ import {
   blobFileAccessors,
   createArchive,
   createArchiveFromUrls,
+  getArchiveFileRecordByUri,
 } from "@prose-reader/archive-reader"
 import type { Manifest } from "@prose-reader/shared"
 import { createXmlSafeId } from "@prose-reader/shared"
@@ -38,6 +39,7 @@ describe(`Given a list of urls archive`, () => {
       spineItems: [
         {
           href: imageUrl,
+          containerUri: imageUrl,
           id: imageId,
           progressionWeight: 1,
           renditionLayout: "pre-paginated",
@@ -83,6 +85,7 @@ describe(`Given a list of urls with rendition flow archive`, () => {
       spineItems: [
         {
           href: imageUrl,
+          containerUri: imageUrl,
           id: imageId,
           progressionWeight: 1,
           renditionLayout: "reflowable",
@@ -127,6 +130,7 @@ describe("Given archive with a folder containing a space", () => {
     expect(manifest.spineItems).toEqual([
       {
         href: "file://Chapter%201/page_1.jpg",
+        containerUri: "Chapter 1/page_1.jpg",
         id: createXmlSafeId("Chapter 1/page_1.jpg"),
         index: 0,
         // detected from the filename when the record has no encodingFormat
@@ -248,6 +252,7 @@ describe("Given non-epub image archive items with encodingFormat", () => {
     expect(manifest.spineItems).toEqual([
       {
         href: "file://page_1.jpeg",
+        containerUri: "page_1.jpeg",
         id: "page_1.jpeg",
         index: 0,
         mediaType: "image/jpeg",
@@ -283,6 +288,7 @@ describe("Given a non-epub image archive with a two-page spread filename", () =>
     expect(manifest.spineItems).toEqual([
       {
         href: "file://p006-007.jpg",
+        containerUri: "p006-007.jpg",
         id: "p006-007.jpg",
         index: 0,
         mediaType: "image/jpeg",
@@ -317,6 +323,7 @@ describe("Given non-epub audio archive items with encodingFormat", () => {
     expect(manifest.spineItems).toEqual([
       {
         href: "file://track_1.mp3",
+        containerUri: "track_1.mp3",
         id: "track_1.mp3",
         index: 0,
         mediaType: "audio/mpeg",
@@ -407,6 +414,86 @@ describe("Given an epub with the opf in a subfolder", () => {
     ).toEqual([
       { href: "file://OEBPS/chapter1.xhtml", progressionWeight: 0.25 },
       { href: "file://OEBPS/chapter2.xhtml", progressionWeight: 0.75 },
+    ])
+  })
+})
+
+describe("Given an epub whose package document escapes its hrefs", () => {
+  // An href is a URL, so it escapes a space or a non-ASCII letter of the
+  // file name it references, and may escape more, such as "(": the book's
+  // navigation and links reference the file the same way.
+  const opf = `<?xml version="1.0" encoding="UTF-8"?>
+<package xmlns="http://www.idpf.org/2007/opf" version="3.0">
+  <metadata xmlns:dc="http://purl.org/dc/elements/1.1/">
+    <dc:title>Test</dc:title>
+  </metadata>
+  <manifest>
+    <item id="ch1" href="Text/Chapter%20%281%29.xhtml" media-type="application/xhtml+xml"/>
+    <item id="ch2" href="Text/%C3%89pilogue.xhtml" media-type="application/xhtml+xml"/>
+  </manifest>
+  <spine>
+    <itemref idref="ch1"/>
+    <itemref idref="ch2"/>
+  </spine>
+</package>`
+
+  const archive = createArchive({
+    filename: "book.epub",
+    records: [
+      {
+        ...blobFileAccessors(() => Promise.resolve(new Blob([opf]))),
+        basename: "content.opf",
+        uri: "OEBPS/content.opf",
+        dir: false,
+        size: opf.length,
+      },
+      {
+        ...fakeContent,
+        basename: "Chapter (1).xhtml",
+        uri: "OEBPS/Text/Chapter (1).xhtml",
+        dir: false,
+        size: 1,
+      },
+      {
+        ...fakeContent,
+        basename: "Épilogue.xhtml",
+        uri: "OEBPS/Text/Épilogue.xhtml",
+        dir: false,
+        size: 3,
+      },
+    ],
+    close: () => Promise.resolve(),
+  })
+
+  it("should name each spine item's record, served at the href the book gives it", async () => {
+    const manifest = await generateManifestFromArchive(archive, {
+      baseUrl: "https://foo.bar/streamer/book",
+    })
+
+    for (const { containerUri } of manifest.spineItems) {
+      expect(
+        getArchiveFileRecordByUri(archive, containerUri),
+        `record of ${containerUri}`,
+      ).toBeDefined()
+    }
+
+    expect(
+      manifest.spineItems.map(({ href, containerUri, progressionWeight }) => ({
+        href,
+        containerUri,
+        progressionWeight,
+      })),
+    ).toEqual([
+      {
+        href: "https://foo.bar/streamer/book/OEBPS/Text/Chapter%20%281%29.xhtml",
+        containerUri: "OEBPS/Text/Chapter (1).xhtml",
+        progressionWeight: 0.25,
+      },
+      {
+        href: "https://foo.bar/streamer/book/OEBPS/Text/%C3%89pilogue.xhtml",
+        containerUri: "OEBPS/Text/Épilogue.xhtml",
+        progressionWeight: 0.75,
+      },
     ])
   })
 })

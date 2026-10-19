@@ -49,6 +49,7 @@ export const createPrePaginatedManifest = ({
     renditionSpread: "auto",
     spineItems: pageSpreads.map((pageSpread, index) => ({
       href: `/page_${index}.jpg`,
+      containerUri: `page_${index}.jpg`,
       id: `${index}`,
       pageSpreadLeft: pageSpread === "right" ? undefined : true,
       pageSpreadRight: pageSpread === "left" ? undefined : true,
