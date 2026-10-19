@@ -3,6 +3,21 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## [28.1.0](https://github.com/mbret/prose-reader/compare/v28.0.0...v28.1.0) (2026-10-19)
+
+### Features
+
+* **archive-reader:** export the resolution of a book's references ([6526b47](https://github.com/mbret/prose-reader/commit/6526b47fc05ad5432ed2af2d66cac5aaa03ec3e9))
+* draw the prose mark, and show it in the readme ([e372fc7](https://github.com/mbret/prose-reader/commit/e372fc7810d3cdb06c9dea633c14cc6f9a54822e))
+* **front:** serve the prose mark as the favicon ([0cd1d58](https://github.com/mbret/prose-reader/commit/0cd1d585497fa3acd8acdf64a57f575519389eb0))
+
+### Bug Fixes
+
+* center the mark on the name in the wordmarks ([dcfb409](https://github.com/mbret/prose-reader/commit/dcfb4093c35c5dac24ad273b6778665e5fcb67ef))
+* **streamer:** find a resource's declared media type by its record ([01ac289](https://github.com/mbret/prose-reader/commit/01ac289b475d10c8e7dac7038f98b3a53f8f120f))
+* **streamer:** rebase an EPUB manifest item as its spine item ([dc51a27](https://github.com/mbret/prose-reader/commit/dc51a27d0248d12e53cbf28678ba705471a46112))
+
+
 ## [28.0.0](https://github.com/mbret/prose-reader/compare/v27.0.0...v28.0.0) (2026-10-19)
 
 ### ⚠ BREAKING CHANGES

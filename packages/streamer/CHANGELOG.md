@@ -3,6 +3,14 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## [28.1.0](https://github.com/mbret/prose-reader/compare/v28.0.0...v28.1.0) (2026-10-19)
+
+### Bug Fixes
+
+* **streamer:** find a resource's declared media type by its record ([01ac289](https://github.com/mbret/prose-reader/commit/01ac289b475d10c8e7dac7038f98b3a53f8f120f))
+* **streamer:** rebase an EPUB manifest item as its spine item ([dc51a27](https://github.com/mbret/prose-reader/commit/dc51a27d0248d12e53cbf28678ba705471a46112))
+
+
 ## [28.0.0](https://github.com/mbret/prose-reader/compare/v27.0.0...v28.0.0) (2026-10-19)
 
 **Note:** Version bump only for package @prose-reader/streamer
