@@ -464,7 +464,8 @@ describe("pagination settlement", () => {
   })
 
   it("does not settle on pages still being computed when a newer layout is requested", async () => {
-    const reader = createTestReader()
+    const laterItem = holdItemLayout("/page_1.jpg")
+    const reader = createTestReader({ getRenderer: laterItem.getRenderer })
 
     mountTestReader(reader)
     await settledOn(reader, 0)
@@ -472,10 +473,12 @@ describe("pagination settlement", () => {
     /**
      * The moment a pass completes, its pages start resolving across animation
      * frames. A request made right then replaces the layout those pages
-     * describe, before they exist.
+     * describe, before they exist. Its own pass is held, so only those pages
+     * could make the layout current again meanwhile.
      */
     let replaced = false
     reader.spine.pages.spineLayout.layout$.pipe(first()).subscribe(() => {
+      laterItem.hold()
       reader.layout()
       replaced = true
     })
@@ -483,13 +486,15 @@ describe("pagination settlement", () => {
     await vi.waitFor(() => expect(replaced).toBe(true))
 
     // Long enough for the first pass's pages to have been published, had
-    // they not been abandoned.
+    // they not been abandoned: the book's two pages resolve in one frame.
     await new Promise((resolve) => requestAnimationFrame(resolve))
     await new Promise((resolve) => requestAnimationFrame(resolve))
 
     reader.navigation.goToSpineItem({ indexOrId: 0, animation: false })
 
     expect(reader.pagination.state.isSettled).toBe(false)
+
+    laterItem.release()
 
     const next = await settledOn(reader, 0)
 
