@@ -1,6 +1,6 @@
 # prose-reader-front
 
-The prose website, made of two pages:
+The prose website, made of three pages:
 
 - `/`, from `index.html`: the landing page.
 - `/demo`, from `demo.html`: the official demo, a reader made with React that
@@ -8,10 +8,29 @@ The prose website, made of two pages:
   integration example, see [the demo docs](../docs/src/content/docs/get-started/demo-and-showcase.md).
   Every path under `/demo` serves this page: `vercel.json` routes it in
   production, and a middleware in `vite.config.ts` in development and preview.
+- `404.html`: the page production answers, with a 404 status, for any other
+  path. It wears the landing page's header, footer and theme. Development and
+  preview answer those paths with an empty 404, and serve this page at `/404`.
 
 The landing page loads none of the demo's code, so visiting it does not
 download the reading engine. Each page keeps its code in its own folder,
-`src/landing` and `src/demo`.
+`src/landing`, `src/demo` and `src/notFound`.
+
+## Search engines and link previews
+
+Each page's `<head>` carries what crawlers and link previews read, since the
+pages render in the browser:
+
+- `index.html`: the title, description, canonical URL, Open Graph and Twitter
+  card tags, and structured data naming the site and the project.
+- `demo.html`: the title, description and link preview of the demo. The reader
+  screen adds `noindex`, so the books the demo opens stay out of search results.
+- `404.html`: `noindex`.
+
+`public/social-card.jpg` is the link preview image, `public/sitemap.xml` lists
+the pages to index, and `public/robots.txt` points to it. So that each page has
+one URL, `vercel.json` redirects `www.prose-reader.com` to `prose-reader.com`,
+and its `cleanUrls` redirects `/index.html` and `/demo.html` to `/` and `/demo`.
 
 The demo's Chakra UI snippets live in `src/demo/components/ui`. The Chakra CLI
 writes to `src/components/ui` unless told otherwise, so add one with:
