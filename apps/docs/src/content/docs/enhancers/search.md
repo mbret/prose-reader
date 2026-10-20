@@ -56,9 +56,14 @@ to know whether it was created with this enhancer.
 function search(text: string): Observable<SearchResult>
 ```
 
-Looks for `text` in the whole book. The observable emits once, with every
-match in reading order: spine item after spine item, then in the order of the
-document. Then it completes. An empty `text` emits an empty list.
+Looks for `text` in the whole book, ignoring case. Every character is matched
+as itself, `.` and `*` included, so the value of a search box can be passed as
+it is. A match has to sit within one text node: a word that markup splits, such
+as a drop cap in its own `<span>`, is not found.
+
+The observable emits once, with every match in reading order: spine item after
+spine item, then in the order of the document. Then it completes. An empty
+`text` emits an empty list.
 
 Each result holds the CFI of a range that covers one match.
 
