@@ -3,6 +3,14 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## [30.1.2](https://github.com/mbret/prose-reader/compare/v30.1.1...v30.1.2) (2026-10-20)
+
+### Bug Fixes
+
+* **enhancer-search:** fold case outside the BMP when matching ([571a4a1](https://github.com/mbret/prose-reader/commit/571a4a133a3a4e7af177c191ca822b2b081952d7))
+* **enhancer-search:** match the search text literally ([cc19223](https://github.com/mbret/prose-reader/commit/cc192231cee81eedf3738129a6081f8dec480a1c))
+
+
 ## [30.1.1](https://github.com/mbret/prose-reader/compare/v30.1.0...v30.1.1) (2026-10-19)
 
 **Note:** Version bump only for package @prose-reader/root
