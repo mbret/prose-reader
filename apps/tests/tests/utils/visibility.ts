@@ -44,7 +44,6 @@ export const isElementStartOnScreen = async (
     (reader, { spineItemIndex, id }) => {
       const spineItem = reader.spineItemsManager.get(spineItemIndex)
       const element = spineItem?.loadedDocument?.getElementById(id)
-      // Its rect is relative to the frame the document is in.
       const frame = spineItem?.renderer.getDocumentFrame()
 
       if (!frame || !element) return `no #${id} in a loaded document`

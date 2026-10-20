@@ -3,13 +3,12 @@ import type { SpineItem } from "../../spineItem/SpineItem"
 import { FrameSelectionTracker } from "./FrameSelectionTracker"
 
 /**
- * The selection in the item's loaded document, and `undefined` while there is
- * none: before it loads, and once it starts leaving.
+ * The selection in the item's document while it is loaded, and `undefined`
+ * while it is not: before it loads, and once it starts leaving.
  */
 export const trackSpineItemSelection = (spineItem: SpineItem) =>
   spineItem.watch("loadStatus").pipe(
     switchMap(() => {
-      // The frame holding it, which the tracker watches being removed.
       const frame = spineItem.renderer.getDocumentFrame()
 
       if (!spineItem.loadedDocument || !frame) return of(undefined)

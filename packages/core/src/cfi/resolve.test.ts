@@ -11,7 +11,6 @@ import {
 
 installReaderTestEnvironment()
 
-/** The paragraph's text in item 1's document, see `TextDocumentRenderer`. */
 const cfiNamingText = "epubcfi(/6/4[1]!/4/2/1:2)"
 const text = "A paragraph of text."
 
@@ -42,7 +41,6 @@ describe("resolveCfi", () => {
     reader.navigation.goToSpineItem({ indexOrId: 1, animation: false })
     await vi.waitFor(() => expect(getFrameText()).toBe(text))
 
-    // Its frame holds the document, which the hooks are still setting up.
     expect(item.value.loadStatus).toBe("loading")
     expect(getResolvedText()).toBeUndefined()
 
@@ -51,7 +49,6 @@ describe("resolveCfi", () => {
 
     expect(getResolvedText()).toBe(text)
 
-    // Its frame holds the document until it is released, once leaving.
     const resolvedWhileReleased: {
       frameText: string | undefined
       resolvedText: string | undefined

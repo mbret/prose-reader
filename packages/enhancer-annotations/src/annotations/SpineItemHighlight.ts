@@ -52,9 +52,8 @@ export class SpineItemHighlight extends DestroyableClass {
     )
 
     /**
-     * Resolved again with each loaded document, and dropped from the moment
-     * the item has none: one being released would otherwise be kept, with
-     * the range into it, until the next load.
+     * Resolved only into a loaded document: one being released would be
+     * kept, with the range into it, until the next load.
      */
     this.resolvedCfi$ = this.spineItem.watch("loadStatus").pipe(
       map(() =>

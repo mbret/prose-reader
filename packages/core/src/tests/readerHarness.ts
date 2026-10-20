@@ -257,10 +257,8 @@ export const holdItemLayout = (href: string) => {
 }
 
 /**
- * Keeps one item `loading` with its document in its frame, as an enhancer's
- * `item.onDocumentLoad` hooks do while they set the document up with fonts or
- * styles: the hook registered here ends for that item only once `release` is
- * called.
+ * Holds one item `loading` with its document already in its frame, as a slow
+ * `item.onDocumentLoad` hook does, until `release` is called.
  */
 export const holdItemDocumentLoadHooks = (
   reader: { hookManager: HookManager },

@@ -7,9 +7,7 @@ import { parseCfi } from "./parse"
 /**
  * Returns the node and offset for the given cfi.
  *
- * A cfi resolves into its item's loaded document only: while the item loads
- * or unloads, as before it loads, it resolves to no node, whatever its frame
- * holds meanwhile.
+ * A CFI can only resolve if the item is loaded.
  *
  * @important
  * This is up to you to resolve CFI at the right time. Trying to resolve a CFI to an invalid

@@ -967,10 +967,6 @@ describe("reading position of a cfi into a document", () => {
     ])
   })
 
-  /**
-   * Every reading position naming a place from now on, with the load status
-   * of the item it names a place in, as it comes.
-   */
   const recordPlacesNamed = (reader: ReturnType<typeof createTestReader>) => {
     const placesNamed: {
       cfi: string
@@ -1051,11 +1047,6 @@ describe("reading position of a cfi into a document", () => {
         ).toBe("A paragraph of text."),
       )
 
-      /**
-       * The frame holds the document from the moment it is written, while
-       * the `item.onDocumentLoad` hooks set it up, as an enhancer's do with
-       * fonts or styles. The cfi is resolved meanwhile.
-       */
       await resolveCfiWhileDocumentIsSetUp(reader)
 
       expect(item.value.loadStatus).toBe("loading")
@@ -1068,12 +1059,6 @@ describe("reading position of a cfi into a document", () => {
         ),
       )
 
-      /**
-       * A document being set up is not the one the reader shows, and a
-       * reading position naming a place in it could not be converted: a
-       * KOReader progress needs the item's loaded document. The reading
-       * position stands in at the item's start until the item has loaded.
-       */
       expect(placesNamed).toEqual([
         { cfi: cfiNamingText, loadStatus: "loaded" },
       ])

@@ -82,7 +82,6 @@ describe("SpineItem loaded document", () => {
       loadedDocument: nameDocument(item.loadedDocument),
     })
 
-    // The loaded document as read with every state the item goes through.
     const readWithEachState: {
       loadStatus: DocumentLoadStatus
       loadedDocument: string | undefined
@@ -100,7 +99,6 @@ describe("SpineItem loaded document", () => {
       expect(getFrameDocument()?.body.textContent).toBe("A paragraph of text."),
     )
 
-    // Its frame holds the document, which the hooks are still setting up.
     expect(describeItem()).toEqual({
       loadStatus: "loading",
       frameHoldsDocument: true,
@@ -116,7 +114,6 @@ describe("SpineItem loaded document", () => {
       loadedDocument: "the frame's document",
     })
 
-    // Its frame holds the document until it is released, once leaving.
     const describedWhileReleased: ReturnType<typeof describeItem>[] = []
 
     reader.hookManager.register("item.onDocumentUnload", ({ itemId }) => {
@@ -133,7 +130,6 @@ describe("SpineItem loaded document", () => {
         loadedDocument: undefined,
       },
     ])
-    // The invariant, read with every state the item went through.
     expect(
       readWithEachState.filter(
         ({ loadStatus, loadedDocument }) =>

@@ -194,19 +194,9 @@ export class SpineItem extends ReactiveEntity<SpineItemState> {
   }
 
   /**
-   * The item's document while it is `loaded`, and `undefined` otherwise:
-   * before it loads, while it loads though its frame may already hold it,
-   * from the moment it starts unloading, after a failed load, once a destroy
-   * has released it, and for an item rendered without a document frame, such
-   * as audio. Read the book's content here, a cfi's node or what a selector
-   * looks for: a document still being set up or already leaving is not the
-   * one the reader shows. An `item.onDocumentLoad` hook, which sets the
-   * document up while it loads, reaches it through the renderer's frame
-   * instead.
-   *
-   * Derived on each read from the item's state and its renderer's frame, and
-   * held nowhere: code reacting to it follows `watch("loadStatus")` and reads
-   * it there.
+   * The item's document while it is `loaded`. Read content here rather than
+   * from the renderer's frame, which also holds the document while it is set
+   * up and while it leaves.
    */
   public get loadedDocument(): Document | undefined {
     if (this.value.loadStatus !== `loaded`) return undefined

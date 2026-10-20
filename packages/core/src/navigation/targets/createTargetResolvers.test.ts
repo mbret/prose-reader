@@ -42,7 +42,6 @@ const createResolvers = ({
     clampPositionInSpine: (position: SpinePosition) => position,
     getNavigationForNode: () => new SpinePosition({ x: 0, y: 0 }),
   }
-  // Its document is shown once loaded, and no longer while it unloads.
   const loadedDocument =
     hasDocument && loadStatus === "loaded" ? document : undefined
   const spineItem = {
