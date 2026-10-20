@@ -10,6 +10,10 @@ so reaching this package through `require()` needs the `require(esm)` support th
 landed unflagged in Node 22.12. `import` and bundler builds are unaffected.
 :::
 
+:::tip
+The package has no import-time side effects and ships one module per source file, so a bundler keeps only what your imports reach. A browser app that only reads stored results, importing the provider ids (`GOOGLE_BOOKS_PROVIDER_ID`, `OPEN_LIBRARY_PROVIDER_ID`, `PROJECT_GUTENBERG_PROVIDER_ID`) or `FETCHED_METADATA_VERSION`, bundles those constants alone, without the catalog clients or the XML parser.
+:::
+
 **`@prose-reader/metadata-fetcher`** fetches a book's metadata from online catalogs. [archive-reader](/archive-reader) reads what the file itself carries; this reads what the world knows about it.
 
 It takes a compact `FetchMetadataInput`, asks a list of **pluggable providers**, scores every rich catalog candidate against that input, and returns the ranked alternatives plus the per-provider detail behind them:

@@ -3,12 +3,11 @@ import type {
   MetadataProvider,
   MetadataProviderContext,
 } from "../../types/provider.ts"
+import { PROJECT_GUTENBERG_PROVIDER_ID } from "../providerIds.ts"
 import { MetadataProviderResponseError } from "../responseError.ts"
 import { projectGutenbergLookupFromInput } from "./identifier.ts"
 import { parseProjectGutenbergRdf } from "./parse.ts"
 import { resolveProjectGutenbergRecord } from "./resolve.ts"
-
-export const PROJECT_GUTENBERG_PROVIDER_ID = "projectGutenberg"
 
 const DEFAULT_BASE_URL = "https://www.gutenberg.org"
 
