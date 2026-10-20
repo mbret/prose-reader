@@ -1,5 +1,6 @@
 ---
 title: "Viewport"
+description: "How the viewport frames what the reader shows: resizing it, choosing when two pages share it with spreadMode, and the absolute and relative viewports."
 ---
 
 The viewport is the visible reading area. It is not to be confused with pagination and navigation.

@@ -1,5 +1,6 @@
 ---
 title: "Project Gutenberg identifiers"
+description: "Read a Project Gutenberg ebook number from EPUB or ComicInfo.xml metadata with identifierValue(), from a typed identifier or a gutenberg.org link alike."
 ---
 
 Archive-reader recognizes `ProjectGutenberg` as a known identifier scheme when a publication states it explicitly. A publication can also carry a Project Gutenberg reference as a general `URL` identifier.

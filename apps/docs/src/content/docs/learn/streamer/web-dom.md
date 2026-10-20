@@ -1,5 +1,8 @@
 ---
-title: "Web (dom)"
+title: "Streamer in your web app"
+description: "Serve an EPUB from your page's own script with JSZip and getResource, without a server or service worker. An older guide, suited to prototypes."
+sidebar:
+  label: "Web (dom)"
 ---
 
 :::danger

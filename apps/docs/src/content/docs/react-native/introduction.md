@@ -1,5 +1,8 @@
 ---
-title: "Introduction"
+title: "React Native"
+description: "Run prose inside a React Native WebView: the web assets it needs, why the reading UI belongs on the native side, and how to stream books to it."
+sidebar:
+  label: "Introduction"
 ---
 
 Integrating prose and React Native is fairly straightforward but there are important concepts to review:

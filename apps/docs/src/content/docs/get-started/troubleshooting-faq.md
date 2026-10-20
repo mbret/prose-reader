@@ -1,5 +1,6 @@
 ---
 title: "Troubleshooting / FAQ"
+description: "Fixes for common problems: a book that displays wrong, a reader that does not resize with its container, and vertical books that open with a slide turn."
 ---
 
 ## My book does not work

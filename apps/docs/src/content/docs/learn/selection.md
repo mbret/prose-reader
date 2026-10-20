@@ -1,5 +1,8 @@
 ---
-title: "Selection"
+title: "Text selection"
+description: "Track what the user selects with reader.selection: streams, getSelection(), ordered ranges to build a CFI, and why a selection stays inside one spine item."
+sidebar:
+  label: "Selection"
 ---
 
 ## Selection across pages

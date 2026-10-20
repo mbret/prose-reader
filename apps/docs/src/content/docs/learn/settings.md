@@ -1,5 +1,8 @@
 ---
-title: "Settings"
+title: "Reader settings"
+description: "The settings a reader takes, such as spreadMode, pageTurnAnimation and pageTurnMode, and the computed values that say what the reader applies."
+sidebar:
+  label: "Settings"
 ---
 
 Settings affecting the reader.

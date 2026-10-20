@@ -1,5 +1,8 @@
 ---
-title: "Audio"
+title: "Audio enhancer"
+description: "Play audiobooks in the reader with @prose-reader/enhancer-audio: MP3, M4B and other tracks, play and seek controls, state$, and a frequency visualizer."
+sidebar:
+  label: "Audio"
 ---
 
 This enhancer adds audiobook playback support to the reader. It detects audio spine items in the manifest, renders them using a dedicated audio renderer, and provides a reactive playback API with play/pause, seeking, track selection, and a real-time frequency visualizer. It uses the standard HTML5 Audio element internally and integrates with the reader's pagination and navigation.

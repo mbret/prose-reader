@@ -1,5 +1,6 @@
 ---
 title: "Zoom"
+description: "Zoom into a page or out to thumbnails by transforming the viewport, and how zooming differs between paginated books and scrollable content such as webtoons."
 ---
 
 API available here [.zoom](/core-api/zoom)

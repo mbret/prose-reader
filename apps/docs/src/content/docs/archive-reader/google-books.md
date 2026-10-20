@@ -1,5 +1,6 @@
 ---
 title: "Google Books identifiers"
+description: "Get the Google Books volume id an EPUB or a ComicInfo.xml carries with identifierValue(), whether the publication typed it or gave a books.google.com URL."
 ---
 
 Archive-reader recognizes `GoogleBooks` as a known identifier scheme when a publication states it explicitly. A publication can also carry a Google Books reference as a general `URL` identifier.

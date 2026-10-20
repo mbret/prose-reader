@@ -1,5 +1,10 @@
 ---
-title: "Introduction"
+title: "Introduction to prose"
+sidebar:
+  label: "Introduction"
+head:
+  - tag: title
+    content: "prose documentation: the open-source engine for reading apps"
 ---
 
 Welcome to the `prose` documentation. Prose is an open source and free **Reading System SDK** to display epub and general archives (zip, cbz, cbr, etc) on the browser.

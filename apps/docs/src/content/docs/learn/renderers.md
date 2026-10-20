@@ -1,5 +1,6 @@
 ---
 title: "Renderers"
+description: "Pick the renderer of each spine item with getRenderer, and write your own by extending DocumentRenderer, shown with a complete image renderer."
 ---
 
 A renderer displays the document of one spine item: a chapter in a frame, a PDF page, the page of an audio track. The reader creates one for each item, from the `getRenderer` option. An item it gets no renderer for is displayed by the html renderer that `createReader` comes with. The [PDF](/enhancers/pdf) and [audio](/enhancers/audio) enhancers bring their own for their items.

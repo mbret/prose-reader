@@ -1,5 +1,8 @@
 ---
-title: "PDF"
+title: "PDF enhancer"
+description: "Set up @prose-reader/enhancer-pdf with pdf.js: the pdfjs-dist version to install, the worker, createArchiveFromPdf, and why PDFs stay out of a service worker."
+sidebar:
+  label: "PDF"
 ---
 
 This enhancer lets you render PDF documents. The reason it's not part of the core is because PDFs require an extra dependency and have a rather specific & much different way to be rendered. Having it as a core would increase the core size significantly and increase complexity while not everyone needs to render pdf.

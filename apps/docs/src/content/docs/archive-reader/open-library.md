@@ -1,5 +1,6 @@
 ---
 title: "Open Library identifiers"
+description: "Open Library names a record by a key path such as /works/OL45883W. identifierValue() reads that key from EPUB or ComicInfo.xml metadata."
 ---
 
 Archive-reader recognizes `OpenLibrary` as a known identifier scheme when a publication states it explicitly. A publication can also carry an Open Library reference as a general `URL` identifier.

@@ -1,5 +1,6 @@
 ---
 title: "Demo & Showcase"
+description: "Where to see prose running: the web demo, built with React and Chakra UI and free to copy, an Expo app for React Native, and the oboku reading app."
 ---
 
 You can see prose in action in our official [demo](https://prose-reader.com/demo) or in a real app such as [oboku](https://oboku.me/).

@@ -1,5 +1,8 @@
 ---
-title: "Getting Started"
+title: "Getting started with React Reader"
+description: "Install @prose-reader/react-reader, render ReactReader with your reader instance, persist font size and spread mode, and add enhancers to turn on more menus."
+sidebar:
+  label: "Getting Started"
 ---
 
 ## Installation

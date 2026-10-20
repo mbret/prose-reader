@@ -1,5 +1,8 @@
 ---
-title: "Gestures"
+title: "Gestures enhancer"
+description: "Add swipe, pan, tap and pinch gestures to the reader with @prose-reader/enhancer-gestures, configure them, and react to each gesture through gestures$."
+sidebar:
+  label: "Gestures"
 ---
 
 :::caution

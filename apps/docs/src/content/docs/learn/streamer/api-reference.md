@@ -1,5 +1,8 @@
 ---
-title: "API Reference"
+title: "Streamer API reference"
+description: "The exports of @prose-reader/streamer and their signatures: manifest and resource generation, the Streamer and ServiceWorkerStreamer classes, and configure()."
+sidebar:
+  label: "API Reference"
 ---
 
 The public surface of `@prose-reader/streamer`. Everything below is exported from the package root (`@prose-reader/streamer`) unless a **subpath** is called out explicitly.
