@@ -2,7 +2,6 @@ import { resolve } from "@prose-reader/cfi"
 import { Report } from "../report"
 import type { SpineItemsManager } from "../spine/SpineItemsManager"
 import type { SpineItem } from "../spineItem/SpineItem"
-import { isHtmlTagElement } from "../utils/dom"
 import { parseCfi } from "./parse"
 
 /**
@@ -37,40 +36,36 @@ export const resolveCfi = ({
       node: null,
     }
 
-  const rendererElement = spineItem.renderer.getDocumentFrame()
+  const doc = spineItem.loadedDocument
 
-  if (isHtmlTagElement(rendererElement, "iframe")) {
-    const doc = rendererElement.contentWindow?.document
+  if (doc) {
+    try {
+      const resolved = resolve(cfi, doc, {
+        throwOnError: true,
+      })
 
-    if (doc) {
-      try {
-        const resolved = resolve(cfi, doc, {
-          throwOnError: true,
-        })
+      return {
+        ...restParsed,
+        itemIndex,
+        node: resolved.isRange
+          ? (resolved.node?.startContainer ?? null)
+          : (resolved.node ?? null),
+        isCfiRange: resolved.isRange,
+        range: resolved.isRange ? resolved.node : undefined,
+        offset: Array.isArray(resolved.offset)
+          ? resolved.offset.at(-1)
+          : resolved.offset,
+        spineItem,
+      }
+    } catch (e) {
+      Report.warn(`Error resolving cfi: ${cfi}.`)
+      Report.warn(e)
 
-        return {
-          ...restParsed,
-          itemIndex,
-          node: resolved.isRange
-            ? (resolved.node?.startContainer ?? null)
-            : (resolved.node ?? null),
-          isCfiRange: resolved.isRange,
-          range: resolved.isRange ? resolved.node : undefined,
-          offset: Array.isArray(resolved.offset)
-            ? resolved.offset.at(-1)
-            : resolved.offset,
-          spineItem,
-        }
-      } catch (e) {
-        Report.warn(`Error resolving cfi: ${cfi}.`)
-        Report.warn(e)
-
-        return {
-          ...restParsed,
-          spineItem,
-          itemIndex,
-          node: null,
-        }
+      return {
+        ...restParsed,
+        spineItem,
+        itemIndex,
+        node: null,
       }
     }
   }

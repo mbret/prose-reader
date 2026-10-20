@@ -4,11 +4,13 @@ import { describe, expect, it, onTestFinished, vi } from "vitest"
 import { getPageStartProgression } from "../pagination/progression"
 import { SpinePosition } from "../spine/types"
 import { DefaultRenderer } from "../spineItem/renderer/DefaultRenderer"
+import type { DocumentLoadStatus } from "../spineItem/renderer/DocumentRenderer"
 import { DocumentRenderer } from "../spineItem/renderer/DocumentRenderer"
 import {
   createEnhancedTestReader,
   createTestReader,
   holdItem,
+  holdItemDocumentLoadHooks,
   installReaderTestEnvironment,
   mountTestReader,
   renderTextDocuments,
@@ -964,4 +966,102 @@ describe("reading position of a cfi into a document", () => {
       inSecondItem(cfiNamingText, "success"),
     ])
   })
+
+  const recordPlacesNamed = (reader: ReturnType<typeof createTestReader>) => {
+    const placesNamed: {
+      cfi: string
+      loadStatus: DocumentLoadStatus | undefined
+    }[] = []
+
+    reader.navigation.readingPosition$.pipe(skip(1)).subscribe(({ cfi }) => {
+      if (reader.cfi.isRootCfi(cfi)) return
+
+      placesNamed.push({
+        cfi,
+        loadStatus: reader.cfi.getSpineItemFromCfi(cfi)?.value.loadStatus,
+      })
+    })
+
+    return placesNamed
+  }
+
+  it.each<
+    [
+      string,
+      {
+        startLoadingSecondItem: (
+          reader: ReturnType<typeof createTestReader>,
+        ) => void
+        resolveCfiWhileDocumentIsSetUp: (
+          reader: ReturnType<typeof createTestReader>,
+        ) => Promise<unknown>
+      },
+    ]
+  >([
+    [
+      "a navigation to it restored by a layout",
+      {
+        startLoadingSecondItem: (reader) =>
+          reader.navigation.goToCfi(cfiNamingText, { animate: false }),
+        // As a resize, or another item loading, lays the book out.
+        resolveCfiWhileDocumentIsSetUp: (reader) => {
+          reader.layout()
+
+          return firstValueFrom(reader.spine.layout$)
+        },
+      },
+    ],
+    [
+      "a navigation to it",
+      {
+        startLoadingSecondItem: (reader) =>
+          reader.navigation.goToSpineItem({ indexOrId: 1, animation: false }),
+        resolveCfiWhileDocumentIsSetUp: async (reader) =>
+          reader.navigation.goToCfi(cfiNamingText, { animate: false }),
+      },
+    ],
+  ])(
+    "names the cfi's place only once its item has loaded, for %s while the item's document already shows it but is still set up",
+    async (_, { startLoadingSecondItem, resolveCfiWhileDocumentIsSetUp }) => {
+      // Item 1 loads only once the reader goes there.
+      const reader = createTestReader({
+        getRenderer: renderTextDocuments,
+        numberOfAdjacentSpineItemToPreLoad: 0,
+      })
+      const documentLoadHooks = holdItemDocumentLoadHooks(reader, "1")
+
+      mountTestReader(reader)
+      await settledOn(reader, 0)
+
+      const item = reader.spineItemsManager.get(1)
+
+      if (!item) throw new Error("item 1 is missing")
+
+      const placesNamed = recordPlacesNamed(reader)
+      const positions = recordReadingPositions(reader)
+
+      startLoadingSecondItem(reader)
+      await vi.waitFor(() =>
+        expect(
+          item.renderer.getDocumentFrame()?.contentDocument?.body.textContent,
+        ).toBe("A paragraph of text."),
+      )
+
+      await resolveCfiWhileDocumentIsSetUp(reader)
+
+      expect(item.value.loadStatus).toBe("loading")
+
+      documentLoadHooks.release()
+      await settledOn(reader, 1)
+      await vi.waitFor(() =>
+        expect(positions.at(-1)).toEqual(
+          inSecondItem(cfiNamingText, "success"),
+        ),
+      )
+
+      expect(placesNamed).toEqual([
+        { cfi: cfiNamingText, loadStatus: "loaded" },
+      ])
+    },
+  )
 })
