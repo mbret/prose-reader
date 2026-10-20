@@ -25,13 +25,9 @@ import { cfiToXPointer, xPointerToCfi } from "@prose-reader/koreader"
 // once it is loaded: not one still loading, nor one being released.
 const getSpineItem = (spineItemIndex: number) => {
   const item = reader.spineItemsManager.get(spineItemIndex)
-  const frame =
-    item?.value.loadStatus === "loaded"
-      ? item.renderer.getDocumentFrame()
-      : undefined
-  const document = frame instanceof HTMLIFrameElement ? frame.contentDocument : undefined
+  const document = item?.loadedDocument
 
-  return document ? { document, id: item?.item.id } : undefined
+  return item && document ? { document, id: item.item.id } : undefined
 }
 
 // A position pulled from a kosync server, into a prose CFI

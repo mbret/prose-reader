@@ -5,7 +5,6 @@ import {
   setStylePropertyIfChanged,
 } from "@prose-reader/core"
 import {
-  distinctUntilChanged,
   first,
   fromEvent,
   map,
@@ -57,10 +56,8 @@ export class SpineItemHighlight extends DestroyableClass {
      * kept, with the range into it, until the next load.
      */
     this.resolvedCfi$ = this.spineItem.watch("loadStatus").pipe(
-      map((loadStatus) => loadStatus === "loaded"),
-      distinctUntilChanged(),
-      map((isLoaded) =>
-        isLoaded
+      map(() =>
+        this.spineItem.loadedDocument
           ? this.reader.cfi.resolveCfi({ cfi: this.highlight.cfi })
           : undefined,
       ),

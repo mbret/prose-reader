@@ -193,6 +193,12 @@ export class SpineItem extends ReactiveEntity<SpineItemState> {
     return this.watch(`isReady`)
   }
 
+  public get loadedDocument(): Document | undefined {
+    if (this.value.loadStatus !== `loaded`) return undefined
+
+    return this.renderer.getDocumentFrame()?.contentDocument ?? undefined
+  }
+
   public destroy = () => {
     if (this.isDestroyed) return
 

@@ -19,6 +19,7 @@ import { navigationEnhancer } from "../enhancers/navigation"
 import { paginationEnhancer } from "../enhancers/pagination/enhancer"
 import { themeEnhancer } from "../enhancers/theme"
 import { zoomEnhancer } from "../enhancers/zoom"
+import type { HookManager } from "../hooks/HookManager"
 import { type CreateReaderOptions, createReader } from "../reader"
 import { DefaultRenderer } from "../spineItem/renderer/DefaultRenderer"
 import {
@@ -252,6 +253,28 @@ export const holdItemLayout = (href: string) => {
     hold: () => isHeld.next(true),
     release: () => isHeld.next(false),
     layoutsStarted: () => layoutsStarted,
+  }
+}
+
+/**
+ * Holds one item `loading` with its document already in its frame, as a slow
+ * `item.onDocumentLoad` hook does, until `release` is called.
+ */
+export const holdItemDocumentLoadHooks = (
+  reader: { hookManager: HookManager },
+  itemId: string,
+) => {
+  const released = new ReplaySubject<void>(1)
+
+  reader.hookManager.register(`item.onDocumentLoad`, async (params) => {
+    if (params.itemId === itemId) await firstValueFrom(released)
+  })
+
+  return {
+    release: () => {
+      released.next()
+      released.complete()
+    },
   }
 }
 

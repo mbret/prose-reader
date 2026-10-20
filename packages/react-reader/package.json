@@ -1,7 +1,7 @@
 {
   "name": "@prose-reader/react-reader",
   "private": false,
-  "version": "30.1.1",
+  "version": "30.1.2",
   "description": "A ready-made React reading interface for prose, themed with Chakra UI: table of contents, settings, search, annotations, bookmarks and gallery.",
   "keywords": [
     "prose-reader",

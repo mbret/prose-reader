@@ -42,10 +42,9 @@ export const isElementStartOnScreen = async (
 ) =>
   (await getReader(page)).evaluate(
     (reader, { spineItemIndex, id }) => {
-      const frame = reader.spineItemsManager
-        .get(spineItemIndex)
-        ?.renderer.getDocumentFrame()
-      const element = frame?.contentDocument?.getElementById(id)
+      const spineItem = reader.spineItemsManager.get(spineItemIndex)
+      const element = spineItem?.loadedDocument?.getElementById(id)
+      const frame = spineItem?.renderer.getDocumentFrame()
 
       if (!frame || !element) return `no #${id} in a loaded document`
 

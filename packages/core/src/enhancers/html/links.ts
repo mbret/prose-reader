@@ -5,13 +5,13 @@ export const handleLinks = (reader: Reader) => {
   return merge(
     ...reader.spine.spineItemsManager.items.map((item) => {
       return item.watch("loadStatus").pipe(
-        switchMap((loadStatus) => {
-          const frame = item.renderer.getDocumentFrame()
+        switchMap(() => {
+          const loadedDocument = item.loadedDocument
 
-          if (loadStatus !== "loaded" || !frame?.contentDocument) return NEVER
+          if (!loadedDocument) return NEVER
 
           const anchorElements = Array.from(
-            frame.contentDocument.querySelectorAll(`a`),
+            loadedDocument.querySelectorAll(`a`),
           )
 
           const events$ = anchorElements.map((element) =>

@@ -43,7 +43,7 @@ describe("trackSpineItemSelection", () => {
     await settledOn(reader, 0)
 
     const item = reader.spineItemsManager.get(0)
-    const document = item?.renderer.getDocumentFrame()?.contentDocument
+    const document = item?.loadedDocument
 
     if (!item || !document) throw new Error("no loaded first item")
 
