@@ -193,11 +193,6 @@ export class SpineItem extends ReactiveEntity<SpineItemState> {
     return this.watch(`isReady`)
   }
 
-  /**
-   * The item's document while it is `loaded`. Read content here rather than
-   * from the renderer's frame, which also holds the document while it is set
-   * up and while it leaves.
-   */
   public get loadedDocument(): Document | undefined {
     if (this.value.loadStatus !== `loaded`) return undefined
 
