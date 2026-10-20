@@ -1,5 +1,6 @@
 ---
 title: "Metadata Fetcher"
+description: "Look up a book in Google Books, Open Library and Project Gutenberg, rank the candidates by how well they match, and run it in Node or as a Docker HTTP service."
 ---
 
 :::caution

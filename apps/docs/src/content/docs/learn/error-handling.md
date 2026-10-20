@@ -1,5 +1,6 @@
 ---
 title: "Error Handling"
+description: "Detect a spine item that fails to load with itemLoadStatusChange$, show a placeholder page, and see how navigation and pagination behave around the failure."
 ---
 
 Having errors on a book reader is uncommon, things should always pretty much work assuming the library and/or your app does not have "bugs". Some processing such as unzipping archives, fetching resources or rendering complex documents such as PDF can lead to errors but are usually well handled.

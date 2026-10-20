@@ -1,5 +1,8 @@
 ---
-title: ".pagination"
+title: "reader.pagination"
+description: "The state$ stream and state of the pagination API, and every field of a result: visible pages, settlement, chapter, total pages and progress through the book."
+sidebar:
+  label: ".pagination"
 ---
 
 The reference for `reader.pagination`. The [pagination guide](/learn/pagination)

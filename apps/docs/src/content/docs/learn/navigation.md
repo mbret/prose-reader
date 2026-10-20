@@ -1,5 +1,6 @@
 ---
 title: "Navigation"
+description: "Turn pages with spatial and direct navigation, save the reading position from readingPosition$, open a book at a saved place, and handle pans and locks."
 ---
 
 Navigation is not a simple task and can be done in many ways depending on the

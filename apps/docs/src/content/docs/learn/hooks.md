@@ -1,5 +1,8 @@
 ---
-title: "Hooks"
+title: "Reader hooks"
+description: "Run your own code inside the reader's lifecycle with reader.hookManager, for example to inject CSS into a document before its pages are laid out."
+sidebar:
+  label: "Hooks"
 ---
 
 Hooks are a different way to add functionality to the reading system. They offer a deeper control and let you hook specific logic within the internal process.

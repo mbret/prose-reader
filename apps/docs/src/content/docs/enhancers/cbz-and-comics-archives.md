@@ -1,5 +1,6 @@
 ---
 title: "CBZ & comics archives"
+description: "Split two-page spreads into single pages, read manga right to left, and set up the streamer hooks and cbzEnhancer for CBZ and other comic archives."
 ---
 
 `@prose-reader/cbz` extends some support related to comics archives (not just .cbz). If your reader is serving epub files you may skip this package as its purpose is to bridge the gap between a comics archive and epub compliances.

@@ -1,5 +1,8 @@
 ---
-title: "KOReader"
+title: "KOReader enhancer"
+description: "Sync progress with KOReader: goToKoreaderProgress(), the koreaderProgress target and cfiToProgress(), xpointers for EPUB and page numbers for PDF and comics."
+sidebar:
+  label: "KOReader"
 ---
 
 This enhancer connects a reader to the KOReader ecosystem: it opens a reader

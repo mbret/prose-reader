@@ -1,5 +1,6 @@
 ---
 title: "Demo & Showcase"
+description: "Where to see prose running: the web demo, built with React and Chakra UI and free to copy, an Expo app for React Native, and the oboku reading app."
 ---
 
 You can see prose in action in our official [demo](https://prose-reader.com/demo) or in a real app such as [oboku](https://oboku.me/).
@@ -24,4 +25,4 @@ We have an expo app showcasing how to use prose with React Native. Visit the [Re
 
 [oboku](https://oboku.me/) is a free and open source reading app that lets you manage and read your own books synchronized from your device or various cloud providers (dropbox, drive, ...). It is a much more polished experience but does not necessarily include all the features of prose at a given time.
 
-<figure><img src="/images/oboku-library.png" alt=""></figure>
+<figure><img src="/images/oboku-library.webp" alt="oboku on a phone: a library of comics, and its reader on a page of a comic" width="1316" height="1161"></figure>

@@ -1,5 +1,6 @@
 ---
 title: "Getting started"
+description: "Install @prose-reader/core, the streamer and the archive reader, then open an EPUB with jszip and render it in your page with createReader() and mount()."
 ---
 
 ## Installation

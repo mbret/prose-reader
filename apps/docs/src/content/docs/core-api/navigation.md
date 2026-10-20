@@ -1,5 +1,8 @@
 ---
-title: ".navigation"
+title: "reader.navigation"
+description: "Every method and stream of the navigation API: readingPosition$, page turns, goToCfi() and the other go-to methods, navigate() targets, panning and locks."
+sidebar:
+  label: ".navigation"
 ---
 
 The reference for `reader.navigation`. The [navigation guide](/learn/navigation)

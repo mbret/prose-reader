@@ -1,5 +1,8 @@
 ---
-title: "Pagination"
+title: "Pagination techniques"
+description: "The two ways a web reading system can split an EPUB chapter into pages, as fragments or as one document laid out in pages, and why prose uses the second."
+sidebar:
+  label: "Pagination"
 ---
 
 Epub files are more or less a group of HTML documents (chapters). These documents depending on the size of your reading device will spread across several pages. Pagination is the act of splitting into pages such documents so that it renders accordingly to your device and settings.

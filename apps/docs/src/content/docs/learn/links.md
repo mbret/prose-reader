@@ -1,5 +1,8 @@
 ---
-title: "Links"
+title: "Handling links"
+description: "What happens when the user clicks a link in a book: links to the book itself navigate on their own, and you handle external or email links with reader.links$."
+sidebar:
+  label: "Links"
 ---
 
 Anchor elements events are prevented by default. This is to avoid unintentional navigation or effects within the document frame.

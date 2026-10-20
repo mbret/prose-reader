@@ -1,5 +1,6 @@
 ---
 title: "Style & CSS"
+description: "Style a prose reader with CSS: the stable data attributes, rules scoped to one reader instance, and injecting an enhancer's styles with injectScopedCSS."
 ---
 
 ## Stable constants
