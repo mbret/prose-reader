@@ -1,6 +1,22 @@
 {
   "name": "@prose-reader/enhancer-gestures",
   "version": "30.1.1",
+  "description": "Touch and mouse gestures for prose: swipe and tap to turn pages, pan, and pinch to zoom.",
+  "keywords": [
+    "prose-reader",
+    "gestures",
+    "swipe",
+    "pinch-zoom",
+    "touch",
+    "ebook",
+    "reader"
+  ],
+  "homepage": "https://doc.prose-reader.com/enhancers/gestures",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/mbret/prose-reader.git",
+    "directory": "packages/enhancer-gestures"
+  },
   "type": "module",
   "main": "./dist/index.cjs",
   "module": "./dist/index.js",

@@ -1,6 +1,22 @@
 {
   "name": "@prose-reader/enhancer-annotations",
   "version": "30.1.1",
+  "description": "Highlights and notes for prose: create annotations anchored by CFIs, show their highlights in the book and react to taps on them.",
+  "keywords": [
+    "prose-reader",
+    "annotations",
+    "highlights",
+    "notes",
+    "epub",
+    "cfi",
+    "ebook"
+  ],
+  "homepage": "https://doc.prose-reader.com/enhancers/annotations",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/mbret/prose-reader.git",
+    "directory": "packages/enhancer-annotations"
+  },
   "type": "module",
   "main": "./dist/index.cjs",
   "module": "./dist/index.js",
