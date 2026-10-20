@@ -1,10 +1,11 @@
 import { scoreMetadataCandidate } from "./match/scoreMetadataCandidate.ts"
 import { responseErrorStatus } from "./providers/responseError.ts"
 import { Report } from "./report.ts"
-import type {
-  FailedMetadataProvider,
-  FetchedMetadata,
-  FetchedMetadataSource,
+import {
+  type FailedMetadataProvider,
+  FETCHED_METADATA_VERSION,
+  type FetchedMetadata,
+  type FetchedMetadataSource,
 } from "./types/fetchedMetadata.ts"
 import type { FetchMetadataInput } from "./types/fetchMetadataInput.ts"
 import type { MetadataMatch } from "./types/match.ts"
@@ -38,7 +39,6 @@ export type FetchMetadataOptions = {
 
 const DEFAULT_LIMIT = 5
 const DEFAULT_MIN_SCORE = 0.5
-const FETCHED_METADATA_VERSION = 5
 
 const toMatch = ({
   candidate,

@@ -2,6 +2,7 @@ import { mainTitle } from "@prose-reader/archive-reader"
 import { describe, expect, it, vi } from "vitest"
 import { fetchMetadata } from "./fetchMetadata.ts"
 import { MetadataProviderResponseError } from "./providers/responseError.ts"
+import { FETCHED_METADATA_VERSION } from "./types/fetchedMetadata.ts"
 import type { FetchMetadataInput } from "./types/fetchMetadataInput.ts"
 import type { MetadataCandidate, MetadataProvider } from "./types/provider.ts"
 
@@ -260,7 +261,7 @@ describe("fetchMetadata", () => {
 
   it("returns an empty, versioned entity when no provider is passed", async () => {
     expect(await fetchMetadata(book, { providers: [] })).toEqual({
-      version: 5,
+      version: FETCHED_METADATA_VERSION,
       matches: [],
       sources: {},
       failedProviders: [],

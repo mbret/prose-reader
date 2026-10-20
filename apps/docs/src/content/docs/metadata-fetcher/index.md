@@ -116,7 +116,34 @@ type FetchedMetadata = {
 }
 ```
 
-`version` is currently `5`. Every candidate uses the explicit `publication.original` / `publication.edition` vocabulary.
+`version` is the schema version, currently `5`, bumped only when the shape or meaning of existing fields changes incompatibly — a `MetadataMatch` included. Every candidate uses the explicit `publication.original` / `publication.edition` vocabulary.
+
+The same value is exported as `FETCHED_METADATA_VERSION`, for a consumer that persists part of the entity, or builds that shape without calling `fetchMetadata`, and still wants to tag what it stores:
+
+```typescript
+import {
+  FETCHED_METADATA_VERSION,
+  scoreMetadataCandidate,
+} from "@prose-reader/metadata-fetcher"
+
+// keep only the best accepted match, with the schema it was written in
+const [best] = fetched.matches.filter(({ accepted }) => accepted)
+if (best) db.put(bookId, { version: FETCHED_METADATA_VERSION, match: best })
+
+// a migration scoring records stored before metadata-fetcher, offline, writes
+// the same shape — and has no fetchMetadata result to read the version from
+const { score, signals } = scoreMetadataCandidate(input, legacy.metadata)
+db.put(bookId, {
+  version: FETCHED_METADATA_VERSION,
+  match: {
+    providerId: legacy.providerId,
+    score,
+    signals,
+    accepted: score >= 0.5,
+    metadata: legacy.metadata,
+  },
+})
+```
 
 `matches` are deliberately not consolidated into a single metadata record. A score says how strongly a candidate resembles the input; it does not prove that several accepted candidates describe the same edition. Keeping the candidates separate avoids silently mixing fields from competing records and leaves selection policy with the consumer.
 

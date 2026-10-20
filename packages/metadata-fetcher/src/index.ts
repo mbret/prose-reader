@@ -116,6 +116,7 @@ export type {
   FetchedMetadataSource,
   FetchedMetadataSources,
 } from "./types/fetchedMetadata.ts"
+export { FETCHED_METADATA_VERSION } from "./types/fetchedMetadata.ts"
 export type { FetchMetadataInput } from "./types/fetchMetadataInput.ts"
 export type {
   MetadataMatch,
