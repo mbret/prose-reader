@@ -3,10 +3,16 @@
   "installCommand": "npx --yes \"$(node -p \"require('../../package.json').packageManager\")\" install --frozen-lockfile",
   "buildCommand": "npx --yes \"$(node -p \"require('../../package.json').packageManager\")\" --filter \"prose-reader-front...\" run build",
   "outputDirectory": "dist",
-  "rewrites": [
-    { "source": "/demo", "destination": "/demo.html" },
-    { "source": "/demo/:path*", "destination": "/demo.html" }
+  "cleanUrls": true,
+  "redirects": [
+    {
+      "source": "/:path(.*)",
+      "has": [{ "type": "host", "value": "www.prose-reader.com" }],
+      "destination": "https://prose-reader.com/:path",
+      "permanent": true
+    }
   ],
+  "rewrites": [{ "source": "/demo/:path*", "destination": "/demo" }],
   "git": {
     "deploymentEnabled": {
       "**": false,

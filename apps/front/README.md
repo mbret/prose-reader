@@ -17,6 +17,10 @@ The landing page loads none of the demo's code, so visiting it does not
 download the reading engine. Each page keeps its code in its own folder,
 `src/landing`, `src/demo` and `src/notFound`.
 
+Each page has one URL: `vercel.json` redirects `www.prose-reader.com` to
+`prose-reader.com`, and its `cleanUrls` redirects `/index.html` and
+`/demo.html` to `/` and `/demo`.
+
 The demo's Chakra UI snippets live in `src/demo/components/ui`. The Chakra CLI
 writes to `src/components/ui` unless told otherwise, so add one with:
 
