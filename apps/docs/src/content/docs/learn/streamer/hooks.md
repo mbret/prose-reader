@@ -33,8 +33,8 @@ const streamer = new Streamer({
 
 Each factory receives `{ archive, baseUrl }` and returns the transform; transforms may be async and run in list order. Find a spine item's record with `getArchiveFileRecordByUri(archive, spineItem.containerUri)` rather than from its `href`, and give an item you derive from a record, as the panorama split does, that record's `containerUri`. The `@prose-reader/cbz` package ships ready-made ones (reading-direction detection, panorama splitting) as `streamerHooks.manifest`.
 
-:::caution
-Before v2 of the streamer, manifest hooks were split into `content`/`spine`/`presentation`/`navigation` phases interleaved with built-in format hooks. That taxonomy is gone — pass a single ordered array instead.
+:::note
+Your hooks are the only manifest transforms: no built-in hook runs before, between or after them, apart from the final defaults. They form a single ordered array, without phases.
 :::
 
 ## Resource hooks

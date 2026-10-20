@@ -13,7 +13,7 @@ For convenience with CSS, prose reader defines some constants that will **NEVER*
 
 When you want to add or override some styles, be careful whether you want to target all readers or the specific one the enhancer is attached to. All data-attributes used have an ID attached to it. You need to target the specific ID together with the data attribute if you want to apply your style to a specific reader instance.
 
-You can retrieve the reader id with `reader.id` .&#x20;
+You can retrieve the reader id with `reader.id`.
 
 You will not be able to use this statically inside .css files since it is not possible to use variables in selectors. Check the next sections to see the strategies on how to add your styles.
 
@@ -42,14 +42,19 @@ Whenever you target `[data-my-enhancer]` in your css files, you can be sure they
 // Inside your enhancer
 const reader = next(options)
 
-const sub = reader.context.watch(`rootElement`).pipe(
-  tap((container) => {
-    // Always set your attribute to the container of the given reader instance
-    container.setAttribute("data-my-enhancer", "true")
-  }),
-)
-
-// don't forget to unsubscribe on reader destroy
+reader.context
+  .watch(`rootElement`)
+  .pipe(
+    // the container is only known once the reader is mounted
+    filter(isDefined),
+    tap((container) => {
+      // Always set your attribute to the container of the given reader instance
+      container.setAttribute("data-my-enhancer", "true")
+    }),
+    // don't forget to unsubscribe on reader destroy
+    takeUntil(reader.$.destroy$),
+  )
+  .subscribe()
 ```
 
 :::caution
@@ -65,8 +70,9 @@ Using javascript to add your style is the only way you can target a reader insta
 The reader instance exposes a convenient method to inject your CSS in a safe way.
 
 ```typescript
+// `\${id}` is escaped: `injectScopedCSS` replaces it, not JavaScript.
 const style = `
-[data-prose-reader-container=${id}] {
+[data-prose-reader-container="\${id}"] {
   background-color: red;
 }
 `
@@ -75,20 +81,23 @@ const style = `
 // import style from "./style.css?inline"
 
 const removeStyle = reader.utils.injectScopedCSS(
-    document,
-    "my-super-enhancer",
-    style
+  document,
+  "my-super-enhancer",
+  style,
 )
-
-// This will create style element that looks like this
-<style id="my-super-enhancer-eb75a4ed-6be2-487b-81b3-d8c22bd8668f">
-  [data-prose-reader-container=eb75a4ed-6be2-487b-81b3-d8c22bd8668f] {
-    background-color: red;
-  }
-</style>
 
 // Later, when reader instance is destroyed
 removeStyle()
+```
+
+This adds a `<style>` element like this one to the document:
+
+```html
+<style id="my-super-enhancer-eb75a4ed-6be2-487b-81b3-d8c22bd8668f">
+  [data-prose-reader-container="eb75a4ed-6be2-487b-81b3-d8c22bd8668f"] {
+    background-color: red;
+  }
+</style>
 ```
 
 There are several things happening:
@@ -96,7 +105,7 @@ There are several things happening:
 * Your style has a unique name based on your scope and the reader instance. This avoid clashing between `<style>` elements
 * Your style is targeting a specific reader instance ID so your style will only apply to the reader it's being injected into
 
-`${id}` is a special template string that will get replaced automatically for you.
+`${id}` is a placeholder that `injectScopedCSS` replaces with the reader id. Only its first occurrence is replaced, so use it once per style. Keep the value quoted: the id is a UUID, and one that starts with a digit is not a valid unquoted attribute value.
 
 :::caution
 You may have noticed the drawback here, the style content is actually part of your javascript file. It adds up to the bundle size. This is not a problem if your style is not huge but you may consider other approaches if your enhancer adds a ton of style.

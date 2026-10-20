@@ -13,7 +13,7 @@ const document$ = reader.renderHeadless(3)
 `renderHeadless(spineItem)`
 
 ```typescript
-function locateResource(spineItem: SpineItemReference): Observable<{
+function renderHeadless(spineItem: SpineItemReference): Observable<{
     doc: Document;
     release: () => void;
 } | undefined>
@@ -32,5 +32,19 @@ Observable<{
 } | undefined>
 ```
 
-An observable containing frame document or undefined
+An observable that emits once, then completes:
 
+* `doc`: the item's content as a document of its own, built by the item's renderer and never attached to the reader. For an HTML item it is the parsed resource; for a PDF page, the page's text layer.
+* `release`: call it once you are done with `doc`. It tells the item's renderer it can free what it holds for the headless document. The built-in renderers hold nothing, but a [custom renderer](/learn/renderers) may.
+
+It emits `undefined` when the spine item does not exist, when its renderer cannot render it headless (an audio item, or an HTML item whose resource is not an HTML or XML document), or when rendering fails.
+
+```typescript
+reader.renderHeadless(3).subscribe((result) => {
+  if (!result) return
+
+  console.log(result.doc.body.textContent)
+
+  result.release()
+})
+```

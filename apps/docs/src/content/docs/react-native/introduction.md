@@ -6,7 +6,7 @@ Integrating prose and React Native is fairly straightforward but there are impor
 
 ## Is it okay to do that?
 
-It's fair to wonder if doing so makes sense. After all, there are already some native epub libraries existing that may be more convenient to use. On a technical perspective, this is a totally viable solution. The major downside is the requirement of a webview and to have separate web assets to run prose. There really is no way around it but it works well and performs without noticeable performance issues.&#x20;
+It's fair to wonder if doing so makes sense. After all, there are already some native epub libraries existing that may be more convenient to use. On a technical perspective, this is a totally viable solution. The major downside is the requirement of a webview and to have separate web assets to run prose. There really is no way around it but it works well and performs without noticeable performance issues.
 
 The question is more whether you want to use prose or not and you are welcome to explore the entire documentation to see what it is capable of.
 
