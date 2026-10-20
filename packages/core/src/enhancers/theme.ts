@@ -1,7 +1,21 @@
-import { BehaviorSubject, type Observable, takeUntil, tap } from "rxjs"
+import {
+  BehaviorSubject,
+  filter,
+  finalize,
+  merge,
+  type Observable,
+  switchMap,
+  takeUntil,
+  tap,
+} from "rxjs"
+import { CSS_VAR_THEME_BACKGROUND_COLOR } from "../constants"
 import type { SpineItem } from "../spineItem/SpineItem"
-import { setStylePropertyIfChanged } from "../utils/dom"
+import {
+  removeStylePropertyIfPresent,
+  setStylePropertyIfChanged,
+} from "../utils/dom"
 import { upsertCSSToFrame } from "../utils/frames"
+import { isDefined } from "../utils/isDefined"
 import type { EnhancerOutput, RootEnhancer } from "./types/enhancer"
 
 export type Theme = `bright` | `sepia` | `night` | `publisher`
@@ -12,7 +26,8 @@ type ThemeColors = {
 }
 
 /**
- * `publisher` overrides nothing: documents keep their own colors.
+ * `publisher` overrides nothing: documents keep their own colors, and the
+ * reader keeps its default white.
  */
 const themeColors: Record<Theme, ThemeColors> = {
   bright: {
@@ -101,25 +116,48 @@ export const themeEnhancer: ThemeEnhancer = (next) => (options) => {
     if (item) applyThemeToItemDocument(item)
   })
 
-  currentThemeSubject$
-    .pipe(
-      tap((theme) => {
-        const { backgroundColor } = themeColors[theme]
+  const applyThemeToLoadedDocuments$ = currentThemeSubject$.pipe(
+    tap(() => {
+      reader.spineItemsManager.items.forEach(applyThemeToItemDocument)
+    }),
+  )
 
-        reader.spineItemsManager.items.forEach((item) => {
-          applyThemeToItemDocument(item)
+  /**
+   * The reader's stylesheet paints its container, and the placeholder of an
+   * item that is loading, with this variable, white by default.
+   */
+  const applyThemeToContainer$ = reader.context.watch(`rootElement`).pipe(
+    filter(isDefined),
+    switchMap((rootElement) =>
+      currentThemeSubject$.pipe(
+        tap((theme) => {
+          const { backgroundColor } = themeColors[theme]
 
           if (backgroundColor) {
             setStylePropertyIfChanged(
-              item.element.style,
-              `background-color`,
+              rootElement.style,
+              CSS_VAR_THEME_BACKGROUND_COLOR,
               backgroundColor,
             )
+          } else {
+            removeStylePropertyIfPresent(
+              rootElement.style,
+              CSS_VAR_THEME_BACKGROUND_COLOR,
+            )
           }
-        })
-      }),
-      takeUntil(reader.$.destroy$),
-    )
+        }),
+        finalize(() => {
+          removeStylePropertyIfPresent(
+            rootElement.style,
+            CSS_VAR_THEME_BACKGROUND_COLOR,
+          )
+        }),
+      ),
+    ),
+  )
+
+  merge(applyThemeToLoadedDocuments$, applyThemeToContainer$)
+    .pipe(takeUntil(reader.$.destroy$))
     .subscribe()
 
   return {
