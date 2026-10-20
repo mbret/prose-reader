@@ -66,6 +66,10 @@ describe("searchTextRangesInNode", () => {
     ])
   })
 
+  it("matches case-insensitively outside the BMP", () => {
+    expect(searchMatchedTexts(`<p>𐐀 and 𐐨</p>`, `𐐨`)).toEqual([`𐐀`, `𐐨`])
+  })
+
   it("ignores the head", () => {
     const doc = createDocument(`<p>needle</p>`)
     doc.title = `needle`

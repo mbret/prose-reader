@@ -68,7 +68,8 @@ export const searchTextRangesInNode = (node: Node, text: string) => {
 
   collectMatchingRanges(
     node,
-    new RegExp(escapeRegExpSyntax(text), `gi`),
+    // `u` so that `i` also folds case outside the BMP (Deseret `𐐀` / `𐐨`).
+    new RegExp(escapeRegExpSyntax(text), `giu`),
     rangeList,
   )
 
