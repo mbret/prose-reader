@@ -1,6 +1,25 @@
 {
   "name": "@prose-reader/archive-reader",
   "version": "30.0.0",
+  "description": "Read EPUB, CBZ, CBR and text files as archives, and resolve their metadata, cover, reading order and table of contents.",
+  "keywords": [
+    "prose-reader",
+    "epub",
+    "cbz",
+    "cbr",
+    "comics",
+    "archive",
+    "zip",
+    "ebook",
+    "metadata",
+    "comicinfo"
+  ],
+  "homepage": "https://doc.prose-reader.com/archive-reader",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/mbret/prose-reader.git",
+    "directory": "packages/archive-reader"
+  },
   "type": "module",
   "main": "./dist/index/index.cjs",
   "module": "./dist/index/index.js",

@@ -1,6 +1,21 @@
 {
   "name": "@prose-reader/enhancer-pdf",
   "version": "30.1.1",
+  "description": "PDF in prose: open a PDF as an archive and render its pages with pdf.js.",
+  "keywords": [
+    "prose-reader",
+    "pdf",
+    "pdfjs",
+    "pdf-viewer",
+    "ebook",
+    "reader"
+  ],
+  "homepage": "https://doc.prose-reader.com/enhancers/pdf",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/mbret/prose-reader.git",
+    "directory": "packages/enhancer-pdf"
+  },
   "type": "module",
   "main": "./dist/index.cjs",
   "module": "./dist/index.js",
