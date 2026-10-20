@@ -6,6 +6,12 @@
   "trailingSlash": false,
   "redirects": [
     {
+      "source": "/:path(.*)",
+      "has": [{ "type": "host", "value": "prose-reader-docs.vercel.app" }],
+      "destination": "https://doc.prose-reader.com/:path",
+      "permanent": true
+    },
+    {
       "source": "/sitemap.xml",
       "destination": "/sitemap-index.xml",
       "permanent": true
