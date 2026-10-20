@@ -131,7 +131,13 @@ reader is destroyed. Its type is `ZoomEnhancerOutput["zoom"]["state"]`.
 | --- | --- |
 | `isZooming` | `true` from `.enter()` until `.exit()` |
 | `currentScale` | The scale of the viewport: `1` at rest, above `1` zoomed in, below `1` zoomed out |
-| `currentPosition` | The offset of the zoomed viewport in controlled page turn mode, the one `.move()` sets or that scaling around the center gives. `{ x: 0, y: 0 }` before the first zoom, after `.exit()`, and at all times in scrollable mode |
+| `currentPosition` | The offset of the zoomed viewport in controlled page turn mode, the one `.move()` sets or that scaling around the center gives |
+
+`currentPosition` is `{ x: 0, y: 0 }` before the first zoom and after `.exit()`
+in controlled mode. Scrollable mode does not track it: `.enter()` sets it to
+`{ x: 0, y: 0 }` and nothing else changes it, not even `.exit()`. A zoom that
+began in controlled mode and goes on after a switch to scrollable mode keeps its
+last offset until the next `.enter()`.
 
 ```typescript
 import { distinctUntilChanged, map } from "rxjs"
@@ -169,7 +175,7 @@ A zoom works differently in each [page turn mode](/learn/page-turn-mode):
 | `animate` | Eases the change over 200 ms | Has no effect |
 | `.move()` | Moves the zoomed viewport | Does nothing: the user scrolls, sideways too when zoomed in |
 | `constrain` | Clamps the position | Has no effect |
-| `currentPosition` | The offset of the viewport | Always `{ x: 0, y: 0 }` |
+| `currentPosition` | The offset of the viewport | Not tracked, see [`.state$`](#stateusd) |
 
 Each change lays the reader out again, since what is visible changed. In
 controlled mode, `.enter()` with a scale other than `1`, and `.exit()`, lay it
@@ -180,8 +186,9 @@ out once more when their animation ends.
 Gestures are not part of this API. The
 [Gestures](/enhancers/gestures#zooming-in-out) enhancer drives it:
 
-- A pinch that spreads enters the zoom, then scales it with
-  `constrain: "within-viewport"`, up to its `zoomMaxScale` setting.
+- A pinch that spreads enters the zoom at the scale of its first move, then
+  scales it with `constrain: "within-viewport"`, up to its `zoomMaxScale`
+  setting. That setting does not cap the scale the zoom enters at.
 - A pinch that takes the scale below `1` exits it.
 - While the book is zoomed in, a pan moves the zoom rather than the page, and a
   tap no longer turns the page.
