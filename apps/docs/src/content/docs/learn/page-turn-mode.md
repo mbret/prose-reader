@@ -56,7 +56,7 @@ The page turns:
 - `fade`: the book fades out, moves, and fades back in.
 - `none`: the new page shows at once.
 
-The animation lasts `pageTurnAnimationDuration` milliseconds. Every navigation you ask for animates, unless you turn it off for that navigation, as `goToCfi(cfi, { animate: false })` does. The reader's own moves never do: opening the book, and returning to the reading position after a layout. The snap that ends a pan always slides, for `snapAnimationDuration` milliseconds.
+The animation lasts `pageTurnAnimationDuration` milliseconds. A navigation you ask for animates unless you turn it off for that navigation, as `goToCfi(cfi, { animate: false })` does. [`goToUrl()`](/core-api/navigation#gotourl) never animates, and neither does a click on a link in the book, which goes through it. Nor do the reader's own moves: opening the book, and returning to the reading position after a layout. The snap that ends a pan always slides, for `snapAnimationDuration` milliseconds.
 
 A book written vertically cannot slide. When `pageTurnAnimation` is `slide`, its pages turn without animation, and `fade` still works. If its first pages still slide, see [Troubleshooting](/get-started/troubleshooting-faq#i-have-a-vertical-reading-book-but-the-first-page-is-using-slide-turn).
 
