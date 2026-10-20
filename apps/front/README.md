@@ -54,3 +54,17 @@ https://github.com/mbret/prose-reader/issues/357.
 
 Visit http://localhost:9000/demo/books and upload your own book, which you can
 then open.
+
+## Search engines and link previews
+
+The pages render in the browser, so each page's `<head>` carries what crawlers
+and link previews read:
+
+- `index.html`: the title, description, canonical URL, Open Graph and Twitter
+  card tags, and structured data naming the site and the project.
+- `demo.html`: the title, description and link preview of the demo. The reader
+  screen adds `noindex`, so the books the demo opens stay out of search results.
+
+`public/social-card.jpg` is the link preview image, rendered from
+`assets/brand/social-card.html`. `public/sitemap.xml` lists the pages to index,
+and `public/robots.txt` points to it.
