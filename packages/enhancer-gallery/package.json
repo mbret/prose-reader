@@ -1,6 +1,6 @@
 {
   "name": "@prose-reader/enhancer-gallery",
-  "version": "30.1.1",
+  "version": "30.2.0",
   "description": "Page thumbnails for prose: snapshot the first page of any spine item to build a gallery of a book's pages.",
   "keywords": [
     "prose-reader",

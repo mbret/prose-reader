@@ -3,6 +3,13 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## [30.2.0](https://github.com/mbret/prose-reader/compare/v30.1.2...v30.2.0) (2026-10-20)
+
+### Features
+
+* **core:** give a spine item's loaded document ([689e50d](https://github.com/mbret/prose-reader/commit/689e50d7dd3b4a04ca32e5ab38c9e70ea370aee9))
+
+
 ## [30.1.1](https://github.com/mbret/prose-reader/compare/v30.1.0...v30.1.1) (2026-10-19)
 
 **Note:** Version bump only for package @prose-reader/enhancer-koreader

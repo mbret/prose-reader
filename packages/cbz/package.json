@@ -1,6 +1,6 @@
 {
   "name": "@prose-reader/cbz",
-  "version": "30.1.1",
+  "version": "30.2.0",
   "description": "Comic archives in prose: streamer hooks and a reader enhancer for CBZ files, with spread splitting and right-to-left manga.",
   "keywords": [
     "prose-reader",
