@@ -2,9 +2,6 @@ version: 2
 updates:
   - package-ecosystem: npm
     directory: '/'
-    # Like every pull request, dependency updates go to develop: master only
-    # takes releases.
-    target-branch: develop
     schedule:
       interval: daily
       time: '01:00'
