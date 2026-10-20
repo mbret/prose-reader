@@ -5,8 +5,7 @@
   "outputDirectory": "dist",
   "rewrites": [
     { "source": "/demo", "destination": "/demo.html" },
-    { "source": "/demo/:path*", "destination": "/demo.html" },
-    { "source": "/(.*)", "destination": "/" }
+    { "source": "/demo/:path*", "destination": "/demo.html" }
   ],
   "git": {
     "deploymentEnabled": {
