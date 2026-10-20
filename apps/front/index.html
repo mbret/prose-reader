@@ -7,6 +7,29 @@
     <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
     <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
 
+    <!-- The fonts of the first screen load with the page's script, rather than once the page renders, which would shift it -->
+    <link
+      rel="preload"
+      href="/node_modules/@fontsource-variable/literata/files/literata-latin-opsz-normal.woff2"
+      as="font"
+      type="font/woff2"
+      crossorigin
+    />
+    <link
+      rel="preload"
+      href="/node_modules/@fontsource-variable/geist/files/geist-latin-wght-normal.woff2"
+      as="font"
+      type="font/woff2"
+      crossorigin
+    />
+    <link
+      rel="preload"
+      href="/node_modules/@fontsource-variable/geist-mono/files/geist-mono-latin-wght-normal.woff2"
+      as="font"
+      type="font/woff2"
+      crossorigin
+    />
+
     <title>prose, the open-source engine for building reading apps</title>
     <meta
       name="description"
@@ -16,12 +39,53 @@
     <link rel="canonical" href="https://prose-reader.com/" />
 
     <meta property="og:type" content="website" />
+    <meta property="og:site_name" content="prose" />
     <meta property="og:url" content="https://prose-reader.com/" />
-    <meta property="og:title" content="prose" />
+    <meta
+      property="og:title"
+      content="prose, the open-source engine for building reading apps"
+    />
     <meta
       property="og:description"
-      content="The open-source engine for building reading apps in the browser."
+      content="Render EPUB 3, comics and PDF with a single, framework-agnostic SDK, and ship your own reader, your way."
     />
+    <meta property="og:image" content="https://prose-reader.com/social-card.jpg" />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+    <meta
+      property="og:image:alt"
+      content="The prose wordmark beside the demo, showing the same book in a browser and on a phone"
+    />
+    <meta name="twitter:card" content="summary_large_image" />
+
+    <!-- The site's name in search results, and the project it presents -->
+    <script type="application/ld+json">
+      {
+        "@context": "https://schema.org",
+        "@graph": [
+          {
+            "@type": "WebSite",
+            "@id": "https://prose-reader.com/#website",
+            "url": "https://prose-reader.com/",
+            "name": "prose",
+            "alternateName": ["prose-reader", "prose reader"],
+            "inLanguage": "en",
+            "about": { "@id": "https://prose-reader.com/#software" }
+          },
+          {
+            "@type": "SoftwareSourceCode",
+            "@id": "https://prose-reader.com/#software",
+            "name": "prose",
+            "description": "Render EPUB 3, comics and PDF with a single, framework-agnostic SDK, and ship your own reader, your way.",
+            "url": "https://prose-reader.com/",
+            "codeRepository": "https://github.com/mbret/prose-reader",
+            "programmingLanguage": "TypeScript",
+            "license": "https://opensource.org/license/mit",
+            "author": { "@type": "Person", "name": "Maxime Bret" }
+          }
+        ]
+      }
+    </script>
   </head>
   <body>
     <div id="root"></div>
