@@ -3,7 +3,6 @@ import { describe, expect, it, vi } from "vitest"
 import { CfiManager } from "../../cfi"
 import { Context } from "../../context/Context"
 import { HookManager } from "../../hooks/HookManager"
-import { Pagination } from "../../pagination/Pagination"
 import { ReaderSettingsManager } from "../../settings/ReaderSettingsManager"
 import { Spine } from "../../spine/Spine"
 import { SpineItemsManager } from "../../spine/SpineItemsManager"
@@ -38,8 +37,6 @@ describe(`Given a backward navigation to a new item`, () => {
           viewport,
         )
         const cfiManager = new CfiManager(hooksManager, spineItemsManager)
-        // biome-ignore lint/suspicious/noExplicitAny: TODO
-        const pagination = new Pagination(context, spineItemsManager as any)
         const spineItemLocator = createSpineItemLocator({
           context,
           settings,
@@ -47,7 +44,6 @@ describe(`Given a backward navigation to a new item`, () => {
         })
         const spine = new Spine(
           context,
-          pagination,
           // biome-ignore lint/suspicious/noExplicitAny: TODO
           spineItemsManager as any,
           spineItemLocator,

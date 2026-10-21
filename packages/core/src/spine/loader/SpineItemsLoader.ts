@@ -15,6 +15,7 @@ import {
   withLatestFrom,
 } from "rxjs"
 import type { Context } from "../../context/Context"
+import type { Navigation } from "../../navigation/types"
 import type { ReaderSettingsManager } from "../../settings/ReaderSettingsManager"
 import type { SpineItem } from "../../spineItem/SpineItem"
 import { DestroyableClass } from "../../utils/DestroyableClass"
@@ -34,7 +35,8 @@ export class SpineItemsLoader extends DestroyableClass {
     protected spineLocator: SpineLocator,
     protected settings: ReaderSettingsManager,
     protected viewport: Viewport,
-    isLayoutCurrent$: Observable<boolean>,
+    /** See `InternalNavigator.navigationOverCurrentLayout$`. */
+    navigationOverCurrentLayout$: Observable<Navigation | undefined>,
   ) {
     super()
 
@@ -45,38 +47,10 @@ export class SpineItemsLoader extends DestroyableClass {
     )
 
     /**
-     * The latest navigation while it was made over the current layout, and
-     * `undefined` otherwise. The window is measured from a navigation's
-     * position against the items' places, and the two only agree for a
-     * navigation made over the layout the items have. A layout makes it
-     * `undefined` as soon as it is requested. Its pages being published make
-     * the layout current and leave it `undefined`: the navigation from before
-     * still describes the previous layout until the reader restores it onto
-     * the new one, and that restoration, a navigation made over the current
-     * layout, is what sets it.
-     *
-     * Kept from construction on: worked out only when a measurement asks, it
-     * would pair the navigation from before a layout with that layout being
-     * current. The window is measured from this navigation's own position:
-     * the reader relays positions on their own, after the navigation, so a
-     * position read from there could still be the previous one.
+     * The window is measured from the position of the navigation that holds
+     * on the current layout, once the viewport is free: a navigation's
+     * position and the items' places only agree for that one.
      */
-    const navigationOverCurrentLayout$ = merge(
-      isLayoutCurrent$.pipe(
-        filter((isLayoutCurrent) => !isLayoutCurrent),
-        map(() => undefined),
-      ),
-      this.context.bridgeEvent.navigation$.pipe(
-        withLatestFrom(isLayoutCurrent$),
-        map(([navigation, isLayoutCurrent]) =>
-          isLayoutCurrent ? navigation : undefined,
-        ),
-      ),
-    ).pipe(shareReplay({ bufferSize: 1, refCount: true }))
-
-    navigationOverCurrentLayout$.pipe(takeUntil(this.destroy$)).subscribe()
-
-    /** The navigation to measure the window from, once the viewport is free. */
     const navigationToMeasureFrom$ = combineLatest([
       this.context.bridgeEvent.viewportState$,
       navigationOverCurrentLayout$,
@@ -88,12 +62,12 @@ export class SpineItemsLoader extends DestroyableClass {
     )
 
     /**
-     * Every navigation is a reason to measure again, a restoration included:
-     * a layout ends with the navigation restored onto it, which is when the
-     * window can be measured again.
+     * The held navigation changing is a reason to measure again: every layout
+     * ends with the navigation restored onto it, which is when the window can
+     * be measured again.
      */
     const shouldReloadSpineItems$ = merge(
-      this.context.bridgeEvent.navigation$,
+      navigationOverCurrentLayout$,
       this.viewport.layout$,
       forcedOpen$,
       settings.watch(["numberOfAdjacentSpineItemToPreLoad"]),

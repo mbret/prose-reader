@@ -1,7 +1,6 @@
 import { describe, expect, it } from "vitest"
 import { Context } from "../../context/Context"
 import { HookManager } from "../../hooks/HookManager"
-import { Pagination } from "../../pagination/Pagination"
 import { ReaderSettingsManager } from "../../settings/ReaderSettingsManager"
 import { Spine } from "../../spine/Spine"
 import { SpineItemsManager } from "../../spine/SpineItemsManager"
@@ -22,7 +21,6 @@ const createTestController = () => {
     hookManager,
     viewport,
   )
-  const pagination = new Pagination(context, spineItemsManager)
   const spineItemLocator = createSpineItemLocator({
     context,
     settings,
@@ -30,7 +28,6 @@ const createTestController = () => {
   })
   const spine = new Spine(
     context,
-    pagination,
     spineItemsManager,
     spineItemLocator,
     settings,

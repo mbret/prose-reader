@@ -11,7 +11,9 @@ import {
   of,
   share,
   shareReplay,
+  skip,
   skipUntil,
+  startWith,
   switchMap,
   take,
   takeUntil,
@@ -46,6 +48,7 @@ import { isTargetInBook } from "./targets/isTargetInBook"
 import type {
   InternalNavigationAnchor,
   InternalNavigationEntry,
+  Navigation,
   NavigationModeController,
   NavigationTarget,
   ReadingPosition,
@@ -109,6 +112,31 @@ export class InternalNavigator extends DestroyableClass {
   )
 
   /**
+   * The navigation that holds on the current layout: made, or restored, while
+   * the pages describe the latest layout requested. `undefined` while none
+   * does: until the reader is first laid out, from the moment a layout is
+   * requested, and still once its pages are published, until the navigation
+   * is restored onto them, which is a navigation made over the current
+   * layout. A navigation made while a layout is pending changes nothing: the
+   * request already voided it.
+   *
+   * The reader's position is consistent with its layout only for this
+   * navigation: pagination settles, and the loader measures which items to
+   * keep loaded, only from it. Both are built after the navigator and take it
+   * from there, and it is derived first thing in the constructor, so it is up
+   * to date before either of them hears of the navigation that changes it.
+   *
+   * Internal: consumers get that answer from
+   * `reader.pagination.state.isSettled`, which is only true over a current
+   * layout.
+   *
+   * @internal
+   */
+  public readonly navigationOverCurrentLayout$: Observable<
+    Navigation | undefined
+  >
+
+  /**
    * Where the reader is in the book, to save and reopen at, the same way
    * whatever the target: the current navigation's anchor, which the target
    * names once its document shows the place and `withAnchor` otherwise finds.
@@ -164,6 +192,28 @@ export class InternalNavigator extends DestroyableClass {
     initialTarget?: NavigationTarget,
   ) {
     super()
+
+    /**
+     * Any change of layout currency voids it: a request replaces the layout
+     * the navigation was made over, and pages being published make current a
+     * layout the navigation was not restored onto yet. Only a navigation made
+     * while the layout is current sets it again.
+     */
+    this.navigationOverCurrentLayout$ = merge(
+      this.navigation$.pipe(filter(() => spine.isLayoutCurrent)),
+      spine.isLayoutCurrent$.pipe(
+        // Changes only: the current value is replayed on subscription.
+        skip(1),
+        map(() => undefined),
+      ),
+    ).pipe(
+      // The layout starts not current, so none holds before it first is.
+      startWith(undefined),
+      shareReplay({ bufferSize: 1, refCount: true }),
+    )
+
+    // Before anything built after the navigator can hear of a navigation.
+    this.navigationOverCurrentLayout$.pipe(takeUntil(this.destroy$)).subscribe()
 
     const getNavigationVisibleArea = () =>
       getActiveNavigationModeController().getNavigationVisibleArea()

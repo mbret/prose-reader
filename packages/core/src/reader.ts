@@ -29,6 +29,7 @@ import { Report } from "./report"
 import { ReaderSettingsManager } from "./settings/ReaderSettingsManager"
 import type { SettingsInterface } from "./settings/SettingsInterface"
 import type { CoreInputSettings } from "./settings/types"
+import { SpineItemsLoader } from "./spine/loader/SpineItemsLoader"
 import { Spine } from "./spine/Spine"
 import { SpineItemsManager } from "./spine/SpineItemsManager"
 import { createSpineItemLocator } from "./spineItem/locationResolver"
@@ -104,7 +105,6 @@ export const createReader = ({
   const pagination = new Pagination(context, spineItemsManager)
   const spine = new Spine(
     context,
-    pagination,
     spineItemsManager,
     spineItemLocator,
     settingsManager,
@@ -120,20 +120,27 @@ export const createReader = ({
     viewport,
     target,
   })
+  const spineItemsLoader = new SpineItemsLoader(
+    context,
+    spineItemsManager,
+    spine.locator,
+    settingsManager,
+    viewport,
+    navigator.internalNavigator.navigationOverCurrentLayout$,
+  )
   const paginationController = new PaginationController(
     context,
     pagination,
     spineItemsManager,
     spine,
+    navigator.navigation$,
+    navigator.internalNavigator.navigationOverCurrentLayout$,
     navigator.isLocked$,
     cfi,
   )
 
-  // bridge all navigation stream with reader so they can be shared across app
+  // The spine items, built before the navigator, wait on its viewport state.
   navigator.navigationState$.subscribe(context.bridgeEvent.viewportStateSubject)
-  navigator.navigation$.subscribe(context.bridgeEvent.navigationSubject)
-  navigator.position$.subscribe(context.bridgeEvent.positionSubject)
-  pagination.subscribe(context.bridgeEvent.paginationSubject)
 
   const layout = (options: ReaderLayoutOptions = {}) => {
     layoutSubject.next(options)
@@ -214,6 +221,7 @@ export const createReader = ({
     }
 
     subs.unsubscribe()
+    spineItemsLoader.destroy()
     spineItemsManager.destroy()
     paginationController.destroy()
     settingsManager.destroy()
@@ -236,6 +244,7 @@ export const createReader = ({
     navigation: navigator,
     spineItemsObserver: spine.spineItemsObserver,
     spineItemsManager,
+    spineItemsLoader,
     layout,
     mount,
     destroy,
