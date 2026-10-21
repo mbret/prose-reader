@@ -1,7 +1,26 @@
 ---
 title: "Style & CSS"
-description: "Style a prose reader with CSS: the stable data attributes, rules scoped to one reader instance, and injecting an enhancer's styles with injectScopedCSS."
+description: "Style a prose reader: its theme, the stable data attributes, rules scoped to one reader instance, and injecting an enhancer's styles with injectScopedCSS."
 ---
+
+## Theme
+
+The `theme` option of `createReader` sets the reader's colors, `bright` by default. `reader.theme.set()` changes it later, `reader.theme.get()` reads it and `reader.theme.$.theme$` emits it.
+
+```typescript
+const reader = createReader({ manifest, theme: "night" })
+
+reader.theme.set("sepia")
+```
+
+| Theme | Background | Text |
+| --- | --- | --- |
+| `bright` | `white` | the book's |
+| `sepia` | `#eaddc7` | `black` |
+| `night` | `#191717` | `#f1ebeb` |
+| `publisher` | the book's, on a `white` reader | the book's |
+
+The background also fills the reader's container wherever the pages do not cover it, and the placeholder page shown while an item loads. Reflowable documents take the theme's background and text colors. Pre-paginated documents, such as comic pages and PDF pages, keep their own colors, with the theme's background around them.
 
 ## Stable constants
 

@@ -17,7 +17,7 @@ import { htmlEnhancer } from "../enhancers/html/enhancer"
 import { layoutEnhancer } from "../enhancers/layout/layoutEnhancer"
 import { navigationEnhancer } from "../enhancers/navigation"
 import { paginationEnhancer } from "../enhancers/pagination/enhancer"
-import { themeEnhancer } from "../enhancers/theme"
+import { type Theme, themeEnhancer } from "../enhancers/theme"
 import { zoomEnhancer } from "../enhancers/zoom"
 import type { HookManager } from "../hooks/HookManager"
 import { type CreateReaderOptions, createReader } from "../reader"
@@ -278,8 +278,11 @@ export const holdItemDocumentLoadHooks = (
   }
 }
 
-/** Settings a test may override, the pre-paginated manifest included. */
-type TestReaderOptions = Partial<CreateReaderOptions>
+/**
+ * Settings a test may override, the pre-paginated manifest included, and the
+ * theme, since every reader here has the theme enhancer.
+ */
+type TestReaderOptions = Partial<CreateReaderOptions> & { theme?: Theme }
 
 /** A reader without the pagination enhancer: `pagination` is the core result. */
 export const createTestReader = (options: TestReaderOptions = {}) =>

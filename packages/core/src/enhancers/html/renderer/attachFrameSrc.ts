@@ -75,11 +75,11 @@ export const attachFrameSrc = ({
                 ITEM_MEDIA_TYPE_REQUIRES_TRANSFORM.includes(item.mediaType))
 
             /**
-             * Because of the bug with iframe and sw, we should not use srcdoc and sw together for
-             * html document. This is because resources will not pass through SW. If `fetchResource` is being
-             * used the user should be aware of the limitation. We use srcdoc for everything except if we detect
-             * an html document and same origin. Hopefully that bug gets fixed one day.
-             * @see https://bugs.chromium.org/p/chromium/issues/detail?id=880768
+             * An item on the page's origin that needs no transform, and that `getResource`
+             * serves as a url, is loaded by that url: the document, and the requests it
+             * makes, go through the network and any service worker. Anything else is built
+             * into a page here and loaded from a blob url, whose relative references
+             * `loadAssets` resolves to the manifest items they name.
              */
             if (
               resource instanceof URL &&
