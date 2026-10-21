@@ -1,6 +1,6 @@
 {
   "name": "@prose-reader/enhancer-annotations",
-  "version": "30.2.0",
+  "version": "31.0.0",
   "description": "Highlights and notes for prose: create annotations anchored by CFIs, show their highlights in the book and react to taps on them.",
   "keywords": [
     "prose-reader",

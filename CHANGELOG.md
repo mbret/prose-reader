@@ -3,6 +3,25 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## [31.0.0](https://github.com/mbret/prose-reader/compare/v30.3.0...v31.0.0) (2026-10-21)
+
+### ⚠ BREAKING CHANGES
+
+* **core:** `reader.spine.isLayoutCurrent$` and
+  `reader.spine.isLayoutCurrent` are no longer in the published types. Read
+  `reader.pagination.state.isSettled` instead, which is only true over a
+  current layout.
+
+### Bug Fixes
+
+* **core:** paint the reader and its loading placeholder with the theme ([90afe98](https://github.com/mbret/prose-reader/commit/90afe983152acd7879b9cd10dee50379dfdb0c9b))
+* **core:** stop theming pre-paginated documents when the theme changes ([0687ed6](https://github.com/mbret/prose-reader/commit/0687ed6efb8fe8ee1956d64339da4de83fb2395d))
+
+### Code Refactoring
+
+* **core:** keep the spine's layout currency out of the published types ([81c28eb](https://github.com/mbret/prose-reader/commit/81c28eb02180505ce2dd0baed7a6463ef4555d64))
+
+
 ## [30.3.0](https://github.com/mbret/prose-reader/compare/v30.2.0...v30.3.0) (2026-10-21)
 
 ### Features

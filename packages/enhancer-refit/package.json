@@ -1,6 +1,6 @@
 {
   "name": "@prose-reader/enhancer-refit",
-  "version": "30.2.0",
+  "version": "31.0.0",
   "description": "Fit the reading area of a prose reader to a desktop, tablet or custom width when a book scrolls.",
   "keywords": [
     "prose-reader",
