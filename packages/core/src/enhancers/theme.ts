@@ -25,10 +25,6 @@ type ThemeColors = {
   foregroundColor?: string
 }
 
-/**
- * `publisher` overrides nothing: documents keep their own colors, and the
- * reader keeps its default white.
- */
 const themeColors: Record<Theme, ThemeColors> = {
   bright: {
     backgroundColor: `white`,
@@ -96,29 +92,31 @@ export const themeEnhancer: ThemeEnhancer = (next) => (options) => {
   )
 
   /**
-   * A pre-paginated document keeps its own look and the theme shows around
-   * it. Its document may not even be the page: the pdf renderer's frame holds
-   * the text layer, blended over the page it renders on a canvas.
+   * A pre-paginated document is left as its publisher laid it out. Its frame
+   * may not even hold the page: the pdf renderer's holds the text layer,
+   * blended over the page it renders on a canvas.
    */
-  const applyThemeToItemDocument = (item: SpineItem) => {
+  const applyThemeToItemDocument = (item: SpineItem, theme: Theme) => {
     if (item.renditionLayout === `pre-paginated`) return
 
     upsertCSSToFrame(
       item.renderer.getDocumentFrame(),
       `prose-reader-theme`,
-      getDocumentStyle(themeColors[currentThemeSubject$.value]),
+      getDocumentStyle(themeColors[theme]),
     )
   }
 
   reader.hookManager.register(`item.onDocumentLoad`, async ({ itemId }) => {
     const item = reader.spineItemsManager.get(itemId)
 
-    if (item) applyThemeToItemDocument(item)
+    if (item) applyThemeToItemDocument(item, currentThemeSubject$.value)
   })
 
   const applyThemeToLoadedDocuments$ = currentThemeSubject$.pipe(
-    tap(() => {
-      reader.spineItemsManager.items.forEach(applyThemeToItemDocument)
+    tap((theme) => {
+      reader.spineItemsManager.items.forEach((item) => {
+        applyThemeToItemDocument(item, theme)
+      })
     }),
   )
 
