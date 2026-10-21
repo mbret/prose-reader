@@ -14,8 +14,13 @@ The gallery enhancer does not create a gallery for you, it will help you gather 
 ## Getting Started
 
 ```bash
-npm install @prose-reader/enhancer-gallery
+npm install @prose-reader/enhancer-gallery @prose-reader/core rxjs
 ```
+
+Both are peer dependencies: the enhancer runs against the reader your app
+creates, so it shares that reader's copies rather than bringing its own. It
+needs the `@prose-reader/core` it was released with, or a later one of the same
+major.
 
 Connect the enhancer to your reader:
 

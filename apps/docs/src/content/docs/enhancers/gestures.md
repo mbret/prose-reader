@@ -17,11 +17,13 @@ This enhancer implements common gesture patterns using [https://github.com/mbret
 ## Getting Started
 
 ```bash
-npm install @prose-reader/enhancer-gestures gesturx rxjs
+npm install @prose-reader/enhancer-gestures @prose-reader/core gesturx rxjs
 ```
 
-Both are peer dependencies: the enhancer needs gesturx 2 (`^2.0.0`) and rxjs
-7.5.5 or any later 7.x (`^7.5.5`).
+All three are peer dependencies. The enhancer runs against the reader your app
+creates, so it shares that reader's `@prose-reader/core` rather than bringing
+its own. It needs the core it was released with or a later one of the same
+major, gesturx 2 (`^2.0.0`), and rxjs 7.5.5 or any later 7.x (`^7.5.5`).
 
 Connect the enhancer to your reader:
 
