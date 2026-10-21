@@ -14,7 +14,6 @@
 }
 
 [data-#{$html-prefix-viewport}] {
-    background-color: white;
     position: relative;
     height: 100%;
     width: 100%;
@@ -23,8 +22,13 @@
 // Applied to the container the reader is mounted into. Kept as a class (rather
 // than inline styles) so mount only adds the class and destroy fully reverts by
 // removing it, leaving no residue on a reused container.
+//
+// The theme enhancer overrides the variable on the container, and removes it
+// on destroy. The viewport and the spine items paint no background of their
+// own, so the container's shows wherever the pages do not cover it.
 .#{$html-prefix}-reader {
-    background-color: white;
+    #{$css-var-theme-background-color}: white;
+    background-color: var(#{$css-var-theme-background-color});
     position: relative;
     overflow: hidden;
 }
