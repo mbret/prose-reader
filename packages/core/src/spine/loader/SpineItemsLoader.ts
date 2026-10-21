@@ -1,12 +1,16 @@
 import { arrayEqual } from "@prose-reader/shared"
 import {
   BehaviorSubject,
+  combineLatest,
   debounceTime,
   distinctUntilChanged,
   filter,
+  first,
   map,
   merge,
+  type Observable,
   shareReplay,
+  switchMap,
   takeUntil,
   withLatestFrom,
 } from "rxjs"
@@ -15,11 +19,9 @@ import type { ReaderSettingsManager } from "../../settings/ReaderSettingsManager
 import type { SpineItem } from "../../spineItem/SpineItem"
 import { DestroyableClass } from "../../utils/DestroyableClass"
 import { isDefined } from "../../utils/isDefined"
-import { waitForSwitch } from "../../utils/rxjs"
 import type { Viewport } from "../../viewport/Viewport"
 import type { SpineLocator } from "../locator/SpineLocator"
 import type { SpineItemsManager } from "../SpineItemsManager"
-import type { SpineLayout } from "../SpineLayout"
 
 export class SpineItemsLoader extends DestroyableClass {
   private forcedOpenSubject = new BehaviorSubject<Map<number, number>>(
@@ -31,8 +33,8 @@ export class SpineItemsLoader extends DestroyableClass {
     protected spineItemsManager: SpineItemsManager,
     protected spineLocator: SpineLocator,
     protected settings: ReaderSettingsManager,
-    protected spineLayout: SpineLayout,
     protected viewport: Viewport,
+    isLayoutCurrent$: Observable<boolean>,
   ) {
     super()
 
@@ -42,10 +44,57 @@ export class SpineItemsLoader extends DestroyableClass {
       shareReplay({ bufferSize: 1, refCount: true }),
     )
 
+    /**
+     * The latest navigation while it was made over the current layout, and
+     * `undefined` otherwise. The window is measured from a navigation's
+     * position against the items' places, and the two only agree for a
+     * navigation made over the layout the items have. A layout makes it
+     * `undefined` as soon as it is requested. Its pages being published make
+     * the layout current and leave it `undefined`: the navigation from before
+     * still describes the previous layout until the reader restores it onto
+     * the new one, and that restoration, a navigation made over the current
+     * layout, is what sets it.
+     *
+     * Kept from construction on: worked out only when a measurement asks, it
+     * would pair the navigation from before a layout with that layout being
+     * current. The window is measured from this navigation's own position:
+     * the reader relays positions on their own, after the navigation, so a
+     * position read from there could still be the previous one.
+     */
+    const navigationOverCurrentLayout$ = merge(
+      isLayoutCurrent$.pipe(
+        filter((isLayoutCurrent) => !isLayoutCurrent),
+        map(() => undefined),
+      ),
+      this.context.bridgeEvent.navigation$.pipe(
+        withLatestFrom(isLayoutCurrent$),
+        map(([navigation, isLayoutCurrent]) =>
+          isLayoutCurrent ? navigation : undefined,
+        ),
+      ),
+    ).pipe(shareReplay({ bufferSize: 1, refCount: true }))
+
+    navigationOverCurrentLayout$.pipe(takeUntil(this.destroy$)).subscribe()
+
+    /** The navigation to measure the window from, once the viewport is free. */
+    const navigationToMeasureFrom$ = combineLatest([
+      this.context.bridgeEvent.viewportState$,
+      navigationOverCurrentLayout$,
+    ]).pipe(
+      map(([viewportState, navigation]) =>
+        viewportState === "free" ? navigation : undefined,
+      ),
+      filter(isDefined),
+    )
+
+    /**
+     * Every navigation is a reason to measure again, a restoration included:
+     * a layout ends with the navigation restored onto it, which is when the
+     * window can be measured again.
+     */
     const shouldReloadSpineItems$ = merge(
-      this.context.bridgeEvent.position$,
+      this.context.bridgeEvent.navigation$,
       this.viewport.layout$,
-      this.spineLayout.layout$,
       forcedOpen$,
       settings.watch(["numberOfAdjacentSpineItemToPreLoad"]),
     )
@@ -72,12 +121,12 @@ export class SpineItemsLoader extends DestroyableClass {
       debounceTime(100),
       // Spine items exist from construction but must not render before mount
       // (their containers are detached and users may still register hooks).
-      // Dropping pre-mount events is safe: mounting triggers a layout which
-      // re-fires this stream.
+      // Dropping pre-mount events is safe: mounting lays the reader out, and
+      // the navigation restored onto that layout fires this stream again.
       filter(() => isDefined(this.context.value.rootElement)),
-      waitForSwitch(this.context.bridgeEvent.viewportFree$),
-      withLatestFrom(this.context.bridgeEvent.position$, forcedOpen$),
-      map(([, position, forcedOpenIndexes]) => {
+      switchMap(() => navigationToMeasureFrom$.pipe(first())),
+      withLatestFrom(forcedOpen$),
+      map(([{ position }, forcedOpenIndexes]) => {
         const { numberOfAdjacentSpineItemToPreLoad } = settings.values
         // these are real visible items to load
         const { beginIndex = 0, endIndex = 0 } =
