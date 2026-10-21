@@ -23,6 +23,15 @@ interface LibConfigOptions {
   minify?: boolean | "oxc" | "esbuild"
   /** Forwarded to `build.target`. */
   target?: string
+  /**
+   * Emit one file per source module, mirroring `src/`, instead of one bundle
+   * per entry. Pair it with `"sideEffects": false` in the package.json: a
+   * consumer's bundler can then skip every module the imports it uses do not
+   * reach, along with that module's dependencies. In a single bundle, every
+   * dependency is imported at the top and stays, whatever the consumer uses.
+   * @default false
+   */
+  preserveModules?: boolean
   /** Extra config deep-merged on top of the defaults (extra plugins, custom test config, etc.). */
   override?: UserConfig
   /**
@@ -78,11 +87,21 @@ type LibConfigInput = LibConfigOptions | ((env: ConfigEnv) => LibConfigOptions)
 // schemes below give the two formats distinct paths.
 const FORMATS: LibraryFormats[] = ["es", "cjs"]
 
-const buildFileNameFor = (entry: Entry) =>
-  typeof entry === "string"
+const extensionFor = (format: string) => (format === "cjs" ? "cjs" : "js")
+
+const buildFileNameFor = (entry: Entry, preserveModules: boolean) => {
+  // Every preserved module is named after its path under `src/`, the entry
+  // included: `src/index.ts` still lands on `index.js` and `index.cjs`.
+  if (preserveModules) {
+    return (format: string, entryName: string) =>
+      `${entryName}.${extensionFor(format)}`
+  }
+
+  return typeof entry === "string"
     ? "index"
     : (format: string, entryName: string) =>
-        `${entryName}/index.${format === "cjs" ? "cjs" : "js"}`
+        `${entryName}/index.${extensionFor(format)}`
+}
 
 export const createLibConfig =
   (input: LibConfigInput) =>
@@ -93,6 +112,7 @@ export const createLibConfig =
       entry = resolve(packageDir, "src/index.ts"),
       minify: minifyOverride,
       target,
+      preserveModules = false,
       override,
       dts: dtsOptions = {},
     } = opts
@@ -108,9 +128,19 @@ export const createLibConfig =
       build: {
         lib: {
           entry,
-          fileName: buildFileNameFor(entry),
+          fileName: buildFileNameFor(entry, preserveModules),
           formats: FORMATS,
         },
+        ...(preserveModules
+          ? {
+              rolldownOptions: {
+                output: {
+                  preserveModules: true,
+                  preserveModulesRoot: resolve(packageDir, "src"),
+                },
+              },
+            }
+          : {}),
         sourcemap: true,
         emptyOutDir: env.mode !== "development",
         minify,

@@ -47,10 +47,7 @@ export {
 } from "./match/similarity.ts"
 export { metadataInputFromResolvedArchive } from "./metadataInputFromResolvedArchive.ts"
 export type { GoogleBooksProviderOptions } from "./providers/googleBooks/createGoogleBooksProvider.ts"
-export {
-  createGoogleBooksProvider,
-  GOOGLE_BOOKS_PROVIDER_ID,
-} from "./providers/googleBooks/createGoogleBooksProvider.ts"
+export { createGoogleBooksProvider } from "./providers/googleBooks/createGoogleBooksProvider.ts"
 export type { GoogleBooksLookup } from "./providers/googleBooks/identifier.ts"
 export {
   GOOGLE_BOOKS_IDENTIFIER_SCHEME,
@@ -75,10 +72,7 @@ export {
   resolveGoogleBooksVolume,
 } from "./providers/googleBooks/resolve.ts"
 export type { OpenLibraryProviderOptions } from "./providers/openLibrary/createOpenLibraryProvider.ts"
-export {
-  createOpenLibraryProvider,
-  OPEN_LIBRARY_PROVIDER_ID,
-} from "./providers/openLibrary/createOpenLibraryProvider.ts"
+export { createOpenLibraryProvider } from "./providers/openLibrary/createOpenLibraryProvider.ts"
 export { marcLanguageToBcp47 } from "./providers/openLibrary/marcLanguage.ts"
 export type { OpenLibraryDoc } from "./providers/openLibrary/parse.ts"
 export { parseOpenLibrarySearchResponse } from "./providers/openLibrary/parse.ts"
@@ -88,10 +82,7 @@ export {
   resolveOpenLibraryDoc,
 } from "./providers/openLibrary/resolve.ts"
 export type { ProjectGutenbergProviderOptions } from "./providers/projectGutenberg/createProjectGutenbergProvider.ts"
-export {
-  createProjectGutenbergProvider,
-  PROJECT_GUTENBERG_PROVIDER_ID,
-} from "./providers/projectGutenberg/createProjectGutenbergProvider.ts"
+export { createProjectGutenbergProvider } from "./providers/projectGutenberg/createProjectGutenbergProvider.ts"
 export {
   PROJECT_GUTENBERG_IDENTIFIER_SCHEME,
   projectGutenbergLookupFromInput,
@@ -107,6 +98,11 @@ export {
   resolveProjectGutenbergRecord,
 } from "./providers/projectGutenberg/resolve.ts"
 export {
+  GOOGLE_BOOKS_PROVIDER_ID,
+  OPEN_LIBRARY_PROVIDER_ID,
+  PROJECT_GUTENBERG_PROVIDER_ID,
+} from "./providers/providerIds.ts"
+export {
   MetadataProviderResponseError,
   responseErrorStatus,
 } from "./providers/responseError.ts"
@@ -116,6 +112,7 @@ export type {
   FetchedMetadataSource,
   FetchedMetadataSources,
 } from "./types/fetchedMetadata.ts"
+export { FETCHED_METADATA_VERSION } from "./types/fetchedMetadata.ts"
 export type { FetchMetadataInput } from "./types/fetchMetadataInput.ts"
 export type {
   MetadataMatch,
