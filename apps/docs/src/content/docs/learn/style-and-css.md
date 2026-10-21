@@ -20,7 +20,17 @@ reader.theme.set("sepia")
 | `night` | `#191717` | `#f1ebeb` |
 | `publisher` | the book's, on a `white` reader | the book's |
 
-The background also fills the reader's container wherever the pages do not cover it, and the placeholder page shown while an item loads. Reflowable documents take the theme's background and text colors. Pre-paginated documents, such as comic pages and PDF pages, keep their own colors, with the theme's background around them.
+The background also fills the reader's container wherever the pages do not cover it, and the placeholder page shown while an item loads. Reflowable documents take the theme's background, and its text color wherever the book's own styles do not set a more specific one. Pre-paginated documents, such as comic pages and PDF pages, keep their own colors: the theme's background shows around them, and through any part of a page that paints no background.
+
+The container holds the theme's background in the `--prose-reader-theme-background-color` CSS variable, exported as `CSS_VAR_THEME_BACKGROUND_COLOR`. Read it from the element you mounted the reader into to match your interface to the theme:
+
+```typescript
+import { CSS_VAR_THEME_BACKGROUND_COLOR } from "@prose-reader/core"
+
+const background = getComputedStyle(container).getPropertyValue(
+  CSS_VAR_THEME_BACKGROUND_COLOR,
+)
+```
 
 ## Stable constants
 
