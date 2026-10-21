@@ -92,8 +92,10 @@ pnpm gives each package only what its own manifest declares. Declare a dependenc
 `pnpm test` runs it alongside the vitest suites. CI runs the two apart: the
 vitest suites on Linux, and every spec of this one, split across shards, on
 macOS, where its screenshot baselines are rendered, on Chromium, Firefox,
-WebKit and two mobile profiles. It needs the browser builds its Playwright
-version pins. Install them once per environment, the way CI does:
+WebKit and two mobile profiles, the desktop browsers once for each way a book
+reaches the reader (`apps/tests/AGENTS.md`, *Loading the book*). It needs the
+browser builds its Playwright version pins. Install them once per environment,
+the way CI does:
 
 ```sh
 pnpm --filter prose-reader-tests exec playwright install --with-deps
@@ -116,6 +118,8 @@ while degrading a guard to watch its test fail. Run one spec with:
 ```sh
 pnpm --filter prose-reader-tests test --project=chromium tests/<path>.spec.ts
 ```
+
+`--project='chromium*'` runs it both ways, over http and from blobs.
 
 ## Internal `@prose-reader/*` ranges
 

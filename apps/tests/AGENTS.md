@@ -19,6 +19,29 @@ scripts are in `tools/`, and those of the KOReader page fixtures in
 `packages/koreader/tools/`. Shared helpers live in `tests/utils`; add to them
 rather than copying a wait or a locator into a second spec.
 
+## Loading the book
+
+A scenario opens a fixture with `openFixtureBook` (`tests/fixtureBook.ts`) and
+passes what it returns to the reader. The book reaches the reader one of two
+ways, and apps use both:
+
+- over http: the test app's server streams it on the page's origin, as an
+  app's service worker or server does, and the reader loads each document
+  straight from its url;
+- from blobs: the page streams it itself and hands the reader each resource as
+  a `Response`, as the getting-started guide does, and the reader loads each
+  document from a blob and resolves its assets itself.
+
+The reader has to render and behave the same either way, so every spec runs
+both ways, and no spec asks which. The way belongs to the Playwright project
+(`playwright.config.ts`): `chromium` loads over http and `chromium-blob` from
+blobs, and so on for Firefox and WebKit. The mobile profiles load over http
+only, which keeps CI's run time in check. A project hands its way to its pages
+in `localStorage` (`tests/utils/resourceLoading.ts`), and
+`tests/fixtureBook.spec.ts` proves each project's documents come in that way.
+Run a spec both ways on Chromium with `--project='chromium*'`. A scenario opened
+by hand loads over http.
+
 ## Waiting
 
 A timer is a guess about how fast a machine is. A wrong guess fails on a slower
@@ -48,11 +71,15 @@ then names the step that went wrong.
 
 ## Snapshots
 
-A `*-snapshots` folder holds one image per browser project, suffixed with the
+A `*-snapshots` folder holds one image per browser profile, suffixed with the
 platform it was rendered on; the committed ones are `-darwin`, from CI's macOS
-runners. An image compares only against the same browser build on the same
-platform, which is why the suite installs its own browsers rather than using
-whatever a machine has. No CI job rewrites them. To change a baseline, run the
-spec with `--update-snapshots` on macOS with the pinned browsers and commit the
-result, or take the `-actual` image from the `playwright-report-<shard>`
-artifact CI uploads from the shard where a comparison failed.
+runners. The projects of a profile compare against that one image, since a
+book renders the same however it reaches the reader: `chromium-blob` against
+`chromium`'s, and a blob render that differs from it fails. An image compares
+only against the same browser build on the same platform, which is why the
+suite installs its own browsers rather than using whatever a machine has. No CI
+job rewrites them. To change a baseline, run the spec with `--update-snapshots`
+on macOS with the pinned browsers, on the http project alone so that the blob
+one is still compared against it, and commit the result; or take the `-actual`
+image from the `playwright-report-<shard>` artifact CI uploads from the shard
+where a comparison failed.
