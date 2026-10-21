@@ -11,6 +11,11 @@ allowBuilds:
   '@parcel/watcher': false
   nx: false
 
+# reactjrx shares prose-reader's maintainer, so its releases are installed as
+# soon as they are out.
+minimumReleaseAgeExclude:
+  - reactjrx
+
 # lerna and nx pin their dependencies to exact versions, so an in-range update
 # cannot move a pin that falls behind. Each override lifts one, stays inside
 # the major its consumers ask for, and goes once lerna or nx pins a version at
