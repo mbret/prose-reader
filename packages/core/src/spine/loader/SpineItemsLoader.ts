@@ -1,11 +1,13 @@
 import { arrayEqual } from "@prose-reader/shared"
 import {
   BehaviorSubject,
+  combineLatest,
   debounceTime,
   distinctUntilChanged,
   filter,
   map,
   merge,
+  type Observable,
   shareReplay,
   takeUntil,
   withLatestFrom,
@@ -33,6 +35,7 @@ export class SpineItemsLoader extends DestroyableClass {
     protected settings: ReaderSettingsManager,
     protected spineLayout: SpineLayout,
     protected viewport: Viewport,
+    isLayoutCurrent$: Observable<boolean>,
   ) {
     super()
 
@@ -48,6 +51,23 @@ export class SpineItemsLoader extends DestroyableClass {
       this.spineLayout.layout$,
       forcedOpen$,
       settings.watch(["numberOfAdjacentSpineItemToPreLoad"]),
+    )
+
+    /**
+     * The window is measured from the navigation position against the items'
+     * positions, and the two only agree once the layout is current: a layout
+     * moves the items first and restores the navigation afterwards. Measured
+     * in between, it loads and unloads items that the restored position then
+     * undoes, laying the spine out again after pagination has settled.
+     */
+    const canMeasureWindow$ = combineLatest([
+      this.context.bridgeEvent.viewportState$,
+      isLayoutCurrent$,
+    ]).pipe(
+      filter(
+        ([viewportState, isLayoutCurrent]) =>
+          viewportState === "free" && isLayoutCurrent,
+      ),
     )
 
     /**
@@ -75,7 +95,7 @@ export class SpineItemsLoader extends DestroyableClass {
       // Dropping pre-mount events is safe: mounting triggers a layout which
       // re-fires this stream.
       filter(() => isDefined(this.context.value.rootElement)),
-      waitForSwitch(this.context.bridgeEvent.viewportFree$),
+      waitForSwitch(canMeasureWindow$),
       withLatestFrom(this.context.bridgeEvent.position$, forcedOpen$),
       map(([, position, forcedOpenIndexes]) => {
         const { numberOfAdjacentSpineItemToPreLoad } = settings.values
