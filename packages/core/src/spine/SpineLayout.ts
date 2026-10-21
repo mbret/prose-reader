@@ -54,6 +54,19 @@ export type SpineLayoutOptions = {
   immediate?: boolean
 }
 
+/**
+ * A layout requested, with the first spine item its pass lays out, then the
+ * same layout done. An item's place only depends on the items before it,
+ * whatever the reading direction, so a layout started by an item's load ending
+ * lays out that item and the ones after it, and leaves the ones before it as
+ * the last completed pass laid them out. One of the reader, whose viewport may
+ * have changed, lays them all out. The items before the first are not touched
+ * at all: no hook, no renderer layout, no dirty flag.
+ */
+export type SpineLayoutStage =
+  | { stage: "requested"; firstAffectedItemIndex: number }
+  | { stage: "laidOut" }
+
 type SpineItemEndOffset = { horizontalOffset: number; verticalOffset: number }
 
 export class SpineLayout extends DestroyableClass {
@@ -87,7 +100,7 @@ export class SpineLayout extends DestroyableClass {
    * cancels whatever is still running for an older one, so a completion always
    * belongs to the latest request.
    */
-  public readonly lifecycle$: Observable<"requested" | "laidOut">
+  public readonly lifecycle$: Observable<SpineLayoutStage>
 
   /** Emits once a pass completes. */
   public readonly layout$: Observable<unknown>
@@ -124,13 +137,6 @@ export class SpineLayout extends DestroyableClass {
      * A layout requested through `layout()` is a layout of the reader, whose
      * viewport may have changed; one started because an item's load ended is
      * not.
-     *
-     * Each request carries the first item it can change. An item's place only
-     * depends on the items before it, whatever the reading direction, so a
-     * layout started by an item's load ending lays out that item and the ones
-     * after it, and leaves the ones before it as the last completed pass laid
-     * them out: no hook, no renderer layout, no dirty flag. One of the reader
-     * lays them all out.
      */
     const request$ = merge(
       this.externalLayoutTrigger.pipe(
@@ -185,7 +191,7 @@ export class SpineLayout extends DestroyableClass {
           return wait$
         }).pipe(
           switchMap(() => this.layOutItems(firstAffectedItemIndex)),
-          map(() => "laidOut" as const),
+          map((): SpineLayoutStage => ({ stage: "laidOut" })),
         )
 
         /**
@@ -196,13 +202,20 @@ export class SpineLayout extends DestroyableClass {
          * everything tracking whether the layout is current must already know
          * it is not.
          */
-        return laidOut$.pipe(startWith("requested" as const))
+        return laidOut$.pipe(
+          startWith<SpineLayoutStage>({
+            stage: "requested",
+            firstAffectedItemIndex,
+          }),
+        )
       }),
       takeUntil(this.destroy$),
       share(),
     )
 
-    this.layout$ = this.lifecycle$.pipe(filter((stage) => stage === "laidOut"))
+    this.layout$ = this.lifecycle$.pipe(
+      filter(({ stage }) => stage === "laidOut"),
+    )
 
     // Passes run whether or not anything listens.
     this.lifecycle$.subscribe()
