@@ -2,6 +2,7 @@ import { combineLatest, filter, firstValueFrom, timeout } from "rxjs"
 import { describe, expect, it } from "vitest"
 import {
   createTestReader,
+  getTestContainer,
   holdItem,
   installReaderTestEnvironment,
   mountTestReader,
@@ -23,23 +24,15 @@ const themeBackgroundColors: Record<Theme, string> = {
   publisher: `white`,
 }
 
-const getTestContainer = () => {
-  const container = document.getElementById(`test-container`)
-
-  if (!container) throw new Error(`installReaderTestEnvironment() did not run`)
-
-  return container
-}
-
 const isPaintedBackground = (backgroundColor: string) =>
   backgroundColor !== `` &&
   backgroundColor !== `transparent` &&
   backgroundColor !== `rgba(0, 0, 0, 0)`
 
 /**
- * Every background painted from `element` up to the reader's container, the
- * container included: what shows wherever the content does not cover it, as
- * when an item is loading or a page turn fades the content out.
+ * The background colors painted from `element` up to the reader's container,
+ * the container included, each once: what shows wherever the content does not
+ * cover it, as when an item is loading or a page turn fades the content out.
  */
 const getBackgroundsPaintedUpToContainer = (element: Element) => {
   const container = getTestContainer()
@@ -72,7 +65,7 @@ const getLoadingPlaceholder = (
   return placeholder
 }
 
-const getDocumentBodyBackgroundColor = (
+const getDocumentBodyPaintedBackground = (
   reader: ReturnType<typeof createTestReader>,
   itemIndex: number,
 ) => {
@@ -84,7 +77,9 @@ const getDocumentBodyBackgroundColor = (
 
   if (!body || !frameWindow) throw new Error(`item ${itemIndex} has no body`)
 
-  return frameWindow.getComputedStyle(body).backgroundColor
+  const { backgroundColor } = frameWindow.getComputedStyle(body)
+
+  return isPaintedBackground(backgroundColor) ? backgroundColor : undefined
 }
 
 const everyItemReady = (reader: ReturnType<typeof createTestReader>) =>
@@ -143,7 +138,7 @@ describe("theme", () => {
     }
   })
 
-  it("leaves nothing on the container once the reader is destroyed", () => {
+  it("leaves no inline style on the container once destroyed", () => {
     const container = getTestContainer()
     const reader = createTestReader({ theme: `night` })
 
@@ -169,15 +164,15 @@ describe("theme", () => {
     await everyItemReady(reader)
 
     expect([
-      getDocumentBodyBackgroundColor(reader, 0),
-      getDocumentBodyBackgroundColor(reader, 1),
-    ]).toEqual([themeBackgroundColors.sepia, ``])
+      getDocumentBodyPaintedBackground(reader, 0),
+      getDocumentBodyPaintedBackground(reader, 1),
+    ]).toEqual([themeBackgroundColors.sepia, undefined])
 
     reader.theme.set(`night`)
 
     expect([
-      getDocumentBodyBackgroundColor(reader, 0),
-      getDocumentBodyBackgroundColor(reader, 1),
-    ]).toEqual([themeBackgroundColors.night, ``])
+      getDocumentBodyPaintedBackground(reader, 0),
+      getDocumentBodyPaintedBackground(reader, 1),
+    ]).toEqual([themeBackgroundColors.night, undefined])
   })
 })
