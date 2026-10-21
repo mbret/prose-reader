@@ -21,7 +21,7 @@ function keepSpineItemLoaded(spineItem: SpineItemReference): () => void
 
 ### Parameters
 
-* `spineItem`: the spine item to keep loaded, by its index, by its id or as a `SpineItem`, as `reader.spineItemsManager.get()` takes it. A spine item the book does not have is ignored.
+* `spineItem`: the spine item to keep loaded, by its index, by its id or as a `SpineItem`, as `reader.spineItemsManager.get()` takes it. An index or an id the book does not have is ignored.
 
 ### Returns
 
