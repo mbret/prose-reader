@@ -126,7 +126,7 @@ const openBook = async (bookId: string, container: HTMLElement) => {
 }
 ```
 
-Leave `getResource` out. The manifest's `href`s point at the worker, and the reader fetches them itself. A `getResource` that returns a document makes the reader load it from the page instead of its URL, and the requests made inside it can then miss the worker.
+Leave `getResource` out. The manifest's `href`s point at the worker, and each frame loads its document from that URL, so the stylesheets, images and fonts the document references go through the worker too. A `getResource` that returns a `Response` makes the reader build the page itself and load it from a blob URL. That page's relative references no longer reach the worker: the reader resolves them to the items they name, and only for the items `getResource` also returns a `Response` for.
 
 A reader shows a single book: destroy it with `reader.destroy()` before you open the next one, as in [Getting started](/get-started/getting-started).
 
