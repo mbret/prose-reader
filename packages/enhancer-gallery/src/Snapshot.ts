@@ -4,7 +4,7 @@ import {
   type Reader,
   type SpineItem,
 } from "@prose-reader/core"
-import { filter, first, Observable, switchMap } from "rxjs"
+import { filter, finalize, first, Observable, switchMap } from "rxjs"
 import { deepCloneElement } from "./utils/deepCloneElement"
 
 const SNAPSHOT_CLASS = "prose-reader-enhancer-gallery-snapshot"
@@ -73,17 +73,9 @@ export class Snapshot extends Observable<HTMLElement> {
   ) {
     super((subscriber) => {
       const parentDocument = parent.ownerDocument
-      const unlockSpineItem = reader.spineItemsLoader.forceOpen([item])
-      let hasUnlockedSpineItem = false
+      const releaseSpineItem = reader.keepSpineItemLoaded(item)
       let releaseSnapshotAssets = () => {}
       let snapshotItem: HTMLElement | undefined
-
-      const unlock = () => {
-        if (hasUnlockedSpineItem) return
-
-        hasUnlockedSpineItem = true
-        unlockSpineItem()
-      }
 
       const subscription = item.isReady$
         .pipe(
@@ -162,22 +154,16 @@ export class Snapshot extends Observable<HTMLElement> {
 
             return cloneReady$
           }),
+          finalize(releaseSpineItem),
         )
+        // Keep the observable open after cloning so the thumbnail owns its
+        // copied object URLs until React unsubscribes from this snapshot.
         .subscribe({
-          error: (error) => {
-            unlock()
-            subscriber.error(error)
-          },
-          complete: () => {
-            unlock()
-            // Keep the observable open after cloning so the thumbnail owns its
-            // copied object URLs until React unsubscribes from this snapshot.
-          },
+          error: (error) => subscriber.error(error),
         })
 
       return () => {
         subscription.unsubscribe()
-        unlock()
         releaseSnapshotAssets()
         snapshotItem?.remove()
       }
