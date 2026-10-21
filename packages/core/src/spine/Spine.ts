@@ -95,7 +95,6 @@ export class Spine extends DestroyableClass {
       spineItemsManager,
       this.locator,
       settings,
-      this.spineLayout,
       this.viewport,
       this.isLayoutCurrent$,
     )
