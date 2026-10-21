@@ -186,9 +186,11 @@ export const gesturesEnhancer =
       panGestures$,
     ).pipe(takeUntil(reader.$.destroy$), share({ resetOnComplete: false }))
 
-    merge(containerUpdate$, watchSettings$, gestures$)
+    merge(containerUpdate$, watchSettings$)
       .pipe(takeUntil(reader.$.destroy$))
       .subscribe()
+
+    gestures$.subscribe()
 
     return {
       ...reader,

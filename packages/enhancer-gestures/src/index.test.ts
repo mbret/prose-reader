@@ -304,20 +304,33 @@ describe("Given a pan moving the page", () => {
 })
 
 describe("Given a subscriber to the gestures", () => {
-  it("is completed once the reader is destroyed, as is one subscribing after", () => {
+  it("is completed once the reader is destroyed", () => {
     const reader = createGesturesReader()
     const container = document.createElement("div")
     document.body.appendChild(container)
     const onGesturesComplete = vi.fn()
-    const onLateGesturesComplete = vi.fn()
 
     reader.gestures.gestures$.subscribe({ complete: onGesturesComplete })
     reader.mount(container)
     reader.destroy()
-    reader.gestures.gestures$.subscribe({ complete: onLateGesturesComplete })
 
     expect(onGesturesComplete).toHaveBeenCalled()
-    expect(onLateGesturesComplete).toHaveBeenCalled()
+  })
+
+  it("is completed when it only subscribes once the reader is destroyed", () => {
+    const reader = createGesturesReader()
+    const container = document.createElement("div")
+    document.body.appendChild(container)
+    const onGesturesComplete = vi.fn()
+
+    reader.mount(container)
+    reader.destroy()
+    const subscription = reader.gestures.gestures$.subscribe({
+      complete: onGesturesComplete,
+    })
+
+    expect(onGesturesComplete).toHaveBeenCalled()
+    expect(subscription.closed).toBe(true)
   })
 })
 
