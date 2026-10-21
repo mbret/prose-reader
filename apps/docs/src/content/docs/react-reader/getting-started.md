@@ -15,7 +15,7 @@ npm install @prose-reader/react-reader @prose-reader/core @prose-reader/shared \
   @chakra-ui/react @emotion/react rc-slider react-icons reactjrx rxjs screenfull
 ```
 
-This package only uses peerDependencies, all of them required, so don't hesitate to use the library for the rest of your app. `react` and `react-dom` (18 or 19) are your app's own.
+This package only uses peerDependencies, all of them required, so don't hesitate to use the library for the rest of your app. `react` and `react-dom` (19) are your app's own.
 
 [https://github.com/mbret/reactjrx](https://github.com/mbret/reactjrx) is specifically very useful if you use `rxjs`.
 

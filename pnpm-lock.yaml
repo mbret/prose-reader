@@ -349,8 +349,8 @@ importers:
         specifier: ^8.3.0
         version: 8.4.0(react-dom@19.3.1(react@19.3.1))(react@19.3.1)
       reactjrx:
-        specifier: ^1.97.0
-        version: 1.142.0(@tanstack/react-query@5.104.4(@types/react@19.3.0)(react@19.3.1))(react-dom@19.3.1(react@19.3.1))(react@19.3.1)(rxjs@7.8.2)
+        specifier: ^2.2.0
+        version: 2.2.0(@tanstack/react-query@5.104.4(@types/react@19.3.0)(react@19.3.1))(react-dom@19.3.1(react@19.3.1))(react@19.3.1)(rxjs@7.8.2)
       rxjs:
         specifier: ^7.8.0
         version: 7.8.2
@@ -471,8 +471,8 @@ importers:
         specifier: ^19.2.7
         version: 19.3.1(react@19.3.1)
       reactjrx:
-        specifier: ^1.126.0
-        version: 1.142.0(@tanstack/react-query@5.104.4(@types/react@19.3.0)(react@19.3.1))(react-dom@19.3.1(react@19.3.1))(react@19.3.1)(rxjs@7.8.2)
+        specifier: ^2.2.0
+        version: 2.2.0(@tanstack/react-query@5.104.4(@types/react@19.3.0)(react@19.3.1))(react-dom@19.3.1(react@19.3.1))(react@19.3.1)(rxjs@7.8.2)
       rxjs:
         specifier: ^7.8.0
         version: 7.8.2
@@ -792,8 +792,8 @@ importers:
         specifier: ^5.4.0
         version: 5.7.0(react@19.3.1)
       reactjrx:
-        specifier: 1.x
-        version: 1.142.0(@tanstack/react-query@5.104.4(@types/react@19.3.0)(react@19.3.1))(react-dom@19.3.1(react@19.3.1))(react@19.3.1)(rxjs@7.8.2)
+        specifier: 2.x
+        version: 2.2.0(@tanstack/react-query@5.104.4(@types/react@19.3.0)(react@19.3.1))(react-dom@19.3.1(react@19.3.1))(react@19.3.1)(rxjs@7.8.2)
       rxjs:
         specifier: ^7.5.5
         version: 7.8.2
@@ -7398,10 +7398,10 @@ packages:
     resolution: {integrity: sha512-QNhWdt7nrgVWWQG58QuGsAR3jv3Hbe4mb4vz7w2csnHavciZJgda1CPNaldF6eVxv90ud3jUXpKlHL69gO38yw==}
     engines: {node: '>=0.10.0'}
 
-  reactjrx@1.142.0:
-    resolution: {integrity: sha512-rKZtN7SeRUzTrDB9lYun9KCfOMktcKDn6jJexshy8esVBZX+ES1M3o+LZ4UD3DaKOfnBnM/UZKk+3rjxrtd9ig==}
+  reactjrx@2.2.0:
+    resolution: {integrity: sha512-E73w/il5XAd3aCOpVQKJKihGC1t+cFJequS4WvOLxRiKlf8bot79i2H6KLiv66s8ecUSsa1ihLSpilIhGIc9ng==}
     peerDependencies:
-      '@tanstack/react-query': 5.x
+      '@tanstack/react-query': ^5.85.1
       react: 19.x
       react-dom: 19.x
       rxjs: '*'
@@ -17353,7 +17353,7 @@ snapshots:
 
   react@19.3.1: {}
 
-  reactjrx@1.142.0(@tanstack/react-query@5.104.4(@types/react@19.3.0)(react@19.3.1))(react-dom@19.3.1(react@19.3.1))(react@19.3.1)(rxjs@7.8.2):
+  reactjrx@2.2.0(@tanstack/react-query@5.104.4(@types/react@19.3.0)(react@19.3.1))(react-dom@19.3.1(react@19.3.1))(react@19.3.1)(rxjs@7.8.2):
     dependencies:
       '@tanstack/react-query': 5.104.4(@types/react@19.3.0)(react@19.3.1)
       react: 19.3.1
