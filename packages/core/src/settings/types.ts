@@ -61,10 +61,10 @@ export type CoreInputSettings = {
    *
    * Anything else is fetched and built into a page by the reader, which the frame loads from a blob
    * url. A relative reference in such a page reaches neither the network nor a service worker. The
-   * reader swaps in the images, media, scripts and stylesheets the page references, and the fonts
-   * those stylesheets declare, from the manifest items they name, and only for an item `getResource`
-   * gives a `Response` for. Any other relative reference, such as a stylesheet's background image,
-   * does not load. So if you return a `Response` for a document, return one for the assets it
+   * reader swaps in the images, media, scripts and `<link>` targets (stylesheets, icons, preloads)
+   * the page references, and the fonts those stylesheets declare, from the manifest items they name,
+   * and only for an item `getResource` gives a `Response` for. Any other relative reference, such as
+   * a stylesheet's background image, does not load. So if you return a `Response` for a document, return one for the assets it
    * references too, or leave `getResource` out and serve the whole book by url from the page's
    * origin, through a backend or a service worker.
    */
