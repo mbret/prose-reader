@@ -74,18 +74,18 @@ export const attachFrameSrc = ({
               (item.mediaType &&
                 ITEM_MEDIA_TYPE_REQUIRES_TRANSFORM.includes(item.mediaType))
 
-            /**
-             * An item on the page's origin that needs no transform, and that `getResource`
-             * serves as a url, is loaded by that url: the document, and the requests it
-             * makes, go through the network and any service worker. Anything else is built
-             * into a page here and loaded from a blob url, whose relative references
-             * `loadAssets` resolves to the manifest items they name.
-             */
-            if (
+            const loadsDocumentByUrl =
               resource instanceof URL &&
               item.href.startsWith(window.location.origin) &&
               !requiresTransform
-            ) {
+
+            /**
+             * Loaded by its url, the document and the requests it makes go through the
+             * network and any service worker. A page built here loads from a blob url,
+             * against which no relative reference resolves: `loadAssets` swaps in the
+             * ones it can.
+             */
+            if (loadsDocumentByUrl) {
               revokeFrameObjectUrl(frameElement)
               frameElement?.setAttribute(`src`, resource.href)
 
