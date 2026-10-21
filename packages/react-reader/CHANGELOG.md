@@ -3,6 +3,21 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## [32.0.0](https://github.com/mbret/prose-reader/compare/v31.0.0...v32.0.0) (2026-10-21)
+
+### ⚠ BREAKING CHANGES
+
+* **react-reader:** `@prose-reader/react-reader` takes `react` and
+  `react-dom` 19.x as peer dependencies.
+* `@prose-reader/react-reader` takes `reactjrx` 2.x as a
+  peer dependency. Apps using it upgrade reactjrx to 2.x.
+
+### Miscellaneous Chores
+
+* move to reactjrx 2 ([c56bc9e](https://github.com/mbret/prose-reader/commit/c56bc9e2c405139f1a374cc25080317d98eddd13))
+* **react-reader:** require React 19 ([20c3548](https://github.com/mbret/prose-reader/commit/20c3548ec93de85e177dae6ca8ca7720432c30bd))
+
+
 ## [31.0.0](https://github.com/mbret/prose-reader/compare/v30.3.0...v31.0.0) (2026-10-21)
 
 **Note:** Version bump only for package @prose-reader/react-reader

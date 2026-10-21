@@ -1,6 +1,6 @@
 {
   "name": "@prose-reader/enhancer-search",
-  "version": "31.0.0",
+  "version": "32.0.0",
   "description": "Full-text search for prose: find a word or phrase anywhere in an EPUB or PDF, with a CFI for each match.",
   "keywords": [
     "prose-reader",

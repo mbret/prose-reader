@@ -3,6 +3,14 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## [32.0.0](https://github.com/mbret/prose-reader/compare/v31.0.0...v32.0.0) (2026-10-21)
+
+### Bug Fixes
+
+* **core:** measure the preload window from the navigation restored onto the current layout ([b993200](https://github.com/mbret/prose-reader/commit/b993200caf3aaa784c545c6f86b42f991b253e31))
+* **core:** preload the chapters around a position only once the layout is current ([197e0b3](https://github.com/mbret/prose-reader/commit/197e0b3ac2abfc4bdcc360e0553fcbbca0f6b10b))
+
+
 ## [31.0.0](https://github.com/mbret/prose-reader/compare/v30.3.0...v31.0.0) (2026-10-21)
 
 ### ⚠ BREAKING CHANGES
