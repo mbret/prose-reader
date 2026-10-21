@@ -1,6 +1,6 @@
 import {
-  CSS_VAR_THEME_BACKGROUND_COLOR,
   DocumentRenderer,
+  getThemeBackgroundColor,
   type Reader,
   type SpineItem,
 } from "@prose-reader/core"
@@ -22,29 +22,13 @@ const createSnapshotItem = (doc: Document, pageBackgroundColor: string) => {
   const contentMask = doc.createElement("div")
 
   contentMask.classList.add(SNAPSHOT_MASK_CLASS)
+  // A snapshot lives outside the reader's container, so it paints the
+  // background the container shows behind the pages itself.
   contentMask.style.backgroundColor = pageBackgroundColor
 
   snapshotElement.appendChild(contentMask)
 
   return { snapshotElement, contentMask }
-}
-
-/**
- * A snapshot is attached outside the reader's container, where the theme's
- * variable does not reach, so it takes the value the variable resolves to on
- * the spine item it copies.
- */
-const getThemeBackgroundColor = (spineItemElement: HTMLElement) => {
-  const spineItemStyle =
-    spineItemElement.ownerDocument.defaultView?.getComputedStyle(
-      spineItemElement,
-    )
-
-  if (!spineItemStyle) {
-    throw new Error("The spine item has no window to resolve its style in")
-  }
-
-  return spineItemStyle.getPropertyValue(CSS_VAR_THEME_BACKGROUND_COLOR)
 }
 
 const makeSnapshotPreviewInert = (element: HTMLElement) => {
@@ -92,7 +76,7 @@ export class Snapshot extends Observable<HTMLElement> {
           switchMap(() => {
             const { snapshotElement, contentMask } = createSnapshotItem(
               parentDocument,
-              getThemeBackgroundColor(item.element),
+              getThemeBackgroundColor(reader.theme.get()),
             )
             snapshotItem = snapshotElement
 

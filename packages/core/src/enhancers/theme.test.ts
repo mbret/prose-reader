@@ -13,7 +13,7 @@ import {
   createTestManifestSpineItems,
 } from "../tests/utils"
 import { CONTAINER_HTML_PREFIX as PLACEHOLDER_CLASS_NAME } from "./layout/createPlaceholderPages"
-import type { Theme } from "./theme"
+import { getThemeBackgroundColor, type Theme } from "./theme"
 
 installReaderTestEnvironment()
 
@@ -135,6 +135,22 @@ describe("theme", () => {
           getLoadingPlaceholder(reader, 0),
         ),
       }).toEqual({ theme, paintedBackgrounds: [themeBackgroundColors[theme]] })
+    }
+  })
+
+  it("getThemeBackgroundColor gives the background the reader paints with each theme", () => {
+    const reader = createTestReader()
+    const themes: Theme[] = [`bright`, `sepia`, `night`, `publisher`]
+
+    mountTestReader(reader)
+
+    for (const theme of themes) {
+      reader.theme.set(theme)
+
+      expect({ theme, background: getThemeBackgroundColor(theme) }).toEqual({
+        theme,
+        background: getComputedStyle(getTestContainer()).backgroundColor,
+      })
     }
   })
 
