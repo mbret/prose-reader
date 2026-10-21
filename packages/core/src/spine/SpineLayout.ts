@@ -54,6 +54,8 @@ export type SpineLayoutOptions = {
   immediate?: boolean
 }
 
+type SpineItemEndOffset = { horizontalOffset: number; verticalOffset: number }
+
 export class SpineLayout extends DestroyableClass {
   protected externalLayoutTrigger = new Subject<SpineLayoutOptions>()
 
@@ -65,6 +67,18 @@ export class SpineLayout extends DestroyableClass {
    * translation of position should be done elsewhere
    */
   protected spineItemsRelativeLayouts: SpineItemSpineLayout[] = []
+
+  /** Where the item after each one starts, from the same pass. */
+  protected spineItemsEndOffsets: SpineItemEndOffset[] = []
+
+  /**
+   * The first item a request since the last completed pass affects, which the
+   * next pass has to lay out from: a request cancels a pass still running for
+   * an older one, whose items are then not laid out yet. Recorded as each
+   * request arrives and cleared when a pass publishes, the pass scheduler's own
+   * bookkeeping.
+   */
+  protected firstItemIndexAwaitingLayout: number | undefined
 
   /**
    * Each layout request as it is made, from `layout()` or from an item loading
@@ -98,31 +112,54 @@ export class SpineLayout extends DestroyableClass {
      * on a state the item had left.
      */
     const spineItemNeedsLayout$ = spineItemsObserver.itemLoadStatusChange$.pipe(
-      filter(endsALoad),
+      filter((loadStatusChange) => endsALoad(loadStatusChange)),
       observeOn(asapScheduler),
-      map(
-        (): SpineLayoutOptions => ({
-          immediate: false,
-        }),
-      ),
+      map(({ item }) => ({
+        options: { immediate: false } satisfies SpineLayoutOptions,
+        firstAffectedItemIndex: item.index,
+      })),
     )
 
     /**
      * A layout requested through `layout()` is a layout of the reader, whose
      * viewport may have changed; one started because an item's load ended is
      * not.
+     *
+     * Each request carries the first item it can change. An item's place only
+     * depends on the items before it, whatever the reading direction, so a
+     * layout started by an item's load ending lays out that item and the ones
+     * after it, and leaves the ones before it as the last completed pass laid
+     * them out: no hook, no renderer layout, no dirty flag. One of the reader
+     * lays them all out.
      */
     const request$ = merge(
       this.externalLayoutTrigger.pipe(
-        map((options) => ({ options, measuresViewport: true })),
+        map((options) => ({
+          options,
+          measuresViewport: true,
+          firstAffectedItemIndex: 0,
+        })),
       ),
       spineItemNeedsLayout$.pipe(
-        map((options) => ({ options, measuresViewport: false })),
+        map((request) => ({ ...request, measuresViewport: false })),
       ),
     )
 
     this.lifecycle$ = request$.pipe(
-      switchMap(({ options, measuresViewport }) => {
+      map((request) => {
+        this.firstItemIndexAwaitingLayout = Math.min(
+          this.firstItemIndexAwaitingLayout ?? request.firstAffectedItemIndex,
+          request.firstAffectedItemIndex,
+          // an item no pass has laid out yet has no layout to keep
+          this.spineItemsRelativeLayouts.length,
+        )
+
+        return {
+          ...request,
+          firstAffectedItemIndex: this.firstItemIndexAwaitingLayout,
+        }
+      }),
+      switchMap(({ options, measuresViewport, firstAffectedItemIndex }) => {
         /**
          * The wait sits inside the switch rather than before it, so a request
          * cancels a pass already running for an older one instead of letting
@@ -139,13 +176,15 @@ export class SpineLayout extends DestroyableClass {
         const laidOut$ = defer(() => {
           if (measuresViewport) this.viewport.layout()
 
-          this.spineItemsManager.items.forEach((item) => {
-            item.markDirty()
-          })
+          this.spineItemsManager.items
+            .slice(firstAffectedItemIndex)
+            .forEach((item) => {
+              item.markDirty()
+            })
 
           return wait$
         }).pipe(
-          switchMap(() => this.layOutItems()),
+          switchMap(() => this.layOutItems(firstAffectedItemIndex)),
           map(() => "laidOut" as const),
         )
 
@@ -186,22 +225,31 @@ export class SpineLayout extends DestroyableClass {
   }
 
   /**
-   * Lays every item out in turn, each one starting where the previous ended,
-   * then publishes the layouts of the whole pass at once.
+   * Lays the items out in turn from `firstItemIndex`, each one starting where
+   * the previous ended, then publishes the layouts of the whole spine at once.
+   * The items before it keep the layouts the last completed pass gave them,
+   * which nothing requested since can have changed.
    */
-  private layOutItems() {
+  private layOutItems(firstItemIndex: number) {
     /**
-     * Local to this pass. A superseded pass is unsubscribed and its array
+     * Local to this pass. A superseded pass is unsubscribed and its arrays
      * discarded, so a cancelled layout can never leave the published layouts
      * holding a mix of two passes.
      */
-    const layouts: SpineItemSpineLayout[] = []
+    const layouts = this.spineItemsRelativeLayouts.slice(0, firstItemIndex)
+    const endOffsets = this.spineItemsEndOffsets.slice(0, firstItemIndex)
+    const startOffset: SpineItemEndOffset = endOffsets[firstItemIndex - 1] ?? {
+      horizontalOffset: 0,
+      verticalOffset: 0,
+    }
 
     return this.spineItemsManager.items
+      .slice(firstItemIndex)
       .reduce(
-        (acc$, item, itemIndex) =>
+        (acc$, item, offsetFromFirstItem) =>
           acc$.pipe(
             concatMap(({ horizontalOffset, verticalOffset }) => {
+              const itemIndex = firstItemIndex + offsetFromFirstItem
               const isScreenStartItem =
                 horizontalOffset % this.viewport.absoluteViewport.width === 0
               const isLastItem =
@@ -245,22 +293,27 @@ export class SpineLayout extends DestroyableClass {
                       this.viewport.absoluteViewport.width,
                     )
 
-                    layouts[itemIndex] = layoutPosition
-
-                    return {
+                    const endOffset: SpineItemEndOffset = {
                       horizontalOffset: edgeX + width,
                       verticalOffset: isVertical ? edgeY + height : 0,
                     }
+
+                    layouts[itemIndex] = layoutPosition
+                    endOffsets[itemIndex] = endOffset
+
+                    return endOffset
                   }),
                 )
             }),
           ),
-        of({ horizontalOffset: 0, verticalOffset: 0 }),
+        of(startOffset),
       )
       .pipe(
         // The pass completed: publish it in one assignment.
         tap(() => {
           this.spineItemsRelativeLayouts = layouts
+          this.spineItemsEndOffsets = endOffsets
+          this.firstItemIndexAwaitingLayout = undefined
         }),
       )
   }
