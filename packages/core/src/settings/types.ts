@@ -55,8 +55,9 @@ export type CoreInputSettings = {
    * @important
    * A spine item's document reaches its frame by its url only when the item's href is on the page's
    * origin, `getResource` gives a `URL` or nothing for it, and the item is not one the reader wraps
-   * in an html page (a JPEG, PNG, WebP or AVIF image, or a text file). The frame's `src` is then that
-   * url, so the document and the requests it makes go through the network and any service worker.
+   * in an html page (a JPEG, PNG, WebP or AVIF image, or a plain text file). The frame's `src` is
+   * then that url, so the document and the requests it makes go through the network and any service
+   * worker.
    *
    * Anything else is fetched and built into a page by the reader, which the frame loads from a blob
    * url. A relative reference in such a page reaches neither the network nor a service worker. The
