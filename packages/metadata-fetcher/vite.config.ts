@@ -3,6 +3,7 @@ import { createLibConfig } from "../../config/vite-lib"
 
 const libConfig = createLibConfig({
   packageDir: __dirname,
+  preserveModules: true,
 })
 
 export default defineConfig((env) =>

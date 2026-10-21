@@ -1,5 +1,8 @@
 ---
-title: "utilities"
+title: "Core utilities"
+description: "A @prose-reader/core helper: observeBookBoundaryReached() tells when the user reaches the start or end of the book, holding the end back while items load."
+sidebar:
+  label: "utilities"
 ---
 
 #### `observeBookBoundaryReached(reader)` { #observebookboundaryreached-reader }

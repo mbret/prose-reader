@@ -1,7 +1,6 @@
 import type { MetadataProvider } from "../../types/provider.ts"
+import { GOOGLE_BOOKS_PROVIDER_ID } from "../providerIds.ts"
 import { createGoogleBooksSearch } from "./search.ts"
-
-export const GOOGLE_BOOKS_PROVIDER_ID = "googleBooks"
 
 const DEFAULT_BASE_URL = "https://www.googleapis.com/books/v1"
 

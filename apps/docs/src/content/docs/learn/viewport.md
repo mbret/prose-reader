@@ -1,5 +1,6 @@
 ---
 title: "Viewport"
+description: "How the viewport frames what the reader shows: resizing it, choosing when two pages share it with spreadMode, and the absolute and relative viewports."
 ---
 
 The viewport is the visible reading area. It is not to be confused with pagination and navigation.
@@ -29,7 +30,7 @@ To avoid conflict between features and undesired behaviors here is a list of rec
 
 A relatively simple manipulation of the viewport can be to change its size and margin. For example to make more items visible when scrolling. [Refit](/enhancers/refit) enhancer is a good example taking advantage of the viewport resizing.
 
-<div class="figures"><figure><img src="/images/viewport-fit-76.png" alt="" width="188"></figure> <figure><img src="/images/viewport-fit-32.png" alt="" width="188"></figure></div>
+<div class="figures"><figure><img src="/images/viewport-fit-76.webp" alt="The demo's viewport fit setting at a maximum width of 76%, with the comic narrowed behind it" width="188" height="334"></figure> <figure><img src="/images/viewport-fit-32.webp" alt="The same setting at 32%, with the comic narrower still" width="188" height="334"></figure></div>
 
 ## Spread mode
 
@@ -77,7 +78,7 @@ reader.context.value.isSpreadAllowed // false for a `none` spread or a `scrolled
 
 The absolute viewport represents the dimensions given when creating the reader and is the dimension used internally for pagination, navigation and all the calculations. The relative viewport represents the viewing area after transformations are applied.
 
-<div class="figures"><figure><img src="/images/viewport-relative.png" alt="" width="188"><figcaption>Relative viewport (scale: 0.5)</figcaption></figure> <figure><img src="/images/viewport-absolute.png" alt="" width="188"><figcaption>Absolute viewport</figcaption></figure></div>
+<div class="figures"><figure><img src="/images/viewport-relative.webp" alt="A manga page at half its size, with the next page beside it" width="188" height="334"><figcaption>Relative viewport (scale: 0.5)</figcaption></figure> <figure><img src="/images/viewport-absolute.webp" alt="The same manga page filling the screen" width="188" height="334"><figcaption>Absolute viewport</figcaption></figure></div>
 
 :::note
 Some calculations will always use the absolute viewport (eg: navigation) to keep consistency and correct results while other behaviors might take advantage of the relative viewport. For example, prose will always load documents that are visible on the relative viewport.

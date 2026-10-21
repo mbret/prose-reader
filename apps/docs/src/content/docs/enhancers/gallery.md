@@ -1,10 +1,13 @@
 ---
-title: "Gallery"
+title: "Gallery enhancer"
+description: "Make page thumbnails for your own gallery with @prose-reader/enhancer-gallery: gallery.snapshot() copies a spine item's first page at the size you choose."
+sidebar:
+  label: "Gallery"
 ---
 
 This enhancer gives you methods to facilitate creation of gallery of pages. This can be helpful to provide a quick overview and / or navigation for a book.
 
-<figure><img src="/images/gallery-iphone-se.png" alt="" width="375"><figcaption>Gallery on the demo reader</figcaption></figure>
+<figure><img src="/images/gallery-iphone-se.webp" alt="Thumbnails of the pages of a manga in a grid of two columns" width="375" height="667"><figcaption>Gallery on the demo reader</figcaption></figure>
 
 The gallery enhancer does not create a gallery for you, it will help you gather snapshots of pages that you can then display in your own gallery. This way it's agnostic and you are responsible for your entire design.
 

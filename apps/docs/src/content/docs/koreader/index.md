@@ -1,5 +1,6 @@
 ---
 title: "KOReader positions"
+description: "Convert KOReader sync positions with xPointerToCfi() and cfiToXPointer(), and read the crengine rules behind them, checked against a real KOReader build."
 ---
 
 **`@prose-reader/koreader`** converts reading positions between prose's EPUB CFIs and the **crengine XPointer** dialect that KOReader and the KOReader-sync ecosystem exchange (KOReader itself, Readest, Crosspoint, Kavita, Komga, Calibre-Web Automated, …). Both formats name the same three things: a spine item, a DOM node inside it and an offset. The conversion is a DOM walk in each direction plus the handful of normalisation rules crengine applies when it parses a spine item. A sync server stores an XPointer as the `progress` of an EPUB only, a PDF's or a comic's being a page number: `getKoreaderProgressKind` tells which form a book takes. The package also computes the digest a KOReader sync server files a book's positions under: see [Document digests](/koreader/document-digests).

@@ -89,6 +89,8 @@ export const ReaderScreen = memo(() => {
 
   return (
     <>
+      {/* React hoists it into the head: the books the demo opens stay out of search results */}
+      <meta name="robots" content="noindex" />
       {/* not wrapping the reader within for now since hot reload break the reader container */}
       <ReactReader
         onItemClick={onItemClick}

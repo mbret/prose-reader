@@ -1,5 +1,8 @@
 ---
-title: "Getting Started"
+title: "Getting started with React Native"
+description: "Start a React Native reader from the Expo demo app, a working example of prose in a WebView bridged with @prose-reader/react-native."
+sidebar:
+  label: "Getting Started"
 ---
 
 There is no official doc to get you started properly at the moment but we have a demo showcase at [https://github.com/mbret/prose-reader/tree/master/prose-react-native-demo](https://github.com/mbret/prose-reader/tree/master/prose-react-native-demo).

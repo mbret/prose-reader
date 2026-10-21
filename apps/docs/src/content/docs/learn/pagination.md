@@ -1,5 +1,6 @@
 ---
 title: "Pagination"
+description: "Show page numbers and progress from reader.pagination, know when a result is settled, and why the reading position, not pagination, is what you save."
 ---
 
 `reader.pagination` describes what is visible: which spine items and pages are

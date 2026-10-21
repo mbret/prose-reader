@@ -8,9 +8,10 @@ import svgr from "vite-plugin-svgr"
 import { DEMO_BASE_PATH } from "./src/constants.ts"
 
 /**
- * The app is two pages: the landing page, index.html, and the demo,
- * demo.html, which answers every path under `DEMO_BASE_PATH`. vercel.json
- * routes them the same way in production.
+ * The app is three pages: the landing page, index.html, the demo, demo.html,
+ * which answers every path under `DEMO_BASE_PATH`, and 404.html. vercel.json
+ * routes them the same way in production, where 404.html answers every other
+ * path; here those paths get an empty 404.
  */
 const serveDemoPage = (): Plugin => {
   const rewriteDemoNavigation: Connect.NextHandleFunction = (
@@ -41,6 +42,7 @@ const serveDemoPage = (): Plugin => {
 }
 
 export default defineConfig(({ mode }) => ({
+  appType: "mpa",
   build: {
     sourcemap: true,
     minify: mode !== "development",
@@ -49,6 +51,7 @@ export default defineConfig(({ mode }) => ({
       input: {
         main: "index.html",
         demo: "demo.html",
+        notFound: "404.html",
       },
     },
   },

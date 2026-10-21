@@ -1,5 +1,8 @@
 ---
-title: "Annotations"
+title: "Annotations enhancer"
+description: "Install @prose-reader/enhancer-annotations, find the pages that can hold an annotation with candidates$, and avoid the root CFI you get on a blank page."
+sidebar:
+  label: "Annotations"
 ---
 
 ## Getting Started

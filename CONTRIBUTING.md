@@ -76,22 +76,33 @@ enforces both.
 
 ## Pull requests
 
-1. Fork the repository, and branch off `master`.
+1. Fork the repository, and branch off `develop`.
 2. Make the change, with its tests and its documentation.
 3. Run the [checks](README.md#checks) your change touches. CI runs all of
    them on your pull request.
-4. Open a pull request against `master`. Say what changed and why. List the
+4. Open a pull request against `develop`. Say what changed and why. List the
    public names it adds, renames or removes, and say whether it breaks the
    API.
 
 Pull requests are merged with a merge commit, or rebased, and never squashed.
-Each of your commits lands on `master` as you wrote it, so each one needs a
+Each of your commits lands on `develop` as you wrote it, so each one needs a
 conventional message.
+
+## Releases
+
+`develop` gathers the merged pull requests, and nothing is published or
+deployed from it. A release is a pull request from `develop` to `master`,
+merged with a merge commit and never rebased or squashed, so that both branches
+keep the same commits.
 
 Every merge to `master` that changes a published package releases it. CI
 derives the version from the commit messages, updates `CHANGELOG.md`, tags the
-release and publishes the changed packages to npm. Do not bump a version or
-edit `CHANGELOG.md` yourself.
+release and publishes the changed packages to npm. The same merge deploys the
+website and the documentation. Do not bump a version or edit `CHANGELOG.md`
+yourself.
+
+The release commit lands on `master` only. Merge `master` back into `develop`
+after it, so that the next pull requests start from the released versions.
 
 ## Commit messages
 

@@ -1,6 +1,6 @@
 ---
 title: "Streamer"
-description: Stream your content with javascript
+description: "@prose-reader/streamer turns a book archive into the manifest a reader opens and serves the resources it requests, in the browser, on Node or in React Native."
 ---
 
 This package is a ready to use javascript streamer. It is by design environment agnostic in order to be compatible with the browser, node or React Native (to only cite a few).

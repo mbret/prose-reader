@@ -1,5 +1,6 @@
 ---
 title: "@prose-reader/react-native"
+description: "Connect a WebView to your app with bridgeReader() and useCreateReader(), drive the reader natively, save the reading position and serve books with Expo."
 ---
 
 prose renders in a webview; your app is native. This package is the bridge

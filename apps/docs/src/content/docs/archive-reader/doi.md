@@ -1,5 +1,6 @@
 ---
 title: "DOI identifiers"
+description: "Read a DOI from EPUB or ComicInfo.xml metadata with identifierValue(), which accepts a doi.org URL and drops the doi: prefix to return the bare name."
 ---
 
 Archive-reader recognizes `DOI` as a known identifier scheme when a publication states it explicitly. A publication can also carry a DOI as a general `URL` identifier, which is how the DOI resolver addresses one.

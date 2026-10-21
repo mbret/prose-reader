@@ -1,5 +1,6 @@
 ---
-title: "Contents Supports"
+title: "Supported formats"
+description: "The book formats prose reads: EPUB, comics, plain text, PDF and audiobooks, with the package or guide that handles each one."
 ---
 
 ## ✅ Epub { #epub }

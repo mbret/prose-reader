@@ -1,5 +1,8 @@
 ---
-title: "Contract"
+title: "Reading system contract"
+description: "Rules for enhancers that keep books intact: respect the publisher's intent, leave the book's content unaltered and never change what a CFI points to."
+sidebar:
+  label: "Contract"
 ---
 
 For a reading system to work correctly with its content, a contract must be set and followed strictly. This is to ensure everyone with the same content will access the information correctly the same way. The rules listed below applies to prose but more generally to all reading systems.

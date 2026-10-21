@@ -1,5 +1,8 @@
 ---
-title: "About"
+title: "EPUB CFI"
+description: "Examples and API reference for @prose-reader/cfi: resolve EPUB CFIs to DOM nodes or ranges, generate them from a node or position, and compare them."
+sidebar:
+  label: "About"
 ---
 
 Prose provides a TypeScript library for working with EPUB Canonical Fragment Identifiers (CFI). This library provides utilities for parsing, resolving, generating, comparing, and serializing CFIs according to the EPUB CFI 1.1 specification.
