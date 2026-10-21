@@ -3,6 +3,30 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## [30.3.0](https://github.com/mbret/prose-reader/compare/v30.2.0...v30.3.0) (2026-10-21)
+
+### Features
+
+* **front:** give the website a link preview and structured data ([545e7aa](https://github.com/mbret/prose-reader/commit/545e7aa98a14b8191f922481634f7cb1d60c29ef))
+* **front:** list the website's pages in a sitemap ([9c1764f](https://github.com/mbret/prose-reader/commit/9c1764f5566ee153d4c188e5b575d6638471433b))
+* **front:** redirect demo.prose-reader.com to the demo ([cf078df](https://github.com/mbret/prose-reader/commit/cf078dfcdf710650613a3631455e641953092cfd))
+* **metadata-fetcher:** export FETCHED_METADATA_VERSION ([86e8f72](https://github.com/mbret/prose-reader/commit/86e8f720dc3eabd7021f200ec5ae22b6fc55f575))
+
+### Bug Fixes
+
+* **docs:** redirect prose-reader-docs.vercel.app to doc.prose-reader.com ([e77cb3d](https://github.com/mbret/prose-reader/commit/e77cb3d0cefbea007323c335448b312f77dcd44c))
+* **front:** answer unknown paths with a 404 page ([030ba0e](https://github.com/mbret/prose-reader/commit/030ba0e294fa4a2957d43adf0aea900d4562a033))
+* **front:** give each feature card's link a text of its own ([68bb335](https://github.com/mbret/prose-reader/commit/68bb33560298e50c69799cfa4d9885eaf604ddd4))
+* **front:** keep the books the demo opens out of search results ([a19c8a8](https://github.com/mbret/prose-reader/commit/a19c8a845a17ed0e471822c24270f2bfc46bb29c))
+* **front:** serve each page of the website at one URL ([d0e41dd](https://github.com/mbret/prose-reader/commit/d0e41dd6cc079b082071a7be6ef1e4627b1be8a2))
+
+### Performance Improvements
+
+* **docs:** serve the screenshots as WebP, at the size they are shown ([c7d1395](https://github.com/mbret/prose-reader/commit/c7d13956d9254ac6a4a53af51d9db3f85d66d7d0))
+* **front:** load the landing page's fonts along with its script ([273108f](https://github.com/mbret/prose-reader/commit/273108f038a885e166e6e2e8c5f1bec3aa58f811))
+* **metadata-fetcher:** let bundlers drop what the imports do not reach ([2bd393c](https://github.com/mbret/prose-reader/commit/2bd393c68d78a9e686165ac666e1c7ff4aea5d89))
+
+
 ## [30.2.0](https://github.com/mbret/prose-reader/compare/v30.1.2...v30.2.0) (2026-10-20)
 
 ### Features
