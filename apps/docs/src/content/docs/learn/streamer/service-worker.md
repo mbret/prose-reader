@@ -126,7 +126,9 @@ const openBook = async (bookId: string, container: HTMLElement) => {
 }
 ```
 
-Leave `getResource` out. The manifest's `href`s point at the worker, and each frame loads its document from that URL, so the stylesheets, images and fonts the document references go through the worker too. A `getResource` that returns a `Response` makes the reader build the page itself and load it from a blob URL. That page's relative references no longer reach the worker: the reader resolves them to the items they name, and only for the items `getResource` also returns a `Response` for.
+Leave `getResource` out. The manifest's `href`s point at the worker, and the reader requests each one there. A chapter's frame loads it by its URL, so the stylesheets, images and fonts the chapter references go through the worker too. Comic pages and text files are fetched through the worker as well, then wrapped in a page the reader builds.
+
+A `getResource` that returns a `Response` makes the reader build the page itself and load it from a blob URL, where relative references no longer reach the worker. The reader then loads only the images, media, scripts and stylesheets the page references, and the fonts those stylesheets declare, and only for the items `getResource` also returns a `Response` for. A stylesheet's background image, for instance, does not load.
 
 A reader shows a single book: destroy it with `reader.destroy()` before you open the next one, as in [Getting started](/get-started/getting-started).
 
