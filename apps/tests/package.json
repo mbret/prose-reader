@@ -30,7 +30,7 @@
     "pdfjs-dist": "^6.2.108",
     "react": "^19.2.7",
     "react-dom": "^19.2.7",
-    "reactjrx": "^2.1.2",
+    "reactjrx": "^2.2.0",
     "rxjs": "^7.8.0"
   }
 }
