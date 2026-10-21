@@ -53,10 +53,17 @@ export type CoreInputSettings = {
    * - Providing custom font, img, etc with direct import
    *
    * @important
-   * Due to a bug in chrome/firefox https://bugs.chromium.org/p/chromium/issues/detail?id=880768 you should avoid
-   * having a custom fetch method if you serve your content from service worker. This is because when you set fetchResource
-   * the iframe will use `srcdoc` rather than `src`. Due to the bug the http hit for the resources inside the iframe will
-   * not pass through the service worker.
+   * A spine item's document reaches its frame by its url only when the item's href is on the page's
+   * origin, `getResource` gives a `URL` for it, and the item is not one the reader transforms (an
+   * image or a text file, which it wraps in an html page). The frame's `src` is then that url, so the
+   * document and the requests it makes go through the network and any service worker.
+   *
+   * Anything else is fetched and built into a page by the reader, which the frame loads from a blob
+   * url. A relative reference in such a page reaches neither the network nor a service worker: the
+   * reader resolves it to the manifest item it names and swaps in that item's content, which it can
+   * only do when `getResource` gives a `Response` for that item. So if you return a `Response` for a
+   * document, return one for the assets it references too, or leave `getResource` out and serve the
+   * whole book by url, from a backend or a service worker.
    */
   getResource?: (item: Manifest["items"][number]) =>
     | Observable<
