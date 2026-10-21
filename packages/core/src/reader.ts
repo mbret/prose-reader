@@ -289,13 +289,11 @@ export const createReader = ({
 const CONTAINER_CLASS = `${HTML_PREFIX}-reader`
 const CONTAINER_ATTRIBUTE = `data-prose-reader-container`
 
-// The container's base styles (background, position, overflow) live in the
-// injected stylesheet keyed on CONTAINER_CLASS rather than as inline styles.
-// This keeps mount side-effect free on the element beyond adding the class and
-// two attributes, so unwrapContainer can fully revert them on destroy and a
-// reused container accumulates nothing across mounts. An enhancer that writes
-// on the container reverts it on destroy itself, as the theme enhancer does
-// with its background variable.
+// The container's base styles live in the injected stylesheet keyed on
+// CONTAINER_CLASS rather than as inline styles, so unwrapContainer undoes
+// everything wrapContainer writes. Anything else that writes on the container,
+// an attribute, a style, an element or a listener, has to undo it on destroy
+// too, or a reused container keeps it across mounts.
 const wrapContainer = (containerElement: HTMLElement, id: string) => {
   containerElement.classList.add(CONTAINER_CLASS)
   setAttributeIfChanged(containerElement, HTML_ATTRIBUTE_DATA_READER_ID, id)

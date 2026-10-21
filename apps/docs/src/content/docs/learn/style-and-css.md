@@ -77,11 +77,15 @@ reader.context
   .pipe(
     // the container is only known once the reader is mounted
     filter(isDefined),
-    tap((container) => {
-      // Always set your attribute to the container of the given reader instance
-      container.setAttribute("data-my-enhancer", "true")
-    }),
-    // don't forget to unsubscribe on reader destroy
+    switchMap(
+      (container) =>
+        new Observable(() => {
+          container.setAttribute("data-my-enhancer", "true")
+
+          // the container outlives the reader, so remove what you set on it
+          return () => container.removeAttribute("data-my-enhancer")
+        }),
+    ),
     takeUntil(reader.$.destroy$),
   )
   .subscribe()
