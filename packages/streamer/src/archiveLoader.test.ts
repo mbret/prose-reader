@@ -1,8 +1,20 @@
 import type { Archive } from "@prose-reader/archive-reader"
 import { catchError, lastValueFrom, of } from "rxjs"
-import { describe, expect, it, vitest } from "vitest"
+import { afterEach, beforeEach, describe, expect, it, vitest } from "vitest"
 import { createArchiveLoader } from "./archiveLoader"
-import { waitFor } from "./tests/waitFor"
+
+/**
+ * Time only moves when a test moves it. On real timers, a wait meant to stop
+ * short of a TTL runs past it on a busy machine, and the archive is already
+ * closed when the test checks that it is not.
+ */
+beforeEach(() => {
+  vitest.useFakeTimers()
+})
+
+afterEach(() => {
+  vitest.useRealTimers()
+})
 
 describe(`Given a TTL`, () => {
   describe(`and the archive is released right away`, () => {
@@ -18,11 +30,11 @@ describe(`Given a TTL`, () => {
 
       release()
 
-      await waitFor(50)
+      await vitest.advanceTimersByTimeAsync(50)
 
       expect(closeFnMock).not.toBeCalled()
 
-      await waitFor(51)
+      await vitest.advanceTimersByTimeAsync(51)
 
       expect(closeFnMock).toBeCalledTimes(1)
     })
@@ -39,17 +51,17 @@ describe(`Given a TTL`, () => {
 
       const { release } = await lastValueFrom(archiveLoader.access(``))
 
-      await waitFor(50)
+      await vitest.advanceTimersByTimeAsync(50)
 
       expect(closeFnMock).not.toBeCalled()
 
       release()
 
-      await waitFor(5)
+      await vitest.advanceTimersByTimeAsync(5)
 
       expect(closeFnMock).not.toBeCalled()
 
-      await waitFor(5)
+      await vitest.advanceTimersByTimeAsync(5)
 
       expect(closeFnMock).toBeCalledTimes(1)
     })
@@ -68,7 +80,7 @@ describe(`Given a TTL`, () => {
 
       archiveLoader.purge()
 
-      await waitFor(50)
+      await vitest.advanceTimersByTimeAsync(50)
 
       expect(closeFnMock).not.toBeCalled()
 
@@ -155,7 +167,7 @@ describe(`Given a long coming archive`, () => {
 
       const archiveLoader = createArchiveLoader({
         getArchive: async () => {
-          await waitFor(100)
+          await new Promise((resolve) => setTimeout(resolve, 100))
 
           return { close: closeFnMock } as unknown as Archive
         },
@@ -166,9 +178,12 @@ describe(`Given a long coming archive`, () => {
         archiveLoader.purge()
       }, 50)
 
-      const { archive, release } = await lastValueFrom(
-        archiveLoader.access(`_`),
-      )
+      const access = lastValueFrom(archiveLoader.access(`_`))
+
+      // The purge, then the archive.
+      await vitest.advanceTimersByTimeAsync(100)
+
+      const { archive, release } = await access
 
       release()
 
@@ -176,7 +191,7 @@ describe(`Given a long coming archive`, () => {
 
       expect(closeFnMock).not.toBeCalled()
 
-      await waitFor(50)
+      await vitest.advanceTimersByTimeAsync(50)
 
       expect(archiveLoader._archives).toEqual({})
 
