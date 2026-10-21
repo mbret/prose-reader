@@ -62,5 +62,5 @@ Or if you passed an array of resources
 Observable<{ resource: T; meta: ConsolidatedResource }[]>
 ```
 
-An observable containing the initial resources and their consolidated metadata.
+An observable containing the initial resources and their consolidated metadata. It completes when the reader is destroyed.
 
