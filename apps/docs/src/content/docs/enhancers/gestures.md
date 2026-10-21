@@ -137,6 +137,8 @@ Observable<{
 
 Emits all gesture events that are recognized and processed by the enhancer. It will attach a boolean to let you know whether the gesture has been handled or not. Typically whether an action happened following this gesture (like a passthrough).
 
+It completes when the reader is destroyed.
+
 Imagine you want to show/hide a menu when the user clicks on the screen. The enhancer will trigger a navigation when the user taps on the left or right edge so you likely don't want to show the menu at the moment. However clicking outside of this range will have no effect. This is where you can intercept the gesture and show your menu.
 
 ```typescript
