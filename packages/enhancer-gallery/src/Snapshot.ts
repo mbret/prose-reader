@@ -53,7 +53,7 @@ export class Snapshot extends Observable<HTMLElement> {
   ) {
     super((subscriber) => {
       const parentDocument = parent.ownerDocument
-      const unlockSpineItem = reader.spine.spineItemsLoader.forceOpen([item])
+      const unlockSpineItem = reader.spineItemsLoader.forceOpen([item])
       let hasUnlockedSpineItem = false
       let releaseSnapshotAssets = () => {}
       let snapshotItem: HTMLElement | undefined
