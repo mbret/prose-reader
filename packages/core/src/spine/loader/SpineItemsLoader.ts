@@ -15,7 +15,7 @@ import {
   withLatestFrom,
 } from "rxjs"
 import type { Context } from "../../context/Context"
-import type { Navigation } from "../../navigation/types"
+import type { NavigationAgainstCurrentLayout } from "../../navigation/types"
 import type { ReaderSettingsManager } from "../../settings/ReaderSettingsManager"
 import type { SpineItem } from "../../spineItem/SpineItem"
 import { DestroyableClass } from "../../utils/DestroyableClass"
@@ -35,8 +35,8 @@ export class SpineItemsLoader extends DestroyableClass {
     protected spineLocator: SpineLocator,
     protected settings: ReaderSettingsManager,
     protected viewport: Viewport,
-    /** See `InternalNavigator.navigationOverCurrentLayout$`. */
-    navigationOverCurrentLayout$: Observable<Navigation | undefined>,
+    /** See `InternalNavigator.navigationAgainstCurrentLayout$`. */
+    navigationAgainstCurrentLayout$: Observable<NavigationAgainstCurrentLayout>,
   ) {
     super()
 
@@ -47,27 +47,29 @@ export class SpineItemsLoader extends DestroyableClass {
     )
 
     /**
-     * The window is measured from the position of the navigation that holds
-     * on the current layout, once the viewport is free: a navigation's
-     * position and the items' places only agree for that one.
+     * The window is measured from the position of the latest navigation, once
+     * the viewport is free and while the navigation holds on the current
+     * layout: a navigation's position and the items' places only agree then.
      */
     const navigationToMeasureFrom$ = combineLatest([
       this.context.bridgeEvent.viewportState$,
-      navigationOverCurrentLayout$,
+      navigationAgainstCurrentLayout$,
     ]).pipe(
-      map(([viewportState, navigation]) =>
-        viewportState === "free" ? navigation : undefined,
+      map(([viewportState, { navigation, holdsOnCurrentLayout }]) =>
+        viewportState === "free" && holdsOnCurrentLayout
+          ? navigation
+          : undefined,
       ),
       filter(isDefined),
     )
 
     /**
-     * The held navigation changing is a reason to measure again: every layout
-     * ends with the navigation restored onto it, which is when the window can
-     * be measured again.
+     * Every report of the latest navigation is a reason to measure again:
+     * every layout ends with the navigation restored onto it, which is when
+     * the window can be measured again.
      */
     const shouldReloadSpineItems$ = merge(
-      navigationOverCurrentLayout$,
+      navigationAgainstCurrentLayout$,
       this.viewport.layout$,
       forcedOpen$,
       settings.watch(["numberOfAdjacentSpineItemToPreLoad"]),

@@ -126,15 +126,14 @@ export const createReader = ({
     spine.locator,
     settingsManager,
     viewport,
-    navigator.internalNavigator.navigationOverCurrentLayout$,
+    navigator.navigationAgainstCurrentLayout$,
   )
   const paginationController = new PaginationController(
     context,
     pagination,
     spineItemsManager,
     spine,
-    navigator.navigation$,
-    navigator.internalNavigator.navigationOverCurrentLayout$,
+    navigator.navigationAgainstCurrentLayout$,
     navigator.isLocked$,
     cfi,
   )

@@ -48,12 +48,8 @@ export class Spine extends DestroyableClass {
    * Item flags cannot tell this: a pass clears an item's dirty flag as soon as
    * it lays that item out, long before the pages are recomputed.
    *
-   * Internal: the navigator derives from it which navigation holds on the
+   * The navigator derives from it whether the latest navigation holds on the
    * current layout, and reads it to decide whether an anchor is final.
-   * Consumers get those answers from `reader.pagination.state.isSettled` and
-   * the reading position's `status`.
-   *
-   * @internal
    */
   public readonly isLayoutCurrent$ = this.isLayoutCurrentSubject.pipe(
     distinctUntilChanged(),
@@ -141,13 +137,7 @@ export class Spine extends DestroyableClass {
     return this.elementSubject.getValue()
   }
 
-  /**
-   * {@link isLayoutCurrent$} now.
-   *
-   * Internal, for the same reason as {@link isLayoutCurrent$}.
-   *
-   * @internal
-   */
+  /** {@link isLayoutCurrent$} now. */
   public get isLayoutCurrent() {
     return this.isLayoutCurrentSubject.getValue()
   }

@@ -8,14 +8,14 @@ import {
   mergeMap,
   type Observable,
   of,
+  scan,
   switchMap,
   take,
   takeUntil,
-  withLatestFrom,
 } from "rxjs"
 import type { CfiManager } from "../cfi"
 import type { Context } from "../context/Context"
-import type { Navigation } from "../navigation/types"
+import type { NavigationAgainstCurrentLayout } from "../navigation/types"
 import { PAGE_VISIBILITY_THRESHOLD } from "../spine/Pages"
 import type { Spine } from "../spine/Spine"
 import type { SpineItemsManager } from "../spine/SpineItemsManager"
@@ -48,42 +48,51 @@ export class PaginationController extends DestroyableClass {
     protected pagination: Pagination,
     protected spineItemsManager: SpineItemsManager,
     protected spine: Spine,
-    /** Every navigation as it happens, restorations included. */
-    protected navigation$: Observable<Navigation>,
-    /** See `InternalNavigator.navigationOverCurrentLayout$`. */
-    protected navigationOverCurrentLayout$: Observable<Navigation | undefined>,
+    /** See `InternalNavigator.navigationAgainstCurrentLayout$`. */
+    navigationAgainstCurrentLayout$: Observable<NavigationAgainstCurrentLayout>,
     protected isNavigationLocked$: Observable<boolean>,
     protected cfi: CfiManager,
   ) {
     super()
 
     /**
-     * A navigation resolves a new result, which settles only while that
+     * A navigation resolves a new result, which settles only if the
      * navigation holds on the current layout (see
-     * `InternalNavigator.navigationOverCurrentLayout$`). The navigator
-     * restores the current navigation onto every layout that lands, even when
-     * the position stays the same: until it has, the viewport still shows the
-     * position as it was on the layout replaced, so the restoration is what
-     * resolves a result over a new layout. The held navigation being voided,
-     * by a layout requested or one landing before that restoration, only
-     * withdraws, and cancels whatever was pending: it was resolved over the
-     * layout being replaced.
+     * `InternalNavigator.navigationAgainstCurrentLayout$`). The navigator restores the
+     * current navigation onto every layout that lands, even when the position
+     * stays the same: until it has, the viewport still shows the position as
+     * it was on the layout replaced, so the restoration is what resolves a
+     * result over a new layout. A layout voiding the navigation, by being
+     * requested or by landing before that restoration, reports the same
+     * navigation again: it only withdraws, and cancels whatever was pending,
+     * which was resolved over the layout being replaced.
      *
-     * Every trigger drops settlement first, so no entry point can forget to,
-     * and cancels whatever the previous one left pending, so a superseded
-     * result never reaches the reader. The navigator updates the held
-     * navigation before this hears of the navigation that changes it, and a
-     * result cannot outlive a voiding, so a result whose navigation holds when
-     * it settles held throughout.
+     * Every report drops settlement first, and cancels whatever the previous
+     * one left pending, so a superseded result never reaches the reader. A
+     * result can only settle before the next report, so the navigation it
+     * resolves still holds as reported.
      */
-    merge(
-      navigation$.pipe(map(() => this.resolve$())),
-      navigationOverCurrentLayout$.pipe(
-        filter((navigation) => navigation === undefined),
-        map(() => EMPTY),
-      ),
-    )
+    navigationAgainstCurrentLayout$
       .pipe(
+        scan<
+          NavigationAgainstCurrentLayout,
+          {
+            navigationAgainstCurrentLayout: NavigationAgainstCurrentLayout
+            isVoiding: boolean
+          },
+          undefined
+        >(
+          (previous, navigationAgainstCurrentLayout) => ({
+            navigationAgainstCurrentLayout,
+            isVoiding:
+              navigationAgainstCurrentLayout.navigation ===
+              previous?.navigationAgainstCurrentLayout.navigation,
+          }),
+          undefined,
+        ),
+        map(({ navigationAgainstCurrentLayout, isVoiding }) =>
+          isVoiding ? EMPTY : this.resolve$(navigationAgainstCurrentLayout),
+        ),
         switchMap((work$) =>
           concat(of(withoutSettlement(this.pagination.value)), work$),
         ),
@@ -95,10 +104,13 @@ export class PaginationController extends DestroyableClass {
   }
 
   /**
-   * Resolves a result in two steps: cheap metrics once the navigator is free,
-   * then positions once the viewport is free.
+   * Resolves a result for a navigation in two steps: cheap metrics once the
+   * navigator is free, then positions once the viewport is free.
    */
-  private resolve$(): Observable<PaginationInfo> {
+  private resolve$({
+    navigation,
+    holdsOnCurrentLayout,
+  }: NavigationAgainstCurrentLayout): Observable<PaginationInfo> {
     /**
      * @important
      *
@@ -112,8 +124,7 @@ export class PaginationController extends DestroyableClass {
     return this.isNavigationLocked$.pipe(
       filter((isLocked) => !isLocked),
       take(1),
-      withLatestFrom(this.navigation$),
-      mergeMap(([, navigation]) => {
+      mergeMap(() => {
         const metrics = this.resolveMetrics(navigation.position)
 
         /**
@@ -136,13 +147,11 @@ export class PaginationController extends DestroyableClass {
            */
           this.context.bridgeEvent.viewportFree$.pipe(
             first(),
-            withLatestFrom(this.navigationOverCurrentLayout$),
-            switchMap(([, navigationOverCurrentLayout]) =>
+            switchMap(() =>
               this.resolvePositions({
                 metrics: provisional,
                 visibleRangeIsKnown: metrics !== undefined,
-                holdsOnCurrentLayout:
-                  navigationOverCurrentLayout === navigation,
+                holdsOnCurrentLayout,
               }),
             ),
           ),
@@ -234,11 +243,11 @@ export class PaginationController extends DestroyableClass {
   /**
    * Resolves the positions of the metrics it is given, rather than of whatever
    * the reader happens to hold by the time the viewport frees up. A newer
-   * trigger cancels this one, so the result is for the latest request.
+   * report cancels this one, so the result is for the latest navigation.
    *
    * It settles only if the visible range is known, the navigation it
-   * resolves holds on the current layout right now, and the visible items
-   * are settled: ready, or failed to load.
+   * resolves holds on the current layout, and the visible items are settled:
+   * ready, or failed to load.
    * An item that is loaded and laid out may legitimately resolve to its root
    * cfi; an unloaded one is not settled merely because a root cfi can be
    * generated for it.
@@ -272,8 +281,8 @@ export class PaginationController extends DestroyableClass {
 
   /**
    * Settled until a visible item is no longer settled, which only an unload
-   * does. The held navigation being voided is a trigger of its own, which
-   * cancels this result.
+   * does. The navigation being voided is reported on its own, which cancels
+   * this result.
    */
   private settledUntilAnItemIsNoLongerSettled(
     resolved: ResolvedEdges,

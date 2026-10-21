@@ -1,7 +1,10 @@
 import { BehaviorSubject } from "rxjs"
 import { afterEach, describe, expect, it, vi } from "vitest"
 import { Context } from "../../context/Context"
-import type { Navigation } from "../../navigation/types"
+import type {
+  Navigation,
+  NavigationAgainstCurrentLayout,
+} from "../../navigation/types"
 import { ReaderSettingsManager } from "../../settings/ReaderSettingsManager"
 import { createTestManifest, waitFor } from "../../tests/utils"
 import { Viewport } from "../../viewport/Viewport"
@@ -66,28 +69,37 @@ const createHarness = ({
   } as unknown as SpineLocator
 
   /**
-   * The navigation that holds on the current layout, as the navigator derives
-   * it, and its voiding, from a layout request until the navigation is
-   * restored onto the new layout.
+   * The latest navigation, as the navigator reports it: one made over the
+   * current layout holds, and a layout voids it, from its request until the
+   * navigation is restored onto it.
    */
-  const navigationOverCurrentLayout = new BehaviorSubject<
-    Navigation | undefined
-  >(undefined)
-  const holdNavigationAt = (
+  const createNavigationOverCurrentLayout = (
     x: number,
     triggeredBy: Navigation["triggeredBy"] = "user",
-  ) => {
-    navigationOverCurrentLayout.next({
+  ): NavigationAgainstCurrentLayout => ({
+    navigation: {
       id: Symbol(),
       position: new SpinePosition({ x, y: 0 }),
       triggeredBy,
+    },
+    holdsOnCurrentLayout: true,
+  })
+  const navigationAgainstCurrentLayout = new BehaviorSubject(
+    createNavigationOverCurrentLayout(0),
+  )
+  const navigateOverCurrentLayout = (
+    ...parameters: Parameters<typeof createNavigationOverCurrentLayout>
+  ) => {
+    navigationAgainstCurrentLayout.next(
+      createNavigationOverCurrentLayout(...parameters),
+    )
+  }
+  const voidNavigation = () => {
+    navigationAgainstCurrentLayout.next({
+      ...navigationAgainstCurrentLayout.value,
+      holdsOnCurrentLayout: false,
     })
   }
-  const voidHeldNavigation = () => {
-    navigationOverCurrentLayout.next(undefined)
-  }
-
-  holdNavigationAt(0)
 
   const loader = new SpineItemsLoader(
     context,
@@ -95,7 +107,7 @@ const createHarness = ({
     spineLocator,
     settings,
     viewport,
-    navigationOverCurrentLayout,
+    navigationAgainstCurrentLayout,
   )
 
   cleanup = () => {
@@ -103,14 +115,14 @@ const createHarness = ({
     context.destroy()
     settings.destroy()
     viewport.destroy()
-    navigationOverCurrentLayout.complete()
+    navigationAgainstCurrentLayout.complete()
   }
 
   return {
     items,
     viewport,
-    holdNavigationAt,
-    voidHeldNavigation,
+    navigateOverCurrentLayout,
+    voidNavigation,
     getVisibleSpineItemsFromPosition,
     clearCalls: () => {
       vi.clearAllMocks()
@@ -150,15 +162,15 @@ describe("SpineItemsLoader", () => {
   describe("Given a layout in progress", () => {
     /**
      * A layout moves the items, then the navigation is restored onto them.
-     * Until then no navigation holds on the current layout: the position and
-     * the items' places disagree. Here the position still names the first
-     * item while the second has taken its place.
+     * Until then the latest navigation does not hold on the current layout:
+     * its position and the items' places disagree. Here the position still
+     * names the first item while the second has taken its place.
      */
-    it("neither loads nor unloads while no navigation holds on the current layout, then measures from the one that comes to", async () => {
+    it("neither loads nor unloads while the latest navigation does not hold on the current layout, then measures from the one that does", async () => {
       const {
         items: [item0, item1],
-        holdNavigationAt,
-        voidHeldNavigation,
+        navigateOverCurrentLayout,
+        voidNavigation,
         viewport,
         clearCalls,
       } = createHarness({
@@ -173,7 +185,7 @@ describe("SpineItemsLoader", () => {
 
       // A layout is requested, and the loader asked to measure again
       // meanwhile, long enough for its debounce to run.
-      voidHeldNavigation()
+      voidNavigation()
       viewport.layout()
       await waitFor(LOADER_DEBOUNCE_MS)
 
@@ -183,7 +195,7 @@ describe("SpineItemsLoader", () => {
       }
 
       // The navigation is restored where the second item now is.
-      holdNavigationAt(100, "restoration")
+      navigateOverCurrentLayout(100, "restoration")
       await waitFor(LOADER_DEBOUNCE_MS)
 
       expect(item1?.load).toHaveBeenCalled()

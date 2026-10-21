@@ -630,6 +630,34 @@ describe("pagination settlement", () => {
     expect(settledItems.filter((index) => index !== 1)).toEqual([])
   })
 
+  it("keeps the result from before a layout until the navigation is restored onto it", async () => {
+    const reader = createTestReader()
+
+    mountTestReader(reader)
+    reader.navigation.goToSpineItem({ indexOrId: 1, animation: false })
+    await settledOn(reader, 1)
+
+    // skip the replayed current result
+    const reportedItems: (number | undefined)[] = []
+    reader.pagination.state$.pipe(skip(1)).subscribe((state) => {
+      reportedItems.push(state.begin.spineItemIndex)
+    })
+
+    /**
+     * Wider pages move item 1 further along the spine, and give its old
+     * position to item 0. A layout voiding the navigation only withdraws the
+     * result: resolving it again would read that old position against the new
+     * pages, and report item 0 until the restoration.
+     */
+    setTestViewport({ width: 300, height: 600 })
+    reader.layout()
+
+    await settledOn(reader, 1)
+    await waitFor(100)
+
+    expect(reportedItems.filter((index) => index !== 1)).toEqual([])
+  })
+
   it("settles once over a new layout, even when the restoration moves the page", async () => {
     const reader = createTestReader()
 
