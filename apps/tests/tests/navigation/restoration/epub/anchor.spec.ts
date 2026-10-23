@@ -136,6 +136,13 @@ const getLongChapterIndex = (page: Page) => getChapterIndex(page, "ch02.xhtml")
  * Runs a navigation and reads the reading position in the same task, before
  * anything asynchronous has happened, along with whether its item was ready
  * when the navigation started.
+ *
+ * The navigation waits for pagination to be settled, which it only is over a
+ * current layout, and happens in the frame that finds it so. A navigation
+ * settles before the reader is done loading and releasing the chapters around
+ * it, and each of those lays the spine out again from that chapter on: a page
+ * in a later chapter is a stand-in until its pages are recomputed. What the
+ * navigation reads at once then depends on its own item and nothing else.
  */
 const navigateAndReadAtOnce = async (
   page: Page,
@@ -145,40 +152,62 @@ const navigateAndReadAtOnce = async (
     | { spineItem: number },
 ) =>
   (await getReader(page)).evaluate((reader, navigation) => {
-    const target =
-      "spineItem" in navigation ? navigation.spineItem : navigation.into
-    const wasReady =
-      reader.spineItemsManager.get(target)?.value.isReady ?? false
+    const navigateAndRead = () => {
+      const target =
+        "spineItem" in navigation ? navigation.spineItem : navigation.into
+      const wasReady =
+        reader.spineItemsManager.get(target)?.value.isReady ?? false
 
-    if ("spineItem" in navigation) {
-      reader.navigation.goToSpineItem({ indexOrId: navigation.spineItem })
-    } else if ("cfi" in navigation) {
-      reader.navigation.goToCfi(navigation.cfi)
-    } else if (navigation.turn === "left") {
-      reader.navigation.turnLeft()
-    } else {
-      reader.navigation.turnRight()
+      if ("spineItem" in navigation) {
+        reader.navigation.goToSpineItem({ indexOrId: navigation.spineItem })
+      } else if ("cfi" in navigation) {
+        reader.navigation.goToCfi(navigation.cfi)
+      } else if (navigation.turn === "left") {
+        reader.navigation.turnLeft()
+      } else {
+        reader.navigation.turnRight()
+      }
+
+      let readingPosition: ReadingPosition | undefined
+      reader.navigation.readingPosition$
+        .subscribe((value) => {
+          readingPosition = value
+        })
+        .unsubscribe()
+
+      if (readingPosition === undefined) throw new Error("no reading position")
+
+      const { cfi, percentageEstimateOfBook, status } = readingPosition
+
+      return {
+        cfi,
+        percentageEstimateOfBook,
+        status,
+        isRootCfi: reader.cfi.isRootCfi(cfi),
+        itemIndex: reader.cfi.parseCfi(cfi).itemIndex,
+        wasReady,
+      }
     }
 
-    let readingPosition: ReadingPosition | undefined
-    reader.navigation.readingPosition$
-      .subscribe((value) => {
-        readingPosition = value
-      })
-      .unsubscribe()
+    return new Promise<ReturnType<typeof navigateAndRead>>(
+      (resolve, reject) => {
+        const navigateOnceSettled = () => {
+          if (!reader.pagination.state.isSettled) {
+            requestAnimationFrame(navigateOnceSettled)
 
-    if (readingPosition === undefined) throw new Error("no reading position")
+            return
+          }
 
-    const { cfi, percentageEstimateOfBook, status } = readingPosition
+          try {
+            resolve(navigateAndRead())
+          } catch (error) {
+            reject(error)
+          }
+        }
 
-    return {
-      cfi,
-      percentageEstimateOfBook,
-      status,
-      isRootCfi: reader.cfi.isRootCfi(cfi),
-      itemIndex: reader.cfi.parseCfi(cfi).itemIndex,
-      wasReady,
-    }
+        navigateOnceSettled()
+      },
+    )
   }, navigation)
 
 /** Third page of a long chapter, reached by turning pages. */
