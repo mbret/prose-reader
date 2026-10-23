@@ -9,6 +9,7 @@ import {
   merge,
   type Observable,
   of,
+  scan,
   share,
   shareReplay,
   skip,
@@ -57,6 +58,8 @@ import type {
 const NAMESPACE = `navigation/InternalNavigator`
 
 const report = Report.namespace(NAMESPACE)
+
+const layoutCurrencyChanged: unique symbol = Symbol("layoutCurrencyChanged")
 
 /**
  * A stand-in's cfi is its item's root cfi and a target place's never is, so
@@ -195,28 +198,38 @@ export class InternalNavigator extends DestroyableClass {
      * Any change of layout currency voids the latest navigation: a request
      * replaces the layout it was made over, and pages being published make
      * current a layout it was not restored onto yet.
+     *
+     * The latest navigation is the stream's own state, set before it is
+     * reported, so a layout requested by a subscriber while a navigation is
+     * reported voids that navigation and not the one before it.
      */
     this.navigationAgainstCurrentLayout$ = merge(
-      this.navigation$.pipe(
-        map(
-          (navigation): NavigationAgainstCurrentLayout => ({
-            navigation,
-            holdsOnCurrentLayout: spine.isLayoutCurrent,
-          }),
-        ),
-      ),
+      this.navigation$,
       spine.isLayoutCurrent$.pipe(
         // Changes only: the current value is replayed on subscription.
         skip(1),
-        withLatestFrom(this.navigation$),
-        map(
-          ([, navigation]): NavigationAgainstCurrentLayout => ({
-            navigation,
-            holdsOnCurrentLayout: false,
-          }),
-        ),
+        map((): typeof layoutCurrencyChanged => layoutCurrencyChanged),
       ),
-    ).pipe(shareReplay({ bufferSize: 1, refCount: true }))
+    ).pipe(
+      scan(
+        (
+          latest: NavigationAgainstCurrentLayout | undefined,
+          change,
+        ): NavigationAgainstCurrentLayout | undefined =>
+          change === layoutCurrencyChanged
+            ? latest && {
+                navigation: latest.navigation,
+                holdsOnCurrentLayout: false,
+              }
+            : {
+                navigation: change,
+                holdsOnCurrentLayout: spine.isLayoutCurrent,
+              },
+        undefined,
+      ),
+      filter(isDefined),
+      shareReplay({ bufferSize: 1, refCount: true }),
+    )
 
     // From construction on, so it has seen every navigation and layout.
     this.navigationAgainstCurrentLayout$

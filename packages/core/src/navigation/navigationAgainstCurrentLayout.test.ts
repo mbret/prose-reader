@@ -1,5 +1,5 @@
 // @vitest-environment jsdom
-import { firstValueFrom, skip } from "rxjs"
+import { first, firstValueFrom, skip } from "rxjs"
 import { describe, expect, it } from "vitest"
 import {
   createTestReader,
@@ -152,5 +152,33 @@ describe("the navigation against the current layout", () => {
     expect(
       reportedAgain.filter(({ holdsOnCurrentLayout }) => holdsOnCurrentLayout),
     ).toEqual([])
+  })
+
+  it("voids the navigation being reported, not the one before, when a subscriber requests a layout", async () => {
+    const reader = createTestReader()
+
+    mountTestReader(reader)
+    await settledOn(reader, 0)
+
+    const paginatedItems: (number | undefined)[] = []
+    reader.pagination.state$.subscribe(({ begin }) => {
+      paginatedItems.push(begin.spineItemIndex)
+    })
+    // As an app does when reaching an item makes it change a layout setting.
+    reader.pagination.state$
+      .pipe(first(({ begin }) => begin.spineItemIndex === 1))
+      .subscribe(() => reader.layout())
+
+    reader.navigation.goToSpineItem({ indexOrId: 1, animation: false })
+
+    const navigation = await getLastNavigationMade(reader)
+    const reported = getNavigationAgainstCurrentLayout(reader)
+
+    expect(reported?.navigation).toBe(navigation)
+    expect(reported?.holdsOnCurrentLayout).toBe(false)
+
+    await settledOn(reader, 1)
+
+    expect(paginatedItems.slice(paginatedItems.indexOf(1))).not.toContain(0)
   })
 })
