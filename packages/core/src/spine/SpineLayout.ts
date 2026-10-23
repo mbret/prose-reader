@@ -103,6 +103,14 @@ type SpineLayoutState =
     }
   | { stage: "laidOut"; laidOutItems: readonly LaidOutSpineItem[] }
 
+/**
+ * A layout requested, with the first item its pass lays out from, then the
+ * same layout done. The items before that one keep their layouts.
+ */
+export type SpineLayoutLifecycleEvent =
+  | { stage: "requested"; firstItemIndexAwaitingLayout: number }
+  | { stage: "laidOut" }
+
 export class SpineLayout extends DestroyableClass {
   protected externalLayoutTrigger = new Subject<SpineLayoutOptions>()
 
@@ -119,16 +127,25 @@ export class SpineLayout extends DestroyableClass {
    * cancels whatever is still running for an older one, so a completion always
    * belongs to the latest request.
    */
-  public readonly lifecycle$: Observable<SpineLayoutState["stage"]> =
+  public readonly lifecycle$: Observable<SpineLayoutLifecycleEvent> =
     this.stateSubject.pipe(
       // the state as it is, before the next request or completion
       skip(1),
-      map(({ stage }) => stage),
+      map(
+        (state): SpineLayoutLifecycleEvent =>
+          state.stage === "requested"
+            ? {
+                stage: "requested",
+                firstItemIndexAwaitingLayout:
+                  state.firstItemIndexAwaitingLayout,
+              }
+            : { stage: "laidOut" },
+      ),
     )
 
   /** Emits once a pass completes. */
   public readonly layout$: Observable<unknown> = this.lifecycle$.pipe(
-    filter((stage) => stage === "laidOut"),
+    filter(({ stage }) => stage === "laidOut"),
   )
 
   constructor(

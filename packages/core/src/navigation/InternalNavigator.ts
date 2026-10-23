@@ -9,6 +9,7 @@ import {
   merge,
   type Observable,
   of,
+  scan,
   share,
   shareReplay,
   skip,
@@ -47,6 +48,7 @@ import { isTargetInBook } from "./targets/isTargetInBook"
 import type {
   InternalNavigationAnchor,
   InternalNavigationEntry,
+  Navigation,
   NavigationAgainstCurrentLayout,
   NavigationModeController,
   NavigationTarget,
@@ -112,25 +114,27 @@ export class InternalNavigator extends DestroyableClass {
 
   /**
    * The latest navigation, and whether it holds on the current layout: made,
-   * or restored, while the pages describe the latest layout requested, with
-   * none requested since. It does not hold until the reader is first laid
-   * out, from the moment a layout is requested, and still once its pages are
-   * published, until the navigation is restored onto them, which is a
-   * navigation made over the current layout. Nor does a navigation made
-   * while a layout is pending.
+   * or restored, while the pages describe the items it shows as the latest
+   * layout requested lays them out, with no layout requested since that can
+   * change them. It does not hold until the reader is first laid out, nor from
+   * the moment a layout that can change what it shows is requested, and still
+   * once that layout's pages are published, until the navigation is restored
+   * onto them. A layout of the items after the last one it shows leaves it
+   * holding: it cannot move the pages the navigation shows. A navigation made
+   * while a layout is pending holds only if that layout cannot change what it
+   * shows either.
    *
    * A navigation's position and the pages agree only while it holds, so
    * whatever depends on the layout reads it: pagination settles, and the
    * loader measures which items to keep loaded, only then. It is reported
-   * with every navigation and every change of layout currency, which repeats
-   * the navigation it voids, so a reader of it needs no other navigation
-   * stream.
+   * with every navigation, and again with the same one when a layout voids
+   * it, so a reader of it needs no other navigation stream.
    *
    * Whether a navigation holds depends on the order navigations and layouts
    * came in, not on their latest values: once a layout's pages are published,
-   * the navigation from before is still the latest until it is restored. So
-   * it is derived from construction on, and replayed, and is the one to read
-   * rather than work out again from `navigation$` and the spine.
+   * a navigation it voided is still the latest until it is restored. So it is
+   * derived from construction on, and replayed, and is the one to read rather
+   * than work out again from `navigation$` and the spine.
    */
   public readonly navigationAgainstCurrentLayout$: Observable<NavigationAgainstCurrentLayout>
 
@@ -192,31 +196,74 @@ export class InternalNavigator extends DestroyableClass {
     super()
 
     /**
-     * Any change of layout currency voids the latest navigation: a request
-     * replaces the layout it was made over, and pages being published make
-     * current a layout it was not restored onto yet.
+     * Whether no item from `firstItemIndexAwaitingLayout` on is in view at the
+     * navigation's position: a layout of those items leaves it showing the
+     * same pages. Any part of an item in view counts, more than pagination
+     * needs to count it visible. The viewport is the one laid out, as for
+     * pagination: what a zoom shows around it takes a read of the DOM.
      */
+    const holdsOver = (
+      navigation: Navigation,
+      firstItemIndexAwaitingLayout: number | undefined,
+    ) => {
+      if (firstItemIndexAwaitingLayout === undefined) return true
+
+      const { endIndex } =
+        spine.locator.getVisibleSpineItemsFromPosition({
+          position: navigation.position,
+          threshold: { type: "percentage", value: 0 },
+        }) ?? {}
+
+      return endIndex !== undefined && endIndex < firstItemIndexAwaitingLayout
+    }
+
     this.navigationAgainstCurrentLayout$ = merge(
       this.navigation$.pipe(
-        map(
-          (navigation): NavigationAgainstCurrentLayout => ({
-            navigation,
-            holdsOnCurrentLayout: spine.isLayoutCurrent,
-          }),
-        ),
+        map((navigation) => ({ type: "navigation" as const, navigation })),
       ),
-      spine.isLayoutCurrent$.pipe(
+      spine.firstItemIndexAwaitingLayout$.pipe(
         // Changes only: the current value is replayed on subscription.
         skip(1),
-        withLatestFrom(this.navigation$),
-        map(
-          ([, navigation]): NavigationAgainstCurrentLayout => ({
-            navigation,
-            holdsOnCurrentLayout: false,
-          }),
-        ),
+        map((firstItemIndexAwaitingLayout) => ({
+          type: "layoutCurrencyChange" as const,
+          firstItemIndexAwaitingLayout,
+        })),
       ),
-    ).pipe(shareReplay({ bufferSize: 1, refCount: true }))
+    ).pipe(
+      scan<
+        | { type: "navigation"; navigation: Navigation }
+        | {
+            type: "layoutCurrencyChange"
+            firstItemIndexAwaitingLayout: number | undefined
+          },
+        NavigationAgainstCurrentLayout | undefined
+      >((latest, event) => {
+        if (event.type === "navigation")
+          return {
+            navigation: event.navigation,
+            holdsOnCurrentLayout: holdsOver(
+              event.navigation,
+              spine.firstItemIndexAwaitingLayout,
+            ),
+          }
+
+        /**
+         * A request voids the navigation once it can change what the
+         * navigation shows, and it stays void until the next navigation, a
+         * restoration onto the new pages included. Pages being published void
+         * nothing: they describe again what a navigation that still holds
+         * shows, which no request since has changed.
+         */
+        return latest?.holdsOnCurrentLayout &&
+          !holdsOver(latest.navigation, event.firstItemIndexAwaitingLayout)
+          ? { navigation: latest.navigation, holdsOnCurrentLayout: false }
+          : latest
+      }, undefined),
+      filter(isDefined),
+      // a change of layout currency that leaves the latest report as it was
+      distinctUntilChanged(),
+      shareReplay({ bufferSize: 1, refCount: true }),
+    )
 
     // From construction on, so it has seen every navigation and layout.
     this.navigationAgainstCurrentLayout$

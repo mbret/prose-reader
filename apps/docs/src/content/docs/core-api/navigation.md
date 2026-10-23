@@ -229,21 +229,25 @@ Observable<{
 
 The latest navigation, the value `.navigation$` emitted for it, and whether it
 holds on the current layout: whether it was made, or restored, over the pages
-the reader shows now, with no layout requested since. Only while it holds do
-its position and the pages agree. Replays the current one on subscription.
+the reader shows now, with no layout requested since that can change what it
+shows. Only while it holds do its position and the pages agree. Replays the
+current one on subscription.
 
 It is given with every navigation, and again, with the same `navigation`, each
 time a layout makes it stop holding. It does not hold:
 
 - before the book is first laid out;
-- from the moment a layout is requested, by `reader.layout()` or by a spine
-  item loading or unloading;
+- from the moment a layout that can change what it shows is requested: one
+  by `reader.layout()`, or by a spine item loading or unloading when that item
+  is shown or comes before the ones shown;
 - once the new pages are in, until the navigation is restored onto them, by a
   `"restoration"` that holds.
 
-A navigation made while a layout is pending does not hold either. Read it
-rather than `.navigation$` when what you do depends on the layout, such as
-which spine items or pages a navigation shows.
+A spine item's place depends only on the items before it, so a layout started
+by an item after the ones shown leaves the navigation holding. A navigation
+made while a layout is pending holds only if that layout cannot change what it
+shows either. Read it rather than `.navigation$` when what you do depends on
+the layout, such as which spine items or pages a navigation shows.
 
 ### `.position$` { #positionusd }
 
