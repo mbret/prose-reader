@@ -1,5 +1,5 @@
 import { mainTitle } from "@prose-reader/archive-reader"
-import { describe, expect, it, vi } from "vitest"
+import { afterEach, describe, expect, it, vi } from "vitest"
 import { createOpenLibraryProvider } from "./createOpenLibraryProvider.ts"
 
 const DUNE_DOC = {
@@ -36,6 +36,10 @@ const requestedUrl = (
 ) => new URL(String(fetchMock.mock.calls[call]?.[0]))
 
 const context = { limit: 5 }
+
+afterEach(() => {
+  vi.useRealTimers()
+})
 
 describe("createOpenLibraryProvider", () => {
   it("looks the book up by ISBN when it states one", async () => {
@@ -208,14 +212,67 @@ describe("createOpenLibraryProvider", () => {
   })
 
   it("throws on a failing response so the fetch can report the provider", async () => {
+    vi.useFakeTimers()
     const fetchMock = vi
       .fn<typeof globalThis.fetch>()
       .mockResolvedValue(new Response("nope", { status: 503 }))
     const provider = createOpenLibraryProvider({ fetch: fetchMock })
+    const rejected = expect(
+      provider.search({ title: "Dune" }, context),
+    ).rejects.toThrow("503")
+
+    await vi.runAllTimersAsync()
+    await rejected
+    expect(fetchMock).toHaveBeenCalledTimes(3)
+  })
+
+  it("does not retry a client error", async () => {
+    const fetchMock = vi
+      .fn<typeof globalThis.fetch>()
+      .mockResolvedValue(new Response("nope", { status: 400 }))
+    const provider = createOpenLibraryProvider({ fetch: fetchMock })
 
     await expect(provider.search({ title: "Dune" }, context)).rejects.toThrow(
-      "503",
+      "400",
     )
+    expect(fetchMock).toHaveBeenCalledTimes(1)
+  })
+
+  it("retries a rate limit after the Retry-After it asks for", async () => {
+    vi.useFakeTimers()
+    const fetchMock = vi
+      .fn<typeof globalThis.fetch>()
+      .mockResolvedValueOnce(
+        new Response("slow down", {
+          status: 429,
+          headers: { "Retry-After": "1" },
+        }),
+      )
+      .mockResolvedValueOnce(jsonResponse({ docs: [DUNE_DOC] }))
+    const provider = createOpenLibraryProvider({ fetch: fetchMock })
+    const pending = provider.search({ title: "Dune" }, context)
+
+    await vi.advanceTimersByTimeAsync(999)
+    expect(fetchMock).toHaveBeenCalledTimes(1)
+
+    await vi.advanceTimersByTimeAsync(1)
+    await expect(pending).resolves.toHaveLength(1)
+    expect(fetchMock).toHaveBeenCalledTimes(2)
+  })
+
+  it("retries a network failure", async () => {
+    vi.useFakeTimers()
+    const fetchMock = vi
+      .fn<typeof globalThis.fetch>()
+      .mockRejectedValueOnce(new TypeError("connection reset"))
+      .mockResolvedValueOnce(jsonResponse({ docs: [DUNE_DOC] }))
+    const provider = createOpenLibraryProvider({ fetch: fetchMock })
+    const pending = provider.search({ title: "Dune" }, context)
+
+    await vi.runAllTimersAsync()
+
+    await expect(pending).resolves.toHaveLength(1)
+    expect(fetchMock).toHaveBeenCalledTimes(2)
   })
 
   it("survives a response whose shape it does not recognize", async () => {

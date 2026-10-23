@@ -343,6 +343,76 @@ describe("createGoogleBooksProvider", () => {
     expect(fetchMock).toHaveBeenCalledTimes(2)
   })
 
+  it("retries a rate limit after the Retry-After it asks for", async () => {
+    vi.useFakeTimers()
+    vi.spyOn(Math, "random").mockReturnValue(0)
+    const fetchMock = fetchReturning(
+      new Response("{}", { status: 429, headers: { "Retry-After": "2" } }),
+      jsonResponse(DUNE_VOLUME),
+    )
+    const provider = createGoogleBooksProvider({
+      apiKey: "secret",
+      fetch: fetchMock,
+    })
+    const pending = provider.search(
+      {
+        identifiers: [{ value: "zyTCAlFPjgYC", scheme: "GoogleBooks" }],
+      },
+      context,
+    )
+
+    // the computed backoff would retry after 1s; Google asked for 2s
+    await vi.advanceTimersByTimeAsync(1_999)
+    expect(fetchMock).toHaveBeenCalledTimes(1)
+
+    await vi.advanceTimersByTimeAsync(1)
+    await expect(pending).resolves.toHaveLength(1)
+    expect(fetchMock).toHaveBeenCalledTimes(2)
+  })
+
+  it("retries a rate limit that states no Retry-After with backoff", async () => {
+    vi.useFakeTimers()
+    const fetchMock = fetchReturning(
+      jsonResponse({}, 429),
+      jsonResponse(DUNE_VOLUME),
+    )
+    const provider = createGoogleBooksProvider({
+      apiKey: "secret",
+      fetch: fetchMock,
+    })
+    const pending = provider.search(
+      {
+        identifiers: [{ value: "zyTCAlFPjgYC", scheme: "GoogleBooks" }],
+      },
+      context,
+    )
+
+    await vi.runAllTimersAsync()
+
+    await expect(pending).resolves.toHaveLength(1)
+    expect(fetchMock).toHaveBeenCalledTimes(2)
+  })
+
+  it("reports a rate limit at once when its Retry-After is beyond the bound", async () => {
+    const fetchMock = fetchReturning(
+      new Response("{}", { status: 429, headers: { "Retry-After": "60" } }),
+    )
+    const provider = createGoogleBooksProvider({
+      apiKey: "secret",
+      fetch: fetchMock,
+    })
+
+    await expect(
+      provider.search(
+        {
+          identifiers: [{ value: "zyTCAlFPjgYC", scheme: "GoogleBooks" }],
+        },
+        context,
+      ),
+    ).rejects.toMatchObject({ status: 429, retryAfterMs: 60_000 })
+    expect(fetchMock).toHaveBeenCalledTimes(1)
+  })
+
   it("throws the final transient upstream failure after three attempts", async () => {
     vi.useFakeTimers()
     const unavailable = createGoogleBooksProvider({
