@@ -15,7 +15,6 @@ vi.mock("./utils/deepCloneElement", async (importOriginal) => {
   return { deepCloneElement }
 })
 
-/** A snapshot of a spine item whose readiness the test drives. */
 const createSnapshot = () => {
   const releaseSpineItem = vi.fn()
   // Cast: a snapshot reads only a few members of the reader.
