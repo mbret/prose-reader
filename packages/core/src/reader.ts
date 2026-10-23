@@ -265,11 +265,6 @@ export const createReader = ({
         of(undefined)
       )
     },
-    /**
-     * Keeps the spine item loaded wherever the reader goes, until the returned
-     * function releases it. Holds add up, and a release called twice releases
-     * once.
-     */
     keepSpineItemLoaded: (spineItem: SpineItemReference) =>
       spineItemsLoader.keepLoaded(spineItem),
     viewport,
