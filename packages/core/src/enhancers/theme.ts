@@ -40,6 +40,13 @@ const themeColors: Record<Theme, ThemeColors> = {
   publisher: {},
 }
 
+/**
+ * The background the reader paints with `theme`. With `publisher`, the book
+ * keeps its own background, on a white reader.
+ */
+export const getThemeBackgroundColor = (theme: Theme) =>
+  themeColors[theme].backgroundColor ?? `white`
+
 const getDocumentStyle = ({
   backgroundColor,
   foregroundColor,
@@ -122,27 +129,18 @@ export const themeEnhancer: ThemeEnhancer = (next) => (options) => {
 
   /**
    * The reader's stylesheet paints its container, and the placeholder of an
-   * item that is loading, with this variable, white by default.
+   * item that is loading, with this variable.
    */
   const applyThemeToContainer$ = reader.context.watch(`rootElement`).pipe(
     filter(isDefined),
     switchMap((rootElement) =>
       currentThemeSubject$.pipe(
         tap((theme) => {
-          const { backgroundColor } = themeColors[theme]
-
-          if (backgroundColor) {
-            setStylePropertyIfChanged(
-              rootElement.style,
-              CSS_VAR_THEME_BACKGROUND_COLOR,
-              backgroundColor,
-            )
-          } else {
-            removeStylePropertyIfPresent(
-              rootElement.style,
-              CSS_VAR_THEME_BACKGROUND_COLOR,
-            )
-          }
+          setStylePropertyIfChanged(
+            rootElement.style,
+            CSS_VAR_THEME_BACKGROUND_COLOR,
+            getThemeBackgroundColor(theme),
+          )
         }),
         finalize(() => {
           removeStylePropertyIfPresent(

@@ -27,7 +27,6 @@
 // on destroy. The viewport and the spine items paint no background of their
 // own, so the container's shows wherever the pages do not cover it.
 .#{$html-prefix}-reader {
-    #{$css-var-theme-background-color}: white;
     background-color: var(#{$css-var-theme-background-color});
     position: relative;
     overflow: hidden;
