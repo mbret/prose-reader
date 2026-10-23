@@ -9,6 +9,7 @@ import {
   shareReplay,
   startWith,
   switchScan,
+  takeUntil,
   withLatestFrom,
 } from "rxjs"
 import type { ProseParsedCfi } from "../../cfi"
@@ -235,6 +236,7 @@ export class ResourcesLocator {
             })),
           )
         }, initialConsolidatedValue),
+        takeUntil(this.reader.$.destroy$),
         shareReplay({ refCount: true, bufferSize: 1 }),
       )
 

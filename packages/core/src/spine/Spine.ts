@@ -179,6 +179,8 @@ export class Spine extends DestroyableClass {
     super.destroy()
 
     this.pages.destroy()
+    this.spineLayout.destroy()
+    this.spineItemsObserver.destroy()
     this.elementSubject.getValue()?.remove()
     this.elementSubject.complete()
   }

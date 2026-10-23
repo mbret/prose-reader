@@ -236,10 +236,11 @@ export class Pages extends ReactiveEntity<PagesState> {
         Report.info(`Pages layout`, pages)
         return { pages }
       }),
+      takeUntil(this.destroy$),
       share(),
     )
 
-    this.layout$.pipe(takeUntil(this.destroy$)).subscribe(this.next.bind(this))
+    this.layout$.subscribe(this.next.bind(this))
   }
 
   static fromSpineItemPageIndex = (
