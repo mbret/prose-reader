@@ -172,15 +172,15 @@ export class ResourcesLocator {
     }
 
     return deferIdle(() => {
-      /**
-       * A pre-paginated item gives its page index and absolute pages without
-       * being loaded.
-       */
       const item = this.reader.spineItemsManager.get(
         initialConsolidatedValue.meta.itemIndex ?? 0,
       )
       const isReflowable = item?.renditionLayout === `reflowable`
 
+      /**
+       * Only a reflowable item is kept loaded: a pre-paginated item gives its
+       * page indexes without being loaded.
+       */
       const release =
         options.mode === "shallow" || !isReflowable || !item
           ? () => {}
