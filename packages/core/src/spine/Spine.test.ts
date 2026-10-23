@@ -1,9 +1,11 @@
 // @vitest-environment jsdom
+import type { Observable } from "rxjs"
 import { describe, expect, it, vi } from "vitest"
 import {
   createTestReader,
   installReaderTestEnvironment,
   mountTestReader,
+  resizeObservers,
 } from "../tests/readerHarness"
 
 installReaderTestEnvironment()
@@ -49,5 +51,34 @@ describe("a destroyed reader", () => {
 
     expect(onLayout).not.toHaveBeenCalled()
     expect(onLayoutComplete).toHaveBeenCalled()
+  })
+
+  it("completes the streams of its items observer, and observes the size of nothing", async () => {
+    vi.useFakeTimers()
+
+    const reader = createTestReader()
+    const { itemStateChange$, itemResize$, itemLoadStatusChange$ } =
+      reader.spineItemsObserver
+    const itemStreams: Record<string, Observable<unknown>> = {
+      itemStateChange$,
+      itemResize$,
+      itemLoadStatusChange$,
+    }
+    const completedItemStreams: string[] = []
+
+    mountTestReader(reader)
+    await vi.runAllTimersAsync()
+
+    for (const [name, itemStream$] of Object.entries(itemStreams)) {
+      itemStream$.subscribe({ complete: () => completedItemStreams.push(name) })
+    }
+    reader.destroy()
+
+    expect([...completedItemStreams].sort()).toEqual([
+      "itemLoadStatusChange$",
+      "itemResize$",
+      "itemStateChange$",
+    ])
+    expect(resizeObservers().watching).toBe(0)
   })
 })
