@@ -141,8 +141,10 @@ const createTestSpineLayout = () => {
 type ItemSize = { height: number; width: number }
 
 /**
- * Every item layout stays pending until the test completes it, so a pass can be
- * superseded while only part of the spine has been laid out.
+ * Every item's renderer layout stays pending until the test completes it, so a
+ * pass can be superseded while only part of the spine has been laid out. The
+ * rest of the item's layout runs: it sizes the item's container, rounding up
+ * to whole pages of 100 by 100, and updates the item's state.
  */
 const createDeferredSpineLayout = (numberOfItems: number) => {
   const context = new Context(
@@ -172,17 +174,14 @@ const createDeferredSpineLayout = (numberOfItems: number) => {
   vi.spyOn(viewport.value.element, "clientHeight", "get").mockReturnValue(100)
   viewport.layout()
 
-  // Only the newest request per item is live: a superseded pass is unsubscribed,
-  // so its pending layout is abandoned rather than completed.
+  // An item asked to lay out again drops the layout it had pending, so only
+  // the newest one per item can complete.
   const pendingLayouts: (Subject<ItemSize> | undefined)[] =
     spineItemsManager.items.map(() => undefined)
   const layoutsStarted = spineItemsManager.items.map(() => 0)
-  const markDirtySpies = spineItemsManager.items.map((item) =>
-    vi.spyOn(item, "markDirty"),
-  )
 
   spineItemsManager.items.forEach((item, itemIndex) => {
-    vi.spyOn(item, "layout").mockImplementation(() => {
+    vi.spyOn(item.renderer, "layout").mockImplementation(() => {
       const result = new Subject<ItemSize>()
 
       pendingLayouts[itemIndex] = result
@@ -217,9 +216,8 @@ const createDeferredSpineLayout = (numberOfItems: number) => {
   /** How many times each item has been asked to lay out. */
   const itemLayoutsStarted = () => [...layoutsStarted]
 
-  /** How many times each item has been marked dirty. */
-  const itemsMarkedDirty = () =>
-    markDirtySpies.map((spy) => spy.mock.calls.length)
+  const dirtyFlags = () =>
+    spineItemsManager.items.map((item) => item.value.isDirty)
 
   /** Lays every item out at the same size, in one completed pass. */
   const layOutSpine = async (size: ItemSize) => {
@@ -245,8 +243,8 @@ const createDeferredSpineLayout = (numberOfItems: number) => {
   return {
     completeItemLayout,
     destroy,
+    dirtyFlags,
     itemLayoutsStarted,
-    itemsMarkedDirty,
     items: spineItemsManager.items,
     layOutSpine,
     lefts,
@@ -333,8 +331,8 @@ describe("SpineLayout", () => {
       // A new pass lays out part of the spine. Until it completes, readers keep
       // seeing the previous layout instead of a mix of the two.
       spineLayout.layout({ immediate: true })
-      completeItemLayout(0, { height: 100, width: 50 })
-      completeItemLayout(1, { height: 100, width: 50 })
+      completeItemLayout(0, { height: 100, width: 200 })
+      completeItemLayout(1, { height: 100, width: 200 })
 
       expect(widths()).toEqual([100, 100, 100])
 
@@ -343,12 +341,12 @@ describe("SpineLayout", () => {
       const lastPassDone = firstValueFrom(spineLayout.layout$)
 
       spineLayout.layout({ immediate: true })
-      completeItemLayout(0, { height: 100, width: 25 })
-      completeItemLayout(1, { height: 100, width: 25 })
-      completeItemLayout(2, { height: 100, width: 25 })
+      completeItemLayout(0, { height: 100, width: 300 })
+      completeItemLayout(1, { height: 100, width: 300 })
+      completeItemLayout(2, { height: 100, width: 300 })
       await lastPassDone
 
-      expect(widths()).toEqual([25, 25, 25])
+      expect(widths()).toEqual([300, 300, 300])
     } finally {
       destroy()
     }
@@ -358,8 +356,8 @@ describe("SpineLayout", () => {
     const {
       completeItemLayout,
       destroy,
+      dirtyFlags,
       itemLayoutsStarted,
-      itemsMarkedDirty,
       items,
       layOutSpine,
       lefts,
@@ -373,6 +371,10 @@ describe("SpineLayout", () => {
       items[1]?.load()
       await vi.waitFor(() => expect(itemLayoutsStarted()).toEqual([1, 2, 1]))
 
+      // The first item is kept, so nothing in this pass would clear its dirty
+      // flag.
+      expect(dirtyFlags()).toEqual([false, true, true])
+
       const passDone = firstValueFrom(spineLayout.layout$)
 
       completeItemLayout(1, { height: 100, width: 200 })
@@ -384,9 +386,7 @@ describe("SpineLayout", () => {
       expect(itemLayoutsStarted()).toEqual([1, 2, 2])
       expect(widths()).toEqual([100, 200, 100])
       expect(lefts()).toEqual([0, 100, 300])
-      // Only a pass that lays an item out marks it dirty: the first item,
-      // kept, never waits for a pass to clear it.
-      expect(itemsMarkedDirty()).toEqual(itemLayoutsStarted())
+      expect(dirtyFlags()).toEqual([false, false, false])
     } finally {
       destroy()
     }
@@ -451,20 +451,20 @@ describe("SpineLayout", () => {
       await layOutSpine({ height: 100, width: 100 })
 
       spineLayout.layout({ immediate: true })
-      completeItemLayout(0, { height: 100, width: 50 })
+      completeItemLayout(0, { height: 100, width: 200 })
 
       items[2]?.load()
       await vi.waitFor(() => expect(itemLayoutsStarted()).toEqual([3, 2, 1]))
 
       const passDone = firstValueFrom(spineLayout.layout$)
 
-      completeItemLayout(0, { height: 100, width: 50 })
+      completeItemLayout(0, { height: 100, width: 200 })
       completeItemLayout(1, { height: 100, width: 100 })
       completeItemLayout(2, { height: 100, width: 100 })
       await passDone
 
-      expect(widths()).toEqual([50, 100, 100])
-      expect(lefts()).toEqual([0, 50, 150])
+      expect(widths()).toEqual([200, 100, 100])
+      expect(lefts()).toEqual([0, 200, 300])
     } finally {
       destroy()
     }
