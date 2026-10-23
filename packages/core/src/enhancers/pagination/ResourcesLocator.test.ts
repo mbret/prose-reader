@@ -1,5 +1,5 @@
 // @vitest-environment jsdom
-import { afterEach, describe, expect, it, vi } from "vitest"
+import { describe, expect, it, vi } from "vitest"
 import {
   createEnhancedTestReader,
   installReaderTestEnvironment,
@@ -7,10 +7,6 @@ import {
 } from "../../tests/readerHarness"
 
 installReaderTestEnvironment()
-
-afterEach(() => {
-  vi.useRealTimers()
-})
 
 describe("a resource located on a reader destroyed while it consolidates", () => {
   it("completes without the metadata it was still consolidating", async () => {
