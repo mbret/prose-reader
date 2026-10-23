@@ -17,7 +17,7 @@ type TestReader = ReturnType<typeof createTestReader>
 const getNavigationAgainstCurrentLayout = (reader: TestReader) => {
   const replayed: NavigationAgainstCurrentLayout[] = []
 
-  reader.navigation.internalNavigator.navigationAgainstCurrentLayout$
+  reader.navigation.navigationAgainstCurrentLayout$
     .subscribe((navigationAgainstCurrentLayout) => {
       replayed.push(navigationAgainstCurrentLayout)
     })
@@ -50,7 +50,7 @@ describe("the navigation against the current layout", () => {
 
     const before = await getLastNavigationMade(reader)
     const reports: NavigationAgainstCurrentLayout[] = []
-    reader.navigation.internalNavigator.navigationAgainstCurrentLayout$
+    reader.navigation.navigationAgainstCurrentLayout$
       // the replayed one
       .pipe(skip(1))
       .subscribe((navigationAgainstCurrentLayout) => {
@@ -123,7 +123,7 @@ describe("the navigation against the current layout", () => {
     reader.navigation.navigation$.subscribe((navigation) => {
       navigationsMade.push(navigation)
     })
-    reader.navigation.internalNavigator.navigationAgainstCurrentLayout$.subscribe(
+    reader.navigation.navigationAgainstCurrentLayout$.subscribe(
       (navigationAgainstCurrentLayout) => {
         reports.push(navigationAgainstCurrentLayout)
       },
