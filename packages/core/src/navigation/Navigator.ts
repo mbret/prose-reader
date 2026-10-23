@@ -154,6 +154,12 @@ export const createNavigator = ({
     navigationResolver: navigationResolver,
     /** Every navigation as it happens, restorations included. */
     navigation$: internalNavigator.navigation$,
+    /**
+     * The latest navigation, and whether it holds on the current layout:
+     * whether its position and the pages agree.
+     */
+    navigationAgainstCurrentLayout$:
+      internalNavigator.navigationAgainstCurrentLayout$,
     position$,
     /** Where the reader is in the book: the cfi to save and reopen at. */
     readingPosition$: internalNavigator.readingPosition$,
