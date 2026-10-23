@@ -53,8 +53,12 @@ const createHarness = ({
     { load: vi.fn(), unload: vi.fn() },
     { load: vi.fn(), unload: vi.fn() },
   ]
-  // Cast: the loader only reads `items` and calls `load` / `unload` here.
-  const spineItemsManager = { items } as unknown as SpineItemsManager
+  // Cast: the loader only reads `items`, calls `load` / `unload`, and looks up
+  // the index of the items it keeps loaded here.
+  const spineItemsManager = {
+    items,
+    getSpineItemIndex: (index: number) => (items[index] ? index : undefined),
+  } as unknown as SpineItemsManager
 
   const getVisibleSpineItemsFromPosition = vi.fn(
     ({ position }: { position: SpinePositionType }) =>
@@ -107,6 +111,7 @@ const createHarness = ({
   }
 
   return {
+    loader,
     items,
     viewport,
     holdNavigationAt,
@@ -189,6 +194,64 @@ describe("SpineItemsLoader", () => {
       expect(item1?.load).toHaveBeenCalled()
       expect(item0?.unload).toHaveBeenCalled()
       expect(item0?.load).not.toHaveBeenCalled()
+    })
+  })
+
+  describe("Given a spine item held loaded outside the window", () => {
+    it("loads it, and unloads it once released", async () => {
+      const {
+        loader,
+        items: [, item1],
+        clearCalls,
+      } = createHarness({
+        getVisibleRange: () => ({ beginIndex: 0, endIndex: 0 }),
+      })
+
+      await waitFor(LOADER_DEBOUNCE_MS)
+      clearCalls()
+
+      const release = loader.keepLoaded(1)
+      await waitFor(LOADER_DEBOUNCE_MS)
+
+      expect(item1?.load).toHaveBeenCalled()
+      expect(item1?.unload).not.toHaveBeenCalled()
+
+      clearCalls()
+      release()
+      await waitFor(LOADER_DEBOUNCE_MS)
+
+      expect(item1?.unload).toHaveBeenCalled()
+    })
+
+    it("keeps it loaded until every hold is released, a release called twice releasing once", async () => {
+      const {
+        loader,
+        items: [, item1],
+        viewport,
+        clearCalls,
+      } = createHarness({
+        getVisibleRange: () => ({ beginIndex: 0, endIndex: 0 }),
+      })
+
+      const releaseFirstHold = loader.keepLoaded(1)
+      const releaseSecondHold = loader.keepLoaded(1)
+      await waitFor(LOADER_DEBOUNCE_MS)
+      clearCalls()
+
+      releaseFirstHold()
+      releaseFirstHold()
+      // The window is measured again, the second hold still standing.
+      viewport.layout()
+      await waitFor(LOADER_DEBOUNCE_MS)
+
+      expect(item1?.unload).not.toHaveBeenCalled()
+      expect(item1?.load).toHaveBeenCalled()
+
+      clearCalls()
+      releaseSecondHold()
+      await waitFor(LOADER_DEBOUNCE_MS)
+
+      expect(item1?.unload).toHaveBeenCalled()
     })
   })
 })

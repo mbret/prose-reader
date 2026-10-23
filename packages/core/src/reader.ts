@@ -244,7 +244,6 @@ export const createReader = ({
     navigation: navigator,
     spineItemsObserver: spine.spineItemsObserver,
     spineItemsManager,
-    spineItemsLoader,
     layout,
     mount,
     destroy,
@@ -266,6 +265,8 @@ export const createReader = ({
         of(undefined)
       )
     },
+    keepSpineItemLoaded: (spineItem: SpineItemReference) =>
+      spineItemsLoader.keepLoaded(spineItem),
     viewport,
     viewportState$: context.bridgeEvent.viewportState$,
     viewportFree$: context.bridgeEvent.viewportFree$,

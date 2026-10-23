@@ -123,6 +123,7 @@ export default defineConfig({
               label: "reader",
               items: [
                 { label: "Overview", slug: "core-api/reader" },
+                "core-api/reader/keepspineitemloaded",
                 "core-api/reader/linksusd",
                 "core-api/reader/locateresource",
                 "core-api/reader/renderheadless",
