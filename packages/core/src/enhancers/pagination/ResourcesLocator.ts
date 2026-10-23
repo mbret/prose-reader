@@ -185,7 +185,7 @@ export class ResourcesLocator {
       const release =
         options.mode === "shallow" || !isReflowable || !item
           ? () => {}
-          : this.reader.spine.spineItemsLoader.forceOpen([item.index])
+          : this.reader.spineItemsLoader.forceOpen([item.index])
 
       const key = "cfi" in resource ? resource.cfi : undefined
       const memoizedConsolidate$ = key ? this.locatorsByKey.get(key) : undefined

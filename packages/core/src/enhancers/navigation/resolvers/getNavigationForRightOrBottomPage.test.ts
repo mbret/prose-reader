@@ -3,7 +3,6 @@ import { CfiManager } from "../../../cfi"
 import { Context } from "../../../context/Context"
 import { HookManager } from "../../../hooks/HookManager"
 import { createNavigationResolver } from "../../../navigation/resolvers/NavigationResolver"
-import { Pagination } from "../../../pagination/Pagination"
 import { ReaderSettingsManager } from "../../../settings/ReaderSettingsManager"
 import { Spine } from "../../../spine/Spine"
 import { SpineItemsManager } from "../../../spine/SpineItemsManager"
@@ -43,7 +42,6 @@ const createContext = () => {
     viewport,
   )
   const cfi = new CfiManager(hookManager, spineItemsManager)
-  const pagination = new Pagination(context, spineItemsManager)
   const spineItemLocator = createSpineItemLocator({
     context,
     settings,
@@ -51,7 +49,6 @@ const createContext = () => {
   })
   const spine = new Spine(
     context,
-    pagination,
     spineItemsManager,
     spineItemLocator,
     settings,
