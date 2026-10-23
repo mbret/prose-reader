@@ -1,4 +1,4 @@
-import { HookManager, type Reader } from "@prose-reader/core"
+import { HookManager, isDefined, type Reader } from "@prose-reader/core"
 import {
   PanRecognizer,
   PinchRecognizer,
@@ -6,7 +6,16 @@ import {
   SwipeRecognizer,
   TapRecognizer,
 } from "gesturx"
-import { combineLatest, merge, share, takeUntil, tap } from "rxjs"
+import {
+  combineLatest,
+  filter,
+  merge,
+  Observable,
+  share,
+  switchMap,
+  takeUntil,
+  tap,
+} from "rxjs"
 import { name as packageName } from "../package.json"
 import { registerPan } from "./gestures/pan"
 import { registerPinch } from "./gestures/pinch"
@@ -115,12 +124,32 @@ export const gesturesEnhancer =
       settingsManager,
     })
 
+    /**
+     * gesturx sets `touch-action: none` on the container, listens to it until
+     * it is given another one, and has no teardown.
+     */
     const containerUpdate$ = reader.context.watch(`rootElement`).pipe(
-      tap((container) => {
-        recognizable.update({
-          container,
-        })
-      }),
+      filter(isDefined),
+      switchMap(
+        (container) =>
+          new Observable(() => {
+            const containerTouchAction = container.style.touchAction
+
+            recognizable.update({
+              container,
+            })
+
+            return () => {
+              recognizable.update({
+                container: container.ownerDocument.createElement(`div`),
+              })
+
+              if (container.style.touchAction === `none`) {
+                container.style.touchAction = containerTouchAction
+              }
+            }
+          }),
+      ),
     )
 
     const watchSettings$ = combineLatest([
@@ -155,11 +184,13 @@ export const gesturesEnhancer =
       tapGestures$,
       swipeGestures$,
       panGestures$,
-    ).pipe(share())
+    ).pipe(takeUntil(reader.$.destroy$), share({ resetOnComplete: false }))
 
-    merge(containerUpdate$, watchSettings$, gestures$)
+    merge(containerUpdate$, watchSettings$)
       .pipe(takeUntil(reader.$.destroy$))
       .subscribe()
+
+    gestures$.subscribe()
 
     return {
       ...reader,

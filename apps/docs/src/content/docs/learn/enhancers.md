@@ -490,6 +490,10 @@ constraint on the narrower ones, so an enhancer applied after yours should
 constrain its options only to what it reads, such as
 `{ target?: { type: string } }` here, or `Pick<CreateReaderOptions, "getRenderer">`.
 
+### The container
+
+The element the reader is mounted into belongs to the application, and outlives the reader: an application can destroy a reader and mount a new one into the same element. Whatever your enhancer writes on it, an attribute, a style, an element or a listener, undo it when the reader is destroyed, as the reader does with what it writes. [Static CSS files](/learn/style-and-css#static-css-files) shows an attribute set and removed this way.
+
 ### Custom CSS in enhancers
 
 To learn how to efficiently handle CSS with your enhancers, you can visit the [Style & CSS](/learn/style-and-css) section.

@@ -14,8 +14,13 @@ The gallery enhancer does not create a gallery for you, it will help you gather 
 ## Getting Started
 
 ```bash
-npm install @prose-reader/enhancer-gallery
+npm install @prose-reader/enhancer-gallery @prose-reader/core rxjs
 ```
+
+Both are peer dependencies: the enhancer runs against the reader your app
+creates, so it shares that reader's copies rather than bringing its own. It
+needs the `@prose-reader/core` it was released with, or a later one of the same
+major.
 
 Connect the enhancer to your reader:
 
@@ -52,7 +57,7 @@ function snapshot(
 ): Observable<HTMLElement>
 ```
 
-This method takes a spine item and a given dimension for snapshot and will provide you with a copy of the relevant document (first page) scaled to your dimensions and centered. This will be an exact copy of how the page would look like in your current reader. It will however try to clean it up and only keep the rendered document. This means that things like annotations, customization to spine item will not be taken into account.
+This method takes a spine item and a given dimension for snapshot and will provide you with a copy of the relevant document (first page) scaled to your dimensions and centered. This will be an exact copy of how the page would look like in your current reader, on the theme's background. The snapshot shows the page and its background as they are when it is taken: take a new snapshot after a theme change. It will however try to clean it up and only keep the rendered document. This means that things like annotations, customization to spine item will not be taken into account.
 
 The parent element needs to be passed down as well as we will attach the snapshot to it automatically. This is needed for internal iframe loading events check.
 

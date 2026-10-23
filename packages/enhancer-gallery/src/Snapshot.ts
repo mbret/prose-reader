@@ -1,9 +1,10 @@
 import {
   DocumentRenderer,
+  getThemeBackgroundColor,
   type Reader,
   type SpineItem,
 } from "@prose-reader/core"
-import { filter, first, Observable, switchMap } from "rxjs"
+import { filter, finalize, first, Observable, switchMap } from "rxjs"
 import { deepCloneElement } from "./utils/deepCloneElement"
 
 const SNAPSHOT_CLASS = "prose-reader-enhancer-gallery-snapshot"
@@ -11,20 +12,23 @@ const SNAPSHOT_MASK_CLASS = "prose-reader-enhancer-gallery-snapshot-mask"
 const SNAPSHOT_PREVIEW_CLASS = "prose-reader-enhancer-gallery-snapshot-preview"
 const SNAPSHOT_FRAME_CLASS = "prose-reader-enhancer-gallery-snapshot-frame"
 
-const createSnapshotItem = (doc: Document) => {
-  const spineItemContainerElement = doc.createElement("div")
-  spineItemContainerElement.classList.add(SNAPSHOT_CLASS)
-  spineItemContainerElement.tabIndex = -1
-  spineItemContainerElement.setAttribute("aria-hidden", "true")
-  spineItemContainerElement.setAttribute("inert", "")
+const createSnapshotItem = (doc: Document, pageBackgroundColor: string) => {
+  const snapshotElement = doc.createElement("div")
+  snapshotElement.classList.add(SNAPSHOT_CLASS)
+  snapshotElement.tabIndex = -1
+  snapshotElement.setAttribute("aria-hidden", "true")
+  snapshotElement.setAttribute("inert", "")
 
   const contentMask = doc.createElement("div")
 
   contentMask.classList.add(SNAPSHOT_MASK_CLASS)
+  // A snapshot lives outside the reader's container, so it paints the
+  // background the container shows behind the pages itself.
+  contentMask.style.backgroundColor = pageBackgroundColor
 
-  spineItemContainerElement.appendChild(contentMask)
+  snapshotElement.appendChild(contentMask)
 
-  return spineItemContainerElement
+  return { snapshotElement, contentMask }
 }
 
 const makeSnapshotPreviewInert = (element: HTMLElement) => {
@@ -53,36 +57,22 @@ export class Snapshot extends Observable<HTMLElement> {
   ) {
     super((subscriber) => {
       const parentDocument = parent.ownerDocument
-      const unlockSpineItem = reader.spine.spineItemsLoader.forceOpen([item])
-      let hasUnlockedSpineItem = false
+      const releaseSpineItem = reader.keepSpineItemLoaded(item)
       let releaseSnapshotAssets = () => {}
       let snapshotItem: HTMLElement | undefined
-
-      const unlock = () => {
-        if (hasUnlockedSpineItem) return
-
-        hasUnlockedSpineItem = true
-        unlockSpineItem()
-      }
 
       const subscription = item.isReady$
         .pipe(
           filter((isReady) => isReady),
           first(),
           switchMap(() => {
-            snapshotItem = createSnapshotItem(parentDocument)
+            const { snapshotElement, contentMask } = createSnapshotItem(
+              parentDocument,
+              getThemeBackgroundColor(reader.theme.get()),
+            )
+            snapshotItem = snapshotElement
 
             const pageSize = reader.viewport.value.pageSize
-            const itemElement = snapshotItem
-            const contentMask = itemElement?.children[0] as
-              | HTMLElement
-              | undefined
-
-            if (!itemElement || !contentMask)
-              throw new Error("No item element or content mask")
-
-            contentMask.style.top = "0"
-            contentMask.style.left = "0"
 
             const measure = options
             const { height, width } = item.layoutInfo
@@ -141,29 +131,23 @@ export class Snapshot extends Observable<HTMLElement> {
               contentMask.style.top = `${gap}px`
             }
 
-            parent.appendChild(itemElement)
+            parent.appendChild(snapshotElement)
             contentMask.appendChild(clonedElement)
 
-            subscriber.next(itemElement)
+            subscriber.next(snapshotElement)
 
             return cloneReady$
           }),
+          finalize(releaseSpineItem),
         )
+        // Keep the observable open after cloning so the thumbnail owns its
+        // copied object URLs until React unsubscribes from this snapshot.
         .subscribe({
-          error: (error) => {
-            unlock()
-            subscriber.error(error)
-          },
-          complete: () => {
-            unlock()
-            // Keep the observable open after cloning so the thumbnail owns its
-            // copied object URLs until React unsubscribes from this snapshot.
-          },
+          error: (error) => subscriber.error(error),
         })
 
       return () => {
         subscription.unsubscribe()
-        unlock()
         releaseSnapshotAssets()
         snapshotItem?.remove()
       }

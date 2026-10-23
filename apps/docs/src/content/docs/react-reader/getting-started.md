@@ -15,7 +15,7 @@ npm install @prose-reader/react-reader @prose-reader/core @prose-reader/shared \
   @chakra-ui/react @emotion/react rc-slider react-icons reactjrx rxjs screenfull
 ```
 
-This package only uses peerDependencies, all of them required, so don't hesitate to use the library for the rest of your app. `react` and `react-dom` (18 or 19) are your app's own.
+This package only uses peerDependencies, all of them required, so don't hesitate to use the library for the rest of your app. `react` and `react-dom` (19) are your app's own.
 
 [https://github.com/mbret/reactjrx](https://github.com/mbret/reactjrx) is specifically very useful if you use `rxjs`.
 
@@ -52,7 +52,7 @@ const MyAppReader = ({ manifest }: { manifest: Manifest | undefined }) => {
 }
 ```
 
-A reader lives for a single book, so the idiomatic React pattern is one effect that creates and mounts the reader together, with `destroy()` as its cleanup. Because `destroy()` is the true inverse of create + mount, the effect is naturally safe with strict mode re-running effects:
+A reader lives for a single book, so the idiomatic React pattern is one effect that creates and mounts the reader together, with `destroy()` as its cleanup. `destroy()` leaves the container as it found it, so the effect is safe with strict mode re-running effects:
 
 ```typescript
 import { useEffect, useState, type RefObject } from "react"

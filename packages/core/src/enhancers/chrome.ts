@@ -1,5 +1,6 @@
-import { takeUntil } from "rxjs"
+import { filter, fromEvent, switchMap, takeUntil, tap } from "rxjs"
 import { setAttributeIfChanged } from "../utils/dom"
+import { isDefined } from "../utils/isDefined"
 import type { EnhancerOutput, RootEnhancer } from "./types/enhancer"
 
 /**
@@ -13,48 +14,28 @@ export const chromeEnhancer =
     const reader = next(options)
 
     /**
-     * This element is used to force a refresh of a screen in order to fix the
-     * frozen screen that happens with chrome.
-     * The bug is weird and I have yet to explain it correctly, what happens
-     * is that sometime when moving the x-axis on navigation, the screen will still display
-     * the old screen, as if it was frozen. Generally any interaction with the page will unfreeze
-     * the screen and the new iframe will be displayed. It also happens within the same iframe.
-     * So far it seems to be due to scaling and x-axis moving.
-     * To ensure the screen does not freeze we are moving a 1:1 square in & out of the screen.
-     * That way chrome is "forced" to refresh the screen.
-     *
-     * @todo
-     * check https://developer.mozilla.org/en-US/docs/Web/CSS/will-change with will-change: transform
-     * to see if it does refresh all the time itself.
-     *
-     * @todo
-     * use transform and translate rather than changing top so it only affect composite layer rather than paint
-     * @see https://www.algolia.com/blog/engineering/performant-web-animations/
-     *
-     * @important
-     * This is disabled for now as removing will-change on container seems to fix the issue
+     * For some reason I have yet to find, chrome will force scroll x-axis on the container
+     * whenever the user select text and drag it to the edges. This is not a scroll inside the iframe
+     * but a scroll on the container itself..
      */
-    // let screenForceRefreshElt: HTMLDivElement | undefined = undefined
-
     reader.context
       .watch("rootElement")
-      .pipe(takeUntil(reader.context.destroy$))
-      .subscribe((rootElement) => {
-        if (!rootElement) return
-
-        const onScroll = () => {
-          if (reader.settings.values.computedPageTurnMode === `controlled`) {
-            rootElement.scrollTo(0, 0)
-          }
-        }
-
-        /**
-         * For some reason I have yet to find, chrome will force scroll x-axis on the container
-         * whenever the user select text and drag it to the edges. This is not a scroll inside the iframe
-         * but a scroll on the container itself..
-         */
-        rootElement.addEventListener(`scroll`, onScroll)
-      })
+      .pipe(
+        filter(isDefined),
+        switchMap((rootElement) =>
+          fromEvent(rootElement, `scroll`).pipe(
+            tap(() => {
+              if (
+                reader.settings.values.computedPageTurnMode === `controlled`
+              ) {
+                rootElement.scrollTo(0, 0)
+              }
+            }),
+          ),
+        ),
+        takeUntil(reader.$.destroy$),
+      )
+      .subscribe()
 
     reader.hookManager.register(`item.onDocumentLoad`, async ({ itemId }) => {
       const item = reader.spineItemsManager.get(itemId)
@@ -71,21 +52,6 @@ export const chromeEnhancer =
         setAttributeIfChanged(frame.contentDocument.body, `tabindex`, `-1`)
       }
     })
-
-    // const forceScreenRefresh$ = reader.$.$
-    //   .pipe(
-    //     // filter(event => event.type === `onNavigationChange`),
-    //     tap(() => {
-    //       // screenForceRefreshElt?.style.setProperty(`top`, `0px`)
-    //       // requestAnimationFrame(() => {
-    //       //   screenForceRefreshElt?.style.setProperty(`top`, `-1px`)
-    //       // })
-    //     })
-    //   )
-
-    // merge(forceScreenRefresh$)
-    //   .pipe(takeUntil(reader.$.destroy$))
-    //   .subscribe()
 
     return reader
   }

@@ -25,10 +25,6 @@ type ThemeColors = {
   foregroundColor?: string
 }
 
-/**
- * `publisher` overrides nothing: documents keep their own colors, and the
- * reader keeps its default white.
- */
 const themeColors: Record<Theme, ThemeColors> = {
   bright: {
     backgroundColor: `white`,
@@ -43,6 +39,13 @@ const themeColors: Record<Theme, ThemeColors> = {
   },
   publisher: {},
 }
+
+/**
+ * The background the reader paints with `theme`. With `publisher`, the book
+ * keeps its own background, on a white reader.
+ */
+export const getThemeBackgroundColor = (theme: Theme) =>
+  themeColors[theme].backgroundColor ?? `white`
 
 const getDocumentStyle = ({
   backgroundColor,
@@ -96,55 +99,48 @@ export const themeEnhancer: ThemeEnhancer = (next) => (options) => {
   )
 
   /**
-   * A pre-paginated document keeps its own look and the theme shows around
-   * it. Its document may not even be the page: the pdf renderer's frame holds
-   * the text layer, blended over the page it renders on a canvas.
+   * A pre-paginated document is left as its publisher laid it out. Its frame
+   * may not even hold the page: the pdf renderer's holds the text layer,
+   * blended over the page it renders on a canvas.
    */
-  const applyThemeToItemDocument = (item: SpineItem) => {
+  const applyThemeToItemDocument = (item: SpineItem, theme: Theme) => {
     if (item.renditionLayout === `pre-paginated`) return
 
     upsertCSSToFrame(
       item.renderer.getDocumentFrame(),
       `prose-reader-theme`,
-      getDocumentStyle(themeColors[currentThemeSubject$.value]),
+      getDocumentStyle(themeColors[theme]),
     )
   }
 
   reader.hookManager.register(`item.onDocumentLoad`, async ({ itemId }) => {
     const item = reader.spineItemsManager.get(itemId)
 
-    if (item) applyThemeToItemDocument(item)
+    if (item) applyThemeToItemDocument(item, currentThemeSubject$.value)
   })
 
   const applyThemeToLoadedDocuments$ = currentThemeSubject$.pipe(
-    tap(() => {
-      reader.spineItemsManager.items.forEach(applyThemeToItemDocument)
+    tap((theme) => {
+      reader.spineItemsManager.items.forEach((item) => {
+        applyThemeToItemDocument(item, theme)
+      })
     }),
   )
 
   /**
    * The reader's stylesheet paints its container, and the placeholder of an
-   * item that is loading, with this variable, white by default.
+   * item that is loading, with this variable.
    */
   const applyThemeToContainer$ = reader.context.watch(`rootElement`).pipe(
     filter(isDefined),
     switchMap((rootElement) =>
       currentThemeSubject$.pipe(
         tap((theme) => {
-          const { backgroundColor } = themeColors[theme]
-
-          if (backgroundColor) {
-            setStylePropertyIfChanged(
-              rootElement.style,
-              CSS_VAR_THEME_BACKGROUND_COLOR,
-              backgroundColor,
-            )
-          } else {
-            removeStylePropertyIfPresent(
-              rootElement.style,
-              CSS_VAR_THEME_BACKGROUND_COLOR,
-            )
-          }
+          setStylePropertyIfChanged(
+            rootElement.style,
+            CSS_VAR_THEME_BACKGROUND_COLOR,
+            getThemeBackgroundColor(theme),
+          )
         }),
         finalize(() => {
           removeStylePropertyIfPresent(

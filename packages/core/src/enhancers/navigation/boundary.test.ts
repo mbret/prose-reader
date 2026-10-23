@@ -6,7 +6,6 @@ import { HookManager } from "../../hooks/HookManager"
 import { createNavigator } from "../../navigation/Navigator"
 import { observeSettledNavigation } from "../../navigation/operators"
 import { mockSpineItemsLayout } from "../../navigation/tests/utils"
-import { Pagination } from "../../pagination/Pagination"
 import type { Reader } from "../../reader"
 import { ReaderSettingsManager } from "../../settings/ReaderSettingsManager"
 import { Spine } from "../../spine/Spine"
@@ -50,7 +49,6 @@ const createTestReader = ({
     viewport,
   )
   const cfi = new CfiManager(hookManager, spineItemsManager)
-  const pagination = new Pagination(context, spineItemsManager)
   const spineItemLocator = createSpineItemLocator({
     context,
     settings,
@@ -58,7 +56,6 @@ const createTestReader = ({
   })
   const spine = new Spine(
     context,
-    pagination,
     spineItemsManager,
     spineItemLocator,
     settings,

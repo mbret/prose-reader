@@ -13,14 +13,15 @@ import {
   timeout,
 } from "rxjs"
 import { afterAll, afterEach, beforeAll, beforeEach, vi } from "vitest"
+import { createReaderWithEnhancers } from "../createReaderWithEnhancer"
 import { htmlEnhancer } from "../enhancers/html/enhancer"
 import { layoutEnhancer } from "../enhancers/layout/layoutEnhancer"
 import { navigationEnhancer } from "../enhancers/navigation"
 import { paginationEnhancer } from "../enhancers/pagination/enhancer"
-import { type Theme, themeEnhancer } from "../enhancers/theme"
+import { themeEnhancer } from "../enhancers/theme"
 import { zoomEnhancer } from "../enhancers/zoom"
 import type { HookManager } from "../hooks/HookManager"
-import { type CreateReaderOptions, createReader } from "../reader"
+import { createReader } from "../reader"
 import { DefaultRenderer } from "../spineItem/renderer/DefaultRenderer"
 import {
   DocumentRenderer,
@@ -278,21 +279,27 @@ export const holdItemDocumentLoadHooks = (
   }
 }
 
-/**
- * Settings a test may override, the pre-paginated manifest included, and the
- * theme, since every reader here has the theme enhancer.
- */
-type TestReaderOptions = Partial<CreateReaderOptions> & { theme?: Theme }
+const createReaderWithoutPaginationEnhancer = navigationEnhancer(
+  htmlEnhancer(layoutEnhancer(themeEnhancer(createReader))),
+)
+
+/** Settings a test may override, the pre-paginated manifest included. */
+type TestReaderOptions = Partial<
+  Parameters<typeof createReaderWithoutPaginationEnhancer>[0]
+>
+
+const testReaderDefaults = () => ({
+  getRenderer: () => (props: DocumentRendererParams) =>
+    new DefaultRenderer(props),
+  getResource: resolvedResource,
+  manifest: createPrePaginatedManifest(),
+})
 
 /** A reader without the pagination enhancer: `pagination` is the core result. */
 export const createTestReader = (options: TestReaderOptions = {}) =>
   track(
-    navigationEnhancer(
-      htmlEnhancer(layoutEnhancer(themeEnhancer(createReader))),
-    )({
-      getRenderer: () => (props) => new DefaultRenderer(props),
-      getResource: resolvedResource,
-      manifest: createPrePaginatedManifest(),
+    createReaderWithoutPaginationEnhancer({
+      ...testReaderDefaults(),
       ...options,
     }),
   )
@@ -305,9 +312,7 @@ export const createEnhancedTestReader = (options: TestReaderOptions = {}) =>
         paginationEnhancer(layoutEnhancer(themeEnhancer(createReader))),
       ),
     )({
-      getRenderer: () => (props) => new DefaultRenderer(props),
-      getResource: resolvedResource,
-      manifest: createPrePaginatedManifest(),
+      ...testReaderDefaults(),
       ...options,
     }),
   )
@@ -315,14 +320,19 @@ export const createEnhancedTestReader = (options: TestReaderOptions = {}) =>
 /** A reader with the zoom enhancer, which transforms the viewport. */
 export const createZoomableTestReader = (options: TestReaderOptions = {}) =>
   track(
-    zoomEnhancer(
-      navigationEnhancer(
-        htmlEnhancer(layoutEnhancer(themeEnhancer(createReader))),
-      ),
-    )({
-      getRenderer: () => (props) => new DefaultRenderer(props),
-      getResource: resolvedResource,
-      manifest: createPrePaginatedManifest(),
+    zoomEnhancer(createReaderWithoutPaginationEnhancer)({
+      ...testReaderDefaults(),
+      ...options,
+    }),
+  )
+
+/** A reader with every core enhancer, as the published `createReader`. */
+export const createFullTestReader = (
+  options: Partial<Parameters<typeof createReaderWithEnhancers>[0]> = {},
+) =>
+  track(
+    createReaderWithEnhancers({
+      ...testReaderDefaults(),
       ...options,
     }),
   )
@@ -371,14 +381,18 @@ export const setTestViewport = (size: { width: number; height: number }) => {
   viewport = { ...size }
 }
 
-export const mountTestReader = (reader: {
-  mount: (element: HTMLElement) => unknown
-}) => {
+export const getTestContainer = () => {
   const container = document.getElementById("test-container")
 
   if (!container) throw new Error("installReaderTestEnvironment() did not run")
 
-  reader.mount(container)
+  return container
+}
+
+export const mountTestReader = (reader: {
+  mount: (element: HTMLElement) => unknown
+}) => {
+  reader.mount(getTestContainer())
 }
 
 /**
