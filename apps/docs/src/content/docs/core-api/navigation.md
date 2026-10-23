@@ -218,6 +218,33 @@ the one to where the reader opens included, or a `"restoration"` of the current
 one onto a new layout or when a pan ends.
 A restoration is emitted even when it lands where the navigation already was.
 
+### `.navigationAgainstCurrentLayout$` { #navigationagainstcurrentlayoutusd }
+
+```typescript
+Observable<{
+  navigation: Navigation
+  holdsOnCurrentLayout: boolean
+}>
+```
+
+The latest navigation, the value `.navigation$` emitted for it, and whether it
+holds on the current layout: whether it was made, or restored, over the pages
+the reader shows now, with no layout requested since. Only while it holds do
+its position and the pages agree. Replays the current one on subscription.
+
+It is given with every navigation, and again, with the same `navigation`, each
+time a layout makes it stop holding. It does not hold:
+
+- before the book is first laid out;
+- from the moment a layout is requested, by `reader.layout()` or by a spine
+  item loading or unloading;
+- once the new pages are in, until the navigation is restored onto them, by a
+  `"restoration"` that holds.
+
+A navigation made while a layout is pending does not hold either. Read it
+rather than `.navigation$` when what you do depends on the layout, such as
+which spine items or pages a navigation shows.
+
 ### `.position$` { #positionusd }
 
 ```typescript

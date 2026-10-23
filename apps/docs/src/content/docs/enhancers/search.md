@@ -8,11 +8,13 @@ sidebar:
 ## Getting Started
 
 ```bash
-npm install @prose-reader/enhancer-search rxjs
+npm install @prose-reader/enhancer-search @prose-reader/core rxjs
 ```
 
-`rxjs` is the package's peer dependency, in the same `^7.5.5` range as
-`@prose-reader/core`.
+Both are peer dependencies: the enhancer runs against the reader your app
+creates, so it shares that reader's copies rather than bringing its own. It
+needs the `@prose-reader/core` it was released with, or a later one of the same
+major. Its `rxjs` range is `^7.5.5`, the same as core's.
 
 Connect the enhancer to your reader:
 

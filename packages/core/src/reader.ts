@@ -29,6 +29,7 @@ import { Report } from "./report"
 import { ReaderSettingsManager } from "./settings/ReaderSettingsManager"
 import type { SettingsInterface } from "./settings/SettingsInterface"
 import type { CoreInputSettings } from "./settings/types"
+import { SpineItemsLoader } from "./spine/loader/SpineItemsLoader"
 import { Spine } from "./spine/Spine"
 import { SpineItemsManager } from "./spine/SpineItemsManager"
 import { createSpineItemLocator } from "./spineItem/locationResolver"
@@ -104,7 +105,6 @@ export const createReader = ({
   const pagination = new Pagination(context, spineItemsManager)
   const spine = new Spine(
     context,
-    pagination,
     spineItemsManager,
     spineItemLocator,
     settingsManager,
@@ -120,20 +120,26 @@ export const createReader = ({
     viewport,
     target,
   })
+  const spineItemsLoader = new SpineItemsLoader(
+    context,
+    spineItemsManager,
+    spine.locator,
+    settingsManager,
+    viewport,
+    navigator.navigationAgainstCurrentLayout$,
+  )
   const paginationController = new PaginationController(
     context,
     pagination,
     spineItemsManager,
     spine,
+    navigator.navigationAgainstCurrentLayout$,
     navigator.isLocked$,
     cfi,
   )
 
-  // bridge all navigation stream with reader so they can be shared across app
+  // The spine items, built before the navigator, wait on its viewport state.
   navigator.navigationState$.subscribe(context.bridgeEvent.viewportStateSubject)
-  navigator.navigation$.subscribe(context.bridgeEvent.navigationSubject)
-  navigator.position$.subscribe(context.bridgeEvent.positionSubject)
-  pagination.subscribe(context.bridgeEvent.paginationSubject)
 
   const layout = (options: ReaderLayoutOptions = {}) => {
     layoutSubject.next(options)
@@ -214,6 +220,7 @@ export const createReader = ({
     }
 
     subs.unsubscribe()
+    spineItemsLoader.destroy()
     spineItemsManager.destroy()
     paginationController.destroy()
     settingsManager.destroy()
@@ -257,6 +264,8 @@ export const createReader = ({
         of(undefined)
       )
     },
+    keepSpineItemLoaded: (spineItem: SpineItemReference) =>
+      spineItemsLoader.keepLoaded(spineItem),
     viewport,
     viewportState$: context.bridgeEvent.viewportState$,
     viewportFree$: context.bridgeEvent.viewportFree$,
@@ -280,11 +289,11 @@ export const createReader = ({
 const CONTAINER_CLASS = `${HTML_PREFIX}-reader`
 const CONTAINER_ATTRIBUTE = `data-prose-reader-container`
 
-// The container's base styles (background, position, overflow) live in the
-// injected stylesheet keyed on CONTAINER_CLASS rather than as inline styles.
-// This keeps mount side-effect free on the element beyond adding the class and
-// two attributes, so unwrapContainer can fully revert them on destroy and a
-// reused container accumulates nothing across mounts.
+// The container's base styles live in the injected stylesheet keyed on
+// CONTAINER_CLASS rather than as inline styles, so unwrapContainer undoes
+// everything wrapContainer writes. Anything else that writes on the container,
+// an attribute, a style, an element or a listener, has to undo it on destroy
+// too, or a reused container keeps it across mounts.
 const wrapContainer = (containerElement: HTMLElement, id: string) => {
   containerElement.classList.add(CONTAINER_CLASS)
   setAttributeIfChanged(containerElement, HTML_ATTRIBUTE_DATA_READER_ID, id)

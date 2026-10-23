@@ -67,12 +67,9 @@ the moment a navigation happens, and refined as the reader finds out:
   rendered follows.
 - **Once the page holding it is laid out**: `success`, and it stays for the
   rest of the navigation. In a chapter already laid out, such as when turning
-  pages, that is at once, even while a chapter after it loads: the book laid
-  out again for that one cannot move it. While the book is laid out again in a
-  way that can, for a resize, a setting, or a chapter before it loading or
-  unloading, it stands in until that layout is done. The change of `status` is
-  emitted even when the `cfi` and its progress stay the same, as they can after
-  a navigation to a cfi on its chapter's first page.
+  pages, that is at once. The change of `status` is emitted even when the `cfi`
+  and its progress stay the same, as they can after a navigation to a cfi on
+  its chapter's first page.
 - **If the chapter fails to load**: `error`, and it stays for the rest of the
   navigation, at what the reader knew by then: the chapter's start, or the
   place the target names if the chapter showed it before failing. The reader
@@ -178,6 +175,15 @@ const reader = createReader({
 Use it to react to navigating as an event. For where the viewport is,
 `position$` emits the position only when it changes, and for what to save,
 `readingPosition$`.
+
+When what you do with a navigation depends on the layout, such as reading
+which spine items or pages its position shows, use
+`navigationAgainstCurrentLayout$` instead. It gives the latest navigation with
+whether it holds on the current layout, and gives it again when a layout makes
+it stop holding: a navigation's position and the pages agree only while it
+holds. After a relayout, the navigation from before is still the latest until
+the restoration, and its position can show other content on the new pages, so
+pairing `navigation$` with a layout signal of your own gets that moment wrong.
 
 ## Pans and locks
 

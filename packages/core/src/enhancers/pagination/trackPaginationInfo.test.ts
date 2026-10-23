@@ -1,25 +1,15 @@
 // @vitest-environment jsdom
-import { type ObservedValueOf, of, skip } from "rxjs"
+import type { Manifest } from "@prose-reader/shared"
+import { describe, expect, it } from "vitest"
 import {
-  afterAll,
-  afterEach,
-  beforeAll,
-  beforeEach,
-  describe,
-  expect,
-  it,
-  vi,
-} from "vitest"
-import { createReader } from "../../reader"
-import { DefaultRenderer } from "../../spineItem/renderer/DefaultRenderer"
+  createEnhancedTestReader,
+  installReaderTestEnvironment,
+  mountTestReader,
+  settledOn,
+} from "../../tests/readerHarness"
 import { createTestManifest } from "../../tests/utils"
-import { htmlEnhancer } from "../html/enhancer"
-import { layoutEnhancer } from "../layout/layoutEnhancer"
-import { navigationEnhancer } from "../navigation"
-import { themeEnhancer } from "../theme"
-import { paginationEnhancer } from "./enhancer"
 
-window.__PROSE_READER_DEBUG = false
+installReaderTestEnvironment()
 
 const BASE_MANIFEST = createTestManifest({
   filename: "",
@@ -28,41 +18,13 @@ const BASE_MANIFEST = createTestManifest({
   renditionSpread: "auto",
 })
 
-beforeAll(() => {
-  vi.stubGlobal(
-    "ResizeObserver",
-    class {
-      observe() {}
-      unobserve() {}
-      disconnect() {}
-    },
-  )
-})
-
-afterAll(() => {
-  vi.unstubAllGlobals()
-})
-
-beforeEach(async () => {
-  const containerElement = document.createElement("div")
-  containerElement.id = "test-container"
-  document.body.appendChild(containerElement)
-})
-
-afterEach(() => {
-  document.getElementById("test-container")?.remove()
-})
-
 describe("Given a book that has not been laid out yet", () => {
   /**
    * The core already places the edges on an estimate by then, the start of
    * the first item. What the enhancer adds waits for a layout.
    */
   it(`should not claim a page, a chapter or a direction on either edge`, () => {
-    const reader = paginationEnhancer(
-      layoutEnhancer(themeEnhancer(createReader)),
-    )({
-      getResource: () => of(new Response("", { status: 200 })),
+    const reader = createEnhancedTestReader({
       manifest: {
         ...BASE_MANIFEST,
         spineItems: [
@@ -95,18 +57,13 @@ describe("Given a book that has not been laid out yet", () => {
         spineItemReadingDirection: undefined,
       })
     }
-
-    reader.destroy()
   })
 })
 
 describe("Given a book with one chapter", () => {
   describe(`when we navigate to first page`, () => {
     it(`should return first chapter`, async () => {
-      const reader = paginationEnhancer(
-        layoutEnhancer(themeEnhancer(createReader)),
-      )({
-        getResource: () => of(new Response("", { status: 200 })),
+      const reader = createEnhancedTestReader({
         manifest: {
           ...BASE_MANIFEST,
           nav: {
@@ -134,19 +91,11 @@ describe("Given a book with one chapter", () => {
         },
       })
 
-      const value = await new Promise<
-        ObservedValueOf<typeof reader.pagination.state$>
-      >((resolve, reject) => {
-        reader.pagination.state$.pipe(skip(1)).subscribe({
-          next: resolve,
-          error: reject,
-        })
+      mountTestReader(reader)
 
-        // biome-ignore lint/style/noNonNullAssertion: TODO
-        reader.mount(document.getElementById("test-container")!)
-      })
+      const { begin } = await settledOn(reader, 0)
 
-      expect(value.begin.chapterInfo).toEqual({
+      expect(begin.chapterInfo).toEqual({
         path: "/chapter_1/page_1.jpg",
         title: "Chapter 1",
       })
@@ -155,13 +104,7 @@ describe("Given a book with one chapter", () => {
 
   describe("when we navigate to second page", () => {
     it(`should return first chapter`, async () => {
-      const reader = navigationEnhancer(
-        htmlEnhancer(
-          paginationEnhancer(layoutEnhancer(themeEnhancer(createReader))),
-        ),
-      )({
-        getRenderer: () => (props) => new DefaultRenderer(props),
-        getResource: () => of(new Response("", { status: 200 })),
+      const reader = createEnhancedTestReader({
         manifest: {
           ...BASE_MANIFEST,
           nav: {
@@ -199,21 +142,12 @@ describe("Given a book with one chapter", () => {
         },
       })
 
-      const value = await new Promise<
-        ObservedValueOf<typeof reader.pagination.state$>
-      >((resolve, reject) => {
-        reader.pagination.state$.pipe(skip(1)).subscribe({
-          next: resolve,
-          error: reject,
-        })
+      mountTestReader(reader)
+      reader.navigation.goToSpineItem({ indexOrId: 1, animation: false })
 
-        // biome-ignore lint/style/noNonNullAssertion: TODO
-        reader.mount(document.getElementById("test-container")!)
+      const { begin } = await settledOn(reader, 1)
 
-        reader.navigation.goToSpineItem({ indexOrId: 1 })
-      })
-
-      expect(value.begin.chapterInfo).toEqual({
+      expect(begin.chapterInfo).toEqual({
         path: "/chapter_1/page_1.jpg",
         title: "Chapter 1",
       })
@@ -222,15 +156,9 @@ describe("Given a book with one chapter", () => {
 
   describe("and contain inner chapter", () => {
     describe(`when we are on first page`, () => {
-      describe("and the first page is within firt chapter sub chapter", () => {
+      describe("and the first page is within first chapter sub chapter", () => {
         it(`should return correct chapter with its subChapter info filled`, async () => {
-          const reader = navigationEnhancer(
-            htmlEnhancer(
-              paginationEnhancer(layoutEnhancer(themeEnhancer(createReader))),
-            ),
-          )({
-            getRenderer: () => (props) => new DefaultRenderer(props),
-            getResource: () => of(new Response("", { status: 200 })),
+          const reader = createEnhancedTestReader({
             manifest: {
               ...BASE_MANIFEST,
               nav: {
@@ -261,35 +189,15 @@ describe("Given a book with one chapter", () => {
                   renditionLayout: "pre-paginated",
                   index: 0,
                 },
-                {
-                  href: "http://localhost:9000/streamer/book/OEBPS/part0007.xhtml",
-                  containerUri: "OEBPS/part0007.xhtml",
-                  id: "part0007.xhtml",
-                  pageSpreadLeft: true,
-                  pageSpreadRight: true,
-                  progressionWeight: 0,
-                  renditionLayout: "pre-paginated",
-                  index: 1,
-                },
               ],
             },
           })
 
-          const value = await new Promise<
-            ObservedValueOf<typeof reader.pagination.state$>
-          >((resolve, reject) => {
-            reader.pagination.state$.pipe(skip(1)).subscribe({
-              next: resolve,
-              error: reject,
-            })
+          mountTestReader(reader)
 
-            // biome-ignore lint/style/noNonNullAssertion: TODO
-            reader.mount(document.getElementById("test-container")!)
+          const { begin } = await settledOn(reader, 0)
 
-            reader.navigation.goToSpineItem({ indexOrId: 1 })
-          })
-
-          expect(value.begin.chapterInfo).toEqual({
+          expect(begin.chapterInfo).toEqual({
             path: "OEBPS/part0006.xhtml",
             title: "Part 1",
             subChapter: { title: "Chapter 1", path: "OEBPS/part0006.xhtml" },
@@ -301,142 +209,93 @@ describe("Given a book with one chapter", () => {
 })
 
 describe("Given a book with two chapters", () => {
+  const manifest: Manifest = {
+    ...BASE_MANIFEST,
+    nav: {
+      toc: [
+        {
+          contents: [],
+          href: "/OPS/page_1.jpg",
+          path: "/OPS/page_1.jpg",
+          title: "Chapter 1",
+        },
+        {
+          contents: [],
+          href: "/OPS/page_2.jpg",
+          path: "/OPS/page_2.jpg",
+          title: "Chapter 2",
+        },
+      ],
+    },
+    spineItems: [
+      {
+        href: "/OPS/page_1.jpg",
+        containerUri: "OPS/page_1.jpg",
+        id: "1",
+        pageSpreadLeft: true,
+        pageSpreadRight: true,
+        progressionWeight: 0,
+        renditionLayout: "pre-paginated",
+        index: 0,
+      },
+      {
+        href: "/OPS/page_2.jpg",
+        containerUri: "OPS/page_2.jpg",
+        id: "2",
+        pageSpreadLeft: true,
+        pageSpreadRight: true,
+        progressionWeight: 0,
+        renditionLayout: "pre-paginated",
+        index: 1,
+      },
+    ],
+  }
+
   describe("when we navigate to the first page which is in first chapter", () => {
     it(`should return chapter 1`, async () => {
-      const reader = paginationEnhancer(
-        layoutEnhancer(themeEnhancer(createReader)),
-      )({
-        getResource: () => of(new Response("", { status: 200 })),
-        manifest: {
-          ...BASE_MANIFEST,
-          nav: {
-            toc: [
-              {
-                contents: [],
-                href: "/OPS/page_1.jpg",
-                path: "/OPS/page_1.jpg",
-                title: "Chapter 1",
-              },
-              {
-                contents: [],
-                href: "/OPS/page_2.jpg",
-                path: "/OPS/page_2.jpg",
-                title: "Chapter 2",
-              },
-            ],
-          },
-          spineItems: [
-            {
-              href: "/OPS/page_1.jpg",
-              containerUri: "OPS/page_1.jpg",
-              id: "1",
-              pageSpreadLeft: true,
-              pageSpreadRight: true,
-              progressionWeight: 0,
-              renditionLayout: "pre-paginated",
-              index: 0,
-            },
-            {
-              href: "/OPS/page_2.jpg",
-              containerUri: "OPS/page_2.jpg",
-              id: "2",
-              pageSpreadLeft: true,
-              pageSpreadRight: true,
-              progressionWeight: 0,
-              renditionLayout: "pre-paginated",
-              index: 1,
-            },
-          ],
-        },
-      })
+      const reader = createEnhancedTestReader({ manifest })
 
-      const value = await new Promise<
-        ObservedValueOf<typeof reader.pagination.state$>
-      >((resolve, reject) => {
-        reader.pagination.state$.pipe(skip(1)).subscribe({
-          next: resolve,
-          error: reject,
-        })
+      mountTestReader(reader)
 
-        // biome-ignore lint/style/noNonNullAssertion: TODO
-        reader.mount(document.getElementById("test-container")!)
-      })
+      const { begin } = await settledOn(reader, 0)
 
-      expect(value.begin.chapterInfo).toEqual({
+      expect(begin.chapterInfo).toEqual({
         path: "/OPS/page_1.jpg",
         title: "Chapter 1",
       })
     })
   })
 
-  // describe("when we navigate to a page that is in a second chapter", () => {
-  //   it(`return chapter 2`, async () => {
-  //     const reader = navigationEnhancer(
-  //       paginationEnhancer(progressionEnhancer(createReader)),
-  //     )({
-  //       fetchResource: async () => {
-  //         return new Response("", { status: 200 })
-  //       },
-  //     })
+  describe("when we navigate to a page that is in a second chapter", () => {
+    it(`should name the chapter of the page each result begins on, settled or not`, async () => {
+      const chapterBySpineItemIndex = [
+        { path: "/OPS/page_1.jpg", title: "Chapter 1" },
+        { path: "/OPS/page_2.jpg", title: "Chapter 2" },
+      ]
+      const reader = createEnhancedTestReader({ manifest })
 
-  //     const value = await new Promise<
-  //       ObservedValueOf<typeof reader.pagination.paginationInfo$>
-  //     >((resolve, reject) => {
-  //       reader.pagination.paginationInfo$.pipe(skip(2)).subscribe({
-  //         next: resolve,
-  //         error: reject,
-  //       })
+      const results: (typeof reader.pagination.state)[] = []
+      reader.pagination.state$.subscribe((result) => {
+        results.push(result)
+      })
 
-  //       reader.load(
-  //         {
-  //           ...BASE_MANIFEST,
-  //           nav: {
-  //             toc: [
-  //               {
-  //                 contents: [],
-  //                 href: "/OPS/page_1.jpg",
-  //                 path: "/OPS/page_1.jpg",
-  //                 title: "Chapter 1",
-  //               },
-  //               {
-  //                 contents: [],
-  //                 href: "/OPS/page_2.jpg",
-  //                 path: "/OPS/page_2.jpg",
-  //                 title: "Chapter 2",
-  //               },
-  //             ],
-  //           },
-  //           spineItems: [
-  //             {
-  //               href: "/OPS/page_1.jpg",
-  //               id: "1",
-  //               pageSpreadLeft: true,
-  //               pageSpreadRight: true,
-  //               progressionWeight: 0,
-  //               renditionLayout: "pre-paginated",
-  //             },
-  //             {
-  //               href: "/OPS/page_2.jpg",
-  //               id: "2",
-  //               pageSpreadLeft: true,
-  //               pageSpreadRight: true,
-  //               progressionWeight: 0,
-  //               renditionLayout: "pre-paginated",
-  //             },
-  //           ],
-  //         },
-  //         {
-  //           containerElement: document.getElementById("test-container")!,
-  //         },
-  //       )
+      mountTestReader(reader)
+      reader.navigation.goToSpineItem({ indexOrId: 1, animation: false })
 
-  //       reader.navigation.goToSpineItem(1)
-  //     })
+      await settledOn(reader, 1)
 
-  //     expect(value.begin.chapterInfo).toEqual({
-  //       path: "/OPS/page_2.jpg",
-  //       title: "Chapter 2",
-  //     })
-  //   })
-  // })
+      const [resultBeforeLayout, ...laidOutResults] = results
+
+      expect(resultBeforeLayout?.begin.chapterInfo).toBeUndefined()
+
+      for (const { begin } of laidOutResults) {
+        const expectedChapter =
+          begin.spineItemIndex === undefined
+            ? undefined
+            : chapterBySpineItemIndex[begin.spineItemIndex]
+
+        expect(begin.chapterInfo).toEqual(expectedChapter)
+      }
+    })
+  })
 })

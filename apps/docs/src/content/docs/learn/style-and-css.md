@@ -20,7 +20,22 @@ reader.theme.set("sepia")
 | `night` | `#191717` | `#f1ebeb` |
 | `publisher` | the book's, on a `white` reader | the book's |
 
-The background also fills the reader's container wherever the pages do not cover it, and the placeholder page shown while an item loads. Reflowable documents take the theme's background and text colors. Pre-paginated documents, such as comic pages and PDF pages, keep their own colors, with the theme's background around them.
+The background also fills the reader's container wherever the pages do not cover it, and the placeholder page shown while an item loads. Reflowable documents take the theme's background. The elements in their body take its text color, unless the book's own styles set a more specific one. Pre-paginated documents, such as comic pages and PDF pages, keep their own colors: the theme's background shows around them, and through any part of a page that paints no background.
+
+`getThemeBackgroundColor()` gives the background the reader paints with a theme. Use it to match your interface to the reader as the theme changes:
+
+```typescript
+import { getThemeBackgroundColor } from "@prose-reader/core"
+import { map } from "rxjs"
+
+reader.theme.$.theme$
+  .pipe(map(getThemeBackgroundColor))
+  .subscribe((background) => {
+    toolbar.style.backgroundColor = background
+  })
+```
+
+The reader's container also holds that background in the `--prose-reader-theme-background-color` CSS variable, exported as `CSS_VAR_THEME_BACKGROUND_COLOR`, for the styles of elements you place inside it.
 
 ## Stable constants
 
@@ -67,11 +82,15 @@ reader.context
   .pipe(
     // the container is only known once the reader is mounted
     filter(isDefined),
-    tap((container) => {
-      // Always set your attribute to the container of the given reader instance
-      container.setAttribute("data-my-enhancer", "true")
-    }),
-    // don't forget to unsubscribe on reader destroy
+    switchMap(
+      (container) =>
+        new Observable(() => {
+          container.setAttribute("data-my-enhancer", "true")
+
+          // the container outlives the reader, so remove what you set on it
+          return () => container.removeAttribute("data-my-enhancer")
+        }),
+    ),
     takeUntil(reader.$.destroy$),
   )
   .subscribe()

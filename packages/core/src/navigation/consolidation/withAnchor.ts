@@ -90,16 +90,10 @@ export const withAnchor =
       const spineItem = spine.spineItemsManager.get(beginIndex)
 
       /**
-       * The pages describe the item as the reader last laid it out, and still
-       * do while a pending layout can only change items after it, as a later
-       * item loading does. A page has a first visible node only once its item
-       * is ready.
+       * Pages describe the latest layout only while it is current, and a page
+       * has a first visible node only once its item is ready.
        */
-      if (
-        !spineItem ||
-        !spine.isLayoutCurrentFor(spineItem) ||
-        !spineItem.value.isReady
-      )
+      if (!spineItem || !spine.isLayoutCurrent || !spineItem.value.isReady)
         return undefined
 
       const { beginPageIndex } =
@@ -126,11 +120,6 @@ export const withAnchor =
     const getPageHoldingTargetAnchor = (anchorCfi: string) => {
       const { node, offset, spineItem } = cfi.resolveCfi({ cfi: anchorCfi })
 
-      /**
-       * The page holding a node is measured in the item's document as it is
-       * now, which any pending layout lays out again, even one that cannot
-       * change it, so it waits for no layout to be pending.
-       */
       if (!spineItem || !spine.isLayoutCurrent || !spineItem.value.isReady)
         return undefined
 

@@ -1,52 +1,85 @@
 import { arrayEqual } from "@prose-reader/shared"
 import {
   BehaviorSubject,
+  combineLatest,
   debounceTime,
   distinctUntilChanged,
   filter,
+  first,
   map,
   merge,
+  type Observable,
   shareReplay,
+  switchMap,
   takeUntil,
   withLatestFrom,
 } from "rxjs"
 import type { Context } from "../../context/Context"
+import type { NavigationAgainstCurrentLayout } from "../../navigation/types"
 import type { ReaderSettingsManager } from "../../settings/ReaderSettingsManager"
-import type { SpineItem } from "../../spineItem/SpineItem"
+import type { SpineItemReference } from "../../spineItem/SpineItem"
 import { DestroyableClass } from "../../utils/DestroyableClass"
 import { isDefined } from "../../utils/isDefined"
-import { waitForSwitch } from "../../utils/rxjs"
 import type { Viewport } from "../../viewport/Viewport"
 import type { SpineLocator } from "../locator/SpineLocator"
 import type { SpineItemsManager } from "../SpineItemsManager"
-import type { SpineLayout } from "../SpineLayout"
+
+type SpineItemHold = { readonly spineItemIndex: number }
 
 export class SpineItemsLoader extends DestroyableClass {
-  private forcedOpenSubject = new BehaviorSubject<Map<number, number>>(
-    new Map(),
-  )
+  private spineItemHoldsSubject = new BehaviorSubject<
+    ReadonlySet<SpineItemHold>
+  >(new Set())
 
   constructor(
     protected context: Context,
     protected spineItemsManager: SpineItemsManager,
     protected spineLocator: SpineLocator,
     protected settings: ReaderSettingsManager,
-    protected spineLayout: SpineLayout,
     protected viewport: Viewport,
+    /** See `InternalNavigator.navigationAgainstCurrentLayout$`. */
+    navigationAgainstCurrentLayout$: Observable<NavigationAgainstCurrentLayout>,
   ) {
     super()
 
-    const forcedOpen$ = this.forcedOpenSubject.pipe(
-      map((v) => Array.from(v.keys()).sort((a, b) => a - b)),
+    const heldSpineItemIndexes$ = this.spineItemHoldsSubject.pipe(
+      map((holds) => {
+        const heldSpineItemIndexes = new Set(
+          Array.from(holds, ({ spineItemIndex }) => spineItemIndex),
+        )
+
+        return Array.from(heldSpineItemIndexes).sort((a, b) => a - b)
+      }),
       distinctUntilChanged(arrayEqual),
       shareReplay({ bufferSize: 1, refCount: true }),
     )
 
+    /**
+     * The window is measured from the position of the latest navigation, once
+     * the viewport is free and while the navigation holds on the current
+     * layout: a navigation's position and the items' places only agree then.
+     */
+    const navigationToMeasureFrom$ = combineLatest([
+      this.context.bridgeEvent.viewportState$,
+      navigationAgainstCurrentLayout$,
+    ]).pipe(
+      map(([viewportState, { navigation, holdsOnCurrentLayout }]) =>
+        viewportState === "free" && holdsOnCurrentLayout
+          ? navigation
+          : undefined,
+      ),
+      filter(isDefined),
+    )
+
+    /**
+     * Every report of the latest navigation is a reason to measure again:
+     * every layout ends with the navigation restored onto it, which is when
+     * the window can be measured again.
+     */
     const shouldReloadSpineItems$ = merge(
-      this.context.bridgeEvent.position$,
+      navigationAgainstCurrentLayout$,
       this.viewport.layout$,
-      this.spineLayout.layout$,
-      forcedOpen$,
+      heldSpineItemIndexes$,
       settings.watch(["numberOfAdjacentSpineItemToPreLoad"]),
     )
 
@@ -72,12 +105,12 @@ export class SpineItemsLoader extends DestroyableClass {
       debounceTime(100),
       // Spine items exist from construction but must not render before mount
       // (their containers are detached and users may still register hooks).
-      // Dropping pre-mount events is safe: mounting triggers a layout which
-      // re-fires this stream.
+      // Dropping pre-mount events is safe: mounting lays the reader out, and
+      // the navigation restored onto that layout fires this stream again.
       filter(() => isDefined(this.context.value.rootElement)),
-      waitForSwitch(this.context.bridgeEvent.viewportFree$),
-      withLatestFrom(this.context.bridgeEvent.position$, forcedOpen$),
-      map(([, position, forcedOpenIndexes]) => {
+      switchMap(() => navigationToMeasureFrom$.pipe(first())),
+      withLatestFrom(heldSpineItemIndexes$),
+      map(([{ position }, heldSpineItemIndexes]) => {
         const { numberOfAdjacentSpineItemToPreLoad } = settings.values
         // these are real visible items to load
         const { beginIndex = 0, endIndex = 0 } =
@@ -102,8 +135,7 @@ export class SpineItemsLoader extends DestroyableClass {
           (_, i) => beginMaximumIndex + i,
         )
 
-        // we combine with forced open to ensure we load the forced open items
-        const indexesToLoad = [...forcedOpenIndexes, ...visibleIndexes]
+        const indexesToLoad = [...heldSpineItemIndexes, ...visibleIndexes]
 
         spineItemsManager.items.forEach((orderedSpineItem, index) => {
           if (indexesToLoad.includes(index)) {
@@ -118,33 +150,28 @@ export class SpineItemsLoader extends DestroyableClass {
     loadSpineItems$.pipe(takeUntil(this.destroy$)).subscribe()
   }
 
-  forceOpen(spineItems: (number | SpineItem)[]) {
-    const indexes = spineItems.map((item) =>
-      typeof item === "number" ? item : item.index,
+  keepLoaded(spineItem: SpineItemReference) {
+    const spineItemIndex = this.spineItemsManager.getSpineItemIndex(spineItem)
+
+    if (spineItemIndex === undefined) return () => {}
+
+    const hold: SpineItemHold = { spineItemIndex }
+
+    this.spineItemHoldsSubject.next(
+      new Set([...this.spineItemHoldsSubject.value, hold]),
     )
 
-    const updateMap = (add: boolean) => {
-      const map = this.forcedOpenSubject.value
-      indexes.forEach((index) => {
-        const count = map.get(index) || 0
-        const newCount = add ? count + 1 : count - 1
-        if (newCount <= 0) map.delete(index)
-        else map.set(index, newCount)
-      })
-      this.forcedOpenSubject.next(map)
-    }
-
-    updateMap(true)
-
     return () => {
-      if (this.isDestroyed) return
-      updateMap(false)
+      const holds = new Set(this.spineItemHoldsSubject.value)
+
+      holds.delete(hold)
+      this.spineItemHoldsSubject.next(holds)
     }
   }
 
   public destroy(): void {
     super.destroy()
 
-    this.forcedOpenSubject.complete()
+    this.spineItemHoldsSubject.complete()
   }
 }

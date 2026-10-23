@@ -60,10 +60,10 @@
     "@prose-reader/enhancer-search": "workspace:^",
     "@prose-reader/shared": "workspace:^",
     "rc-slider": "11.1.x",
-    "react": "19.x || 18.x",
-    "react-dom": "19.x || 18.x",
+    "react": "19.x",
+    "react-dom": "19.x",
     "react-icons": "^5.4.0",
-    "reactjrx": "1.x",
+    "reactjrx": "2.x",
     "rxjs": "^7.5.5",
     "screenfull": "^6.0.2"
   }
