@@ -1,6 +1,6 @@
 {
   "name": "@prose-reader/enhancer-audio",
-  "version": "32.0.0",
+  "version": "33.0.0",
   "description": "Audiobook playback for prose: play a book's audio tracks with play, pause, seek and track selection, and a frequency visualizer.",
   "keywords": [
     "prose-reader",

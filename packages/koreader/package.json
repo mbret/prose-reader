@@ -1,6 +1,6 @@
 {
   "name": "@prose-reader/koreader",
-  "version": "32.0.0",
+  "version": "33.0.0",
   "description": "Convert reading positions between EPUB CFIs and KOReader's crengine XPointers, and compute the document digests KOReader sync uses.",
   "keywords": [
     "prose-reader",

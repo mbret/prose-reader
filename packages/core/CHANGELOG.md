@@ -3,6 +3,26 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## [33.0.0](https://github.com/mbret/prose-reader/compare/v32.0.0...v33.0.0) (2026-10-23)
+
+### ⚠ BREAKING CHANGES
+
+* **core:** `reader.spine.spineItemsLoader` is now
+  `reader.spineItemsLoader`. `reader.context.bridgeEvent` no longer carries
+  `navigation$`, `position$` and `pagination$`, nor their subjects: read
+  `reader.navigation.navigation$`, `reader.navigation.position$` and
+  `reader.pagination.state$`. The `Spine` constructor no longer takes a
+  `Pagination`.
+
+### Features
+
+* **core:** export the background each theme paints ([15777de](https://github.com/mbret/prose-reader/commit/15777ded1e157612a81f21f251b3d66022170ecb))
+
+### Code Refactoring
+
+* **core:** let the navigator own which navigation holds on the current layout ([0c102de](https://github.com/mbret/prose-reader/commit/0c102dee8e542a4fbcdadca0f85bde4d1569d262)), closes [#596](https://github.com/mbret/prose-reader/issues/596)
+
+
 ## [32.0.0](https://github.com/mbret/prose-reader/compare/v31.0.0...v32.0.0) (2026-10-21)
 
 ### Bug Fixes

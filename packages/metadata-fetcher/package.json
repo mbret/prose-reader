@@ -1,6 +1,6 @@
 {
   "name": "@prose-reader/metadata-fetcher",
-  "version": "32.0.0",
+  "version": "33.0.0",
   "description": "Look up a book's metadata in Google Books, Open Library and Project Gutenberg, and rank the matches, in Node or as an HTTP service.",
   "keywords": [
     "prose-reader",
