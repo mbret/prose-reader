@@ -14,8 +14,13 @@ The audio enhancer automatically builds a track list from spine items that have 
 ### Getting started
 
 ```bash
-npm install @prose-reader/enhancer-audio
+npm install @prose-reader/enhancer-audio @prose-reader/core rxjs
 ```
+
+Both are peer dependencies: the enhancer runs against the reader your app
+creates, so it shares that reader's copies rather than bringing its own. It
+needs the `@prose-reader/core` it was released with, or a later one of the same
+major.
 
 Connect the enhancer to your reader:
 

@@ -22,10 +22,10 @@ We encourage you to visit the [prose reader demo](https://github.com/mbret/prose
 :::
 
 ```bash
-npm install @prose-reader/enhancer-pdf "pdfjs-dist@>=6.2.108 <7"
+npm install @prose-reader/enhancer-pdf @prose-reader/core @prose-reader/archive-reader rxjs "pdfjs-dist@>=6.2.108 <7"
 ```
 
-The enhancer declares `pdfjs-dist` as a `>=6.2.108 <7` peer dependency. The floor
+All four are peer dependencies, `pdfjs-dist` in the `>=6.2.108 <7` range. The floor
 is the patched release, not the major: every `pdfjs-dist` from `5.6.83` up to but
 excluding `6.2.108` is affected by
 [GHSA-hq66-cqwq-w95j](https://github.com/advisories/GHSA-hq66-cqwq-w95j), which
