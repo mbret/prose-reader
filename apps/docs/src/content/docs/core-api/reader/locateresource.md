@@ -22,11 +22,11 @@ type CfiLocatableResource = {
   cfi: string
 }
 
-type ProseParsedCfi {
+type ProseParsedCfi = {
   // This will always be set and is statically inferred from the CFI format.
   // This does not mean the range is valid.
   isCfiRange: boolean
-  itemIndex?: number
+  itemIndex: number
 }
 
 export type LocatableResource = SpineItem | CfiLocatableResource
@@ -34,11 +34,15 @@ export type LocatableResource = SpineItem | CfiLocatableResource
 export type ConsolidatedResource = CfiLocatableResource & ProseParsedCfi & {
   itemPageIndex?: number
   absolutePageIndex?: number
-  startNode?: Node
+  // The node the CFI points to, while its item is loaded.
+  node: Node | null
+  // The character offset at the end of the CFI, as written.
+  offset?: number
+  // The offset the CFI resolves to, while its item is loaded.
   startOffset?: number
   // This is the resolved range if there is one and if it's resolvable.
   // Meaning, a valid range for this book item
-  range?: Range
+  range?: Range | null
 }
 
 locateResource(resource, options)
@@ -48,7 +52,7 @@ locateResource(resource, options)
 
 * `resource`: An object or array of objects that extends `LocatableResource`. When using a cfi, all resources sharing the same cfi will share the same consolidation stream.
 * `options?` :
-  * `mode?:`"shallow" | "load" : Default `load`. Shallow means that the item will not be loaded if needed. Load keeps a reflowable item loaded while you are subscribed, and for a second after, as [`keepSpineItemLoaded()`](/core-api/reader/keepspineitemloaded) does: a pre-paginated item gives its values without being loaded. By using shallow you avoid loading documents excessively but you will only get the values as precise as possible with the current reader state.
+  * `mode?:`"shallow" | "load" : Default `load`. Shallow means that the item will not be loaded if needed. Load keeps a reflowable item loaded while you are subscribed, through [`keepSpineItemLoaded()`](/core-api/reader/keepspineitemloaded), and releases its hold a second after you unsubscribe. Neither mode loads a pre-paginated item: its page indexes need no document, and its `node`, `startOffset` and `range` resolve only while it is loaded for another reason, such as being around the reading position. By using shallow you avoid loading documents excessively but you will only get the values as precise as possible with the current reader state.
 
 ### Returns
 
