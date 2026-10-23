@@ -338,8 +338,9 @@ export const createFullTestReader = (
   )
 
 /**
- * Stubs what jsdom lacks, gives each test a container, and destroys every
- * reader a test created. Call once at the top of a test file.
+ * Stubs what jsdom lacks, gives each test a container, destroys every reader a
+ * test created, and then restores the real clock. Call once at the top of a
+ * test file.
  */
 export const installReaderTestEnvironment = () => {
   window.__PROSE_READER_DEBUG = false
@@ -366,6 +367,7 @@ export const installReaderTestEnvironment = () => {
 
   afterEach(() => {
     for (const reader of createdReaders.splice(0)) reader.destroy()
+    vi.useRealTimers()
     document.getElementById("test-container")?.remove()
     viewport = { ...defaultViewport }
     watchingResizeObservers.clear()

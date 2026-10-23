@@ -210,10 +210,10 @@ describe("SpineItemsLoader", () => {
   })
 
   describe("Given a spine item held loaded outside the window", () => {
-    it("loads it, and unloads it once released", async () => {
+    it("loads it along with the window, and unloads it once released", async () => {
       const {
         loader,
-        items: [, item1],
+        items: [item0, item1],
         clearCalls,
       } = createHarness({
         getVisibleRange: () => ({ beginIndex: 0, endIndex: 0 }),
@@ -227,6 +227,8 @@ describe("SpineItemsLoader", () => {
 
       expect(item1?.load).toHaveBeenCalled()
       expect(item1?.unload).not.toHaveBeenCalled()
+      expect(item0?.load).toHaveBeenCalled()
+      expect(item0?.unload).not.toHaveBeenCalled()
 
       clearCalls()
       release()
