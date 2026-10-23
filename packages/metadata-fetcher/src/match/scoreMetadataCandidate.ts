@@ -1,8 +1,10 @@
 import {
   identifierValue,
   isIsbnBearingScheme,
+  METADATA_CATALOG_SCHEMES,
   type MetadataIdentifier,
   mainTitle,
+  normalizeIdentifierScheme,
   type ResolvedMetadata,
 } from "@prose-reader/archive-reader"
 import type { FetchMetadataInput } from "../types/fetchMetadataInput.ts"
@@ -51,53 +53,53 @@ const stated = (value: string | undefined): string | undefined => {
   return trimmed !== undefined && trimmed.length > 0 ? trimmed : undefined
 }
 
-const identifiersHaveSameValue = (
-  a: MetadataIdentifier,
-  b: MetadataIdentifier,
-): boolean => {
-  const aValue = stated(a.value)?.toLowerCase()
-
-  return aValue !== undefined && aValue === stated(b.value)?.toLowerCase()
+/**
+ * Where an identifier's value means something: the namespace that assigned it
+ * and the value in that namespace's canonical spelling. Two identifiers can
+ * only agree or disagree when they share one.
+ */
+type ScopedIdentifier = {
+  readonly namespace: string
+  readonly value: string
+  readonly identifier: MetadataIdentifier
 }
 
-const identifierScheme = (
-  identifier: MetadataIdentifier,
-): string | undefined =>
-  identifier.scheme.trim().toLowerCase() === "unknown"
-    ? undefined
-    : stated(identifier.scheme)?.toLowerCase()
-
-const identifierLabel = (identifier: MetadataIdentifier): string =>
-  `${identifier.scheme}:${identifier.value}`
+/** Schemes that say how a value was written, not what assigned it. */
+const UNSCOPED_SCHEMES: ReadonlySet<string> = new Set(["url", "uri", "unknown"])
 
 /**
- * An `Unknown` scheme is not a contradiction; a `DOI` and an `ISBN` carrying
- * the same digits are.
+ * The namespace an identifier is scoped to, or `undefined` when nothing says
+ * which one assigned it. A catalog id is read the way archive-reader reads it,
+ * so a Gutenberg URL and a `ProjectGutenberg` number land in the same
+ * namespace; another stated scheme is its own namespace. An untyped value no
+ * catalog addresses — an EPUB's `urn:uuid`, a publisher's web page — has
+ * none: it cannot contradict a catalog's id, nor be confirmed by one.
  */
-const identifiersAgree = (
-  a: MetadataIdentifier,
-  b: MetadataIdentifier,
-): boolean => {
-  if (!identifiersHaveSameValue(a, b)) return false
-  const aScheme = identifierScheme(a)
-  const bScheme = identifierScheme(b)
+const scopedIdentifier = (
+  identifier: MetadataIdentifier,
+): ScopedIdentifier | undefined => {
+  for (const catalogScheme of METADATA_CATALOG_SCHEMES) {
+    const value = identifierValue([identifier], catalogScheme)
 
-  if (aScheme === undefined || bScheme === undefined) return true
+    if (value !== undefined) {
+      return {
+        namespace: catalogScheme.toLowerCase(),
+        value: value.toLowerCase(),
+        identifier,
+      }
+    }
+  }
 
-  return aScheme === bScheme
+  const scheme = normalizeIdentifierScheme(identifier.scheme).toLowerCase()
+  const value = stated(identifier.value)?.toLowerCase()
+
+  if (value === undefined || UNSCOPED_SCHEMES.has(scheme)) return undefined
+
+  return { namespace: scheme, value, identifier }
 }
 
-/** Only a known or consumer-authored scope makes a value unambiguous identity. */
-const identifiersAgreeDecisively = (
-  a: MetadataIdentifier,
-  b: MetadataIdentifier,
-): boolean => {
-  if (!identifiersHaveSameValue(a, b)) return false
-  const aScheme = identifierScheme(a)
-  const bScheme = identifierScheme(b)
-
-  return aScheme !== undefined && aScheme === bScheme
-}
+const identifierLabel = ({ identifier }: ScopedIdentifier): string =>
+  `${identifier.scheme}:${identifier.value}`
 
 const primaryLanguageSubtag = (language: string): string =>
   language.trim().toLowerCase().split("-")[0] ?? ""
@@ -254,9 +256,10 @@ export type ScoredMetadataCandidate = {
  * - **The aggregate is a weighted average** ({@link METADATA_MATCH_WEIGHTS}),
  *   putting a rich query and a sparse one on the same scale.
  * - **Confirmed identity settles it** — an agreeing ISBN, GTIN, or
- *   scheme-scoped identifier pins the score to `1`. A contradictory ISBN or
- *   GTIN pins it to `0`; two disjoint provider-specific identifier lists are
- *   merely unrelated.
+ *   identifier of a namespace both sides state pins the score to `1`. A
+ *   contradictory ISBN or GTIN pins it to `0`. Identifiers are only compared
+ *   within a shared namespace, so two lists from different id spaces — an
+ *   EPUB's `urn:uuid` against a catalog's own id — are merely unrelated.
  */
 export const scoreMetadataCandidate = (
   query: FetchMetadataInput,
@@ -330,27 +333,45 @@ export const scoreMetadataCandidate = (
 
   // ISBN and GTIN have normalized comparisons above. Comparing their raw
   // spellings again would emit a false generic mismatch for hyphenated ISBNs.
-  const queryIdentifiers = (query.identifiers ?? []).filter(
-    (identifier) => !isIsbnBearingScheme(identifier.scheme),
+  const scopedIdentifiers = (
+    identifiers: ReadonlyArray<MetadataIdentifier> | undefined,
+  ): ReadonlyArray<ScopedIdentifier> =>
+    (identifiers ?? []).flatMap((identifier) => {
+      if (isIsbnBearingScheme(identifier.scheme)) return []
+
+      const scoped = scopedIdentifier(identifier)
+
+      return scoped !== undefined ? [scoped] : []
+    })
+  const candidateScopedIdentifiers = scopedIdentifiers(candidate.identifiers)
+  // Only a namespace both sides state can agree or disagree: an EPUB's
+  // `urn:uuid` and a catalog's own id do not contradict each other, they
+  // cannot be compared at all.
+  const queryComparableIdentifiers = scopedIdentifiers(
+    query.identifiers,
+  ).filter((scoped) =>
+    candidateScopedIdentifiers.some(
+      (other) => other.namespace === scoped.namespace,
+    ),
   )
-  const candidateIdentifiers = (candidate.identifiers ?? []).filter(
-    (identifier) => !isIsbnBearingScheme(identifier.scheme),
+  const candidateComparableIdentifiers = candidateScopedIdentifiers.filter(
+    (scoped) =>
+      queryComparableIdentifiers.some(
+        (other) => other.namespace === scoped.namespace,
+      ),
   )
-  const decisiveIdentifierAgreement = queryIdentifiers.some((identifier) =>
-    candidateIdentifiers.some((other) =>
-      identifiersAgreeDecisively(identifier, other),
+  const sharedIdentifier = queryComparableIdentifiers.some((scoped) =>
+    candidateComparableIdentifiers.some(
+      (other) =>
+        other.namespace === scoped.namespace && other.value === scoped.value,
     ),
   )
 
-  if (queryIdentifiers.length > 0 && candidateIdentifiers.length > 0) {
-    const shared = queryIdentifiers.some((identifier) =>
-      candidateIdentifiers.some((other) => identifiersAgree(identifier, other)),
-    )
-
+  if (queryComparableIdentifiers.length > 0) {
     addSignal("identifiers", {
-      score: shared ? 1 : 0,
-      query: queryIdentifiers.map(identifierLabel).join(", "),
-      candidate: candidateIdentifiers.map(identifierLabel).join(", "),
+      score: sharedIdentifier ? 1 : 0,
+      query: queryComparableIdentifiers.map(identifierLabel).join(", "),
+      candidate: candidateComparableIdentifiers.map(identifierLabel).join(", "),
     })
   }
 
@@ -451,10 +472,10 @@ export const scoreMetadataCandidate = (
   // title and author scores (0.8 + 0.5) / 2.3 ≈ 0.57, accepted.
   if (decisive.some((signal) => signal.score === 0))
     return { score: 0, signals }
-  if (
-    decisiveIdentifierAgreement ||
-    decisive.some((signal) => signal.score === 1)
-  )
+  // A shared identifier is scoped, so it is identity too. Unlike an ISBN, a
+  // differing one is not a contradiction: one edition can sit under several
+  // records of the same catalog.
+  if (sharedIdentifier || decisive.some((signal) => signal.score === 1))
     return { score: 1, signals }
 
   const totalWeight = signals.reduce(

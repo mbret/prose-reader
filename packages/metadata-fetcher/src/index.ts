@@ -48,11 +48,7 @@ export {
 export { metadataInputFromResolvedArchive } from "./metadataInputFromResolvedArchive.ts"
 export type { GoogleBooksProviderOptions } from "./providers/googleBooks/createGoogleBooksProvider.ts"
 export { createGoogleBooksProvider } from "./providers/googleBooks/createGoogleBooksProvider.ts"
-export type { GoogleBooksLookup } from "./providers/googleBooks/identifier.ts"
-export {
-  GOOGLE_BOOKS_IDENTIFIER_SCHEME,
-  googleBooksLookupFromInput,
-} from "./providers/googleBooks/identifier.ts"
+export { GOOGLE_BOOKS_IDENTIFIER_SCHEME } from "./providers/googleBooks/identifier.ts"
 export type {
   GoogleBooksImageLinks,
   GoogleBooksIndustryIdentifier,
@@ -83,10 +79,7 @@ export {
 } from "./providers/openLibrary/resolve.ts"
 export type { ProjectGutenbergProviderOptions } from "./providers/projectGutenberg/createProjectGutenbergProvider.ts"
 export { createProjectGutenbergProvider } from "./providers/projectGutenberg/createProjectGutenbergProvider.ts"
-export {
-  PROJECT_GUTENBERG_IDENTIFIER_SCHEME,
-  projectGutenbergLookupFromInput,
-} from "./providers/projectGutenberg/identifier.ts"
+export { PROJECT_GUTENBERG_IDENTIFIER_SCHEME } from "./providers/projectGutenberg/identifier.ts"
 export type {
   ProjectGutenbergContributor,
   ProjectGutenbergCover,

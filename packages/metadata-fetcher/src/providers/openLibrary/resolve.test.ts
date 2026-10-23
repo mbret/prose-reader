@@ -137,24 +137,6 @@ describe("resolveOpenLibraryDoc", () => {
     })
   })
 
-  it("echoes a Gutenberg URL only after an exact external-id lookup", () => {
-    expect(
-      resolveOpenLibraryDoc(
-        { title: "Pride and Prejudice", id_project_gutenberg: ["1342"] },
-        {
-          coversBaseUrl,
-          matchedProjectGutenbergIdentifier: {
-            value: "http://www.gutenberg.org/1342",
-            scheme: "URL",
-          },
-        },
-      ).identifiers,
-    ).toEqual([
-      { value: "http://www.gutenberg.org/1342", scheme: "URL" },
-      { value: "1342", scheme: "ProjectGutenberg" },
-    ])
-  })
-
   it("dedupes the languages the MARC variants collapse into", () => {
     expect(
       resolveOpenLibraryDoc({ language: ["fre", "fra"] }, { coversBaseUrl })

@@ -1,10 +1,10 @@
 import type {
   KnownMetadataIdentifierScheme,
-  MetadataIdentifier,
   ResolvedMetadata,
 } from "@prose-reader/archive-reader"
 import { resolvedAggregateRating } from "../../utils/aggregateRating.ts"
 import { omitUndefined } from "../../utils/omitUndefined.ts"
+import { PROJECT_GUTENBERG_IDENTIFIER_SCHEME } from "../projectGutenberg/identifier.ts"
 import { marcLanguageToBcp47 } from "./marcLanguage.ts"
 import type { OpenLibraryDoc } from "./parse.ts"
 
@@ -17,8 +17,6 @@ export const OPEN_LIBRARY_MAX_SUBJECTS = 25
 
 export const OPEN_LIBRARY_IDENTIFIER_SCHEME =
   "OpenLibrary" satisfies KnownMetadataIdentifierScheme
-const PROJECT_GUTENBERG_IDENTIFIER_SCHEME =
-  "ProjectGutenberg" satisfies KnownMetadataIdentifierScheme
 
 const emptyToUndefined = <T>(
   values: ReadonlyArray<T>,
@@ -43,8 +41,6 @@ export const resolveOpenLibraryDoc = (
     readonly coversBaseUrl: string
     /** The ISBN this record was looked up by, when it was. */
     readonly isbn?: string
-    /** The source identifier that an exact Gutenberg-id lookup confirmed. */
-    readonly matchedProjectGutenbergIdentifier?: MetadataIdentifier
   },
 ): ResolvedMetadata => {
   const {
@@ -85,9 +81,6 @@ export const resolveOpenLibraryDoc = (
   const identifiers = [
     ...(options.isbn !== undefined
       ? [{ value: options.isbn, scheme: "ISBN" }]
-      : []),
-    ...(options.matchedProjectGutenbergIdentifier !== undefined
-      ? [options.matchedProjectGutenbergIdentifier]
       : []),
     ...(id_project_gutenberg ?? []).map((value) => ({
       value,

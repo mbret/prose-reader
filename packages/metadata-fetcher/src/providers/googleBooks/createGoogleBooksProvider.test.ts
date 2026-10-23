@@ -108,12 +108,14 @@ describe("createGoogleBooksProvider", () => {
     expect(requestedUrl(fetchMock, 0).pathname).toBe(
       "/books/v1/volumes/zyTCAlFPjgYC",
     )
-    expect(candidate?.metadata.identifiers).toEqual(
-      expect.arrayContaining([
-        { value, scheme: "URL" },
-        { value: "zyTCAlFPjgYC", scheme: "GoogleBooks" },
-      ]),
-    )
+    expect(candidate?.metadata.identifiers).toContainEqual({
+      value: "zyTCAlFPjgYC",
+      scheme: "GoogleBooks",
+    })
+    expect(candidate?.metadata.identifiers).not.toContainEqual({
+      value,
+      scheme: "URL",
+    })
     expect(scoreMetadataCandidate(input, candidate?.metadata ?? {}).score).toBe(
       1,
     )

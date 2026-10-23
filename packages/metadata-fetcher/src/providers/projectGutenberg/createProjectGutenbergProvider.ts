@@ -1,3 +1,4 @@
+import { identifierValue } from "@prose-reader/archive-reader"
 import type { FetchMetadataInput } from "../../types/fetchMetadataInput.ts"
 import type {
   MetadataProvider,
@@ -5,7 +6,7 @@ import type {
 } from "../../types/provider.ts"
 import { PROJECT_GUTENBERG_PROVIDER_ID } from "../providerIds.ts"
 import { MetadataProviderResponseError } from "../responseError.ts"
-import { projectGutenbergLookupFromInput } from "./identifier.ts"
+import { PROJECT_GUTENBERG_IDENTIFIER_SCHEME } from "./identifier.ts"
 import { parseProjectGutenbergRdf } from "./parse.ts"
 import { resolveProjectGutenbergRecord } from "./resolve.ts"
 
@@ -35,12 +36,15 @@ export const createProjectGutenbergProvider = (
     input: FetchMetadataInput,
     context: MetadataProviderContext,
   ) => {
-    const lookup = projectGutenbergLookupFromInput(input)
+    const ebookId = identifierValue(
+      input.identifiers,
+      PROJECT_GUTENBERG_IDENTIFIER_SCHEME,
+    )
 
-    if (lookup === undefined) return []
+    if (ebookId === undefined) return []
 
     const recordUrl = new URL(
-      `/cache/epub/${lookup.id}/pg${lookup.id}.rdf`,
+      `/cache/epub/${ebookId}/pg${ebookId}.rdf`,
       baseUrl,
     )
     const doFetch = options.fetch ?? globalThis.fetch
@@ -65,23 +69,20 @@ export const createProjectGutenbergProvider = (
 
     const record = parseProjectGutenbergRdf(await response.text())
 
-    if (record === undefined || record.id !== lookup.id) {
+    if (record === undefined || record.id !== ebookId) {
       throw new Error(
-        `Project Gutenberg RDF did not contain the requested eBook ${lookup.id}`,
+        `Project Gutenberg RDF did not contain the requested eBook ${ebookId}`,
       )
     }
 
-    const bookUrl = new URL(`/ebooks/${lookup.id}`, baseUrl).toString()
+    const bookUrl = new URL(`/ebooks/${ebookId}`, baseUrl).toString()
 
     return [
       {
         id: record.id,
         url: bookUrl,
         raw: record,
-        metadata: resolveProjectGutenbergRecord(record, {
-          baseUrl,
-          matchedIdentifier: lookup.identifier,
-        }),
+        metadata: resolveProjectGutenbergRecord(record, { baseUrl }),
       },
     ]
   }

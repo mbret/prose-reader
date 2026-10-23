@@ -5,10 +5,7 @@ import type {
   MetadataProvider,
   MetadataProviderContext,
 } from "../../types/provider.ts"
-import {
-  type ProjectGutenbergLookup,
-  projectGutenbergLookupFromInput,
-} from "../projectGutenberg/identifier.ts"
+import { PROJECT_GUTENBERG_IDENTIFIER_SCHEME } from "../projectGutenberg/identifier.ts"
 import { OPEN_LIBRARY_PROVIDER_ID } from "../providerIds.ts"
 import { MetadataProviderResponseError } from "../responseError.ts"
 import { type OpenLibraryDoc, parseOpenLibrarySearchResponse } from "./parse.ts"
@@ -128,15 +125,12 @@ export const createOpenLibraryProvider = (
     docs: ReadonlyArray<OpenLibraryDoc>,
     options: {
       readonly isbn?: string
-      readonly confirmedProjectGutenberg?: ProjectGutenbergLookup
     } = {},
   ): ReadonlyArray<MetadataCandidate> =>
     docs.map((doc) => ({
       metadata: resolveOpenLibraryDoc(doc, {
         coversBaseUrl,
         isbn: options.isbn,
-        matchedProjectGutenbergIdentifier:
-          options.confirmedProjectGutenberg?.identifier,
       }),
       id: doc.key,
       url: doc.key !== undefined ? `${baseUrl}${doc.key}` : undefined,
@@ -148,7 +142,10 @@ export const createOpenLibraryProvider = (
     name: "Open Library",
     search: async (input, context) => {
       const isbn = identifierValue(input.identifiers, "ISBN")
-      const projectGutenberg = projectGutenbergLookupFromInput(input)
+      const projectGutenbergId = identifierValue(
+        input.identifiers,
+        PROJECT_GUTENBERG_IDENTIFIER_SCHEME,
+      )
 
       if (isbn !== undefined) {
         const docs = await searchDocs({ isbn }, context)
@@ -156,17 +153,13 @@ export const createOpenLibraryProvider = (
         if (docs.length > 0) return toCandidates(docs, { isbn })
       }
 
-      if (projectGutenberg !== undefined) {
+      if (projectGutenbergId !== undefined) {
         const docs = await searchDocs(
-          { q: `id_project_gutenberg:${projectGutenberg.id}` },
+          { q: `id_project_gutenberg:${projectGutenbergId}` },
           context,
         )
 
-        if (docs.length > 0) {
-          return toCandidates(docs, {
-            confirmedProjectGutenberg: projectGutenberg,
-          })
-        }
+        if (docs.length > 0) return toCandidates(docs)
       }
 
       const terms = searchTerms(input)

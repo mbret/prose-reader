@@ -301,7 +301,51 @@ describe("scoreMetadataCandidate", () => {
     )
   })
 
-  it("does not make an Unknown identifier match decisive", () => {
+  it("makes a Gutenberg URL agree, decisively, with a ProjectGutenberg id", () => {
+    const result = score(
+      {
+        title: "A locally edited title",
+        identifiers: [
+          { value: "http://www.gutenberg.org/78139", scheme: "URL" },
+        ],
+      },
+      {
+        titles: [{ value: "The catalog title" }],
+        identifiers: [{ value: "78139", scheme: "ProjectGutenberg" }],
+      },
+    )
+
+    expect(result.score).toBe(1)
+    expect(result.signals).toContainEqual(
+      expect.objectContaining({
+        field: "identifiers",
+        score: 1,
+        query: "URL:http://www.gutenberg.org/78139",
+        candidate: "ProjectGutenberg:78139",
+      }),
+    )
+  })
+
+  it("scores a different id of the same catalog as a disagreement, not a contradiction", () => {
+    const result = score(
+      {
+        title: "Dune",
+        identifiers: [{ value: "zyTCAlFPjgYC", scheme: "GoogleBooks" }],
+      },
+      {
+        titles: [{ value: "Dune" }],
+        identifiers: [{ value: "B1hSG45JCX4C", scheme: "GoogleBooks" }],
+      },
+    )
+
+    expect(result.signals).toContainEqual(
+      expect.objectContaining({ field: "identifiers", score: 0 }),
+    )
+    expect(result.score).toBeGreaterThan(0)
+    expect(result.score).toBeLessThan(1)
+  })
+
+  it("does not compare an Unknown value against a catalog id, even an equal one", () => {
     const result = score(
       {
         title: "Dune",
@@ -313,13 +357,38 @@ describe("scoreMetadataCandidate", () => {
       },
     )
 
-    expect(result.score).toBeLessThan(1)
-    expect(result.signals).toContainEqual(
-      expect.objectContaining({ field: "identifiers", score: 1 }),
+    expect(result.signals.map((signal) => signal.field)).toEqual(["title"])
+  })
+
+  it("does not compare an EPUB urn:uuid with a catalog's own id", () => {
+    const query: FetchMetadataInput = {
+      title: "Dune",
+      authors: ["Frank Herbert"],
+      identifiers: [
+        {
+          value: "urn:uuid:5b1a4ef0-3c4e-4a3c-9a59-3f1c1c7c0d11",
+          scheme: "Unknown",
+        },
+      ],
+    }
+    const candidate: ResolvedMetadata = {
+      titles: [{ value: "Dune Messiah" }],
+      contributors: [{ name: "Frank Herbert", roles: ["author"] }],
+      identifiers: [{ value: "B1hSG45JCX4C", scheme: "GoogleBooks" }],
+    }
+
+    const result = score(query, candidate)
+
+    expect(result.signals.map((signal) => signal.field)).toEqual([
+      "title",
+      "authors",
+    ])
+    expect(result).toEqual(
+      score({ ...query, identifiers: undefined }, candidate),
     )
   })
 
-  it("does not treat disjoint provider identifier spaces as decisive contradictions", () => {
+  it("does not compare identifiers of disjoint provider id spaces", () => {
     const result = score(
       {
         title: "Dune",
@@ -327,11 +396,41 @@ describe("scoreMetadataCandidate", () => {
       },
       {
         titles: [{ value: "Dune" }],
-        identifiers: [{ value: "two", scheme: "CatalogB" }],
+        identifiers: [
+          { value: "two", scheme: "CatalogB" },
+          { value: "/works/OL893415W", scheme: "OpenLibrary" },
+        ],
       },
     )
 
-    expect(result.score).toBeGreaterThan(0.5)
+    expect(result.signals.map((signal) => signal.field)).toEqual(["title"])
+    expect(result.score).toBe(1)
+  })
+
+  it("shows only the identifiers it compared", () => {
+    const result = score(
+      {
+        identifiers: [
+          { value: "urn:uuid:5b1a4ef0", scheme: "Unknown" },
+          { value: "OL893415W", scheme: "OpenLibrary" },
+        ],
+      },
+      {
+        identifiers: [
+          { value: "zyTCAlFPjgYC", scheme: "GoogleBooks" },
+          { value: "/works/OL893415W", scheme: "OpenLibrary" },
+        ],
+      },
+    )
+
+    expect(result.signals).toEqual([
+      expect.objectContaining({
+        field: "identifiers",
+        score: 1,
+        query: "OpenLibrary:OL893415W",
+        candidate: "OpenLibrary:/works/OL893415W",
+      }),
+    ])
   })
 
   it("compares languages on their primary subtag", () => {
