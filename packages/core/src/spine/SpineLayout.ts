@@ -1,12 +1,11 @@
 import {
   asapScheduler,
   BehaviorSubject,
+  concatMap,
   defer,
   filter,
-  from,
   map,
   merge,
-  mergeScan,
   type Observable,
   observeOn,
   of,
@@ -18,7 +17,6 @@ import {
   takeUntil,
   tap,
   timer,
-  toArray,
 } from "rxjs"
 import type { Context } from "../context/Context"
 import type { ReaderSettingsManager } from "../settings/ReaderSettingsManager"
@@ -58,6 +56,14 @@ export type SpineLayoutOptions = {
   immediate?: boolean
 }
 
+type SpineLayoutRequest = {
+  options: SpineLayoutOptions
+  /** Whether the viewport is measured first, as for a layout of the reader. */
+  measuresViewport: boolean
+  /** The first item the request can change. */
+  firstAffectedItemIndex: number
+}
+
 type SpineItemEndOffset = { horizontalOffset: number; verticalOffset: number }
 
 /**
@@ -73,22 +79,10 @@ type LaidOutSpineItem = {
   endOffset: SpineItemEndOffset
 }
 
-/**
- * Where the first item starts, as if an item of no size stood before it at
- * the spine's start: every item is laid out from the end of the one before.
- */
-const spineStart: LaidOutSpineItem = {
-  layout: new SpineItemSpineLayout({
-    left: 0,
-    right: 0,
-    top: 0,
-    bottom: 0,
-    width: 0,
-    height: 0,
-    x: 0,
-    y: 0,
-  }),
-  endOffset: { horizontalOffset: 0, verticalOffset: 0 },
+/** Where the first item starts, with no item ending before it. */
+const spineStartOffset: SpineItemEndOffset = {
+  horizontalOffset: 0,
+  verticalOffset: 0,
 }
 
 /**
@@ -177,7 +171,7 @@ export class SpineLayout extends DestroyableClass {
      * them out: no hook, no renderer layout, no dirty flag. One of the reader
      * lays them all out.
      */
-    const request$ = merge(
+    const request$: Observable<SpineLayoutRequest> = merge(
       this.externalLayoutTrigger.pipe(
         map((options) => ({
           options,
@@ -190,81 +184,17 @@ export class SpineLayout extends DestroyableClass {
       ),
     )
 
-    /**
-     * Each request starts from the state the previous one left: the one a
-     * completed pass gave, or the request it cancels, which carries the first
-     * item it was waiting to lay out.
-     */
     request$
       .pipe(
+        /**
+         * A request starts from the state the previous one left: the one a
+         * completed pass gave or, when it cancels a pass still running, the
+         * one of the request it replaces, which holds the first item that
+         * pass had yet to lay out.
+         */
         switchScan(
-          (state, { options, measuresViewport, firstAffectedItemIndex }) => {
-            /**
-             * The pass keeps the layouts of the items before the first one any
-             * request since the last completed pass affects, as far as that
-             * pass laid them out: before one completes, there is none to keep.
-             * It lays out every item after them.
-             */
-            const keptItems = state.laidOutItems.slice(
-              0,
-              Math.min(
-                state.stage === "requested"
-                  ? state.firstItemIndexAwaitingLayout
-                  : firstAffectedItemIndex,
-                firstAffectedItemIndex,
-              ),
-            )
-            const firstItemIndexAwaitingLayout = keptItems.length
-
-            /**
-             * The wait sits inside the switch rather than before it, so a
-             * request cancels a pass already running for an older one instead
-             * of letting it finish while the new request waits. Requests still
-             * coalesce, since each one restarts the wait.
-             *
-             * Immediate only skips this artificial delay. Item layout itself
-             * can still complete asynchronously depending on the renderer.
-             */
-            const wait$: Observable<unknown> = options.immediate
-              ? of(undefined)
-              : timer(50)
-
-            const laidOut$ = defer(() => {
-              if (measuresViewport) this.viewport.layout()
-
-              this.spineItemsManager.items
-                .slice(firstItemIndexAwaitingLayout)
-                .forEach((item) => {
-                  item.markDirty()
-                })
-
-              return wait$
-            }).pipe(
-              switchMap(() => this.layOutItems(keptItems)),
-              map(
-                (laidOutItems): SpineLayoutState => ({
-                  stage: "laidOut",
-                  laidOutItems,
-                }),
-              ),
-            )
-
-            /**
-             * The request is announced before anything is done for it:
-             * nothing above runs until `laidOut$` is subscribed, and
-             * `startWith` delivers the announcement to every listener first.
-             * Measuring the viewport notifies synchronously, and whatever it
-             * notifies may navigate, so everything tracking whether the layout
-             * is current must already know it is not.
-             */
-            return laidOut$.pipe(
-              startWith<SpineLayoutState>({
-                stage: "requested",
-                laidOutItems: state.laidOutItems,
-                firstItemIndexAwaitingLayout,
-              }),
-            )
-          },
+          (previousState, request) =>
+            this.runLayoutPass(previousState, request),
           this.stateSubject.value,
         ),
         takeUntil(this.destroy$),
@@ -273,6 +203,85 @@ export class SpineLayout extends DestroyableClass {
       .subscribe(this.stateSubject)
 
     this.watchForVerticalWritingUpdate()
+  }
+
+  /**
+   * The states a request takes the layout through: requested at once, then
+   * laid out once its pass completes, unless a newer request cancels it first.
+   */
+  private runLayoutPass(
+    previousState: SpineLayoutState,
+    { options, measuresViewport, firstAffectedItemIndex }: SpineLayoutRequest,
+  ): Observable<SpineLayoutState> {
+    /**
+     * A request whose pass this one cancels still counts: that pass may not
+     * have laid out the items it affects.
+     */
+    const firstItemIndexAffectedSinceLastPass =
+      previousState.stage === "requested"
+        ? Math.min(
+            previousState.firstItemIndexAwaitingLayout,
+            firstAffectedItemIndex,
+          )
+        : firstAffectedItemIndex
+
+    /**
+     * The items before it keep their layouts, as far as a completed pass gave
+     * them: before the first pass completes, there are none to keep.
+     */
+    const keptItems = previousState.laidOutItems.slice(
+      0,
+      firstItemIndexAffectedSinceLastPass,
+    )
+    const firstItemIndexAwaitingLayout = keptItems.length
+
+    /**
+     * The wait sits inside the switch rather than before it, so a request
+     * cancels a pass already running for an older one instead of letting it
+     * finish while the new request waits. Requests still coalesce, since each
+     * one restarts the wait.
+     *
+     * Immediate only skips this artificial delay. Item layout itself can still
+     * complete asynchronously depending on the renderer.
+     */
+    const wait$: Observable<unknown> = options.immediate
+      ? of(undefined)
+      : timer(50)
+
+    const laidOut$ = defer(() => {
+      if (measuresViewport) this.viewport.layout()
+
+      this.spineItemsManager.items
+        .slice(firstItemIndexAwaitingLayout)
+        .forEach((item) => {
+          item.markDirty()
+        })
+
+      return wait$
+    }).pipe(
+      switchMap(() => this.layOutItems(keptItems)),
+      map(
+        (laidOutItems): SpineLayoutState => ({
+          stage: "laidOut",
+          laidOutItems,
+        }),
+      ),
+    )
+
+    /**
+     * The request is announced before anything is done for it: nothing above
+     * runs until `laidOut$` is subscribed, and `startWith` delivers the
+     * announcement to every listener first. Measuring the viewport notifies
+     * synchronously, and whatever it notifies may navigate, so everything
+     * tracking whether the layout is current must already know it is not.
+     */
+    return laidOut$.pipe(
+      startWith<SpineLayoutState>({
+        stage: "requested",
+        laidOutItems: previousState.laidOutItems,
+        firstItemIndexAwaitingLayout,
+      }),
+    )
   }
 
   private watchForVerticalWritingUpdate() {
@@ -290,26 +299,42 @@ export class SpineLayout extends DestroyableClass {
   }
 
   /**
-   * Lays out the items after the ones kept, each from where the one before it
-   * ends, and gives every item of the spine once the last is laid out. The
-   * items kept are the first ones, as the last completed pass laid them out,
-   * which nothing requested since can have changed.
+   * Lays out the items after the ones kept, one after the other, each from
+   * where the one before it ends, and gives every item of the spine once the
+   * last is laid out. The items kept are the first ones, as the last completed
+   * pass laid them out, which nothing requested since can have changed.
    */
   private layOutItems(
     keptItems: readonly LaidOutSpineItem[],
   ): Observable<readonly LaidOutSpineItem[]> {
-    return from(this.spineItemsManager.items.slice(keptItems.length)).pipe(
-      mergeScan(
-        (itemBefore, item) => this.layOutItem(item, itemBefore.endOffset),
-        keptItems[keptItems.length - 1] ?? spineStart,
-        // one at a time, since each starts where the one before it ends
-        1,
-      ),
-      toArray(),
-      map((newlyLaidOutItems) => [...keptItems, ...newlyLaidOutItems]),
+    return this.spineItemsManager.items.slice(keptItems.length).reduce(
+      (laidOutItems$, item) =>
+        laidOutItems$.pipe(
+          concatMap((laidOutItems) =>
+            this.layOutItem(
+              item,
+              laidOutItems[laidOutItems.length - 1]?.endOffset ??
+                spineStartOffset,
+            ).pipe(
+              map((laidOutItem) => {
+                laidOutItems.push(laidOutItem)
+
+                return laidOutItems
+              }),
+            ),
+          ),
+        ),
+      /**
+       * A list of the pass's own, so pushing to it is safe: nothing else sees
+       * it before the pass completes, and a cancelled pass drops it. Copying
+       * it for each item instead would cost the square of their number, which
+       * a spine of a few thousand items feels.
+       */
+      defer(() => of([...keptItems])),
     )
   }
 
+  /** Lays out one item from where the one before it ends. */
   private layOutItem(
     item: SpineItem,
     { horizontalOffset, verticalOffset }: SpineItemEndOffset,
