@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
 import { first, firstValueFrom, skip } from "rxjs"
-import { describe, expect, it } from "vitest"
+import { describe, expect, it, vi } from "vitest"
 import {
   createTestReader,
   installReaderTestEnvironment,
@@ -180,5 +180,17 @@ describe("the navigation against the current layout", () => {
     await settledOn(reader, 1)
 
     expect(paginatedItems.slice(paginatedItems.indexOf(1))).not.toContain(0)
+  })
+
+  it("completes when the reader is destroyed", () => {
+    const reader = createTestReader()
+    const onComplete = vi.fn()
+
+    reader.navigation.navigationAgainstCurrentLayout$.subscribe({
+      complete: onComplete,
+    })
+    reader.destroy()
+
+    expect(onComplete).toHaveBeenCalled()
   })
 })

@@ -228,13 +228,12 @@ export class InternalNavigator extends DestroyableClass {
         undefined,
       ),
       filter(isDefined),
+      takeUntil(this.destroy$),
       shareReplay({ bufferSize: 1, refCount: true }),
     )
 
     // From construction on, so it has seen every navigation and layout.
-    this.navigationAgainstCurrentLayout$
-      .pipe(takeUntil(this.destroy$))
-      .subscribe()
+    this.navigationAgainstCurrentLayout$.subscribe()
 
     const getNavigationVisibleArea = () =>
       getActiveNavigationModeController().getNavigationVisibleArea()

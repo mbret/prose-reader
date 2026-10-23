@@ -243,7 +243,8 @@ time a layout makes it stop holding. It does not hold:
 
 A navigation made while a layout is pending does not hold either. Read it
 rather than `.navigation$` when what you do depends on the layout, such as
-which spine items or pages a navigation shows.
+which spine items or pages a navigation shows. It completes when the reader is
+destroyed.
 
 ### `.position$` { #positionusd }
 
