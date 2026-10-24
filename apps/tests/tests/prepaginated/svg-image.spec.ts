@@ -54,4 +54,68 @@ test.describe("Given a prepaginated book with a page drawn as an SVG image", () 
     expect(documentProtocol).toBe("blob:")
     expect(picture).toEqual({ width: 924, height: 1458 })
   })
+
+  test("should report the page loaded once its picture can be drawn", async ({
+    page,
+  }) => {
+    await page.goto("http://localhost:3333/tests/prepaginated/index.html")
+    await waitForSettled(page)
+
+    const pageLoad = await (await getReader(page)).evaluate(
+      (reader, index) =>
+        new Promise<{
+          loadStatusBeforeNavigation: string | undefined
+          pictureAlpha: number | string
+          loadDuration: number
+        }>((resolve) => {
+          const loadStatusBeforeNavigation =
+            reader.spineItemsManager.get(index)?.value.loadStatus
+          let loadStartedAt = Number.NaN
+
+          reader.spineItemsObserver.itemLoadStatusChange$.subscribe(
+            ({ item, loadStatus }) => {
+              if (item.index !== index) return
+
+              if (loadStatus === "loading") loadStartedAt = performance.now()
+
+              if (loadStatus !== "loaded") return
+
+              const image = item.loadedDocument?.querySelector("image")
+              const canvas = document.createElement("canvas")
+              const context = canvas.getContext("2d")
+              let pictureAlpha: number | string
+
+              canvas.width = 1
+              canvas.height = 1
+
+              try {
+                if (!image || !context) throw new Error("no image or canvas")
+
+                // A picture not loaded yet draws nothing.
+                context.drawImage(image, 0, 0, 1, 1)
+                pictureAlpha = context.getImageData(0, 0, 1, 1).data[3] ?? 0
+              } catch (error) {
+                pictureAlpha = String(error)
+              }
+
+              resolve({
+                loadStatusBeforeNavigation,
+                pictureAlpha,
+                loadDuration: performance.now() - loadStartedAt,
+              })
+            },
+          )
+
+          reader.navigation.goToSpineItem({ indexOrId: index })
+        }),
+      SVG_IMAGE_PAGE_SPINE_ITEM_INDEX,
+    )
+
+    expect(pageLoad.loadStatusBeforeNavigation).toBe("idle")
+    // `img-3.jpg` is opaque.
+    expect(pageLoad.pictureAlpha).toBe(255)
+    // The picture reported its own load: the reader gives up on an asset
+    // after 5 seconds.
+    expect(pageLoad.loadDuration).toBeLessThan(5_000)
+  })
 })

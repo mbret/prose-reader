@@ -55,6 +55,32 @@ async function run() {
     readingPositions.push(readingPosition)
   })
 
+  // The pictures of each chapter as it reports loaded, from the reader's
+  // creation on.
+  const picturesWhenLoaded: {
+    itemIndex: number
+    images: {
+      reference: string | null
+      complete: boolean
+      naturalWidth: number
+    }[]
+  }[] = []
+
+  reader.spineItemsObserver.itemLoadStatusChange$.subscribe(
+    ({ item, loadStatus }) => {
+      if (loadStatus !== "loaded") return
+
+      picturesWhenLoaded.push({
+        itemIndex: item.index,
+        images: Array.from(item.loadedDocument?.images ?? [], (image) => ({
+          reference: image.getAttribute("src"),
+          complete: image.complete,
+          naturalWidth: image.naturalWidth,
+        })),
+      })
+    },
+  )
+
   // biome-ignore lint/style/noNonNullAssertion: TODO
   reader.mount(document.getElementById(`app`)!)
 
@@ -62,6 +88,8 @@ async function run() {
   window.reader = reader
   // @ts-expect-error export for the specs
   window.readingPositions = readingPositions
+  // @ts-expect-error export for the specs
+  window.picturesWhenLoaded = picturesWhenLoaded
 }
 
 run()
