@@ -30,11 +30,12 @@ anything else hears of them. A newer request cancels everything still running
 for older ones, so the pages that make the layout current are the ones it asked
 for. It is `false` until the first pages are published.
 
-Read it before you use where a page or a spine item is: while it is `false`,
-they describe the layout before the request. A spine item's `isDirty` cannot
-tell: a layout clears it as soon as it lays that item out, long before the
-pages are computed again. For the latest navigation with whether it holds on
-this layout, read
+Read it before you use where a page is: while it is `false`, the pages describe
+the layout before the request. A spine item's place in the spine does not wait
+for them: it is replaced once the items are laid out. Neither does a spine
+item's `isDirty`: a layout clears it as soon as it lays that item out, long
+before the pages are computed again. For the latest navigation with whether it
+holds on this layout, read
 [`reader.navigation.navigationAgainstCurrentLayout$`](/core-api/navigation#navigationagainstcurrentlayoutusd).
 
 It completes when the reader is destroyed.
