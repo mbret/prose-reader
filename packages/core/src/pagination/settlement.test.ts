@@ -1,5 +1,12 @@
 // @vitest-environment jsdom
-import { distinctUntilChanged, filter, first, map, skip } from "rxjs"
+import {
+  distinctUntilChanged,
+  filter,
+  first,
+  firstValueFrom,
+  map,
+  skip,
+} from "rxjs"
 import { describe, expect, it, vi } from "vitest"
 import {
   createEnhancedTestReader,
@@ -310,18 +317,16 @@ describe("pagination settlement", () => {
 
   it("withdraws settlement while the spine relays out for another item, and settles again once on the new layout", async () => {
     /**
-     * Item 1 is not visible. When its load finishes, the spine lays every item
-     * out again on its own, without any request through `reader.layout()`.
+     * Item 1 is not visible. When its load finishes, the spine lays it and the
+     * items after it out again on its own, without any request through
+     * `reader.layout()`. The page being read is before it, but the pages are
+     * computed for the whole spine, and the result is resolved over them.
      */
     const otherItem = holdItem("/page_1.jpg")
     const reader = createTestReader({ getRenderer: otherItem.getRenderer })
 
     mountTestReader(reader)
     await settledOn(reader, 0)
-
-    const visibleItem = reader.spineItemsManager.get(0)
-
-    if (!visibleItem) throw new Error("item 0 is missing")
 
     const settlement: boolean[] = []
     reader.pagination.state$
@@ -333,7 +338,11 @@ describe("pagination settlement", () => {
       .subscribe((isSettled) => settlement.push(isSettled))
 
     otherItem.release()
-    await vi.waitFor(() => expect(visibleItem.value.isDirty).toBe(true))
+    await firstValueFrom(
+      reader.spine.isLayoutCurrent$.pipe(
+        filter((isLayoutCurrent) => !isLayoutCurrent),
+      ),
+    )
 
     // The pages are about to be recomputed, so what the result says about the
     // page being read may no longer hold.
@@ -358,12 +367,12 @@ describe("pagination settlement", () => {
     mountTestReader(reader)
     await settledOn(reader, 0)
 
-    const visibleItem = reader.spineItemsManager.get(0)
-
-    if (!visibleItem) throw new Error("item 0 is missing")
-
     otherItem.release()
-    await vi.waitFor(() => expect(visibleItem.value.isDirty).toBe(true))
+    await firstValueFrom(
+      reader.spine.isLayoutCurrent$.pipe(
+        filter((isLayoutCurrent) => !isLayoutCurrent),
+      ),
+    )
 
     reader.navigation.goToSpineItem({ indexOrId: 0, animation: false })
 
@@ -554,12 +563,12 @@ describe("pagination settlement", () => {
     mountTestReader(reader)
     await settledOn(reader, 0)
 
-    const visibleItem = reader.spineItemsManager.get(0)
-
-    if (!visibleItem) throw new Error("item 0 is missing")
-
     otherItem.release()
-    await vi.waitFor(() => expect(visibleItem.value.isDirty).toBe(true))
+    await firstValueFrom(
+      reader.spine.isLayoutCurrent$.pipe(
+        filter((isLayoutCurrent) => !isLayoutCurrent),
+      ),
+    )
 
     // The enhancer throttles its enrichment, and must not keep presenting a
     // settlement the core result has withdrawn without any new trigger.
@@ -628,6 +637,34 @@ describe("pagination settlement", () => {
     await waitFor(100)
 
     expect(settledItems.filter((index) => index !== 1)).toEqual([])
+  })
+
+  it("keeps the result from before a layout until the navigation is restored onto it", async () => {
+    const reader = createTestReader()
+
+    mountTestReader(reader)
+    reader.navigation.goToSpineItem({ indexOrId: 1, animation: false })
+    await settledOn(reader, 1)
+
+    // skip the replayed current result
+    const reportedItems: (number | undefined)[] = []
+    reader.pagination.state$.pipe(skip(1)).subscribe((state) => {
+      reportedItems.push(state.begin.spineItemIndex)
+    })
+
+    /**
+     * Wider pages move item 1 further along the spine, and give its old
+     * position to item 0. A layout voiding the navigation only withdraws the
+     * result: resolving it again would read that old position against the new
+     * pages, and report item 0 until the restoration.
+     */
+    setTestViewport({ width: 300, height: 600 })
+    reader.layout()
+
+    await settledOn(reader, 1)
+    await waitFor(100)
+
+    expect(reportedItems.filter((index) => index !== 1)).toEqual([])
   })
 
   it("settles once over a new layout, even when the restoration moves the page", async () => {

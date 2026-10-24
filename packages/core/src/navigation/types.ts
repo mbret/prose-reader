@@ -275,3 +275,14 @@ export type Navigation = Pick<
 > & {
   triggeredBy: InternalNavigationEntry["meta"]["triggeredBy"]
 }
+
+/**
+ * The latest navigation, and whether it holds on the current layout: it was
+ * made, or restored, while the pages described the latest layout requested,
+ * and no layout has been requested since. `navigation` is what `navigation$`
+ * emitted for it.
+ */
+export type NavigationAgainstCurrentLayout = {
+  navigation: Navigation
+  holdsOnCurrentLayout: boolean
+}

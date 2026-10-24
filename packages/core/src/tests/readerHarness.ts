@@ -13,6 +13,7 @@ import {
   timeout,
 } from "rxjs"
 import { afterAll, afterEach, beforeAll, beforeEach, vi } from "vitest"
+import { createReaderWithEnhancers } from "../createReaderWithEnhancer"
 import { htmlEnhancer } from "../enhancers/html/enhancer"
 import { layoutEnhancer } from "../enhancers/layout/layoutEnhancer"
 import { navigationEnhancer } from "../enhancers/navigation"
@@ -287,13 +288,18 @@ type TestReaderOptions = Partial<
   Parameters<typeof createReaderWithoutPaginationEnhancer>[0]
 >
 
+const testReaderDefaults = () => ({
+  getRenderer: () => (props: DocumentRendererParams) =>
+    new DefaultRenderer(props),
+  getResource: resolvedResource,
+  manifest: createPrePaginatedManifest(),
+})
+
 /** A reader without the pagination enhancer: `pagination` is the core result. */
 export const createTestReader = (options: TestReaderOptions = {}) =>
   track(
     createReaderWithoutPaginationEnhancer({
-      getRenderer: () => (props) => new DefaultRenderer(props),
-      getResource: resolvedResource,
-      manifest: createPrePaginatedManifest(),
+      ...testReaderDefaults(),
       ...options,
     }),
   )
@@ -306,9 +312,7 @@ export const createEnhancedTestReader = (options: TestReaderOptions = {}) =>
         paginationEnhancer(layoutEnhancer(themeEnhancer(createReader))),
       ),
     )({
-      getRenderer: () => (props) => new DefaultRenderer(props),
-      getResource: resolvedResource,
-      manifest: createPrePaginatedManifest(),
+      ...testReaderDefaults(),
       ...options,
     }),
   )
@@ -317,16 +321,26 @@ export const createEnhancedTestReader = (options: TestReaderOptions = {}) =>
 export const createZoomableTestReader = (options: TestReaderOptions = {}) =>
   track(
     zoomEnhancer(createReaderWithoutPaginationEnhancer)({
-      getRenderer: () => (props) => new DefaultRenderer(props),
-      getResource: resolvedResource,
-      manifest: createPrePaginatedManifest(),
+      ...testReaderDefaults(),
+      ...options,
+    }),
+  )
+
+/** A reader with every core enhancer, as the published `createReader`. */
+export const createFullTestReader = (
+  options: Partial<Parameters<typeof createReaderWithEnhancers>[0]> = {},
+) =>
+  track(
+    createReaderWithEnhancers({
+      ...testReaderDefaults(),
       ...options,
     }),
   )
 
 /**
- * Stubs what jsdom lacks, gives each test a container, and destroys every
- * reader a test created. Call once at the top of a test file.
+ * Stubs what jsdom lacks, gives each test a container, destroys every reader a
+ * test created, and then restores the real clock. Call once at the top of a
+ * test file.
  */
 export const installReaderTestEnvironment = () => {
   window.__PROSE_READER_DEBUG = false
@@ -353,6 +367,7 @@ export const installReaderTestEnvironment = () => {
 
   afterEach(() => {
     for (const reader of createdReaders.splice(0)) reader.destroy()
+    vi.useRealTimers()
     document.getElementById("test-container")?.remove()
     viewport = { ...defaultViewport }
     watchingResizeObservers.clear()
@@ -368,7 +383,6 @@ export const setTestViewport = (size: { width: number; height: number }) => {
   viewport = { ...size }
 }
 
-/** The element `installReaderTestEnvironment` gives each test to mount into. */
 export const getTestContainer = () => {
   const container = document.getElementById("test-container")
 

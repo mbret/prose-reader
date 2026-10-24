@@ -106,6 +106,13 @@ beforeAll(() => {
   )
 })
 
+const createGesturesReader = () =>
+  gesturesEnhancer(createReader)({
+    manifest,
+    getRenderer: () => (props) => new EmptyRenderer(props),
+    getResource: () => of(new Response("", { status: 200 })),
+  })
+
 const readers: { destroy: () => void }[] = []
 
 afterEach(() => {
@@ -114,21 +121,20 @@ afterEach(() => {
   vi.useRealTimers()
 })
 
+const excludeFromCleanup = (reader: { destroy: () => void }) => {
+  readers.splice(readers.indexOf(reader), 1)
+}
+
 /**
  * A reader settled on its first page, recording every user navigation and
  * gesture from then on.
  */
-const onFirstPage = async () => {
+const onFirstPage = async (container = document.createElement("div")) => {
   vi.useFakeTimers()
 
-  const reader = gesturesEnhancer(createReader)({
-    manifest,
-    getRenderer: () => (props) => new EmptyRenderer(props),
-    getResource: () => of(new Response("", { status: 200 })),
-  })
+  const reader = createGesturesReader()
   readers.push(reader)
 
-  const container = document.createElement("div")
   document.body.appendChild(container)
   reader.mount(container)
   await vi.runAllTimersAsync()
@@ -295,8 +301,81 @@ describe("Given a pan moving the page", () => {
     await drag({ x: viewport.width / 2, distance: -60, letGo: false })
 
     expect(isNavigationLocked(reader)).toBe(true)
-    // Destroyed here, not again after the test.
-    readers.splice(readers.indexOf(reader), 1)
+    excludeFromCleanup(reader)
     expect(() => reader.destroy()).not.toThrow()
+  })
+})
+
+describe("Given a subscriber to the gestures", () => {
+  it("is completed once the reader is destroyed", () => {
+    const reader = createGesturesReader()
+    const container = document.createElement("div")
+    document.body.appendChild(container)
+    const onGesturesComplete = vi.fn()
+
+    reader.gestures.gestures$.subscribe({ complete: onGesturesComplete })
+    reader.mount(container)
+    reader.destroy()
+
+    expect(onGesturesComplete).toHaveBeenCalled()
+  })
+
+  it("is completed when it only subscribes once the reader is destroyed", () => {
+    const reader = createGesturesReader()
+    const container = document.createElement("div")
+    document.body.appendChild(container)
+    const onGesturesComplete = vi.fn()
+
+    reader.mount(container)
+    reader.destroy()
+    const subscription = reader.gestures.gestures$.subscribe({
+      complete: onGesturesComplete,
+    })
+
+    expect(onGesturesComplete).toHaveBeenCalled()
+    expect(subscription.closed).toBe(true)
+  })
+})
+
+describe("Given a container whose touch action changes while the reader is mounted", () => {
+  it("keeps the new touch action once the reader is destroyed", () => {
+    const reader = createGesturesReader()
+    const container = document.createElement("div")
+    document.body.appendChild(container)
+
+    reader.mount(container)
+    container.style.touchAction = "pan-x"
+    reader.destroy()
+
+    expect(container.style.touchAction).toBe("pan-x")
+  })
+})
+
+describe("Given a reader a gesture was made on", () => {
+  it("leaves the container as it found it once destroyed", async () => {
+    const container = document.createElement("div")
+    container.classList.add("app-container")
+    container.style.touchAction = "pan-y"
+    const containerBeforeMount = container.outerHTML
+    const addEventListener = vi.spyOn(container, "addEventListener")
+    const removeEventListener = vi.spyOn(container, "removeEventListener")
+    const { reader, drag } = await onFirstPage(container)
+
+    await drag({ x: viewport.width / 2, distance: 0 })
+    const touchActionWhileMounted = container.style.touchAction
+    excludeFromCleanup(reader)
+    reader.destroy()
+
+    const addedListeners = addEventListener.mock.calls.map(
+      ([type, listener]) => ({ type, listener }),
+    )
+    const removedListeners = removeEventListener.mock.calls.map(
+      ([type, listener]) => ({ type, listener }),
+    )
+
+    expect(touchActionWhileMounted).toBe("none")
+    expect(addedListeners).not.toEqual([])
+    expect(removedListeners).toEqual(expect.arrayContaining(addedListeners))
+    expect(container.outerHTML).toBe(containerBeforeMount)
   })
 })

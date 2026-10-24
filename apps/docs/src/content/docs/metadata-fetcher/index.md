@@ -126,6 +126,7 @@ The same value is exported as `FETCHED_METADATA_VERSION`, for a consumer that pe
 
 ```typescript
 import {
+  DEFAULT_METADATA_MATCH_MIN_SCORE,
   FETCHED_METADATA_VERSION,
   scoreMetadataCandidate,
 } from "@prose-reader/metadata-fetcher"
@@ -135,7 +136,8 @@ const [best] = fetched.matches.filter(({ accepted }) => accepted)
 if (best) db.put(bookId, { version: FETCHED_METADATA_VERSION, match: best })
 
 // a migration scoring records stored before metadata-fetcher, offline, writes
-// the same shape — and has no fetchMetadata result to read the version from
+// the same shape — and has no fetchMetadata result to read the version from,
+// so it accepts by the threshold fetchMetadata uses when given no minScore
 const { score, signals } = scoreMetadataCandidate(input, legacy.metadata)
 db.put(bookId, {
   version: FETCHED_METADATA_VERSION,
@@ -143,7 +145,7 @@ db.put(bookId, {
     providerId: legacy.providerId,
     score,
     signals,
-    accepted: score >= 0.5,
+    accepted: score >= DEFAULT_METADATA_MATCH_MIN_SCORE,
     metadata: legacy.metadata,
   },
 })
@@ -213,7 +215,7 @@ The rules:
 - **Flat publication evidence uses the best candidate value.** `publisher` and `publishedYear` compare against both the candidate's original and edition publication details when present; the closest value supplies the single signal.
 - **A rating is never evidence.** `aggregateRating` is returned but deliberately not scored: how much a crowd liked a book says nothing about whether it is *this* book, and a popular edition must not outrank the right one.
 
-`minScore` (default `0.5`) decides which matches are `accepted`. Rejected matches are **kept and ranked**, not dropped: "the catalog found three books, none convincing" is an answer, and it is exactly what a "did you mean?" picker renders.
+`minScore` (default `0.5`, exported as `DEFAULT_METADATA_MATCH_MIN_SCORE`) decides which matches are `accepted`. Rejected matches are **kept and ranked**, not dropped: "the catalog found three books, none convincing" is an answer, and it is exactly what a "did you mean?" picker renders.
 
 ```typescript
 if (!fetched.matches.some(({ accepted }) => accepted)) {
@@ -241,7 +243,7 @@ const fetched = await fetchMetadata(input, {
 | --- | --- | --- |
 | `providers` | — | the catalogs to ask, queried concurrently. Their order is the tie-break precedence: equally-scored matches rank in declaration order |
 | `limit` | `5` | hard cap on the matches kept **per provider**, best-scoring first, and the page-size hint passed to each provider |
-| `minScore` | `0.5` | score a match must reach to be `accepted` |
+| `minScore` | `0.5` | score a match must reach to be `accepted`; the default is exported as `DEFAULT_METADATA_MATCH_MIN_SCORE`, for a consumer scoring candidates itself with `scoreMetadataCandidate` |
 | `includeRaw` | `false` | keep each provider's own record on `match.raw`. Off by default: provenance most consumers don't need, and it can dwarf the normalized entity they persist |
 | `signal` | — | cancellation, forwarded to every provider |
 
@@ -543,4 +545,4 @@ Rules of thumb:
 - **Normalize honestly.** Populate a field only when the record actually states it — a fabricated value is a signal the matcher will score, and a wrong `ISBN` identifier is the single most damaging thing you can emit.
 - **`raw` is yours**: put your parsed record there for provenance and provider-specific fields with no home in the vocabulary. It is kept only when the consumer asks for it.
 
-The matching primitives are exported too (`scoreMetadataCandidate`, `titleSimilarity`, `personNameSimilarity`, `textSimilarity`, `normalizeForComparison`) if you want to rank something of your own by the same rules — `scoreMetadataCandidate(input, candidate)` takes a `FetchMetadataInput` and a rich `ResolvedMetadata` candidate.
+The matching primitives are exported too (`scoreMetadataCandidate`, `titleSimilarity`, `personNameSimilarity`, `textSimilarity`, `normalizeForComparison`) if you want to rank something of your own by the same rules — `scoreMetadataCandidate(input, candidate)` takes a `FetchMetadataInput` and a rich `ResolvedMetadata` candidate. Accept by `DEFAULT_METADATA_MATCH_MIN_SCORE` to draw the line where `fetchMetadata` draws it by default.

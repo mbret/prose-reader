@@ -6,6 +6,7 @@ import {
   type Observable,
   pairwise,
   share,
+  takeUntil,
 } from "rxjs"
 import type { DocumentLoadStatus } from "../spineItem/renderer/DocumentRenderer"
 import type { SpineItem, SpineItemState } from "../spineItem/SpineItem"
@@ -19,6 +20,7 @@ export class SpineItemsObserver extends DestroyableClass {
    * As there can be lot of spine items and subscriptions can become costly it is
    * encouraged to use this shared observable. Read `item.value` for a current
    * snapshot rather than relying on this stream to replay on subscribe.
+   * Completes when the reader is destroyed.
    */
   public itemStateChange$: Observable<{ item: SpineItem } & SpineItemState>
 
@@ -27,6 +29,7 @@ export class SpineItemsObserver extends DestroyableClass {
    *
    * Items are only attached to the DOM at mount, and ResizeObserver does not
    * report detached elements, so this starts emitting once items are attached.
+   * Completes when the reader is destroyed, which stops the observation.
    */
   public itemResize$: Observable<{
     item: SpineItem
@@ -51,6 +54,8 @@ export class SpineItemsObserver extends DestroyableClass {
    * that changes an item's state in response must defer that change, as the
    * spine's layout does: done during the delivery, it would reach the
    * item's later subscribers before the status it responds to.
+   *
+   * Completes when the reader is destroyed.
    */
   public itemLoadStatusChange$: Observable<{
     item: SpineItem
@@ -70,13 +75,13 @@ export class SpineItemsObserver extends DestroyableClass {
           distinctUntilChanged(isShallowEqual),
         ),
       ),
-    ).pipe(share())
+    ).pipe(takeUntil(this.destroy$), share())
 
     this.itemResize$ = merge(
       ...items.map((item) =>
         observeResize(item.element).pipe(map((entries) => ({ entries, item }))),
       ),
-    ).pipe(share())
+    ).pipe(takeUntil(this.destroy$), share())
 
     this.itemLoadStatusChange$ = merge(
       ...items.map((item) =>
@@ -89,6 +94,6 @@ export class SpineItemsObserver extends DestroyableClass {
           })),
         ),
       ),
-    ).pipe(share())
+    ).pipe(takeUntil(this.destroy$), share())
   }
 }

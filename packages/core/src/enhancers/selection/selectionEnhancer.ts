@@ -116,6 +116,7 @@ export const selectionEnhancer =
         withLatestFrom(selection$),
         map(([, selection]) => selection),
         startWith(undefined),
+        takeUntil(reader.$.destroy$),
         shareReplay({ refCount: true, bufferSize: 1 }),
       )
 

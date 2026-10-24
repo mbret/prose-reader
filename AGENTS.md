@@ -139,6 +139,23 @@ is implemented:
 Do not read lerna's "fixed mode" as lockstep either: 2.0.1 moved `react-native`
 and `react-reader` and left the other fifteen packages at 2.0.0.
 
+# Core is small; enhancers do the rest
+
+prose is meant to be as flexible and extensible as possible. Core does what a
+reader cannot work without, and anything that could live outside it is an
+enhancer, in core's `enhancers/` or in a package of its own.
+
+- **Before adding something to core, ask whether an enhancer could do it** on
+  top of what core exposes. If it could, write the enhancer, and expose from
+  core what it lacks.
+- **Expose the internals an enhancer would need.** What core works out to
+  decide something, an enhancer doing related work usually needs too. One that
+  has to rebuild it from other streams repeats the derivation, with its
+  mistakes. Core may keep behaviour of its own, but not answers: do not hide
+  one with `@internal`.
+- **An exposed internal meets the bar of any public name**: named for what it
+  is, typed, and documented.
+
 # API design: breaking changes are not a constraint
 
 Cleanliness of the design wins. The goal is a surface that is smaller, simpler and easier to consume; a break is just the cost of getting there. **"I did not do that because it would be a breaking change" is never a valid reason** — do not weigh backward compatibility when choosing a shape, and do not present it as a trade-off. If the cleanest design changes a public type, renames an export, removes an option or reshapes a returned entity, do that.

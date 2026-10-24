@@ -1,5 +1,5 @@
 // @vitest-environment jsdom
-import { afterEach, describe, expect, it, vi } from "vitest"
+import { describe, expect, it, vi } from "vitest"
 import {
   createTestReader,
   installReaderTestEnvironment,
@@ -8,10 +8,6 @@ import {
 import type { BoundaryReachedEvent } from "./boundary"
 
 installReaderTestEnvironment()
-
-afterEach(() => {
-  vi.useRealTimers()
-})
 
 /**
  * A mounted reader on its last page, recording every boundary event. The test

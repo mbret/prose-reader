@@ -100,7 +100,7 @@ Observable<void>
 
 Emits each time the viewport is measured for a layout, right after the state of
 that layout. The book is not laid out yet: `reader.layout$` emits once its pages
-are.
+are. Both complete when the reader is destroyed.
 
 ## Sizes
 
