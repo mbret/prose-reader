@@ -115,4 +115,44 @@ describe("retryWithBackoff", () => {
     ).rejects.toThrow("initialDelayMs")
     expect(operation).not.toHaveBeenCalled()
   })
+
+  it("waits the delay a failure asks for instead of the backoff", async () => {
+    vi.useFakeTimers()
+    const operation = vi
+      .fn<() => Promise<string>>()
+      .mockRejectedValueOnce({ retryAfterMs: 250 })
+      .mockResolvedValue("done")
+    const pending = retryWithBackoff(operation, {
+      attempts: 2,
+      initialDelayMs: 1_000,
+      maxDelayMs: 2_000,
+      shouldRetry: () => true,
+      requestedDelayMs: (error) =>
+        typeof error === "object" && error !== null && "retryAfterMs" in error
+          ? Number(error.retryAfterMs)
+          : undefined,
+    })
+
+    await vi.advanceTimersByTimeAsync(249)
+    expect(operation).toHaveBeenCalledTimes(1)
+
+    await vi.advanceTimersByTimeAsync(1)
+    await expect(pending).resolves.toBe("done")
+  })
+
+  it("rethrows at once when the requested delay exceeds maxDelayMs", async () => {
+    const failure = new Error("come back in a minute")
+    const operation = vi.fn<() => Promise<never>>().mockRejectedValue(failure)
+
+    await expect(
+      retryWithBackoff(operation, {
+        attempts: 3,
+        initialDelayMs: 100,
+        maxDelayMs: 1_000,
+        shouldRetry: () => true,
+        requestedDelayMs: () => 60_000,
+      }),
+    ).rejects.toBe(failure)
+    expect(operation).toHaveBeenCalledTimes(1)
+  })
 })

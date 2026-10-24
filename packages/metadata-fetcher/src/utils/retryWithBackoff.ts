@@ -9,6 +9,13 @@ export type RetryWithBackoffOptions = {
   readonly jitter?: boolean
   /** Decides whether a failed call is safe and useful to repeat. */
   readonly shouldRetry: (error: unknown, attempt: number) => boolean
+  /**
+   * The delay a failure itself asks for, such as a rate limit's
+   * `Retry-After`, in place of the computed backoff. One longer than
+   * `maxDelayMs` is not waited out: the error is rethrown, since retrying any
+   * sooner would only be refused again.
+   */
+  readonly requestedDelayMs?: (error: unknown) => number | undefined
   /** Stops future attempts and cancels a wait between attempts. */
   readonly signal?: AbortSignal
 }
@@ -95,7 +102,19 @@ export const retryWithBackoff = async <Value>(
         throw error
       }
 
-      await wait(retryDelay(attempt, options), options.signal)
+      const requestedDelayMs = options.requestedDelayMs?.(error)
+
+      if (
+        requestedDelayMs !== undefined &&
+        requestedDelayMs > (options.maxDelayMs ?? Number.MAX_SAFE_INTEGER)
+      ) {
+        throw error
+      }
+
+      await wait(
+        requestedDelayMs ?? retryDelay(attempt, options),
+        options.signal,
+      )
     }
   }
 

@@ -3,8 +3,8 @@ import type {
   MetadataProvider,
   MetadataProviderContext,
 } from "../../types/provider.ts"
+import { catalogResponseError, retryCatalogRequest } from "../catalogRequest.ts"
 import { PROJECT_GUTENBERG_PROVIDER_ID } from "../providerIds.ts"
-import { MetadataProviderResponseError } from "../responseError.ts"
 import { projectGutenbergLookupFromInput } from "./identifier.ts"
 import { parseProjectGutenbergRdf } from "./parse.ts"
 import { resolveProjectGutenbergRecord } from "./resolve.ts"
@@ -44,24 +44,30 @@ export const createProjectGutenbergProvider = (
       baseUrl,
     )
     const doFetch = options.fetch ?? globalThis.fetch
-    const response = await doFetch(recordUrl.toString(), {
-      signal: context.signal,
-      headers: {
-        Accept: "application/rdf+xml, application/xml;q=0.9",
-        ...(options.userAgent !== undefined
-          ? { "User-Agent": options.userAgent }
-          : {}),
-      },
-    })
+    const response = await retryCatalogRequest(async () => {
+      const response = await doFetch(recordUrl.toString(), {
+        signal: context.signal,
+        headers: {
+          Accept: "application/rdf+xml, application/xml;q=0.9",
+          ...(options.userAgent !== undefined
+            ? { "User-Agent": options.userAgent }
+            : {}),
+        },
+      })
 
-    if (response.status === 404) return []
+      if (response.status === 404) return undefined
 
-    if (!response.ok) {
-      throw new MetadataProviderResponseError(
-        response.status,
-        `Project Gutenberg metadata lookup failed with status ${response.status}`,
-      )
-    }
+      if (!response.ok) {
+        throw catalogResponseError(
+          response,
+          `Project Gutenberg metadata lookup failed with status ${response.status}`,
+        )
+      }
+
+      return response
+    }, context.signal)
+
+    if (response === undefined) return []
 
     const record = parseProjectGutenbergRdf(await response.text())
 

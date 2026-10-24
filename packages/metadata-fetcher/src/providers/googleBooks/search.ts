@@ -6,11 +6,7 @@ import type {
   MetadataProviderContext,
 } from "../../types/provider.ts"
 import { isJsonRecord, readRecordArray } from "../../utils/json.ts"
-import { retryWithBackoff } from "../../utils/retryWithBackoff.ts"
-import {
-  MetadataProviderResponseError,
-  responseErrorStatus,
-} from "../responseError.ts"
+import { catalogResponseError, retryCatalogRequest } from "../catalogRequest.ts"
 import { googleBooksLookupFromInput } from "./identifier.ts"
 import { type GoogleBooksVolume, parseGoogleBooksVolume } from "./parse.ts"
 import {
@@ -22,10 +18,6 @@ import {
 const GOOGLE_BOOKS_MAX_RESULTS = 40
 const GOOGLE_BOOKS_EXACT_OVERSAMPLE = 1
 const GOOGLE_BOOKS_TITLE_OVERSAMPLE = 4
-const GOOGLE_BOOKS_REQUEST_ATTEMPTS = 3
-const GOOGLE_BOOKS_INITIAL_RETRY_DELAY_MS = 1_000
-const GOOGLE_BOOKS_MAX_RETRY_DELAY_MS = 3_000
-const GOOGLE_BOOKS_RETRYABLE_STATUSES = new Set([500, 502, 503, 504])
 
 type GoogleBooksSearchOptions = {
   readonly apiKey: string
@@ -133,38 +125,23 @@ export const createGoogleBooksSearch = (
   ): Promise<Response | undefined> => {
     url.searchParams.set("key", options.apiKey)
 
-    return retryWithBackoff(
-      async () => {
-        const response = await options.fetch(url.toString(), {
-          signal: context.signal,
-          headers: { Accept: "application/json" },
-        })
-
-        if (notFoundIsEmpty && response.status === 404) return undefined
-
-        if (!response.ok) {
-          throw new MetadataProviderResponseError(
-            response.status,
-            `Google Books lookup failed with status ${response.status}`,
-          )
-        }
-
-        return response
-      },
-      {
-        attempts: GOOGLE_BOOKS_REQUEST_ATTEMPTS,
-        initialDelayMs: GOOGLE_BOOKS_INITIAL_RETRY_DELAY_MS,
-        maxDelayMs: GOOGLE_BOOKS_MAX_RETRY_DELAY_MS,
+    return retryCatalogRequest(async () => {
+      const response = await options.fetch(url.toString(), {
         signal: context.signal,
-        shouldRetry: (error) => {
-          const status = responseErrorStatus(error)
+        headers: { Accept: "application/json" },
+      })
 
-          return (
-            status === undefined || GOOGLE_BOOKS_RETRYABLE_STATUSES.has(status)
-          )
-        },
-      },
-    )
+      if (notFoundIsEmpty && response.status === 404) return undefined
+
+      if (!response.ok) {
+        throw catalogResponseError(
+          response,
+          `Google Books lookup failed with status ${response.status}`,
+        )
+      }
+
+      return response
+    }, context.signal)
   }
 
   const findByVolumeId = async (

@@ -5,12 +5,12 @@ import type {
   MetadataProvider,
   MetadataProviderContext,
 } from "../../types/provider.ts"
+import { catalogResponseError, retryCatalogRequest } from "../catalogRequest.ts"
 import {
   type ProjectGutenbergLookup,
   projectGutenbergLookupFromInput,
 } from "../projectGutenberg/identifier.ts"
 import { OPEN_LIBRARY_PROVIDER_ID } from "../providerIds.ts"
-import { MetadataProviderResponseError } from "../responseError.ts"
 import { type OpenLibraryDoc, parseOpenLibrarySearchResponse } from "./parse.ts"
 import { resolveOpenLibraryDoc } from "./resolve.ts"
 
@@ -104,22 +104,26 @@ export const createOpenLibraryProvider = (
 
     // read lazily so a consumer stubbing the global afterwards still wins
     const doFetch = options.fetch ?? globalThis.fetch
-    const response = await doFetch(url.toString(), {
-      signal: context.signal,
-      headers: {
-        Accept: "application/json",
-        ...(options.userAgent !== undefined
-          ? { "User-Agent": options.userAgent }
-          : {}),
-      },
-    })
+    const response = await retryCatalogRequest(async () => {
+      const response = await doFetch(url.toString(), {
+        signal: context.signal,
+        headers: {
+          Accept: "application/json",
+          ...(options.userAgent !== undefined
+            ? { "User-Agent": options.userAgent }
+            : {}),
+        },
+      })
 
-    if (!response.ok) {
-      throw new MetadataProviderResponseError(
-        response.status,
-        `Open Library search failed with status ${response.status}`,
-      )
-    }
+      if (!response.ok) {
+        throw catalogResponseError(
+          response,
+          `Open Library search failed with status ${response.status}`,
+        )
+      }
+
+      return response
+    }, context.signal)
 
     return parseOpenLibrarySearchResponse(await response.json())
   }

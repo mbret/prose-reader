@@ -1,4 +1,4 @@
-import { describe, expect, it, vi } from "vitest"
+import { afterEach, describe, expect, it, vi } from "vitest"
 import { scoreMetadataCandidate } from "../../match/scoreMetadataCandidate.ts"
 import type { FetchMetadataInput } from "../../types/fetchMetadataInput.ts"
 import { createProjectGutenbergProvider } from "./createProjectGutenbergProvider.ts"
@@ -14,6 +14,10 @@ const PROJECT_GUTENBERG_RDF_FIXTURE = `<rdf:RDF
 </rdf:RDF>`
 
 const context = { limit: 5 }
+
+afterEach(() => {
+  vi.useRealTimers()
+})
 
 describe("createProjectGutenbergProvider", () => {
   it("fetches and confirms an official Gutenberg URL", async () => {
@@ -114,10 +118,12 @@ describe("createProjectGutenbergProvider", () => {
   })
 
   it("throws on upstream failures and invalid successful responses", async () => {
+    vi.useFakeTimers()
+    const unavailableFetch = vi
+      .fn<typeof globalThis.fetch>()
+      .mockResolvedValue(new Response("nope", { status: 503 }))
     const unavailable = createProjectGutenbergProvider({
-      fetch: vi
-        .fn<typeof globalThis.fetch>()
-        .mockResolvedValue(new Response("nope", { status: 503 })),
+      fetch: unavailableFetch,
     })
     const invalid = createProjectGutenbergProvider({
       fetch: vi
@@ -130,7 +136,13 @@ describe("createProjectGutenbergProvider", () => {
       ],
     }
 
-    await expect(unavailable.search(input, context)).rejects.toThrow("503")
+    const unavailableRejected = expect(
+      unavailable.search(input, context),
+    ).rejects.toThrow("503")
+
+    await vi.runAllTimersAsync()
+    await unavailableRejected
+    expect(unavailableFetch).toHaveBeenCalledTimes(3)
     await expect(invalid.search(input, context)).rejects.toThrow(
       "did not contain the requested eBook",
     )

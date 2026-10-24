@@ -261,7 +261,14 @@ const throttled = fetched.failedProviders.filter(({ status }) => status === 429)
 
 Each entry carries the catalog's HTTP `status` when the failure was a response — `429` (ask again later), `5xx` (the catalog is down), `4xx` (we asked wrong) — and no status when it wasn't one, which is itself the answer: a network error, an unparseable payload, a bug. Three states are distinguishable: a provider in `sources` answered, one in `failedProviders` threw, one in neither was never asked (narrowed out by the `providers` option).
 
-`fetchMetadata` itself does not retry or interpret `Retry-After`; providers own that policy because only they know which operations are idempotent and which failures their catalog treats as transient. The built-in Google Books provider retries its transient failures as described below. A provider that exhausts its own retries is reported here normally.
+`fetchMetadata` itself does not retry or interpret `Retry-After`; providers own that policy because only they know which operations are idempotent and which failures their catalog treats as transient. The built-in providers share one:
+
+- Each request makes at most three attempts.
+- A network failure, a rate limit (`429`) and an outage (`500`, `502`, `503`, `504`) are retried with abortable exponential backoff and jitter, bounded at 3 seconds per wait. Cancelling through `signal` interrupts a wait.
+- When the catalog sends `Retry-After`, the provider waits exactly that long instead. A `Retry-After` beyond the 3-second bound is not waited out: the provider gives up at once, since an earlier retry would only be refused again.
+- Client errors, such as an invalid key, are not retried.
+
+A provider that exhausts its retries, or gives up on a long `Retry-After`, is reported here normally, with its status.
 
 Cancelling through `signal` is the one exception: it rejects, since the caller asked for it.
 
@@ -309,7 +316,7 @@ const provider = createProjectGutenbergProvider({
 | `fetch` | the global one | for tests, a custom agent, or a caching layer |
 | `userAgent` | — | optional identifying user agent |
 
-**Lookup strategy**, exactly one request: the provider recognizes an official Gutenberg URL in `identifiers` (including `/ebooks/78139`, `/files/78139/…`, `/cache/epub/78139/…`, and the older `/78139` form), or a numeric identifier whose scheme is `ProjectGutenberg`. It then requests Gutenberg's official per-eBook RDF record at `/cache/epub/{id}/pg{id}.rdf`. A title or author alone never triggers the provider, so it neither crawls the website nor returns a fuzzy Gutenberg hit. Arbitrary URLs and identifiers with another authored scheme are ignored.
+**Lookup strategy**, exactly one request, retried under the built-in providers' [retry policy](#error-policy): the provider recognizes an official Gutenberg URL in `identifiers` (including `/ebooks/78139`, `/files/78139/…`, `/cache/epub/78139/…`, and the older `/78139` form), or a numeric identifier whose scheme is `ProjectGutenberg`. It then requests Gutenberg's official per-eBook RDF record at `/cache/epub/{id}/pg{id}.rdf`. A title or author alone never triggers the provider, so it neither crawls the website nor returns a fuzzy Gutenberg hit. Arbitrary URLs and identifiers with another authored scheme are ignored.
 
 The confirmed candidate echoes the book's exact input identifier and adds `{ value: "78139", scheme: "ProjectGutenberg" }`. A shared scheme-scoped identifier makes the match decisive even when the catalog and embedded titles differ. A missing RDF record returns no candidate; a failing or malformed response is reported through `failedProviders` like any other provider failure.
 
@@ -366,7 +373,7 @@ const input = {
 
 An official Google Books website/API URL with scheme `URL` is recognized too. An exact lookup echoes the confirmed volume id as `{ value: id, scheme: "GoogleBooks" }`, so the shared matcher treats it as decisive and `metadataInputFromResolvedArchive` can forward it unchanged for a later refresh. A missing volume id falls through to ISBN/title when available. ISBN searches likewise retain the queried ISBN identifier even when a sparse Google record omits `industryIdentifiers`.
 
-Each request makes at most three total attempts. Network failures and HTTP `500`, `502`, `503` and `504` responses are retried with abortable exponential backoff and jitter; client errors such as an invalid key are not. When the third attempt fails, or when a successful exact response is malformed, the provider is reported through `failedProviders` normally.
+Each request follows the built-in providers' [retry policy](#error-policy): rate limits and outages are retried, honouring `Retry-After`, and client errors such as an invalid key are not. When the last attempt fails, or when a successful exact response is malformed, the provider is reported through `failedProviders` normally.
 
 **Mapping** (Google Books Volume → `ResolvedMetadata`; the resolver names every parsed field and asserts the rest is empty, so a field added to the parser fails the build until someone decides what becomes of it):
 
@@ -406,7 +413,7 @@ const provider = createOpenLibraryProvider({
 | `fetch` | the global one | for tests, a custom agent, or a caching layer |
 | `userAgent` | — | Open Library's API etiquette asks for an identifying one (app name + contact) and throttles anonymous traffic harder |
 
-**Lookup strategy**, at most four requests: an ISBN search when the book states one — the catalog then verifies the identity for us; an exact `id_project_gutenberg` search when an identifier is an official Project Gutenberg URL or a numeric `ProjectGutenberg` identifier; then a precise title (+ first author) search when those identifiers are unknown to Open Library or absent. When that precise search is empty, a free-text title-and-author query handles records whose work title and subtitle were indexed separately. The Gutenberg crosswalk is applied explicitly by this provider because `id_project_gutenberg` is Open Library's catalog field, not a generic URL convention in the scorer. A query with none of those terms yields no candidates rather than a fishing expedition.
+**Lookup strategy**, at most four requests: an ISBN search when the book states one — the catalog then verifies the identity for us; an exact `id_project_gutenberg` search when an identifier is an official Project Gutenberg URL or a numeric `ProjectGutenberg` identifier; then a precise title (+ first author) search when those identifiers are unknown to Open Library or absent. When that precise search is empty, a free-text title-and-author query handles records whose work title and subtitle were indexed separately. The Gutenberg crosswalk is applied explicitly by this provider because `id_project_gutenberg` is Open Library's catalog field, not a generic URL convention in the scorer. A query with none of those terms yields no candidates rather than a fishing expedition. Each request follows the built-in providers' [retry policy](#error-policy). Open Library throttles anonymous and fast traffic with `429`, which the policy retries.
 
 **Mapping** (`search.json` doc → `ResolvedMetadata`; same exhaustive-destructure check as the other providers):
 
@@ -453,7 +460,7 @@ The image is published with every release, tagged with the version and `latest`,
 
 Both metadata routes answer with the `FetchedMetadata` entity verbatim. The options above (`limit`, `minScore`, `includeRaw`, plus a `providers` filter) are query parameters, and the deployment defaults are environment variables.
 
-The service does no per-client rate limiting: who a client is, which address is real and how often each may call depend on your infrastructure and your own provider quotas, so that limit belongs to the proxy or gateway in front of it. It does bound its own capacity — `MAX_CONCURRENT_LOOKUPS` (default `32`) caps the lookups one process runs at once, and a lookup beyond it answers `503` with `Retry-After`. This package has no limit of its own either: it reports a catalog's `429` in `failedProviders`, and backing off is the caller's decision.
+The service does no per-client rate limiting: who a client is, which address is real and how often each may call depend on your infrastructure and your own provider quotas, so that limit belongs to the proxy or gateway in front of it. It does bound its own capacity — `MAX_CONCURRENT_LOOKUPS` (default `32`) caps the lookups one process runs at once, and a lookup beyond it answers `503` with `Retry-After`. This package has no limit of its own either. A built-in provider retries a catalog's `429` briefly, as its [retry policy](#error-policy) describes; one that persists is reported in `failedProviders`, and backing off further is the caller's decision.
 
 For development, `pnpm run start:metadata-fetcher` starts the same image with the source bind-mounted: editing the express app or this package restarts it — node runs both as TypeScript, so nothing is rebuilt. It also serves a playground at `/` — enter metadata manually or choose an EPUB/CBZ/ZIP file, then inspect each candidate, its score and the signals behind it. In both cases the playground posts the canonical `FetchMetadataInput` JSON to `/metadata`, so the browser's network inspector shows the exact input an SDK consumer would provide. Uploaded files have no application-level size limit: archive-reader resolves them in memory and discards them before that compact input is posted, with no disk or browser storage. The playground is development-only: the production image sets `NODE_ENV=production`, and the route is then never registered.
 
@@ -525,20 +532,38 @@ Rules of thumb:
     throw new MetadataProviderResponseError(response.status, "My Catalog search failed")
   }
   ```
-- **Use `retryWithBackoff`** when an idempotent provider request has known transient failures. `attempts` counts the initial call, and cancellation interrupts the next delay. Pass the same signal to the request when it should cancel an active call too. The helper deliberately leaves the retry predicate to the provider:
+- **Use `retryWithBackoff`** when an idempotent provider request has known transient failures. `attempts` counts the initial call, and cancellation interrupts the next delay. Pass the same signal to the request when it should cancel an active call too. The helper deliberately leaves the retry predicate to the provider. `requestedDelayMs` lets a failure name its own delay, such as a rate limit's `Retry-After`, in place of the backoff; a delay longer than `maxDelayMs` rethrows at once instead of retrying early. `parseRetryAfterHeader` reads the header, the error carries it as `retryAfterMs`, and `responseErrorRetryAfterMs` reads it back from any error carrying one:
 
   ```typescript
   import {
+    MetadataProviderResponseError,
+    parseRetryAfterHeader,
+    responseErrorRetryAfterMs,
     responseErrorStatus,
     retryWithBackoff,
   } from "@prose-reader/metadata-fetcher"
 
-  const response = await retryWithBackoff(() => requestCatalog({ signal }), {
-    attempts: 3,
-    initialDelayMs: 1_000,
-    signal,
-    shouldRetry: (error) => responseErrorStatus(error) === 503,
-  })
+  const response = await retryWithBackoff(
+    async () => {
+      const response = await fetch(url, { signal })
+
+      if (!response.ok) {
+        throw new MetadataProviderResponseError(response.status, "My Catalog search failed", {
+          retryAfterMs: parseRetryAfterHeader(response.headers.get("Retry-After")),
+        })
+      }
+
+      return response
+    },
+    {
+      attempts: 3,
+      initialDelayMs: 1_000,
+      maxDelayMs: 5_000,
+      signal,
+      shouldRetry: (error) => [429, 503].includes(responseErrorStatus(error) ?? 0),
+      requestedDelayMs: responseErrorRetryAfterMs,
+    },
+  )
   ```
 - **Forward `signal`** to every request you make.
 - **Treat `limit` as a page-size hint**; the fetch caps the ranked result anyway.
