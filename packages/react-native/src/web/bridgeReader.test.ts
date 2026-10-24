@@ -15,6 +15,7 @@ import {
   describe,
   expect,
   it,
+  onTestFinished,
   vi,
 } from "vitest"
 import type { ReaderLoadOptions } from "../shared"
@@ -129,11 +130,20 @@ afterEach(() => {
   container.remove()
 })
 
-const createTestReader = (options: ReaderLoadOptions) =>
-  createReader({
+/**
+ * The bridge destroys a reader only when the next `load` replaces it, which
+ * leaves the last one of each test running.
+ */
+const createTestReader = (options: ReaderLoadOptions) => {
+  const reader = createReader({
     ...options,
     getResource: () => of(new Response("", { status: 200 })),
   })
+
+  onTestFinished(() => reader.destroy())
+
+  return reader
+}
 
 const currentReadingPosition = (reader: Reader) => {
   let readingPosition: ReadingPosition | undefined

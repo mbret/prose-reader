@@ -9,6 +9,7 @@ import {
   shareReplay,
   startWith,
   switchScan,
+  takeUntil,
   withLatestFrom,
 } from "rxjs"
 import type { ProseParsedCfi } from "../../cfi"
@@ -171,21 +172,19 @@ export class ResourcesLocator {
     }
 
     return deferIdle(() => {
-      /**
-       * We only force open reflowable spine items.
-       * This is because page index and absolute pages can be retrieved on
-       * a pre-paginated content without having to load it.
-       */
-
       const item = this.reader.spineItemsManager.get(
         initialConsolidatedValue.meta.itemIndex ?? 0,
       )
       const isReflowable = item?.renditionLayout === `reflowable`
 
+      /**
+       * Only a reflowable item is kept loaded: a pre-paginated item gives its
+       * page indexes without being loaded.
+       */
       const release =
         options.mode === "shallow" || !isReflowable || !item
           ? () => {}
-          : this.reader.spineItemsLoader.forceOpen([item.index])
+          : this.reader.keepSpineItemLoaded(item)
 
       const key = "cfi" in resource ? resource.cfi : undefined
       const memoizedConsolidate$ = key ? this.locatorsByKey.get(key) : undefined
@@ -235,6 +234,7 @@ export class ResourcesLocator {
             })),
           )
         }, initialConsolidatedValue),
+        takeUntil(this.reader.$.destroy$),
         shareReplay({ refCount: true, bufferSize: 1 }),
       )
 

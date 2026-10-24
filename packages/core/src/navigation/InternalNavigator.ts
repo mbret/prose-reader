@@ -13,7 +13,6 @@ import {
   shareReplay,
   skip,
   skipUntil,
-  startWith,
   switchMap,
   take,
   takeUntil,
@@ -48,7 +47,7 @@ import { isTargetInBook } from "./targets/isTargetInBook"
 import type {
   InternalNavigationAnchor,
   InternalNavigationEntry,
-  Navigation,
+  NavigationAgainstCurrentLayout,
   NavigationModeController,
   NavigationTarget,
   ReadingPosition,
@@ -112,29 +111,28 @@ export class InternalNavigator extends DestroyableClass {
   )
 
   /**
-   * The navigation that holds on the current layout: made, or restored, while
-   * the pages describe the latest layout requested. `undefined` while none
-   * does: until the reader is first laid out, from the moment a layout is
-   * requested, and still once its pages are published, until the navigation
-   * is restored onto them, which is a navigation made over the current
-   * layout. A navigation made while a layout is pending changes nothing: the
-   * request already voided it.
+   * The latest navigation, and whether it holds on the current layout: made,
+   * or restored, while the pages describe the latest layout requested, with
+   * none requested since. It does not hold until the reader is first laid
+   * out, from the moment a layout is requested, and still once its pages are
+   * published, until the navigation is restored onto them, which is a
+   * navigation made over the current layout. Nor does a navigation made
+   * while a layout is pending.
    *
-   * The reader's position is consistent with its layout only for this
-   * navigation: pagination settles, and the loader measures which items to
-   * keep loaded, only from it. Both are built after the navigator and take it
-   * from there, and it is derived first thing in the constructor, so it is up
-   * to date before either of them hears of the navigation that changes it.
+   * A navigation's position and the pages agree only while it holds, so
+   * whatever depends on the layout reads it: pagination settles, and the
+   * loader measures which items to keep loaded, only then. It is reported
+   * with every navigation and every change of layout currency, which repeats
+   * the navigation it voids, so a reader of it needs no other navigation
+   * stream.
    *
-   * Internal: consumers get that answer from
-   * `reader.pagination.state.isSettled`, which is only true over a current
-   * layout.
-   *
-   * @internal
+   * Whether a navigation holds depends on the order navigations and layouts
+   * came in, not on their latest values: once a layout's pages are published,
+   * the navigation from before is still the latest until it is restored. So
+   * it is derived from construction on, and replayed, and is the one to read
+   * rather than work out again from `navigation$` and the spine.
    */
-  public readonly navigationOverCurrentLayout$: Observable<
-    Navigation | undefined
-  >
+  public readonly navigationAgainstCurrentLayout$: Observable<NavigationAgainstCurrentLayout>
 
   /**
    * Where the reader is in the book, to save and reopen at, the same way
@@ -194,26 +192,36 @@ export class InternalNavigator extends DestroyableClass {
     super()
 
     /**
-     * Any change of layout currency voids it: a request replaces the layout
-     * the navigation was made over, and pages being published make current a
-     * layout the navigation was not restored onto yet. Only a navigation made
-     * while the layout is current sets it again.
+     * Any change of layout currency voids the latest navigation: a request
+     * replaces the layout it was made over, and pages being published make
+     * current a layout it was not restored onto yet.
      */
-    this.navigationOverCurrentLayout$ = merge(
-      this.navigation$.pipe(filter(() => spine.isLayoutCurrent)),
+    this.navigationAgainstCurrentLayout$ = merge(
+      this.navigation$.pipe(
+        map(
+          (navigation): NavigationAgainstCurrentLayout => ({
+            navigation,
+            holdsOnCurrentLayout: spine.isLayoutCurrent,
+          }),
+        ),
+      ),
       spine.isLayoutCurrent$.pipe(
         // Changes only: the current value is replayed on subscription.
         skip(1),
-        map(() => undefined),
+        withLatestFrom(this.navigation$),
+        map(
+          ([, navigation]): NavigationAgainstCurrentLayout => ({
+            navigation,
+            holdsOnCurrentLayout: false,
+          }),
+        ),
       ),
-    ).pipe(
-      // The layout starts not current, so none holds before it first is.
-      startWith(undefined),
-      shareReplay({ bufferSize: 1, refCount: true }),
-    )
+    ).pipe(shareReplay({ bufferSize: 1, refCount: true }))
 
-    // Before anything built after the navigator can hear of a navigation.
-    this.navigationOverCurrentLayout$.pipe(takeUntil(this.destroy$)).subscribe()
+    // From construction on, so it has seen every navigation and layout.
+    this.navigationAgainstCurrentLayout$
+      .pipe(takeUntil(this.destroy$))
+      .subscribe()
 
     const getNavigationVisibleArea = () =>
       getActiveNavigationModeController().getNavigationVisibleArea()
