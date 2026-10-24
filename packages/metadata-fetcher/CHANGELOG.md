@@ -3,6 +3,13 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## [34.0.0](https://github.com/mbret/prose-reader/compare/v33.0.0...v34.0.0) (2026-10-24)
+
+### Features
+
+* **metadata-fetcher:** export the default minScore ([4c8a88c](https://github.com/mbret/prose-reader/commit/4c8a88c62db3c4e4e7e06674fe466b1fcbc1307a))
+
+
 ## [33.0.0](https://github.com/mbret/prose-reader/compare/v32.0.0...v33.0.0) (2026-10-23)
 
 **Note:** Version bump only for package @prose-reader/metadata-fetcher

@@ -3,6 +3,32 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## [34.0.0](https://github.com/mbret/prose-reader/compare/v33.0.0...v34.0.0) (2026-10-24)
+
+### ⚠ BREAKING CHANGES
+
+* **deps:** `@prose-reader/core` is now a peer dependency of
+  `@prose-reader/enhancer-gallery`, `enhancer-audio`, `enhancer-gestures`
+  and `enhancer-search`. Install the core the enhancer was released with,
+  or a later one of the same major: npm refuses to install the enhancer
+  next to any other, and pnpm and yarn report an unmet peer, where a
+  second core used to be installed.
+* **core:** the reader no longer exposes its spine items loader,
+  `reader.spine.spineItemsLoader` in 32.x. Call
+  `reader.keepSpineItemLoaded(spineItem)` for each spine item instead of
+  its `forceOpen(spineItems)`: it takes an index, an id or a SpineItem,
+  and its release releases once however many times it is called.
+  `reader.destroy()` destroys the loader.
+
+### Bug Fixes
+
+* **deps:** make @prose-reader/core a peer of the gallery, audio, gestures and search enhancers ([8591888](https://github.com/mbret/prose-reader/commit/8591888fa3b9bdd07100e75a02cbab6e49279321)), references [#597](https://github.com/mbret/prose-reader/issues/597)
+
+### Code Refactoring
+
+* **core:** replace reader.spineItemsLoader with reader.keepSpineItemLoaded() ([2c40b04](https://github.com/mbret/prose-reader/commit/2c40b04d4d2996a02bbaa01e068b56adf208be93))
+
+
 ## [33.0.0](https://github.com/mbret/prose-reader/compare/v32.0.0...v33.0.0) (2026-10-23)
 
 ### ⚠ BREAKING CHANGES

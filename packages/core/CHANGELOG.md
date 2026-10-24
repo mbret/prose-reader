@@ -3,6 +3,35 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## [34.0.0](https://github.com/mbret/prose-reader/compare/v33.0.0...v34.0.0) (2026-10-24)
+
+### ⚠ BREAKING CHANGES
+
+* **core:** the reader no longer exposes its spine items loader,
+  `reader.spine.spineItemsLoader` in 32.x. Call
+  `reader.keepSpineItemLoaded(spineItem)` for each spine item instead of
+  its `forceOpen(spineItems)`: it takes an index, an id or a SpineItem,
+  and its release releases once however many times it is called.
+  `reader.destroy()` destroys the loader.
+
+### Bug Fixes
+
+* **core:** complete navigationAgainstCurrentLayout$ when the reader is destroyed ([1e6d55e](https://github.com/mbret/prose-reader/commit/1e6d55e744429306bd0ee5b582c59459e9b16f7a))
+* **core:** complete the items observer's streams when the reader is destroyed ([9edabc2](https://github.com/mbret/prose-reader/commit/9edabc2f8a9c6f0b63080caba09f8a040f1aca11))
+* **core:** release the container's listeners when the reader is destroyed ([f2f9191](https://github.com/mbret/prose-reader/commit/f2f9191594b2636982c9ae3f8fbba461462c2d49))
+* **core:** stop a located resource's consolidation when the reader is destroyed ([97ffe0e](https://github.com/mbret/prose-reader/commit/97ffe0e057d2efd340491a3238f410f513410887))
+* **core:** stop the spine's layout work when the reader is destroyed ([a05c988](https://github.com/mbret/prose-reader/commit/a05c9882ccacb9d00133a5bdfca009b528e37f79))
+* **core:** void the navigation being reported when a subscriber requests a layout ([a0f89f0](https://github.com/mbret/prose-reader/commit/a0f89f0d8f38631249014e4c71c239e927a9c255))
+
+### Performance Improvements
+
+* **core:** lay out the spine from the first chapter a load affects ([8d8fdb5](https://github.com/mbret/prose-reader/commit/8d8fdb59455272b93600b736d3e5585de4ac3865))
+
+### Code Refactoring
+
+* **core:** replace reader.spineItemsLoader with reader.keepSpineItemLoaded() ([2c40b04](https://github.com/mbret/prose-reader/commit/2c40b04d4d2996a02bbaa01e068b56adf208be93))
+
+
 ## [33.0.0](https://github.com/mbret/prose-reader/compare/v32.0.0...v33.0.0) (2026-10-23)
 
 ### ⚠ BREAKING CHANGES
