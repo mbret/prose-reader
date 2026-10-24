@@ -171,6 +171,7 @@ export class ResourcesLocator {
       meta: toCfiLocatableResource(this.reader, resource),
     }
 
+    // Outside the idle wait: `destroy$` does not replay for a later subscriber.
     return deferIdle(() => {
       const item = this.reader.spineItemsManager.get(
         initialConsolidatedValue.meta.itemIndex ?? 0,
@@ -245,7 +246,7 @@ export class ResourcesLocator {
       }
 
       return withRelease(consolidate$)
-    })
+    }).pipe(takeUntil(this.reader.$.destroy$))
   }
 
   locateResource<T extends LocatableResource>(
@@ -262,12 +263,8 @@ export class ResourcesLocator {
   ):
     | Observable<{ resource: T; meta: ConsolidatedResource }>
     | Observable<{ resource: T; meta: ConsolidatedResource }[]> {
-    /**
-     * The guard sits on the result, outside the idle wait: a reader destroyed
-     * before the locator sets up completes it too, since the destruction is
-     * not replayed.
-     */
     if (Array.isArray(resource)) {
+      // Outside the idle wait: `destroy$` does not replay for a later subscriber.
       return deferIdle(() =>
         combineLatest(
           resource.map((item) => this.locate(item, options ?? {})),
@@ -275,8 +272,6 @@ export class ResourcesLocator {
       ).pipe(takeUntil(this.reader.$.destroy$))
     }
 
-    return this.locate(resource, options ?? {}).pipe(
-      takeUntil(this.reader.$.destroy$),
-    )
+    return this.locate(resource, options ?? {})
   }
 }
