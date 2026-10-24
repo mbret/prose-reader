@@ -128,8 +128,7 @@ const isFetchedStylesheet = (
   )
 }
 
-/** The chapter is measured and drawn with these, so its load waits for them. */
-const isPicture = (
+const isImageElement = (
   element: Element,
   view: DocumentView,
 ): element is HTMLImageElement | SVGImageElement =>
@@ -147,9 +146,6 @@ const waitForAssetLoad = (element: Element) =>
       mergeMap(() => throwError(() => new Error(`the asset failed`))),
     ),
   ).pipe(timeout({ first: ASSET_LOAD_TIMEOUT_MS }), first())
-
-const waitForStylesheet = (link: HTMLLinkElement) =>
-  waitForAssetLoad(link).pipe(map(() => link.sheet))
 
 /**
  * Rules are replaced rather than edited, which Firefox does not allow. Object
@@ -211,6 +207,44 @@ const rewriteFontFaces = ({
     return merge(...rewrites).pipe(ignoreElements())
   })
 
+/**
+ * What the document's load waits for once an element's reference is swapped:
+ * a stylesheet and the fonts it declares, or an image, which the chapter is
+ * measured and drawn with.
+ */
+const waitForSwappedAsset = ({
+  element,
+  url,
+  view,
+  fetchAsset,
+}: {
+  element: Element
+  url: URL
+  view: DocumentView
+  fetchAsset: FetchAsset
+}): Observable<never> => {
+  if (isFetchedStylesheet(element, view)) {
+    return waitForAssetLoad(element).pipe(
+      switchMap(() =>
+        element.sheet
+          ? rewriteFontFaces({
+              sheet: element.sheet,
+              sheetUrl: url,
+              view,
+              fetchAsset,
+            })
+          : EMPTY,
+      ),
+    )
+  }
+
+  if (isImageElement(element, view)) {
+    return waitForAssetLoad(element).pipe(ignoreElements())
+  }
+
+  return EMPTY
+}
+
 /** Never errors: a failed asset is reported and the document loads without it. */
 const loadElementAsset = ({
   element,
@@ -234,10 +268,8 @@ const loadElementAsset = ({
 
     return fetchAsset(url).pipe(
       switchMap((blob) => {
-        /**
-         * A lazy image loads once it nears the viewport, which the frame,
-         * hidden while it loads, may never do.
-         */
+        // A lazy image away from the viewport would hold the load until the
+        // timeout, so it turns eager before its reference is swapped.
         if (
           element instanceof view.HTMLImageElement &&
           element.loading === "lazy"
@@ -251,21 +283,7 @@ const loadElementAsset = ({
           view.URL.createObjectURL(blob),
         )
 
-        if (isFetchedStylesheet(element, view)) {
-          return waitForStylesheet(element).pipe(
-            switchMap((sheet) =>
-              sheet
-                ? rewriteFontFaces({ sheet, sheetUrl: url, view, fetchAsset })
-                : EMPTY,
-            ),
-          )
-        }
-
-        if (isPicture(element, view)) {
-          return waitForAssetLoad(element).pipe(ignoreElements())
-        }
-
-        return EMPTY
+        return waitForSwappedAsset({ element, url, view, fetchAsset })
       }),
     )
   }).pipe(

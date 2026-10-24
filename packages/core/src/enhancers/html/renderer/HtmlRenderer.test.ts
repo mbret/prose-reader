@@ -41,7 +41,6 @@ type HeldRequest = { load: () => void; fail: () => void }
 const svgWith = (image: string) =>
   `<svg xmlns="${SVG_NAMESPACE}" xmlns:xlink="${XLINK_NAMESPACE}">${image}</svg>`
 
-/** The reference the browser draws an SVG image from: `href` overrides the XLink one. */
 const getSvgImageReference = (image: Element) =>
   image.getAttributeNS(null, `href`) ??
   image.getAttributeNS(XLINK_NAMESPACE, `href`)
@@ -152,14 +151,45 @@ const createHarness = ({
     context,
   )
   const viewport = new Viewport(context, settings)
+  const hookManager = new HookManager()
   const containerElement = document.createElement(`div`)
+
+  /**
+   * happy-dom never loads an SVG image, so this reports each one loaded once
+   * it is swapped in, from a task as a browser does.
+   */
+  if (!holdsImages) {
+    hookManager.register(`item.onDocumentCreated`, ({ documentContainer }) => {
+      if (!(documentContainer instanceof HTMLIFrameElement)) return
+
+      documentContainer.addEventListener(`load`, () => {
+        const frameDocument = documentContainer.contentDocument
+        const frameView = frameDocument?.defaultView
+
+        if (!frameDocument || !frameView) return
+
+        const reportedImages = new Set<Element>()
+
+        new frameView.MutationObserver(() => {
+          for (const image of frameDocument.querySelectorAll(`image`)) {
+            const isSwapped = getSvgImageReference(image)?.startsWith(`blob:`)
+
+            if (!isSwapped || reportedImages.has(image)) continue
+
+            reportedImages.add(image)
+            setTimeout(() => image.dispatchEvent(new Event(`load`)))
+          }
+        }).observe(frameDocument, { attributes: true, subtree: true })
+      })
+    })
+  }
 
   document.body.appendChild(containerElement)
 
   const renderer = new HtmlRenderer({
     context,
     settings,
-    hookManager: new HookManager(),
+    hookManager,
     item,
     containerElement,
     resourcesHandler: new ResourceHandler(item, settings),
@@ -168,8 +198,7 @@ const createHarness = ({
 
   const getDocument = () => renderer.getDocumentFrame()?.contentDocument
 
-  /** Each SVG image, once its picture is swapped in. */
-  const waitForSvgImages = () =>
+  const waitForSwappedSvgImages = () =>
     vi.waitFor(() => {
       const images = Array.from(getDocument()?.querySelectorAll(`image`) ?? [])
 
@@ -201,16 +230,7 @@ const createHarness = ({
 
         return imageRequests
       }),
-    waitForSvgImages,
-    /**
-     * happy-dom never loads an SVG picture, so the test reports each one
-     * loaded in the browser's place.
-     */
-    reportSvgImagesLoaded: async () => {
-      for (const image of await waitForSvgImages()) {
-        image.dispatchEvent(new Event(`load`))
-      }
-    },
+    waitForSwappedSvgImages,
     waitForLoaded: () =>
       vi.waitFor(() => expect(renderer.value.loadStatus).toBe(`loaded`)),
     cleanup: () => {
@@ -244,6 +264,12 @@ afterEach(() => {
   getHappyDOMWindow().happyDOM.settings.enableImageFileLoading = false
   vi.useRealTimers()
 })
+
+// rxjs schedules delays with intervals
+const useRxjsFakeTimers = () =>
+  vi.useFakeTimers({
+    toFake: [`setTimeout`, `clearTimeout`, `setInterval`, `clearInterval`],
+  })
 
 const setup = (params: Parameters<typeof createHarness>[0]) => {
   const harness = createHarness(params)
@@ -362,10 +388,7 @@ describe(`HtmlRenderer`, () => {
     })
 
     it(`loads without one that never reports, once it stops waiting for it`, async () => {
-      // rxjs schedules delays with intervals
-      vi.useFakeTimers({
-        toFake: [`setTimeout`, `clearTimeout`, `setInterval`, `clearInterval`],
-      })
+      useRxjsFakeTimers()
 
       const { load, waitForStylesheetRequests, waitForLoaded, renderer } =
         setup({ documentHref: `file://EPUB/chapter.xhtml`, resources })
@@ -482,14 +505,15 @@ describe(`HtmlRenderer`, () => {
     })
 
     it(`is not loaded until its SVG image has loaded`, async () => {
-      const { load, waitForSvgImages, waitForLoaded, renderer } = setup({
+      const { load, waitForSwappedSvgImages, waitForLoaded, renderer } = setup({
         documentHref,
         resources,
+        holdsImages: true,
       })
 
       load(documentWith(``, svgWith(`<image href="images/a.png" />`)))
 
-      const [image] = await waitForSvgImages()
+      const [image] = await waitForSwappedSvgImages()
 
       expect(renderer.value.loadStatus).toBe(`loading`)
 
@@ -499,8 +523,12 @@ describe(`HtmlRenderer`, () => {
     })
 
     it(`loads without the images that fail`, async () => {
-      const { load, waitForImageRequests, waitForSvgImages, waitForLoaded } =
-        setup({ documentHref, resources, holdsImages: true })
+      const {
+        load,
+        waitForImageRequests,
+        waitForSwappedSvgImages,
+        waitForLoaded,
+      } = setup({ documentHref, resources, holdsImages: true })
 
       load(
         documentWith(
@@ -510,7 +538,7 @@ describe(`HtmlRenderer`, () => {
       )
 
       const [image] = await waitForImageRequests(1)
-      const [svgImage] = await waitForSvgImages()
+      const [svgImage] = await waitForSwappedSvgImages()
 
       image?.fail()
       svgImage?.dispatchEvent(new Event(`error`))
@@ -519,10 +547,7 @@ describe(`HtmlRenderer`, () => {
     })
 
     it(`loads without an image that never reports, once it stops waiting for it`, async () => {
-      // rxjs schedules delays with intervals
-      vi.useFakeTimers({
-        toFake: [`setTimeout`, `clearTimeout`, `setInterval`, `clearInterval`],
-      })
+      useRxjsFakeTimers()
 
       const { load, waitForImageRequests, waitForLoaded, renderer } = setup({
         documentHref,
@@ -542,7 +567,7 @@ describe(`HtmlRenderer`, () => {
       await waitForLoaded()
     })
 
-    it(`loads a lazy image eagerly, since the frame is hidden while it loads`, async () => {
+    it(`marks a lazy image eager`, async () => {
       const { load, waitForLoaded, getDocument } = setup({
         documentHref,
         resources,
@@ -557,7 +582,7 @@ describe(`HtmlRenderer`, () => {
       )
     })
 
-    it(`does not load when it unloads while an image is loading, and revokes its picture`, async () => {
+    it(`does not load when it unloads while an image is loading, and revokes the image's blob url`, async () => {
       const { load, waitForImageRequests, renderer, getDocument } = setup({
         documentHref,
         resources,
@@ -573,18 +598,16 @@ describe(`HtmlRenderer`, () => {
 
       await waitForImageRequests(1)
 
-      const pictureUrl = getDocument()
-        ?.querySelector(`img`)
-        ?.getAttribute(`src`)
+      const imageUrl = getDocument()?.querySelector(`img`)?.getAttribute(`src`)
 
-      expect(await readObjectUrl(pictureUrl)).toBe(`a`)
+      expect(await readObjectUrl(imageUrl)).toBe(`a`)
 
       renderer.unload()
 
       await vi.waitFor(() => expect(renderer.value.loadStatus).toBe(`idle`))
 
       expect(loadStatuses).not.toContain(`loaded`)
-      expect(await readObjectUrl(pictureUrl)).toBeUndefined()
+      expect(await readObjectUrl(imageUrl)).toBeUndefined()
     })
   })
 
@@ -712,12 +735,13 @@ describe(`HtmlRenderer`, () => {
       }
 
       it(`resolves its XLink href, as SVG 1.1 writes it, and swaps the picture in there`, async () => {
-        const { load, reportSvgImagesLoaded, waitForLoaded, getDocument } =
-          setup({ documentHref, resources })
+        const { load, waitForLoaded, getDocument } = setup({
+          documentHref,
+          resources,
+        })
 
         load(documentWith(``, svgWith(`<image xlink:href="../Image/a.jpg" />`)))
 
-        await reportSvgImagesLoaded()
         await waitForLoaded()
 
         const image = getDocument()?.querySelector(`image`)
@@ -729,12 +753,13 @@ describe(`HtmlRenderer`, () => {
       })
 
       it(`resolves its href, as SVG 2 writes it`, async () => {
-        const { load, reportSvgImagesLoaded, waitForLoaded, getDocument } =
-          setup({ documentHref, resources })
+        const { load, waitForLoaded, getDocument } = setup({
+          documentHref,
+          resources,
+        })
 
         load(documentWith(``, svgWith(`<image href="../Image/a.jpg" />`)))
 
-        await reportSvgImagesLoaded()
         await waitForLoaded()
 
         expect(
@@ -745,8 +770,10 @@ describe(`HtmlRenderer`, () => {
       })
 
       it(`resolves its href rather than its XLink href, as the browser draws it`, async () => {
-        const { load, reportSvgImagesLoaded, waitForLoaded, getDocument } =
-          setup({ documentHref, resources })
+        const { load, waitForLoaded, getDocument } = setup({
+          documentHref,
+          resources,
+        })
 
         load(
           documentWith(
@@ -757,7 +784,6 @@ describe(`HtmlRenderer`, () => {
           ),
         )
 
-        await reportSvgImagesLoaded()
         await waitForLoaded()
 
         const image = getDocument()?.querySelector(`image`)
@@ -774,13 +800,7 @@ describe(`HtmlRenderer`, () => {
 
   describe(`when it unloads`, () => {
     it(`revokes the blob url of every asset it swapped in`, async () => {
-      const {
-        load,
-        reportSvgImagesLoaded,
-        waitForLoaded,
-        getDocument,
-        renderer,
-      } = setup({
+      const { load, waitForLoaded, getDocument, renderer } = setup({
         documentHref: `file://EPUB/Content/page.xhtml`,
         resources: {
           "file://EPUB/Image/a.jpg": { mediaType: `image/jpeg`, body: `a` },
@@ -795,7 +815,6 @@ describe(`HtmlRenderer`, () => {
         ),
       )
 
-      await reportSvgImagesLoaded()
       await waitForLoaded()
 
       const assetUrls = [
