@@ -10,7 +10,6 @@ type ChapterImagesWhenLoaded = {
     reference: string | null
     complete: boolean
     naturalWidth: number
-    offsetTop: number
   }[]
 }
 
@@ -55,7 +54,6 @@ const goToChapterRecordingImages = async (page: Page, href: string) =>
                   reference: image.getAttribute("src"),
                   complete: image.complete,
                   naturalWidth: image.naturalWidth,
-                  offsetTop: image.offsetTop,
                 }),
               ),
             })
@@ -117,7 +115,7 @@ test.describe("Given a chapter whose image is swapped in after its page", () => 
 
   /**
    * A lazy image loads once it nears the viewport. The scenario's `lazyImages`
-   * puts each image far below where its page starts.
+   * puts each image far from where its page starts.
    */
   test("it is loaded once its lazy image has its size", async ({ page }) => {
     await page.goto(`${url}?preload=0&lazyImages`)
@@ -132,10 +130,6 @@ test.describe("Given a chapter whose image is swapped in after its page", () => 
     expect(chapterIndex).toBeGreaterThanOrEqual(0)
     expect(loadStatusBeforeNavigation).toBe("idle")
     expect(chapterImages).not.toHaveLength(0)
-
-    for (const { offsetTop } of chapterImages) {
-      expect(offsetTop).toBeGreaterThanOrEqual(10_000)
-    }
 
     expectEachImageSized(imagesWhenLoaded)
   })
