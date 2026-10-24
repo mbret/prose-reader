@@ -234,7 +234,6 @@ export class ResourcesLocator {
             })),
           )
         }, initialConsolidatedValue),
-        takeUntil(this.reader.$.destroy$),
         shareReplay({ refCount: true, bufferSize: 1 }),
       )
 
@@ -263,14 +262,21 @@ export class ResourcesLocator {
   ):
     | Observable<{ resource: T; meta: ConsolidatedResource }>
     | Observable<{ resource: T; meta: ConsolidatedResource }[]> {
+    /**
+     * The guard sits on the result, outside the idle wait: a reader destroyed
+     * before the locator sets up completes it too, since the destruction is
+     * not replayed.
+     */
     if (Array.isArray(resource)) {
       return deferIdle(() =>
         combineLatest(
           resource.map((item) => this.locate(item, options ?? {})),
         ).pipe(defaultIfEmpty([])),
-      )
+      ).pipe(takeUntil(this.reader.$.destroy$))
     }
 
-    return this.locate(resource, options ?? {})
+    return this.locate(resource, options ?? {}).pipe(
+      takeUntil(this.reader.$.destroy$),
+    )
   }
 }
