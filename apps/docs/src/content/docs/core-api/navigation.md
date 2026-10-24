@@ -232,8 +232,9 @@ holds on the current layout: whether it was made, or restored, over the pages
 the reader shows now, with no layout requested since. Only while it holds do
 its position and the pages agree. Replays the current one on subscription.
 
-It is given with every navigation, and again, with the same `navigation`, each
-time a layout makes it stop holding. It does not hold:
+It is given with every navigation, and again, with the same `navigation` and
+`holdsOnCurrentLayout: false`, each time a layout is requested and each time its
+pages are in. It does not hold:
 
 - before the book is first laid out;
 - from the moment a layout is requested, by `reader.layout()` or by a spine
@@ -243,7 +244,8 @@ time a layout makes it stop holding. It does not hold:
 
 A navigation made while a layout is pending does not hold either. Read it
 rather than `.navigation$` when what you do depends on the layout, such as
-which spine items or pages a navigation shows.
+which spine items or pages a navigation shows. It completes when the reader is
+destroyed.
 
 ### `.position$` { #positionusd }
 
