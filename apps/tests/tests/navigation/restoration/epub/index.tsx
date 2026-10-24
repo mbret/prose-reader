@@ -4,7 +4,27 @@ import { Streamer } from "@prose-reader/streamer"
 import { loadAsync } from "jszip"
 import { from } from "rxjs"
 
-async function createStreamer() {
+/**
+ * Gives every image of the book's pages `loading="lazy"`, and a top margin that
+ * keeps it far beyond any engine's lazy loading distance while its page loads.
+ */
+const makeImagesLazy = async (
+  epubJszip: Awaited<ReturnType<typeof loadAsync>>,
+) => {
+  for (const page of epubJszip.file(/\.xhtml$/)) {
+    const content = await page.async("string")
+
+    epubJszip.file(
+      page.name,
+      content.replace(
+        /<img /g,
+        '<img loading="lazy" style="margin-top: 10000px" ',
+      ),
+    )
+  }
+}
+
+async function createStreamer({ lazyImages }: { lazyImages: boolean }) {
   const streamer = new Streamer({
     getArchive: async () => {
       const epubResponse = await fetch(
@@ -12,6 +32,9 @@ async function createStreamer() {
       )
       const epubBlob = await epubResponse.blob()
       const epubJszip = await loadAsync(epubBlob)
+
+      if (lazyImages) await makeImagesLazy(epubJszip)
+
       const archive = await createArchiveFromJszip(epubJszip)
 
       return archive
@@ -22,11 +45,13 @@ async function createStreamer() {
 }
 
 async function run() {
-  const streamer = await createStreamer()
+  const query = new URLSearchParams(window.location.search)
+  const streamer = await createStreamer({
+    lazyImages: query.has("lazyImages"),
+  })
   const manifestResponse = await streamer.fetchManifest()
   const manifest = await manifestResponse.json()
 
-  const query = new URLSearchParams(window.location.search)
   const cfi = query.get("cfi")
   const preload = query.get("preload")
   const pageHorizontalMargin = query.get("pageHorizontalMargin")
@@ -55,32 +80,6 @@ async function run() {
     readingPositions.push(readingPosition)
   })
 
-  // The pictures of each chapter as it reports loaded, from the reader's
-  // creation on.
-  const picturesWhenLoaded: {
-    itemIndex: number
-    images: {
-      reference: string | null
-      complete: boolean
-      naturalWidth: number
-    }[]
-  }[] = []
-
-  reader.spineItemsObserver.itemLoadStatusChange$.subscribe(
-    ({ item, loadStatus }) => {
-      if (loadStatus !== "loaded") return
-
-      picturesWhenLoaded.push({
-        itemIndex: item.index,
-        images: Array.from(item.loadedDocument?.images ?? [], (image) => ({
-          reference: image.getAttribute("src"),
-          complete: image.complete,
-          naturalWidth: image.naturalWidth,
-        })),
-      })
-    },
-  )
-
   // biome-ignore lint/style/noNonNullAssertion: TODO
   reader.mount(document.getElementById(`app`)!)
 
@@ -88,8 +87,6 @@ async function run() {
   window.reader = reader
   // @ts-expect-error export for the specs
   window.readingPositions = readingPositions
-  // @ts-expect-error export for the specs
-  window.picturesWhenLoaded = picturesWhenLoaded
 }
 
 run()

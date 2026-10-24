@@ -55,10 +55,27 @@ test.describe("Given a prepaginated book with a page drawn as an SVG image", () 
     expect(picture).toEqual({ width: 924, height: 1458 })
   })
 
+  /**
+   * Without its stylesheet, nothing but the picture holds the page's load. The
+   * reader warns of an asset it could not load or gave up waiting for, once
+   * debugging is on before it is created.
+   */
   test("should report the page loaded once its picture can be drawn", async ({
     page,
   }) => {
-    await page.goto("http://localhost:3333/tests/prepaginated/index.html")
+    const assetWarnings: string[] = []
+
+    page.on("console", (message) => {
+      if (message.text().includes("Could not load asset")) {
+        assetWarnings.push(message.text())
+      }
+    })
+    await page.addInitScript(() => {
+      window.__PROSE_READER_DEBUG = true
+    })
+    await page.goto(
+      "http://localhost:3333/tests/prepaginated/index.html?withoutStylesheets",
+    )
     await waitForSettled(page)
 
     const pageLoad = await (await getReader(page)).evaluate(
@@ -66,19 +83,13 @@ test.describe("Given a prepaginated book with a page drawn as an SVG image", () 
         new Promise<{
           loadStatusBeforeNavigation: string | undefined
           pictureAlpha: number | string
-          loadDuration: number
         }>((resolve) => {
           const loadStatusBeforeNavigation =
             reader.spineItemsManager.get(index)?.value.loadStatus
-          let loadStartedAt = Number.NaN
 
           reader.spineItemsObserver.itemLoadStatusChange$.subscribe(
             ({ item, loadStatus }) => {
-              if (item.index !== index) return
-
-              if (loadStatus === "loading") loadStartedAt = performance.now()
-
-              if (loadStatus !== "loaded") return
+              if (item.index !== index || loadStatus !== "loaded") return
 
               const image = item.loadedDocument?.querySelector("image")
               const canvas = document.createElement("canvas")
@@ -98,11 +109,7 @@ test.describe("Given a prepaginated book with a page drawn as an SVG image", () 
                 pictureAlpha = String(error)
               }
 
-              resolve({
-                loadStatusBeforeNavigation,
-                pictureAlpha,
-                loadDuration: performance.now() - loadStartedAt,
-              })
+              resolve({ loadStatusBeforeNavigation, pictureAlpha })
             },
           )
 
@@ -114,8 +121,6 @@ test.describe("Given a prepaginated book with a page drawn as an SVG image", () 
     expect(pageLoad.loadStatusBeforeNavigation).toBe("idle")
     // `img-3.jpg` is opaque.
     expect(pageLoad.pictureAlpha).toBe(255)
-    // The picture reported its own load: the reader gives up on an asset
-    // after 5 seconds.
-    expect(pageLoad.loadDuration).toBeLessThan(5_000)
+    expect(assetWarnings).toEqual([])
   })
 })
