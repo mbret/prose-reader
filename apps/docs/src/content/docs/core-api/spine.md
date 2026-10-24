@@ -23,7 +23,7 @@ it:
 
 - by `reader.layout()`, and what calls it, such as a resize or a setting that
   moves the pages;
-- by a spine item loading, failing to load or unloading.
+- by a spine item that finishes loading, fails to load or finishes unloading.
 
 It turns `true` once the pages of the latest request are published, before
 anything else hears of them. A newer request cancels everything still running
