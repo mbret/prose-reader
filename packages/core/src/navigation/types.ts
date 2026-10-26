@@ -278,9 +278,9 @@ export type Navigation = Pick<
 
 /**
  * The latest navigation, and whether it holds on the current layout: it was
- * made, or restored, while the pages described the latest layout requested,
- * and no layout has been requested since. `navigation` is what `navigation$`
- * emitted for it.
+ * made, or restored, while the pages described what it shows as the latest
+ * layout requested lays it out, and no layout requested since can change
+ * that. `navigation` is what `navigation$` emitted for it.
  */
 export type NavigationAgainstCurrentLayout = {
   navigation: Navigation

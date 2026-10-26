@@ -182,11 +182,13 @@ Use it to react to navigating as an event. For where the viewport is,
 When what you do with a navigation depends on the layout, such as reading
 which spine items or pages its position shows, use
 `navigationAgainstCurrentLayout$` instead. It gives the latest navigation with
-whether it holds on the current layout, and gives it again, not holding, each
-time a layout is requested and each time its pages are in: a navigation's
-position and the pages agree only while it holds. After a relayout, the navigation from before is still the latest until
-the restoration, and its position can show other content on the new pages, so
-pairing `navigation$` with a layout signal of your own gets that moment wrong.
+whether it holds on the current layout, and gives it again, not holding, when a
+layout that can change what it shows is requested: a navigation's position and
+the pages agree only while it holds. A layout of chapters after the ones it
+shows leaves it holding. After a relayout, the navigation from before is still
+the latest until the restoration, and its position can show other content on
+the new pages, so pairing `navigation$` with a layout signal of your own gets
+that moment wrong.
 
 ## Pans and locks
 
