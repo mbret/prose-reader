@@ -6,6 +6,19 @@ import { from } from "rxjs"
 
 window.__PROSE_READER_DEBUG = true
 
+const removeStylesheetLinks = async (
+  epubJszip: Awaited<ReturnType<typeof loadAsync>>,
+) => {
+  for (const page of epubJszip.file(/\.xhtml$/)) {
+    const content = await page.async("string")
+
+    epubJszip.file(
+      page.name,
+      content.replace(/<link [^>]*rel="stylesheet"[^>]*\/>/g, ""),
+    )
+  }
+}
+
 async function createStreamer() {
   const streamer = new Streamer({
     getArchive: async () => {
@@ -14,6 +27,13 @@ async function createStreamer() {
       )
       const epubBlob = await epubResponse.blob()
       const epubJszip = await loadAsync(epubBlob)
+
+      if (
+        new URLSearchParams(window.location.search).has("withoutStylesheets")
+      ) {
+        await removeStylesheetLinks(epubJszip)
+      }
+
       const archive = await createArchiveFromJszip(epubJszip)
 
       return archive
