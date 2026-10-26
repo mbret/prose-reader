@@ -41,6 +41,42 @@ describe("a resource located on a reader destroyed while it consolidates", () =>
   })
 })
 
+describe("a resource located on a reader destroyed before the locator sets up", () => {
+  it.each([
+    ["one resource", false],
+    ["a list of resources", true],
+  ])("completes as the reader is destroyed, given %s", async (_, asList) => {
+    vi.useFakeTimers()
+
+    const reader = createEnhancedTestReader()
+
+    mountTestReader(reader)
+    await vi.runAllTimersAsync()
+
+    const item = reader.spineItemsManager.get(1)
+
+    if (!item) throw new Error("the book has no second item")
+
+    const onLocated = vi.fn()
+    const onComplete = vi.fn()
+    const observer = { next: onLocated, complete: onComplete }
+
+    if (asList) {
+      reader.locateResource([item]).subscribe(observer)
+    } else {
+      reader.locateResource(item).subscribe(observer)
+    }
+
+    reader.destroy()
+
+    expect(onComplete).toHaveBeenCalled()
+
+    await vi.runAllTimersAsync()
+
+    expect(onLocated).not.toHaveBeenCalled()
+  })
+})
+
 describe("a reflowable item located away from the reading position", () => {
   it("stays loaded while it is located, and for a second after", async () => {
     vi.useFakeTimers()
