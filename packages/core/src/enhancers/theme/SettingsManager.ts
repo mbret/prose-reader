@@ -25,16 +25,6 @@ export class SettingsManager<
     return !isShallowEqual(this.outputSettings, newOutputSettings)
   }
 
-  getCleanedParentInputSettings(
-    settings: Partial<EnhancerThemeInputSettings & ParentInputSettings>,
-  ): ParentInputSettings {
-    const { theme: _unused, ...rest } = settings
-
-    // Cast: removing a key from a generic type gives an `Omit` that TypeScript
-    // cannot relate back to `ParentInputSettings`.
-    return rest as unknown as ParentInputSettings
-  }
-
   getDefaultSettings(): EnhancerThemeInputSettings {
     return {
       theme: `bright`,

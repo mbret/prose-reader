@@ -1,6 +1,7 @@
 import { combineLatest, filter, firstValueFrom, timeout } from "rxjs"
 import { describe, expect, it, vi } from "vitest"
 import {
+  createFullTestReader,
   createTestReader,
   getTestContainer,
   holdItem,
@@ -99,12 +100,14 @@ describe("theme", () => {
   })
 
   it("reads, changes and emits the theme through the reader's settings", () => {
-    const reader = createTestReader({ theme: `sepia` })
+    const reader = createFullTestReader({ theme: `sepia` })
     const onThemeEmitted = vi.fn()
     const subscription = reader.settings
       .watch([`theme`])
       .subscribe(onThemeEmitted)
 
+    reader.settings.update({ theme: `sepia` })
+    reader.settings.update({ fontScale: 1.2 })
     reader.settings.update({ theme: `night` })
     reader.settings.update({ pageTurnAnimation: `none` })
     subscription.unsubscribe()
