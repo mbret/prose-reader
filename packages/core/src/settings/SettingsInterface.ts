@@ -7,11 +7,6 @@ export interface SettingsInterface<
   _outputSettings?: OutputSettings
   _inputSettings?: InputSettings
 
-  _prepareUpdate(settings: Partial<InputSettings>): {
-    hasChanged: boolean
-    commit: () => OutputSettings
-  }
-
   update(settings: Partial<InputSettings>): void
 
   values$: Observable<OutputSettings>

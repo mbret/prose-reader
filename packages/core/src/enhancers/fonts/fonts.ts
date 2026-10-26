@@ -1,19 +1,23 @@
+import { shallowMergeIfDefined } from "@prose-reader/shared"
 import {
   map,
   type Observable,
   type ObservedValueOf,
   pairwise,
-  Subject,
   takeUntil,
   tap,
 } from "rxjs"
 import type { SettingsInterface } from "../../settings/SettingsInterface"
 import { upsertCSSToFrame } from "../../utils/frames"
 import type { EnhancerOutput, RootEnhancer } from "../types/enhancer"
-import { SettingsManager } from "./SettingsManager"
 import type { EnhancerFontsInputSettings } from "./types"
 
-type OutputOptions = Required<EnhancerFontsInputSettings>
+const defaultFontsSettings: EnhancerFontsInputSettings = {
+  fontScale: 1,
+  fontWeight: `publisher`,
+  lineHeight: `publisher`,
+  fontJustification: `publisher`,
+}
 
 /**
  * @important
@@ -46,25 +50,13 @@ export const fontsEnhancer =
     next: (options: InheritOptions) => InheritOutput,
   ) =>
   (options: InheritOptions & Partial<EnhancerFontsInputSettings>): Output => {
-    const { fontScale, lineHeight, fontWeight, fontJustification } = options
-    const changes$ = new Subject<Partial<OutputOptions>>()
-    const reader = next(options)
-
-    const settingsManager = new SettingsManager<
-      InheritSettings,
-      InheritComputedSettings
-    >(
-      {
-        fontScale,
-        lineHeight,
-        fontWeight,
-        fontJustification,
-      },
-      reader.settings as SettingsInterface<
-        InheritSettings,
-        InheritComputedSettings
-      >,
-    )
+    const reader = next(shallowMergeIfDefined(defaultFontsSettings, options))
+    // Cast: the reader's settings hold every setting given to them, these
+    // included, but their type only lists the inherited ones.
+    const settings = reader.settings as SettingsInterface<
+      InheritSettings & EnhancerFontsInputSettings,
+      EnhancerFontsInputSettings & InheritComputedSettings
+    >
 
     const getStyle = () => `
     ${
@@ -78,10 +70,10 @@ export const fontsEnhancer =
     */ ``
     }
     body {
-      ${settingsManager.values.fontScale !== 1 ? `font-size: ${settingsManager.values.fontScale}em !important;` : ``}
-      ${settingsManager.values.lineHeight !== `publisher` ? `line-height: ${settingsManager.values.lineHeight} !important;` : ``}
-      ${settingsManager.values.fontWeight !== `publisher` ? `font-weight: ${settingsManager.values.fontWeight} !important;` : ``}
-      ${settingsManager.values.fontJustification !== `publisher` ? `text-align: ${settingsManager.values.fontJustification} !important;` : ``}
+      ${settings.values.fontScale !== 1 ? `font-size: ${settings.values.fontScale}em !important;` : ``}
+      ${settings.values.lineHeight !== `publisher` ? `line-height: ${settings.values.lineHeight} !important;` : ``}
+      ${settings.values.fontWeight !== `publisher` ? `font-weight: ${settings.values.fontWeight} !important;` : ``}
+      ${settings.values.fontJustification !== `publisher` ? `text-align: ${settings.values.fontJustification} !important;` : ``}
     }
   `
 
@@ -119,7 +111,16 @@ export const fontsEnhancer =
       }
     })
 
-    const shouldRequireLayout = <T extends ObservedValueOf<typeof changes$>>(
+    const fontsSettings$ = settings.watch([
+      `fontScale`,
+      `lineHeight`,
+      `fontWeight`,
+      `fontJustification`,
+    ])
+
+    const shouldRequireLayout = <
+      T extends ObservedValueOf<typeof fontsSettings$>,
+    >(
       source: Observable<T>,
     ) =>
       source.pipe(
@@ -132,7 +133,7 @@ export const fontsEnhancer =
         }),
       )
 
-    settingsManager.values$
+    fontsSettings$
       .pipe(
         shouldRequireLayout,
         tap(applyChangeToSpineItems),
@@ -140,13 +141,7 @@ export const fontsEnhancer =
       )
       .subscribe()
 
-    return {
-      ...reader,
-      destroy: () => {
-        changes$.complete()
-        settingsManager.destroy()
-        reader.destroy()
-      },
-      settings: settingsManager,
-    } as unknown as Output
+    // Cast: the reader is a generic `InheritOutput`, which TypeScript cannot
+    // match to `Output`, a type the caller may narrow.
+    return reader as unknown as Output
   }
