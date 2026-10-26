@@ -21,7 +21,7 @@ const createSnapshot = () => {
   const reader = {
     keepSpineItemLoaded: vi.fn(() => releaseSpineItem),
     viewport: { value: { pageSize: { width: 100, height: 100 } } },
-    theme: { get: () => "bright" },
+    settings: { values: { theme: "bright" } },
   } as unknown as Reader
   const isReady$ = new BehaviorSubject(false)
   const element = document.createElement("div")
