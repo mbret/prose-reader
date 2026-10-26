@@ -1,4 +1,4 @@
-import type { CoreInputSettings, Reader } from "@prose-reader/core"
+import type { CoreInputSettings, Reader, Theme } from "@prose-reader/core"
 import type {
   Annotation,
   RuntimeAnnotation,
@@ -22,6 +22,7 @@ export type PrivateContextType = {
    */
   uncontrolledFontSize: number
   uncontrolledSpreadMode: CoreInputSettings["spreadMode"]
+  uncontrolledTheme: Theme
   refitMenuOpen: boolean
   onRefitMenuOpenChange: (open: boolean) => void
   fontSizeMenuOpen: boolean
@@ -84,6 +85,11 @@ export type PublicContextType = {
     PROSE_REACT_READER_SETTINGS_SCOPE_REFERENCE,
     CoreInputSettings["spreadMode"] | undefined
   >
+  theme?: Theme
+  onThemeChange?: (
+    from: PROSE_REACT_READER_SETTINGS_SCOPE_REFERENCE | "internal",
+    value: Theme,
+  ) => void
   annotations?: Annotation[]
   onAnnotationCreate?: (annotation: Annotation) => void
   onAnnotationUpdate?: (
@@ -110,6 +116,7 @@ export const getDefaultValue = (): ReaderContextType => ({
   fontSizeMax: 5,
   uncontrolledFontSize: 1,
   uncontrolledSpreadMode: "auto",
+  uncontrolledTheme: "bright",
   enableFloatingProgress: true,
   selectedHighlight: undefined,
 })

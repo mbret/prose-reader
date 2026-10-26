@@ -1,6 +1,6 @@
 ---
 title: "Getting started with React Reader"
-description: "Install @prose-reader/react-reader, render ReactReader with your reader instance, persist font size and spread mode, and add enhancers to turn on more menus."
+description: "Install @prose-reader/react-reader, render ReactReader with your reader instance, persist font size, spread mode and theme, and add enhancers to turn on more menus."
 sidebar:
   label: "Getting Started"
 ---
@@ -86,14 +86,15 @@ const useReaderInstance = (
 
 ## Settings
 
-The user changes some of the reader's settings from react-reader's menus: the font size, and the spread mode in the Layout dialog. react-reader manages both the same way, as props of the component:
+react-reader manages some of the reader's settings as props of the component. The user changes two of them from its menus: the font size, and the spread mode in the Layout dialog. The theme has no menu: your app sets it, for example to follow its own light or dark mode.
 
 | Setting | Value | Change callback | Scopes | Reader setting |
 | --- | --- | --- | --- | --- |
 | Font size | `fontSize` | `onFontSizeChange` | `fontSizeScope`, `onFontSizeScopeChange`, `fontSizeValues` | `fontScale` |
 | Spread mode | `spreadMode` | `onSpreadModeChange` | `spreadModeScope`, `onSpreadModeScopeChange`, `spreadModeValues` | `spreadMode` |
+| Theme | `theme` | `onThemeChange` | none | `theme` |
 
-react-reader writes the value into the reader, so don't give it to your reader when you create it: it would be overwritten. Keep the value in your app, save it from the change callback and pass it back as a prop:
+Keep the value in your app, save it from the change callback and pass it back as a prop. react-reader writes it into the reader:
 
 ```tsx
 <ReactReader
@@ -102,12 +103,25 @@ react-reader writes the value into the reader, so don't give it to your reader w
   onFontSizeChange={(_scope, fontSize) => save({ fontSize })}
   spreadMode={saved.spreadMode}
   onSpreadModeChange={(_scope, spreadMode) => save({ spreadMode })}
+  theme={saved.theme}
+  onThemeChange={(_scope, theme) => save({ theme })}
 >
   <div ref={containerRef} style={{ height: "100%", width: "100%" }} />
 </ReactReader>
 ```
 
-The change callback receives the scope whose value the user changed, or `"internal"` for a value set on the reader directly. Without the value prop, react-reader keeps its own copy for as long as it is mounted, starting from the value the reader was created with. Its menus offer to pick a scope only once you pass the scope props.
+react-reader meets the reader only once it is created and mounted, and writes the values from then on. Create your reader with the same values, so it starts on them rather than switching to them, as a reader created without your theme first shows the default one, `bright`. Read them when you create the reader rather than recreating it when they change: react-reader keeps it on them afterwards.
+
+```typescript
+const instance = createAppReader({
+  manifest,
+  fontScale: saved.fontSize,
+  spreadMode: saved.spreadMode,
+  theme: saved.theme,
+})
+```
+
+The change callback receives the scope whose value the user changed, or `"internal"` for a value set on the reader directly, the only one `onThemeChange` receives. Without the value prop, react-reader keeps its own copy for as long as it is mounted, starting from the value the reader was created with. Its menus offer to pick a scope only once you pass the scope props.
 
 ## Toggling features
 
