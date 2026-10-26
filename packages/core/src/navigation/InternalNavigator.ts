@@ -9,8 +9,10 @@ import {
   merge,
   type Observable,
   of,
+  scan,
   share,
   shareReplay,
+  skip,
   skipUntil,
   switchMap,
   take,
@@ -46,6 +48,7 @@ import { isTargetInBook } from "./targets/isTargetInBook"
 import type {
   InternalNavigationAnchor,
   InternalNavigationEntry,
+  NavigationAgainstCurrentLayout,
   NavigationModeController,
   NavigationTarget,
   ReadingPosition,
@@ -55,6 +58,8 @@ import type {
 const NAMESPACE = `navigation/InternalNavigator`
 
 const report = Report.namespace(NAMESPACE)
+
+const layoutCurrencyChanged: unique symbol = Symbol("layoutCurrencyChanged")
 
 /**
  * A stand-in's cfi is its item's root cfi and a target place's never is, so
@@ -107,6 +112,30 @@ export class InternalNavigator extends DestroyableClass {
     })),
     shareReplay(1),
   )
+
+  /**
+   * The latest navigation, and whether it holds on the current layout: made,
+   * or restored, while the pages describe the latest layout requested, with
+   * none requested since. It does not hold until the reader is first laid
+   * out, from the moment a layout is requested, and still once its pages are
+   * published, until the navigation is restored onto them, which is a
+   * navigation made over the current layout. Nor does a navigation made
+   * while a layout is pending.
+   *
+   * A navigation's position and the pages agree only while it holds, so
+   * whatever depends on the layout reads it: pagination settles, and the
+   * loader measures which items to keep loaded, only then. It is reported
+   * with every navigation and every change of layout currency, which repeats
+   * the navigation it voids, so a reader of it needs no other navigation
+   * stream.
+   *
+   * Whether a navigation holds depends on the order navigations and layouts
+   * came in, not on their latest values: once a layout's pages are published,
+   * the navigation from before is still the latest until it is restored. So
+   * it is derived from construction on, and replayed, and is the one to read
+   * rather than work out again from `navigation$` and the spine.
+   */
+  public readonly navigationAgainstCurrentLayout$: Observable<NavigationAgainstCurrentLayout>
 
   /**
    * Where the reader is in the book, to save and reopen at, the same way
@@ -164,6 +193,47 @@ export class InternalNavigator extends DestroyableClass {
     initialTarget?: NavigationTarget,
   ) {
     super()
+
+    /**
+     * Any change of layout currency voids the latest navigation: a request
+     * replaces the layout it was made over, and pages being published make
+     * current a layout it was not restored onto yet.
+     *
+     * The latest navigation is the stream's own state, set before it is
+     * reported, so a layout requested by a subscriber while a navigation is
+     * reported voids that navigation and not the one before it.
+     */
+    this.navigationAgainstCurrentLayout$ = merge(
+      this.navigation$,
+      spine.isLayoutCurrent$.pipe(
+        // Changes only: the current value is replayed on subscription.
+        skip(1),
+        map((): typeof layoutCurrencyChanged => layoutCurrencyChanged),
+      ),
+    ).pipe(
+      scan(
+        (
+          latest: NavigationAgainstCurrentLayout | undefined,
+          change,
+        ): NavigationAgainstCurrentLayout | undefined =>
+          change === layoutCurrencyChanged
+            ? latest && {
+                navigation: latest.navigation,
+                holdsOnCurrentLayout: false,
+              }
+            : {
+                navigation: change,
+                holdsOnCurrentLayout: spine.isLayoutCurrent,
+              },
+        undefined,
+      ),
+      filter(isDefined),
+      takeUntil(this.destroy$),
+      shareReplay({ bufferSize: 1, refCount: true }),
+    )
+
+    // From construction on, so it has seen every navigation and layout.
+    this.navigationAgainstCurrentLayout$.subscribe()
 
     const getNavigationVisibleArea = () =>
       getActiveNavigationModeController().getNavigationVisibleArea()

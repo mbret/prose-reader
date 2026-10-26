@@ -42,6 +42,11 @@ in `localStorage` (`tests/utils/resourceLoading.ts`), and
 Run a spec both ways on Chromium with `--project='chromium*'`. A scenario opened
 by hand loads over http.
 
+A scenario that needs a fixture to differ in one way, such as with its images
+lazy, opens a book the server rewrites from it (`REWRITTEN_BOOKS` in
+`server/serveBooks.ts`) and serves beside the fixtures. Rewriting the book in
+the page would only reach the reader loading from blobs.
+
 ## Waiting
 
 A timer is a guess about how fast a machine is. A wrong guess fails on a slower

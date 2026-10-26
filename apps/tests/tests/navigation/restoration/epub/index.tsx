@@ -2,9 +2,14 @@ import { createReader, type ReadingPosition } from "@prose-reader/core"
 import { openFixtureBook } from "../../../fixtureBook"
 
 async function run() {
-  const book = await openFixtureBook("accessible_epub_3.epub")
-
   const query = new URLSearchParams(window.location.search)
+  // `server/serveBooks.ts` makes the book with lazy images.
+  const book = await openFixtureBook(
+    query.has("lazyImages")
+      ? "accessible_epub_3-lazy-images.epub"
+      : "accessible_epub_3.epub",
+  )
+
   const cfi = query.get("cfi")
   const preload = query.get("preload")
   const pageHorizontalMargin = query.get("pageHorizontalMargin")

@@ -66,13 +66,15 @@ Observable<SelectionOver>
 
 Emits when user releases the pointer after a selection
 
-### `selection.lastSelectionOnPointerDown$` { #selection.lastselectiononpointerdownusd }
+### `selection.lastSelectionOnPointerdown$` { #selection.lastselectiononpointerdownusd }
 
 ```typescript
 Observable<SelectionValue>
 ```
 
 Useful to know about the selection state before a pointerdown event. For example if you want to prevent certain action on click if user is discarding a selection. A good example is delaying the opening of a reader menu by discarding the current selection before toggling the menu.
+
+It completes when the reader is destroyed.
 
 ### `selection.getSelection()` { #selection.getselection }
 

@@ -4,7 +4,12 @@ import { openFixtureBook } from "../fixtureBook"
 window.__PROSE_READER_DEBUG = true
 
 async function run() {
-  const book = await openFixtureBook("sous-le-vent.epub")
+  // `server/serveBooks.ts` makes the book without stylesheets.
+  const book = await openFixtureBook(
+    new URLSearchParams(window.location.search).has("withoutStylesheets")
+      ? "sous-le-vent-without-stylesheets.epub"
+      : "sous-le-vent.epub",
+  )
 
   const reader = createReader({
     ...book,

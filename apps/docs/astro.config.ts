@@ -123,6 +123,7 @@ export default defineConfig({
               label: "reader",
               items: [
                 { label: "Overview", slug: "core-api/reader" },
+                "core-api/reader/keepspineitemloaded",
                 "core-api/reader/linksusd",
                 "core-api/reader/locateresource",
                 "core-api/reader/renderheadless",
@@ -131,6 +132,7 @@ export default defineConfig({
             "core-api/viewport",
             "core-api/navigation",
             "core-api/pagination",
+            "core-api/spine",
             "core-api/zoom",
             "core-api/utilities",
           ],

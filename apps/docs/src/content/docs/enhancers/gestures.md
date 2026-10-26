@@ -17,11 +17,13 @@ This enhancer implements common gesture patterns using [https://github.com/mbret
 ## Getting Started
 
 ```bash
-npm install @prose-reader/enhancer-gestures gesturx rxjs
+npm install @prose-reader/enhancer-gestures @prose-reader/core gesturx rxjs
 ```
 
-Both are peer dependencies: the enhancer needs gesturx 2 (`^2.0.0`) and rxjs
-7.5.5 or any later 7.x (`^7.5.5`).
+All three are peer dependencies. The enhancer runs against the reader your app
+creates, so it shares that reader's `@prose-reader/core` rather than bringing
+its own. It needs the core it was released with or a later one of the same
+major, gesturx 2 (`^2.0.0`), and rxjs 7.5.5 or any later 7.x (`^7.5.5`).
 
 Connect the enhancer to your reader:
 
@@ -136,6 +138,8 @@ Observable<{
 ```
 
 Emits all gesture events that are recognized and processed by the enhancer. It will attach a boolean to let you know whether the gesture has been handled or not. Typically whether an action happened following this gesture (like a passthrough).
+
+It completes when the reader is destroyed.
 
 Imagine you want to show/hide a menu when the user clicks on the screen. The enhancer will trigger a navigation when the user taps on the left or right edge so you likely don't want to show the menu at the moment. However clicking outside of this range will have no effect. This is where you can intercept the gesture and show your menu.
 

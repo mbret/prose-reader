@@ -6,16 +6,17 @@ import { from } from "rxjs"
 import { getScenarioResourceLoading } from "./utils/resourceLoading"
 
 /**
- * The manifest of a book in `public/epubs`, and the `getResource` its reader
- * needs, for the resource loading the scenario's project asks for (see
- * `utils/resourceLoading.ts`). Pass both to the reader as they are.
+ * The manifest of a book the test app serves, a file of `public/epubs` or a
+ * book rewritten from one (see `server/serveBooks.ts`), and the `getResource`
+ * its reader needs, for the resource loading the scenario's project asks for
+ * (see `utils/resourceLoading.ts`). Pass both to the reader as they are.
  */
 export const openFixtureBook = async (
-  file: string,
+  bookName: string,
 ): Promise<Pick<CreateReaderOptions, "manifest" | "getResource">> => {
   if (getScenarioResourceLoading() === "http") {
     const manifestResponse = await fetch(
-      `/streamer/${encodeURIComponent(file)}/manifest`,
+      `/streamer/${encodeURIComponent(bookName)}/manifest`,
     )
 
     return { manifest: await manifestResponse.json() }
@@ -23,7 +24,7 @@ export const openFixtureBook = async (
 
   const streamer = new Streamer({
     getArchive: async () => {
-      const bookResponse = await fetch(`/epubs/${encodeURIComponent(file)}`)
+      const bookResponse = await fetch(`/epubs/${encodeURIComponent(bookName)}`)
 
       return createArchiveFromJszip(await loadAsync(await bookResponse.blob()))
     },

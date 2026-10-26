@@ -111,9 +111,10 @@ describe("the spine", () => {
 
     /**
      * Every state a subscriber receives is the item's state at that moment.
-     * Laying out marks every item dirty: done while the item's release is
-     * still being delivered, the dirty state reaches the subscribers after it
-     * before the release does, and they end on a state the item left.
+     * Laying out marks the item and the ones after it dirty: done while the
+     * item's release is still being delivered, the dirty state reaches the
+     * subscribers after it before the release does, and they end on a state
+     * the item left.
      */
     const outdatedStates: string[] = []
     reader.spineItemsObserver.itemStateChange$.subscribe(
