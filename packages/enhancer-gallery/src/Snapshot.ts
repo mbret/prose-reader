@@ -68,7 +68,7 @@ export class Snapshot extends Observable<HTMLElement> {
           switchMap(() => {
             const { snapshotElement, contentMask } = createSnapshotItem(
               parentDocument,
-              getThemeBackgroundColor(reader.theme.get()),
+              getThemeBackgroundColor(reader.settings.values.theme),
             )
             snapshotItem = snapshotElement
 

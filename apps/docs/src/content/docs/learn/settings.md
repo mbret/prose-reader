@@ -5,7 +5,7 @@ sidebar:
   label: "Settings"
 ---
 
-Settings affecting the reader.
+Settings affecting the reader. The enhancers `createReader` is built with add settings of their own to the same `reader.settings`, such as the [theme](/learn/style-and-css#theme), `fontScale` and `pageHorizontalMargin`.
 
 ```typescript
 export type InputSettings = {

@@ -1,19 +1,21 @@
 import { combineLatest, filter, firstValueFrom, timeout } from "rxjs"
-import { describe, expect, it } from "vitest"
+import { describe, expect, it, vi } from "vitest"
 import {
+  createFullTestReader,
   createTestReader,
   getTestContainer,
   holdItem,
   installReaderTestEnvironment,
   mountTestReader,
   renderTextDocuments,
-} from "../tests/readerHarness"
+} from "../../tests/readerHarness"
 import {
   createTestManifest,
   createTestManifestSpineItems,
-} from "../tests/utils"
-import { CONTAINER_HTML_PREFIX as PLACEHOLDER_CLASS_NAME } from "./layout/createPlaceholderPages"
-import { getThemeBackgroundColor, type Theme } from "./theme"
+} from "../../tests/utils"
+import { CONTAINER_HTML_PREFIX as PLACEHOLDER_CLASS_NAME } from "../layout/createPlaceholderPages"
+import { getThemeBackgroundColor } from "./theme"
+import type { Theme } from "./types"
 
 installReaderTestEnvironment()
 
@@ -93,6 +95,32 @@ const everyItemReady = (reader: ReturnType<typeof createTestReader>) =>
   )
 
 describe("theme", () => {
+  it("is bright by default", () => {
+    expect(createTestReader().settings.values.theme).toBe(`bright`)
+  })
+
+  it("reads, changes and emits the theme through the reader's settings", () => {
+    const reader = createFullTestReader({ theme: `sepia` })
+    const onThemeEmitted = vi.fn()
+    const subscription = reader.settings
+      .watch([`theme`])
+      .subscribe(onThemeEmitted)
+
+    reader.settings.update({ theme: `sepia` })
+    reader.settings.update({ fontScale: 1.2 })
+    reader.settings.update({ theme: `night` })
+    reader.settings.update({ pageTurnAnimation: `none` })
+    subscription.unsubscribe()
+
+    expect({
+      theme: reader.settings.values.theme,
+      emittedThemes: onThemeEmitted.mock.calls,
+    }).toEqual({
+      theme: `night`,
+      emittedThemes: [[{ theme: `sepia` }], [{ theme: `night` }]],
+    })
+  })
+
   it("paints the reader and a loading item's placeholder with the theme's background", () => {
     const heldItem = holdItem(`/page_0.jpg`)
     const reader = createTestReader({
@@ -127,7 +155,7 @@ describe("theme", () => {
     ]
 
     for (const theme of themesInSwitchOrder) {
-      reader.theme.set(theme)
+      reader.settings.update({ theme })
 
       expect({
         theme,
@@ -138,6 +166,18 @@ describe("theme", () => {
     }
   })
 
+  it("repaints the reader when the theme changes in the same update as a core setting", () => {
+    const heldItem = holdItem(`/page_0.jpg`)
+    const reader = createTestReader({ getRenderer: heldItem.getRenderer })
+
+    mountTestReader(reader)
+    reader.settings.update({ theme: `night`, spreadMode: `never` })
+
+    expect(
+      getBackgroundsPaintedUpToContainer(getLoadingPlaceholder(reader, 0)),
+    ).toEqual([themeBackgroundColors.night])
+  })
+
   it("getThemeBackgroundColor gives the background the reader paints with each theme", () => {
     const reader = createTestReader()
     const themes: Theme[] = [`bright`, `sepia`, `night`, `publisher`]
@@ -145,7 +185,7 @@ describe("theme", () => {
     mountTestReader(reader)
 
     for (const theme of themes) {
-      reader.theme.set(theme)
+      reader.settings.update({ theme })
 
       expect({ theme, background: getThemeBackgroundColor(theme) }).toEqual({
         theme,
@@ -184,7 +224,7 @@ describe("theme", () => {
       getDocumentBodyPaintedBackground(reader, 1),
     ]).toEqual([themeBackgroundColors.sepia, undefined])
 
-    reader.theme.set(`night`)
+    reader.settings.update({ theme: `night` })
 
     expect([
       getDocumentBodyPaintedBackground(reader, 0),

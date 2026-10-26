@@ -35,7 +35,6 @@ export const SettingsMenu = ({
   localSettings: LocalSettings
 }) => {
   const { reader } = useReader()
-  const [theme, setTheme] = useState<Theme>(reader?.theme.get() || `publisher`)
   const readerSettings = useReaderSettings()
   const [verticalMarginSliderValue, setVerticalMarginSliderValue] = useState(0)
   const [horizontalMarginSliderValue, setHorizontalMarginSliderValue] =
@@ -122,10 +121,9 @@ export const SettingsMenu = ({
           defaultValue="default"
           onValueChange={(e) => {
             const value = (e.value ?? "publisher") as Theme
-            setTheme(value)
-            reader.theme.set(value)
+            reader.settings.update({ theme: value })
           }}
-          value={theme}
+          value={readerSettings?.theme}
         >
           <HStack gap="24px">
             <Radio value="publisher">default (publisher)</Radio>

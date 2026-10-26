@@ -5,12 +5,12 @@ description: "Style a prose reader: its theme, the stable data attributes, rules
 
 ## Theme
 
-The `theme` option of `createReader` sets the reader's colors, `bright` by default. `reader.theme.set()` changes it later, `reader.theme.get()` reads it and `reader.theme.$.theme$` emits it.
+The `theme` setting sets the reader's colors, `bright` by default. Like the reader's other [settings](/learn/settings), you give it to `createReader`, change it with `reader.settings.update()`, and read it from `reader.settings.values` or `reader.settings.values$`.
 
 ```typescript
 const reader = createReader({ manifest, theme: "night" })
 
-reader.theme.set("sepia")
+reader.settings.update({ theme: "sepia" })
 ```
 
 | Theme | Background | Text |
@@ -26,10 +26,13 @@ The background also fills the reader's container wherever the pages do not cover
 
 ```typescript
 import { getThemeBackgroundColor } from "@prose-reader/core"
-import { map } from "rxjs"
+import { distinctUntilChanged, map } from "rxjs"
 
-reader.theme.$.theme$
-  .pipe(map(getThemeBackgroundColor))
+reader.settings.values$
+  .pipe(
+    map(({ theme }) => getThemeBackgroundColor(theme)),
+    distinctUntilChanged(),
+  )
   .subscribe((background) => {
     toolbar.style.backgroundColor = background
   })
