@@ -233,8 +233,10 @@ the reader shows now, with no layout requested since that can change what it
 shows. Only while it holds do its position and the pages agree. Replays the
 current one on subscription.
 
-It is given with every navigation, and again, with the same `navigation`, each
-time a layout makes it stop holding. It does not hold:
+It is given with every navigation, and again, with the same `navigation` and
+`holdsOnCurrentLayout: false`, when a layout that can change what it shows is
+requested: once, as it then stays void until the next navigation. It does not
+hold:
 
 - before the book is first laid out;
 - from the moment a layout that can change what it shows is requested: one
@@ -244,10 +246,11 @@ time a layout makes it stop holding. It does not hold:
   `"restoration"` that holds.
 
 A spine item's place depends only on the items before it, so a layout started
-by an item after the ones shown leaves the navigation holding. A navigation
-made while a layout is pending holds only if that layout cannot change what it
-shows either. Read it rather than `.navigation$` when what you do depends on
-the layout, such as which spine items or pages a navigation shows.
+by an item after the ones shown leaves the navigation holding, and is not
+reported. A navigation made while a layout is pending holds only if that layout
+cannot change what it shows either. Read it rather than `.navigation$` when
+what you do depends on the layout, such as which spine items or pages a
+navigation shows. It completes when the reader is destroyed.
 
 ### `.position$` { #positionusd }
 

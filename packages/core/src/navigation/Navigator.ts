@@ -156,7 +156,8 @@ export const createNavigator = ({
     navigation$: internalNavigator.navigation$,
     /**
      * The latest navigation, and whether it holds on the current layout:
-     * whether its position and the pages agree.
+     * whether its position and the pages agree. Completes when the reader is
+     * destroyed.
      */
     navigationAgainstCurrentLayout$:
       internalNavigator.navigationAgainstCurrentLayout$,

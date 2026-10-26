@@ -1,6 +1,7 @@
 import { mainTitle } from "@prose-reader/archive-reader"
 import { describe, expect, it, vi } from "vitest"
 import { fetchMetadata } from "./fetchMetadata.ts"
+import { DEFAULT_METADATA_MATCH_MIN_SCORE } from "./match/scoreMetadataCandidate.ts"
 import { MetadataProviderResponseError } from "./providers/responseError.ts"
 import { FETCHED_METADATA_VERSION } from "./types/fetchedMetadata.ts"
 import type { FetchMetadataInput } from "./types/fetchMetadataInput.ts"
@@ -156,6 +157,29 @@ describe("fetchMetadata", () => {
       (await fetchMetadata(book, { providers, minScore: 0.1 })).matches[0]
         ?.accepted,
     ).toBe(true)
+  })
+
+  it("accepts by DEFAULT_METADATA_MATCH_MIN_SCORE when given no minScore", async () => {
+    const providers = [
+      providerReturning("a", [
+        { metadata: { titles: [{ value: "Dune" }] } },
+        { metadata: { titles: [{ value: "Dune Messiah" }] } },
+        { metadata: { titles: [{ value: "Neuromancer" }] } },
+      ]),
+    ]
+
+    const { matches } = await fetchMetadata(book, { providers })
+
+    expect(matches.map(({ accepted }) => accepted)).toEqual([
+      true,
+      false,
+      false,
+    ])
+    for (const match of matches) {
+      expect(match.accepted).toBe(
+        match.score >= DEFAULT_METADATA_MATCH_MIN_SCORE,
+      )
+    }
   })
 
   it("caps the matches a provider contributes, best first", async () => {

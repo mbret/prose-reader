@@ -162,10 +162,10 @@ export class SpineLayout extends DestroyableClass {
      * on an item in error as on a loaded one.
      *
      * It is requested once the item's new status has reached all of its
-     * subscribers: requesting it marks every item dirty, and done while the
-     * status is still being delivered, that dirty state would reach the
-     * item's later subscribers before the status itself, and they would end
-     * on a state the item had left.
+     * subscribers: requesting it marks the item and the ones after it dirty,
+     * and done while the status is still being delivered, that dirty state
+     * would reach the item's later subscribers before the status itself, and
+     * they would end on a state the item had left.
      */
     const spineItemNeedsLayout$ = spineItemsObserver.itemLoadStatusChange$.pipe(
       filter((loadStatusChange) => endsALoad(loadStatusChange)),

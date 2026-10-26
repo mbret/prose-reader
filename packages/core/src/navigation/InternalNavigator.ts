@@ -217,6 +217,11 @@ export class InternalNavigator extends DestroyableClass {
       return endIndex !== undefined && endIndex < firstItemIndexAwaitingLayout
     }
 
+    /**
+     * The latest navigation is the stream's own state, set before it is
+     * reported, so a layout requested by a subscriber while a navigation is
+     * reported voids that navigation and not the one before it.
+     */
     this.navigationAgainstCurrentLayout$ = merge(
       this.navigation$.pipe(
         map((navigation) => ({ type: "navigation" as const, navigation })),
@@ -262,13 +267,12 @@ export class InternalNavigator extends DestroyableClass {
       filter(isDefined),
       // a change of layout currency that leaves the latest report as it was
       distinctUntilChanged(),
+      takeUntil(this.destroy$),
       shareReplay({ bufferSize: 1, refCount: true }),
     )
 
     // From construction on, so it has seen every navigation and layout.
-    this.navigationAgainstCurrentLayout$
-      .pipe(takeUntil(this.destroy$))
-      .subscribe()
+    this.navigationAgainstCurrentLayout$.subscribe()
 
     const getNavigationVisibleArea = () =>
       getActiveNavigationModeController().getNavigationVisibleArea()

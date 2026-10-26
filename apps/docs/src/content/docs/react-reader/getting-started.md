@@ -52,7 +52,7 @@ const MyAppReader = ({ manifest }: { manifest: Manifest | undefined }) => {
 }
 ```
 
-A reader lives for a single book, so the idiomatic React pattern is one effect that creates and mounts the reader together, with `destroy()` as its cleanup. `destroy()` leaves the container as it found it, so the effect is safe with strict mode re-running effects:
+A reader lives for a single book, so the idiomatic React pattern is one effect that creates and mounts the reader together, with `destroy()` as its cleanup. `destroy()` removes the reader's elements, classes, attributes, styles and listeners from the container, so the effect is safe with strict mode re-running effects:
 
 ```typescript
 import { useEffect, useState, type RefObject } from "react"

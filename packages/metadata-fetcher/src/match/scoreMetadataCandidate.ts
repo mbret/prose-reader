@@ -35,6 +35,13 @@ export const METADATA_MATCH_WEIGHTS = {
 } as const satisfies Record<MetadataMatchField, number>
 
 /**
+ * The score a match must reach to be `accepted` when `fetchMetadata` is not
+ * given a `minScore`. Compare against it when scoring candidates yourself with
+ * {@link scoreMetadataCandidate}, so the two agree on what is convincing.
+ */
+export const DEFAULT_METADATA_MATCH_MIN_SCORE = 0.5
+
+/**
  * Identity rather than description, so these settle the score outright in both
  * directions. Catalogs and books disagree on titles and page counts
  * constantly; they do not agree or disagree on an ISBN by accident.

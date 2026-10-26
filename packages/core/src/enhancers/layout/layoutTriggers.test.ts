@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
 import { filter, firstValueFrom, skip, timeout } from "rxjs"
-import { afterEach, describe, expect, it, vi } from "vitest"
+import { describe, expect, it, vi } from "vitest"
 import {
   createPrePaginatedManifest,
   createTestReader,
@@ -62,10 +62,6 @@ const mountedAndSettled = async (
 
   return reader
 }
-
-afterEach(() => {
-  vi.useRealTimers()
-})
 
 describe("Given a reader being mounted", () => {
   it("measures the viewport once", async () => {
