@@ -132,6 +132,7 @@ export default defineConfig({
             "core-api/viewport",
             "core-api/navigation",
             "core-api/pagination",
+            "core-api/spine",
             "core-api/zoom",
             "core-api/utilities",
           ],
