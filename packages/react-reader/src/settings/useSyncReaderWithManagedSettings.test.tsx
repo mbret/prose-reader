@@ -1,6 +1,6 @@
 /* @vitest-environment happy-dom */
 
-import type { CoreInputSettings } from "@prose-reader/core"
+import type { CoreInputSettings, Theme } from "@prose-reader/core"
 import { act, type ComponentProps, useState } from "react"
 import { createRoot } from "react-dom/client"
 import { BehaviorSubject } from "rxjs"
@@ -8,6 +8,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
 
 type ManagedReaderSettings = Pick<CoreInputSettings, "spreadMode"> & {
   fontScale: number
+  theme: Theme
 }
 
 const { useReaderMock } = vi.hoisted(() => ({ useReaderMock: vi.fn() }))
@@ -23,6 +24,7 @@ const createReaderWithSettings = (
   const values$ = new BehaviorSubject<ManagedReaderSettings>({
     fontScale: 1,
     spreadMode: `auto`,
+    theme: `bright`,
     ...initialSettings,
   })
 
@@ -48,7 +50,7 @@ const SyncReaderWithManagedSettingsProbe = () => {
 }
 
 type SavedChange = [
-  setting: "fontSize" | "spreadMode",
+  setting: "fontSize" | "spreadMode" | "theme",
   from: string,
   value: number | string,
 ]
@@ -60,14 +62,17 @@ type SavedChange = [
 const AppSavingEveryChange = ({
   initialFontSize,
   initialSpreadMode,
+  initialTheme,
   savedChanges,
 }: {
   initialFontSize: number
   initialSpreadMode: CoreInputSettings["spreadMode"]
+  initialTheme: Theme
   savedChanges: SavedChange[]
 }) => {
   const [fontSize, setFontSize] = useState(initialFontSize)
   const [spreadMode, setSpreadMode] = useState(initialSpreadMode)
+  const [theme, setTheme] = useState(initialTheme)
 
   return (
     <ReactReaderProvider
@@ -81,6 +86,11 @@ const AppSavingEveryChange = ({
       onSpreadModeChange={function saveSpreadMode(from, value) {
         savedChanges.push([`spreadMode`, from, value])
         setSpreadMode(value)
+      }}
+      theme={theme}
+      onThemeChange={function saveTheme(from, value) {
+        savedChanges.push([`theme`, from, value])
+        setTheme(value)
       }}
     >
       <SyncReaderWithManagedSettingsProbe />
@@ -126,6 +136,7 @@ describe(`useSyncReaderWithManagedSettings`, () => {
     const reader = createReaderWithSettings({
       fontScale: 1,
       spreadMode: `auto`,
+      theme: `bright`,
     })
     const savedChanges: SavedChange[] = []
     const renderApp = async () => {
@@ -134,6 +145,7 @@ describe(`useSyncReaderWithManagedSettings`, () => {
           <AppSavingEveryChange
             initialFontSize={1.5}
             initialSpreadMode="never"
+            initialTheme="night"
             savedChanges={savedChanges}
           />,
         )
@@ -149,6 +161,7 @@ describe(`useSyncReaderWithManagedSettings`, () => {
     expect(reader.settings.values).toEqual({
       fontScale: 1.5,
       spreadMode: `never`,
+      theme: `night`,
     })
     expect(savedChanges).toEqual([])
   })
@@ -200,6 +213,32 @@ describe(`useSyncReaderWithManagedSettings`, () => {
     expect(reader.settings.values.spreadMode).toBe(`always`)
     expect(reader.settings.update).not.toHaveBeenCalledWith({
       spreadMode: `auto`,
+    })
+  })
+
+  it(`reports a theme set on the reader directly as an internal change`, async () => {
+    const reader = createReaderWithSettings({ theme: `night` })
+    const onThemeChange = vi.fn()
+    useReaderMock.mockReturnValue(reader)
+
+    await render({ reader: undefined, theme: `night`, onThemeChange })
+    await act(async () => {
+      reader.settings.update({ theme: `sepia` })
+    })
+
+    expect(onThemeChange.mock.calls).toEqual([[`internal`, `sepia`]])
+  })
+
+  it(`keeps the theme the reader was created with when the app passes none`, async () => {
+    const reader = createReaderWithSettings({ theme: `night` })
+    useReaderMock.mockReturnValue(reader)
+
+    await render({ reader: undefined })
+    await waitForWrites(500)
+
+    expect(reader.settings.values.theme).toBe(`night`)
+    expect(reader.settings.update).not.toHaveBeenCalledWith({
+      theme: `bright`,
     })
   })
 })

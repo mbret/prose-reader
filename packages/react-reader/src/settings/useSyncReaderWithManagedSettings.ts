@@ -11,13 +11,21 @@ import { useSyncReaderSettingWithManagedValue } from "./useSyncReaderSettingWith
  */
 export const useSyncReaderWithManagedSettings = () => {
   const context = useReaderContext()
-  const { fontSize, uncontrolledFontSize, spreadMode, uncontrolledSpreadMode } =
-    useReaderContextValue([
-      "fontSize",
-      "uncontrolledFontSize",
-      "spreadMode",
-      "uncontrolledSpreadMode",
-    ])
+  const {
+    fontSize,
+    uncontrolledFontSize,
+    spreadMode,
+    uncontrolledSpreadMode,
+    theme,
+    uncontrolledTheme,
+  } = useReaderContextValue([
+    "fontSize",
+    "uncontrolledFontSize",
+    "spreadMode",
+    "uncontrolledSpreadMode",
+    "theme",
+    "uncontrolledTheme",
+  ])
 
   useSyncReaderSettingWithManagedValue({
     appValue: fontSize,
@@ -38,6 +46,17 @@ export const useSyncReaderWithManagedSettings = () => {
     onReaderValueChange: function adoptSpreadModeOfReader(spreadMode) {
       context.value.onSpreadModeChange?.("internal", spreadMode)
       context.update((old) => ({ ...old, uncontrolledSpreadMode: spreadMode }))
+    },
+  })
+
+  useSyncReaderSettingWithManagedValue({
+    appValue: theme,
+    uncontrolledValue: uncontrolledTheme,
+    readReaderValue: (settings) => settings.theme,
+    toReaderSettings: (theme) => ({ theme }),
+    onReaderValueChange: function adoptThemeOfReader(theme) {
+      context.value.onThemeChange?.("internal", theme)
+      context.update((old) => ({ ...old, uncontrolledTheme: theme }))
     },
   })
 }
