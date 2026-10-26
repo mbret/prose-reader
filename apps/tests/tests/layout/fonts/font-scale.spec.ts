@@ -1,14 +1,9 @@
 import { expect, test } from "@playwright/test"
-import { updateSettings } from "../../../utils"
-import { getReader } from "../../../utils/reader"
+import { updateSettings } from "../../utils"
+import { getReader } from "../../utils/reader"
 
-const url = "http://localhost:3333/tests/navigation/restoration/epub/index.html"
+const url = "http://localhost:3333/tests/layout/fonts/index.html"
 
-/**
- * One update can change the settings of several enhancers. A layout setting
- * that lays nothing out, changed with the font scale, must not keep the
- * chapter on the page count it had at the old size.
- */
 test.describe("Given a reflowable chapter on screen", () => {
   test("should lay the chapter out again when its font scale changes with a setting of another enhancer", async ({
     page,
@@ -37,6 +32,8 @@ test.describe("Given a reflowable chapter on screen", () => {
 
     expect(chapterAtFontScale1.layoutLayerTransition).toBe(false)
 
+    // `layoutLayerTransition` lays nothing out by itself, so it cannot hide a
+    // font scale change that fails to lay the chapter out.
     await updateSettings({
       page,
       settings: { layoutLayerTransition: true, fontScale: 2 },
