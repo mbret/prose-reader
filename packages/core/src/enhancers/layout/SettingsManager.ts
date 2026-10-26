@@ -25,20 +25,6 @@ export class SettingsManager<
     return !isShallowEqual(this.outputSettings, newOutputSettings)
   }
 
-  getCleanedParentInputSettings(
-    settings: Partial<EnhancerLayoutInputSettings & ParentInputSettings>,
-  ): ParentInputSettings {
-    const {
-      layoutAutoResize: _unused1,
-      pageHorizontalMargin: _unused2,
-      pageVerticalMargin: _unused3,
-      layoutLayerTransition: _unused4,
-      ...rest
-    } = settings
-
-    return rest as unknown as ParentInputSettings
-  }
-
   getDefaultSettings(): EnhancerLayoutInputSettings {
     return {
       layoutAutoResize: "container",

@@ -1,18 +1,22 @@
 import { isShallowEqual, shallowMergeIfDefined } from "@prose-reader/shared"
 import {
-  combineLatest,
   distinctUntilChanged,
   map,
+  merge,
   type Observable,
   type ObservedValueOf,
   Subject,
   shareReplay,
-  startWith,
 } from "rxjs"
 import { watchKeys } from "../utils/rxjs"
 import type { SettingsInterface } from "./SettingsInterface"
 import type { CoreInputSettings, CoreOutputSettings } from "./types"
 
+/**
+ * Adds an enhancer's settings to those of the settings manager it wraps, its
+ * parent. Its own settings are the keys of `getDefaultSettings()`: an update
+ * keeps those and hands every other key to the parent.
+ */
 export abstract class SettingsManagerOverload<
   InputSettings extends object,
   OutputSettings extends object,
@@ -42,24 +46,22 @@ export abstract class SettingsManagerOverload<
     >,
   ) {
     this.settingsManager = settingsManager
-
-    const inputSettings = shallowMergeIfDefined(
-      this.getDefaultSettings(),
-      initialSettings,
-    )
-
-    this.outputSettings = this.computeOutputSettings(inputSettings)
     this.inputSettings = shallowMergeIfDefined(
       this.getDefaultSettings(),
       initialSettings,
     )
+    this.outputSettings = this.computeOutputSettings(this.inputSettings)
     this.outputSettingsUpdateSubject = new Subject()
 
-    this.values$ = combineLatest([
+    /**
+     * An update commits every layer before any of them emits, so the values
+     * read on an emission are the ones the whole update left.
+     */
+    this.values$ = merge(
       this.settingsManager.values$,
-      this.outputSettingsUpdateSubject.pipe(startWith(this.outputSettings)),
-    ]).pipe(
-      map(([parentSettings, settings]) => ({ ...parentSettings, ...settings })),
+      this.outputSettingsUpdateSubject,
+    ).pipe(
+      map(() => this.values),
       shareReplay(1),
     )
 
@@ -71,24 +73,30 @@ export abstract class SettingsManagerOverload<
   abstract computeOutputSettings(inputSettings: InputSettings): OutputSettings
 
   /**
-   * Returns true if both are equal
+   * Whether `newOutputSettings` differs from the output settings held now.
    */
   abstract hasSettingsChanged(newOutputSettings: OutputSettings): boolean
-
-  abstract getCleanedParentInputSettings(
-    settings: Partial<InputSettings & ParentInputSettings>,
-  ): ParentInputSettings
 
   _prepareUpdate(settings: Partial<InputSettings & ParentInputSettings>): {
     hasChanged: boolean
     commit: () => OutputSettings & ParentOutputSettings
   } {
-    const parentInputSettings = this.getCleanedParentInputSettings(settings)
+    const ownSettingsKeys = Object.keys(this.getDefaultSettings())
+    const settingsEntries = Object.entries(settings)
+    // Cast: entries keep no key type, and the keys of the default settings
+    // are the keys of `InputSettings`.
+    const ownSettings = Object.fromEntries(
+      settingsEntries.filter(([key]) => ownSettingsKeys.includes(key)),
+    ) as Partial<InputSettings>
+    // Cast: same reason, for the keys this manager hands to its parent.
+    const parentSettings = Object.fromEntries(
+      settingsEntries.filter(([key]) => !ownSettingsKeys.includes(key)),
+    ) as Partial<ParentInputSettings>
 
     const parentManagerPreparedUpdate =
-      this.settingsManager._prepareUpdate(parentInputSettings)
+      this.settingsManager._prepareUpdate(parentSettings)
 
-    const inputSettings = shallowMergeIfDefined(this.inputSettings, settings)
+    const inputSettings = shallowMergeIfDefined(this.inputSettings, ownSettings)
 
     const outputSettings = this.computeOutputSettings(inputSettings)
     const hasChanged = this.hasSettingsChanged(outputSettings)
@@ -99,11 +107,12 @@ export abstract class SettingsManagerOverload<
         this.inputSettings = inputSettings
         this.outputSettings = outputSettings
 
-        if (!parentManagerPreparedUpdate.hasChanged && hasChanged) {
+        const parentOutputSettings = parentManagerPreparedUpdate.commit()
+        const isEmittedByParent = parentManagerPreparedUpdate.hasChanged
+
+        if (hasChanged && !isEmittedByParent) {
           this.outputSettingsUpdateSubject.next(outputSettings)
         }
-
-        const parentOutputSettings = parentManagerPreparedUpdate.commit()
 
         return {
           ...parentOutputSettings,
