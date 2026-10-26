@@ -20,7 +20,8 @@ test.describe("Given an app that lays the book out again as soon as a page turn 
     // The turn has to land on the current layout for the layout to void it.
     await page.waitForFunction(
       (reader) =>
-        reader.pagination.state.isSettled && reader.spine.isLayoutCurrent,
+        reader.pagination.state.isSettled &&
+        reader.spine.firstItemIndexAwaitingLayout === undefined,
       reader,
     )
 
@@ -42,7 +43,8 @@ test.describe("Given an app that lays the book out again as soon as a page turn 
             if (!isTurning || turnNavigation) return
 
             turnNavigation = navigation
-            isLayoutCurrentWhenTurnReported = reader.spine.isLayoutCurrent
+            isLayoutCurrentWhenTurnReported =
+              reader.spine.firstItemIndexAwaitingLayout === undefined
             reader.layout()
             // Replays the current one, synchronously.
             reader.navigation.navigationAgainstCurrentLayout$

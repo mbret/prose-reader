@@ -12,7 +12,7 @@ import {
   switchMap,
   timeout,
 } from "rxjs"
-import { afterAll, afterEach, beforeAll, beforeEach, vi } from "vitest"
+import { afterAll, afterEach, beforeAll, beforeEach, expect, vi } from "vitest"
 import { createReaderWithEnhancers } from "../createReaderWithEnhancer"
 import { htmlEnhancer } from "../enhancers/html/enhancer"
 import { layoutEnhancer } from "../enhancers/layout/layoutEnhancer"
@@ -22,6 +22,8 @@ import { themeEnhancer } from "../enhancers/theme"
 import { zoomEnhancer } from "../enhancers/zoom"
 import type { HookManager } from "../hooks/HookManager"
 import { createReader } from "../reader"
+import type { Spine } from "../spine/Spine"
+import type { SpineItemsManager } from "../spine/SpineItemsManager"
 import { DefaultRenderer } from "../spineItem/renderer/DefaultRenderer"
 import {
   DocumentRenderer,
@@ -255,6 +257,39 @@ export const holdItemLayout = (href: string) => {
     release: () => isHeld.next(false),
     layoutsStarted: () => layoutsStarted,
   }
+}
+
+/**
+ * Unloads an item once the reader has loaded it and no layout is pending, and
+ * resolves once the layout the unload ends with is requested, before that
+ * layout is done. An item's load ending, whichever way, lays out that item and
+ * the ones after it. The reader loads the item again soon after, as it keeps
+ * the items around the position loaded.
+ */
+export const requestLayoutByUnloadingItem = async (
+  reader: { spine: Spine; spineItemsManager: SpineItemsManager },
+  spineItemIndex: number,
+) => {
+  const spineItem = reader.spineItemsManager.get(spineItemIndex)
+
+  if (!spineItem) throw new Error(`item ${spineItemIndex} is missing`)
+
+  await vi.waitFor(() => {
+    expect(spineItem.value.loadStatus).toBe("loaded")
+    expect(reader.spine.firstItemIndexAwaitingLayout).toBeUndefined()
+  })
+
+  spineItem.unload()
+
+  await firstValueFrom(
+    reader.spine.firstItemIndexAwaitingLayout$.pipe(
+      filter(
+        (firstItemIndexAwaitingLayout) =>
+          firstItemIndexAwaitingLayout === spineItemIndex,
+      ),
+      timeout(2000),
+    ),
+  )
 }
 
 /**
