@@ -52,15 +52,15 @@ describe("the reader's settings", () => {
     )
   })
 
-  it("emit a change that follows an update which changed nothing", () => {
+  it("emit nothing for an update that changes nothing", () => {
     const reader = createFullTestReader()
     const onValues = vi.fn()
 
     reader.settings.values$.subscribe(onValues)
-    reader.settings.update({ spreadMode: `auto` })
-    reader.settings.update({ spreadMode: `never` })
+    onValues.mockClear()
+    reader.settings.update({ spreadMode: `auto`, fontScale: 1 })
 
-    expect(onValues.mock.lastCall?.[0].spreadMode).toBe(`never`)
+    expect(onValues).not.toHaveBeenCalled()
   })
 
   it("emit once for an update that changes several layers", () => {
@@ -79,6 +79,22 @@ describe("the reader's settings", () => {
         }),
       ],
     ])
+  })
+
+  it("keep an update made by a subscriber on an emission", () => {
+    const reader = createFullTestReader()
+
+    reader.settings.values$.subscribe(function widenMarginsForLargeFont({
+      fontScale,
+      pageHorizontalMargin,
+    }) {
+      if (fontScale === 2 && pageHorizontalMargin !== 10) {
+        reader.settings.update({ pageHorizontalMargin: 10 })
+      }
+    })
+    reader.settings.update({ fontScale: 2 })
+
+    expect(reader.settings.values.pageHorizontalMargin).toBe(10)
   })
 
   it("lay out for a font scale changed with a setting that does not lay out", () => {
