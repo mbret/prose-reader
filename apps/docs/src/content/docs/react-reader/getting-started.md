@@ -92,7 +92,7 @@ react-reader manages some of the reader's settings as props of the component. Th
 | --- | --- | --- | --- | --- |
 | Font size | `fontSize` | `onFontSizeChange` | `fontSizeScope`, `onFontSizeScopeChange`, `fontSizeValues` | `fontScale` |
 | Spread mode | `spreadMode` | `onSpreadModeChange` | `spreadModeScope`, `onSpreadModeScopeChange`, `spreadModeValues` | `spreadMode` |
-| Theme | `theme` | `onThemeChange` | none | `theme` |
+| Theme | `theme` | `onThemeChange` | — | `theme` |
 
 Keep the value in your app, save it from the change callback and pass it back as a prop. react-reader writes it into the reader:
 

@@ -163,6 +163,18 @@ describe("theme", () => {
     }
   })
 
+  it("repaints the reader when the theme changes in the same update as a core setting", () => {
+    const heldItem = holdItem(`/page_0.jpg`)
+    const reader = createTestReader({ getRenderer: heldItem.getRenderer })
+
+    mountTestReader(reader)
+    reader.settings.update({ theme: `night`, spreadMode: `never` })
+
+    expect(
+      getBackgroundsPaintedUpToContainer(getLoadingPlaceholder(reader, 0)),
+    ).toEqual([themeBackgroundColors.night])
+  })
+
   it("getThemeBackgroundColor gives the background the reader paints with each theme", () => {
     const reader = createTestReader()
     const themes: Theme[] = [`bright`, `sepia`, `night`, `publisher`]
