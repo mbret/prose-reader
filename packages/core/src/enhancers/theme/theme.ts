@@ -1,4 +1,5 @@
-import { filter, finalize, merge, switchMap, takeUntil, tap } from "rxjs"
+import { shallowMergeIfDefined } from "@prose-reader/shared"
+import { filter, finalize, map, merge, switchMap, takeUntil, tap } from "rxjs"
 import { CSS_VAR_THEME_BACKGROUND_COLOR } from "../../constants"
 import type { SettingsInterface } from "../../settings/SettingsInterface"
 import type { SpineItem } from "../../spineItem/SpineItem"
@@ -9,8 +10,11 @@ import {
 import { upsertCSSToFrame } from "../../utils/frames"
 import { isDefined } from "../../utils/isDefined"
 import type { EnhancerOutput, RootEnhancer } from "../types/enhancer"
-import { SettingsManager } from "./SettingsManager"
 import type { EnhancerThemeInputSettings, Theme } from "./types"
+
+const defaultThemeSettings: EnhancerThemeInputSettings = {
+  theme: `bright`,
+}
 
 type ThemeColors = {
   backgroundColor?: string
@@ -83,21 +87,14 @@ export const themeEnhancer =
     next: (options: InheritOptions) => InheritOutput,
   ) =>
   (options: InheritOptions & Partial<EnhancerThemeInputSettings>): Output => {
-    const reader = next(options)
-    const settingsManager = new SettingsManager<
-      InheritSettings,
-      InheritComputedSettings
-    >(
-      { theme: options.theme },
-      // Cast: `InheritSettings` and `InheritComputedSettings` are read from
-      // `reader.settings`, but TypeScript does not relate a generic back to
-      // the type it was read from.
-      reader.settings as SettingsInterface<
-        InheritSettings,
-        InheritComputedSettings
-      >,
-    )
-    const theme$ = settingsManager.watch(`theme`)
+    const reader = next(shallowMergeIfDefined(defaultThemeSettings, options))
+    // Cast: the reader's settings hold every setting given to them, this one
+    // included, but their type only lists the inherited ones.
+    const settings = reader.settings as SettingsInterface<
+      InheritSettings & EnhancerThemeInputSettings,
+      EnhancerThemeInputSettings & InheritComputedSettings
+    >
+    const theme$ = settings.watch([`theme`]).pipe(map(({ theme }) => theme))
 
     /**
      * A pre-paginated document is left as its publisher laid it out. Its frame
@@ -117,7 +114,7 @@ export const themeEnhancer =
     reader.hookManager.register(`item.onDocumentLoad`, async ({ itemId }) => {
       const item = reader.spineItemsManager.get(itemId)
 
-      if (item) applyThemeToItemDocument(item, settingsManager.values.theme)
+      if (item) applyThemeToItemDocument(item, settings.values.theme)
     })
 
     const applyThemeToLoadedDocuments$ = theme$.pipe(
@@ -157,14 +154,7 @@ export const themeEnhancer =
       .pipe(takeUntil(reader.$.destroy$))
       .subscribe()
 
-    // Cast: the object is built from a generic `InheritOutput`, which
-    // TypeScript cannot match to `Output`, a type the caller may narrow.
-    return {
-      ...reader,
-      destroy: () => {
-        settingsManager.destroy()
-        reader.destroy()
-      },
-      settings: settingsManager,
-    } as unknown as Output
+    // Cast: the reader is a generic `InheritOutput`, which TypeScript cannot
+    // match to `Output`, a type the caller may narrow.
+    return reader as unknown as Output
   }
