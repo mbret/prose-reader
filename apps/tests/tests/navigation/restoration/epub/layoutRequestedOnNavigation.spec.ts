@@ -1,4 +1,5 @@
 import { expect, test } from "@playwright/test"
+import { waitForSettledOnCurrentLayout } from "../../../utils/pagination"
 import { getReader } from "../../../utils/reader"
 
 const url = "http://localhost:3333/tests/navigation/restoration/epub/index.html"
@@ -15,14 +16,10 @@ test.describe("Given an app that lays the book out again as soon as a page turn 
     await page.setViewportSize({ width: 536, height: 842 })
     await page.goto(`${url}?cfi=${encodeURIComponent("epubcfi(/6/14!/4/2)")}`)
 
-    const reader = await getReader(page)
-
     // The turn has to land on the current layout for the layout to void it.
-    await page.waitForFunction(
-      (reader) =>
-        reader.pagination.state.isSettled && reader.spine.isLayoutCurrent,
-      reader,
-    )
+    await waitForSettledOnCurrentLayout(page)
+
+    const reader = await getReader(page)
 
     const turn = await reader.evaluate(async (reader) => {
       const pageOf = ({ begin }: typeof reader.pagination.state) =>

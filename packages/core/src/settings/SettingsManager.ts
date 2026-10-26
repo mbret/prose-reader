@@ -40,31 +40,22 @@ export abstract class SettingsManager<
     this._settings$.subscribe()
   }
 
-  _prepareUpdate(settings: Partial<InputSettings>): {
-    hasChanged: boolean
-    state: OutputSettings
-    commit: () => OutputSettings
-  } {
-    const newInputSettings = shallowMergeIfDefined(this.inputSettings, settings)
+  /**
+   * Stores the settings before it emits them, so a subscriber that updates
+   * the settings on an emission is not overwritten.
+   */
+  private commit(inputSettings: InputSettings) {
+    const outputSettings = this.getOutputSettings(inputSettings)
+    const hasChanged = !isShallowEqual(this.outputSettings, outputSettings)
 
-    const state = this.getOutputSettings(newInputSettings)
+    this.inputSettings = inputSettings
+    this.outputSettings = outputSettings
 
-    const hasChanged = !isShallowEqual(this.outputSettings, state)
-
-    return {
-      hasChanged: hasChanged,
-      state,
-      commit: () => {
-        this.inputSettings = newInputSettings
-        this.outputSettings = state
-
-        if (hasChanged) {
-          this.outputSettingsUpdateSubject.next(state)
-        }
-
-        return state
-      },
+    if (hasChanged) {
+      this.outputSettingsUpdateSubject.next(outputSettings)
     }
+
+    return outputSettings
   }
 
   abstract getOutputSettings(inputSettings: InputSettings): OutputSettings
@@ -72,26 +63,16 @@ export abstract class SettingsManager<
   abstract getDefaultSettings(): InputSettings
 
   public update(settings: Partial<InputSettings>) {
-    const { commit } = this._prepareUpdate(settings)
-
-    commit()
+    this.commit(shallowMergeIfDefined(this.inputSettings, settings))
   }
 
   get values() {
-    if (!this.outputSettings) {
-      const { commit } = this._prepareUpdate(this.inputSettings)
-
-      return commit()
-    }
-
-    return this.outputSettings
+    return this.outputSettings ?? this.commit(this.inputSettings)
   }
 
   get values$() {
     if (!this.outputSettings) {
-      const { commit } = this._prepareUpdate(this.inputSettings)
-
-      commit()
+      this.commit(this.inputSettings)
     }
 
     return this._settings$

@@ -51,4 +51,4 @@ Some settings have their `computed` counterpart. When you read the settings you 
 Observable<OutputSettings>
 ```
 
-This observable emits as soon as you subscribe, then once each time the settings change, with every setting as it then stands.
+This observable emits as soon as you subscribe, then once each time the settings change.

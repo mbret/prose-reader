@@ -1,36 +1,43 @@
 import { expect, test } from "@playwright/test"
 import { updateSettings } from "../../utils"
+import { waitForSettledOnCurrentLayout } from "../../utils/pagination"
 import { getReader } from "../../utils/reader"
 
 const url = "http://localhost:3333/tests/layout/fonts/index.html"
+const chapterCfi = "epubcfi(/6/14!/4/2)"
+const chapterSpineItemIndex = 6
 
 test.describe("Given a reflowable chapter on screen", () => {
   test("should lay the chapter out again when its font scale changes with a setting of another enhancer", async ({
     page,
   }) => {
     await page.setViewportSize({ width: 536, height: 842 })
-    await page.goto(`${url}?cfi=${encodeURIComponent("epubcfi(/6/14!/4/2)")}`)
+    await page.goto(`${url}?cfi=${encodeURIComponent(chapterCfi)}`)
+    await waitForSettledOnCurrentLayout(page)
 
     const reader = await getReader(page)
+    const getNumberOfPagesOfChapter = () =>
+      reader.evaluate(
+        (reader, spineItemIndex) =>
+          reader.spineItemsManager.get(spineItemIndex)?.numberOfPages,
+        chapterSpineItemIndex,
+      )
 
-    await page.waitForFunction(
-      (reader) =>
-        reader.pagination.state.isSettled && reader.spine.isLayoutCurrent,
-      reader,
-    )
+    const chapterBeforeUpdate = await reader.evaluate((reader) => ({
+      spineItemIndex: reader.pagination.state.begin.spineItemIndex,
+      layoutLayerTransition: reader.settings.values.layoutLayerTransition,
+    }))
 
-    const chapterAtFontScale1 = await reader.evaluate((reader) => {
-      const { spineItemIndex, numberOfPagesInSpineItem } =
-        reader.pagination.state.begin
-
-      return {
-        spineItemIndex,
-        numberOfPages: numberOfPagesInSpineItem,
-        layoutLayerTransition: reader.settings.values.layoutLayerTransition,
-      }
+    expect(chapterBeforeUpdate).toEqual({
+      spineItemIndex: chapterSpineItemIndex,
+      layoutLayerTransition: false,
     })
 
-    expect(chapterAtFontScale1.layoutLayerTransition).toBe(false)
+    const numberOfPagesAtFontScale1 = await getNumberOfPagesOfChapter()
+
+    if (numberOfPagesAtFontScale1 === undefined) {
+      throw new Error(`the chapter is not laid out`)
+    }
 
     // `layoutLayerTransition` lays nothing out by itself, so it cannot hide a
     // font scale change that fails to lay the chapter out.
@@ -40,13 +47,7 @@ test.describe("Given a reflowable chapter on screen", () => {
     })
 
     await expect
-      .poll(() =>
-        reader.evaluate(
-          (reader, spineItemIndex) =>
-            reader.spineItemsManager.get(spineItemIndex)?.numberOfPages,
-          chapterAtFontScale1.spineItemIndex,
-        ),
-      )
-      .toBeGreaterThan(chapterAtFontScale1.numberOfPages)
+      .poll(getNumberOfPagesOfChapter)
+      .toBeGreaterThan(numberOfPagesAtFontScale1)
   })
 })

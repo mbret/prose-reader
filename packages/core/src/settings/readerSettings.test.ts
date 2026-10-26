@@ -116,6 +116,6 @@ describe("the reader's settings", () => {
 
     reader.settings.update({ layoutLayerTransition: false, fontScale: 2 })
 
-    expect(spineLayout).toHaveBeenCalled()
+    expect(spineLayout).toHaveBeenCalledTimes(1)
   })
 })

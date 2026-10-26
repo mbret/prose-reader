@@ -78,6 +78,10 @@ export class ReaderSettingsManager
     return computedSettings
   }
 
+  /**
+   * Keeps every setting it is given, not only the core ones: the enhancers
+   * keep their settings here too.
+   */
   getOutputSettings(
     inputSettings: CoreInputSettings,
   ): CoreInputSettings & ComputedCoreSettings {

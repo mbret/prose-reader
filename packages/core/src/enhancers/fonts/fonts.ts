@@ -111,8 +111,15 @@ export const fontsEnhancer =
       }
     })
 
+    const fontsSettings$ = settings.watch([
+      `fontScale`,
+      `lineHeight`,
+      `fontWeight`,
+      `fontJustification`,
+    ])
+
     const shouldRequireLayout = <
-      T extends ObservedValueOf<typeof settings.values$>,
+      T extends ObservedValueOf<typeof fontsSettings$>,
     >(
       source: Observable<T>,
     ) =>
@@ -126,7 +133,7 @@ export const fontsEnhancer =
         }),
       )
 
-    settings.values$
+    fontsSettings$
       .pipe(
         shouldRequireLayout,
         tap(applyChangeToSpineItems),

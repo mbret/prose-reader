@@ -118,8 +118,7 @@ export const layoutEnhancer =
       const mimeType = item.mediaType ?? detectMimeTypeFromName(item.href)
       const isImageType = !!mimeType?.startsWith(`image/`)
 
-      const { pageHorizontalMargin = 0, pageVerticalMargin = 0 } =
-        settings.values
+      const { pageHorizontalMargin, pageVerticalMargin } = settings.values
       const pageSize = reader.viewport.pageSize
 
       if (spineItem?.renditionLayout === `reflowable` && !isImageType) {
@@ -190,7 +189,7 @@ export const layoutEnhancer =
       const element = spineItem?.renderer.documentContainer
 
       // @todo dont remember why i did this but there should be a reason. If i get time to explain
-      if (reader.settings.values.computedPageTurnMode !== `scrollable`) {
+      if (settings.values.computedPageTurnMode !== `scrollable`) {
         // @todo see what's the impact
         if (element) {
           setAttributeIfChanged(element, `tab-index`, `0`)
