@@ -113,12 +113,8 @@ export const SettingsMenu = ({
           </HStack>
         </RadioGroup>
       </Field>
-      <Field
-        label="Theme"
-        helperText="Change the weight of the text in the entire book (if supported by current font)"
-      >
+      <Field label="Theme" helperText="Change the colors of the reader">
         <RadioGroup
-          defaultValue="default"
           onValueChange={(e) => {
             const value = (e.value ?? "publisher") as Theme
             reader.settings.update({ theme: value })
