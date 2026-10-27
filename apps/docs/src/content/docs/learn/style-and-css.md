@@ -5,7 +5,7 @@ description: "Style a prose reader: its theme, the stable data attributes, rules
 
 ## Theme
 
-The `theme` setting sets the reader's colors, `bright` by default. Like the reader's other [settings](/learn/settings), you give it to `createReader`, change it with `reader.settings.update()`, and read it from `reader.settings.values` or `reader.settings.values$`.
+The `theme` setting sets the reader's colors, `bright` by default. Like the reader's other [settings](/learn/settings), you give it to `createReader`, change it with `reader.settings.update()`, and read it from `reader.settings.values`, or follow it with `reader.settings.watch(["theme"])`.
 
 ```typescript
 const reader = createReader({ manifest, theme: "night" })
@@ -20,25 +20,23 @@ reader.settings.update({ theme: "sepia" })
 | `night` | `#191717` | `#f1ebeb` |
 | `publisher` | the book's, on a `white` reader | the book's |
 
-The background also fills the reader's container wherever the pages do not cover it, and the placeholder page shown while an item loads. Reflowable documents take the theme's background. The elements in their body take its text color, unless the book's own styles set a more specific one. Pre-paginated documents, such as comic pages and PDF pages, keep their own colors: the theme's background shows around them, and through any part of a page that paints no background.
+The background also fills the reader's container wherever the pages do not cover it, and the placeholder page shown while an item loads, whose text takes a gray that suits the theme. Reflowable documents take the theme's background. The elements in their body take its text color, unless the book's own styles set a more specific one. Pre-paginated documents, such as comic pages and PDF pages, keep their own colors: the theme's background shows around them, and through any part of a page that paints no background.
 
 `getThemeBackgroundColor()` gives the background the reader paints with a theme. Use it to match your interface to the reader as the theme changes:
 
 ```typescript
 import { getThemeBackgroundColor } from "@prose-reader/core"
-import { distinctUntilChanged, map } from "rxjs"
+import { map } from "rxjs"
 
-reader.settings.values$
-  .pipe(
-    map(({ theme }) => getThemeBackgroundColor(theme)),
-    distinctUntilChanged(),
-  )
+reader.settings
+  .watch(["theme"])
+  .pipe(map(({ theme }) => getThemeBackgroundColor(theme)))
   .subscribe((background) => {
     toolbar.style.backgroundColor = background
   })
 ```
 
-The reader's container also holds that background in the `--prose-reader-theme-background-color` CSS variable, exported as `CSS_VAR_THEME_BACKGROUND_COLOR`, for the styles of elements you place inside it.
+The reader's container also holds that background in the `--prose-reader-theme-background-color` CSS variable, exported as `CSS_VAR_THEME_BACKGROUND_COLOR`, and the placeholder's text color in `--prose-reader-theme-placeholder-color`, exported as `CSS_VAR_THEME_PLACEHOLDER_COLOR`, for the styles of elements you place inside it.
 
 ## Stable constants
 

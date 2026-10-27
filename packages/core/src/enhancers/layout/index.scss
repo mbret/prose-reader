@@ -23,7 +23,7 @@
   position: absolute;
   left: 0;
   top: 0;
-  color: rgb(202, 202, 202);
+  color: var(#{$css-var-theme-placeholder-color});
   background-color: var(#{$css-var-theme-background-color});
   z-index: 1;
 }

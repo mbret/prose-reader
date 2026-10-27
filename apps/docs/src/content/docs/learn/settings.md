@@ -5,7 +5,7 @@ sidebar:
   label: "Settings"
 ---
 
-Settings affecting the reader. The enhancers `createReader` is built with add settings of their own to the same `reader.settings`, such as the [theme](/learn/style-and-css#theme), `fontScale` and `pageHorizontalMargin`.
+Settings affecting the reader. The enhancers `createReader` is built with add settings of their own to the same `reader.settings`, such as [`theme`](/learn/style-and-css#theme). Their types, `EnhancerThemeInputSettings`, `EnhancerFontsInputSettings` and `EnhancerLayoutInputSettings`, are exported by `@prose-reader/core`.
 
 ```typescript
 export type InputSettings = {

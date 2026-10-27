@@ -1,7 +1,6 @@
 import { combineLatest, filter, firstValueFrom, timeout } from "rxjs"
-import { describe, expect, it, vi } from "vitest"
+import { describe, expect, it } from "vitest"
 import {
-  createFullTestReader,
   createTestReader,
   getTestContainer,
   holdItem,
@@ -95,32 +94,6 @@ const everyItemReady = (reader: ReturnType<typeof createTestReader>) =>
   )
 
 describe("theme", () => {
-  it("is bright by default", () => {
-    expect(createTestReader().settings.values.theme).toBe(`bright`)
-  })
-
-  it("reads, changes and emits the theme through the reader's settings", () => {
-    const reader = createFullTestReader({ theme: `sepia` })
-    const onThemeEmitted = vi.fn()
-    const subscription = reader.settings
-      .watch([`theme`])
-      .subscribe(onThemeEmitted)
-
-    reader.settings.update({ theme: `sepia` })
-    reader.settings.update({ fontScale: 1.2 })
-    reader.settings.update({ theme: `night` })
-    reader.settings.update({ pageTurnAnimation: `none` })
-    subscription.unsubscribe()
-
-    expect({
-      theme: reader.settings.values.theme,
-      emittedThemes: onThemeEmitted.mock.calls,
-    }).toEqual({
-      theme: `night`,
-      emittedThemes: [[{ theme: `sepia` }], [{ theme: `night` }]],
-    })
-  })
-
   it("paints the reader and a loading item's placeholder with the theme's background", () => {
     const heldItem = holdItem(`/page_0.jpg`)
     const reader = createTestReader({
@@ -166,16 +139,29 @@ describe("theme", () => {
     }
   })
 
-  it("repaints the reader when the theme changes in the same update as a core setting", () => {
+  it("colors a loading item's placeholder text for the theme it is created with, and for each theme after", () => {
     const heldItem = holdItem(`/page_0.jpg`)
-    const reader = createTestReader({ getRenderer: heldItem.getRenderer })
+    const reader = createTestReader({
+      getRenderer: heldItem.getRenderer,
+      theme: `sepia`,
+    })
 
     mountTestReader(reader)
-    reader.settings.update({ theme: `night`, spreadMode: `never` })
 
-    expect(
-      getBackgroundsPaintedUpToContainer(getLoadingPlaceholder(reader, 0)),
-    ).toEqual([themeBackgroundColors.night])
+    const textColorAtCreation = getComputedStyle(
+      getLoadingPlaceholder(reader, 0),
+    ).color
+
+    reader.settings.update({ theme: `night` })
+
+    expect({
+      textColorAtCreation,
+      textColorAfterNight: getComputedStyle(getLoadingPlaceholder(reader, 0))
+        .color,
+    }).toEqual({
+      textColorAtCreation: `#939393`,
+      textColorAfterNight: `rgb(202, 202, 202)`,
+    })
   })
 
   it("getThemeBackgroundColor gives the background the reader paints with each theme", () => {
@@ -230,5 +216,12 @@ describe("theme", () => {
       getDocumentBodyPaintedBackground(reader, 0),
       getDocumentBodyPaintedBackground(reader, 1),
     ]).toEqual([themeBackgroundColors.night, undefined])
+
+    reader.settings.update({ theme: `publisher` })
+
+    expect([
+      getDocumentBodyPaintedBackground(reader, 0),
+      getDocumentBodyPaintedBackground(reader, 1),
+    ]).toEqual([undefined, undefined])
   })
 })

@@ -1,6 +1,9 @@
 import { shallowMergeIfDefined } from "@prose-reader/shared"
 import { filter, finalize, map, merge, switchMap, takeUntil, tap } from "rxjs"
-import { CSS_VAR_THEME_BACKGROUND_COLOR } from "../../constants"
+import {
+  CSS_VAR_THEME_BACKGROUND_COLOR,
+  CSS_VAR_THEME_PLACEHOLDER_COLOR,
+} from "../../constants"
 import type { SettingsInterface } from "../../settings/SettingsInterface"
 import type { SpineItem } from "../../spineItem/SpineItem"
 import {
@@ -19,21 +22,27 @@ const defaultThemeSettings: EnhancerThemeInputSettings = {
 type ThemeColors = {
   backgroundColor?: string
   foregroundColor?: string
+  placeholderTextColor: string
 }
 
 const themeColors: Record<Theme, ThemeColors> = {
   bright: {
     backgroundColor: `white`,
+    placeholderTextColor: `rgb(202, 202, 202)`,
   },
   sepia: {
     backgroundColor: `#eaddc7`,
     foregroundColor: `black`,
+    placeholderTextColor: `#939393`,
   },
   night: {
     backgroundColor: `#191717`,
     foregroundColor: `#f1ebeb`,
+    placeholderTextColor: `rgb(202, 202, 202)`,
   },
-  publisher: {},
+  publisher: {
+    placeholderTextColor: `rgb(202, 202, 202)`,
+  },
 }
 
 /**
@@ -127,7 +136,7 @@ export const themeEnhancer =
 
     /**
      * The reader's stylesheet paints its container, and the placeholder of an
-     * item that is loading, with this variable.
+     * item that is loading, with these variables.
      */
     const applyThemeToContainer$ = reader.context.watch(`rootElement`).pipe(
       filter(isDefined),
@@ -139,11 +148,20 @@ export const themeEnhancer =
               CSS_VAR_THEME_BACKGROUND_COLOR,
               getThemeBackgroundColor(theme),
             )
+            setStylePropertyIfChanged(
+              rootElement.style,
+              CSS_VAR_THEME_PLACEHOLDER_COLOR,
+              themeColors[theme].placeholderTextColor,
+            )
           }),
           finalize(() => {
             removeStylePropertyIfPresent(
               rootElement.style,
               CSS_VAR_THEME_BACKGROUND_COLOR,
+            )
+            removeStylePropertyIfPresent(
+              rootElement.style,
+              CSS_VAR_THEME_PLACEHOLDER_COLOR,
             )
           }),
         ),

@@ -13,8 +13,8 @@ type FullTestReaderSettings = Parameters<
 >[0]
 
 /**
- * Settings of the core reader, of the layout enhancer and of the fonts
- * enhancer, alone and together. The first and the seventh change nothing.
+ * Settings of the core reader and of the layout, fonts and theme enhancers,
+ * alone and together. The first, the seventh and the last change nothing.
  */
 const updatesAcrossEnhancers: FullTestReaderSettings[] = [
   { spreadMode: `auto` },
@@ -25,6 +25,8 @@ const updatesAcrossEnhancers: FullTestReaderSettings[] = [
   { pageTurnAnimation: `none`, pageVerticalMargin: 12, lineHeight: 1.4 },
   { fontScale: 2 },
   { spreadMode: `auto` },
+  { theme: `night`, pageTurnAnimation: `slide` },
+  { theme: `night` },
 ]
 
 describe("the reader's settings", () => {
@@ -45,6 +47,7 @@ describe("the reader's settings", () => {
         layoutAutoResize: `container`,
         layoutLayerTransition: true,
         spreadMode: `auto`,
+        theme: `bright`,
       }),
     )
   })
@@ -53,10 +56,15 @@ describe("the reader's settings", () => {
     const reader = createFullTestReader({
       fontScale: undefined,
       spreadMode: undefined,
+      theme: undefined,
     })
 
     expect(reader.settings.values).toEqual(
-      expect.objectContaining({ fontScale: 1, spreadMode: `auto` }),
+      expect.objectContaining({
+        fontScale: 1,
+        spreadMode: `auto`,
+        theme: `bright`,
+      }),
     )
   })
 
@@ -91,6 +99,8 @@ describe("the reader's settings", () => {
       true,
       false,
       true,
+      true,
+      false,
     ])
     expect(resultOfEachUpdate).toEqual(
       resultOfEachUpdate.map(({ update, values, changed }) => ({
