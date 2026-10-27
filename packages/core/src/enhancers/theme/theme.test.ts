@@ -139,7 +139,7 @@ describe("theme", () => {
     }
   })
 
-  it("colors a loading item's placeholder text for the theme it is created with, and for each theme after", () => {
+  it("colors a loading item's placeholder text for the theme it is created with, and for a new one", () => {
     const heldItem = holdItem(`/page_0.jpg`)
     const reader = createTestReader({
       getRenderer: heldItem.getRenderer,
