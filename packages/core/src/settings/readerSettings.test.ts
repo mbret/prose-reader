@@ -49,6 +49,17 @@ describe("the reader's settings", () => {
     )
   })
 
+  it("keep each default over a setting given as undefined", () => {
+    const reader = createFullTestReader({
+      fontScale: undefined,
+      spreadMode: undefined,
+    })
+
+    expect(reader.settings.values).toEqual(
+      expect.objectContaining({ fontScale: 1, spreadMode: `auto` }),
+    )
+  })
+
   it("hold each update, and emit once for one that changes them, with every setting it left", () => {
     const reader = createFullTestReader()
     const onValues = vi.fn()
