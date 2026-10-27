@@ -25,12 +25,10 @@ export abstract class SettingsManager<
   constructor(initialSettings: Partial<InputSettings>) {
     super()
 
-    const settingsWithDefaults: InputSettings = {
-      ...this.getDefaultSettings(),
-      ...initialSettings,
-    }
-
-    this.inputSettings = settingsWithDefaults
+    this.inputSettings = shallowMergeIfDefined(
+      this.getDefaultSettings(),
+      initialSettings,
+    )
     this.outputSettingsUpdateSubject = new Subject()
 
     this._settings$ = this.outputSettingsUpdateSubject
