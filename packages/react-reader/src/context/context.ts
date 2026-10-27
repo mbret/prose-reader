@@ -86,10 +86,7 @@ export type PublicContextType = {
     CoreInputSettings["spreadMode"] | undefined
   >
   theme?: Theme
-  onThemeChange?: (
-    from: PROSE_REACT_READER_SETTINGS_SCOPE_REFERENCE | "internal",
-    value: Theme,
-  ) => void
+  onThemeChange?: (from: "internal", value: Theme) => void
   annotations?: Annotation[]
   onAnnotationCreate?: (annotation: Annotation) => void
   onAnnotationUpdate?: (

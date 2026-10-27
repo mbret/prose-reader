@@ -4,7 +4,15 @@ import type { CoreInputSettings, Theme } from "@prose-reader/core"
 import { act, type ComponentProps, useState } from "react"
 import { createRoot } from "react-dom/client"
 import { BehaviorSubject } from "rxjs"
-import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
+import {
+  afterEach,
+  beforeEach,
+  describe,
+  expect,
+  it,
+  type Mock,
+  vi,
+} from "vitest"
 
 type ManagedReaderSettings = Pick<CoreInputSettings, "spreadMode"> & {
   fontScale: number
@@ -98,6 +106,49 @@ const AppSavingEveryChange = ({
   )
 }
 
+/**
+ * Each setting react-reader manages, with a value the reader is created with
+ * that is not react-reader's own default, and one set on the reader directly.
+ */
+const managedSettings = [
+  {
+    setting: `font size`,
+    readerCreatedWith: { fontScale: 2 },
+    appProps: (onChange: Mock) => ({ fontSize: 2, onFontSizeChange: onChange }),
+    setOnReader: { fontScale: 3 },
+    reportedChange: [`internal`, 3],
+    reactReaderDefault: { fontScale: 1 },
+  },
+  {
+    setting: `spread mode`,
+    readerCreatedWith: { spreadMode: `always` },
+    appProps: (onChange: Mock) => ({
+      spreadMode: `always`,
+      onSpreadModeChange: onChange,
+    }),
+    setOnReader: { spreadMode: `never` },
+    reportedChange: [`internal`, `never`],
+    reactReaderDefault: { spreadMode: `auto` },
+  },
+  {
+    setting: `theme`,
+    readerCreatedWith: { theme: `night` },
+    appProps: (onChange: Mock) => ({ theme: `night`, onThemeChange: onChange }),
+    setOnReader: { theme: `sepia` },
+    reportedChange: [`internal`, `sepia`],
+    reactReaderDefault: { theme: `bright` },
+  },
+] satisfies {
+  setting: string
+  readerCreatedWith: Partial<ManagedReaderSettings>
+  appProps: (
+    onChange: Mock,
+  ) => Partial<ComponentProps<typeof ReactReaderProvider>>
+  setOnReader: Partial<ManagedReaderSettings>
+  reportedChange: unknown[]
+  reactReaderDefault: Partial<ManagedReaderSettings>
+}[]
+
 describe(`useSyncReaderWithManagedSettings`, () => {
   let root: ReturnType<typeof createRoot>
 
@@ -190,55 +241,52 @@ describe(`useSyncReaderWithManagedSettings`, () => {
     expect(reader.settings.values.spreadMode).toBe(`never`)
   })
 
-  it(`reports a spread mode set on the reader directly as an internal change`, async () => {
-    const reader = createReaderWithSettings({ spreadMode: `never` })
-    const onSpreadModeChange = vi.fn()
+  it(`writes the app's theme into the reader without waiting`, async () => {
+    const reader = createReaderWithSettings()
     useReaderMock.mockReturnValue(reader)
 
-    await render({ reader: undefined, spreadMode: `never`, onSpreadModeChange })
-    await act(async () => {
-      reader.settings.update({ spreadMode: `always` })
-    })
-
-    expect(onSpreadModeChange).toHaveBeenCalledWith(`internal`, `always`)
-  })
-
-  it(`keeps the spread mode the reader was created with when the app passes none`, async () => {
-    const reader = createReaderWithSettings({ spreadMode: `always` })
-    useReaderMock.mockReturnValue(reader)
-
-    await render({ reader: undefined })
-    await waitForWrites(500)
-
-    expect(reader.settings.values.spreadMode).toBe(`always`)
-    expect(reader.settings.update).not.toHaveBeenCalledWith({
-      spreadMode: `auto`,
-    })
-  })
-
-  it(`reports a theme set on the reader directly as an internal change`, async () => {
-    const reader = createReaderWithSettings({ theme: `night` })
-    const onThemeChange = vi.fn()
-    useReaderMock.mockReturnValue(reader)
-
-    await render({ reader: undefined, theme: `night`, onThemeChange })
-    await act(async () => {
-      reader.settings.update({ theme: `sepia` })
-    })
-
-    expect(onThemeChange.mock.calls).toEqual([[`internal`, `sepia`]])
-  })
-
-  it(`keeps the theme the reader was created with when the app passes none`, async () => {
-    const reader = createReaderWithSettings({ theme: `night` })
-    useReaderMock.mockReturnValue(reader)
-
-    await render({ reader: undefined })
-    await waitForWrites(500)
+    await render({ reader: undefined, theme: `night` })
+    await waitForWrites(0)
 
     expect(reader.settings.values.theme).toBe(`night`)
-    expect(reader.settings.update).not.toHaveBeenCalledWith({
-      theme: `bright`,
-    })
   })
+
+  describe.each(managedSettings)(
+    `the $setting`,
+    ({
+      readerCreatedWith,
+      appProps,
+      setOnReader,
+      reportedChange,
+      reactReaderDefault,
+    }) => {
+      it(`is reported as an internal change when set on the reader directly`, async () => {
+        const reader = createReaderWithSettings(readerCreatedWith)
+        const onChange = vi.fn()
+        useReaderMock.mockReturnValue(reader)
+
+        await render({ reader: undefined, ...appProps(onChange) })
+        await act(async () => {
+          reader.settings.update(setOnReader)
+        })
+
+        expect(onChange.mock.calls).toEqual([reportedChange])
+      })
+
+      it(`stays as the reader was created with when the app passes none`, async () => {
+        const reader = createReaderWithSettings(readerCreatedWith)
+        useReaderMock.mockReturnValue(reader)
+
+        await render({ reader: undefined })
+        await waitForWrites(500)
+
+        expect(reader.settings.values).toEqual(
+          expect.objectContaining(readerCreatedWith),
+        )
+        expect(reader.settings.update).not.toHaveBeenCalledWith(
+          reactReaderDefault,
+        )
+      })
+    },
+  )
 })

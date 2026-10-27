@@ -86,15 +86,15 @@ const useReaderInstance = (
 
 ## Settings
 
-react-reader manages some of the reader's settings as props of the component. The user changes two of them from its menus: the font size, and the spread mode in the Layout dialog. The theme has no menu: your app sets it, for example to follow its own light or dark mode.
+react-reader manages some of the reader's settings as props of the component. The user changes two of them from its menus: the font size, and the spread mode in the Layout dialog. The theme has no menu: your app sets it, for example to follow its own light or dark mode. It colors the book, not react-reader's own interface, which follows its Chakra UI theme.
 
 | Setting | Value | Change callback | Scopes | Reader setting |
 | --- | --- | --- | --- | --- |
 | Font size | `fontSize` | `onFontSizeChange` | `fontSizeScope`, `onFontSizeScopeChange`, `fontSizeValues` | `fontScale` |
 | Spread mode | `spreadMode` | `onSpreadModeChange` | `spreadModeScope`, `onSpreadModeScopeChange`, `spreadModeValues` | `spreadMode` |
-| Theme | `theme` | `onThemeChange` | — | `theme` |
+| Theme | `theme` | `onThemeChange` | none | `theme` |
 
-Keep the value in your app, save it from the change callback and pass it back as a prop. react-reader writes it into the reader:
+Keep the value in your app, save it from the change callback and pass it back as a prop. A theme that follows the app's color mode has nothing to save:
 
 ```tsx
 <ReactReader
@@ -103,25 +103,33 @@ Keep the value in your app, save it from the change callback and pass it back as
   onFontSizeChange={(_scope, fontSize) => save({ fontSize })}
   spreadMode={saved.spreadMode}
   onSpreadModeChange={(_scope, spreadMode) => save({ spreadMode })}
-  theme={saved.theme}
-  onThemeChange={(_scope, theme) => save({ theme })}
+  theme={colorMode === "dark" ? "night" : "bright"}
 >
   <div ref={containerRef} style={{ height: "100%", width: "100%" }} />
 </ReactReader>
 ```
 
-react-reader meets the reader only once it is created and mounted, and writes the values from then on. Create your reader with the same values, so it starts on them rather than switching to them, as a reader created without your theme first shows the default one, `bright`. Read them when you create the reader rather than recreating it when they change: react-reader keeps it on them afterwards.
+The change callback receives the scope whose value the user changed, or `"internal"` for a value that comes from the reader: one set on it directly or, without the value prop, the one it was created with when that is not the default. `onThemeChange` only receives `"internal"`, since react-reader has no theme menu. Without the value prop, react-reader keeps its own copy for as long as it is mounted, starting from the value the reader was created with. Its menus offer to pick a scope only once you pass the scope props.
+
+react-reader writes the values into the reader it gets through the `reader` prop. It writes the font size and the spread mode once they have stayed 200 ms, so a slider dragged across sizes writes once, and the theme as soon as it changes.
+
+Create your reader with the same values, so it starts on them rather than switching to them: a reader created without your theme shows `bright` until react-reader writes yours. Read the values when you create the reader, without making them a reason to create it again, since react-reader keeps the reader on them afterwards. In `useReaderInstance`, a ref does that:
 
 ```typescript
-const instance = createAppReader({
-  manifest,
+const settingsRef = useLiveRef({
   fontScale: saved.fontSize,
   spreadMode: saved.spreadMode,
-  theme: saved.theme,
+  theme: colorMode === "dark" ? "night" : "bright",
 })
+
+useEffect(() => {
+  // ...
+  const instance = createAppReader({ manifest, ...settingsRef.current })
+  // ...
+}, [manifest, containerRef, settingsRef])
 ```
 
-The change callback receives the scope whose value the user changed, or `"internal"` for a value set on the reader directly, the only one `onThemeChange` receives. Without the value prop, react-reader keeps its own copy for as long as it is mounted, starting from the value the reader was created with. Its menus offer to pick a scope only once you pass the scope props.
+`useLiveRef` comes from [reactjrx](https://github.com/mbret/reactjrx). A setting left `undefined`, as before anything is saved, keeps its default.
 
 ## Toggling features
 
