@@ -15,11 +15,12 @@ import { useScreenSettingsScopeReference } from "./useScreenSettingsScopeReferen
  * app's, from the setting's scope or the global values, or react-reader's own
  * when the app gives none.
  *
- * A value the reader takes that is not that one is reported to the app as
- * `"internal"` and adopted as react-reader's own, except, when the app gives a
- * value, the one the reader holds when react-reader meets it: the app's value
- * is about to replace it. Without an app value, react-reader adopts that one
- * too, which is how it starts from the value the reader was created with.
+ * The value the reader holds when react-reader meets it is not a change, and is
+ * not reported: the value in effect replaces it, or, without one, react-reader
+ * adopts it as its own, which is how it starts from the value the reader was
+ * created with. A value the reader takes after that and that is not the value
+ * in effect, such as by a pinch, is reported to the app as `"internal"` and
+ * adopted as react-reader's own.
  */
 export const useSyncReaderSettingWithManagedValue = <
   Name extends ManagedSettingName,
@@ -43,7 +44,6 @@ export const useSyncReaderSettingWithManagedValue = <
   const valueInEffect =
     appValueInEffect ?? appSettingValues.uncontrolledSettings[name]
   const valueInEffectRef = useLiveRef(valueInEffect)
-  const hasAppValueInEffectRef = useLiveRef(appValueInEffect !== undefined)
 
   useEffect(
     function writeValueInEffectIntoReader() {
@@ -63,36 +63,47 @@ export const useSyncReaderSettingWithManagedValue = <
     [reader, name, valueInEffect],
   )
 
-  const reportValuesTheReaderTakes = useCallback(
-    function reportValuesTheReaderTakes() {
+  const adoptValuesTheReaderTakes = useCallback(
+    function adoptValuesTheReaderTakes() {
       return reader?.settings.values$
         .pipe(
           map((settings) => settings[name]),
           distinctUntilChanged(),
-          filter(function isReaderValueToReport(readerValue, index) {
-            const isValueReaderHeldWhenMet = index === 0
-            const isAboutToBeReplacedByAppValue =
-              isValueReaderHeldWhenMet && hasAppValueInEffectRef.current
+          map(function toReaderValueTaken(readerValue, index) {
+            return { readerValue, isValueReaderHeldWhenMet: index === 0 }
+          }),
+          filter(function isReaderValueToAdopt({
+            readerValue,
+            isValueReaderHeldWhenMet,
+          }) {
+            const isValueInEffect = readerValue === valueInEffectRef.current
+            const hasValueInEffect = valueInEffectRef.current !== undefined
+            const isReplacedByValueInEffect =
+              isValueReaderHeldWhenMet && hasValueInEffect
 
-            return (
-              readerValue !== valueInEffectRef.current &&
-              !isAboutToBeReplacedByAppValue
-            )
+            return !isValueInEffect && !isReplacedByValueInEffect
           }),
         )
-        .subscribe(function reportAndAdoptReaderValue(readerValue) {
+        .subscribe(function adoptReaderValue({
+          readerValue,
+          isValueReaderHeldWhenMet,
+        }) {
           const changes: ReactReaderSettings = {}
 
           changes[name] = readerValue
-          context.value.onSettingsChange?.(changes, "internal")
+
+          if (!isValueReaderHeldWhenMet) {
+            context.value.onSettingsChange?.(changes, "internal")
+          }
+
           context.update((old) => ({
             ...old,
             uncontrolledSettings: { ...old.uncontrolledSettings, ...changes },
           }))
         })
     },
-    [reader, name, context, valueInEffectRef, hasAppValueInEffectRef],
+    [reader, name, context, valueInEffectRef],
   )
 
-  useSubscribe(reportValuesTheReaderTakes)
+  useSubscribe(adoptValuesTheReaderTakes)
 }
