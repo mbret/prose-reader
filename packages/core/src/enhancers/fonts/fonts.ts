@@ -1,11 +1,4 @@
-import {
-  map,
-  type Observable,
-  type ObservedValueOf,
-  pairwise,
-  takeUntil,
-  tap,
-} from "rxjs"
+import { map, pairwise, takeUntil, tap } from "rxjs"
 import type { ExtendedSettings } from "../../settings/SettingsInterface"
 import { upsertCSSToFrame } from "../../utils/frames"
 import type { EnhancerOutput, RootEnhancer } from "../types/enhancer"
@@ -105,24 +98,14 @@ export const fontsEnhancer =
       `fontJustification`,
     ])
 
-    const shouldRequireLayout = <
-      T extends ObservedValueOf<typeof fontsSettings$>,
-    >(
-      source: Observable<T>,
-    ) =>
-      source.pipe(
-        pairwise(),
-        map(([old, latest]) => {
-          if (latest.fontScale !== old.fontScale) return true
-          if (latest.lineHeight !== old.lineHeight) return true
-
-          return false
-        }),
-      )
-
     fontsSettings$
       .pipe(
-        shouldRequireLayout,
+        pairwise(),
+        map(
+          ([previousFontsSettings, fontsSettings]) =>
+            fontsSettings.fontScale !== previousFontsSettings.fontScale ||
+            fontsSettings.lineHeight !== previousFontsSettings.lineHeight,
+        ),
         tap(applyChangeToSpineItems),
         takeUntil(reader.$.destroy$),
       )
