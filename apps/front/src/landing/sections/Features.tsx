@@ -86,7 +86,7 @@ const features: {
     icon: LuServer,
     title: "Streamer",
     description:
-      "Serve books from anywhere: the page itself, a service worker, a Node server or React Native.",
+      "Serve books from anywhere: a service worker, a Node server, React Native or the page itself.",
     href: links.streamer,
     linkTopic: "the streamer",
   },

@@ -38,7 +38,7 @@
 
 It strictly follows the [EPUB 3.3 specification](https://www.w3.org/TR/epub-33/) and can render **anything**: its *enhancer* system lets you teach the engine new media types and behaviors. Comics (CBZ/CBR), PDF and audiobooks already ship as enhancers — and you can write your own for any format you need.
 
-Nor does it care where a book comes from. The reader asks for a manifest and the resources it lists, and you decide how each one is served: from the page itself or a service worker, entirely in the browser with no server at all, or from your own server or a React Native app.
+Nor does it care where a book comes from. The reader asks for a manifest and the resources it lists, and you decide how each one is served: from a service worker or the page itself, entirely in the browser with no server at all, or from your own server or a React Native app.
 
 ## Who is it for?
 
