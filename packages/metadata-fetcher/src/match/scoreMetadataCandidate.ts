@@ -99,7 +99,7 @@ const scopedIn = (
  * which one assigned it. A catalog id is read the way archive-reader reads it,
  * so a Gutenberg URL and a `ProjectGutenberg` number land in the same
  * namespace; another stated scheme is its own namespace. An untyped value no
- * catalog addresses — an EPUB's `urn:uuid`, a publisher's web page — has
+ * catalog addresses — an `Unknown` string, a publisher's web page — has
  * none: it cannot contradict a catalog's id, nor be confirmed by one. Neither
  * has a blank scheme, which states nothing.
  */
