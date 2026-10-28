@@ -690,7 +690,7 @@ test.describe("Given the chapter after the one being read laid out again", () =>
           }
 
           const releaseOnceNoLayoutIsPending = () => {
-            if (reader.spine.firstItemIndexAwaitingLayout === undefined) {
+            if (reader.spine.isLayoutCurrent) {
               turnOnceTheNextChapterLoads()
             } else {
               requestAnimationFrame(releaseOnceNoLayoutIsPending)

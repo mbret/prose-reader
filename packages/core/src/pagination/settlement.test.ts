@@ -339,11 +339,8 @@ describe("pagination settlement", () => {
 
     otherItem.release()
     await firstValueFrom(
-      reader.spine.firstItemIndexAwaitingLayout$.pipe(
-        filter(
-          (firstItemIndexAwaitingLayout) =>
-            firstItemIndexAwaitingLayout !== undefined,
-        ),
+      reader.spine.isLayoutCurrent$.pipe(
+        filter((isLayoutCurrent) => !isLayoutCurrent),
       ),
     )
 
@@ -372,11 +369,8 @@ describe("pagination settlement", () => {
 
     otherItem.release()
     await firstValueFrom(
-      reader.spine.firstItemIndexAwaitingLayout$.pipe(
-        filter(
-          (firstItemIndexAwaitingLayout) =>
-            firstItemIndexAwaitingLayout !== undefined,
-        ),
+      reader.spine.isLayoutCurrent$.pipe(
+        filter((isLayoutCurrent) => !isLayoutCurrent),
       ),
     )
 
@@ -571,11 +565,8 @@ describe("pagination settlement", () => {
 
     otherItem.release()
     await firstValueFrom(
-      reader.spine.firstItemIndexAwaitingLayout$.pipe(
-        filter(
-          (firstItemIndexAwaitingLayout) =>
-            firstItemIndexAwaitingLayout !== undefined,
-        ),
+      reader.spine.isLayoutCurrent$.pipe(
+        filter((isLayoutCurrent) => !isLayoutCurrent),
       ),
     )
 
@@ -596,10 +587,7 @@ describe("pagination settlement", () => {
 
     const settledWhileStale: PaginationInfo[] = []
     reader.pagination.state$.subscribe((state) => {
-      if (
-        state.isSettled &&
-        reader.spine.firstItemIndexAwaitingLayout !== undefined
-      ) {
+      if (state.isSettled && !reader.spine.isLayoutCurrent) {
         settledWhileStale.push(state)
       }
     })
