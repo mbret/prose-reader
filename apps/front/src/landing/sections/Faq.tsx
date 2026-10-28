@@ -40,11 +40,13 @@ const questions: { question: string; answer: ReactNode }[] = [
     question: "Can I protect books with DRM?",
     answer: (
       <>
-        prose ships no DRM of its own yet, but it never needs the book file:
-        your server or service worker can check access and decrypt each resource
-        before the reader gets it. A more native DRM integration is in the
-        works: tell us on <AnswerLink href={links.discord}>Discord</AnswerLink>{" "}
-        if you are interested.
+        prose ships no DRM of its own yet. The reader asks for a book one
+        resource at a time, so your server or service worker can check access
+        and decrypt each one before the reader gets it. PDF is the exception:
+        pdf.js needs the whole file in the page. A more native DRM integration
+        is in the works: tell us on{" "}
+        <AnswerLink href={links.discord}>Discord</AnswerLink> if you are
+        interested.
       </>
     ),
   },
