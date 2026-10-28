@@ -20,7 +20,8 @@ test.describe("Given an app that lays the book out again as soon as a page turn 
     // The turn has to land on the current layout for the layout to void it.
     await page.waitForFunction(
       (reader) =>
-        reader.pagination.state.isSettled && reader.spine.isLayoutCurrent,
+        reader.pagination.state.isSettled &&
+        reader.spine.firstItemIndexAwaitingLayout === undefined,
       reader,
     )
 
@@ -31,18 +32,18 @@ test.describe("Given an app that lays the book out again as soon as a page turn 
       const pagesReported: string[] = []
       let isTurning = false
       let turnNavigation: unknown
-      let isLayoutCurrentWhenTurnReported: boolean | undefined
+      let turnHeldWhenReported: boolean | undefined
       let replayedOnceLayoutRequested:
         | { navigation: unknown; holdsOnCurrentLayout: boolean }
         | undefined
 
       const settledAfterLayout = new Promise<void>((resolve) => {
         reader.navigation.navigationAgainstCurrentLayout$.subscribe(
-          ({ navigation }) => {
+          ({ navigation, holdsOnCurrentLayout }) => {
             if (!isTurning || turnNavigation) return
 
             turnNavigation = navigation
-            isLayoutCurrentWhenTurnReported = reader.spine.isLayoutCurrent
+            turnHeldWhenReported = holdsOnCurrentLayout
             reader.layout()
             // Replays the current one, synchronously.
             reader.navigation.navigationAgainstCurrentLayout$
@@ -68,7 +69,7 @@ test.describe("Given an app that lays the book out again as soon as a page turn 
       return {
         pageBeforeTurn,
         pagesReported,
-        isLayoutCurrentWhenTurnReported,
+        turnHeldWhenReported,
         replaysTheTurn:
           replayedOnceLayoutRequested?.navigation === turnNavigation,
         replayedHolds: replayedOnceLayoutRequested?.holdsOnCurrentLayout,
@@ -76,7 +77,7 @@ test.describe("Given an app that lays the book out again as soon as a page turn 
     })
 
     // The turn landed on the current layout, on another page.
-    expect(turn.isLayoutCurrentWhenTurnReported).toBe(true)
+    expect(turn.turnHeldWhenReported).toBe(true)
     expect(turn.pagesReported[turn.pagesReported.length - 1]).not.toBe(
       turn.pageBeforeTurn,
     )
