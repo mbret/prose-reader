@@ -293,6 +293,29 @@ describe(`SyncReaderWithManagedSettings`, () => {
     expect(spreadModeMenu.current?.getValueForScope(`global`)).toBe(`always`)
   })
 
+  it(`shows the spread mode the reader arrives with when the app passes none, and reports only the values it takes afterwards`, async () => {
+    const reader = createReaderWithSettings({ spreadMode: `always` })
+    const onSettingsChange = vi.fn()
+
+    const spreadModeMenu = await renderWithSpreadModeMenu({
+      reader: undefined,
+      onSettingsChange,
+    })
+    await act(async () => {
+      testReader.set(reader)
+    })
+
+    expect(spreadModeMenu.current?.getValueForScope(`global`)).toBe(`always`)
+
+    await act(async () => {
+      reader.settings.update({ spreadMode: `never` })
+    })
+
+    expect(onSettingsChange.mock.calls).toEqual([
+      [{ spreadMode: `never` }, `internal`],
+    ])
+  })
+
   it(`writes a spread mode chosen in the menu into the reader when the app passes none`, async () => {
     const reader = createReaderWithSettings({ spreadMode: `auto` })
     testReader.set(reader)
