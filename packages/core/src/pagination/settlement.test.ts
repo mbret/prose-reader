@@ -356,11 +356,8 @@ describe("pagination settlement", () => {
     expect(reader.pagination.state.isSettled).toBe(true)
 
     await firstValueFrom(
-      reader.spine.firstItemIndexAwaitingLayout$.pipe(
-        filter(
-          (firstItemIndexAwaitingLayout) =>
-            firstItemIndexAwaitingLayout === undefined,
-        ),
+      reader.spine.isLayoutCurrent$.pipe(
+        filter((isLayoutCurrent) => isLayoutCurrent),
       ),
     )
     await settledOn(reader, 0)

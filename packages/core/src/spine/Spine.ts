@@ -61,10 +61,23 @@ export class Spine extends DestroyableClass {
    * it lays that item out, long before the pages are recomputed.
    *
    * The navigator derives from it whether the latest navigation holds on the
-   * current layout, and reads it to decide whether an anchor is final.
+   * current layout: whether a pending layout can change what it shows.
    */
   public readonly firstItemIndexAwaitingLayout$ =
     this.firstItemIndexAwaitingLayoutSubject.pipe(distinctUntilChanged())
+
+  /**
+   * Whether the pages describe every item as the latest layout requested lays
+   * it out: no item awaits it in {@link firstItemIndexAwaitingLayout$}. Until
+   * the first pages are published, it is not current.
+   */
+  public readonly isLayoutCurrent$ = this.firstItemIndexAwaitingLayout$.pipe(
+    map(
+      (firstItemIndexAwaitingLayout) =>
+        firstItemIndexAwaitingLayout === undefined,
+    ),
+    distinctUntilChanged(),
+  )
 
   constructor(
     protected context: Context,
@@ -170,11 +183,18 @@ export class Spine extends DestroyableClass {
     return this.firstItemIndexAwaitingLayoutSubject.getValue()
   }
 
+  /** {@link isLayoutCurrent$} now. */
+  public get isLayoutCurrent() {
+    return this.firstItemIndexAwaitingLayout === undefined
+  }
+
   /**
    * Whether the pages describe this item as the latest layout requested lays
    * it out: whether it comes before {@link firstItemIndexAwaitingLayout$}.
    * Its place, its pages and what a position shows of it are then the ones
    * the reader shows, even while a layout of items after it is pending.
+   *
+   * The navigator reads it to decide whether an anchor is final.
    */
   public isLayoutCurrentFor(spineItem: SpineItem | number) {
     const spineItemIndex =
