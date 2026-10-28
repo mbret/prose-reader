@@ -119,8 +119,8 @@ describe("resolveOpf", () => {
         ],
       }).identifiers,
     ).toEqual([
-      { value: "urn:uuid:secondary", scheme: "UUID" },
-      { unique: true, value: "urn:uuid:package", scheme: "UUID" },
+      { value: "urn:uuid:secondary", scheme: "URN" },
+      { unique: true, value: "urn:uuid:package", scheme: "URN" },
     ])
   })
 
@@ -174,7 +174,7 @@ describe("resolveOpf", () => {
       },
       { value: "HTTPS://example.com/books/1", scheme: "URL" },
       { value: "https://", scheme: "Unknown" },
-      { value: "urn:uuid:abc", scheme: "UUID" },
+      { value: "urn:uuid:abc", scheme: "URN" },
       { value: "url:http://example.com/books/1", scheme: "Unknown" },
       { value: "https://example.com/explicit", scheme: "URI" },
     ])

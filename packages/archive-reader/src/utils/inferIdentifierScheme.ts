@@ -12,23 +12,53 @@ export type InferredIdentifierScheme = Extract<
   "ISBN" | "GTIN" | "UUID" | "URN" | "URL" | "Unknown"
 >
 
+/** One URI path character, per RFC 3986: what a URN's parts are made of. */
+const URI_PATH_CHARACTER = "(?:[a-z0-9._~!$&'()*+,;=:@-]|%[0-9a-f]{2})"
+
 /**
  * A URN, per RFC 8141: `urn:`, a namespace identifier of 2 to 32 letters,
- * digits and inner hyphens, and a namespace-specific string.
+ * digits and inner hyphens, a namespace-specific string of URI path
+ * characters, and the optional `?+`, `?=` and `#` components.
  */
-const URN_PATTERN = /^urn:([a-z0-9][a-z0-9-]{0,30}[a-z0-9]):\S+$/i
+const URN_PATTERN = new RegExp(
+  `^urn:([a-z0-9][a-z0-9-]{0,30}[a-z0-9])` +
+    `:(${URI_PATH_CHARACTER}(?:${URI_PATH_CHARACTER}|/)*)` +
+    `(?:\\?\\+${URI_PATH_CHARACTER}(?:${URI_PATH_CHARACTER}|[/?])*)?` +
+    `(?:\\?=${URI_PATH_CHARACTER}(?:${URI_PATH_CHARACTER}|[/?])*)?` +
+    `(?:#(?:${URI_PATH_CHARACTER}|[/?])*)?$`,
+  "i",
+)
 
 /** A UUID's text form, per RFC 9562: 32 hex digits grouped 8-4-4-4-12. */
 const UUID_PATTERN =
   /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
 
-/** The scheme a URN's namespace identifier names. */
-const urnScheme = (namespaceIdentifier: string): InferredIdentifierScheme => {
+/**
+ * The scheme a value written as a URN announces. The namespace it names
+ * counts only when the rest is that namespace's value — an ISBN after
+ * `urn:isbn:`, a UUID after `urn:uuid:` — and any other well-formed URN is a
+ * `URN`. One that is not well-formed is `Unknown`: it still never reaches the
+ * barcode readings, which would take the digit runs of a malformed
+ * `urn:uuid:{…}` for an ISBN-10 or a GTIN.
+ */
+const urnScheme = (urn: string): InferredIdentifierScheme => {
+  const [, namespaceIdentifier, namespaceSpecificString] =
+    URN_PATTERN.exec(urn) ?? []
+
+  if (
+    namespaceIdentifier === undefined ||
+    namespaceSpecificString === undefined
+  ) {
+    return "Unknown"
+  }
+
   switch (namespaceIdentifier.toLowerCase()) {
     case "isbn":
-      return "ISBN"
+      return booklandIsbn(namespaceSpecificString) !== undefined
+        ? "ISBN"
+        : "URN"
     case "uuid":
-      return "UUID"
+      return UUID_PATTERN.test(namespaceSpecificString) ? "UUID" : "URN"
     default:
       return "URN"
   }
@@ -37,8 +67,9 @@ const urnScheme = (namespaceIdentifier: string): InferredIdentifierScheme => {
 /**
  * The scheme a value announces by its own syntax, for an identifier that
  * announced none: an absolute http(s) link is a `URL`; a URN is the scheme its
- * namespace names — `ISBN` for `urn:isbn:`, `UUID` for `urn:uuid:`, `URN` for
- * any other; a bare UUID is a `UUID`; a Bookland number is an `ISBN`, another
+ * namespace names when it holds that namespace's value — `ISBN` for an ISBN
+ * after `urn:isbn:`, `UUID` for a UUID after `urn:uuid:` — and a `URN`
+ * otherwise; a bare UUID is a `UUID`; a Bookland number is an `ISBN`, another
  * well-formed barcode a `GTIN`, and anything else is `Unknown`.
  *
  * EPUB 3.3 recommends a URN for its unique identifier because the namespace it
@@ -71,11 +102,7 @@ export const inferIdentifierScheme = (
     }
   }
 
-  const urnNamespaceIdentifier = URN_PATTERN.exec(trimmed)?.[1]
-
-  if (urnNamespaceIdentifier !== undefined) {
-    return urnScheme(urnNamespaceIdentifier)
-  }
+  if (/^urn:/i.test(trimmed)) return urnScheme(trimmed)
 
   if (UUID_PATTERN.test(trimmed)) return "UUID"
   if (booklandIsbn(trimmed) !== undefined) return "ISBN"

@@ -20,12 +20,12 @@ The `value` is preserved as authored. The `scheme` describes the identifier name
 | --- | --- |
 | Explicit EPUB 2 `opf:scheme` or EPUB 3 `identifier-type` | The canonical known scheme or the authored custom scheme |
 | Absolute HTTP(S) URL | `URL` |
-| Untyped URN, `urn:<namespace>:…` | The scheme its namespace names: `ISBN` for `urn:isbn:`, `UUID` for `urn:uuid:`, `URN` for any other |
+| Untyped URN, `urn:<namespace>:…` | The scheme its namespace names when the URN holds that namespace's value — `ISBN` for an ISBN after `urn:isbn:`, `UUID` for a UUID after `urn:uuid:` — and `URN` for any other well-formed URN |
 | Untyped UUID, such as `a1b0d67e-2e81-4df5-9e67-a64cbe366809` | `UUID` |
 | Recognizable untyped ISBN or GTIN | `ISBN` or `GTIN` |
 | Other untyped value | `Unknown` |
 
-The rows are tried in order. EPUB 3.3 recommends a URN for the unique identifier, as "the use of a URN with a namespace identifier improves processing by reading systems", and its examples state a `urn:uuid:` with no `identifier-type`. A URN and a UUID are read before the barcodes because their digit runs can pass for an ISBN-10 or a GTIN: read as a barcode, about one random UUID in forty would lend its book an ISBN or a GTIN it never had.
+The rows are tried in order. EPUB 3.3 recommends a URN for the unique identifier, as "the use of a URN with a namespace identifier improves processing by reading systems", and its examples state a `urn:uuid:` with no `identifier-type`. A URN and a UUID are read before the barcodes because their digit runs can pass for an ISBN-10 or a GTIN: read as a barcode, about one random UUID in forty would lend its book an ISBN or a GTIN it never had. A value that starts with `urn:` never reaches the barcode readings: when [RFC 8141](https://www.rfc-editor.org/rfc/rfc8141) does not allow it, such as a UUID in braces after `urn:uuid:`, it is `Unknown`.
 
 The built-in scheme vocabulary includes `ISBN`, `GTIN`, `DOI`, `GoogleBooks`, `OpenLibrary`, `ProjectGutenberg`, `UUID`, `URN`, `URL`, and the `Unknown` fallback. Applications can also use a custom scheme string for a namespace that is not in `KnownMetadataIdentifierScheme`.
 
