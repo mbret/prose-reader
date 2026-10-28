@@ -187,8 +187,9 @@ Gestures are not part of this API. The
 [Gestures](/enhancers/gestures#zooming-in-out) enhancer drives it:
 
 - A pinch that spreads enters the zoom at the scale of its first move, then
-  scales it with `constrain: "within-viewport"`, up to its `zoomMaxScale`
-  setting. That setting does not cap the scale the zoom enters at.
+  scales it with `constrain: "within-viewport"`. No step goes past its
+  `zoomMaxScale` setting, and a `zoomMaxScale` of `1` or less keeps a pinch
+  from zooming in.
 - A pinch that takes the scale below `1` exits it.
 - While the book is zoomed in, a pan moves the zoom rather than the page, and a
   tap no longer turns the page.
