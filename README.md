@@ -9,7 +9,7 @@
 <p align="center">
   <b>The open-source engine for building reading apps in the browser.</b>
   <br/>
-  Render EPUB3, comics, and PDF with a single, framework-agnostic SDK — and ship your own reader, your way.
+  Render any format: EPUB 3, comics and PDF are ready, and enhancers add the rest. Serve books from anywhere, entirely in the browser or from your server. One framework-agnostic SDK to ship your own reader, your way.
 </p>
 
 <p align="center">
@@ -36,7 +36,9 @@
 
 **prose** is a free, open-source **Reading System Engine** — the hard part of an ebook reader, packaged as a modern SDK. It takes care of parsing, layout, pagination, navigation, and rendering so you can focus on building your own reading experience.
 
-It strictly follows the [EPUB 3.3 specification](https://www.w3.org/TR/epub-33/) and, in theory, can render **anything**: its *enhancer* system lets you teach the engine new media types and behaviors. Comics (CBZ/CBR), PDF, and plain text already ship as enhancers — and you can write your own for any format you need.
+It strictly follows the [EPUB 3.3 specification](https://www.w3.org/TR/epub-33/) and can render **anything**: its *enhancer* system lets you teach the engine new media types and behaviors. Comics (CBZ/CBR), PDF and audiobooks already ship as enhancers — and you can write your own for any format you need.
+
+Nor does it care where a book comes from. The reader asks for a manifest and the resources it lists, and you decide how each one is served: from the page itself or a service worker, entirely in the browser with no server at all, or from your own server or a React Native app.
 
 ## Who is it for?
 
