@@ -1,4 +1,3 @@
-import { shallowMergeIfDefined } from "@prose-reader/shared"
 import { filter, finalize, map, merge, switchMap, takeUntil, tap } from "rxjs"
 import {
   CSS_VAR_THEME_BACKGROUND_COLOR,
@@ -96,13 +95,8 @@ export const themeEnhancer =
     next: (options: InheritOptions) => InheritOutput,
   ) =>
   (options: InheritOptions & Partial<EnhancerThemeInputSettings>): Output => {
-    const reader = next(shallowMergeIfDefined(defaultThemeSettings, options))
-    // Cast: the reader's settings hold every setting given to them, this one
-    // included, but their type only lists the inherited ones.
-    const settings = reader.settings as SettingsInterface<
-      InheritSettings & EnhancerThemeInputSettings,
-      EnhancerThemeInputSettings & InheritComputedSettings
-    >
+    const reader = next(options)
+    const settings = reader.settings.extend(defaultThemeSettings, options)
     const theme$ = settings.watch([`theme`]).pipe(map(({ theme }) => theme))
 
     /**
