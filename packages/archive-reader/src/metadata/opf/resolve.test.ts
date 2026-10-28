@@ -1,4 +1,5 @@
 import { describe, expect, it } from "vitest"
+import { identifierValue } from "../../utils/identifierValues"
 import { mainTitle } from "../../utils/mainTitle"
 import type { OpfMetadata } from "./parse"
 import { resolveOpf } from "./resolve"
@@ -118,9 +119,34 @@ describe("resolveOpf", () => {
         ],
       }).identifiers,
     ).toEqual([
-      { value: "urn:uuid:secondary", scheme: "Unknown" },
-      { unique: true, value: "urn:uuid:package", scheme: "Unknown" },
+      { value: "urn:uuid:secondary", scheme: "UUID" },
+      { unique: true, value: "urn:uuid:package", scheme: "UUID" },
     ])
+  })
+
+  it("reads an untyped URN by its namespace, so a UUID never yields an ISBN", () => {
+    const { identifiers } = resolveOpf({
+      ...emptyOpf(),
+      identifiers: [
+        {
+          id: "pub-id",
+          unique: true,
+          value: "urn:uuid:df2ff42a-d9c6-4bf0-b362-9f6132942570",
+        },
+        { value: "urn:nbn:de:101:1-2011" },
+      ],
+    })
+
+    expect(identifiers).toEqual([
+      {
+        unique: true,
+        value: "urn:uuid:df2ff42a-d9c6-4bf0-b362-9f6132942570",
+        scheme: "UUID",
+      },
+      { value: "urn:nbn:de:101:1-2011", scheme: "URN" },
+    ])
+    expect(identifierValue(identifiers, "ISBN")).toBeUndefined()
+    expect(identifierValue(identifiers, "GTIN")).toBeUndefined()
   })
 
   it("infers URL only for valid absolute HTTP(S) identifiers without a scheme", () => {
@@ -148,7 +174,7 @@ describe("resolveOpf", () => {
       },
       { value: "HTTPS://example.com/books/1", scheme: "URL" },
       { value: "https://", scheme: "Unknown" },
-      { value: "urn:uuid:abc", scheme: "Unknown" },
+      { value: "urn:uuid:abc", scheme: "UUID" },
       { value: "url:http://example.com/books/1", scheme: "Unknown" },
       { value: "https://example.com/explicit", scheme: "URI" },
     ])

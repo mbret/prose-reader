@@ -19,11 +19,15 @@ The `value` is preserved as authored. The `scheme` describes the identifier name
 | Source value | Resolved scheme |
 | --- | --- |
 | Explicit EPUB 2 `opf:scheme` or EPUB 3 `identifier-type` | The canonical known scheme or the authored custom scheme |
-| Recognizable untyped ISBN or GTIN | `ISBN` or `GTIN` |
 | Absolute HTTP(S) URL | `URL` |
+| Untyped URN, `urn:<namespace>:…` | The scheme its namespace names: `ISBN` for `urn:isbn:`, `UUID` for `urn:uuid:`, `URN` for any other |
+| Untyped UUID, such as `a1b0d67e-2e81-4df5-9e67-a64cbe366809` | `UUID` |
+| Recognizable untyped ISBN or GTIN | `ISBN` or `GTIN` |
 | Other untyped value | `Unknown` |
 
-The built-in scheme vocabulary includes `ISBN`, `GTIN`, `DOI`, `GoogleBooks`, `OpenLibrary`, `ProjectGutenberg`, `URL`, and the `Unknown` fallback. Applications can also use a custom scheme string for a namespace that is not in `KnownMetadataIdentifierScheme`.
+The rows are tried in order. EPUB 3.3 recommends a URN for the unique identifier, as "the use of a URN with a namespace identifier improves processing by reading systems", and its examples state a `urn:uuid:` with no `identifier-type`. A URN and a UUID are read before the barcodes because their digit runs can pass for an ISBN-10 or a GTIN: read as a barcode, about one random UUID in forty would lend its book an ISBN or a GTIN it never had.
+
+The built-in scheme vocabulary includes `ISBN`, `GTIN`, `DOI`, `GoogleBooks`, `OpenLibrary`, `ProjectGutenberg`, `UUID`, `URN`, `URL`, and the `Unknown` fallback. Applications can also use a custom scheme string for a namespace that is not in `KnownMetadataIdentifierScheme`.
 
 `Unknown` means the publication supplied an identifier value without enough information to determine its namespace. The value is preserved instead of being guessed or discarded.
 
@@ -153,10 +157,12 @@ An identifier that announces no scheme at all is given one by its own syntax, an
 ```typescript
 inferIdentifierScheme("9783161484100") // "ISBN"
 inferIdentifierScheme("https://example.com/book") // "URL"
+inferIdentifierScheme("urn:uuid:a1b0d67e-2e81-4df5-9e67-a64cbe366809") // "UUID"
+inferIdentifierScheme("urn:nbn:de:101:1-2011") // "URN"
 inferIdentifierScheme("catalog-42") // "Unknown"
 ```
 
-It returns `InferredIdentifierScheme` — the four members of `KnownMetadataIdentifierScheme` a value can announce on its own — so the result narrows exhaustively and assigns straight into a scheme field.
+It returns `InferredIdentifierScheme` — the six members of `KnownMetadataIdentifierScheme` a value can announce on its own — so the result narrows exhaustively and assigns straight into a scheme field.
 
 A consumer editing a container needs it for the same reason it needs the two above: an untyped `<dc:identifier>` holding a Bookland number is an `ISBN` in `identifiers`, so a writer that reads it as untagged would build a second element beside the one the reader reported.
 

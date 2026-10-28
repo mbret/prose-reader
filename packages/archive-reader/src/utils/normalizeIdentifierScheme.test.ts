@@ -11,6 +11,8 @@ describe("normalizeIdentifierScheme", () => {
     ["GOOGLEBOOKS", "GoogleBooks"],
     ["openlibrary", "OpenLibrary"],
     ["projectgutenberg", "ProjectGutenberg"],
+    ["uuid", "UUID"],
+    ["urn", "URN"],
     ["url", "URL"],
     ["unknown", "Unknown"],
   ])("spells %s the way the vocabulary does", (scheme, expected) => {
