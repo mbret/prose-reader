@@ -32,7 +32,7 @@ test.describe("Given a prepaginated book with a page drawn as an SVG image", () 
       page,
       SVG_IMAGE_PAGE_SPINE_ITEM_INDEX,
     )
-    const { documentProtocol, picture } = await frame
+    const picture = await frame
       .contentFrame()
       .locator("image")
       .evaluate(async (image: SVGImageElement) => {
@@ -42,16 +42,16 @@ test.describe("Given a prepaginated book with a page drawn as an SVG image", () 
 
         probe.src = image.href.baseVal
 
-        const picture = await probe.decode().then(
+        return probe.decode().then(
           () => ({ width: probe.naturalWidth, height: probe.naturalHeight }),
           () => `the picture did not load from ${image.href.baseVal}`,
         )
-
-        return { documentProtocol: new URL(document.URL).protocol, picture }
       })
 
-    // A reference relative to a page loaded from a blob resolves to nothing.
-    expect(documentProtocol).toBe("blob:")
+    /**
+     * Loaded from its url, the page's relative reference resolves on its own.
+     * Loaded from a blob, it resolves to nothing unless the reader resolves it.
+     */
     expect(picture).toEqual({ width: 924, height: 1458 })
   })
 

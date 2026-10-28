@@ -2,6 +2,7 @@ import { createReadStream } from "node:fs"
 import { createRequire } from "node:module"
 import react from "@vitejs/plugin-react"
 import { defineConfig, type Plugin } from "vite"
+import { serveBooks } from "./server/serveBooks"
 
 const require = createRequire(import.meta.url)
 
@@ -56,6 +57,6 @@ export default defineConfig(() => {
     server: {
       port: 3333,
     },
-    plugins: [serveRawPdfWorker(), react()],
+    plugins: [serveBooks(), serveRawPdfWorker(), react()],
   }
 })

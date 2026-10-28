@@ -84,10 +84,11 @@ const expectEachImageSized = (imagesWhenLoaded: ChapterImagesWhenLoaded[]) => {
 }
 
 /**
- * The reader swaps a blob url of its own into each image once the chapter's
- * page is in.
+ * Loaded from its url, a chapter's page holds its load until its images are
+ * in, lazy ones aside. Loaded from a blob, it does not: the reader swaps a
+ * blob url of its own into each image once the page is in.
  */
-test.describe("Given a chapter whose image is swapped in after its page", () => {
+test.describe("Given a chapter with an image", () => {
   /**
    * `spi-ad.xhtml` has an image and no stylesheet, so nothing but its image
    * holds its load.
@@ -105,10 +106,6 @@ test.describe("Given a chapter whose image is swapped in after its page", () => 
     expect(chapterIndex).toBeGreaterThanOrEqual(0)
     expect(loadStatusBeforeNavigation).toBe("idle")
     expect(chapterImages).not.toHaveLength(0)
-
-    for (const { reference } of chapterImages) {
-      expect(reference).toMatch(/^blob:/)
-    }
 
     expectEachImageSized(imagesWhenLoaded)
   })
