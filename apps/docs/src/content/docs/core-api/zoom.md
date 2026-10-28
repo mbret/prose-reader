@@ -187,7 +187,7 @@ Gestures are not part of this API. The
 [Gestures](/enhancers/gestures#zooming-in-out) enhancer drives it:
 
 - A pinch that spreads enters the zoom at the scale of its first move, then
-  scales it with `constrain: "within-viewport"`. No step goes past its
+  scales it with `constrain: "within-viewport"`. No move goes past its
   `zoomMaxScale` setting, and a `zoomMaxScale` of `1` or less keeps a pinch
   from zooming in.
 - A pinch that takes the scale below `1` exits it.
