@@ -8,6 +8,7 @@ import {
   skip,
 } from "rxjs"
 import { describe, expect, it, vi } from "vitest"
+import { Spine } from "../spine/Spine"
 import {
   createEnhancedTestReader,
   createTestReader,
@@ -339,14 +340,9 @@ describe("pagination settlement", () => {
 
     otherItem.release()
     await firstValueFrom(
-      reader.spine
-        .watch("firstItemIndexAwaitingLayout")
-        .pipe(
-          filter(
-            (firstItemIndexAwaitingLayout) =>
-              firstItemIndexAwaitingLayout !== undefined,
-          ),
-        ),
+      reader.spine.pipe(
+        filter((spineState) => !Spine.isLayoutCurrent(spineState)),
+      ),
     )
 
     // The pages are about to be recomputed, so what the result says about the
@@ -374,14 +370,9 @@ describe("pagination settlement", () => {
 
     otherItem.release()
     await firstValueFrom(
-      reader.spine
-        .watch("firstItemIndexAwaitingLayout")
-        .pipe(
-          filter(
-            (firstItemIndexAwaitingLayout) =>
-              firstItemIndexAwaitingLayout !== undefined,
-          ),
-        ),
+      reader.spine.pipe(
+        filter((spineState) => !Spine.isLayoutCurrent(spineState)),
+      ),
     )
 
     reader.navigation.goToSpineItem({ indexOrId: 0, animation: false })
@@ -575,14 +566,9 @@ describe("pagination settlement", () => {
 
     otherItem.release()
     await firstValueFrom(
-      reader.spine
-        .watch("firstItemIndexAwaitingLayout")
-        .pipe(
-          filter(
-            (firstItemIndexAwaitingLayout) =>
-              firstItemIndexAwaitingLayout !== undefined,
-          ),
-        ),
+      reader.spine.pipe(
+        filter((spineState) => !Spine.isLayoutCurrent(spineState)),
+      ),
     )
 
     // The enhancer throttles its enrichment, and must not keep presenting a
@@ -602,10 +588,7 @@ describe("pagination settlement", () => {
 
     const settledWhileStale: PaginationInfo[] = []
     reader.pagination.state$.subscribe((state) => {
-      if (
-        state.isSettled &&
-        reader.spine.value.firstItemIndexAwaitingLayout !== undefined
-      ) {
+      if (state.isSettled && !reader.spine.isLayoutCurrent()) {
         settledWhileStale.push(state)
       }
     })

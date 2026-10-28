@@ -76,13 +76,23 @@ updates its state before the pages reach anything else. A newer request
 cancels everything still running for older ones, so the pages published then
 are the ones it asked for. It is `0` until the first pages are published.
 
-Read it before you use where a page is: while it is a number, the pages of that
-item and of the ones after it describe the layout before the request. A spine
-item's place in the spine does not wait for them: it is replaced once the items
-are laid out. Neither does a spine item's `isDirty`: a layout clears it as soon
-as it lays that item out, long before the pages are computed again. For the
-latest navigation with whether it holds on this layout, read
+Read it before you use where a page is, with `.isLayoutCurrent()` or
+`.isLayoutCurrentFor()`: while it is a number, the pages of that item and of the
+ones after it describe the layout before the request. A spine item's place in
+the spine does not wait for them: it is replaced once the items are laid out.
+Neither does a spine item's `isDirty`: a layout clears it as soon as it lays
+that item out, long before the pages are computed again. For the latest
+navigation with whether it holds on this layout, read
 [`reader.navigation.navigationAgainstCurrentLayout$`](/core-api/navigation#navigationagainstcurrentlayoutusd).
+
+### `.isLayoutCurrent()` { #islayoutcurrent }
+
+```typescript
+() => boolean
+```
+
+Whether the pages describe every spine item as the latest layout requested
+lays it out: no item awaits it. It reads the current state.
 
 ### `.isLayoutCurrentFor()` { #islayoutcurrentfor }
 
@@ -92,6 +102,30 @@ latest navigation with whether it holds on this layout, read
 
 Whether the pages describe a spine item, given as a `SpineItem` or by its
 index, as the latest layout requested lays it out: whether it comes before the
-state's `firstItemIndexAwaitingLayout`, read when you call it. Its place, its
-pages and what a position shows of it are then the ones the reader shows, even
-while a layout of the items after it is pending.
+state's `firstItemIndexAwaitingLayout`. Its place, its pages and what a position
+shows of it are then the ones the reader shows, even while a layout of the
+items after it is pending. It reads the current state.
+
+### `Spine.isLayoutCurrent()` and `Spine.isLayoutCurrentFor()` { #for-a-given-state }
+
+```typescript
+import { Spine } from "@prose-reader/core"
+
+Spine.isLayoutCurrent(state: Pick<SpineState, "firstItemIndexAwaitingLayout">): boolean
+Spine.isLayoutCurrentFor(
+  state: Pick<SpineState, "firstItemIndexAwaitingLayout">,
+  spineItem: SpineItem | number,
+): boolean
+```
+
+The same answers, for a state you hold rather than the current one, such as
+the one a subscriber receives: its answer then matches that state, even if the
+state moves on while it is being reported.
+
+```typescript
+reader.spine
+  .pipe(map(Spine.isLayoutCurrent), distinctUntilChanged())
+  .subscribe((isLayoutCurrent) => {
+    // true once the pages describe every item again
+  })
+```
