@@ -3,6 +3,7 @@ import { describe, expect, it } from "vitest"
 import type { CfiManager } from "../../cfi"
 import type { Context } from "../../context/Context"
 import type { Spine } from "../../spine/Spine"
+import type { DocumentLoadStatus } from "../../spineItem/renderer/DocumentRenderer"
 import {
   createTestManifest,
   createTestManifestSpineItems,
@@ -40,18 +41,18 @@ const expectedCfiPageStartProgression = 0.375
 const createSpine = ({
   isLayoutCurrent = true,
   isReady = true,
-  isError = false,
+  loadStatus = "loaded",
 }: {
   isLayoutCurrent?: boolean
   isReady?: boolean
-  isError?: boolean
+  loadStatus?: DocumentLoadStatus
 } = {}) => {
   const item = { index: 0 }
   const spineItem = {
     item,
     index: 0,
     numberOfPages: 4,
-    value: { isReady, isError },
+    value: { isReady, loadStatus },
   }
   const spine = {
     isLayoutCurrent,
@@ -214,7 +215,10 @@ describe("withAnchor", () => {
 
   describe("once the item the navigation goes to has failed to load", () => {
     // An item whose load failed is not ready.
-    const failedItem = { isReady: false, isError: true }
+    const failedItem: Parameters<typeof createSpine>[0] = {
+      isReady: false,
+      loadStatus: "error",
+    }
 
     it("ends in error at the item's start while no place is known", async () => {
       expect(await consolidateAnchor({}, createSpine(failedItem))).toEqual({

@@ -49,12 +49,14 @@ const createManifestSpineItem = ({
 } = {}) => ({
   id,
   href,
+  containerUri: href,
   index,
   mediaType,
 })
 
 const createManifest = (spineItems: Manifest["spineItems"] = []): Manifest => ({
   filename: ``,
+  mediaType: `application/zip`,
   title: ``,
   renditionLayout: undefined,
   renditionSpread: undefined,

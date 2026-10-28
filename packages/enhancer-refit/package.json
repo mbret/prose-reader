@@ -1,10 +1,26 @@
 {
   "name": "@prose-reader/enhancer-refit",
-  "version": "21.0.2",
+  "version": "30.2.0",
+  "description": "Fit the reading area of a prose reader to a desktop, tablet or custom width when a book scrolls.",
+  "keywords": [
+    "prose-reader",
+    "viewport",
+    "webtoon",
+    "comics",
+    "scrolling",
+    "ebook"
+  ],
+  "homepage": "https://doc.prose-reader.com/enhancers/refit",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/mbret/prose-reader.git",
+    "directory": "packages/enhancer-refit"
+  },
   "type": "module",
   "main": "./dist/index.cjs",
   "module": "./dist/index.js",
   "types": "./dist/index.d.ts",
+  "license": "MIT",
   "files": [
     "/dist"
   ],

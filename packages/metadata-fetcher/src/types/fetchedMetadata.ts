@@ -1,6 +1,18 @@
 import type { MetadataMatch } from "./match.ts"
 
 /**
+ * The schema version {@link FetchedMetadata.version} carries. Bumped only when
+ * the shape or meaning of existing fields changes incompatibly, including the
+ * shape of a {@link MetadataMatch}.
+ *
+ * Exported for consumers that persist part of the entity, such as a single
+ * match, without the `FetchedMetadata` around it, or that build the shape
+ * themselves without calling `fetchMetadata` — scoring stored records with
+ * `scoreMetadataCandidate`, for instance.
+ */
+export const FETCHED_METADATA_VERSION = 5
+
+/**
  * What one provider had to say: every candidate, with the provider identity
  * needed to present or revisit those results independently.
  */
@@ -47,8 +59,8 @@ export type FailedMetadataProvider = {
  */
 export type FetchedMetadata = {
   /**
-   * Schema version, for consumers persisting the entity. Bumped only when the
-   * shape or meaning of existing fields changes incompatibly.
+   * Schema version, for consumers persisting the entity: always
+   * {@link FETCHED_METADATA_VERSION}.
    */
   readonly version: number
   /**

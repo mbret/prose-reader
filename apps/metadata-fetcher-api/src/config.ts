@@ -2,6 +2,7 @@ import {
   createGoogleBooksProvider,
   createOpenLibraryProvider,
   createProjectGutenbergProvider,
+  DEFAULT_METADATA_MATCH_MIN_SCORE,
   type MetadataProvider,
 } from "@prose-reader/metadata-fetcher"
 import type { CreateAppOptions } from "./createApp.ts"
@@ -105,7 +106,12 @@ export const configFromEnv = (env: NodeJS.ProcessEnv): ApiConfig => ({
   port: readNumber(env, "PORT", 6382, { min: 0, max: 65535, integer: true }),
   providers: providersFromEnv(env),
   limit: readNumber(env, "METADATA_LIMIT", 5, { min: 1, integer: true }),
-  minScore: readNumber(env, "METADATA_MIN_SCORE", 0.5, { min: 0, max: 1 }),
+  minScore: readNumber(
+    env,
+    "METADATA_MIN_SCORE",
+    DEFAULT_METADATA_MATCH_MIN_SCORE,
+    { min: 0, max: 1 },
+  ),
   requestTimeoutMs: readNumber(env, "REQUEST_TIMEOUT_MS", 10_000, {
     min: 1,
     integer: true,

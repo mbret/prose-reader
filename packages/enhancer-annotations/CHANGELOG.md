@@ -3,6 +3,138 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## [30.2.0](https://github.com/mbret/prose-reader/compare/v30.1.2...v30.2.0) (2026-10-20)
+
+### Features
+
+* **core:** give a spine item's loaded document ([689e50d](https://github.com/mbret/prose-reader/commit/689e50d7dd3b4a04ca32e5ab38c9e70ea370aee9))
+
+
+## [30.1.1](https://github.com/mbret/prose-reader/compare/v30.1.0...v30.1.1) (2026-10-19)
+
+**Note:** Version bump only for package @prose-reader/enhancer-annotations
+
+
+
+
+
+## [30.0.0](https://github.com/mbret/prose-reader/compare/v29.0.0...v30.0.0) (2026-10-19)
+
+**Note:** Version bump only for package @prose-reader/enhancer-annotations
+
+
+
+
+
+## [29.0.0](https://github.com/mbret/prose-reader/compare/v28.2.0...v29.0.0) (2026-10-19)
+
+**Note:** Version bump only for package @prose-reader/enhancer-annotations
+
+
+
+
+
+## [28.0.0](https://github.com/mbret/prose-reader/compare/v27.0.0...v28.0.0) (2026-10-19)
+
+**Note:** Version bump only for package @prose-reader/enhancer-annotations
+
+
+
+
+
+## [27.0.0](https://github.com/mbret/prose-reader/compare/v26.0.0...v27.0.0) (2026-10-19)
+
+**Note:** Version bump only for package @prose-reader/enhancer-annotations
+
+
+
+
+
+## [26.0.0](https://github.com/mbret/prose-reader/compare/v25.1.0...v26.0.0) (2026-10-19)
+
+**Note:** Version bump only for package @prose-reader/enhancer-annotations
+
+
+
+
+
+## [25.1.0](https://github.com/mbret/prose-reader/compare/v25.0.1...v25.1.0) (2026-10-10)
+
+**Note:** Version bump only for package @prose-reader/enhancer-annotations
+
+
+
+
+
+## [25.0.1](https://github.com/mbret/prose-reader/compare/v25.0.0...v25.0.1) (2026-10-10)
+
+### Bug Fixes
+
+* declare the MIT license in every published package ([fefd424](https://github.com/mbret/prose-reader/commit/fefd424c2bf8aba9e925ffb1022fa9ef3a08b15d))
+
+
+## [25.0.0](https://github.com/mbret/prose-reader/compare/v24.0.0...v25.0.0) (2026-10-10)
+
+**Note:** Version bump only for package @prose-reader/enhancer-annotations
+
+
+
+
+
+## [24.0.0](https://github.com/mbret/prose-reader/compare/v23.0.0...v24.0.0) (2026-09-27)
+
+**Note:** Version bump only for package @prose-reader/enhancer-annotations
+
+
+
+
+
+## [23.0.0](https://github.com/mbret/prose-reader/compare/v22.0.2...v23.0.0) (2026-09-27)
+
+### ⚠ BREAKING CHANGES
+
+* **core:** `SpineItemState.isLoaded` and `isError` are replaced by
+  `loadStatus: DocumentLoadStatus`, `"idle" | "loading" | "loaded" |
+  "unloading" | "error"`: `isLoaded` is `loadStatus === "loaded"` and `isError`
+  is `loadStatus === "error"`. A renderer's `state` is renamed `loadStatus`.
+  `SpineItemsObserver.itemLoad$`, `itemUnload$` and `itemLoadFailure$` are
+  replaced by `itemLoadStatusChange$`, emitting `{ item, loadStatus }`.
+  `SpineItem.loaded$` and `unloaded$`, and `DocumentRenderer.loaded$`,
+  `unloaded$` and `isLoaded$`, are removed: watch `loadStatus` instead.
+
+### Bug Fixes
+
+* **core:** lay out after a load status reaches every subscriber, on load ends only ([6a299d2](https://github.com/mbret/prose-reader/commit/6a299d2ed23a55c1300f07947b62b534f574b100))
+
+### Code Refactoring
+
+* **core:** one load status for a spine item, not two flags and three streams ([a5656f8](https://github.com/mbret/prose-reader/commit/a5656f88e63d42ab8bc20b655c3a24588942c003))
+
+
+## [22.0.2](https://github.com/mbret/prose-reader/compare/v22.0.1...v22.0.2) (2026-09-27)
+
+**Note:** Version bump only for package @prose-reader/enhancer-annotations
+
+
+
+
+
+## [22.0.1](https://github.com/mbret/prose-reader/compare/v22.0.0...v22.0.1) (2026-09-27)
+
+**Note:** Version bump only for package @prose-reader/enhancer-annotations
+
+
+
+
+
+## [22.0.0](https://github.com/mbret/prose-reader/compare/v21.0.2...v22.0.0) (2026-09-27)
+
+**Note:** Version bump only for package @prose-reader/enhancer-annotations
+
+
+
+
+
 ## [21.0.2](https://github.com/mbret/prose-reader/compare/v21.0.1...v21.0.2) (2026-09-27)
 
 **Note:** Version bump only for package @prose-reader/enhancer-annotations

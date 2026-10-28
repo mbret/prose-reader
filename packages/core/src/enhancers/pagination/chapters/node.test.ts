@@ -3,21 +3,19 @@ import type { Manifest } from "@prose-reader/shared"
 import { describe, expect, it } from "vitest"
 import type { PageEntry } from "../../../spine/Pages"
 import type { SpineItem } from "../../../spineItem/SpineItem"
+import { createTestManifest } from "../../../tests/utils"
 import {
   buildTocCandidatesBySpineHref,
   buildTocIndex,
   resolveChapterInfoFromVisibleNode,
 } from "./index"
 
-const BASE_MANIFEST: Manifest = {
+const BASE_MANIFEST = createTestManifest({
   filename: "",
-  items: [],
-  readingDirection: "ltr",
+  title: "",
   renditionLayout: "pre-paginated",
   renditionSpread: "auto",
-  spineItems: [],
-  title: "",
-}
+})
 
 const createSpineItemForDoc = ({
   id,
@@ -28,13 +26,10 @@ const createSpineItemForDoc = ({
   href: string
   doc: Document
 }) => {
-  const frame = { contentDocument: doc } as unknown as HTMLIFrameElement
-
+  // The lookup reads only these members of a loaded item.
   return {
     item: { id, href },
-    renderer: {
-      getDocumentFrame: () => frame,
-    },
+    loadedDocument: doc,
   } as unknown as SpineItem
 }
 
@@ -76,6 +71,7 @@ describe("resolveChapterInfoFromVisibleNode", () => {
       spineItems: [
         {
           href: chapterHref,
+          containerUri: "EPUB/ch02.xhtml",
           id: "ch02",
           pageSpreadLeft: true,
           pageSpreadRight: true,
@@ -156,6 +152,7 @@ describe("resolveChapterInfoFromVisibleNode", () => {
       spineItems: [
         {
           href: chapterHref,
+          containerUri: "EPUB/ch02.xhtml",
           id: "ch02",
           pageSpreadLeft: true,
           pageSpreadRight: true,
@@ -236,6 +233,7 @@ describe("resolveChapterInfoFromVisibleNode", () => {
       spineItems: [
         {
           href: chapterHref,
+          containerUri: "EPUB/ch02.xhtml",
           id: "ch02",
           pageSpreadLeft: true,
           pageSpreadRight: true,

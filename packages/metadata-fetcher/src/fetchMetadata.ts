@@ -1,10 +1,14 @@
-import { scoreMetadataCandidate } from "./match/scoreMetadataCandidate.ts"
+import {
+  DEFAULT_METADATA_MATCH_MIN_SCORE,
+  scoreMetadataCandidate,
+} from "./match/scoreMetadataCandidate.ts"
 import { responseErrorStatus } from "./providers/responseError.ts"
 import { Report } from "./report.ts"
-import type {
-  FailedMetadataProvider,
-  FetchedMetadata,
-  FetchedMetadataSource,
+import {
+  type FailedMetadataProvider,
+  FETCHED_METADATA_VERSION,
+  type FetchedMetadata,
+  type FetchedMetadataSource,
 } from "./types/fetchedMetadata.ts"
 import type { FetchMetadataInput } from "./types/fetchMetadataInput.ts"
 import type { MetadataMatch } from "./types/match.ts"
@@ -23,7 +27,8 @@ export type FetchMetadataOptions = {
    */
   readonly limit?: number
   /**
-   * Score a match must reach to be `accepted`. Defaults to `0.5`. Below it,
+   * Score a match must reach to be `accepted`. Defaults to
+   * {@link DEFAULT_METADATA_MATCH_MIN_SCORE}, `0.5`. Below it,
    * matches are still returned and ranked, for a consumer to offer as "did
    * you mean?".
    */
@@ -37,8 +42,6 @@ export type FetchMetadataOptions = {
 }
 
 const DEFAULT_LIMIT = 5
-const DEFAULT_MIN_SCORE = 0.5
-const FETCHED_METADATA_VERSION = 5
 
 const toMatch = ({
   candidate,
@@ -108,7 +111,7 @@ export const fetchMetadata = async (
   options: FetchMetadataOptions,
 ): Promise<FetchedMetadata> => {
   const limit = options.limit ?? DEFAULT_LIMIT
-  const minScore = options.minScore ?? DEFAULT_MIN_SCORE
+  const minScore = options.minScore ?? DEFAULT_METADATA_MATCH_MIN_SCORE
   const includeRaw = options.includeRaw === true
 
   const results = await Promise.all(

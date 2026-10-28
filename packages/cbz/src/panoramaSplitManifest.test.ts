@@ -15,22 +15,24 @@ import {
 const fakeContent = blobFileAccessors(() => Promise.resolve(new Blob([])))
 
 const createManifest = ({
-  href,
+  containerUri,
   id,
   mediaType,
 }: {
-  href: string
+  containerUri: string
   id: string
   mediaType: string | undefined
 }): Manifest => ({
   filename: "",
-  items: [{ href, id, mediaType }],
+  mediaType: "application/vnd.comicbook+zip",
+  items: [{ href: `file://${containerUri}`, id, mediaType }],
   readingDirection: "ltr",
   renditionLayout: "pre-paginated",
   renditionSpread: undefined,
   spineItems: [
     {
-      href,
+      href: `file://${containerUri}`,
+      containerUri,
       id,
       index: 0,
       mediaType,
@@ -49,6 +51,7 @@ const createManifestFromResourceNames = ({
   resourceNames: string[]
 }): Manifest => ({
   filename: "",
+  mediaType: "application/vnd.comicbook+zip",
   items: resourceNames.map((resourceName) => ({
     href: `file://${resourceName}`,
     id: resourceName,
@@ -59,6 +62,7 @@ const createManifestFromResourceNames = ({
   renditionSpread: undefined,
   spineItems: resourceNames.map((resourceName, index) => ({
     href: `file://${resourceName}`,
+    containerUri: resourceName,
     id: resourceName,
     index,
     mediaType: "image/jpeg",
@@ -141,7 +145,7 @@ describe("panoramaSplit", () => {
       },
     ])
     const manifest = createManifest({
-      href: `file://${spreadBasename}`,
+      containerUri: spreadBasename,
       id: spreadBasename,
       mediaType: "image/jpeg",
     })
@@ -162,6 +166,7 @@ describe("panoramaSplit", () => {
       spineItems: [
         {
           href: encodeURI(`file://${leftResourcePath}`),
+          containerUri: spreadBasename,
           id: leftId,
           mediaType: PANORAMA_SPLIT_DOCUMENT_MEDIA_TYPE,
           pageSpreadLeft: true,
@@ -171,6 +176,7 @@ describe("panoramaSplit", () => {
         },
         {
           href: encodeURI(`file://${rightResourcePath}`),
+          containerUri: spreadBasename,
           id: rightId,
           mediaType: PANORAMA_SPLIT_DOCUMENT_MEDIA_TYPE,
           pageSpreadLeft: undefined,
@@ -213,7 +219,7 @@ describe("panoramaSplit", () => {
     ])
     const manifest: Manifest = {
       ...createManifest({
-        href: `file://${spreadBasename}`,
+        containerUri: spreadBasename,
         id: spreadBasename,
         mediaType: "image/jpeg",
       }),
@@ -402,7 +408,7 @@ describe("panoramaSplit", () => {
       },
     ])
     const manifest = createManifest({
-      href: "file://p002-003.jpg",
+      containerUri: "p002-003.jpg",
       id: "p002-003.jpg",
       mediaType: "image/jpeg",
     })
@@ -424,7 +430,7 @@ describe("panoramaSplit", () => {
       },
     ])
     const manifest = createManifest({
-      href: "file://p002-003.txt",
+      containerUri: "p002-003.txt",
       id: "p002-003.txt",
       mediaType: "image/jpeg",
     })
@@ -434,7 +440,7 @@ describe("panoramaSplit", () => {
     ).resolves.toBe(manifest)
   })
 
-  it("should match archive records by exact resource path instead of suffix", async () => {
+  it("should match archive records by exact container uri instead of suffix", async () => {
     const nestedUri = "bonus/p006-007.jpg"
     const archive = createArchive([
       {
@@ -455,7 +461,7 @@ describe("panoramaSplit", () => {
       },
     ])
     const manifest = createManifest({
-      href: `file://${nestedUri}`,
+      containerUri: nestedUri,
       id: nestedUri,
       mediaType: "image/jpeg",
     })

@@ -114,7 +114,8 @@ export const createTargetResolvers = ({
           : undefined,
         directionFromLastNavigation: "forward",
         snapToPage: false,
-        awaitsDocument: !namesOnlyItsItem && !spineItem.value.isLoaded,
+        awaitsDocument:
+          !namesOnlyItsItem && spineItem.value.loadStatus !== "loaded",
       }
     },
 
@@ -126,10 +127,8 @@ export const createTargetResolvers = ({
       if (!item)
         return resolvers.position(context.previousNavigation.position, context)
 
-      const document = item.value.isLoaded
-        ? item.renderer.getDocumentFrame()?.contentDocument
-        : undefined
-      const found = document ? tryFind(find, document) : undefined
+      const loadedDocument = item.loadedDocument
+      const found = loadedDocument ? tryFind(find, loadedDocument) : undefined
 
       /**
        * Found, it is the cfi of what was found. Otherwise it is the item
@@ -148,7 +147,7 @@ export const createTargetResolvers = ({
             : cfi.generateRootCfi(item.item),
           context,
         ),
-        awaitsDocument: !item.value.isLoaded,
+        awaitsDocument: item.value.loadStatus !== "loaded",
       }
     },
   }

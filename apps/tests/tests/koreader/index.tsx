@@ -25,30 +25,35 @@ async function createStreamer() {
 
 async function run() {
   const streamer = await createStreamer()
-  const manifestResponse = await streamer.fetchManifest({
-    key: `_`,
-  })
+  const manifestResponse = await streamer.fetchManifest()
   const manifest = await manifestResponse.json()
 
   const query = new URLSearchParams(window.location.search)
   const cfi = query.get("cfi")
+  // A KOReader `progress` to open at, as a sync client opens at a pulled one.
+  const progress = query.get("progress")
   const preload = query.get("preload")
 
   const reader = koreaderEnhancer(createReader)({
     manifest,
-    target: cfi ? { type: "cfi", value: cfi } : undefined,
+    target: progress
+      ? { type: "koreaderProgress", value: progress }
+      : cfi
+        ? { type: "cfi", value: cfi }
+        : undefined,
     ...(preload !== null && {
       numberOfAdjacentSpineItemToPreLoad: Number(preload),
     }),
     pageTurnAnimation: "none",
     layoutLayerTransition: false,
     getResource: (item) => {
-      return from(streamer.fetchResource({ key: `_`, resourcePath: item.href }))
+      return from(streamer.fetchResource({ resourcePath: item.href }))
     },
   })
 
-  // Every reading position from the start, converted to an xpointer as it
-  // comes, the way a sync client converts what it pushes.
+  // Every reading position from the start, converted to KOReader's progress
+  // as it comes, the way a sync client converts what it pushes: an xpointer,
+  // for an EPUB.
   const readingPositionsAsXPointers: {
     xpointer: string | undefined
     status: ReadingPosition["status"]
@@ -56,7 +61,7 @@ async function run() {
 
   reader.navigation.readingPosition$.subscribe(({ cfi, status }) => {
     readingPositionsAsXPointers.push({
-      xpointer: reader.koreader.cfiToXPointer(cfi),
+      xpointer: reader.koreader.cfiToProgress(cfi),
       status,
     })
   })

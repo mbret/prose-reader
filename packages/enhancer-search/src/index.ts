@@ -1,9 +1,8 @@
 import { deferIdle, type Reader } from "@prose-reader/core"
 import { catchError, defer, finalize, forkJoin, map, of, switchMap } from "rxjs"
 import { report } from "./report"
-import type { SearchResult } from "./search"
-import { searchInDocument } from "./search"
-import type { ResultItem, SearchEnhancerAPI } from "./types"
+import { searchTextRangesInNode } from "./search"
+import type { ResultItem, SearchEnhancerAPI, SearchResult } from "./types"
 
 export type { ResultItem, SearchEnhancerAPI, SearchResult }
 
@@ -36,7 +35,13 @@ export const searchEnhancer =
           if (!doc) return of([])
 
           return deferIdle(() =>
-            searchInDocument(reader, item, doc, text),
+            of(
+              searchTextRangesInNode(doc, text).map(
+                (range): ResultItem => ({
+                  cfi: reader.cfi.generateCfiFromRange(range, item.item),
+                }),
+              ),
+            ),
           ).pipe(
             finalize(() => {
               release?.()

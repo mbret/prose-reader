@@ -1,14 +1,33 @@
 # prose-reader-front
 
-The prose website. It serves both:
+The prose website, made of three pages:
 
-- `/` — the landing page.
-- `/demo` — the official demo, a reader made with React that showcases the
-  capabilities of the engine and its enhancers. It doubles as an integration
-  example, see [the demo docs](../../gitbook/get-started/demo-and-showcase.md).
+- `/`, from `index.html`: the landing page.
+- `/demo`, from `demo.html`: the official demo, a reader made with React that
+  showcases the capabilities of the engine and its enhancers. It doubles as an
+  integration example, see [the demo docs](../docs/src/content/docs/get-started/demo-and-showcase.md).
+  Every path under `/demo` serves this page: `vercel.json` routes it in
+  production, and a middleware in `vite.config.ts` in development and preview.
+- `404.html`: the page production answers, with a 404 status, for any other
+  path. It wears the landing page's header, footer and theme, and is
+  `noindex`. Development and preview answer those paths with an empty 404, and
+  serve this page at `/404`.
 
-The demo bundle is loaded lazily so that visiting the landing page does not
-download the reading engine.
+The landing page loads none of the demo's code, so visiting it does not
+download the reading engine. Each page keeps its code in its own folder,
+`src/landing`, `src/demo` and `src/notFound`.
+
+Each page has one URL: `vercel.json` redirects `www.prose-reader.com` to
+`prose-reader.com`, and its `cleanUrls` redirects `/index.html` and
+`/demo.html` to `/` and `/demo`. `demo.prose-reader.com`, where the demo used
+to live, redirects each of its paths to its place under `/demo`.
+
+The demo's Chakra UI snippets live in `src/demo/components/ui`. The Chakra CLI
+writes to `src/components/ui` unless told otherwise, so add one with:
+
+```bash
+npx @chakra-ui/cli snippet add <name> --outdir src/demo/components/ui
+```
 
 ## Development
 
@@ -44,3 +63,17 @@ https://github.com/mbret/prose-reader/issues/357.
 
 Visit http://localhost:9000/demo/books and upload your own book, which you can
 then open.
+
+## Search engines and link previews
+
+The pages render in the browser, so each page's `<head>` carries what crawlers
+and link previews read:
+
+- `index.html`: the title, description, canonical URL, Open Graph and Twitter
+  card tags, and structured data naming the site and the project.
+- `demo.html`: the title, description and link preview of the demo. The reader
+  screen adds `noindex`, so the books the demo opens stay out of search results.
+
+`public/social-card.jpg` is the link preview image, rendered from
+`assets/brand/social-card.html`. `public/sitemap.xml` lists the pages to index,
+and `public/robots.txt` points to it.

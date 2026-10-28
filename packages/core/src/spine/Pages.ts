@@ -71,19 +71,10 @@ const FIRST_VISIBLE_NODE_PAGES_PER_FRAME = 10
 const resolveFirstVisibleNodeForPage = (
   page: UnresolvedPageEntry,
 ): PageEntry => {
-  const { spineItem: _unused, ...rest } = page
+  const { spineItem, ...rest } = page
+  const loadedDocument = spineItem.loadedDocument
 
-  if (!page.spineItem.value.isLoaded) {
-    return {
-      ...rest,
-      firstVisibleNode: undefined,
-    }
-  }
-
-  const frame = page.spineItem.renderer?.getDocumentFrame()
-  const frameDocument = frame?.contentWindow?.document
-
-  if (!frameDocument || frameDocument.body === null) {
+  if (!loadedDocument || loadedDocument.body === null) {
     return {
       ...rest,
       firstVisibleNode: undefined,
@@ -93,7 +84,7 @@ const resolveFirstVisibleNodeForPage = (
   return {
     ...rest,
     firstVisibleNode: getFirstVisibleNodeForPositionRelativeTo(
-      frameDocument,
+      loadedDocument,
       page.layout,
     ),
   }
@@ -245,10 +236,11 @@ export class Pages extends ReactiveEntity<PagesState> {
         Report.info(`Pages layout`, pages)
         return { pages }
       }),
+      takeUntil(this.destroy$),
       share(),
     )
 
-    this.layout$.pipe(takeUntil(this.destroy$)).subscribe(this.next.bind(this))
+    this.layout$.subscribe(this.next.bind(this))
   }
 
   static fromSpineItemPageIndex = (

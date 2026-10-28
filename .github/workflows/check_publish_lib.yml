@@ -51,7 +51,6 @@ jobs:
 
       - uses: ./.github/actions/setup
         with:
-          build: libs
           registry-url: "https://registry.npmjs.org"
 
       # The bump comes from the commit messages rather than being hardcoded, so
@@ -62,12 +61,12 @@ jobs:
       # a patch, `feat` gives a minor, and a `!` before the colon or a
       # `BREAKING CHANGE:` footer gives a major. Changelogs come along with it.
       #
-      # A release is versioned and tagged here, pushed by the step itself, and
-      # published only once the push is in. `lerna publish` pushes for itself,
-      # and when its atomic push is refused it retries without `--atomic`: a
-      # merge landing mid-release then pushed the tag without the release
-      # commit, and every later release failed on that tag. The step's push is
-      # atomic with no retry, so a refused one leaves nothing behind.
+      # A release is versioned, tagged and built here, pushed by the step
+      # itself, and published only once the push is in. `lerna publish` pushes
+      # for itself, and when its atomic push is refused it retries without
+      # `--atomic`: a merge landing mid-release then pushed the tag without the
+      # release commit, and every later release failed on that tag. The step's
+      # push is atomic with no retry, so a refused one leaves nothing behind.
       #
       # lerna exits 0 when it has nothing to version, so the step names the
       # outcome and fails on any it cannot name, which is how a skipped release
@@ -117,6 +116,12 @@ jobs:
             echo "::error title=Release skipped::lerna version exited 0 without tagging a release, for a reason this step does not know"
             exit 1
           fi
+
+          # Built from the versioned manifests, and before the push so a failed
+          # build leaves nothing on master. A package can inline its own
+          # version, as react-reader's help dialog does: built before `lerna
+          # version`, every release shipped the previous one's number.
+          pnpm run build:lib
 
           # The release commit and its tag land together or not at all.
           if ! git push --atomic --no-verify origin HEAD:refs/heads/master "refs/tags/${tag}"; then

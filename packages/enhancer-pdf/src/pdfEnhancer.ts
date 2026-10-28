@@ -29,7 +29,7 @@ export const pdfEnhancer =
       getRenderer(item) {
         const maybeFactory = options.getRenderer?.(item)
 
-        if (!maybeFactory && item.href.endsWith(`.pdf`)) {
+        if (!maybeFactory && item.containerUri.endsWith(`.pdf`)) {
           return (params) =>
             new PdfRenderer(options.pdf.pdfjsViewerInlineCss, params)
         }
@@ -47,13 +47,18 @@ export const pdfEnhancer =
               return of(undefined)
             }
 
-            // we account for opf file
-            const fileIndex =
-              archive.records.findIndex((file) =>
-                item.href.endsWith(file.uri),
-              ) - 1
+            // `createArchiveFromPdf` holds its package document, then one
+            // record per page in page order, so the record a page's spine
+            // item shows is at its page number. A resource is requested by
+            // its manifest entry, which does not name its record: the spine
+            // item of the same id does.
+            const containerUri = reader.spineItemsManager.get(item.id)?.item
+              .containerUri
+            const pageNumber = archive.records.findIndex(
+              (file) => file.uri === containerUri,
+            )
 
-            return from(archive.proxyDocument.getPage(fileIndex + 1)).pipe(
+            return from(archive.proxyDocument.getPage(pageNumber)).pipe(
               map((pageProxy) => ({
                 custom: true as const,
                 data: pageProxy,

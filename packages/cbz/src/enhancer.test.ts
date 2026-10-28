@@ -17,10 +17,12 @@ type CfiResolveHook = (params: { cfi: string }) => string | undefined
 
 const createSpineItem = ({
   href,
+  containerUri,
   id,
   index,
-}: Pick<SpineItem, "href" | "id" | "index">): SpineItem => ({
+}: Pick<SpineItem, "href" | "containerUri" | "id" | "index">): SpineItem => ({
   href,
+  containerUri,
   id,
   index,
 })
@@ -43,6 +45,8 @@ const createVirtualSpineItem = ({
         originalUri,
       })}`,
     ),
+    // a half shows the panorama's record
+    containerUri: originalUri,
     id,
     index,
   })
@@ -127,6 +131,7 @@ describe("cbzEnhancer", () => {
     const originalUri = "p002-003.jpg"
     const cover = createSpineItem({
       href: "file://cover.jpg",
+      containerUri: "cover.jpg",
       id: "cover.jpg",
       index: 0,
     })
@@ -264,6 +269,7 @@ describe("cbzEnhancer", () => {
     const { generateHook, resolveHook } = createReader([
       createSpineItem({
         href: "file://cover.jpg",
+        containerUri: "cover.jpg",
         id: "cover.jpg",
         index: 0,
       }),

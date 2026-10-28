@@ -84,7 +84,7 @@ pnpm exec lerna run build --stream --scope "@prose-reader/*"
 
 `nvm install`/`nvm use` read `.nvmrc` from the repo root, and CI reads the same `.nvmrc` and `packageManager`, so both follow whatever is pinned — no version numbers to keep in sync. Regenerate `pnpm-lock.yaml` only with that pinned pnpm: another major can rewrite the lockfile's format.
 
-pnpm gives each package only what its own manifest declares. Declare a dependency in the package that imports it: anything the published code or its types import in `dependencies` or `peerDependencies`, a test-only import in `devDependencies`. Build tooling shared by every package (vite, vitest, the dts and externals plugins) is declared once at the root. The React Native demo is the exception to the workspace: it is not a member, and installs with npm from its own lockfile, the way an app consuming the libraries would.
+pnpm gives each package only what its own manifest declares. Declare a dependency in the package that imports it: anything the published code or its types import in `dependencies` or `peerDependencies`, a test-only import in `devDependencies`. Build tooling shared by every package (vite, vitest, the dts and externals plugins) is declared once at the root. That includes happy-dom and jsdom: vitest loads the test environment through its own peer, which pnpm resolves at the root, so a package's declaration does not choose the version its tests run in. A package declares one only when a test imports it. The React Native demo is the exception to the workspace: it is not a member, and installs with npm from its own lockfile, the way an app consuming the libraries would.
 
 ## Browser tests
 
@@ -139,6 +139,23 @@ is implemented:
 Do not read lerna's "fixed mode" as lockstep either: 2.0.1 moved `react-native`
 and `react-reader` and left the other fifteen packages at 2.0.0.
 
+# Core is small; enhancers do the rest
+
+prose is meant to be as flexible and extensible as possible. Core does what a
+reader cannot work without, and anything that could live outside it is an
+enhancer, in core's `enhancers/` or in a package of its own.
+
+- **Before adding something to core, ask whether an enhancer could do it** on
+  top of what core exposes. If it could, write the enhancer, and expose from
+  core what it lacks.
+- **Expose the internals an enhancer would need.** What core works out to
+  decide something, an enhancer doing related work usually needs too. One that
+  has to rebuild it from other streams repeats the derivation, with its
+  mistakes. Core may keep behaviour of its own, but not answers: do not hide
+  one with `@internal`.
+- **An exposed internal meets the bar of any public name**: named for what it
+  is, typed, and documented.
+
 # API design: breaking changes are not a constraint
 
 Cleanliness of the design wins. The goal is a surface that is smaller, simpler and easier to consume; a break is just the cost of getting there. **"I did not do that because it would be a breaking change" is never a valid reason** — do not weigh backward compatibility when choosing a shape, and do not present it as a trade-off. If the cleanest design changes a public type, renames an export, removes an option or reshapes a returned entity, do that.
@@ -153,7 +170,7 @@ Concretely, never do these unless explicitly asked:
 What is still expected of you:
 
 - update every in-repo consumer (all packages, examples, tests) in the same change — a break you introduce is a break you fix repo-wide, and the repo must typecheck and pass tests
-- update `gitbook/` for the new surface, per the Documentation section — not the old one, and no "previously this was…" notes
+- update the documentation for the new surface, per the Documentation section — not the old one, and no "previously this was…" notes
 - state the break plainly in your summary, including when it needs a semver major, so the release can be handled
 
 # Epub SPECS
@@ -234,11 +251,21 @@ released.
 
 # Documentation
 
-The `gitbook/` folder is user-facing documentation that must stay in sync with the code. After any change that alters the public surface or its documented behavior, check whether the docs need updating in the same change — do not defer it.
+The pages in `apps/docs/src/content/docs/` are user-facing documentation that must stay in sync with the code. `apps/docs` builds them with Starlight into doc.prose-reader.com. After any change that alters the public surface or its documented behavior, check whether the docs need updating in the same change — do not defer it.
 
 - Treat doc updates as part of the task, not a follow-up. A feature or fix is not done until the relevant docs reflect it.
 - When you change a guide, reread the whole section against `src/`, not only the lines you touch. A summary sentence ("only", "never", "always") has to hold for every case listed under it.
 - Things that almost always require a doc update: adding/removing/renaming a public export (e.g. a new `createArchiveFrom*` creator), changing a function signature or options, changing a documented type/contract, adding or changing a peer dependency or subpath export, and changing documented defaults or behavior.
 - When adding something that belongs to an existing documented list/table (creators, enhancers, hooks, settings…), add it to that list and add a short usage example next to the sibling examples.
-- If you add a new doc page, also register it in `gitbook/SUMMARY.md`.
+- If you add a new doc page, also add it to the `sidebar` in `apps/docs/astro.config.ts`.
 - If a change is purely internal (no public surface or documented behavior affected), no doc update is needed — but state that you checked.
+
+Writing a page:
+
+- The title is the `title` field of the frontmatter, not a `#` heading. The body starts at `##`.
+- Link another page by its path on the site, not by its file: `[Navigation](/learn/navigation#reading-position)`. A folder's `index.md` is served at the folder's path, `/archive-reader`. The build checks every internal link and anchor and fails on a broken one, so build the docs after renaming a page or a heading: `pnpm --filter prose-reader-docs build`.
+- Callouts are Starlight asides: `:::note`, `:::tip`, `:::caution` or `:::danger`, closed by `:::`.
+- Images go in `apps/docs/public/images/`, referenced as `/images/<name>.png`.
+- A published URL stays valid: when you move or rename a page, add a permanent redirect from its old path to `redirects` in `apps/docs/vercel.json`. Published npm READMEs and older releases link to these pages.
+- A heading that ends in `{ #id }` keeps the anchor the GitBook site gave it, which published links point to. Keep the `{ #id }` when you reword the heading.
+- `pnpm run start:docs` serves the site while you write.

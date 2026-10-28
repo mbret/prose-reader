@@ -3,6 +3,139 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## [30.2.0](https://github.com/mbret/prose-reader/compare/v30.1.2...v30.2.0) (2026-10-20)
+
+**Note:** Version bump only for package @prose-reader/enhancer-pdf
+
+
+
+
+
+## [30.1.1](https://github.com/mbret/prose-reader/compare/v30.1.0...v30.1.1) (2026-10-19)
+
+**Note:** Version bump only for package @prose-reader/enhancer-pdf
+
+
+
+
+
+## [30.0.0](https://github.com/mbret/prose-reader/compare/v29.0.0...v30.0.0) (2026-10-19)
+
+**Note:** Version bump only for package @prose-reader/enhancer-pdf
+
+
+
+
+
+## [29.0.0](https://github.com/mbret/prose-reader/compare/v28.2.0...v29.0.0) (2026-10-19)
+
+**Note:** Version bump only for package @prose-reader/enhancer-pdf
+
+
+
+
+
+## [28.1.0](https://github.com/mbret/prose-reader/compare/v28.0.0...v28.1.0) (2026-10-19)
+
+**Note:** Version bump only for package @prose-reader/enhancer-pdf
+
+
+
+
+
+## [28.0.0](https://github.com/mbret/prose-reader/compare/v27.0.0...v28.0.0) (2026-10-19)
+
+**Note:** Version bump only for package @prose-reader/enhancer-pdf
+
+
+
+
+
+## [27.0.0](https://github.com/mbret/prose-reader/compare/v26.0.0...v27.0.0) (2026-10-19)
+
+### Bug Fixes
+
+* **enhancer-pdf:** render the page each spine item names, past the tenth ([8008a98](https://github.com/mbret/prose-reader/commit/8008a98db02fb5bb114b3193ae24249a260f82af))
+
+
+## [26.0.0](https://github.com/mbret/prose-reader/compare/v25.1.0...v26.0.0) (2026-10-19)
+
+**Note:** Version bump only for package @prose-reader/enhancer-pdf
+
+
+
+
+
+## [25.1.0](https://github.com/mbret/prose-reader/compare/v25.0.1...v25.1.0) (2026-10-10)
+
+**Note:** Version bump only for package @prose-reader/enhancer-pdf
+
+
+
+
+
+## [25.0.1](https://github.com/mbret/prose-reader/compare/v25.0.0...v25.0.1) (2026-10-10)
+
+### Bug Fixes
+
+* declare the MIT license in every published package ([fefd424](https://github.com/mbret/prose-reader/commit/fefd424c2bf8aba9e925ffb1022fa9ef3a08b15d))
+
+
+## [25.0.0](https://github.com/mbret/prose-reader/compare/v24.0.0...v25.0.0) (2026-10-10)
+
+**Note:** Version bump only for package @prose-reader/enhancer-pdf
+
+
+
+
+
+## [24.0.0](https://github.com/mbret/prose-reader/compare/v23.0.0...v24.0.0) (2026-09-27)
+
+### ⚠ BREAKING CHANGES
+
+* **core:** `DocumentRenderer` no longer has `setDocumentContainer()`
+  or `detach()`. A custom renderer returns its document's element from
+  `onCreateDocument()`, which becomes `documentContainer`, and no longer
+  detaches it in `onUnload()`: `DocumentRenderer` removes it from the dom
+  once `onUnload()` has run.
+
+### Bug Fixes
+
+* **core:** let the renderer's lifecycle own its document container ([45f80eb](https://github.com/mbret/prose-reader/commit/45f80ebb33e76a08966344f82f6b8d452aadde6b))
+
+
+## [23.0.0](https://github.com/mbret/prose-reader/compare/v22.0.2...v23.0.0) (2026-09-27)
+
+**Note:** Version bump only for package @prose-reader/enhancer-pdf
+
+
+
+
+
+## [22.0.2](https://github.com/mbret/prose-reader/compare/v22.0.1...v22.0.2) (2026-09-27)
+
+**Note:** Version bump only for package @prose-reader/enhancer-pdf
+
+
+
+
+
+## [22.0.1](https://github.com/mbret/prose-reader/compare/v22.0.0...v22.0.1) (2026-09-27)
+
+**Note:** Version bump only for package @prose-reader/enhancer-pdf
+
+
+
+
+
+## [22.0.0](https://github.com/mbret/prose-reader/compare/v21.0.2...v22.0.0) (2026-09-27)
+
+**Note:** Version bump only for package @prose-reader/enhancer-pdf
+
+
+
+
+
 ## [21.0.2](https://github.com/mbret/prose-reader/compare/v21.0.1...v21.0.2) (2026-09-27)
 
 **Note:** Version bump only for package @prose-reader/enhancer-pdf

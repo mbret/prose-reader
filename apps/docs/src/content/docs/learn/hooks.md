@@ -1,0 +1,43 @@
+---
+title: "Reader hooks"
+description: "Run your own code inside the reader's lifecycle with reader.hookManager, for example to inject CSS into a document before its pages are laid out."
+sidebar:
+  label: "Hooks"
+---
+
+Hooks are a different way to add functionality to the reading system. They offer a deeper control and let you hook specific logic within the internal process.
+
+Remember that:
+
+* **Not all** lifecycle or events are accessible through the public API (for good reasons)
+* Hooks can and are often **asynchronous**.
+* Hooks can and often read the **return values.** This is how you can change deeper behaviors.
+
+Overall they offer a power and flexibility that is not possible with simple event or streams.
+
+**Consider this use-case:**
+
+I want to increase the font size of the document loaded. Changing the font size of the document will likely change its overall size. Maybe it will spread across 2 pages instead of 1. Because you want the layout process to account for your font size before recalculating the book page sizes you cannot just change the font size after a `layout$` event. You have to hook your logic within the layout process itself.
+
+```typescript
+reader.hookManager.register(`item.onDocumentLoad`, ({ itemId }) => {
+  const item = reader.spineItemsManager.get(itemId)
+  const frame = item?.renderer.getDocumentFrame()
+  /**
+   * Manually injecting your own css during the load process
+   * will ensure the layout is taking the new font size into account.
+   */
+  frame && upsertCSSToFrame(frame, `fonts-style`, `
+    * {
+      font-size: 200%;
+    }
+  `)
+})
+```
+
+The item is `loading` until its `item.onDocumentLoad` hooks are done, so the hook reaches the document through the renderer's frame. Code that reads the book's content, outside the load, reads the item's `loadedDocument` instead: it is the document only while the item is `loaded`, not while hooks still set it up, nor once it starts unloading. To react as it changes, follow `item.watch("loadStatus")` and read it there.
+
+:::danger
+Reacting to an item's `loadStatus` becoming `loaded`, from `reader.spineItemsObserver.itemLoadStatusChange$`, would work in this case too, because the reader lays the spine out after that change. Nothing guarantees that order, which is why a hook is preferable when you need to run code at a specific point of the lifecycle.
+:::
+

@@ -1,7 +1,7 @@
 import { expect, test } from "@playwright/test"
-import type { Reader } from "@prose-reader/core"
-import { waitForSpineItemReady } from "../../../utils"
+import { navigateToSpineItem, waitForSpineItemReady } from "../../../utils"
 import { waitForSettled } from "../../../utils/pagination"
+import { getReader } from "../../../utils/reader"
 
 /**
  * `ch03s03.xhtml` links PLS pronunciation lexicons, which a browser never
@@ -15,23 +15,15 @@ test.describe("Given a chapter linking pronunciation lexicons", () => {
     await page.goto(url)
     await waitForSettled(page)
 
-    const chapterIndex = await page.evaluate(() => {
-      // @ts-expect-error window.reader is set by this scenario's index.tsx
-      const reader = window.reader as Reader
-
-      return reader.context.manifest.spineItems.findIndex((item) =>
+    const chapterIndex = await (await getReader(page)).evaluate((reader) =>
+      reader.context.manifest.spineItems.findIndex((item) =>
         item.href.endsWith("ch03s03.xhtml"),
-      )
-    })
+      ),
+    )
 
     expect(chapterIndex).toBeGreaterThan(0)
 
-    await page.evaluate((indexOrId) => {
-      // @ts-expect-error window.reader is set by this scenario's index.tsx
-      const reader = window.reader as Reader
-
-      reader.navigation.goToSpineItem({ indexOrId })
-    }, chapterIndex)
+    await navigateToSpineItem({ page, index: chapterIndex })
     await waitForSettled(page)
 
     await waitForSpineItemReady(page, [chapterIndex])

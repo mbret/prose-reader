@@ -1,5 +1,5 @@
 export {
   type KoreaderEnhancerOutput,
+  type KoreaderProgressNavigationTarget,
   koreaderEnhancer,
-  type XPointerNavigationTarget,
 } from "./koreaderEnhancer"

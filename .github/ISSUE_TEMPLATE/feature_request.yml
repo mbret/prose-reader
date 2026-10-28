@@ -1,0 +1,20 @@
+name: Feature request
+description: Suggest an idea or an improvement for prose-reader
+labels: ["enhancement"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Planning a large change? Agree on the approach in this issue before you open a pull request.
+  - type: textarea
+    id: problem
+    attributes:
+      label: What problem would this solve?
+      description: Describe the situation first, before any solution.
+    validations:
+      required: true
+  - type: textarea
+    id: solution
+    attributes:
+      label: What would you like to happen?
+      description: The API or behaviour you have in mind, if any.

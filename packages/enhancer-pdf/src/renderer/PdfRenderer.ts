@@ -78,8 +78,6 @@ export class PdfRenderer extends DocumentRenderer {
   }
 
   onUnload(): void {
-    this.detach()
-
     if (this.renderTask) {
       this.renderTask.cancel()
     }
@@ -129,8 +127,6 @@ export class PdfRenderer extends DocumentRenderer {
 
     rootElement.appendChild(canvas)
     rootElement.appendChild(frameContainer)
-
-    this.setDocumentContainer(rootElement)
 
     return of(rootElement)
   }

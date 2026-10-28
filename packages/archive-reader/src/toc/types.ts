@@ -8,10 +8,11 @@
 export type ArchiveTocItem = {
   title: string
   /**
-   * Reference to the target as authored in the source: a container path with
-   * an optional `#fragment` for nav/NCX documents, or the raw record `uri`
-   * for folder-derived TOCs. Empty when the entry has no target (e.g. a nav
-   * `<span>` heading without a link).
+   * Reference to the target: for nav/NCX documents, the link as the source
+   * escapes it, with an optional `#fragment`, rebased onto the container and
+   * its dot segments resolved; the raw record `uri` for folder-derived TOCs.
+   * Empty when the entry has no target (e.g. a nav `<span>` heading without
+   * a link).
    */
   path: string
   /**

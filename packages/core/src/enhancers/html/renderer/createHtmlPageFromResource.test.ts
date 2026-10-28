@@ -26,6 +26,7 @@ test(`keeps generated image object URLs alive for cloned gallery frames`, async 
     id: `page-1`,
     index: 0,
     href: `page-1.jpg`,
+    containerUri: `page-1.jpg`,
     mediaType: `image/jpeg`,
     renditionLayout: `pre-paginated`,
   }
@@ -63,6 +64,7 @@ test(`wraps avif images into a generated html page`, async () => {
     id: `page-1`,
     index: 0,
     href: `page-1.avif`,
+    containerUri: `page-1.avif`,
     mediaType: `image/avif`,
     renditionLayout: `pre-paginated`,
   }

@@ -1,13 +1,11 @@
 import { expect, type Page, test } from "@playwright/test"
 import type { AudioEnhancedReader } from "@prose-reader/enhancer-audio"
+import { getReader } from "../utils/reader"
 
-const readAudioState = (page: Page) =>
-  page.evaluate(() => {
-    // @ts-expect-error window.reader is set by this scenario's index.tsx
-    const reader = window.reader as AudioEnhancedReader
-
-    return reader.audio.state
-  })
+const readAudioState = async (page: Page) =>
+  (await getReader<AudioEnhancedReader>(page)).evaluate(
+    (reader) => reader.audio.state,
+  )
 
 test("reports an error once the track the user asked to play turns out to be undecodable", async ({
   page,

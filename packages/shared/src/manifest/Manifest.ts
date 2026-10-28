@@ -8,6 +8,13 @@ export type TocItem = {
 export type Manifest = {
   filename: string
   /**
+   * The media type of the file the book was opened from:
+   * `application/epub+zip`, `application/pdf`,
+   * `application/vnd.comicbook+zip`… `application/octet-stream`, the type of
+   * data of an unknown type, when nothing tells it.
+   */
+  mediaType: string
+  /**
    * @see https://www.w3.org/publishing/epub3/epub-packages.html#sec-nav-toc
    */
   nav?: {
@@ -59,6 +66,13 @@ export type Manifest = {
      * Ultimately, href have to make sense for either the reader or you since they are the primary means of mapping.
      */
     href: string
+    /**
+     * The archive record the item shows, by its path in the book's container,
+     * with no serving base (`OEBPS/ch01.xhtml`, `chapter 1/001.jpg`), or a
+     * remote resource's absolute URL. An item made from a record, such as
+     * half of a split panorama, names that record.
+     */
+    containerUri: string
     /**
      * @see https://www.w3.org/TR/epub-33/#property-layout-global
      */

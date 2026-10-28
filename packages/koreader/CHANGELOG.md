@@ -3,6 +3,116 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## [30.2.0](https://github.com/mbret/prose-reader/compare/v30.1.2...v30.2.0) (2026-10-20)
+
+**Note:** Version bump only for package @prose-reader/koreader
+
+
+
+
+
+## [30.0.0](https://github.com/mbret/prose-reader/compare/v29.0.0...v30.0.0) (2026-10-19)
+
+### ⚠ BREAKING CHANGES
+
+* **enhancer-koreader:** `reader.koreader.cfiToXPointer(cfi)` is replaced by
+  `reader.koreader.cfiToProgress(cfi)`, which returns the same xpointer for
+  an EPUB and a page number, such as "12", for a PDF or a comic archive.
+  `reader.navigation.goToXPointer(xpointer)` is replaced by
+  `reader.navigation.goToKoreaderProgress(progress)`, and the
+  `{ type: "xpointer" }` navigation target and `XPointerNavigationTarget` by
+  `{ type: "koreaderProgress" }` and `KoreaderProgressNavigationTarget`.
+  The form follows the manifest's `mediaType`: a book of unknown type,
+  `application/octet-stream`, such as one opened from an archive with no
+  `filename`, no `encodingFormat` and no `META-INF/container.xml`, has no
+  progress, nor has a plain ZIP the app does not give a comic's media type.
+
+### Features
+
+* **enhancer-koreader:** give the KOReader progress of any book ([4c10a15](https://github.com/mbret/prose-reader/commit/4c10a15b1f5701b732f59b2ae9f34f178131f424)), references [#535](https://github.com/mbret/prose-reader/issues/535)
+* **koreader:** tell the form of a book's progress ([3c169c5](https://github.com/mbret/prose-reader/commit/3c169c5cf442abe6c46962237fb3ce9437b2885f))
+
+
+## [29.0.0](https://github.com/mbret/prose-reader/compare/v28.2.0...v29.0.0) (2026-10-19)
+
+**Note:** Version bump only for package @prose-reader/koreader
+
+
+
+
+
+## [28.0.0](https://github.com/mbret/prose-reader/compare/v27.0.0...v28.0.0) (2026-10-19)
+
+**Note:** Version bump only for package @prose-reader/koreader
+
+
+
+
+
+## [27.0.0](https://github.com/mbret/prose-reader/compare/v26.0.0...v27.0.0) (2026-10-19)
+
+**Note:** Version bump only for package @prose-reader/koreader
+
+
+
+
+
+## [26.0.0](https://github.com/mbret/prose-reader/compare/v25.1.0...v26.0.0) (2026-10-19)
+
+**Note:** Version bump only for package @prose-reader/koreader
+
+
+
+
+
+## [25.1.0](https://github.com/mbret/prose-reader/compare/v25.0.1...v25.1.0) (2026-10-10)
+
+### Features
+
+* **koreader:** compute the digests KOReader files reading positions under ([c550d66](https://github.com/mbret/prose-reader/commit/c550d66055a22fe697d6ed7d5587e7fab649dcb9))
+* **shared:** move the md5 out of @prose-reader/koreader ([a7f37ee](https://github.com/mbret/prose-reader/commit/a7f37ee864f33d9232f8eb05cae4bcf5b2d1cab5))
+
+
+## [25.0.1](https://github.com/mbret/prose-reader/compare/v25.0.0...v25.0.1) (2026-10-10)
+
+**Note:** Version bump only for package @prose-reader/koreader
+
+
+
+
+
+## [25.0.0](https://github.com/mbret/prose-reader/compare/v24.0.0...v25.0.0) (2026-10-10)
+
+**Note:** Version bump only for package @prose-reader/koreader
+
+
+
+
+
+## [24.0.0](https://github.com/mbret/prose-reader/compare/v23.0.0...v24.0.0) (2026-09-27)
+
+**Note:** Version bump only for package @prose-reader/koreader
+
+
+
+
+
+## [23.0.0](https://github.com/mbret/prose-reader/compare/v22.0.2...v23.0.0) (2026-09-27)
+
+**Note:** Version bump only for package @prose-reader/koreader
+
+
+
+
+
+## [22.0.0](https://github.com/mbret/prose-reader/compare/v21.0.2...v22.0.0) (2026-09-27)
+
+**Note:** Version bump only for package @prose-reader/koreader
+
+
+
+
+
 ## [21.0.0](https://github.com/mbret/prose-reader/compare/v20.0.1...v21.0.0) (2026-09-27)
 
 **Note:** Version bump only for package @prose-reader/koreader

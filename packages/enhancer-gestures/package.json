@@ -1,6 +1,22 @@
 {
   "name": "@prose-reader/enhancer-gestures",
-  "version": "21.0.2",
+  "version": "30.2.0",
+  "description": "Touch and mouse gestures for prose: swipe and tap to turn pages, pan, and pinch to zoom.",
+  "keywords": [
+    "prose-reader",
+    "gestures",
+    "swipe",
+    "pinch-zoom",
+    "touch",
+    "ebook",
+    "reader"
+  ],
+  "homepage": "https://doc.prose-reader.com/enhancers/gestures",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/mbret/prose-reader.git",
+    "directory": "packages/enhancer-gestures"
+  },
   "type": "module",
   "main": "./dist/index.cjs",
   "module": "./dist/index.js",
@@ -16,6 +32,7 @@
       "require": "./dist/index.cjs"
     }
   },
+  "license": "MIT",
   "files": [
     "/dist"
   ],
@@ -24,16 +41,17 @@
     "build": "tsc && vite build",
     "test": "vitest run --coverage"
   },
-  "dependencies": {
-    "@prose-reader/core": "workspace:^"
-  },
   "devDependencies": {
-    "gesturx": "*",
+    "gesturx": "^2.0.0",
     "rxjs": "^7.5.5"
   },
   "peerDependencies": {
-    "gesturx": "^1.11.1",
+    "@prose-reader/core": "workspace:^",
+    "gesturx": "^2.0.0",
     "rxjs": "^7.5.5"
+  },
+  "engines": {
+    "node": ">=22.12"
   },
   "gitHead": "4601e14dcacf50b2295cb343582a7ef2c7e1eedc"
 }

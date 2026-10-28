@@ -22,6 +22,7 @@ const trackResourceReleased = new Promise<void>((resolve) => {
 
 const manifest: Manifest = {
   filename: `undecodable-audio`,
+  mediaType: `application/zip`,
   title: `Undecodable audio`,
   renditionLayout: `pre-paginated`,
   renditionSpread: undefined,
@@ -31,6 +32,7 @@ const manifest: Manifest = {
       id: `track`,
       index: 0,
       href: `track.mp3`,
+      containerUri: `track.mp3`,
       mediaType: `audio/mpeg`,
     },
   ],

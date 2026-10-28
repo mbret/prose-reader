@@ -4,6 +4,7 @@ import type {
   Reader,
   UserNavigationEntry,
 } from "@prose-reader/core"
+import { getReader } from "./reader"
 
 export async function waitForSpineItemReady(page: Page, indexes: number[]) {
   for (const index of indexes) {
@@ -99,15 +100,23 @@ export const navigateToSpineItem = async ({
   page: Page
   index: number
 }) => {
-  await page.evaluate(
-    ([indexOrId = 0]) => {
-      // @ts-expect-error
-      const reader = window.reader as Reader
+  const reader = await getReader(page)
 
-      reader.navigation.goToSpineItem({ indexOrId })
-    },
-    [index],
-  )
+  await reader.evaluate((reader, indexOrId) => {
+    reader.navigation.goToSpineItem({ indexOrId })
+  }, index)
+}
+
+/**
+ * Goes to the next spine item, whichever way the book reads: a comic reads
+ * right to left unless it says otherwise.
+ */
+export const goToNextSpineItem = async ({ page }: { page: Page }) => {
+  const reader = await getReader(page)
+
+  await reader.evaluate((reader) => {
+    reader.navigation.goToNextSpineItem()
+  })
 }
 
 export const navigateTo = async ({
@@ -120,17 +129,11 @@ export const navigateTo = async ({
   >
   page: Page
 }) => {
-  await page.evaluate(
-    ([navigation]) => {
-      if (!navigation) return
+  const reader = await getReader(page)
 
-      // @ts-expect-error
-      const reader = window.reader as Reader
-
-      reader.navigation.navigate(navigation)
-    },
-    [navigation],
-  )
+  await reader.evaluate((reader, navigation) => {
+    reader.navigation.navigate(navigation)
+  }, navigation)
 }
 
 export const updateSettings = async ({
@@ -144,19 +147,33 @@ export const updateSettings = async ({
     "getResource" | "getRenderer"
   >
 }) => {
-  await page.evaluate((settings) => {
-    // @ts-expect-error window.reader is set by the scenario's index.tsx
-    const reader = window.reader as Reader
+  const reader = await getReader(page)
 
+  await reader.evaluate((reader, settings) => {
     reader.settings.update(settings)
   }, settings)
 }
 
-export const getScrollNavigationMetadata = async ({ page }: { page: Page }) => {
-  return await page.evaluate(() => {
-    // @ts-expect-error
-    const reader = window.reader as Reader
+/** Enters zoom and scales the book to `scale`. */
+export const zoomAt = async ({
+  page,
+  scale,
+}: {
+  page: Page
+  scale: number
+}) => {
+  const reader = await getReader(page)
 
+  await reader.evaluate((reader, scale) => {
+    reader.zoom.enter()
+    reader.zoom.scaleAt(scale)
+  }, scale)
+}
+
+export const getScrollNavigationMetadata = async ({ page }: { page: Page }) => {
+  const reader = await getReader(page)
+
+  return await reader.evaluate((reader) => {
     const navigatorElement =
       reader.navigation.scrollNavigationController.value.element
     const scrollLeft =

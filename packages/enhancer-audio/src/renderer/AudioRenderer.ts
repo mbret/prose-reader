@@ -14,8 +14,6 @@ export class AudioRenderer extends DocumentRenderer {
     `
     rootElement.setAttribute(`data-prose-reader-audio-page`, this.item.id)
 
-    this.setDocumentContainer(rootElement)
-
     return of(rootElement)
   }
 
@@ -25,9 +23,7 @@ export class AudioRenderer extends DocumentRenderer {
     return EMPTY
   }
 
-  onUnload() {
-    this.detach()
-  }
+  onUnload() {}
 
   onLayout() {
     const { width, height } = this.viewport.pageSize

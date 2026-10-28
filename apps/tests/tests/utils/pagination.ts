@@ -1,5 +1,5 @@
 import type { Page } from "@playwright/test"
-import type { Reader } from "@prose-reader/core"
+import { getReader } from "./reader"
 
 /**
  * The reader exists and its current result has settled. A navigation
@@ -7,13 +7,14 @@ import type { Reader } from "@prose-reader/core"
  * core's `settlement.test.ts` holds pagination to, so awaited on the line
  * after one, this waits for that navigation's own result.
  */
-export const waitForSettled = (page: Page) =>
-  page.waitForFunction(() => {
-    // @ts-expect-error window.reader is set by this scenario's index.tsx
-    const reader = window.reader as Reader | undefined
+export const waitForSettled = async (page: Page) => {
+  const reader = await getReader(page)
 
-    return reader?.pagination.state.isSettled === true
-  })
+  await page.waitForFunction(
+    (reader) => reader.pagination.state.isSettled,
+    reader,
+  )
+}
 
 /**
  * Resizes the window and resolves once the reader has laid out for the new
@@ -36,10 +37,11 @@ export const resizeAndSettle = async (
   page: Page,
   size: { width: number; height: number },
 ) => {
-  await page.evaluate(() => {
-    // @ts-expect-error window.reader is set by this scenario's index.tsx
-    const reader = window.reader as Reader
+  const reader = await getReader(page)
 
+  // Wrapped in an object, so that the handle comes back with the wait still
+  // pending: a promise returned as is would be awaited before the resize.
+  const pendingSettlement = await reader.evaluateHandle((reader) => {
     /**
      * Resolves on the first accepted value emitted after subscribing. A value
      * handed back during the subscribe call is a replay of the current state,
@@ -62,8 +64,7 @@ export const resizeAndSettle = async (
       replaying = false
     }
 
-    // @ts-expect-error scratch slot for the pending wait
-    window.__settled = new Promise<void>((resolve, reject) => {
+    const settled = new Promise<void>((resolve, reject) => {
       let hasReacted = false
       const timer = setTimeout(
         () =>
@@ -76,7 +77,7 @@ export const resizeAndSettle = async (
           ),
         10_000,
       )
-      const settled = () => {
+      const awaitSettledResult = () => {
         hasReacted = true
         once(
           reader.pagination.state$,
@@ -92,17 +93,15 @@ export const resizeAndSettle = async (
       // first thing the reader does for the new size.
       window.addEventListener(
         "resize",
-        () => once(reader.viewport.layout$, () => true, settled),
+        () => once(reader.viewport.layout$, () => true, awaitSettledResult),
         { once: true },
       )
     })
+
+    return { settled }
   })
 
   await page.setViewportSize(size)
 
-  await page.evaluate(
-    () =>
-      // @ts-expect-error scratch slot for the pending wait
-      window.__settled as Promise<void>,
-  )
+  await pendingSettlement.evaluate(({ settled }) => settled)
 }

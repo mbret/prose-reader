@@ -12,10 +12,14 @@ import type { Archive } from "./types.ts"
  * @important
  * Make sure the urls are on the same origin or the cors header is set otherwise
  * the resource cannot be consumed as it is on the web.
+ *
+ * A list of urls is no file, so it has no media type of its own: declare the
+ * type of book it stands for as `encodingFormat`, such as a comic's
+ * (`application/vnd.comicbook+zip`).
  */
 export const createArchiveFromUrls = async (
   urls: string[],
-  options?: { useRenditionFlow: boolean },
+  options: { useRenditionFlow?: boolean; encodingFormat?: string } = {},
 ): Promise<Archive> => {
   const createSafeId = createXmlSafeIdFactory()
   const resources = urls.map((url) => ({
@@ -25,8 +29,8 @@ export const createArchiveFromUrls = async (
   const opfFileData = `
     <?xml version="1.0" encoding="UTF-8"?><package xmlns="http://www.idpf.org/2007/opf" version="2.0" unique-identifier="bookid">
       <metadata>
-        <meta property="rendition:layout">${options?.useRenditionFlow ? `reflowable` : `pre-paginated`}</meta>
-        ${options?.useRenditionFlow ? `<meta property="rendition:flow">scrolled-continuous</meta>` : ``}
+        <meta property="rendition:layout">${options.useRenditionFlow ? `reflowable` : `pre-paginated`}</meta>
+        ${options.useRenditionFlow ? `<meta property="rendition:flow">scrolled-continuous</meta>` : ``}
       </metadata>
       <manifest>
         ${resources
@@ -65,6 +69,7 @@ export const createArchiveFromUrls = async (
   }
 
   return createArchive({
+    encodingFormat: options.encodingFormat,
     records: [opfFile, ...filesFromUrl],
     close: () => Promise.resolve(),
   })

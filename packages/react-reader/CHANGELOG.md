@@ -3,6 +3,149 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## [30.2.0](https://github.com/mbret/prose-reader/compare/v30.1.2...v30.2.0) (2026-10-20)
+
+**Note:** Version bump only for package @prose-reader/react-reader
+
+
+
+
+
+## [30.1.2](https://github.com/mbret/prose-reader/compare/v30.1.1...v30.1.2) (2026-10-20)
+
+**Note:** Version bump only for package @prose-reader/react-reader
+
+
+
+
+
+## [30.1.1](https://github.com/mbret/prose-reader/compare/v30.1.0...v30.1.1) (2026-10-19)
+
+**Note:** Version bump only for package @prose-reader/react-reader
+
+
+
+
+
+## [30.0.0](https://github.com/mbret/prose-reader/compare/v29.0.0...v30.0.0) (2026-10-19)
+
+**Note:** Version bump only for package @prose-reader/react-reader
+
+
+
+
+
+## [29.0.0](https://github.com/mbret/prose-reader/compare/v28.2.0...v29.0.0) (2026-10-19)
+
+**Note:** Version bump only for package @prose-reader/react-reader
+
+
+
+
+
+## [28.2.0](https://github.com/mbret/prose-reader/compare/v28.1.0...v28.2.0) (2026-10-19)
+
+**Note:** Version bump only for package @prose-reader/react-reader
+
+
+
+
+
+## [28.1.0](https://github.com/mbret/prose-reader/compare/v28.0.0...v28.1.0) (2026-10-19)
+
+**Note:** Version bump only for package @prose-reader/react-reader
+
+
+
+
+
+## [28.0.0](https://github.com/mbret/prose-reader/compare/v27.0.0...v28.0.0) (2026-10-19)
+
+**Note:** Version bump only for package @prose-reader/react-reader
+
+
+
+
+
+## [27.0.0](https://github.com/mbret/prose-reader/compare/v26.0.0...v27.0.0) (2026-10-19)
+
+**Note:** Version bump only for package @prose-reader/react-reader
+
+
+
+
+
+## [26.0.0](https://github.com/mbret/prose-reader/compare/v25.1.0...v26.0.0) (2026-10-19)
+
+**Note:** Version bump only for package @prose-reader/react-reader
+
+
+
+
+
+## [25.1.0](https://github.com/mbret/prose-reader/compare/v25.0.1...v25.1.0) (2026-10-10)
+
+**Note:** Version bump only for package @prose-reader/react-reader
+
+
+
+
+
+## [25.0.1](https://github.com/mbret/prose-reader/compare/v25.0.0...v25.0.1) (2026-10-10)
+
+### Bug Fixes
+
+* declare the MIT license in every published package ([fefd424](https://github.com/mbret/prose-reader/commit/fefd424c2bf8aba9e925ffb1022fa9ef3a08b15d))
+
+
+## [25.0.0](https://github.com/mbret/prose-reader/compare/v24.0.0...v25.0.0) (2026-10-10)
+
+**Note:** Version bump only for package @prose-reader/react-reader
+
+
+
+
+
+## [24.0.0](https://github.com/mbret/prose-reader/compare/v23.0.0...v24.0.0) (2026-09-27)
+
+**Note:** Version bump only for package @prose-reader/react-reader
+
+
+
+
+
+## [23.0.0](https://github.com/mbret/prose-reader/compare/v22.0.2...v23.0.0) (2026-09-27)
+
+**Note:** Version bump only for package @prose-reader/react-reader
+
+
+
+
+
+## [22.0.2](https://github.com/mbret/prose-reader/compare/v22.0.1...v22.0.2) (2026-09-27)
+
+**Note:** Version bump only for package @prose-reader/react-reader
+
+
+
+
+
+## [22.0.1](https://github.com/mbret/prose-reader/compare/v22.0.0...v22.0.1) (2026-09-27)
+
+**Note:** Version bump only for package @prose-reader/react-reader
+
+
+
+
+
+## [22.0.0](https://github.com/mbret/prose-reader/compare/v21.0.2...v22.0.0) (2026-09-27)
+
+**Note:** Version bump only for package @prose-reader/react-reader
+
+
+
+
+
 ## [21.0.2](https://github.com/mbret/prose-reader/compare/v21.0.1...v21.0.2) (2026-09-27)
 
 **Note:** Version bump only for package @prose-reader/react-reader

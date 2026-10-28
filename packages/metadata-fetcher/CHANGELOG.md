@@ -3,6 +3,102 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## [30.2.0](https://github.com/mbret/prose-reader/compare/v30.1.2...v30.2.0) (2026-10-20)
+
+**Note:** Version bump only for package @prose-reader/metadata-fetcher
+
+
+
+
+
+## [30.0.0](https://github.com/mbret/prose-reader/compare/v29.0.0...v30.0.0) (2026-10-19)
+
+**Note:** Version bump only for package @prose-reader/metadata-fetcher
+
+
+
+
+
+## [29.0.0](https://github.com/mbret/prose-reader/compare/v28.2.0...v29.0.0) (2026-10-19)
+
+**Note:** Version bump only for package @prose-reader/metadata-fetcher
+
+
+
+
+
+## [28.1.0](https://github.com/mbret/prose-reader/compare/v28.0.0...v28.1.0) (2026-10-19)
+
+**Note:** Version bump only for package @prose-reader/metadata-fetcher
+
+
+
+
+
+## [28.0.0](https://github.com/mbret/prose-reader/compare/v27.0.0...v28.0.0) (2026-10-19)
+
+**Note:** Version bump only for package @prose-reader/metadata-fetcher
+
+
+
+
+
+## [27.0.0](https://github.com/mbret/prose-reader/compare/v26.0.0...v27.0.0) (2026-10-19)
+
+**Note:** Version bump only for package @prose-reader/metadata-fetcher
+
+
+
+
+
+## [26.0.0](https://github.com/mbret/prose-reader/compare/v25.1.0...v26.0.0) (2026-10-19)
+
+**Note:** Version bump only for package @prose-reader/metadata-fetcher
+
+
+
+
+
+## [25.1.0](https://github.com/mbret/prose-reader/compare/v25.0.1...v25.1.0) (2026-10-10)
+
+**Note:** Version bump only for package @prose-reader/metadata-fetcher
+
+
+
+
+
+## [25.0.0](https://github.com/mbret/prose-reader/compare/v24.0.0...v25.0.0) (2026-10-10)
+
+**Note:** Version bump only for package @prose-reader/metadata-fetcher
+
+
+
+
+
+## [24.0.0](https://github.com/mbret/prose-reader/compare/v23.0.0...v24.0.0) (2026-09-27)
+
+**Note:** Version bump only for package @prose-reader/metadata-fetcher
+
+
+
+
+
+## [23.0.0](https://github.com/mbret/prose-reader/compare/v22.0.2...v23.0.0) (2026-09-27)
+
+**Note:** Version bump only for package @prose-reader/metadata-fetcher
+
+
+
+
+
+## [22.0.0](https://github.com/mbret/prose-reader/compare/v21.0.2...v22.0.0) (2026-09-27)
+
+**Note:** Version bump only for package @prose-reader/metadata-fetcher
+
+
+
+
+
 ## [21.0.0](https://github.com/mbret/prose-reader/compare/v20.0.1...v21.0.0) (2026-09-27)
 
 **Note:** Version bump only for package @prose-reader/metadata-fetcher

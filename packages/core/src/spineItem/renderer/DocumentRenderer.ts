@@ -1,19 +1,19 @@
 import type { Manifest } from "@prose-reader/shared"
 import {
   catchError,
+  concat,
   defer,
+  distinctUntilChanged,
   EMPTY,
   endWith,
-  filter,
   finalize,
   first,
+  ignoreElements,
   map,
-  merge,
   mergeMap,
   type Observable,
   of,
   Subject,
-  share,
   switchMap,
   takeUntil,
 } from "rxjs"
@@ -44,16 +44,43 @@ type LayoutParams = {
   minimumWidth: number
 }
 
-type DocumentRendererState = {
-  state: `idle` | `loading` | `loaded` | `unloading` | `error`
-  error: unknown | undefined
+/**
+ * Where the load of a document stands:
+ *
+ * - `idle`: nothing loaded, as at first and once released.
+ * - `loading`: `load()` started a load.
+ * - `loaded`: the document is there.
+ * - `unloading`: `unload()` is releasing it; it is gone once `idle`.
+ * - `error`: the load failed, with what it created released. `load()` does
+ *   not retry it: it stays failed until `unload()`, which makes it `idle`.
+ */
+export type DocumentLoadStatus =
+  | `idle`
+  | `loading`
+  | `loaded`
+  | `unloading`
+  | `error`
+
+/**
+ * The load of a document: where it stands, and why it failed when it did.
+ * A `loadError` goes only with `error`, whose status holds it.
+ */
+export type DocumentLoad =
+  | { loadStatus: `error`; loadError: unknown }
+  | { loadStatus: Exclude<DocumentLoadStatus, `error`>; loadError: undefined }
+
+type DocumentRendererState = DocumentLoad & {
   documentContainer: HTMLElement | undefined
 }
 
 export abstract class DocumentRenderer extends ReactiveEntity<DocumentRendererState> {
   static readonly DOCUMENT_CONTAINER_CLASS_NAME =
     `prose-reader-document-container`
-  private triggerSubject = new Subject<{ type: `load` } | { type: `unload` }>()
+  /**
+   * Every `load()` and `unload()`, in the order they are asked for, until
+   * `destroy()` ends them.
+   */
+  private documentRequestSubject = new Subject<`load` | `unload`>()
 
   protected viewport: Viewport
   protected context: Context
@@ -63,21 +90,10 @@ export abstract class DocumentRenderer extends ReactiveEntity<DocumentRendererSt
   protected containerElement: HTMLElement
   protected resourcesHandler: ResourceHandler
 
-  public loaded$: Observable<void>
-  public unloaded$: Observable<void>
-
-  constructor(params: {
-    context: Context
-    settings: ReaderSettingsManager
-    hookManager: HookManager
-    item: Manifest[`spineItems`][number]
-    containerElement: HTMLElement
-    resourcesHandler: ResourceHandler
-    viewport: Viewport
-  }) {
+  constructor(params: DocumentRendererParams) {
     super({
-      state: `idle`,
-      error: undefined,
+      loadStatus: `idle`,
+      loadError: undefined,
       documentContainer: undefined,
     })
 
@@ -89,124 +105,146 @@ export abstract class DocumentRenderer extends ReactiveEntity<DocumentRendererSt
     this.resourcesHandler = params.resourcesHandler
     this.viewport = params.viewport
 
-    const unloadTrigger$ = this.triggerSubject.pipe(
-      filter((trigger) => trigger.type === `unload`),
-    )
+    const createAndLoadDocument$ = defer(() => {
+      this.setLoad({ loadStatus: `loading`, loadError: undefined })
 
-    const loadTrigger$ = this.triggerSubject.pipe(
-      filter((trigger) => trigger.type === `load`),
-    )
+      return this.onCreateDocument()
+    }).pipe(
+      first(),
+      mergeMap((documentContainer) => {
+        documentContainer.classList.add(
+          DocumentRenderer.DOCUMENT_CONTAINER_CLASS_NAME,
+        )
+        this.mergeCompare({ documentContainer })
 
-    this.loaded$ = loadTrigger$.pipe(
-      mergeMap(() => {
-        /**
-         * A load is a request: nothing to do while the document is loaded or
-         * loading, nor once its load failed, which stays failed until an
-         * unload.
-         */
-        const canBeIgnored =
-          this.value.state === `loaded` ||
-          this.value.state === `loading` ||
-          this.value.state === `error`
+        this.hookManager.execute(`item.onDocumentCreated`, {
+          itemId: this.item.id,
+          documentContainer,
+        })
 
-        if (canBeIgnored) return EMPTY
+        const loadDocument$ = this.onLoadDocument().pipe(endWith(null), first())
 
-        this.mergeCompare({ state: `loading`, error: undefined })
-
-        return defer(() => this.onCreateDocument()).pipe(
-          first(),
-          mergeMap((documentContainer) => {
-            this.hookManager.execute(`item.onDocumentCreated`, {
-              itemId: this.item.id,
-              documentContainer,
-            })
-
-            const loadDocument$ = this.onLoadDocument().pipe(
-              endWith(null),
-              first(),
-            )
-
-            return loadDocument$.pipe(
-              waitForSwitch(this.context.bridgeEvent.viewportFree$),
-              switchMap(() =>
-                this.hookManager.fromExecuteAsync(
-                  `item.onDocumentLoad`,
-                  this.item.id,
-                  {
-                    itemId: this.item.id,
-                    documentContainer,
-                  },
-                ),
-              ),
-            )
-          }),
-          map(() => {
-            this.mergeCompare({ state: `loaded`, error: undefined })
-
-            return undefined
-          }),
-          /**
-           * A load that fails leaves the renderer in `error`, with what it
-           * created released, and `loaded$` going on: the spine lays out on
-           * every item's `loaded$`, and one ending in an error would stop its
-           * layouts for good. The next `load()` tries again.
-           */
-          catchError((error) => {
-            Report.error(`Error loading document`, error)
-            this.releaseDocument()
-            this.mergeCompare({ state: `error`, error })
-
-            return EMPTY
-          }),
-          takeUntil(unloadTrigger$),
+        return loadDocument$.pipe(
+          waitForSwitch(this.context.bridgeEvent.viewportFree$),
+          switchMap(() =>
+            this.hookManager.fromExecuteAsync(
+              `item.onDocumentLoad`,
+              this.item.id,
+              {
+                itemId: this.item.id,
+                documentContainer,
+              },
+            ),
+          ),
         )
       }),
-      share(),
-    )
-
-    this.unloaded$ = unloadTrigger$.pipe(
-      mergeMap(() => {
-        const canBeIgnored =
-          this.value.state === `unloading` || this.value.state === `idle`
-
-        if (canBeIgnored) return EMPTY
-
-        // A failed load released what it created: nothing is left to unload.
-        if (this.value.state === `error`) {
-          this.mergeCompare({ state: `idle`, error: undefined })
-
-          return EMPTY
-        }
-
-        this.mergeCompare({ state: `unloading`, error: undefined })
-
-        return this.context.bridgeEvent.viewportFree$.pipe(
-          first(),
-          map(() => {
-            this.releaseDocument()
-            this.mergeCompare({ state: `idle`, error: undefined })
-
-            return undefined
-          }),
-          takeUntil(loadTrigger$),
-        )
+      map(() => {
+        this.setLoad({ loadStatus: `loaded`, loadError: undefined })
       }),
-      share(),
+      /**
+       * A load that fails leaves the renderer in `error`, with what it
+       * created released, and the lifecycle going on: an error ending it
+       * would keep the renderer from ever loading again.
+       */
+      catchError((error) => {
+        Report.error(`Error loading document`, error)
+        this.releaseDocument()
+        this.setLoad({ loadStatus: `error`, loadError: error })
+
+        return EMPTY
+      }),
     )
 
-    merge(this.loaded$, this.unloaded$)
-      .pipe(takeUntil(this.destroy$))
-      .subscribe()
+    /**
+     * Releases the document once the viewport is free, so the release does
+     * not compete with a navigation. Without a document there is nothing to
+     * release: none was loaded, or its failed load released it.
+     */
+    const unload$ = defer(() => {
+      if (!this.holdsDocument) {
+        this.setLoad({ loadStatus: `idle`, loadError: undefined })
+
+        return EMPTY
+      }
+
+      this.setLoad({ loadStatus: `unloading`, loadError: undefined })
+
+      return this.context.bridgeEvent.viewportFree$.pipe(
+        first(),
+        map(() => {
+          this.releaseDocument()
+          this.setLoad({ loadStatus: `idle`, loadError: undefined })
+        }),
+      )
+    })
+
+    /**
+     * A renderer holds one document at a time: a load unloads what is held
+     * first, so a load asked for while the document waits for the viewport to
+     * release it waits for that release, then creates a new one.
+     */
+    const load$ = concat(unload$, createAndLoadDocument$)
+
+    /** Emits once `destroy()` has ended the requests. */
+    const endOfRequests$ = this.documentRequestSubject.pipe(
+      ignoreElements(),
+      endWith(null),
+    )
+
+    const documentLifecycle$ = this.documentRequestSubject.pipe(
+      /**
+       * A request says whether the document should be there, so asking again
+       * for what the latest request asked for changes nothing: a load while
+       * the document is loading, loaded or failed to load, an unload while it
+       * is released or waits to be.
+       */
+      distinctUntilChanged(),
+      /**
+       * A request replaces the one before it, which stops first: an unload
+       * cancels a load in progress before its document is released.
+       */
+      switchMap((request) => (request === `load` ? load$ : unload$)),
+      /**
+       * Once the requests end, what runs for the last one stops as well: a
+       * load in progress, or a release waiting for the viewport.
+       */
+      takeUntil(endOfRequests$),
+    )
+
+    documentLifecycle$.subscribe()
+  }
+
+  /**
+   * Whether what a load creates is held: from the start of the load until it
+   * is released. A load that fails releases it at once.
+   */
+  private get holdsDocument() {
+    const { loadStatus } = this.value
+
+    return (
+      loadStatus === `loading` ||
+      loadStatus === `loaded` ||
+      loadStatus === `unloading`
+    )
+  }
+
+  /**
+   * Every write of the load goes through here, the status with its error, so
+   * one can never be left standing over the other.
+   */
+  private setLoad(load: DocumentLoad) {
+    this.mergeCompare(load)
   }
 
   /**
    * Runs the unload hooks on the document container, when there is one, then
-   * `onUnload`. Synchronous, so `destroy` can release a document before its
-   * caller detaches the container. A step that throws is reported, and does
-   * not keep the next one from running.
+   * `onUnload`, then removes the document container from the dom and lets go
+   * of it. Synchronous, so `destroy` can release a document before its caller
+   * detaches the item. A step that throws is reported, and does not keep the
+   * next one from running.
    */
   private releaseDocument() {
-    const documentContainer = this.value.documentContainer
+    const { documentContainer } = this.value
 
     if (documentContainer) {
       try {
@@ -224,11 +262,9 @@ export abstract class DocumentRenderer extends ReactiveEntity<DocumentRendererSt
     } catch (error) {
       Report.error(`Error unloading document`, error)
     }
-  }
 
-  protected setDocumentContainer(element: HTMLElement) {
-    element.classList.add(DocumentRenderer.DOCUMENT_CONTAINER_CLASS_NAME)
-    this.mergeCompare({ documentContainer: element })
+    documentContainer?.remove()
+    this.mergeCompare({ documentContainer: undefined })
   }
 
   protected attach() {
@@ -237,26 +273,25 @@ export abstract class DocumentRenderer extends ReactiveEntity<DocumentRendererSt
     }
   }
 
-  protected detach() {
-    this.documentContainer?.remove()
-    this.mergeCompare({ documentContainer: undefined })
-  }
-
-  public get isLoaded$() {
-    return this.state$.pipe(map((state) => state.state === `loaded`))
-  }
-
   /**
    * Asks for the document to be loaded. It is not loaded again while it is
    * loaded, loading, or its load failed: a failed load stays failed until
-   * `unload()`.
+   * `unload()`. While the document waits for the viewport to release it, the
+   * load waits for that release, then loads a new document.
    */
   public load() {
-    this.triggerSubject.next({ type: `load` })
+    this.documentRequestSubject.next(`load`)
   }
 
+  /**
+   * Asks for the document to be released, once the viewport is free. A load
+   * in progress is cancelled first. A `load()` that comes before the release
+   * does not keep the document: it loads a new one after the release. After
+   * a failed load there is nothing left to release, and the renderer only
+   * becomes idle.
+   */
   public unload() {
-    this.triggerSubject.next({ type: `unload` })
+    this.documentRequestSubject.next(`unload`)
   }
 
   /**
@@ -299,18 +334,19 @@ export abstract class DocumentRenderer extends ReactiveEntity<DocumentRendererSt
     if (this.isDestroyed) return
 
     /**
-     * The trigger based unload flow is asynchronous (viewport gate) and its
-     * subscription dies with destroy$. Destroy needs to release resources
-     * (eg: blob urls) deterministically, so we run the unload steps directly.
-     * The unload hook is synchronous and runs before onUnload tears the
-     * document down, so it still observes the live document even though the
-     * caller detaches the container right after destroy returns. If an unload
-     * was already in flight, hooks may be notified twice, which they already
-     * have to tolerate (see unloaded$). A failed load released what it
-     * created already.
+     * Ends the requests first: a load in progress, or a release waiting for
+     * the viewport, stops, and a request made from here on changes nothing.
      */
-    if (this.value.documentContainer && this.value.state !== `error`)
-      this.releaseDocument()
+    this.documentRequestSubject.complete()
+
+    /**
+     * Then releases what is held at once, rather than once the viewport is
+     * free, so resources (eg: blob urls) are released deterministically: the
+     * caller detaches the item right after, and the unload hooks still
+     * observe the live document. The state has not completed yet, so what
+     * observes it sees the document go. The spine is not laid out for it.
+     */
+    if (this.holdsDocument) this.releaseDocument()
 
     super.destroy()
   }
@@ -320,9 +356,16 @@ export abstract class DocumentRenderer extends ReactiveEntity<DocumentRendererSt
   }): Observable<Document | undefined>
 
   /**
-   * Release the document and its resources. Must be synchronous: unload also
-   * runs during a synchronous `destroy`, before the caller detaches the
-   * container, so any deferred work would run against a torn-down document.
+   * Release the resources of the document. Called once for each load, to
+   * release what it created: when the document is unloaded, when its load
+   * fails, or on `destroy`. A load still in progress is cancelled first, and
+   * one cancelled before its document was created is released too, with
+   * nothing to release.
+   *
+   * The document container is still the `documentContainer`, and still
+   * attached if it was, while this runs. It is removed from the dom right
+   * after, and on `destroy` the item as well, so this must be synchronous:
+   * any deferred work would run against a torn-down document.
    */
   abstract onUnload(): void
 
@@ -330,6 +373,11 @@ export abstract class DocumentRenderer extends ReactiveEntity<DocumentRendererSt
    * This lifecycle lets you fetch your resource and create the document.
    * You can fill the layers with your document(s). You can also preload or
    * load any resources that you need as well.
+   *
+   * The element emitted holds the document: it is the `documentContainer`
+   * until the document is released. A renderer holds one document at a time:
+   * this is only called once the previous document, if any, has been
+   * released.
    *
    * @important Do not attach anything to the dom yet.
    */
@@ -339,7 +387,8 @@ export abstract class DocumentRenderer extends ReactiveEntity<DocumentRendererSt
    * This lifecycle lets you load whatever you need once the document is attached to
    * the dom. Some operations can only be done at this stage (eg: loading iframe).
    *
-   * @important By the end of your stream, the layers should be attached to the dom.
+   * @important By the end of your stream, the layers should be attached to the dom,
+   * with `attach()`.
    */
   abstract onLoadDocument(): Observable<unknown>
 
@@ -352,6 +401,10 @@ export abstract class DocumentRenderer extends ReactiveEntity<DocumentRendererSt
    */
   abstract getDocumentFrame(): HTMLIFrameElement | undefined
 
+  /**
+   * The element holding the document, as `onCreateDocument` emitted it, from
+   * its creation until it is released.
+   */
   get documentContainer() {
     return this.value.documentContainer
   }

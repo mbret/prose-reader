@@ -3,6 +3,7 @@ import {
   type ArchiveTocItem,
   mainTitle,
   type ResolvedArchive,
+  toContainerHref,
 } from "@prose-reader/archive-reader"
 import type { Manifest } from "@prose-reader/shared"
 import { createXmlSafeIdFactory, urlJoin } from "@prose-reader/shared"
@@ -54,7 +55,7 @@ const firstDirectoryTitle = (archive: Archive): string | undefined =>
  */
 type ResolvedArchiveForManifest = Pick<
   ResolvedArchive,
-  "metadata" | "readingOrder" | "toc" | "sources"
+  "mediaType" | "metadata" | "readingOrder" | "toc" | "sources"
 >
 
 const epubManifest = (
@@ -79,6 +80,7 @@ const epubManifest = (
 
   return {
     filename: archive.filename ?? ``,
+    mediaType: resolved.mediaType,
     title: mainTitle(metadata) || firstDirectoryTitle(archive) || ``,
     renditionLayout: metadata.renditionLayout,
     renditionFlow: metadata.renditionFlow ?? `auto`,
@@ -88,10 +90,13 @@ const epubManifest = (
       id: item.id ?? createSafeId(item.uri),
       index,
       // remote resources pass through; local ones get the serving base, or
-      // the file:// scheme when the manifest is not served from anywhere
+      // the file:// scheme when the manifest is not served from anywhere, and
+      // the reference the book makes to them, which its navigation and links
+      // match as written
       href: isHttpUrl(item.uri)
         ? item.uri
-        : `${baseUrl || `file://`}${item.uri}`,
+        : `${baseUrl || `file://`}${item.containerHref ?? item.uri}`,
+      containerUri: item.uri,
       renditionLayout: item.renditionLayout,
       ...(item.renditionFlow !== undefined
         ? { renditionFlow: item.renditionFlow }
@@ -103,9 +108,10 @@ const epubManifest = (
     })),
     items: opf.opf.manifestItems.map((item) => ({
       id: item.id,
+      // rebased as the spine item of the same resource is
       href: isHttpUrl(item.href)
         ? item.href
-        : `${baseUrl || `file://`}${opfBasePath ? `${opfBasePath}/` : ``}${item.href}`,
+        : `${baseUrl || `file://`}${toContainerHref(item.href, opfBasePath)}`,
       mediaType: item.mediaType,
     })),
     guide: guide.length > 0 ? guide : undefined,
@@ -131,6 +137,7 @@ const recordsManifest = (
 
   const manifest: Manifest = {
     filename: archive.filename ?? ``,
+    mediaType: resolved.mediaType,
     title:
       mainTitle(metadata) ||
       firstDirectoryTitle(archive) ||
@@ -143,6 +150,7 @@ const recordsManifest = (
       id: idByUri.get(item.uri) ?? createSafeId(item.uri),
       index,
       href: createManifestResourceHref({ baseUrl, resourcePath: item.uri }),
+      containerUri: item.uri,
       renditionLayout: item.renditionLayout,
       progressionWeight: item.progressionWeight,
       pageSpreadLeft: undefined,
@@ -157,7 +165,7 @@ const recordsManifest = (
     })),
   }
 
-  const audiobookToc = buildAudiobookToc(manifest, archive)
+  const audiobookToc = buildAudiobookToc(manifest)
   const toc = audiobookToc ?? resolved.toc?.map(toManifestTocItem(baseUrl))
 
   return toc !== undefined ? { ...manifest, nav: { toc } } : manifest

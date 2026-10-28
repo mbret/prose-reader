@@ -51,6 +51,9 @@ export type CoreHook =
        * update things around such as the dom etc. Note that the document is already
        * attached to the dom at this stage. If your operations can be done on the prepared layers
        * you should try to do so as much as possible.
+       *
+       * The item is still `loading` while these run, so its `loadedDocument`
+       * is undefined: reach the document through the renderer's frame.
        */
       name: `item.onDocumentLoad`
       runFn: (
@@ -62,7 +65,11 @@ export type CoreHook =
     }
   | {
       /**
-       * Hook called before the loaded document is unloaded.
+       * Hook called before a document is released, once for every document
+       * `item.onDocumentCreated` ran on: when it is unloaded, when its load
+       * fails, or when the reader is destroyed. A load still in progress is
+       * cancelled first, so its `item.onDocumentLoad` hooks are aborted by the
+       * time this runs.
        *
        * Synchronous: unload also runs during a synchronous `destroy`, before the
        * document is torn down and its container detached, so the hook is

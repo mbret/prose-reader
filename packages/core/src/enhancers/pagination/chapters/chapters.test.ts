@@ -137,6 +137,7 @@ describe("buildChaptersInfo (template-b)", () => {
 describe("buildChaptersInfo (anchor-only toc href)", () => {
   const manifestWithAnchorOnlyHref: Manifest = {
     filename: "",
+    mediaType: "application/epub+zip",
     items: [],
     readingDirection: "ltr",
     renditionLayout: "pre-paginated",
@@ -168,6 +169,7 @@ describe("buildChaptersInfo (anchor-only toc href)", () => {
     spineItems: [
       {
         href: "OPS/ch01.xhtml",
+        containerUri: "OPS/ch01.xhtml",
         id: "ch01",
         pageSpreadLeft: true,
         pageSpreadRight: true,
@@ -177,6 +179,7 @@ describe("buildChaptersInfo (anchor-only toc href)", () => {
       },
       {
         href: "OPS/ch02.xhtml",
+        containerUri: "OPS/ch02.xhtml",
         id: "ch02",
         pageSpreadLeft: true,
         pageSpreadRight: true,

@@ -1,0 +1,176 @@
+---
+title: "Publication identifiers"
+description: "Read an ISBN, GTIN, DOI or catalog id out of EPUB and ComicInfo metadata with identifierValue(), and see how each identifier gets its scheme."
+---
+
+Archive-reader normalizes identifiers from supported publication metadata into a shared shape:
+
+```typescript
+{
+  value: string
+  scheme: MetadataIdentifierScheme
+}
+```
+
+The `value` is preserved as authored. The `scheme` describes the identifier namespace when the publication states one or its syntax can be identified reliably.
+
+## How schemes are resolved
+
+| Source value | Resolved scheme |
+| --- | --- |
+| Explicit EPUB 2 `opf:scheme` or EPUB 3 `identifier-type` | The canonical known scheme or the authored custom scheme |
+| Recognizable untyped ISBN or GTIN | `ISBN` or `GTIN` |
+| Absolute HTTP(S) URL | `URL` |
+| Other untyped value | `Unknown` |
+
+The built-in scheme vocabulary includes `ISBN`, `GTIN`, `DOI`, `GoogleBooks`, `OpenLibrary`, `ProjectGutenberg`, `URL`, and the `Unknown` fallback. Applications can also use a custom scheme string for a namespace that is not in `KnownMetadataIdentifierScheme`.
+
+`Unknown` means the publication supplied an identifier value without enough information to determine its namespace. The value is preserved instead of being guessed or discarded.
+
+A URL remains a URL identifier, including when its query or path contains another catalog's identifier. Archive-reader does not replace the authored URL with an identifier extracted from it.
+
+## Reading a specific identifier
+
+`identifiers` is a list, so answering "what is this publication's ISBN?" means selecting the entries whose scheme can carry one and normalizing the authored value. `identifierValue` does exactly that:
+
+```typescript
+import { identifierValue } from "@prose-reader/archive-reader"
+
+const isbn = identifierValue(metadata.identifiers, "ISBN") // "9780441013593" | undefined
+const gtin = identifierValue(metadata.identifiers, "GTIN") // "9780441013593" | undefined
+```
+
+One function answers for every scheme it can derive — `ISBN`, `GTIN`, `GoogleBooks`, `OpenLibrary`, `ProjectGutenberg` and `DOI` — so the options are visible at the call site rather than being separate exports to discover.
+
+Asking for either reads `ISBN` **and** `GTIN` identifiers, because the two are one namespace in practice: an ISBN-13 *is* a GTIN-13 in the Bookland (`978`/`979`) range, and [ComicInfo](#comicinfo) has no ISBN field at all — a comic announces its ISBN through `GTIN`, which stays labelled `GTIN` because that is what the source said. Filtering on `scheme === "ISBN"` therefore silently misses every comic ISBN, and filtering on `GTIN` misses every EPUB one. `isIsbnBearingScheme(scheme)` is exported for code that needs the same scheme test on its own, and `normalizeIdentifierScheme(scheme)` for code comparing a scheme it was handed: publications author these by hand, so `opf:scheme="isbn"` and an `identifier-type` of `ISBN` name the one namespace. A scheme outside the vocabulary keeps the spelling the publication chose.
+
+### Catalog identifiers
+
+The same applies to a catalog that addresses its records by URL. A publication can state `GoogleBooks` outright, or carry `https://books.google.com/books?id=k028AAAACAAJ` as a `URL` — a comic has no choice but the second, since ComicInfo's only reference field is `Web`. `identifierValue` answers for both:
+
+```typescript
+import { identifierValue } from "@prose-reader/archive-reader"
+
+const volume = identifierValue(metadata.identifiers, "GoogleBooks")
+// "k028AAAACAAJ" | undefined
+```
+
+It accepts `GoogleBooks`, `OpenLibrary`, `ProjectGutenberg` and `DOI`, canonicalizing the authored value — a padded Gutenberg number, a bare Open Library id, a `doi:`-prefixed name. A reference URL is only read when the publication left the identifier untyped (`URL`, `Unknown`, or a `uri` custom scheme): an identifier another catalog already claims is left alone.
+
+`catalogIdentifierFromUrl` exposes the same crosswalk for a single URL, for code holding a link rather than a metadata list:
+
+```typescript
+catalogIdentifierFromUrl("https://www.gutenberg.org/ebooks/78139")
+// { value: "78139", scheme: "ProjectGutenberg" }
+```
+
+`catalogUrlFromIdentifier` is its inverse, for writing a reference into a container whose only identifier slot is a list of links:
+
+```typescript
+catalogUrlFromIdentifier({ value: "OL7353617M", scheme: "OpenLibrary" })
+// "https://openlibrary.org/books/OL7353617M"
+```
+
+It canonicalizes the value on the way out and returns a URL only once reading it back yields what it was built from, so a value the catalog cannot address — a non-numeric Gutenberg id — declines rather than producing a link nothing recovers. The two directions are defined together and tested against each other, so they cannot drift apart.
+
+`METADATA_CATALOG_SCHEMES` lists the schemes that have a link form, and `isMetadataCatalogScheme` tests one, for code deciding whether a container can carry a given scheme at all.
+
+None of this rewrites anything: `identifiers` still reports the authored URL as a `URL` identifier, because whether that link *is* the publication's catalog identifier is the application's call, not archive-reader's.
+
+The authored `value` needs normalizing before use: it is preserved as the publication wrote it, so it arrives hyphenated (`978-0-441-01359-3`), prefixed (`urn:isbn:9780441013593`), or padded with free text. It returns the canonical form — 10 or 13 characters for an ISBN, digits only for a GTIN.
+
+Asking for an `ISBN` also declines a value that is not a book number, whichever scheme announced it. A retail barcode scanned off a comic's cover (`4006381333931`) is a valid GTIN-13 but sits outside the Bookland range, so it is not reported as an ISBN even when the publication labels it `opf:scheme="ISBN"`. A barcode of another GTIN length is not reduced to its leading digits either: no ISBN is carved out of a longer number the publication printed. Only the derivation declines — the identifier itself stays in `identifiers` exactly as authored, so nothing is lost. Check digits are not verified: a mistyped one still identifies the intended book.
+
+## EPUB and OPF
+
+Every non-empty OPF `dc:identifier` is retained. EPUB 3 can explicitly type an identifier with an `identifier-type` refinement:
+
+```xml
+<dc:identifier id="catalog-id">catalog-42</dc:identifier>
+<meta refines="#catalog-id" property="identifier-type">
+  ExampleCatalog
+</meta>
+```
+
+This resolves to:
+
+```typescript
+{
+  value: "catalog-42",
+  scheme: "ExampleCatalog",
+}
+```
+
+The identifier referenced by the OPF package's `unique-identifier` attribute also receives `unique: true` in resolved archive metadata.
+
+### Reading a scheme out of an OPF yourself
+
+Resolved metadata already answers *what scheme is this identifier on*, so most consumers need nothing else. A consumer holding the package document itself — one editing it in place, and needing to agree with archive-reader about which element is which — can read the two vocabularies directly instead of restating them:
+
+```typescript
+import {
+  OPF_IDENTIFIER_SCHEME_ATTRIBUTES,
+  opfIdentifierSchemeAttribute,
+  opfIdentifierTypeScheme,
+} from "@prose-reader/archive-reader"
+
+// the scheme attribute an element carries, whichever spelling it used
+opfIdentifierSchemeAttribute({ "opf:Scheme": "ISBN" }) // "ISBN"
+
+// the scheme an `identifier-type` refinement names
+opfIdentifierTypeScheme({ value: "15", scheme: "onix:codelist5" }) // "ISBN"
+opfIdentifierTypeScheme({ value: "ExampleCatalog" }) // "ExampleCatalog"
+```
+
+`opfIdentifierTypeScheme` translates a code stated against `onix:codelist5` and passes anything else through verbatim, including a code that list does not define.
+
+The scheme attribute is read under every prefix the document binds to the OPF namespace, because the prefix is arbitrary — `opf` by convention, but a package is free to bind the namespace to another one and it names the same attribute:
+
+```xml
+<package xmlns:pkg="http://www.idpf.org/2007/opf" ...>
+  <dc:identifier pkg:scheme="GoogleBooks">zyTCAlFPjgYC</dc:identifier>
+```
+
+Bindings are scoped to the element that declares them and inherited by its descendants, so they are accumulated while descending — a package may declare the prefix on `<package>`, on `<metadata>`, or on the identifier itself, and a descendant may rebind one its ancestor bound. `xmlNamespaceScope` layers one element's declarations over the scope it was reached under, and `opfNamespacePrefixes` answers which prefixes name the OPF namespace there:
+
+```typescript
+const packageScope = xmlNamespaceScope(packageAttributes)
+const scope = xmlNamespaceScope(elementAttributes, packageScope)
+
+opfIdentifierSchemeAttribute(elementAttributes, opfNamespacePrefixes(scope))
+```
+
+`opfIdentifierSchemeAttribute` takes the prefixes as its second argument, defaulting to `opf` alone when omitted.
+
+`opf` is accepted whether or not a package declares it, since using it undeclared is invalid but common — but a document that explicitly binds `opf` to another namespace is honoured, and it is then not read. A prefix bound to some other namespace is never read. The unprefixed `scheme` is a deliberate fallback for EPUB 2 documents rather than an equivalent name — an unprefixed attribute is in no namespace at all.
+
+`OPF_IDENTIFIER_SCHEME_LOCAL_NAMES` is the ordered list of local names — `scheme`, then the `Scheme` capitalization some producers emit — for a consumer resolving namespaces itself, as anything holding a DOM can with `getAttributeNS(OPF_NAMESPACE, …)`. `OPF_IDENTIFIER_SCHEME_ATTRIBUTES` remains the literal `opf`-prefixed spellings, which do not cover an aliased prefix.
+
+`opf:role` and `opf:file-as` are read the same way.
+
+An identifier that announces no scheme at all is given one by its own syntax, and `inferIdentifierScheme` is that reading:
+
+```typescript
+inferIdentifierScheme("9783161484100") // "ISBN"
+inferIdentifierScheme("https://example.com/book") // "URL"
+inferIdentifierScheme("catalog-42") // "Unknown"
+```
+
+It returns `InferredIdentifierScheme` — the four members of `KnownMetadataIdentifierScheme` a value can announce on its own — so the result narrows exhaustively and assigns straight into a scheme field.
+
+A consumer editing a container needs it for the same reason it needs the two above: an untyped `<dc:identifier>` holding a Bookland number is an `ISBN` in `identifiers`, so a writer that reads it as untagged would build a second element beside the one the reader reported.
+
+These are what the parser and resolver use, so a consumer reading through them cannot drift from what `identifiers` reports.
+
+For EPUBs that include Apple or Kobo display-option files, the OPF package document remains the identifier source. Those sidecars describe presentation and do not define bibliographic identifier fields.
+
+## ComicInfo
+
+ComicInfo has dedicated fields rather than a generic typed identifier collection:
+
+- `GTIN` becomes a `GTIN` identifier. ComicInfo has no ISBN field, so a comic's ISBN arrives here; the scheme stays faithful to the source and [`identifierValue`](#reading-a-specific-identifier) reads the ISBN out of it.
+- [`Web`](https://anansi-project.github.io/docs/comicinfo/documentation#web) accepts space-separated reference URLs. Every valid absolute HTTP(S) value becomes a `URL` identifier and is also retained under `metadata.comicInfo.web`.
+
+Use a catalog's reference URL in `Web` when a comic archive needs to identify an external catalog entry without being converted to EPUB or using a vendor-specific extension.
+
+See [Google Books identifiers](/archive-reader/google-books) and [Project Gutenberg identifiers](/archive-reader/project-gutenberg) for concrete catalog examples.

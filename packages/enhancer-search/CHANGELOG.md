@@ -3,6 +3,133 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## [30.2.0](https://github.com/mbret/prose-reader/compare/v30.1.2...v30.2.0) (2026-10-20)
+
+**Note:** Version bump only for package @prose-reader/enhancer-search
+
+
+
+
+
+## [30.1.2](https://github.com/mbret/prose-reader/compare/v30.1.1...v30.1.2) (2026-10-20)
+
+### Bug Fixes
+
+* **enhancer-search:** fold case outside the BMP when matching ([571a4a1](https://github.com/mbret/prose-reader/commit/571a4a133a3a4e7af177c191ca822b2b081952d7))
+* **enhancer-search:** match the search text literally ([cc19223](https://github.com/mbret/prose-reader/commit/cc192231cee81eedf3738129a6081f8dec480a1c))
+
+
+## [30.1.1](https://github.com/mbret/prose-reader/compare/v30.1.0...v30.1.1) (2026-10-19)
+
+**Note:** Version bump only for package @prose-reader/enhancer-search
+
+
+
+
+
+## [30.0.0](https://github.com/mbret/prose-reader/compare/v29.0.0...v30.0.0) (2026-10-19)
+
+**Note:** Version bump only for package @prose-reader/enhancer-search
+
+
+
+
+
+## [29.0.0](https://github.com/mbret/prose-reader/compare/v28.2.0...v29.0.0) (2026-10-19)
+
+**Note:** Version bump only for package @prose-reader/enhancer-search
+
+
+
+
+
+## [28.0.0](https://github.com/mbret/prose-reader/compare/v27.0.0...v28.0.0) (2026-10-19)
+
+**Note:** Version bump only for package @prose-reader/enhancer-search
+
+
+
+
+
+## [27.0.0](https://github.com/mbret/prose-reader/compare/v26.0.0...v27.0.0) (2026-10-19)
+
+**Note:** Version bump only for package @prose-reader/enhancer-search
+
+
+
+
+
+## [26.0.0](https://github.com/mbret/prose-reader/compare/v25.1.0...v26.0.0) (2026-10-19)
+
+**Note:** Version bump only for package @prose-reader/enhancer-search
+
+
+
+
+
+## [25.1.0](https://github.com/mbret/prose-reader/compare/v25.0.1...v25.1.0) (2026-10-10)
+
+**Note:** Version bump only for package @prose-reader/enhancer-search
+
+
+
+
+
+## [25.0.1](https://github.com/mbret/prose-reader/compare/v25.0.0...v25.0.1) (2026-10-10)
+
+### Bug Fixes
+
+* declare the MIT license in every published package ([fefd424](https://github.com/mbret/prose-reader/commit/fefd424c2bf8aba9e925ffb1022fa9ef3a08b15d))
+
+
+## [25.0.0](https://github.com/mbret/prose-reader/compare/v24.0.0...v25.0.0) (2026-10-10)
+
+**Note:** Version bump only for package @prose-reader/enhancer-search
+
+
+
+
+
+## [24.0.0](https://github.com/mbret/prose-reader/compare/v23.0.0...v24.0.0) (2026-09-27)
+
+**Note:** Version bump only for package @prose-reader/enhancer-search
+
+
+
+
+
+## [23.0.0](https://github.com/mbret/prose-reader/compare/v22.0.2...v23.0.0) (2026-09-27)
+
+**Note:** Version bump only for package @prose-reader/enhancer-search
+
+
+
+
+
+## [22.0.2](https://github.com/mbret/prose-reader/compare/v22.0.1...v22.0.2) (2026-09-27)
+
+**Note:** Version bump only for package @prose-reader/enhancer-search
+
+
+
+
+
+## [22.0.1](https://github.com/mbret/prose-reader/compare/v22.0.0...v22.0.1) (2026-09-27)
+
+**Note:** Version bump only for package @prose-reader/enhancer-search
+
+
+
+
+
+## [22.0.0](https://github.com/mbret/prose-reader/compare/v21.0.2...v22.0.0) (2026-09-27)
+
+**Note:** Version bump only for package @prose-reader/enhancer-search
+
+
+
+
+
 ## [21.0.2](https://github.com/mbret/prose-reader/compare/v21.0.1...v21.0.2) (2026-09-27)
 
 **Note:** Version bump only for package @prose-reader/enhancer-search

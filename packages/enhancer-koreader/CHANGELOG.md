@@ -3,6 +3,155 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## [30.2.0](https://github.com/mbret/prose-reader/compare/v30.1.2...v30.2.0) (2026-10-20)
+
+### Features
+
+* **core:** give a spine item's loaded document ([689e50d](https://github.com/mbret/prose-reader/commit/689e50d7dd3b4a04ca32e5ab38c9e70ea370aee9))
+
+
+## [30.1.1](https://github.com/mbret/prose-reader/compare/v30.1.0...v30.1.1) (2026-10-19)
+
+**Note:** Version bump only for package @prose-reader/enhancer-koreader
+
+
+
+
+
+## [30.1.0](https://github.com/mbret/prose-reader/compare/v30.0.0...v30.1.0) (2026-10-19)
+
+### Features
+
+* **enhancer-koreader:** open a reader at a KOReader progress ([66aa7cc](https://github.com/mbret/prose-reader/commit/66aa7cc79ac1ad4894dcd391daf2ef73ab76606c)), closes [#567](https://github.com/mbret/prose-reader/issues/567)
+
+
+## [30.0.0](https://github.com/mbret/prose-reader/compare/v29.0.0...v30.0.0) (2026-10-19)
+
+### ⚠ BREAKING CHANGES
+
+* **enhancer-koreader:** `reader.koreader.cfiToXPointer(cfi)` is replaced by
+  `reader.koreader.cfiToProgress(cfi)`, which returns the same xpointer for
+  an EPUB and a page number, such as "12", for a PDF or a comic archive.
+  `reader.navigation.goToXPointer(xpointer)` is replaced by
+  `reader.navigation.goToKoreaderProgress(progress)`, and the
+  `{ type: "xpointer" }` navigation target and `XPointerNavigationTarget` by
+  `{ type: "koreaderProgress" }` and `KoreaderProgressNavigationTarget`.
+  The form follows the manifest's `mediaType`: a book of unknown type,
+  `application/octet-stream`, such as one opened from an archive with no
+  `filename`, no `encodingFormat` and no `META-INF/container.xml`, has no
+  progress, nor has a plain ZIP the app does not give a comic's media type.
+
+### Features
+
+* **enhancer-koreader:** give the KOReader progress of any book ([4c10a15](https://github.com/mbret/prose-reader/commit/4c10a15b1f5701b732f59b2ae9f34f178131f424)), references [#535](https://github.com/mbret/prose-reader/issues/535)
+
+
+## [29.0.0](https://github.com/mbret/prose-reader/compare/v28.2.0...v29.0.0) (2026-10-19)
+
+**Note:** Version bump only for package @prose-reader/enhancer-koreader
+
+
+
+
+
+## [28.0.0](https://github.com/mbret/prose-reader/compare/v27.0.0...v28.0.0) (2026-10-19)
+
+**Note:** Version bump only for package @prose-reader/enhancer-koreader
+
+
+
+
+
+## [27.0.0](https://github.com/mbret/prose-reader/compare/v26.0.0...v27.0.0) (2026-10-19)
+
+**Note:** Version bump only for package @prose-reader/enhancer-koreader
+
+
+
+
+
+## [26.0.0](https://github.com/mbret/prose-reader/compare/v25.1.0...v26.0.0) (2026-10-19)
+
+**Note:** Version bump only for package @prose-reader/enhancer-koreader
+
+
+
+
+
+## [25.1.0](https://github.com/mbret/prose-reader/compare/v25.0.1...v25.1.0) (2026-10-10)
+
+**Note:** Version bump only for package @prose-reader/enhancer-koreader
+
+
+
+
+
+## [25.0.1](https://github.com/mbret/prose-reader/compare/v25.0.0...v25.0.1) (2026-10-10)
+
+**Note:** Version bump only for package @prose-reader/enhancer-koreader
+
+
+
+
+
+## [25.0.0](https://github.com/mbret/prose-reader/compare/v24.0.0...v25.0.0) (2026-10-10)
+
+**Note:** Version bump only for package @prose-reader/enhancer-koreader
+
+
+
+
+
+## [24.0.0](https://github.com/mbret/prose-reader/compare/v23.0.0...v24.0.0) (2026-09-27)
+
+**Note:** Version bump only for package @prose-reader/enhancer-koreader
+
+
+
+
+
+## [23.0.0](https://github.com/mbret/prose-reader/compare/v22.0.2...v23.0.0) (2026-09-27)
+
+### ⚠ BREAKING CHANGES
+
+* **core:** `SpineItemState.isLoaded` and `isError` are replaced by
+  `loadStatus: DocumentLoadStatus`, `"idle" | "loading" | "loaded" |
+  "unloading" | "error"`: `isLoaded` is `loadStatus === "loaded"` and `isError`
+  is `loadStatus === "error"`. A renderer's `state` is renamed `loadStatus`.
+  `SpineItemsObserver.itemLoad$`, `itemUnload$` and `itemLoadFailure$` are
+  replaced by `itemLoadStatusChange$`, emitting `{ item, loadStatus }`.
+  `SpineItem.loaded$` and `unloaded$`, and `DocumentRenderer.loaded$`,
+  `unloaded$` and `isLoaded$`, are removed: watch `loadStatus` instead.
+
+### Code Refactoring
+
+* **core:** one load status for a spine item, not two flags and three streams ([a5656f8](https://github.com/mbret/prose-reader/commit/a5656f88e63d42ab8bc20b655c3a24588942c003))
+
+
+## [22.0.2](https://github.com/mbret/prose-reader/compare/v22.0.1...v22.0.2) (2026-09-27)
+
+**Note:** Version bump only for package @prose-reader/enhancer-koreader
+
+
+
+
+
+## [22.0.1](https://github.com/mbret/prose-reader/compare/v22.0.0...v22.0.1) (2026-09-27)
+
+**Note:** Version bump only for package @prose-reader/enhancer-koreader
+
+
+
+
+
+## [22.0.0](https://github.com/mbret/prose-reader/compare/v21.0.2...v22.0.0) (2026-09-27)
+
+**Note:** Version bump only for package @prose-reader/enhancer-koreader
+
+
+
+
+
 ## [21.0.2](https://github.com/mbret/prose-reader/compare/v21.0.1...v21.0.2) (2026-09-27)
 
 **Note:** Version bump only for package @prose-reader/enhancer-koreader

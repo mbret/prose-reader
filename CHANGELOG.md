@@ -3,6 +3,284 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## [30.2.0](https://github.com/mbret/prose-reader/compare/v30.1.2...v30.2.0) (2026-10-20)
+
+### Features
+
+* **core:** give a spine item's loaded document ([689e50d](https://github.com/mbret/prose-reader/commit/689e50d7dd3b4a04ca32e5ab38c9e70ea370aee9))
+
+### Bug Fixes
+
+* **core:** end a spine item's loaded document when it is destroyed ([269edce](https://github.com/mbret/prose-reader/commit/269edceb827dcb4f3e502f0779273e1ee72f134b))
+* **core:** resolve a cfi only into its item's loaded document ([9968556](https://github.com/mbret/prose-reader/commit/9968556d4d0c00c7f8cb2c4e634e5d19a52476e5)), closes [#499](https://github.com/mbret/prose-reader/issues/499)
+
+
+## [30.1.2](https://github.com/mbret/prose-reader/compare/v30.1.1...v30.1.2) (2026-10-20)
+
+### Bug Fixes
+
+* **enhancer-search:** fold case outside the BMP when matching ([571a4a1](https://github.com/mbret/prose-reader/commit/571a4a133a3a4e7af177c191ca822b2b081952d7))
+* **enhancer-search:** match the search text literally ([cc19223](https://github.com/mbret/prose-reader/commit/cc192231cee81eedf3738129a6081f8dec480a1c))
+
+
+## [30.1.1](https://github.com/mbret/prose-reader/compare/v30.1.0...v30.1.1) (2026-10-19)
+
+**Note:** Version bump only for package @prose-reader/root
+
+
+
+
+
+## [30.1.0](https://github.com/mbret/prose-reader/compare/v30.0.0...v30.1.0) (2026-10-19)
+
+### Features
+
+* **enhancer-koreader:** open a reader at a KOReader progress ([66aa7cc](https://github.com/mbret/prose-reader/commit/66aa7cc79ac1ad4894dcd391daf2ef73ab76606c)), closes [#567](https://github.com/mbret/prose-reader/issues/567)
+
+
+## [30.0.0](https://github.com/mbret/prose-reader/compare/v29.0.0...v30.0.0) (2026-10-19)
+
+### ⚠ BREAKING CHANGES
+
+* **enhancer-koreader:** `reader.koreader.cfiToXPointer(cfi)` is replaced by
+  `reader.koreader.cfiToProgress(cfi)`, which returns the same xpointer for
+  an EPUB and a page number, such as "12", for a PDF or a comic archive.
+  `reader.navigation.goToXPointer(xpointer)` is replaced by
+  `reader.navigation.goToKoreaderProgress(progress)`, and the
+  `{ type: "xpointer" }` navigation target and `XPointerNavigationTarget` by
+  `{ type: "koreaderProgress" }` and `KoreaderProgressNavigationTarget`.
+  The form follows the manifest's `mediaType`: a book of unknown type,
+  `application/octet-stream`, such as one opened from an archive with no
+  `filename`, no `encodingFormat` and no `META-INF/container.xml`, has no
+  progress, nor has a plain ZIP the app does not give a comic's media type.
+
+### Features
+
+* **enhancer-koreader:** give the KOReader progress of any book ([4c10a15](https://github.com/mbret/prose-reader/commit/4c10a15b1f5701b732f59b2ae9f34f178131f424)), references [#535](https://github.com/mbret/prose-reader/issues/535)
+* **koreader:** tell the form of a book's progress ([3c169c5](https://github.com/mbret/prose-reader/commit/3c169c5cf442abe6c46962237fb3ce9437b2885f))
+
+### Bug Fixes
+
+* **front:** center the landing footer on a phone ([f76f438](https://github.com/mbret/prose-reader/commit/f76f4381cc999fd502d61c9cdb60985a9732b896))
+* **front:** set the landing footer's name and license on one baseline ([4b01cd2](https://github.com/mbret/prose-reader/commit/4b01cd222c72a268066d204f1dc99efd616e26e3))
+
+
+## [29.0.0](https://github.com/mbret/prose-reader/compare/v28.2.0...v29.0.0) (2026-10-19)
+
+### ⚠ BREAKING CHANGES
+
+* **archive-reader:** `getArchiveOpfInfo(archive)`, which returned the first
+  `.opf` record as `{ data, basePath }`, is replaced by the asynchronous
+  `getArchiveOpfRecord(archive)`, which returns the record of the package
+  document the container file lists. `readArchiveOpf(archive)` still
+  gives the parsed package document with its `basePath`.
+
+### Features
+
+* **front:** renovate the landing page, as a page of its own ([afd7827](https://github.com/mbret/prose-reader/commit/afd782753357f4f5a772b63ad6794f40bea6d5d1))
+
+### Bug Fixes
+
+* **archive-reader:** leave out a container file's elements of other namespaces ([ddd22c4](https://github.com/mbret/prose-reader/commit/ddd22c47819e6280d3289ae9466824b659fc6142))
+* **archive-reader:** read the package document the container file lists ([1c7145a](https://github.com/mbret/prose-reader/commit/1c7145aeee46b978e80b9e0216372e9732e94b35))
+* **front:** center the mark on the name in the landing header and footer ([8e477d9](https://github.com/mbret/prose-reader/commit/8e477d98a20b9872a78c2e9781b2079228b9d579))
+* **front:** draw the landing wordmark from the brand logo ([323f278](https://github.com/mbret/prose-reader/commit/323f278c511ed7ac822b5c87b229ce67d493be1f))
+* **front:** show the reader setup without getResource on the landing page ([2829e49](https://github.com/mbret/prose-reader/commit/2829e49d4083f968f62126524ddd809306848243))
+
+
+## [28.2.0](https://github.com/mbret/prose-reader/compare/v28.1.0...v28.2.0) (2026-10-19)
+
+### Features
+
+* **streamer:** make the archive key optional ([e8fad96](https://github.com/mbret/prose-reader/commit/e8fad96c724b54eac8a63db8de288110cb570bd3))
+
+
+## [28.1.0](https://github.com/mbret/prose-reader/compare/v28.0.0...v28.1.0) (2026-10-19)
+
+### Features
+
+* **archive-reader:** export the resolution of a book's references ([6526b47](https://github.com/mbret/prose-reader/commit/6526b47fc05ad5432ed2af2d66cac5aaa03ec3e9))
+* draw the prose mark, and show it in the readme ([e372fc7](https://github.com/mbret/prose-reader/commit/e372fc7810d3cdb06c9dea633c14cc6f9a54822e))
+* **front:** serve the prose mark as the favicon ([0cd1d58](https://github.com/mbret/prose-reader/commit/0cd1d585497fa3acd8acdf64a57f575519389eb0))
+
+### Bug Fixes
+
+* center the mark on the name in the wordmarks ([dcfb409](https://github.com/mbret/prose-reader/commit/dcfb4093c35c5dac24ad273b6778665e5fcb67ef))
+* **streamer:** find a resource's declared media type by its record ([01ac289](https://github.com/mbret/prose-reader/commit/01ac289b475d10c8e7dac7038f98b3a53f8f120f))
+* **streamer:** rebase an EPUB manifest item as its spine item ([dc51a27](https://github.com/mbret/prose-reader/commit/dc51a27d0248d12e53cbf28678ba705471a46112))
+
+
+## [28.0.0](https://github.com/mbret/prose-reader/compare/v27.0.0...v28.0.0) (2026-10-19)
+
+### ⚠ BREAKING CHANGES
+
+* **archive-reader:** `getSpineItemFilesFromArchive` is removed from
+  `@prose-reader/archive-reader`. Resolve the reading order with
+  `resolveArchiveReadingOrder(archive)` and find each item's record with
+  `getArchiveFileRecordByUri(archive, item.uri)`.
+
+### Bug Fixes
+
+* **archive-reader:** find the nav document and the NCX by their record ([cbb391b](https://github.com/mbret/prose-reader/commit/cbb391b2edf2dcc7a816af6429f18d48827bfe3a))
+* **archive-reader:** keep a reference's query and fragment out of its path ([939001f](https://github.com/mbret/prose-reader/commit/939001f92a7339f4775771ea2cca1ebed0c4f209))
+* **archive-reader:** resolve escaped dot segments as a browser does ([07b9cd6](https://github.com/mbret/prose-reader/commit/07b9cd6d09970b20b5227d68a089e9c67296fdd2))
+* **archive-reader:** resolve the dot segments of toc links ([7dbdae7](https://github.com/mbret/prose-reader/commit/7dbdae71229748c77cd40adb398ee84afd11ed47))
+
+### Code Refactoring
+
+* **archive-reader:** remove getSpineItemFilesFromArchive ([a21d1fe](https://github.com/mbret/prose-reader/commit/a21d1fe0bbeff2528874250b3b7bae0234fa18ac))
+
+
+## [27.0.0](https://github.com/mbret/prose-reader/compare/v26.0.0...v27.0.0) (2026-10-19)
+
+### ⚠ BREAKING CHANGES
+
+* **streamer:** `Manifest.spineItems[].containerUri` is required. A
+  manifest built by hand states the uri of the archive record each spine
+  item shows. Manifests generated by the streamer carry it. A manifest
+  saved before this release lacks it: generate it again.
+
+### Features
+
+* **streamer:** carry each spine item's archive record in the manifest ([269ad72](https://github.com/mbret/prose-reader/commit/269ad72fc36650f0a76b9d6e794536438411da38)), references [#413](https://github.com/mbret/prose-reader/issues/413)
+
+### Bug Fixes
+
+* **archive-reader:** resolve an escaped href to the record it names ([36886cf](https://github.com/mbret/prose-reader/commit/36886cf05007bcb816ed35139f58c172c3f04d61))
+* **enhancer-pdf:** render the page each spine item names, past the tenth ([8008a98](https://github.com/mbret/prose-reader/commit/8008a98db02fb5bb114b3193ae24249a260f82af))
+* **streamer:** name each audiobook track after its own archive record ([c3bfbd4](https://github.com/mbret/prose-reader/commit/c3bfbd4fdbaf1dc3f8f20b05362b7e1ab4ef4d37))
+
+
+## [26.0.0](https://github.com/mbret/prose-reader/compare/v25.1.0...v26.0.0) (2026-10-19)
+
+### ⚠ BREAKING CHANGES
+
+* **streamer:** `Manifest.mediaType` is required. A manifest built by
+  hand states the media type of the book it stands for,
+  `application/octet-stream` when it is none. Manifests generated by the
+  streamer carry it. A manifest saved before this release lacks it:
+  generate it again.
+
+### Features
+
+* **archive-reader:** resolve the media type of the book file ([cfd4a08](https://github.com/mbret/prose-reader/commit/cfd4a08e56a06633c4cc2d97c5f427be39c4a7f8))
+* **streamer:** carry the book's media type in the manifest ([a3aa009](https://github.com/mbret/prose-reader/commit/a3aa0091c0444ded166ed7e3b1a86b0bfacae650))
+
+
+## [25.1.0](https://github.com/mbret/prose-reader/compare/v25.0.1...v25.1.0) (2026-10-10)
+
+### Features
+
+* **koreader:** compute the digests KOReader files reading positions under ([c550d66](https://github.com/mbret/prose-reader/commit/c550d66055a22fe697d6ed7d5587e7fab649dcb9))
+* **shared:** move the md5 out of @prose-reader/koreader ([a7f37ee](https://github.com/mbret/prose-reader/commit/a7f37ee864f33d9232f8eb05cae4bcf5b2d1cab5))
+
+### Bug Fixes
+
+* start every watcher in start and start:lib ([e527d17](https://github.com/mbret/prose-reader/commit/e527d1746f65c96269dcdd88502a9624c7192588))
+
+
+## [25.0.1](https://github.com/mbret/prose-reader/compare/v25.0.0...v25.0.1) (2026-10-10)
+
+### Bug Fixes
+
+* declare the MIT license in every published package ([fefd424](https://github.com/mbret/prose-reader/commit/fefd424c2bf8aba9e925ffb1022fa9ef3a08b15d))
+
+
+## [25.0.0](https://github.com/mbret/prose-reader/compare/v24.0.0...v25.0.0) (2026-10-10)
+
+### ⚠ BREAKING CHANGES
+
+* **gestures:** @prose-reader/enhancer-gestures requires gesturx 2,
+  and Node >=22.12 when loaded on Node. Apps on gesturx 1 upgrade it
+  alongside; its API is unchanged. `import` and bundler builds are
+  unaffected.
+
+### Features
+
+* **gestures:** require gesturx 2 ([4697012](https://github.com/mbret/prose-reader/commit/46970125ff1de1ca15c523db53b057cb4e2b79d9))
+
+
+## [24.0.0](https://github.com/mbret/prose-reader/compare/v23.0.0...v24.0.0) (2026-09-27)
+
+### ⚠ BREAKING CHANGES
+
+* **core:** `DocumentRenderer` no longer has `setDocumentContainer()`
+  or `detach()`. A custom renderer returns its document's element from
+  `onCreateDocument()`, which becomes `documentContainer`, and no longer
+  detaches it in `onUnload()`: `DocumentRenderer` removes it from the dom
+  once `onUnload()` has run.
+
+### Bug Fixes
+
+* **core:** let the renderer's lifecycle own its document container ([45f80eb](https://github.com/mbret/prose-reader/commit/45f80ebb33e76a08966344f82f6b8d452aadde6b))
+
+
+## [23.0.0](https://github.com/mbret/prose-reader/compare/v22.0.2...v23.0.0) (2026-09-27)
+
+### ⚠ BREAKING CHANGES
+
+* **core:** `SpineItemState.error` and a renderer's `error` are renamed
+  `loadError`.
+* **core:** `SpineItemState.isLoaded` and `isError` are replaced by
+  `loadStatus: DocumentLoadStatus`, `"idle" | "loading" | "loaded" |
+  "unloading" | "error"`: `isLoaded` is `loadStatus === "loaded"` and `isError`
+  is `loadStatus === "error"`. A renderer's `state` is renamed `loadStatus`.
+  `SpineItemsObserver.itemLoad$`, `itemUnload$` and `itemLoadFailure$` are
+  replaced by `itemLoadStatusChange$`, emitting `{ item, loadStatus }`.
+  `SpineItem.loaded$` and `unloaded$`, and `DocumentRenderer.loaded$`,
+  `unloaded$` and `isLoaded$`, are removed: watch `loadStatus` instead.
+* **core:** `SpineItemState` and a renderer's state are unions on
+  `loadStatus`: `loadError` is `undefined` unless `loadStatus` is `error`.
+
+### Bug Fixes
+
+* **core:** deliver load status changes as they happen, and defer only the layout ([73f3721](https://github.com/mbret/prose-reader/commit/73f37215a73bf549948375b3b089bbb5d29809da))
+* **core:** lay out after a load status reaches every subscriber, on load ends only ([6a299d2](https://github.com/mbret/prose-reader/commit/6a299d2ed23a55c1300f07947b62b534f574b100))
+
+### Code Refactoring
+
+* **core:** hold a load error only with the error status, and test the selection and writing mode ([b4be71c](https://github.com/mbret/prose-reader/commit/b4be71c73ce9a119e983b3f3cd0d443d7d8ae571))
+* **core:** name the reason a load failed loadError, and what ends a load ([002f4d8](https://github.com/mbret/prose-reader/commit/002f4d8d3607b2f09b2bd27998a945ed5d980c42))
+* **core:** one load status for a spine item, not two flags and three streams ([a5656f8](https://github.com/mbret/prose-reader/commit/a5656f88e63d42ab8bc20b655c3a24588942c003))
+
+
+## [22.0.2](https://github.com/mbret/prose-reader/compare/v22.0.1...v22.0.2) (2026-09-27)
+
+### Bug Fixes
+
+* **core:** hold one document at a time in a renderer ([bb20d76](https://github.com/mbret/prose-reader/commit/bb20d7624291f81bbcd05cd641d5671f0970c78b)), closes [#497](https://github.com/mbret/prose-reader/issues/497)
+* **core:** release on destroy while the renderer's state is still observed ([f74ff11](https://github.com/mbret/prose-reader/commit/f74ff11de42cf44d86bb900de70b3cac2bd8b313))
+
+
+## [22.0.1](https://github.com/mbret/prose-reader/compare/v22.0.0...v22.0.1) (2026-09-27)
+
+### Bug Fixes
+
+* **core:** load the picture of an SVG image in a document loaded from a blob ([8729c53](https://github.com/mbret/prose-reader/commit/8729c535c7517a25edf64c18da7ac32b59ffa9e8)), closes [#408](https://github.com/mbret/prose-reader/issues/408)
+
+
+## [22.0.0](https://github.com/mbret/prose-reader/compare/v21.0.2...v22.0.0) (2026-09-27)
+
+### ⚠ BREAKING CHANGES
+
+* **navigation:** `ReadingPosition.state` is replaced by
+  `ReadingPosition.status`, `"pending" | "success"`: `"final"` is `"success"`,
+  and `"standIn"` and `"targetPlace"` are `"pending"`. A pending value stands in
+  at its spine item's start when `reader.cfi.isRootCfi` says its cfi names only
+  the item. A navigation entry's `anchor` is an `InternalNavigationAnchor`,
+  which keeps `state`.
+* **core:** `ReadingPosition.status` gains `"error"`: the navigation's
+  spine item failed to load, and the value stays until the next navigation.
+  `load()` no longer retries a renderer or spine item in error: it loads
+  again after `unload()`. `isSettled` pagination results can describe an item
+  in error.
+
+### Features
+
+* **core:** end a navigation into a spine item that fails to load in error ([0a4d495](https://github.com/mbret/prose-reader/commit/0a4d49549a47fac5571d1337d78ff0a5dd87d721))
+* **navigation:** say whether the reading position is found, not how much of it ([ed9312b](https://github.com/mbret/prose-reader/commit/ed9312bef94276f44ebeb43163fa06f9d84ad3df))
+
+
 ## [21.0.2](https://github.com/mbret/prose-reader/compare/v21.0.1...v21.0.2) (2026-09-27)
 
 ### Bug Fixes

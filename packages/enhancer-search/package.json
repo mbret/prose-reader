@@ -1,10 +1,27 @@
 {
   "name": "@prose-reader/enhancer-search",
-  "version": "21.0.2",
+  "version": "30.2.0",
+  "description": "Full-text search for prose: find a word or phrase anywhere in an EPUB or PDF, with a CFI for each match.",
+  "keywords": [
+    "prose-reader",
+    "search",
+    "full-text-search",
+    "epub",
+    "pdf",
+    "cfi",
+    "ebook"
+  ],
+  "homepage": "https://doc.prose-reader.com/enhancers/search",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/mbret/prose-reader.git",
+    "directory": "packages/enhancer-search"
+  },
   "type": "module",
   "main": "./dist/index.cjs",
   "module": "./dist/index.js",
   "types": "./dist/index.d.ts",
+  "license": "MIT",
   "files": [
     "/dist"
   ],
@@ -24,10 +41,10 @@
     "test": "vitest run --coverage"
   },
   "dependencies": {
-    "@prose-reader/core": "workspace:^",
     "@prose-reader/shared": "workspace:^"
   },
   "peerDependencies": {
+    "@prose-reader/core": "workspace:^",
     "rxjs": "^7.5.5"
   },
   "gitHead": "4601e14dcacf50b2295cb343582a7ef2c7e1eedc"

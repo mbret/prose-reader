@@ -3,5 +3,32 @@
   "installCommand": "npx --yes \"$(node -p \"require('../../package.json').packageManager\")\" install --frozen-lockfile",
   "buildCommand": "npx --yes \"$(node -p \"require('../../package.json').packageManager\")\" --filter \"prose-reader-front...\" run build",
   "outputDirectory": "dist",
-  "rewrites": [{ "source": "/(.*)", "destination": "/" }]
+  "cleanUrls": true,
+  "redirects": [
+    {
+      "source": "/:path(.*)",
+      "has": [{ "type": "host", "value": "www.prose-reader.com" }],
+      "destination": "https://prose-reader.com/:path",
+      "permanent": true
+    },
+    {
+      "source": "/",
+      "has": [{ "type": "host", "value": "demo.prose-reader.com" }],
+      "destination": "https://prose-reader.com/demo",
+      "permanent": true
+    },
+    {
+      "source": "/:path(.+)",
+      "has": [{ "type": "host", "value": "demo.prose-reader.com" }],
+      "destination": "https://prose-reader.com/demo/:path",
+      "permanent": true
+    }
+  ],
+  "rewrites": [{ "source": "/demo/:path*", "destination": "/demo" }],
+  "git": {
+    "deploymentEnabled": {
+      "**": false,
+      "master": true
+    }
+  }
 }

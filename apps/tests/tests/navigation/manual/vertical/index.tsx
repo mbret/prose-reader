@@ -21,9 +21,7 @@ async function createStreamer() {
 
 async function run() {
   const streamer = await createStreamer()
-  const manifestResponse = await streamer.fetchManifest({
-    key: `_`,
-  })
+  const manifestResponse = await streamer.fetchManifest()
   const manifest = await manifestResponse.json()
 
   const query = new URLSearchParams(window.location.search)
@@ -36,7 +34,7 @@ async function run() {
     pageTurnDirection: "vertical",
     layoutLayerTransition: false,
     getResource: (item) => {
-      return from(streamer.fetchResource({ key: `_`, resourcePath: item.href }))
+      return from(streamer.fetchResource({ resourcePath: item.href }))
     },
   })
 

@@ -145,6 +145,7 @@ describe(`Given a reflowable EPUB with OPF in a subfolder, NCX toc, guide and a 
 
     expect(manifest).toEqual({
       filename: `characterization.epub`,
+      mediaType: `application/epub+zip`,
       title: `Characterization Book`,
       renditionLayout: `reflowable`,
       renditionFlow: `scrolled-doc`,
@@ -155,6 +156,7 @@ describe(`Given a reflowable EPUB with OPF in a subfolder, NCX toc, guide and a 
           id: `ch1`,
           index: 0,
           href: `http://localhost:9000/book/OEBPS/chapter1.xhtml`,
+          containerUri: `OEBPS/chapter1.xhtml`,
           renditionLayout: `reflowable`,
           progressionWeight: 0.25,
           pageSpreadLeft: undefined,
@@ -165,6 +167,7 @@ describe(`Given a reflowable EPUB with OPF in a subfolder, NCX toc, guide and a 
           id: `ch2`,
           index: 1,
           href: `http://localhost:9000/book/OEBPS/chapter2.xhtml`,
+          containerUri: `OEBPS/chapter2.xhtml`,
           renditionLayout: `reflowable`,
           progressionWeight: 0.75,
           pageSpreadLeft: undefined,
@@ -255,6 +258,7 @@ describe(`Given an explicitly pre-paginated (FXL) EPUB with page spreads and a p
 
     expect(manifest).toEqual({
       filename: `fxl.epub`,
+      mediaType: `application/epub+zip`,
       title: `FXL Book`,
       renditionLayout: `pre-paginated`,
       renditionFlow: `auto`,
@@ -265,6 +269,7 @@ describe(`Given an explicitly pre-paginated (FXL) EPUB with page spreads and a p
           id: `p1`,
           index: 0,
           href: `file://page1.xhtml`,
+          containerUri: `page1.xhtml`,
           renditionLayout: `pre-paginated`,
           progressionWeight: 0.5,
           pageSpreadLeft: true,
@@ -275,6 +280,7 @@ describe(`Given an explicitly pre-paginated (FXL) EPUB with page spreads and a p
           id: `p2`,
           index: 1,
           href: `file://page2.xhtml`,
+          containerUri: `page2.xhtml`,
           // itemref `rendition:layout-reflowable` overrides the package layout
           renditionLayout: `reflowable`,
           progressionWeight: 0.5,
@@ -342,6 +348,7 @@ describe(`Given a reflowable EPUB whose spine documents all declare a viewport`,
 
     expect(manifest).toEqual({
       filename: `viewport.epub`,
+      mediaType: `application/epub+zip`,
       title: `Viewport Book`,
       renditionLayout: `pre-paginated`,
       renditionFlow: `auto`,
@@ -352,6 +359,7 @@ describe(`Given a reflowable EPUB whose spine documents all declare a viewport`,
           id: `p1`,
           index: 0,
           href: `file://page1.xhtml`,
+          containerUri: `page1.xhtml`,
           renditionLayout: `pre-paginated`,
           progressionWeight: 0.5,
           pageSpreadLeft: undefined,
@@ -362,6 +370,7 @@ describe(`Given a reflowable EPUB whose spine documents all declare a viewport`,
           id: `p2`,
           index: 1,
           href: `file://page2.xhtml`,
+          containerUri: `page2.xhtml`,
           renditionLayout: `pre-paginated`,
           progressionWeight: 0.5,
           pageSpreadLeft: undefined,
@@ -452,6 +461,7 @@ describe(`Given an EPUB that also contains a ComicInfo.xml`, () => {
 
     expect(manifest).toEqual({
       filename: `epub-with-comicinfo.epub`,
+      mediaType: `application/epub+zip`,
       title: `Epub With ComicInfo`,
       renditionLayout: `pre-paginated`,
       renditionFlow: `auto`,
@@ -463,6 +473,7 @@ describe(`Given an EPUB that also contains a ComicInfo.xml`, () => {
           id: `p1`,
           index: 0,
           href: `file://page1.xhtml`,
+          containerUri: `page1.xhtml`,
           renditionLayout: `pre-paginated`,
           // deliberate change with the resolveArchive migration: the sidecar
           // no longer flattens the size-proportional epub weights
@@ -475,6 +486,7 @@ describe(`Given an EPUB that also contains a ComicInfo.xml`, () => {
           id: `p2`,
           index: 1,
           href: `file://page2.xhtml`,
+          containerUri: `page2.xhtml`,
           renditionLayout: `pre-paginated`,
           progressionWeight: 0.75,
           pageSpreadLeft: undefined,
@@ -524,6 +536,7 @@ describe(`Given a flat CBZ with a ComicInfo.xml`, () => {
 
     expect(manifest).toEqual({
       filename: `my comic.cbz`,
+      mediaType: `application/vnd.comicbook+zip`,
       // deliberate change with the resolveArchive migration: the ComicInfo
       // Title now feeds the manifest title instead of the filename
       title: `Vol 1`,
@@ -538,6 +551,7 @@ describe(`Given a flat CBZ with a ComicInfo.xml`, () => {
           // exclusion, no more index gap
           index: 0,
           href: `file://page_001.jpg`,
+          containerUri: `page_001.jpg`,
           renditionLayout: `pre-paginated`,
           progressionWeight: 0.5,
           pageSpreadLeft: undefined,
@@ -548,6 +562,7 @@ describe(`Given a flat CBZ with a ComicInfo.xml`, () => {
           id: `page_002.jpg`,
           index: 1,
           href: `file://page_002.jpg`,
+          containerUri: `page_002.jpg`,
           renditionLayout: `pre-paginated`,
           progressionWeight: 0.5,
           pageSpreadLeft: undefined,
@@ -601,6 +616,7 @@ describe(`Given an EPUB with a Kobo display-options sidecar`, () => {
 
     expect(manifest).toEqual({
       filename: `kobo.epub`,
+      mediaType: `application/epub+zip`,
       title: `Kobo Flagged Book`,
       renditionLayout: `pre-paginated`,
       renditionFlow: `auto`,
@@ -611,6 +627,7 @@ describe(`Given an EPUB with a Kobo display-options sidecar`, () => {
           id: `ch1`,
           index: 0,
           href: `file://ch1.xhtml`,
+          containerUri: `ch1.xhtml`,
           // kobo only fills the manifest-level layout, items stay undefined
           renditionLayout: undefined,
           progressionWeight: 1,
@@ -690,6 +707,7 @@ describe(`Given an EPUB with an Apple display-options sidecar`, () => {
 
     expect(manifest).toEqual({
       filename: `apple.epub`,
+      mediaType: `application/epub+zip`,
       title: `Apple Flagged Book`,
       renditionLayout: `pre-paginated`,
       renditionFlow: `auto`,
@@ -700,6 +718,7 @@ describe(`Given an EPUB with an Apple display-options sidecar`, () => {
           id: `ch1`,
           index: 0,
           href: `file://ch1.xhtml`,
+          containerUri: `ch1.xhtml`,
           // apple only fills the manifest-level layout, items stay undefined
           renditionLayout: undefined,
           progressionWeight: 1,
@@ -762,6 +781,7 @@ describe(`Given a flat audiobook archive`, () => {
 
     expect(manifest).toEqual({
       filename: `audiobook.zip`,
+      mediaType: `application/zip`,
       title: `audiobook.zip`,
       renditionLayout: undefined,
       renditionSpread: `auto`,
@@ -771,6 +791,7 @@ describe(`Given a flat audiobook archive`, () => {
           id: `chapter-01.mp3`,
           index: 0,
           href: `file://chapter-01.mp3`,
+          containerUri: `chapter-01.mp3`,
           renditionLayout: `pre-paginated`,
           // weights are an equal split for non-epub, regardless of sizes
           progressionWeight: 0.5,
@@ -782,6 +803,7 @@ describe(`Given a flat audiobook archive`, () => {
           id: `chapter-02-final.mp3`,
           index: 1,
           href: `file://chapter-02-final.mp3`,
+          containerUri: `chapter-02-final.mp3`,
           renditionLayout: `pre-paginated`,
           progressionWeight: 0.5,
           pageSpreadLeft: undefined,
@@ -821,6 +843,7 @@ describe(`Given text content`, () => {
 
     expect(manifest).toEqual({
       filename: `content.txt`,
+      mediaType: `text/plain`,
       title: ``,
       renditionLayout: `reflowable`,
       renditionFlow: `auto`,
@@ -831,6 +854,7 @@ describe(`Given text content`, () => {
           id: `p01`,
           index: 0,
           href: `file://p01.txt`,
+          containerUri: `p01.txt`,
           renditionLayout: `reflowable`,
           progressionWeight: 1,
           pageSpreadLeft: undefined,
@@ -864,6 +888,7 @@ describe(`Given a folder comic with a .db file`, () => {
 
     expect(manifest).toEqual({
       filename: `comic.cbz`,
+      mediaType: `application/vnd.comicbook+zip`,
       // title comes from the first directory record
       title: `Album`,
       renditionLayout: undefined,
@@ -874,6 +899,7 @@ describe(`Given a folder comic with a .db file`, () => {
           id: `Album_page1.jpg`,
           index: 0,
           href: `http://localhost:9000/Album/page1.jpg`,
+          containerUri: `Album/page1.jpg`,
           renditionLayout: `pre-paginated`,
           // deliberate change with the resolveArchive migration: the excluded
           // .db file no longer inflates the denominator, weights sum to 1
@@ -886,6 +912,7 @@ describe(`Given a folder comic with a .db file`, () => {
           id: `Album_page2.jpg`,
           index: 1,
           href: `http://localhost:9000/Album/page2.jpg`,
+          containerUri: `Album/page2.jpg`,
           renditionLayout: `pre-paginated`,
           progressionWeight: 0.5,
           pageSpreadLeft: undefined,

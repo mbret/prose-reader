@@ -1,6 +1,22 @@
 {
   "name": "@prose-reader/react-native",
-  "version": "21.0.2",
+  "version": "30.2.0",
+  "description": "Run prose in a React Native WebView: bridge the reader to your app, drive it from native code, and serve books with Expo.",
+  "keywords": [
+    "prose-reader",
+    "react-native",
+    "expo",
+    "webview",
+    "epub",
+    "ebook",
+    "reader"
+  ],
+  "homepage": "https://doc.prose-reader.com/react-native/prose-reader-react-native",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/mbret/prose-reader.git",
+    "directory": "packages/react-native"
+  },
   "type": "module",
   "main": "./dist/native/index.cjs",
   "module": "./dist/native/index.js",
@@ -36,7 +52,6 @@
   "devDependencies": {
     "@types/react": "^19.0.2",
     "expo": "^57.0.24",
-    "jsdom": "^29.0.0",
     "react": "19.2.3",
     "react-dom": "19.2.3",
     "react-native": "0.86.3",

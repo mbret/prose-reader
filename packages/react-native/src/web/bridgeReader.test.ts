@@ -15,6 +15,7 @@ import {
   describe,
   expect,
   it,
+  onTestFinished,
   vi,
 } from "vitest"
 import type { ReaderLoadOptions } from "../shared"
@@ -64,6 +65,7 @@ vi.mock("@webview-bridge/web", () => ({
 
 const manifest: Manifest = {
   filename: "",
+  mediaType: "application/vnd.comicbook+zip",
   items: [],
   readingDirection: "ltr",
   renditionLayout: "pre-paginated",
@@ -71,6 +73,7 @@ const manifest: Manifest = {
   spineItems: [
     {
       href: "/chapter_1/page_1.jpg",
+      containerUri: "chapter_1/page_1.jpg",
       id: "1",
       pageSpreadLeft: true,
       pageSpreadRight: true,
@@ -80,6 +83,7 @@ const manifest: Manifest = {
     },
     {
       href: "/chapter_2/page_1.jpg",
+      containerUri: "chapter_2/page_1.jpg",
       id: "2",
       pageSpreadLeft: true,
       pageSpreadRight: true,
@@ -126,11 +130,20 @@ afterEach(() => {
   container.remove()
 })
 
-const createTestReader = (options: ReaderLoadOptions) =>
-  createReader({
+/**
+ * The bridge destroys a reader only when the next `load` replaces it, which
+ * leaves the last one of each test running.
+ */
+const createTestReader = (options: ReaderLoadOptions) => {
+  const reader = createReader({
     ...options,
     getResource: () => of(new Response("", { status: 200 })),
   })
+
+  onTestFinished(() => reader.destroy())
+
+  return reader
+}
 
 const currentReadingPosition = (reader: Reader) => {
   let readingPosition: ReadingPosition | undefined

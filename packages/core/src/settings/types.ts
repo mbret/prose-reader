@@ -53,10 +53,23 @@ export type CoreInputSettings = {
    * - Providing custom font, img, etc with direct import
    *
    * @important
-   * Due to a bug in chrome/firefox https://bugs.chromium.org/p/chromium/issues/detail?id=880768 you should avoid
-   * having a custom fetch method if you serve your content from service worker. This is because when you set fetchResource
-   * the iframe will use `srcdoc` rather than `src`. Due to the bug the http hit for the resources inside the iframe will
-   * not pass through the service worker.
+   * A spine item's document reaches its frame by its url only when the item's href is on the page's
+   * origin, `getResource` gives a `URL` or nothing for it, and the item is not one the reader wraps
+   * in an html page (a JPEG, PNG, WebP or AVIF image, or a plain text file). The frame's `src` is
+   * then that url, so the document and the requests it makes go through the network and any service
+   * worker.
+   *
+   * Anything else is fetched and built into a page by the reader, which the frame loads from a blob
+   * url. A relative reference in such a page reaches neither the network nor a service worker. The
+   * reader swaps in the `src` of the page's images, videos and audio, the `href` of its SVG images
+   * and `<link>` elements (stylesheets, icons, preloads), and the fonts those stylesheets declare,
+   * from the manifest items they name, and only for an item `getResource` gives a `Response` for.
+   * The page counts as loaded once its stylesheets and images, lazy ones included, have loaded or
+   * failed, or have reported neither for 5 seconds. Any other relative reference, such as a script's
+   * `src`, a `<source>` element, a `srcset` candidate or a stylesheet's background image, does not
+   * load. So if you return a `Response` for a document, return one for the assets it references
+   * too, or leave `getResource` out and serve the whole book by url from the page's origin, through
+   * a backend or a service worker.
    */
   getResource?: (item: Manifest["items"][number]) =>
     | Observable<

@@ -1,0 +1,21 @@
+/* Expressive Code also renders code blocks as figures, so only style the ones holding an image */
+.sl-markdown-content figure:has(> img) {
+  margin-inline: auto;
+  text-align: center;
+}
+
+.sl-markdown-content figure:has(> img) > figcaption {
+  color: var(--sl-color-gray-3);
+  font-size: var(--sl-text-sm);
+}
+
+.sl-markdown-content .figures {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 1rem;
+}
+
+.sl-markdown-content .figures > figure {
+  margin: 0;
+}

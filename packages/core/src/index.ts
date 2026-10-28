@@ -2,10 +2,17 @@ export type { Manifest } from "@prose-reader/shared"
 
 import { createReaderWithEnhancers as createReader } from "./createReaderWithEnhancer"
 
-export type { Theme, ThemeEnhancerOutput } from "./enhancers/theme"
+export {
+  getThemeBackgroundColor,
+  type Theme,
+  type ThemeEnhancerOutput,
+} from "./enhancers/theme"
 export { HookManager } from "./hooks/HookManager"
 export { SettingsManager } from "./settings/SettingsManager"
-export { DocumentRenderer } from "./spineItem/renderer/DocumentRenderer"
+export {
+  type DocumentLoadStatus,
+  DocumentRenderer,
+} from "./spineItem/renderer/DocumentRenderer"
 export { ResourceHandler } from "./spineItem/resources/ResourceHandler"
 
 export type CreateReaderOptions = Parameters<typeof createReader>[0]

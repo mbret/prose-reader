@@ -6,6 +6,7 @@ const trackIds = [`track-1`, `track-2`]
 
 const manifest: Manifest = {
   filename: `audio-tracks`,
+  mediaType: `application/zip`,
   title: `Audio tracks`,
   renditionLayout: `pre-paginated`,
   renditionSpread: `none`,
@@ -14,6 +15,7 @@ const manifest: Manifest = {
     id,
     index,
     href: `${id}.mp3`,
+    containerUri: `${id}.mp3`,
     mediaType: `audio/mpeg`,
   })),
   items: trackIds.map((id) => ({

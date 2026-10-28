@@ -1,12 +1,12 @@
 name: check
 
+# A fork's pushes trigger nothing here, so its branch is checked on its pull
+# request. A branch of this repository is checked on push only.
 on:
   push:
     branches-ignore:
       - 'master'
   pull_request:
-    branches-ignore:
-      - 'master'
 
 # A new push to a branch supersedes the run still going for the previous one:
 # cancel it rather than let it hold runners, the macOS ones especially, that
@@ -17,16 +17,23 @@ concurrency:
 
 jobs:
   lint:
+    if: &push_or_fork_pull_request >-
+      github.event_name == 'push' ||
+      github.event.pull_request.head.repo.full_name != github.repository
     uses: ./.github/workflows/_lint.yml
 
   ts:
+    if: *push_or_fork_pull_request
     uses: ./.github/workflows/_ts.yml
 
   ts_react_native_demo:
+    if: *push_or_fork_pull_request
     uses: ./.github/workflows/_ts_react_native_demo.yml
 
   tests:
+    if: *push_or_fork_pull_request
     uses: ./.github/workflows/_test.yml
 
   docker:
+    if: *push_or_fork_pull_request
     uses: ./.github/workflows/_docker.yml

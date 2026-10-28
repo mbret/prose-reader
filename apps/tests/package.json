@@ -13,6 +13,7 @@
   "devDependencies": {
     "@playwright/test": "^1.48.2",
     "@prose-reader/archive-reader": "workspace:*",
+    "@prose-reader/cbz": "workspace:*",
     "@prose-reader/core": "workspace:*",
     "@prose-reader/enhancer-annotations": "workspace:*",
     "@prose-reader/enhancer-audio": "workspace:*",
@@ -29,7 +30,7 @@
     "pdfjs-dist": "^6.2.108",
     "react": "^19.2.7",
     "react-dom": "^19.2.7",
-    "reactjrx": "^1.126.0",
+    "reactjrx": "^2.2.0",
     "rxjs": "^7.8.0"
   }
 }

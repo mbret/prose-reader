@@ -1,0 +1,8 @@
+blank_issues_enabled: true
+contact_links:
+  - name: Chat on Discord
+    url: https://discord.gg/dffDEgwNc5
+    about: Quick questions on the oboku & prose Discord server.
+  - name: Read the documentation
+    url: https://doc.prose-reader.com/
+    about: The user documentation for every package.

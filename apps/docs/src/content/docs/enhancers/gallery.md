@@ -1,0 +1,67 @@
+---
+title: "Gallery enhancer"
+description: "Make page thumbnails for your own gallery with @prose-reader/enhancer-gallery: gallery.snapshot() copies a spine item's first page at the size you choose."
+sidebar:
+  label: "Gallery"
+---
+
+This enhancer gives you methods to facilitate creation of gallery of pages. This can be helpful to provide a quick overview and / or navigation for a book.
+
+<figure><img src="/images/gallery-iphone-se.webp" alt="Thumbnails of the pages of a manga in a grid of two columns" width="375" height="667"><figcaption>Gallery on the demo reader</figcaption></figure>
+
+The gallery enhancer does not create a gallery for you, it will help you gather snapshots of pages that you can then display in your own gallery. This way it's agnostic and you are responsible for your entire design.
+
+## Getting Started
+
+```bash
+npm install @prose-reader/enhancer-gallery @prose-reader/core rxjs
+```
+
+Both are peer dependencies: the enhancer runs against the reader your app
+creates, so it shares that reader's copies rather than bringing its own. It
+needs the `@prose-reader/core` it was released with, or a later one of the same
+major.
+
+Connect the enhancer to your reader:
+
+```typescript
+import { galleryEnhancer } from "@prose-reader/enhancer-gallery"
+
+const createAppReader = galleryEnhancer(createReader)
+
+/**
+ * There is no required configuration for this
+ * enhancer.
+ */
+const reader = createAppReader({ manifest })
+```
+
+## API
+
+The API is under the `gallery` namespace.
+
+```typescript
+type Options = {}
+```
+
+### `.snapshot()`
+
+```typescript
+function snapshot(
+  spineItem: SpineItem,
+  parentElement: Element,
+  options: {
+    height: number
+    width: number
+  },
+): Observable<HTMLElement>
+```
+
+This method takes a spine item and a given dimension for snapshot and will provide you with a copy of the relevant document (first page) scaled to your dimensions and centered. This will be an exact copy of how the page would look like in your current reader, on the theme's background. The snapshot shows the page and its background as they are when it is taken: take a new snapshot after a theme change. It will however try to clean it up and only keep the rendered document. This means that things like annotations, customization to spine item will not be taken into account.
+
+The parent element needs to be passed down as well as we will attach the snapshot to it automatically. This is needed for internal iframe loading events check.
+
+:::note
+You may be wondering why we don't use a tool like [https://html2canvas.hertzen.com/](https://html2canvas.hertzen.com/) to create a snapshot. Drawing the iframe in a canvas would be much more memory efficient and easier to manipulate but it only works with same origin content. This is too big of a restriction to be used as default method.
+:::
+

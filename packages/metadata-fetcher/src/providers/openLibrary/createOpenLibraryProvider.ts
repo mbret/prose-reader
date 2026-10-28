@@ -9,11 +9,10 @@ import {
   type ProjectGutenbergLookup,
   projectGutenbergLookupFromInput,
 } from "../projectGutenberg/identifier.ts"
+import { OPEN_LIBRARY_PROVIDER_ID } from "../providerIds.ts"
 import { MetadataProviderResponseError } from "../responseError.ts"
 import { type OpenLibraryDoc, parseOpenLibrarySearchResponse } from "./parse.ts"
 import { resolveOpenLibraryDoc } from "./resolve.ts"
-
-export const OPEN_LIBRARY_PROVIDER_ID = "openLibrary"
 
 const DEFAULT_BASE_URL = "https://openlibrary.org"
 const DEFAULT_COVERS_BASE_URL = "https://covers.openlibrary.org"

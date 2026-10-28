@@ -10,14 +10,12 @@ import {
 } from "rxjs"
 import { HTML_PREFIX } from "../constants"
 import type { Context } from "../context/Context"
-import type { Pagination } from "../pagination/Pagination"
 import type { ReaderSettingsManager } from "../settings/ReaderSettingsManager"
 import type { createSpineItemLocator as createSpineItemLocationResolver } from "../spineItem/locationResolver"
 import type { SpineItem } from "../spineItem/SpineItem"
 import { DestroyableClass } from "../utils/DestroyableClass"
 import { isDefined } from "../utils/isDefined"
 import type { Viewport } from "../viewport/Viewport"
-import { SpineItemsLoader } from "./loader/SpineItemsLoader"
 import { createSpineLocator, type SpineLocator } from "./locator/SpineLocator"
 import { Pages } from "./Pages"
 import type { SpineItemsManager } from "./SpineItemsManager"
@@ -30,13 +28,12 @@ export class Spine extends DestroyableClass {
   )
   protected spineLayout: SpineLayout
 
-  public readonly spineItemsLoader: SpineItemsLoader
   public locator: SpineLocator
   public spineItemsObserver: SpineItemsObserver
   public pages: Pages
   public element$ = this.elementSubject.asObservable()
 
-  protected isLayoutCurrentSubject = new BehaviorSubject(true)
+  protected isLayoutCurrentSubject = new BehaviorSubject(false)
 
   /**
    * Whether the pages describe the latest layout requested. A request makes
@@ -45,10 +42,14 @@ export class Spine extends DestroyableClass {
    * unloading. A request also cancels everything still running for older
    * ones, the pass and the page computation both, so the next pages published
    * are the ones it asked for, and they make the layout current again, before
-   * anything else hears of them.
+   * anything else hears of them. Until the first pages are published there
+   * are none to describe a layout, so it starts not current.
    *
    * Item flags cannot tell this: a pass clears an item's dirty flag as soon as
    * it lays that item out, long before the pages are recomputed.
+   *
+   * The navigator derives from it whether the latest navigation holds on the
+   * current layout, and reads it to decide whether an anchor is final.
    */
   public readonly isLayoutCurrent$ = this.isLayoutCurrentSubject.pipe(
     distinctUntilChanged(),
@@ -56,7 +57,6 @@ export class Spine extends DestroyableClass {
 
   constructor(
     protected context: Context,
-    protected pagination: Pagination,
     public spineItemsManager: SpineItemsManager,
     public spineItemLocator: ReturnType<typeof createSpineItemLocationResolver>,
     protected settings: ReaderSettingsManager,
@@ -82,15 +82,6 @@ export class Spine extends DestroyableClass {
       spineLayout: this.spineLayout,
       viewport,
     })
-
-    this.spineItemsLoader = new SpineItemsLoader(
-      this.context,
-      spineItemsManager,
-      this.locator,
-      settings,
-      this.spineLayout,
-      this.viewport,
-    )
 
     this.pages = new Pages(
       this.spineLayout,
@@ -178,7 +169,8 @@ export class Spine extends DestroyableClass {
     super.destroy()
 
     this.pages.destroy()
-    this.spineItemsLoader.destroy()
+    this.spineLayout.destroy()
+    this.spineItemsObserver.destroy()
     this.elementSubject.getValue()?.remove()
     this.elementSubject.complete()
   }

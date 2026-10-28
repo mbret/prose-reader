@@ -4,6 +4,7 @@ import type { Context } from "../../context/Context"
 import type { ReaderSettingsManager } from "../../settings/ReaderSettingsManager"
 import type { SpineItemsManager } from "../../spine/SpineItemsManager"
 import { SpinePosition } from "../../spine/types"
+import type { DocumentLoadStatus } from "../../spineItem/renderer/DocumentRenderer"
 import { createTestManifest } from "../../tests/utils"
 import type { NavigationResolver } from "../resolvers/NavigationResolver"
 import type { InternalNavigationEntry, NavigationTarget } from "../types"
@@ -30,10 +31,10 @@ const document = new DOMParser().parseFromString(
 )
 
 const createResolvers = ({
-  isLoaded = true,
+  loadStatus = "loaded",
   hasDocument = true,
 }: {
-  isLoaded?: boolean
+  loadStatus?: DocumentLoadStatus
   // An item rendered without a document, such as audio, has none.
   hasDocument?: boolean
 } = {}) => {
@@ -41,23 +42,22 @@ const createResolvers = ({
     clampPositionInSpine: (position: SpinePosition) => position,
     getNavigationForNode: () => new SpinePosition({ x: 0, y: 0 }),
   }
+  const loadedDocument =
+    hasDocument && loadStatus === "loaded" ? document : undefined
   const spineItem = {
     item: { index: 0, href: "0.xhtml" },
     index: 0,
-    value: { isLoaded },
-    renderer: {
-      getDocumentFrame: () =>
-        hasDocument ? { contentDocument: document } : undefined,
-    },
+    value: { loadStatus },
+    loadedDocument,
   }
   const cfi = {
     isRootCfi: (value: string) => value.endsWith("!)"),
     getSpineItemFromCfi: () => spineItem,
-    // `text` names the note, once its document is there to look in.
+    // `text` names the note, in the document the item shows.
     resolveCfi: ({ cfi }: { cfi: string }) => ({
       node:
-        isLoaded && hasDocument && cfi === text
-          ? document.getElementById("note")
+        loadedDocument && cfi === text
+          ? loadedDocument.getElementById("note")
           : null,
     }),
     generateRootCfi: () => itemStart,
@@ -126,19 +126,19 @@ describe("target resolvers", () => {
     })
   })
 
-  it.each([
-    ["one naming a place", text],
-    ["one naming nothing", nothing],
+  it.each<[string, string, DocumentLoadStatus]>([
+    ["one naming a place", text, "loading"],
+    ["one naming nothing", nothing, "loading"],
+    ["one naming a place", text, "unloading"],
   ])(
-    "leave a cfi into an item not loaded without an anchor, %s, awaiting the item for restorations to resolve it again",
-    (_, value) => {
+    "leave a cfi into an item not loaded without an anchor, %s, while it is %s, awaiting the item for restorations to resolve it again",
+    (_, value, loadStatus) => {
       /**
-       * Nothing shows yet where the cfi leads, to a place or nowhere: as for a
-       * selector, the navigation has no place until the item is loaded.
+       * Nothing shows yet where the cfi leads, to a place or nowhere, and
+       * the document leaving no longer shows it: as for a selector, the
+       * navigation has no place until the item is loaded.
        */
-      expect(
-        resolve({ type: "cfi", value }, { isLoaded: false }),
-      ).toMatchObject({
+      expect(resolve({ type: "cfi", value }, { loadStatus })).toMatchObject({
         spineItem: 0,
         anchor: undefined,
         awaitsDocument: true,
@@ -161,13 +161,13 @@ describe("target resolvers", () => {
     })
   })
 
-  it.each([true, false])(
-    "leave a cfi naming only an item to be anchored at the page it lands on, loaded: %s",
-    (isLoaded) => {
+  it.each<DocumentLoadStatus>(["loaded", "loading"])(
+    "leave a cfi naming only an item to be anchored at the page it lands on, %s",
+    (loadStatus) => {
       // A book reopened at a saved item start lands on the item's first page,
       // with nothing to look for in its document.
       expect(
-        resolve({ type: "cfi", value: itemStart }, { isLoaded }),
+        resolve({ type: "cfi", value: itemStart }, { loadStatus }),
       ).toMatchObject({ anchor: undefined, awaitsDocument: false })
     },
   )
@@ -177,7 +177,20 @@ describe("target resolvers", () => {
   })
 
   it("leave a selector awaiting the document of an item not loaded, without an anchor, for restorations to try again", () => {
-    expect(resolve(note, { isLoaded: false })).toMatchObject({
+    expect(resolve(note, { loadStatus: "loading" })).toMatchObject({
+      spineItem: 0,
+      anchor: undefined,
+      awaitsDocument: true,
+    })
+  })
+
+  it("leave a selector awaiting the document of an item being unloaded, rather than looking in the document leaving", () => {
+    /**
+     * The document leaving is no longer the one the item shows, and what the
+     * selector would find in it goes with it: the next load's is the one to
+     * look in.
+     */
+    expect(resolve(note, { loadStatus: "unloading" })).toMatchObject({
       spineItem: 0,
       anchor: undefined,
       awaitsDocument: true,

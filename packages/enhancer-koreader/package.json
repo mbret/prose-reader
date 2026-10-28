@@ -1,6 +1,22 @@
 {
   "name": "@prose-reader/enhancer-koreader",
-  "version": "21.0.2",
+  "version": "30.2.0",
+  "description": "KOReader sync for prose: open a reader at the progress a KOReader sync server stores, go to it, and convert a CFI to it.",
+  "keywords": [
+    "prose-reader",
+    "koreader",
+    "kosync",
+    "reading-progress",
+    "sync",
+    "xpointer",
+    "epub"
+  ],
+  "homepage": "https://doc.prose-reader.com/enhancers/koreader",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/mbret/prose-reader.git",
+    "directory": "packages/enhancer-koreader"
+  },
   "type": "module",
   "license": "MIT",
   "main": "./dist/index.cjs",
@@ -23,7 +39,8 @@
   "scripts": {
     "start": "vite build --watch --mode development",
     "build": "tsc && vite build",
-    "tsc": "tsc"
+    "tsc": "tsc",
+    "test": "vitest run"
   },
   "dependencies": {
     "@prose-reader/koreader": "workspace:^",
@@ -31,5 +48,11 @@
   },
   "peerDependencies": {
     "@prose-reader/core": "workspace:^"
+  },
+  "devDependencies": {
+    "@prose-reader/archive-reader": "workspace:^",
+    "@prose-reader/cbz": "workspace:^",
+    "@prose-reader/streamer": "workspace:^",
+    "rxjs": "^7.5.5"
   }
 }

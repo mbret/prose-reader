@@ -75,8 +75,7 @@ export {
   parseKoboXml,
 } from "./metadata/kobo/parse.ts"
 export { readArchiveKobo } from "./metadata/kobo/readArchiveKobo.ts"
-export { getArchiveOpfInfo } from "./metadata/opf/getArchiveOpfInfo.ts"
-export { getSpineItemFilesFromArchive } from "./metadata/opf/getSpineItemFilesFromArchive.ts"
+export { getArchiveOpfRecord } from "./metadata/opf/getArchiveOpfRecord.ts"
 export type { OpfIdentifierTypeMeta } from "./metadata/opf/identifierScheme.ts"
 export {
   OPF_IDENTIFIER_SCHEME_ATTRIBUTES,
@@ -85,12 +84,10 @@ export {
   opfIdentifierTypeScheme,
 } from "./metadata/opf/identifierScheme.ts"
 export { isArchiveEpub } from "./metadata/opf/isArchiveEpub.ts"
-export type { XmlNamespaceScope } from "./metadata/opf/opfNamespace.ts"
 export {
   OPF_NAMESPACE,
   opfNamespacedAttribute,
   opfNamespacePrefixes,
-  xmlNamespaceScope,
 } from "./metadata/opf/opfNamespace.ts"
 export type {
   OpfContributor,
@@ -162,4 +159,7 @@ export { normalizeGtin } from "./utils/normalizeGtin.ts"
 export { normalizeIdentifierScheme } from "./utils/normalizeIdentifierScheme.ts"
 export { normalizeIsbn } from "./utils/normalizeIsbn.ts"
 export { parseW3cDtfDate } from "./utils/parseW3cDtfDate.ts"
+export { toContainerHref, toContainerUri } from "./utils/toContainerUri.ts"
 export { tokenizeXmlSpaceSeparatedList } from "./utils/tokenizeXmlSpaceSeparatedList.ts"
+export type { XmlNamespaceScope } from "./utils/xmlNamespaceScope.ts"
+export { xmlNamespaceScope } from "./utils/xmlNamespaceScope.ts"

@@ -1,6 +1,22 @@
 {
   "name": "@prose-reader/streamer",
-  "version": "21.0.0",
+  "version": "30.2.0",
+  "description": "Turn a book archive into the manifest prose reads and serve its resources, from a service worker, Node or React Native.",
+  "keywords": [
+    "prose-reader",
+    "epub",
+    "streamer",
+    "service-worker",
+    "manifest",
+    "comics",
+    "ebook"
+  ],
+  "homepage": "https://doc.prose-reader.com/learn/streamer",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/mbret/prose-reader.git",
+    "directory": "packages/streamer"
+  },
   "type": "module",
   "main": "./dist/index/index.cjs",
   "module": "./dist/index/index.js",

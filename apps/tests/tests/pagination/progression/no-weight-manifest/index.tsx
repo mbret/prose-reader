@@ -13,6 +13,7 @@ pdfjsLib.GlobalWorkerOptions.workerSrc = new URL(
 async function run() {
   const manifest: Manifest = {
     filename: "sample",
+    mediaType: "text/plain",
     title: "sample",
     renditionLayout: "reflowable",
     renditionSpread: "none",
@@ -22,12 +23,14 @@ async function run() {
       {
         id: "a.txt",
         href: "a.txt",
+        containerUri: "a.txt",
         mediaType: "text/plain",
         index: 0,
       },
       {
         id: "b.txt",
         href: "b.txt",
+        containerUri: "b.txt",
         mediaType: "text/plain",
         index: 1,
       },

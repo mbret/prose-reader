@@ -1,10 +1,27 @@
 {
   "name": "@prose-reader/enhancer-audio",
-  "version": "21.0.2",
+  "version": "30.2.0",
+  "description": "Audiobook playback for prose: play a book's audio tracks with play, pause, seek and track selection, and a frequency visualizer.",
+  "keywords": [
+    "prose-reader",
+    "audiobook",
+    "audio",
+    "mp3",
+    "m4b",
+    "player",
+    "ebook"
+  ],
+  "homepage": "https://doc.prose-reader.com/enhancers/audio",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/mbret/prose-reader.git",
+    "directory": "packages/enhancer-audio"
+  },
   "type": "module",
   "main": "./dist/index.cjs",
   "module": "./dist/index.js",
   "types": "./dist/index.d.ts",
+  "license": "MIT",
   "files": [
     "/dist"
   ],
@@ -24,10 +41,10 @@
     "test": "vitest run --coverage"
   },
   "dependencies": {
-    "@prose-reader/core": "workspace:^",
     "@prose-reader/shared": "workspace:^"
   },
   "peerDependencies": {
+    "@prose-reader/core": "workspace:^",
     "rxjs": "^7.5.5"
   }
 }

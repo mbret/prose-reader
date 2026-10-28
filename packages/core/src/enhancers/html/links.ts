@@ -4,14 +4,14 @@ import type { Reader } from "../../reader"
 export const handleLinks = (reader: Reader) => {
   return merge(
     ...reader.spine.spineItemsManager.items.map((item) => {
-      return item.watch("isLoaded").pipe(
+      return item.watch("loadStatus").pipe(
         switchMap(() => {
-          const frame = item.renderer.getDocumentFrame()
+          const loadedDocument = item.loadedDocument
 
-          if (!frame?.contentDocument) return NEVER
+          if (!loadedDocument) return NEVER
 
           const anchorElements = Array.from(
-            frame.contentDocument.querySelectorAll(`a`),
+            loadedDocument.querySelectorAll(`a`),
           )
 
           const events$ = anchorElements.map((element) =>

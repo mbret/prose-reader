@@ -1,7 +1,23 @@
 {
   "name": "@prose-reader/react-reader",
   "private": false,
-  "version": "21.0.2",
+  "version": "30.2.0",
+  "description": "A ready-made React reading interface for prose, themed with Chakra UI: table of contents, settings, search, annotations, bookmarks and gallery.",
+  "keywords": [
+    "prose-reader",
+    "react",
+    "epub-reader",
+    "ebook-reader",
+    "chakra-ui",
+    "epub",
+    "comics"
+  ],
+  "homepage": "https://doc.prose-reader.com/react-reader/introduction",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/mbret/prose-reader.git",
+    "directory": "packages/react-reader"
+  },
   "type": "module",
   "types": "./dist/index.d.ts",
   "publishConfig": {
@@ -12,6 +28,7 @@
     ".": "./dist/index.js",
     "./index.css": "./dist/index.css"
   },
+  "license": "MIT",
   "files": [
     "/dist"
   ],
@@ -43,10 +60,10 @@
     "@prose-reader/enhancer-search": "workspace:^",
     "@prose-reader/shared": "workspace:^",
     "rc-slider": "11.1.x",
-    "react": "19.x || 18.x",
-    "react-dom": "19.x || 18.x",
+    "react": "19.x",
+    "react-dom": "19.x",
     "react-icons": "^5.4.0",
-    "reactjrx": "1.x",
+    "reactjrx": "2.x",
     "rxjs": "^7.5.5",
     "screenfull": "^6.0.2"
   }

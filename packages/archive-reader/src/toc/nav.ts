@@ -1,9 +1,10 @@
-import { getUriBasePath, urlJoin } from "@prose-reader/shared"
+import { getUriBasePath } from "@prose-reader/shared"
 import { XmlDocument, XmlElement, type XmlNodeBase } from "xmldoc"
 import { readRecordAsText } from "../archives/readRecordAsText.ts"
-import type { Archive } from "../archives/types.ts"
+import { type Archive, getArchiveFileRecordByUri } from "../archives/types.ts"
 import type { OpfMetadata } from "../metadata/opf/parse.ts"
 import { getXmlElementInnerText } from "../utils/getXmlElementInnerText.ts"
+import { toContainerHref, toContainerUri } from "../utils/toContainerUri.ts"
 import { tokenizeXmlSpaceSeparatedList } from "../utils/tokenizeXmlSpaceSeparatedList.ts"
 import type { ArchiveTocItem } from "./types.ts"
 
@@ -43,7 +44,7 @@ const extractNavChapter = (
   }
 
   if (node === `a` && contentNode?.attr.href) {
-    chp.path = urlJoin(basePath, contentNode.attr.href)
+    chp.path = toContainerHref(contentNode.attr.href, basePath)
     chp.containerHref = chp.path
   }
   const sublistNode = li.childNamed(`ol`)
@@ -86,27 +87,33 @@ const buildTocFromNavDocument = (
   return toc
 }
 
-export const resolveTocFromNav = async (
-  opf: OpfMetadata,
-  archive: Archive,
-): Promise<ArchiveTocItem[] | undefined> => {
+export const resolveTocFromNav = async ({
+  opf,
+  opfBasePath,
+  archive,
+}: {
+  opf: OpfMetadata
+  opfBasePath: string
+  archive: Archive
+}): Promise<ArchiveTocItem[] | undefined> => {
   const navItem = opf.manifestItems.find(manifestItemIsNavDocument)
 
   if (navItem?.href) {
-    const tocFile = archive.records.find((item) =>
-      item.uri.endsWith(navItem.href),
+    const navRecord = getArchiveFileRecordByUri(
+      archive,
+      toContainerUri(navItem.href, opfBasePath),
     )
 
-    if (tocFile && !tocFile.dir) {
-      const doc = new XmlDocument(await readRecordAsText(tocFile))
-
-      const tocFileBasePath = getUriBasePath(tocFile.uri)
+    if (navRecord) {
+      const doc = new XmlDocument(await readRecordAsText(navRecord))
 
       /**
        * links inside toc.xhtml are relative to the toc.xhtml file,
        * not the opf file anymore
        */
-      return buildTocFromNavDocument(doc, { basePath: tocFileBasePath })
+      return buildTocFromNavDocument(doc, {
+        basePath: getUriBasePath(navRecord.uri),
+      })
     }
   }
 
