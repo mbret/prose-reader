@@ -3,7 +3,11 @@ import type {
   MetadataProvider,
   MetadataProviderContext,
 } from "../../types/provider.ts"
-import { catalogResponseError, retryCatalogRequest } from "../catalogRequest.ts"
+import {
+  catalogResponseError,
+  discardResponse,
+  retryCatalogRequest,
+} from "../catalogRequest.ts"
 import { PROJECT_GUTENBERG_PROVIDER_ID } from "../providerIds.ts"
 import { projectGutenbergLookupFromInput } from "./identifier.ts"
 import { parseProjectGutenbergRdf } from "./parse.ts"
@@ -55,10 +59,14 @@ export const createProjectGutenbergProvider = (
         },
       })
 
-      if (response.status === 404) return undefined
+      if (response.status === 404) {
+        await discardResponse(response)
+
+        return undefined
+      }
 
       if (!response.ok) {
-        throw catalogResponseError(
+        throw await catalogResponseError(
           response,
           `Project Gutenberg metadata lookup failed with status ${response.status}`,
         )

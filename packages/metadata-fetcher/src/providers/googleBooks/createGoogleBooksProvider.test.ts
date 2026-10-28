@@ -34,6 +34,19 @@ const fetchReturning = (...responses: ReadonlyArray<Response>) => {
   return fetchMock
 }
 
+/** A response whose body stays open until something cancels it. */
+const responseWithOpenBody = (status: number) => {
+  const cancel = vi.fn()
+  const response = new Response(
+    new ReadableStream({ pull: () => {}, cancel }),
+    {
+      status,
+    },
+  )
+
+  return { response, cancel }
+}
+
 const requestedUrl = (
   fetchMock: ReturnType<typeof fetchReturning>,
   call: number,
@@ -317,6 +330,29 @@ describe("createGoogleBooksProvider", () => {
 
     await expect(pending).resolves.toHaveLength(1)
     expect(fetchMock).toHaveBeenCalledTimes(3)
+  })
+
+  it("releases a failed response's body before retrying", async () => {
+    vi.useFakeTimers()
+    const failed = responseWithOpenBody(503)
+    const fetchMock = fetchReturning(failed.response, jsonResponse(DUNE_VOLUME))
+    const provider = createGoogleBooksProvider({
+      apiKey: "secret",
+      fetch: fetchMock,
+    })
+    const pending = provider.search(
+      {
+        identifiers: [{ value: "zyTCAlFPjgYC", scheme: "GoogleBooks" }],
+      },
+      context,
+    )
+
+    await vi.advanceTimersByTimeAsync(0)
+    expect(fetchMock).toHaveBeenCalledTimes(1)
+    expect(failed.cancel).toHaveBeenCalledTimes(1)
+
+    await vi.runAllTimersAsync()
+    await expect(pending).resolves.toHaveLength(1)
   })
 
   it("retries a network failure", async () => {

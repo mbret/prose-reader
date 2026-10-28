@@ -117,6 +117,29 @@ describe("createProjectGutenbergProvider", () => {
     ).toEqual([])
   })
 
+  it("releases the body of a missing record", async () => {
+    const cancel = vi.fn()
+    const provider = createProjectGutenbergProvider({
+      fetch: vi.fn<typeof globalThis.fetch>().mockResolvedValue(
+        new Response(new ReadableStream({ pull: () => {}, cancel }), {
+          status: 404,
+        }),
+      ),
+    })
+
+    expect(
+      await provider.search(
+        {
+          identifiers: [
+            { value: "https://www.gutenberg.org/ebooks/78139", scheme: "URL" },
+          ],
+        },
+        context,
+      ),
+    ).toEqual([])
+    expect(cancel).toHaveBeenCalledTimes(1)
+  })
+
   it("throws on upstream failures and invalid successful responses", async () => {
     vi.useFakeTimers()
     const unavailableFetch = vi

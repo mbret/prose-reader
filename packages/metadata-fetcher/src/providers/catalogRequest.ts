@@ -16,14 +16,31 @@ const CATALOG_MAX_RETRY_DELAY_MS = 3_000
  */
 const CATALOG_TRANSIENT_STATUSES = new Set([429, 500, 502, 503, 504])
 
-/** The failing response as an error, carrying its status and `Retry-After`. */
-export const catalogResponseError = (
+/**
+ * Releases a response nobody will read. Node's fetch keeps an unread body's
+ * connection busy until garbage collection, so the failed attempts of a retry,
+ * and the lookups running beside it, would pile up sockets.
+ */
+export const discardResponse = async (response: Response): Promise<void> => {
+  // best effort: the status is the answer, and a body that fails to cancel
+  // must not replace it
+  await response.body?.cancel().catch(() => undefined)
+}
+
+/**
+ * The failing response as an error, carrying its status and `Retry-After`.
+ * Its body is released first, since nothing reads it.
+ */
+export const catalogResponseError = async (
   response: Response,
   message: string,
-): MetadataProviderResponseError =>
-  new MetadataProviderResponseError(response.status, message, {
+): Promise<MetadataProviderResponseError> => {
+  await discardResponse(response)
+
+  return new MetadataProviderResponseError(response.status, message, {
     retryAfterMs: parseRetryAfterHeader(response.headers.get("Retry-After")),
   })
+}
 
 /**
  * The built-in providers' one retry policy for an idempotent catalog request:

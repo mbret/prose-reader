@@ -6,7 +6,11 @@ import type {
   MetadataProviderContext,
 } from "../../types/provider.ts"
 import { isJsonRecord, readRecordArray } from "../../utils/json.ts"
-import { catalogResponseError, retryCatalogRequest } from "../catalogRequest.ts"
+import {
+  catalogResponseError,
+  discardResponse,
+  retryCatalogRequest,
+} from "../catalogRequest.ts"
 import { googleBooksLookupFromInput } from "./identifier.ts"
 import { type GoogleBooksVolume, parseGoogleBooksVolume } from "./parse.ts"
 import {
@@ -131,10 +135,14 @@ export const createGoogleBooksSearch = (
         headers: { Accept: "application/json" },
       })
 
-      if (notFoundIsEmpty && response.status === 404) return undefined
+      if (notFoundIsEmpty && response.status === 404) {
+        await discardResponse(response)
+
+        return undefined
+      }
 
       if (!response.ok) {
-        throw catalogResponseError(
+        throw await catalogResponseError(
           response,
           `Google Books lookup failed with status ${response.status}`,
         )

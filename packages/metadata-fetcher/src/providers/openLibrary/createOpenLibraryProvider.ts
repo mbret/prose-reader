@@ -116,7 +116,7 @@ export const createOpenLibraryProvider = (
       })
 
       if (!response.ok) {
-        throw catalogResponseError(
+        throw await catalogResponseError(
           response,
           `Open Library search failed with status ${response.status}`,
         )

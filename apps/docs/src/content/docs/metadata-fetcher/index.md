@@ -530,7 +530,7 @@ Rules of thumb:
     throw new MetadataProviderResponseError(response.status, "My Catalog search failed")
   }
   ```
-- **Use `retryWithBackoff`** when an idempotent provider request has known transient failures. `attempts` counts the initial call, and cancellation interrupts the next delay. Pass the same signal to the request when it should cancel an active call too. The helper deliberately leaves the retry predicate to the provider. `requestedDelayMs` lets a failure name its own delay, such as a rate limit's `Retry-After`, in place of the backoff; a delay longer than `maxDelayMs` rethrows at once instead of retrying early. `parseRetryAfterHeader` reads the header, the error carries it as `retryAfterMs`, and `responseErrorRetryAfterMs` reads it back from any error carrying one:
+- **Use `retryWithBackoff`** when an idempotent provider request has known transient failures. `attempts` counts the initial call, and cancellation interrupts the next delay. Pass the same signal to the request when it should cancel an active call too. The helper deliberately leaves the retry predicate to the provider. `requestedDelayMs` lets a failure name its own delay, such as a rate limit's `Retry-After`, in place of the backoff; a delay longer than `maxDelayMs` rethrows at once instead of retrying early. `parseRetryAfterHeader` reads the header, the error carries it as `retryAfterMs`, and `responseErrorRetryAfterMs` reads it back from any error carrying one. Cancel the body of a response you do not read: Node's `fetch` keeps its connection busy until garbage collection, and failed attempts would pile up sockets:
 
   ```typescript
   import {
@@ -546,6 +546,8 @@ Rules of thumb:
       const response = await fetch(url, { signal })
 
       if (!response.ok) {
+        await response.body?.cancel()
+
         throw new MetadataProviderResponseError(response.status, "My Catalog search failed", {
           retryAfterMs: parseRetryAfterHeader(response.headers.get("Retry-After")),
         })
