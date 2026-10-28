@@ -11,10 +11,11 @@ import {
 import type {
   ManagedSettingName,
   ManagedSettingValues,
+  ReactReaderSettings,
 } from "./managedSettings"
 import type {
-  PROSE_REACT_READER_SETTINGS_SCOPE,
-  PROSE_REACT_READER_SETTINGS_SCOPE_REFERENCE,
+  ReactReaderSettingsScope,
+  ReactReaderSettingsScopeReference,
 } from "./types"
 
 /**
@@ -35,18 +36,16 @@ export const useManagedSetting = <Name extends ManagedSettingName>(
   ])
 
   /** What a scope's tab shows: the value the setting takes with that scope. */
-  const getValueForScope = (
-    scope: PROSE_REACT_READER_SETTINGS_SCOPE_REFERENCE,
-  ) =>
+  const getValueForScope = (scope: ReactReaderSettingsScopeReference) =>
     getAppSettingValueWhenScopeInEffect(appSettingValues, name, scope) ??
     appSettingValues.uncontrolledSettings[name]
 
   const changeValueForScope = useCallback(
     function changeValueForScope(
-      scope: PROSE_REACT_READER_SETTINGS_SCOPE_REFERENCE,
+      scope: ReactReaderSettingsScopeReference,
       value: ManagedSettingValues[Name],
     ) {
-      const changes: Partial<ManagedSettingValues> = {}
+      const changes: ReactReaderSettings = {}
       const isValueInEffectReactReaderOwn =
         getAppSettingValueInEffect(context.value, name) === undefined &&
         scope === getSettingScopeInEffect(context.value, name)
@@ -66,9 +65,9 @@ export const useManagedSetting = <Name extends ManagedSettingName>(
   )
 
   const changeScope = useCallback(
-    function changeScope(scope: PROSE_REACT_READER_SETTINGS_SCOPE) {
+    function changeScope(scope: ReactReaderSettingsScope) {
       const changes: Partial<
-        Record<ManagedSettingName, PROSE_REACT_READER_SETTINGS_SCOPE>
+        Record<ManagedSettingName, ReactReaderSettingsScope>
       > = {}
 
       changes[name] = scope

@@ -3,7 +3,7 @@ import type {
   ManagedSettingName,
   ManagedSettingValues,
 } from "./managedSettings"
-import type { PROSE_REACT_READER_SETTINGS_SCOPE_REFERENCE } from "./types"
+import type { ReactReaderSettingsScopeReference } from "./types"
 
 type AppSettingValues = Pick<
   PublicContextType,
@@ -14,7 +14,7 @@ type AppSettingValues = Pick<
 const getAppSettingValueForScope = <Name extends ManagedSettingName>(
   { settings, settingsByScope }: AppSettingValues,
   name: Name,
-  scope: PROSE_REACT_READER_SETTINGS_SCOPE_REFERENCE,
+  scope: ReactReaderSettingsScopeReference,
 ): ManagedSettingValues[Name] | undefined =>
   scope === "global" ? settings?.[name] : settingsByScope?.[scope]?.[name]
 
@@ -22,8 +22,7 @@ const getAppSettingValueForScope = <Name extends ManagedSettingName>(
 export const getSettingScopeInEffect = (
   { settingsScopes }: AppSettingValues,
   name: ManagedSettingName,
-): PROSE_REACT_READER_SETTINGS_SCOPE_REFERENCE =>
-  settingsScopes?.[name] ?? "global"
+): ReactReaderSettingsScopeReference => settingsScopes?.[name] ?? "global"
 
 /**
  * The value the app gives a setting when a scope is in effect: the scope's, or
@@ -34,7 +33,7 @@ export const getAppSettingValueWhenScopeInEffect = <
 >(
   appSettingValues: AppSettingValues,
   name: Name,
-  scope: PROSE_REACT_READER_SETTINGS_SCOPE_REFERENCE,
+  scope: ReactReaderSettingsScopeReference,
 ): ManagedSettingValues[Name] | undefined =>
   getAppSettingValueForScope(appSettingValues, name, scope) ??
   appSettingValues.settings?.[name]

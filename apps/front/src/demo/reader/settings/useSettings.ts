@@ -1,16 +1,24 @@
-import { signal, useSignal } from "reactjrx"
 import type {
-  ReaderSettings,
-  ScreenScopeReference,
-} from "./reactReaderSettings"
+  ReactReaderSettings,
+  ReactReaderSettingsScopeReference,
+} from "@prose-reader/react-reader"
+import { signal, useSignal } from "reactjrx"
+
+/** The screens of react-reader's screen scope. */
+export type ScreenSettingsScopeReference = Exclude<
+  ReactReaderSettingsScopeReference,
+  "global" | "book"
+>
 
 export type LocalSettings = {
   navigationGestures: "pan" | "swipe" | "none"
   navigationSnapThreshold: { type: "pixels"; value: number } | undefined
   /** The global values of the settings react-reader manages. */
-  readerSettings: ReaderSettings
+  readerSettings: ReactReaderSettings
   /** Their values for each screen. */
-  readerSettingsByScreen: Partial<Record<ScreenScopeReference, ReaderSettings>>
+  readerSettingsByScreen: Partial<
+    Record<ScreenSettingsScopeReference, ReactReaderSettings>
+  >
 }
 
 const hydratedSettings = ((): Partial<LocalSettings> => {

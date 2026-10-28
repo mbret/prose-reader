@@ -7,10 +7,7 @@ import {
   useReaderContextValue,
 } from "../context/useReaderContext"
 import { getAppSettingValueInEffect } from "./appSettingValues"
-import type {
-  ManagedSettingName,
-  ManagedSettingValues,
-} from "./managedSettings"
+import type { ManagedSettingName, ReactReaderSettings } from "./managedSettings"
 
 /**
  * Keeps one of the reader's settings on the value in effect for this book: the
@@ -52,7 +49,7 @@ export const useSyncReaderSettingWithManagedValue = <
         return
       }
 
-      const readerSettings: Partial<ManagedSettingValues> = {}
+      const readerSettings: ReactReaderSettings = {}
 
       readerSettings[name] = valueInEffect
       reader.settings.update(readerSettings)
@@ -78,7 +75,7 @@ export const useSyncReaderSettingWithManagedValue = <
           }),
         )
         .subscribe(function reportAndAdoptReaderValue(readerValue) {
-          const changes: Partial<ManagedSettingValues> = {}
+          const changes: ReactReaderSettings = {}
 
           changes[name] = readerValue
           context.value.onSettingsChange?.(changes, "internal")

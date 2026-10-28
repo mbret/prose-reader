@@ -166,18 +166,16 @@ const InnerReactReader = memo(
   },
 )
 
-export const ReactReader = memo(
-  ({
-    children,
-    slots,
-    ...props
-  }: ComponentProps<typeof ReactReaderProvider> & {
-    slots?: {
-      container?: {
-        props?: Omit<ComponentProps<typeof InnerReactReader>, "children">
-      }
+export type ReactReaderProps = ComponentProps<typeof ReactReaderProvider> & {
+  slots?: {
+    container?: {
+      props?: Omit<ComponentProps<typeof InnerReactReader>, "children">
     }
-  }) => {
+  }
+}
+
+export const ReactReader = memo(
+  ({ children, slots, ...props }: ReactReaderProps) => {
     const { container: { props: containerProps = {} } = {} } = slots ?? {}
 
     return (

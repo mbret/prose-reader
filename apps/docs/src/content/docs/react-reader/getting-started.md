@@ -89,7 +89,9 @@ const useReaderInstance = (
 The user changes some of the reader's settings from react-reader's menus: the font scale from the font size menu, and the spread mode from the Layout dialog. react-reader writes them into the reader, so don't give them to your reader when you create it: they would be overwritten. Keep them in your app instead. Pass them as `settings`, in the shape `reader.settings` has, and merge what `onSettingsChange` reports into them:
 
 ```tsx
-const [settings, setSettings] = useState(savedSettings)
+import { ReactReader, type ReactReaderSettings } from "@prose-reader/react-reader"
+
+const [settings, setSettings] = useState<ReactReaderSettings>(savedSettings)
 
 <ReactReader
   reader={reader}
@@ -110,6 +112,8 @@ const [settings, setSettings] = useState(savedSettings)
 `onSettingsChange(changes, from)` receives only the settings that changed. `from` is the scope the user chose the value for, or `"internal"` for a value set on the reader directly, such as by a pinch.
 
 A setting you give no value keeps react-reader's own, for as long as it is mounted, starting from the value the reader was created with. A change in the menus still reaches `onSettingsChange`.
+
+The package exports the types of these props: `ReactReaderSettings` for the values, `ReactReaderSettingsScope` and `ReactReaderSettingsScopeReference` for the scopes below, and `ReactReaderProps` for every prop of `ReactReader`.
 
 ### Scopes
 

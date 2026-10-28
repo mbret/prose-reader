@@ -14,3 +14,10 @@ export type ManagedSettingValues = Pick<
   Reader["settings"]["values"],
   ManagedSettingName
 >
+
+/**
+ * Values of the settings react-reader manages, in the shape `reader.settings`
+ * has: what `settings` and `settingsByScope` hold, and what `onSettingsChange`
+ * reports.
+ */
+export type ReactReaderSettings = Partial<ManagedSettingValues>

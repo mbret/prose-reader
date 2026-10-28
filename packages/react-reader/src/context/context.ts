@@ -10,11 +10,11 @@ import { Subject } from "rxjs"
 import type { ReaderNotification } from "../notifications/types"
 import type {
   ManagedSettingName,
-  ManagedSettingValues,
+  ReactReaderSettings,
 } from "../settings/managedSettings"
 import type {
-  PROSE_REACT_READER_SETTINGS_SCOPE,
-  PROSE_REACT_READER_SETTINGS_SCOPE_REFERENCE,
+  ReactReaderSettingsScope,
+  ReactReaderSettingsScopeReference,
 } from "../settings/types"
 
 export type PrivateContextType = {
@@ -24,7 +24,7 @@ export type PrivateContextType = {
    * - there are no persistent settings
    * - the settings are valid only for the current mount runtime
    */
-  uncontrolledSettings: Partial<ManagedSettingValues>
+  uncontrolledSettings: ReactReaderSettings
   refitMenuOpen: boolean
   onRefitMenuOpenChange: (open: boolean) => void
   fontSizeMenuOpen: boolean
@@ -68,20 +68,20 @@ export type PublicContextType = {
    * react-reader's menus. They apply unless `settingsScopes` points a setting
    * to another scope.
    */
-  settings?: Partial<ManagedSettingValues>
+  settings?: ReactReaderSettings
   /**
    * The settings whose value the user chose in a menu, with the scope it was
    * chosen for, or `"internal"` for a value set on the reader directly.
    */
   onSettingsChange?: (
-    changes: Partial<ManagedSettingValues>,
-    from: PROSE_REACT_READER_SETTINGS_SCOPE_REFERENCE | "internal",
+    changes: ReactReaderSettings,
+    from: ReactReaderSettingsScopeReference | "internal",
   ) => void
   /** The values of the scopes other than the global one. */
   settingsByScope?: Partial<
     Record<
-      Exclude<PROSE_REACT_READER_SETTINGS_SCOPE_REFERENCE, "global">,
-      Partial<ManagedSettingValues>
+      Exclude<ReactReaderSettingsScopeReference, "global">,
+      ReactReaderSettings
     >
   >
   /**
@@ -89,13 +89,11 @@ export type PublicContextType = {
    * the global one. The menus offer the scopes once it is set.
    */
   settingsScopes?: Partial<
-    Record<ManagedSettingName, PROSE_REACT_READER_SETTINGS_SCOPE_REFERENCE>
+    Record<ManagedSettingName, ReactReaderSettingsScopeReference>
   >
   /** The scope the user picked for a setting, for this book. */
   onSettingsScopesChange?: (
-    changes: Partial<
-      Record<ManagedSettingName, PROSE_REACT_READER_SETTINGS_SCOPE>
-    >,
+    changes: Partial<Record<ManagedSettingName, ReactReaderSettingsScope>>,
   ) => void
   annotations?: Annotation[]
   onAnnotationCreate?: (annotation: Annotation) => void

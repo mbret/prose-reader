@@ -1,13 +1,11 @@
+import type {
+  ReactReaderSettings,
+  ReactReaderSettingsScopeReference,
+} from "@prose-reader/react-reader"
 import { useCallback, useMemo } from "react"
 import { type Signal, useSignalValue } from "reactjrx"
-import type {
-  ReaderSettings,
-  ReaderSettingsChangeOrigin,
-  ReaderSettingsScopes,
-  ScreenScopeReference,
-} from "./reactReaderSettings"
-import type { BookSettings } from "./useBookSettings"
-import { useSettings } from "./useSettings"
+import type { BookSettings, ReaderSettingsScopes } from "./useBookSettings"
+import { type ScreenSettingsScopeReference, useSettings } from "./useSettings"
 
 /**
  * ReactReader's settings props, from what the demo stores: the global values
@@ -17,7 +15,7 @@ import { useSettings } from "./useSettings"
  */
 export const useReactReaderSettingsProps = (
   bookSettingsSignal: Signal<BookSettings>,
-  screen: ScreenScopeReference | undefined,
+  screen: ScreenSettingsScopeReference | undefined,
 ) => {
   const [localSettings, setLocalSettings] = useSettings()
   const bookSettings = useSignalValue(bookSettingsSignal)
@@ -45,8 +43,8 @@ export const useReactReaderSettingsProps = (
 
   const onSettingsChange = useCallback(
     function saveSettingsChosenInReader(
-      changes: ReaderSettings,
-      from: ReaderSettingsChangeOrigin,
+      changes: ReactReaderSettings,
+      from: ReactReaderSettingsScopeReference | "internal",
     ) {
       if (from === "internal") return
 
