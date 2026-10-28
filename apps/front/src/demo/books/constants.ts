@@ -1,28 +1,33 @@
-import { DEMO_BASE_PATH } from "../../constants"
+/**
+ * The reader's path for a book in `public/epubs`, relative to the router's
+ * basename. The reader fetches the book from the url its key encodes.
+ */
+const getReaderPathOfDemoBook = (filename: string) =>
+  `/reader/${btoa(`${window.location.origin}/epubs/${filename}`)}`
 
 export const COMICS = [
   {
-    link: `${DEMO_BASE_PATH}/reader/${btoa(`${window.location.origin}/epubs/haruko-comic.zip`)}`,
+    link: getReaderPathOfDemoBook("haruko-comic.zip"),
     name: "Manga, horizontal scrolling",
     type: `FXL - RTL`,
   },
   {
-    link: `${DEMO_BASE_PATH}/reader/${btoa(`${window.location.origin}/epubs/haruko-comic.zip`)}?vertical`,
+    link: `${getReaderPathOfDemoBook("haruko-comic.zip")}?vertical`,
     name: "Manga, vertical scrolling",
     type: `FXL - RTL`,
   },
   {
-    link: `${DEMO_BASE_PATH}/reader/${btoa(`${window.location.origin}/epubs/haruko-comic.zip`)}?free&vertical`,
+    link: `${getReaderPathOfDemoBook("haruko-comic.zip")}?free&vertical`,
     name: "Manga, vertical free scrolling",
     type: `FXL - RTL`,
   },
   {
-    link: `${DEMO_BASE_PATH}/reader/${btoa(`${window.location.origin}/epubs/rendition-flow-webtoon-one-page.epub`)}?free&vertical`,
+    link: `${getReaderPathOfDemoBook("rendition-flow-webtoon-one-page.epub")}?free&vertical`,
     name: "Webtoon (one big image), vertical free scrolling",
     type: `RFL - LTR`,
   },
   {
-    link: `${DEMO_BASE_PATH}/reader/${btoa(`${window.location.origin}/epubs/rendition-flow-webtoon.epub`)}?free&vertical`,
+    link: `${getReaderPathOfDemoBook("rendition-flow-webtoon.epub")}?free&vertical`,
     name: "Webtoon, vertical free scrolling",
     type: `RFL - LTR`,
   },
@@ -32,7 +37,7 @@ export const PDFS = [
   {
     name: `sample-3.pdf`,
     type: `EN - LTR - FXL`,
-    link: `${DEMO_BASE_PATH}/reader/${btoa(`${window.location.origin}/epubs/sample-3.pdf`)}`,
+    link: getReaderPathOfDemoBook("sample-3.pdf"),
   },
 ]
 
@@ -40,7 +45,7 @@ export const AUDIOBOOKS = [
   {
     name: `Aesop Fables, Volume One (LibriVox)`,
     type: `EN - LTR - AUDIO`,
-    link: `${DEMO_BASE_PATH}/reader/${btoa(`${window.location.origin}/epubs/aesop_fables_volume_one_librivox.zip`)}`,
+    link: getReaderPathOfDemoBook("aesop_fables_volume_one_librivox.zip"),
   },
 ]
 
@@ -48,47 +53,47 @@ export const EPUBS = [
   {
     name: `accessible_epub_3.epub`,
     type: `EN - LTR - RFL`,
-    link: `${DEMO_BASE_PATH}/reader/${btoa(`${window.location.origin}/epubs/accessible_epub_3.epub`)}`,
+    link: getReaderPathOfDemoBook("accessible_epub_3.epub"),
   },
   {
     name: `sous-le-vent.epub`,
     type: `FR - LTR - FXL`,
-    link: `${DEMO_BASE_PATH}/reader/${btoa(`${window.location.origin}/epubs/sous-le-vent.epub`)}`,
+    link: getReaderPathOfDemoBook("sous-le-vent.epub"),
   },
   {
     name: `moby-dick_txt.txt`,
     type: `EN - LTR - TXT`,
-    link: `${DEMO_BASE_PATH}/reader/${btoa(`${window.location.origin}/epubs/moby-dick_txt.txt`)}`,
+    link: getReaderPathOfDemoBook("moby-dick_txt.txt"),
   },
 
   {
     name: `sample.cbz`,
     type: `EN - LTR - FXL`,
-    link: `${DEMO_BASE_PATH}/reader/${btoa(`${window.location.origin}/epubs/sample.cbz`)}`,
+    link: getReaderPathOfDemoBook("sample.cbz"),
   },
   {
     name: `cc-shared-culture.epub`,
     type: `EN - LTR - MEDIA`,
-    link: `${DEMO_BASE_PATH}/reader/${btoa(`${window.location.origin}/epubs/cc-shared-culture.epub`)}`,
+    link: getReaderPathOfDemoBook("cc-shared-culture.epub"),
   },
   {
     name: `Accessibility-Tests-Mathematics.epub`,
     type: `EN - LTR - RFL`,
-    link: `${DEMO_BASE_PATH}/reader/${btoa(`${window.location.origin}/epubs/Accessibility-Tests-Mathematics.epub`)}`,
+    link: getReaderPathOfDemoBook("Accessibility-Tests-Mathematics.epub"),
   },
   {
     name: `regime-anticancer-arabic.epub`,
     type: `AR - RTL - RFL`,
-    link: `${DEMO_BASE_PATH}/reader/${btoa(`${window.location.origin}/epubs/regime-anticancer-arabic.epub`)}`,
+    link: getReaderPathOfDemoBook("regime-anticancer-arabic.epub"),
   },
   {
     name: `mymedia_lite.epub`,
     type: `JP - RTL - RFL`,
-    link: `${DEMO_BASE_PATH}/reader/${btoa(`${window.location.origin}/epubs/mymedia_lite.epub`)}`,
+    link: getReaderPathOfDemoBook("mymedia_lite.epub"),
   },
   {
     name: `haruko-html-jpeg.epub`,
     type: `JP - RTL - FXL(P)`,
-    link: `${DEMO_BASE_PATH}/reader/${btoa(`${window.location.origin}/epubs/haruko-html-jpeg.epub`)}`,
+    link: getReaderPathOfDemoBook("haruko-html-jpeg.epub"),
   },
 ]

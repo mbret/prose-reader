@@ -11,7 +11,6 @@ import localforage from "localforage"
 import { LuArrowLeft } from "react-icons/lu"
 import { MdDelete } from "react-icons/md"
 import { Link } from "react-router"
-import { DEMO_BASE_PATH } from "../../constants"
 import { BookTable } from "./BookTable"
 import { AUDIOBOOKS, COMICS, EPUBS, PDFS } from "./constants"
 import { Glossary } from "./Glossary"
@@ -71,9 +70,7 @@ export const BooksScreen = () => {
               <Table.Row key={name}>
                 <Table.Cell>
                   <ChakraLink asChild>
-                    <Link to={`${DEMO_BASE_PATH}/reader/${base64Uri}`}>
-                      {name}
-                    </Link>
+                    <Link to={`/reader/${base64Uri}`}>{name}</Link>
                   </ChakraLink>
                 </Table.Cell>
                 <Table.Cell textAlign="right">

@@ -5,7 +5,6 @@ import {
 } from "@tanstack/react-query"
 import { memo } from "react"
 import { Navigate, Route, Routes } from "react-router"
-import { DEMO_BASE_PATH } from "../constants"
 import { BooksScreen } from "./books/BooksScreen"
 import { Toaster } from "./components/ui/toaster"
 import { ReaderScreen } from "./reader/ReaderScreen"
@@ -18,8 +17,7 @@ const queryClient = new QueryClient({
 })
 
 /**
- * Every demo route is relative to `DEMO_BASE_PATH`, the app mounts them under
- * a splat route.
+ * Every path is relative to `DEMO_BASE_PATH`, the router's basename.
  */
 export const DemoRoutes = memo(() => {
   useRegisterServiceWorker()
@@ -29,7 +27,7 @@ export const DemoRoutes = memo(() => {
       <Routes>
         <Route path="/" element={<BooksScreen />} />
         <Route path="reader/:url" element={<ReaderScreen />} />
-        <Route path="*" element={<Navigate to={DEMO_BASE_PATH} replace />} />
+        <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
       <Toaster />
     </QueryClientProvider>
