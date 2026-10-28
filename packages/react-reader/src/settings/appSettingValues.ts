@@ -11,7 +11,7 @@ type AppSettingValues = Pick<
 >
 
 /** The value the app gives a setting for a scope, if it gives one. */
-export const getAppSettingValueForScope = <Name extends ManagedSettingName>(
+const getAppSettingValueForScope = <Name extends ManagedSettingName>(
   { settings, settingsByScope }: AppSettingValues,
   name: Name,
   scope: PROSE_REACT_READER_SETTINGS_SCOPE_REFERENCE,
@@ -26,15 +26,26 @@ export const getSettingScopeInEffect = (
   settingsScopes?.[name] ?? "global"
 
 /**
- * The value the app gives a setting for this book: its scope's, or the global
- * one when its scope has none.
+ * The value the app gives a setting when a scope is in effect: the scope's, or
+ * the global one when the scope has none.
  */
+export const getAppSettingValueWhenScopeInEffect = <
+  Name extends ManagedSettingName,
+>(
+  appSettingValues: AppSettingValues,
+  name: Name,
+  scope: PROSE_REACT_READER_SETTINGS_SCOPE_REFERENCE,
+): ManagedSettingValues[Name] | undefined =>
+  getAppSettingValueForScope(appSettingValues, name, scope) ??
+  appSettingValues.settings?.[name]
+
+/** The value the app gives a setting for this book. */
 export const getAppSettingValueInEffect = <Name extends ManagedSettingName>(
   appSettingValues: AppSettingValues,
   name: Name,
 ): ManagedSettingValues[Name] | undefined =>
-  getAppSettingValueForScope(
+  getAppSettingValueWhenScopeInEffect(
     appSettingValues,
     name,
     getSettingScopeInEffect(appSettingValues, name),
-  ) ?? appSettingValues.settings?.[name]
+  )

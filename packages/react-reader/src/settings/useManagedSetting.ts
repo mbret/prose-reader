@@ -4,8 +4,8 @@ import {
   useReaderContextValue,
 } from "../context/useReaderContext"
 import {
-  getAppSettingValueForScope,
   getAppSettingValueInEffect,
+  getAppSettingValueWhenScopeInEffect,
   getSettingScopeInEffect,
 } from "./appSettingValues"
 import type {
@@ -33,14 +33,13 @@ export const useManagedSetting = <Name extends ManagedSettingName>(
     "onSettingsScopesChange",
     "uncontrolledSettings",
   ])
-  const valueInEffect =
-    getAppSettingValueInEffect(appSettingValues, name) ??
-    appSettingValues.uncontrolledSettings[name]
 
+  /** What a scope's tab shows: the value the setting takes with that scope. */
   const getValueForScope = (
     scope: PROSE_REACT_READER_SETTINGS_SCOPE_REFERENCE,
   ) =>
-    getAppSettingValueForScope(appSettingValues, name, scope) ?? valueInEffect
+    getAppSettingValueWhenScopeInEffect(appSettingValues, name, scope) ??
+    appSettingValues.uncontrolledSettings[name]
 
   const changeValueForScope = useCallback(
     function changeValueForScope(

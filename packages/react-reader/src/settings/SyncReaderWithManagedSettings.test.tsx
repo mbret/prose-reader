@@ -318,6 +318,20 @@ describe(`SyncReaderWithManagedSettings`, () => {
     expect(reader.settings.values.spreadMode).toBe(`never`)
   })
 
+  it(`shows in a scope's tab the value that scope applies, the global one when it has none`, async () => {
+    testReader.set(createReaderWithSettings())
+
+    const spreadModeMenu = await renderWithSpreadModeMenu({
+      reader: undefined,
+      settings: { spreadMode: `never` },
+      settingsByScope: { book: { spreadMode: `always` } },
+      settingsScopes: { spreadMode: `book` },
+    })
+
+    expect(spreadModeMenu.current?.getValueForScope(`book`)).toBe(`always`)
+    expect(spreadModeMenu.current?.getValueForScope(`mobile`)).toBe(`never`)
+  })
+
   it(`offers the scopes once the app passes settingsScopes`, async () => {
     testReader.set(createReaderWithSettings())
 
