@@ -7,7 +7,7 @@ head:
     content: "prose documentation: the open-source engine for reading apps"
 ---
 
-Welcome to the `prose` documentation. prose is a free and open-source **Reading System SDK** that renders any format in the browser. EPUB 3, comics (cbz, cbr, etc) and PDF are ready to use, and an [enhancer](/learn/enhancers) teaches it any other.
+Welcome to the `prose` documentation. prose is a free and open-source **Reading System SDK** that renders any format in the browser. EPUB 3, comics (cbz, cbr, etc) and PDF are ready to use, and you can extend it to more with your own [archive](/archive-reader#the-archive-contract) and [renderer](/learn/renderers).
 
 It does not mind where a book comes from either: the [streamer](/learn/streamer), or your own code, can serve it entirely in the browser, with no server at all, or from your own server or a React Native app.
 

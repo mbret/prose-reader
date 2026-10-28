@@ -9,7 +9,7 @@
 <p align="center">
   <b>The open-source engine for building reading apps in the browser.</b>
   <br/>
-  Render any format: EPUB 3, comics and PDF are ready, and enhancers add the rest. Serve books from anywhere, entirely in the browser or from your server. One framework-agnostic SDK to ship your own reader, your way.
+  Render any format: EPUB 3, comics and PDF are ready, and you can extend it to more. Serve books from anywhere, entirely in the browser or from your server. One framework-agnostic SDK to ship your own reader, your way.
 </p>
 
 <p align="center">

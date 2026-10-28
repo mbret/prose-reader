@@ -29,7 +29,7 @@ const questions: { question: string; answer: ReactNode }[] = [
   {
     question: "Which formats can it read?",
     answer:
-      "Any format. EPUB 3, comics in CBZ or CBR, PDF, plain text and audiobooks are ready to use, and an enhancer teaches it any other.",
+      "Any format. EPUB 3, comics in CBZ or CBR, PDF, plain text and audiobooks are ready to use, and you can extend it to more.",
   },
   {
     question: "Do I need a server?",
