@@ -36,6 +36,8 @@ const XLINK_NAMESPACE = `http://www.w3.org/1999/xlink`
 
 type Resource = { mediaType: string; body: string }
 
+const ONE_PIXEL_PNG_DATA_URL = `data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNkYAAAAAYAAjCB0C8AAAAASUVORK5CYII=`
+
 type HeldRequest = { load: () => void; fail: () => void }
 
 const svgWith = (image: string) =>
@@ -58,40 +60,54 @@ const readObjectUrl = async (url: string | null | undefined) =>
 /**
  * Serves the frame's blob urls through happy-dom's fetch interceptor, holding
  * each stylesheet, and each image when asked, until the test loads or fails
- * it.
+ * it. With `servesAtUrls`, `getResource` gives nothing, and the interceptor
+ * serves the document and its resources at their urls instead, as a server or
+ * a service worker does.
  */
 const createHarness = ({
   documentHref,
   resources,
   failingResources = [],
   holdsImages = false,
+  servesAtUrls = false,
 }: {
   documentHref: string
   resources: Record<string, Resource>
   failingResources?: string[]
   holdsImages?: boolean
+  servesAtUrls?: boolean
 }) => {
   const happyDOMWindow = getHappyDOMWindow()
   const stylesheetRequests: HeldRequest[] = []
   const imageRequests: HeldRequest[] = []
+  const served: Record<string, Resource> = { ...resources }
+
+  const getRequestedResource = async (
+    url: string,
+  ): Promise<Resource | undefined> => {
+    const blob = resolveObjectURL(url)
+
+    if (blob) return { mediaType: blob.type, body: await blob.text() }
+
+    return servesAtUrls ? served[url] : undefined
+  }
 
   happyDOMWindow.happyDOM.settings.enableImageFileLoading = true
   happyDOMWindow.happyDOM.settings.fetch.interceptor = {
     beforeAsyncRequest: async ({ request, window: requestWindow }) => {
-      const blob = resolveObjectURL(request.url)
+      const resource = await getRequestedResource(request.url)
 
-      if (!blob) return undefined
+      if (!resource) return undefined
 
-      const body = await blob.text()
       const respond = () =>
-        new requestWindow.Response(body, {
-          headers: { "content-type": blob.type },
+        new requestWindow.Response(resource.body, {
+          headers: { "content-type": resource.mediaType },
         })
 
       const heldRequests =
-        blob.type === `text/css`
+        resource.mediaType === `text/css`
           ? stylesheetRequests
-          : holdsImages && blob.type.startsWith(`image/`)
+          : holdsImages && resource.mediaType.startsWith(`image/`)
             ? imageRequests
             : undefined
 
@@ -100,7 +116,7 @@ const createHarness = ({
       return new Promise((resolve, reject) => {
         heldRequests.push({
           load: () => resolve(respond()),
-          fail: () => reject(new Error(`${blob.type} failed`)),
+          fail: () => reject(new Error(`${resource.mediaType} failed`)),
         })
       })
     },
@@ -130,7 +146,6 @@ const createHarness = ({
       ],
     }),
   )
-  const served: Record<string, Resource> = { ...resources }
   const settings = new ReaderSettingsManager(
     {
       getResource: (resourceItem) => {
@@ -141,10 +156,11 @@ const createHarness = ({
         const resource = served[resourceItem.href]
 
         return of(
-          resource &&
-            new Response(resource.body, {
-              headers: { "content-type": resource.mediaType },
-            }),
+          resource && !servesAtUrls
+            ? new Response(resource.body, {
+                headers: { "content-type": resource.mediaType },
+              })
+            : undefined,
         )
       },
     },
@@ -153,6 +169,13 @@ const createHarness = ({
   const viewport = new Viewport(context, settings)
   const hookManager = new HookManager()
   const containerElement = document.createElement(`div`)
+  let hasFrameLoaded = false
+
+  hookManager.register(`item.onDocumentCreated`, ({ documentContainer }) => {
+    documentContainer.addEventListener(`load`, () => {
+      hasFrameLoaded = true
+    })
+  })
 
   /**
    * happy-dom never loads an SVG image, so this reports each one loaded once
@@ -214,6 +237,8 @@ const createHarness = ({
   return {
     renderer,
     getDocument,
+    waitForFrameLoaded: () =>
+      vi.waitFor(() => expect(hasFrameLoaded).toBe(true)),
     load: (body: string) => {
       served[documentHref] = { mediaType: `application/xhtml+xml`, body }
       renderer.load()
@@ -608,6 +633,86 @@ describe(`HtmlRenderer`, () => {
 
       expect(loadStatuses).not.toContain(`loaded`)
       expect(await readObjectUrl(imageUrl)).toBeUndefined()
+    })
+  })
+
+  describe(`given a document loaded by its url, with images`, () => {
+    // On the page's origin, so the frame loads the document from its url.
+    const documentHref = `${window.location.origin}/EPUB/chapter.xhtml`
+    const resources = {
+      [`${window.location.origin}/EPUB/images/a.png`]: {
+        mediaType: `image/png`,
+        body: `a`,
+      },
+    }
+
+    it(`is not loaded until each of them has loaded, though its frame has`, async () => {
+      useRxjsFakeTimers()
+
+      const {
+        load,
+        waitForImageRequests,
+        waitForFrameLoaded,
+        waitForLoaded,
+        renderer,
+        getDocument,
+      } = setup({
+        documentHref,
+        resources,
+        holdsImages: true,
+        servesAtUrls: true,
+      })
+
+      load(documentWith(``, `<img src="images/a.png" />`))
+
+      const [image] = await waitForImageRequests(1)
+
+      await waitForFrameLoaded()
+      // well short of the 5 seconds the reader waits for an image at most
+      await vi.advanceTimersByTimeAsync(1_000)
+
+      expect(getDocument()?.URL).toBe(documentHref)
+      expect(renderer.value.loadStatus).toBe(`loading`)
+
+      image?.load()
+
+      await waitForLoaded()
+    })
+
+    it(`does not wait for an image that has already loaded`, async () => {
+      useRxjsFakeTimers()
+
+      const { load, waitForFrameLoaded, renderer, getDocument } = setup({
+        documentHref,
+        resources,
+        servesAtUrls: true,
+      })
+
+      // A data url loads as the document is parsed, before its frame's load.
+      load(documentWith(``, `<img src="${ONE_PIXEL_PNG_DATA_URL}" />`))
+
+      await waitForFrameLoaded()
+      // well short of the 5 seconds the reader waits for an image at most
+      await vi.advanceTimersByTimeAsync(1_000)
+
+      expect(getDocument()?.querySelector(`img`)?.complete).toBe(true)
+      expect(renderer.value.loadStatus).toBe(`loaded`)
+    })
+
+    it(`marks a lazy image eager`, async () => {
+      const { load, waitForLoaded, getDocument } = setup({
+        documentHref,
+        resources,
+        servesAtUrls: true,
+      })
+
+      load(documentWith(``, `<img loading="lazy" src="images/a.png" />`))
+
+      await waitForLoaded()
+
+      expect(getDocument()?.querySelector(`img`)?.getAttribute(`loading`)).toBe(
+        `eager`,
+      )
     })
   })
 
