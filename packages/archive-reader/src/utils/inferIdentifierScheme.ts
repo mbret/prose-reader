@@ -1,6 +1,8 @@
 import type { KnownMetadataIdentifierScheme } from "../types/resolvedMetadata.ts"
 import { booklandIsbn } from "./booklandIsbn.ts"
 import { normalizeGtin } from "./normalizeGtin.ts"
+import { parseUrn } from "./urn.ts"
+import { canonicalUuid } from "./uuid.ts"
 
 /**
  * The schemes a value can announce by itself. Drawn from
@@ -12,27 +14,6 @@ export type InferredIdentifierScheme = Extract<
   "ISBN" | "GTIN" | "UUID" | "URN" | "URL" | "Unknown"
 >
 
-/** One URI path character, per RFC 3986: what a URN's parts are made of. */
-const URI_PATH_CHARACTER = "(?:[a-z0-9._~!$&'()*+,;=:@-]|%[0-9a-f]{2})"
-
-/**
- * A URN, per RFC 8141: `urn:`, a namespace identifier of 2 to 32 letters,
- * digits and inner hyphens, a namespace-specific string of URI path
- * characters, and the optional `?+`, `?=` and `#` components.
- */
-const URN_PATTERN = new RegExp(
-  `^urn:([a-z0-9][a-z0-9-]{0,30}[a-z0-9])` +
-    `:(${URI_PATH_CHARACTER}(?:${URI_PATH_CHARACTER}|/)*)` +
-    `(?:\\?\\+${URI_PATH_CHARACTER}(?:${URI_PATH_CHARACTER}|[/?])*)?` +
-    `(?:\\?=${URI_PATH_CHARACTER}(?:${URI_PATH_CHARACTER}|[/?])*)?` +
-    `(?:#(?:${URI_PATH_CHARACTER}|[/?])*)?$`,
-  "i",
-)
-
-/** A UUID's text form, per RFC 9562: 32 hex digits grouped 8-4-4-4-12. */
-const UUID_PATTERN =
-  /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
-
 /**
  * The scheme a value written as a URN announces. The namespace it names
  * counts only when the rest is that namespace's value — an ISBN after
@@ -41,24 +22,20 @@ const UUID_PATTERN =
  * barcode readings, which would take the digit runs of a malformed
  * `urn:uuid:{…}` for an ISBN-10 or a GTIN.
  */
-const urnScheme = (urn: string): InferredIdentifierScheme => {
-  const [, namespaceIdentifier, namespaceSpecificString] =
-    URN_PATTERN.exec(urn) ?? []
+const urnScheme = (value: string): InferredIdentifierScheme => {
+  const urn = parseUrn(value)
 
-  if (
-    namespaceIdentifier === undefined ||
-    namespaceSpecificString === undefined
-  ) {
-    return "Unknown"
-  }
+  if (urn === undefined) return "Unknown"
 
-  switch (namespaceIdentifier.toLowerCase()) {
+  switch (urn.namespaceIdentifier) {
     case "isbn":
-      return booklandIsbn(namespaceSpecificString) !== undefined
+      return booklandIsbn(urn.namespaceSpecificString) !== undefined
         ? "ISBN"
         : "URN"
     case "uuid":
-      return UUID_PATTERN.test(namespaceSpecificString) ? "UUID" : "URN"
+      return canonicalUuid(urn.namespaceSpecificString) !== undefined
+        ? "UUID"
+        : "URN"
     default:
       return "URN"
   }
@@ -104,7 +81,7 @@ export const inferIdentifierScheme = (
 
   if (/^urn:/i.test(trimmed)) return urnScheme(trimmed)
 
-  if (UUID_PATTERN.test(trimmed)) return "UUID"
+  if (canonicalUuid(trimmed) !== undefined) return "UUID"
   if (booklandIsbn(trimmed) !== undefined) return "ISBN"
   if (normalizeGtin(trimmed) !== undefined) return "GTIN"
 

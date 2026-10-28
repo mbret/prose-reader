@@ -13,17 +13,19 @@ export type MetadataCatalogScheme = Extract<
 >
 
 /**
- * Schemes that say nothing about what assigned the value, which is what makes
- * a reference URL worth reading: the publication stated a link, not a
- * namespace. An explicitly typed identifier of another catalog is left alone.
+ * Schemes that say how a value is written rather than what assigned it — a
+ * link, a URN — or say nothing at all, which is what makes the value worth
+ * reading for the namespace it names: a catalog's URL, a `urn:uuid:`. An
+ * explicitly typed identifier of another namespace is left alone.
  */
-const isUntypedReferenceScheme = (
-  scheme: MetadataIdentifierScheme,
-): boolean => {
+const isReferenceScheme = (scheme: MetadataIdentifierScheme): boolean => {
   const normalized = scheme.trim().toLowerCase()
 
   return (
-    normalized === "url" || normalized === "uri" || normalized === "unknown"
+    normalized === "url" ||
+    normalized === "uri" ||
+    normalized === "urn" ||
+    normalized === "unknown"
   )
 }
 
@@ -315,4 +317,4 @@ export const catalogRule = (
   return catalog
 }
 
-export { isUntypedReferenceScheme }
+export { isReferenceScheme }
