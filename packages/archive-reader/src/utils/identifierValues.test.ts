@@ -208,3 +208,53 @@ describe("identifierValue for catalog schemes", () => {
     expect(identifierValue(undefined, "GoogleBooks")).toBeUndefined()
   })
 })
+
+describe("identifierValue for UUID", () => {
+  const uuid = "a1b0d67e-2e81-4df5-9e67-a64cbe366809"
+
+  it("reads a UUID identifier in either spelling and either case", () => {
+    for (const value of [
+      uuid,
+      uuid.toUpperCase(),
+      `urn:uuid:${uuid}`,
+      `URN:UUID:${uuid.toUpperCase()}`,
+    ]) {
+      expect(identifierValue([{ value, scheme: "UUID" }], "UUID")).toBe(uuid)
+    }
+    expect(identifierValue([{ value: uuid, scheme: "uuid" }], "UUID")).toBe(
+      uuid,
+    )
+  })
+
+  it("reads the urn:uuid: form of a URN or an untyped identifier", () => {
+    expect(
+      identifierValue([{ value: `urn:uuid:${uuid}`, scheme: "URN" }], "UUID"),
+    ).toBe(uuid)
+    expect(
+      identifierValue(
+        [{ value: `urn:uuid:${uuid}`, scheme: "Unknown" }],
+        "UUID",
+      ),
+    ).toBe(uuid)
+  })
+
+  it("still refuses a bare UUID an untyped identifier happens to carry", () => {
+    expect(
+      identifierValue([{ value: uuid, scheme: "Unknown" }], "UUID"),
+    ).toBeUndefined()
+  })
+
+  it("declines what is not a UUID", () => {
+    expect(
+      identifierValue(
+        [
+          { value: "urn:uuid:abc", scheme: "UUID" },
+          { value: "urn:nbn:de:101:1-2011", scheme: "URN" },
+          { value: `{${uuid}}`, scheme: "UUID" },
+          { value: `urn:uuid:${uuid}`, scheme: "ExampleCatalog" },
+        ],
+        "UUID",
+      ),
+    ).toBeUndefined()
+  })
+})
