@@ -1,4 +1,4 @@
-import { Box, useBreakpointValue } from "@chakra-ui/react"
+import { Box } from "@chakra-ui/react"
 import { ReactReader } from "@prose-reader/react-reader"
 import "@prose-reader/react-reader/index.css"
 import { type ComponentProps, memo, useCallback, useRef } from "react"
@@ -43,11 +43,6 @@ export const ReaderScreen = memo(() => {
   const isQuickMenuOpen = useSignalValue(isQuickMenuOpenSignal)
   const navigate = useNavigate()
   const { key: locationKey } = useLocation()
-  const breakpointValue = useBreakpointValue<"mobile" | "tablet" | "desktop">({
-    base: "mobile",
-    md: "tablet",
-    lg: "desktop",
-  })
 
   useDocumentTitle(manifest?.title ?? `Reader - prose reader demo`)
 
@@ -58,10 +53,8 @@ export const ReaderScreen = memo(() => {
   usePersistAnnotations(annotationsSignal, epubKey)
   useBookBoundariesReachedToast()
 
-  const reactReaderSettingsProps = useReactReaderSettingsProps(
-    bookSettingsSignal,
-    breakpointValue,
-  )
+  const reactReaderSettingsProps =
+    useReactReaderSettingsProps(bookSettingsSignal)
 
   const onItemClick = useCallback(
     (

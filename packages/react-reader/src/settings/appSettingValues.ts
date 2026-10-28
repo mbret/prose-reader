@@ -3,7 +3,10 @@ import type {
   ManagedSettingName,
   ManagedSettingValues,
 } from "./managedSettings"
-import type { ReactReaderSettingsScopeReference } from "./types"
+import type {
+  ReactReaderSettingsScopeReference,
+  ScreenSettingsScopeReference,
+} from "./types"
 
 type AppSettingValues = Pick<
   PublicContextType,
@@ -18,11 +21,19 @@ const getAppSettingValueForScope = <Name extends ManagedSettingName>(
 ): ManagedSettingValues[Name] | undefined =>
   scope === "global" ? settings?.[name] : settingsByScope?.[scope]?.[name]
 
-/** The scope a setting takes its value from, for this book. */
-export const getSettingScopeInEffect = (
+/**
+ * The scope a setting takes its value from for this book, as the screen it
+ * stands for when it is the screen scope.
+ */
+export const getSettingScopeReferenceInEffect = (
   { settingsScopes }: AppSettingValues,
   name: ManagedSettingName,
-): ReactReaderSettingsScopeReference => settingsScopes?.[name] ?? "global"
+  screen: ScreenSettingsScopeReference,
+): ReactReaderSettingsScopeReference => {
+  const scope = settingsScopes?.[name] ?? "global"
+
+  return scope === "screen" ? screen : scope
+}
 
 /**
  * The value the app gives a setting when a scope is in effect: the scope's, or
@@ -38,13 +49,14 @@ export const getAppSettingValueWhenScopeInEffect = <
   getAppSettingValueForScope(appSettingValues, name, scope) ??
   appSettingValues.settings?.[name]
 
-/** The value the app gives a setting for this book. */
+/** The value the app gives a setting for this book, on this screen. */
 export const getAppSettingValueInEffect = <Name extends ManagedSettingName>(
   appSettingValues: AppSettingValues,
   name: Name,
+  screen: ScreenSettingsScopeReference,
 ): ManagedSettingValues[Name] | undefined =>
   getAppSettingValueWhenScopeInEffect(
     appSettingValues,
     name,
-    getSettingScopeInEffect(appSettingValues, name),
+    getSettingScopeReferenceInEffect(appSettingValues, name, screen),
   )

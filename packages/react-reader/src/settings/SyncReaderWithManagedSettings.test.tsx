@@ -1,7 +1,8 @@
 /* @vitest-environment happy-dom */
 
+import { ChakraProvider, defaultSystem } from "@chakra-ui/react"
 import type { CoreInputSettings } from "@prose-reader/core"
-import { act, type ComponentProps, useState } from "react"
+import { act, type ComponentProps, type ReactNode, useState } from "react"
 import { createRoot } from "react-dom/client"
 import { BehaviorSubject } from "rxjs"
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
@@ -108,17 +109,48 @@ const AppSavingEveryChange = ({
   )
 }
 
+const hasViewportControl = (
+  happyDOM: unknown,
+): happyDOM is {
+  setViewport: (viewport: { width: number; height: number }) => void
+} =>
+  typeof happyDOM === `object` &&
+  happyDOM !== null &&
+  `setViewport` in happyDOM &&
+  typeof happyDOM.setViewport === `function`
+
+/** Sets the width of the window happy-dom emulates, which media queries follow. */
+const setWindowWidth = (width: number) => {
+  const happyDOM: unknown = Reflect.get(window, `happyDOM`)
+
+  if (!hasViewportControl(happyDOM)) {
+    throw new Error(
+      `These tests run in happy-dom, to control the window's width`,
+    )
+  }
+
+  happyDOM.setViewport({ width, height: window.innerHeight })
+}
+
+const DEFAULT_WINDOW_WIDTH = window.innerWidth
+
 describe(`SyncReaderWithManagedSettings`, () => {
   let root: ReturnType<typeof createRoot>
 
-  const render = async (props: ReactReaderProviderProps) => {
+  const renderInChakra = async (element: ReactNode) => {
     await act(async () => {
       root.render(
-        <ReactReaderProvider {...props}>
-          <SyncReaderWithManagedSettings />
-        </ReactReaderProvider>,
+        <ChakraProvider value={defaultSystem}>{element}</ChakraProvider>,
       )
     })
+  }
+
+  const render = async (props: ReactReaderProviderProps) => {
+    await renderInChakra(
+      <ReactReaderProvider {...props}>
+        <SyncReaderWithManagedSettings />
+      </ReactReaderProvider>,
+    )
   }
 
   /**
@@ -135,14 +167,12 @@ describe(`SyncReaderWithManagedSettings`, () => {
       return null
     }
 
-    await act(async () => {
-      root.render(
-        <ReactReaderProvider {...props}>
-          <SyncReaderWithManagedSettings />
-          <SpreadModeMenu />
-        </ReactReaderProvider>,
-      )
-    })
+    await renderInChakra(
+      <ReactReaderProvider {...props}>
+        <SyncReaderWithManagedSettings />
+        <SpreadModeMenu />
+      </ReactReaderProvider>,
+    )
 
     return spreadModeMenu
   }
@@ -157,6 +187,7 @@ describe(`SyncReaderWithManagedSettings`, () => {
       root.unmount()
     })
     testReader.set(undefined)
+    setWindowWidth(DEFAULT_WINDOW_WIDTH)
   })
 
   it(`keeps the app's values when the reader arrives holding others`, async () => {
@@ -166,14 +197,12 @@ describe(`SyncReaderWithManagedSettings`, () => {
     })
     const savedChanges: SettingsChange[] = []
     const renderApp = async () => {
-      await act(async () => {
-        root.render(
-          <AppSavingEveryChange
-            initialSettings={{ fontScale: 1.5, spreadMode: `never` }}
-            savedChanges={savedChanges}
-          />,
-        )
-      })
+      await renderInChakra(
+        <AppSavingEveryChange
+          initialSettings={{ fontScale: 1.5, spreadMode: `never` }}
+          savedChanges={savedChanges}
+        />,
+      )
     }
 
     await renderApp()
@@ -330,6 +359,52 @@ describe(`SyncReaderWithManagedSettings`, () => {
 
     expect(spreadModeMenu.current?.getValueForScope(`book`)).toBe(`always`)
     expect(spreadModeMenu.current?.getValueForScope(`mobile`)).toBe(`never`)
+  })
+
+  it(`takes the value of the screen the book is read on for a setting with the screen scope, without another value first`, async () => {
+    setWindowWidth(800)
+    const reader = createReaderWithSettings({ spreadMode: `auto` })
+    testReader.set(reader)
+
+    await render({
+      reader: undefined,
+      settings: { spreadMode: `never` },
+      settingsByScope: {
+        tablet: { spreadMode: `always` },
+        desktop: { spreadMode: `auto` },
+      },
+      settingsScopes: { spreadMode: `screen` },
+    })
+
+    expect(reader.settings.update.mock.calls).toEqual([
+      [{ spreadMode: `always` }],
+    ])
+  })
+
+  it(`shows the screen the book is read on as the scope in effect, from a menu's first render`, async () => {
+    setWindowWidth(800)
+    testReader.set(createReaderWithSettings())
+    const activeScopes: unknown[] = []
+    const SpreadModeMenu = () => {
+      activeScopes.push(useManagedSetting(`spreadMode`).activeScope)
+
+      return null
+    }
+    const renderReaderWithMenu = (menu: ReactNode) =>
+      renderInChakra(
+        <ReactReaderProvider
+          reader={undefined}
+          settingsScopes={{ spreadMode: `screen` }}
+        >
+          <SyncReaderWithManagedSettings />
+          {menu}
+        </ReactReaderProvider>,
+      )
+
+    await renderReaderWithMenu(null)
+    await renderReaderWithMenu(<SpreadModeMenu />)
+
+    expect(activeScopes[0]).toBe(`tablet`)
   })
 
   it(`offers the scopes once the app passes settingsScopes`, async () => {

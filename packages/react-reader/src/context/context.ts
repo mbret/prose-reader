@@ -85,13 +85,15 @@ export type PublicContextType = {
     >
   >
   /**
-   * For this book, the scope each setting takes its value from, when it is not
-   * the global one. The menus offer the scopes once it is set.
+   * For this book, the scope each setting takes its value from, as
+   * `onSettingsScopesChange` reports it. A setting it leaves out takes the
+   * global value. The menus offer the scopes once it is set.
    */
-  settingsScopes?: Partial<
-    Record<ManagedSettingName, ReactReaderSettingsScopeReference>
-  >
-  /** The scope the user picked for a setting, for this book. */
+  settingsScopes?: Partial<Record<ManagedSettingName, ReactReaderSettingsScope>>
+  /**
+   * The scope the user picked for a setting, for this book, to keep and pass
+   * back in `settingsScopes`.
+   */
   onSettingsScopesChange?: (
     changes: Partial<Record<ManagedSettingName, ReactReaderSettingsScope>>,
   ) => void

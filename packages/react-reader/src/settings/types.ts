@@ -25,6 +25,12 @@ export type ReactReaderSettingsScope =
 export type ReactReaderSettingsScopeReference =
   (typeof PROSE_REACT_READER_SETTINGS_SCOPE_CONFIGURATION)[number]["references"][number]
 
+/** The screens the screen scope stands for, `mobile`, `tablet` or `desktop`. */
+export type ScreenSettingsScopeReference = Extract<
+  (typeof PROSE_REACT_READER_SETTINGS_SCOPE_CONFIGURATION)[number],
+  { value: "screen" }
+>["references"][number]
+
 export const SETTINGS_SCOPES =
   PROSE_REACT_READER_SETTINGS_SCOPE_CONFIGURATION.map((scope) => scope.value)
 

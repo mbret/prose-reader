@@ -5,7 +5,7 @@ import type {
 import { signal, useSignal } from "reactjrx"
 
 /** The screens of react-reader's screen scope. */
-export type ScreenSettingsScopeReference = Exclude<
+type ScreenSettingsScopeReference = Exclude<
   ReactReaderSettingsScopeReference,
   "global" | "book"
 >

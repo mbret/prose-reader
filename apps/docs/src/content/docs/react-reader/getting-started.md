@@ -123,10 +123,10 @@ The menus can keep a value per scope: global, the book, or the screen (`mobile`,
 | --- | --- |
 | `settings` | The global values. |
 | `settingsByScope` | The values of the other scopes, by scope: `book`, `mobile`, `tablet` and `desktop`. |
-| `settingsScopes` | For this book, the scope each setting takes its value from, such as `{ fontScale: "book" }`. A setting it leaves out takes the global value. |
-| `onSettingsScopesChange(changes)` | The scope the user picked for a setting, such as `{ fontScale: "screen" }`. Pass it back in `settingsScopes` as the screen you are on, such as `"tablet"`. |
+| `settingsScopes` | For this book, the scope each setting takes its value from, such as `{ fontScale: "screen" }`. A setting it leaves out takes the global value. |
+| `onSettingsScopesChange(changes)` | The scope the user picked for a setting, such as `{ fontScale: "screen" }`. Keep it and pass it back in `settingsScopes`. |
 
-A setting takes the value of its scope when that scope has one, and the global value otherwise. `from` tells which scope a change belongs to: merge `changes` into `settings` for `"global"`, and into `settingsByScope[from]` for the other scopes.
+react-reader resolves the screen scope to `mobile`, `tablet` or `desktop` from the width of the window, at the `md` and `lg` breakpoints of your Chakra theme. A setting takes the value of its scope when that scope has one, and the global value otherwise. `from` is the scope of the tab the value was chosen in, as its screen for the screen scope: merge `changes` into `settings` for `"global"`, and into `settingsByScope[from]` for the other scopes.
 
 ## Toggling features
 

@@ -6,7 +6,7 @@ import {
 import {
   getAppSettingValueInEffect,
   getAppSettingValueWhenScopeInEffect,
-  getSettingScopeInEffect,
+  getSettingScopeReferenceInEffect,
 } from "./appSettingValues"
 import type {
   ManagedSettingName,
@@ -17,6 +17,7 @@ import type {
   ReactReaderSettingsScope,
   ReactReaderSettingsScopeReference,
 } from "./types"
+import { useScreenSettingsScopeReference } from "./useScreenSettingsScopeReference"
 
 /**
  * What a menu needs to edit a setting react-reader manages: its scopes, the
@@ -27,6 +28,7 @@ export const useManagedSetting = <Name extends ManagedSettingName>(
   name: Name,
 ) => {
   const context = useReaderContext()
+  const screen = useScreenSettingsScopeReference()
   const appSettingValues = useReaderContextValue([
     "settings",
     "settingsByScope",
@@ -47,8 +49,8 @@ export const useManagedSetting = <Name extends ManagedSettingName>(
     ) {
       const changes: ReactReaderSettings = {}
       const isValueInEffectReactReaderOwn =
-        getAppSettingValueInEffect(context.value, name) === undefined &&
-        scope === getSettingScopeInEffect(context.value, name)
+        getAppSettingValueInEffect(context.value, name, screen) === undefined &&
+        scope === getSettingScopeReferenceInEffect(context.value, name, screen)
 
       changes[name] = value
 
@@ -61,7 +63,7 @@ export const useManagedSetting = <Name extends ManagedSettingName>(
 
       context.value.onSettingsChange?.(changes, scope)
     },
-    [name, context],
+    [name, context, screen],
   )
 
   const changeScope = useCallback(
@@ -78,7 +80,7 @@ export const useManagedSetting = <Name extends ManagedSettingName>(
 
   return {
     activeScope: appSettingValues.settingsScopes
-      ? getSettingScopeInEffect(appSettingValues, name)
+      ? getSettingScopeReferenceInEffect(appSettingValues, name, screen)
       : undefined,
     onActiveScopeChange: appSettingValues.onSettingsScopesChange
       ? changeScope

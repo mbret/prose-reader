@@ -5,7 +5,10 @@ import type {
 import { useCallback, useMemo } from "react"
 import { type Signal, useSignalValue } from "reactjrx"
 import type { BookSettings, ReaderSettingsScopes } from "./useBookSettings"
-import { type ScreenSettingsScopeReference, useSettings } from "./useSettings"
+import { useSettings } from "./useSettings"
+
+/** A book whose settings take every value from the global scope. */
+const NO_READER_SETTINGS_SCOPES: ReaderSettingsScopes = {}
 
 /**
  * ReactReader's settings props, from what the demo stores: the global values
@@ -15,7 +18,6 @@ import { type ScreenSettingsScopeReference, useSettings } from "./useSettings"
  */
 export const useReactReaderSettingsProps = (
   bookSettingsSignal: Signal<BookSettings>,
-  screen: ScreenSettingsScopeReference | undefined,
 ) => {
   const [localSettings, setLocalSettings] = useSettings()
   const bookSettings = useSignalValue(bookSettingsSignal)
@@ -26,19 +28,6 @@ export const useReactReaderSettingsProps = (
       book: bookSettings.readerSettings,
     }),
     [localSettings.readerSettingsByScreen, bookSettings.readerSettings],
-  )
-
-  const settingsScopes = useMemo(
-    () =>
-      Object.fromEntries(
-        Object.entries(bookSettings.readerSettingsScopes ?? {}).map(
-          ([name, scope]) => [
-            name,
-            scope === "screen" ? (screen ?? "desktop") : scope,
-          ],
-        ),
-      ),
-    [bookSettings.readerSettingsScopes, screen],
   )
 
   const onSettingsChange = useCallback(
@@ -84,7 +73,8 @@ export const useReactReaderSettingsProps = (
   return {
     settings: localSettings.readerSettings,
     settingsByScope,
-    settingsScopes,
+    settingsScopes:
+      bookSettings.readerSettingsScopes ?? NO_READER_SETTINGS_SCOPES,
     onSettingsChange,
     onSettingsScopesChange,
   }

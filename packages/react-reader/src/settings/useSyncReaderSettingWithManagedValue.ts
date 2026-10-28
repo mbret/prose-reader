@@ -8,6 +8,7 @@ import {
 } from "../context/useReaderContext"
 import { getAppSettingValueInEffect } from "./appSettingValues"
 import type { ManagedSettingName, ReactReaderSettings } from "./managedSettings"
+import { useScreenSettingsScopeReference } from "./useScreenSettingsScopeReference"
 
 /**
  * Keeps one of the reader's settings on the value in effect for this book: the
@@ -33,7 +34,12 @@ export const useSyncReaderSettingWithManagedValue = <
     "settingsScopes",
     "uncontrolledSettings",
   ])
-  const appValueInEffect = getAppSettingValueInEffect(appSettingValues, name)
+  const screen = useScreenSettingsScopeReference()
+  const appValueInEffect = getAppSettingValueInEffect(
+    appSettingValues,
+    name,
+    screen,
+  )
   const valueInEffect =
     appValueInEffect ?? appSettingValues.uncontrolledSettings[name]
   const valueInEffectRef = useLiveRef(valueInEffect)
