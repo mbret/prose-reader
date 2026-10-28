@@ -8,7 +8,6 @@ import { Navigate, Route, Routes } from "react-router"
 import { DEMO_BASE_PATH } from "../constants"
 import { BooksScreen } from "./books/BooksScreen"
 import { Toaster } from "./components/ui/toaster"
-import { HomeScreen } from "./home/HomeScreen"
 import { ReaderScreen } from "./reader/ReaderScreen"
 import { useRegisterServiceWorker } from "./serviceWorker/useRegisterServiceWorker"
 
@@ -28,8 +27,7 @@ export const DemoRoutes = memo(() => {
   return (
     <QueryClientProvider client={queryClient}>
       <Routes>
-        <Route path="/" element={<HomeScreen />} />
-        <Route path="books" element={<BooksScreen />} />
+        <Route path="/" element={<BooksScreen />} />
         <Route path="reader/:url" element={<ReaderScreen />} />
         <Route path="*" element={<Navigate to={DEMO_BASE_PATH} replace />} />
       </Routes>

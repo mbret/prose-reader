@@ -8,6 +8,7 @@ import {
   Text,
 } from "@chakra-ui/react"
 import localforage from "localforage"
+import { LuArrowLeft } from "react-icons/lu"
 import { MdDelete } from "react-icons/md"
 import { Link } from "react-router"
 import { DEMO_BASE_PATH } from "../../constants"
@@ -15,7 +16,6 @@ import { useDocumentTitle } from "../useDocumentTitle"
 import { BookTable } from "./BookTable"
 import { AUDIOBOOKS, COMICS, EPUBS, PDFS } from "./constants"
 import { Glossary } from "./Glossary"
-import { NavigationBreadcrumb } from "./NavigationBreadcrumb"
 import { UploadBook } from "./UploadBook"
 import { useUploadedBooks } from "./useUploadedBooks"
 
@@ -26,7 +26,17 @@ export const BooksScreen = () => {
 
   return (
     <Container maxW="2xl" py={4} display="flex" flexDirection="column">
-      <NavigationBreadcrumb />
+      {/* The landing page is a page of its own, so this is a plain anchor rather than a route */}
+      <ChakraLink
+        href="/"
+        alignSelf="flex-start"
+        color="fg.muted"
+        textStyle="sm"
+        _hover={{ color: "fg" }}
+      >
+        <LuArrowLeft />
+        Home
+      </ChakraLink>
 
       <Heading as="h1" size="4xl" mb={2} mt={2}>
         Books
