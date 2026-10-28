@@ -3,6 +3,13 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## [35.0.1](https://github.com/mbret/prose-reader/compare/v35.0.0...v35.0.1) (2026-10-28)
+
+### Bug Fixes
+
+* **react-reader:** do not report the values a reader starts with ([bc05daf](https://github.com/mbret/prose-reader/commit/bc05daff49eb49306fc25ad072caef8d2d2e97d8))
+
+
 ## [35.0.0](https://github.com/mbret/prose-reader/compare/v34.0.0...v35.0.0) (2026-10-28)
 
 ### ⚠ BREAKING CHANGES
