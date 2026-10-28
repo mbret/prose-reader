@@ -37,6 +37,18 @@ const questions: { question: string; answer: ReactNode }[] = [
       "No. A book can open entirely in the browser, from a file the user picks or downloads, or be served by your own server. The reader asks for a manifest and the resources it lists, and you decide where each one comes from.",
   },
   {
+    question: "Can I protect books with DRM?",
+    answer: (
+      <>
+        prose ships no DRM of its own yet, but it never needs the book file:
+        your server or service worker can check access and decrypt each resource
+        before the reader gets it. A more native DRM integration is in the
+        works: tell us on <AnswerLink href={links.discord}>Discord</AnswerLink>{" "}
+        if you are interested.
+      </>
+    ),
+  },
+  {
     question: "Does it work with React or React Native?",
     answer:
       "Yes. The core is plain TypeScript, there is a React reader package, and React Native runs the engine through a WebView bridge.",
