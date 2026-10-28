@@ -245,6 +245,22 @@ const waitForSwappedAsset = ({
   return EMPTY
 }
 
+/**
+ * What the document's load waits for when an element keeps its reference: an
+ * image still loading, such as a lazy one, which the frame's `load` does not
+ * wait for.
+ */
+const waitForUnswappedAsset = ({
+  element,
+  view,
+}: {
+  element: Element
+  view: DocumentView
+}): Observable<never> =>
+  element instanceof view.HTMLImageElement && !element.complete
+    ? waitForAssetLoad(element).pipe(ignoreElements())
+    : EMPTY
+
 /** Never errors: a failed asset is reported and the document loads without it. */
 const loadElementAsset = ({
   element,
@@ -267,15 +283,18 @@ const loadElementAsset = ({
     const url = new URL(reference, documentUrl)
 
     return fetchAsset(url).pipe(
+      defaultIfEmpty(undefined),
       switchMap((blob) => {
         // A lazy image away from the viewport would hold the load until the
-        // timeout, so it turns eager before its reference is swapped.
+        // timeout, so it turns eager, before its reference is swapped if it is.
         if (
           element instanceof view.HTMLImageElement &&
           element.loading === "lazy"
         ) {
           element.loading = "eager"
         }
+
+        if (!blob) return waitForUnswappedAsset({ element, view })
 
         element.setAttributeNS(
           referenceAttribute.namespaceURI,
