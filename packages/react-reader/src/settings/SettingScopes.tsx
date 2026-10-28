@@ -6,8 +6,8 @@ import {
   getScopeForReference,
   isSettingsScope,
   isSettingsScopeReference,
-  type PROSE_REACT_READER_SETTINGS_SCOPE,
-  type PROSE_REACT_READER_SETTINGS_SCOPE_REFERENCE,
+  type ReactReaderSettingsScope,
+  type ReactReaderSettingsScopeReference,
   SETTINGS_SCOPE_REFERENCES,
   SETTINGS_SCOPES,
 } from "./types"
@@ -24,18 +24,12 @@ export const SettingScopes = memo(function SettingScopes({
   renderScopeValue,
 }: {
   scopeHelperText: string
-  activeScope: PROSE_REACT_READER_SETTINGS_SCOPE_REFERENCE | undefined
-  onActiveScopeChange:
-    | ((scope: PROSE_REACT_READER_SETTINGS_SCOPE) => void)
-    | undefined
-  renderScopeValue: (
-    scope: PROSE_REACT_READER_SETTINGS_SCOPE_REFERENCE,
-  ) => ReactNode
+  activeScope: ReactReaderSettingsScopeReference | undefined
+  onActiveScopeChange: ((scope: ReactReaderSettingsScope) => void) | undefined
+  renderScopeValue: (scope: ReactReaderSettingsScopeReference) => ReactNode
 }) {
   const [shownScope, setShownScope] =
-    useState<PROSE_REACT_READER_SETTINGS_SCOPE_REFERENCE>(
-      activeScope ?? "global",
-    )
+    useState<ReactReaderSettingsScopeReference>(activeScope ?? "global")
 
   useEffect(
     function showActiveScope() {
