@@ -283,7 +283,7 @@ describe("scoreMetadataCandidate", () => {
     )
   })
 
-  it("makes a matching Google Books volume id decisive", () => {
+  it("makes a matching Google Books volume id decisive, however its scheme is spelled", () => {
     const result = score(
       {
         title: "A local title",
@@ -291,7 +291,7 @@ describe("scoreMetadataCandidate", () => {
       },
       {
         titles: [{ value: "The catalog title" }],
-        identifiers: [{ value: "zytcalfpjgyc", scheme: "googlebooks" }],
+        identifiers: [{ value: "zyTCAlFPjgYC", scheme: "googlebooks" }],
       },
     )
 
@@ -299,6 +299,62 @@ describe("scoreMetadataCandidate", () => {
     expect(result.signals).toContainEqual(
       expect.objectContaining({ field: "identifiers", score: 1 }),
     )
+  })
+
+  it("does not equate Google Books volume ids that differ only in case", () => {
+    const result = score(
+      {
+        title: "Dune",
+        identifiers: [
+          {
+            value: "https://books.google.com/books?id=zytcalfpjgyc",
+            scheme: "URL",
+          },
+        ],
+      },
+      {
+        titles: [{ value: "Neuromancer" }],
+        identifiers: [{ value: "zyTCAlFPjgYC", scheme: "GoogleBooks" }],
+      },
+    )
+
+    expect(result.signals).toContainEqual(
+      expect.objectContaining({ field: "identifiers", score: 0 }),
+    )
+    expect(result.score).toBeLessThan(0.5)
+  })
+
+  it("compares DOIs regardless of case, which the DOI system ignores", () => {
+    const result = score(
+      {
+        title: "A local title",
+        identifiers: [{ value: "10.1000/ABC.123", scheme: "DOI" }],
+      },
+      {
+        titles: [{ value: "The catalog title" }],
+        identifiers: [
+          { value: "https://doi.org/10.1000/abc.123", scheme: "URL" },
+        ],
+      },
+    )
+
+    expect(result.score).toBe(1)
+  })
+
+  it("does not scope an identifier to a blank scheme", () => {
+    const result = score(
+      {
+        title: "Dune",
+        identifiers: [{ value: "catalog-42", scheme: "" }],
+      },
+      {
+        titles: [{ value: "Neuromancer" }],
+        identifiers: [{ value: "catalog-42", scheme: "  " }],
+      },
+    )
+
+    expect(result.signals.map((signal) => signal.field)).toEqual(["title"])
+    expect(result.score).toBeLessThan(0.5)
   })
 
   it("makes a Gutenberg URL agree, decisively, with a ProjectGutenberg id", () => {

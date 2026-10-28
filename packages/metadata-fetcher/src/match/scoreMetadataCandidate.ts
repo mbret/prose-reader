@@ -68,12 +68,33 @@ type ScopedIdentifier = {
 const UNSCOPED_SCHEMES: ReadonlySet<string> = new Set(["url", "uri", "unknown"])
 
 /**
+ * Namespaces whose ids ignore case by definition: the DOI Handbook makes a
+ * DOI name case-insensitive. Every other id compares in the spelling its
+ * namespace canonicalizes to, since folding case there would equate ids that
+ * name different records — Google Books volume ids are case-sensitive.
+ */
+const CASE_INSENSITIVE_NAMESPACES: ReadonlySet<string> = new Set(["doi"])
+
+const scopedIn = (
+  namespace: string,
+  value: string,
+  identifier: MetadataIdentifier,
+): ScopedIdentifier => ({
+  namespace,
+  value: CASE_INSENSITIVE_NAMESPACES.has(namespace)
+    ? value.toLowerCase()
+    : value,
+  identifier,
+})
+
+/**
  * The namespace an identifier is scoped to, or `undefined` when nothing says
  * which one assigned it. A catalog id is read the way archive-reader reads it,
  * so a Gutenberg URL and a `ProjectGutenberg` number land in the same
  * namespace; another stated scheme is its own namespace. An untyped value no
  * catalog addresses — an EPUB's `urn:uuid`, a publisher's web page — has
- * none: it cannot contradict a catalog's id, nor be confirmed by one.
+ * none: it cannot contradict a catalog's id, nor be confirmed by one. Neither
+ * has a blank scheme, which states nothing.
  */
 const scopedIdentifier = (
   identifier: MetadataIdentifier,
@@ -82,20 +103,20 @@ const scopedIdentifier = (
     const value = identifierValue([identifier], catalogScheme)
 
     if (value !== undefined) {
-      return {
-        namespace: catalogScheme.toLowerCase(),
-        value: value.toLowerCase(),
-        identifier,
-      }
+      return scopedIn(catalogScheme.toLowerCase(), value, identifier)
     }
   }
 
-  const scheme = normalizeIdentifierScheme(identifier.scheme).toLowerCase()
-  const value = stated(identifier.value)?.toLowerCase()
+  const scheme = stated(identifier.scheme)
+  const value = stated(identifier.value)
 
-  if (value === undefined || UNSCOPED_SCHEMES.has(scheme)) return undefined
+  if (scheme === undefined || value === undefined) return undefined
 
-  return { namespace: scheme, value, identifier }
+  const namespace = normalizeIdentifierScheme(scheme).toLowerCase()
+
+  return UNSCOPED_SCHEMES.has(namespace)
+    ? undefined
+    : scopedIn(namespace, value, identifier)
 }
 
 const identifierLabel = ({ identifier }: ScopedIdentifier): string =>
