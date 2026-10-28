@@ -1,7 +1,9 @@
 import { isShallowEqual } from "@prose-reader/shared"
-import { describe, expect, it, vi } from "vitest"
+import { describe, expect, it, onTestFinished, vi } from "vitest"
+import { createReader } from "../reader"
 import {
   createFullTestReader,
+  createPrePaginatedManifest,
   installReaderTestEnvironment,
   mountTestReader,
 } from "../tests/readerHarness"
@@ -50,6 +52,35 @@ describe("the reader's settings", () => {
         theme: `bright`,
       }),
     )
+  })
+
+  it("hold no enhancer's setting in a reader without enhancers, whatever its options carry", () => {
+    const optionsWithAFontsSetting = {
+      manifest: createPrePaginatedManifest(),
+      fontScale: 2,
+    }
+    const reader = createReader(optionsWithAFontsSetting)
+
+    onTestFinished(() => reader.destroy())
+
+    expect(reader.settings.values).not.toHaveProperty(`fontScale`)
+  })
+
+  it("leave out what no settings declare, at creation and on an update", () => {
+    const optionsWithAnUndeclaredSetting = { fontScale: 2, notASetting: true }
+    const updateWithAnUndeclaredSetting = {
+      spreadMode: `never` as const,
+      notAnUpdatedSetting: true,
+    }
+    const reader = createFullTestReader(optionsWithAnUndeclaredSetting)
+
+    reader.settings.update(updateWithAnUndeclaredSetting)
+
+    expect(reader.settings.values).toEqual(
+      expect.objectContaining({ fontScale: 2, spreadMode: `never` }),
+    )
+    expect(reader.settings.values).not.toHaveProperty(`notASetting`)
+    expect(reader.settings.values).not.toHaveProperty(`notAnUpdatedSetting`)
   })
 
   it("keep each default over a setting given as undefined", () => {

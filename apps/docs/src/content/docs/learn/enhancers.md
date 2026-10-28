@@ -490,6 +490,53 @@ constraint on the narrower ones, so an enhancer applied after yours should
 constrain its options only to what it reads, such as
 `{ target?: { type: string } }` here, or `Pick<CreateReaderOptions, "getRenderer">`.
 
+### Adding reader settings
+
+An option the user changes while reading, like the confirm message, can be a reader setting. It then takes its value from `createReader`'s options, changes with `reader.settings.update` and shows in `reader.settings.values$`, next to the reader's own settings. The fonts and layout enhancers `createReader` is built with add theirs this way.
+
+[`reader.settings.extend`](/learn/settings#settingsextend) takes the defaults of your settings and the options your enhancer was created with. It adds the keys of the defaults, each with its value from the options when that value is defined, and returns the reader's settings typed with them. Return them on the reader, so its type includes them:
+
+```typescript
+type CreateReader = typeof createReader
+type ReaderOutput = ReturnType<CreateReader>
+
+type ConfirmLinksSettings = {
+  confirmMessage: string
+}
+
+const defaultConfirmLinksSettings: ConfirmLinksSettings = {
+  confirmMessage: `You are going to be redirected to external link`,
+}
+
+export const confirmLinksEnhancer =
+  <InheritOptions, InheritOutput extends ReaderOutput>(next: (options: InheritOptions) => InheritOutput) =>
+  (options: InheritOptions & Partial<ConfirmLinksSettings>) => {
+    const reader = next(options)
+    const settings = reader.settings.extend(defaultConfirmLinksSettings, options)
+
+    reader.links$.pipe(takeUntil(reader.$.destroy$)).subscribe((event) => {
+      const url = getExternalUrl(reader, event)
+
+      if (url && confirm(settings.values.confirmMessage)) {
+        window.open(url, "_blank")
+      }
+    })
+
+    return { ...reader, settings }
+  }
+
+const createAppReader = confirmLinksEnhancer(createReader)
+
+const reader = createAppReader({
+  manifest,
+  confirmMessage: `Do you want to leave the book?`,
+})
+
+reader.settings.update({ confirmMessage: `Voulez-vous quitter le livre ?` })
+```
+
+The enhancer reads `settings.values` on each click, so an updated message applies from the next one. Unlike the namespaced options above, settings are flat: yours share `reader.settings` with the reader's and every other enhancer's, so give them names no other enhancer uses. Give each one a default, `undefined` for an optional one: the settings hold only the keys their defaults declare.
+
 ### The container
 
 The element the reader is mounted into belongs to the application, and outlives the reader: an application can destroy a reader and mount a new one into the same element. Whatever your enhancer writes on it, an attribute, a style, an element or a listener, undo it when the reader is destroyed, as the reader does with what it writes. [Static CSS files](/learn/style-and-css#static-css-files) shows an attribute set and removed this way.

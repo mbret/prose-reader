@@ -1,4 +1,4 @@
-import { isShallowEqual, shallowMergeIfDefined } from "@prose-reader/shared"
+import { isShallowEqual } from "@prose-reader/shared"
 import {
   distinctUntilChanged,
   type Observable,
@@ -7,7 +7,23 @@ import {
 } from "rxjs"
 import { DestroyableClass } from "../utils/DestroyableClass"
 import { mapKeysTo } from "../utils/rxjs"
-import type { SettingsInterface } from "./SettingsInterface"
+import type { SettingsDefaults, SettingsInterface } from "./SettingsInterface"
+
+/**
+ * The values `settings` defines for the keys `declaredSettings` has, laid over
+ * `declaredSettings`.
+ */
+const mergeDeclaredSettings = <Settings extends object>(
+  declaredSettings: Settings,
+  settings: Partial<Settings>,
+): Settings => ({
+  ...declaredSettings,
+  ...Object.fromEntries(
+    Object.entries(settings).filter(
+      ([key, value]) => key in declaredSettings && value !== undefined,
+    ),
+  ),
+})
 
 export abstract class SettingsManager<
     InputSettings extends object,
@@ -25,7 +41,7 @@ export abstract class SettingsManager<
   constructor(initialSettings: Partial<InputSettings>) {
     super()
 
-    this.inputSettings = shallowMergeIfDefined(
+    this.inputSettings = mergeDeclaredSettings<InputSettings>(
       this.getDefaultSettings(),
       initialSettings,
     )
@@ -56,12 +72,33 @@ export abstract class SettingsManager<
     return outputSettings
   }
 
+  /**
+   * Every input setting, the ones `extend` added included, with the ones
+   * computed from them.
+   */
   abstract getOutputSettings(inputSettings: InputSettings): OutputSettings
 
-  abstract getDefaultSettings(): InputSettings
+  abstract getDefaultSettings(): SettingsDefaults<InputSettings>
 
   public update(settings: Partial<InputSettings>) {
-    this.commit(shallowMergeIfDefined(this.inputSettings, settings))
+    this.commit(mergeDeclaredSettings(this.inputSettings, settings))
+  }
+
+  public extend<AddedSettings extends object>(
+    defaults: SettingsDefaults<AddedSettings>,
+    settings: Partial<AddedSettings>,
+  ) {
+    this.commit({
+      ...this.inputSettings,
+      ...mergeDeclaredSettings<AddedSettings>(defaults, settings),
+    })
+
+    // Cast: these settings now hold the added ones too, a change of type that
+    // TypeScript cannot follow on `this`.
+    return this as unknown as SettingsInterface<
+      InputSettings & AddedSettings,
+      OutputSettings & AddedSettings
+    >
   }
 
   get values() {

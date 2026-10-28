@@ -78,16 +78,12 @@ export class ReaderSettingsManager
     return computedSettings
   }
 
-  /**
-   * Keeps every setting it is given, not only the core ones: the enhancers
-   * keep their settings here too.
-   */
   getOutputSettings(
     inputSettings: CoreInputSettings,
   ): CoreInputSettings & ComputedCoreSettings {
     const computedSettings = this.getComputedSettings(inputSettings)
 
-    return { ...this.outputSettings, ...inputSettings, ...computedSettings }
+    return { ...inputSettings, ...computedSettings }
   }
 
   getDefaultSettings() {
@@ -100,6 +96,8 @@ export class ReaderSettingsManager
       snapAnimationDuration: 300,
       navigationSnapThreshold: { type: "pixels", value: 40 },
       numberOfAdjacentSpineItemToPreLoad: 3,
+      getResource: undefined,
+      getRenderer: undefined,
     } satisfies CoreInputSettings
   }
 }

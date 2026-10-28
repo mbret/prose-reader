@@ -1,7 +1,4 @@
-import {
-  detectMimeTypeFromName,
-  shallowMergeIfDefined,
-} from "@prose-reader/shared"
+import { detectMimeTypeFromName } from "@prose-reader/shared"
 import {
   debounceTime,
   EMPTY,
@@ -67,13 +64,8 @@ export const layoutEnhancer =
     next: (options: InheritOptions) => InheritOutput,
   ) =>
   (options: InheritOptions & Partial<EnhancerLayoutInputSettings>): Output => {
-    const reader = next(shallowMergeIfDefined(defaultLayoutSettings, options))
-    // Cast: the reader's settings hold every setting given to them, these
-    // included, but their type only lists the inherited ones.
-    const settings = reader.settings as SettingsInterface<
-      InheritSettings & EnhancerLayoutInputSettings,
-      EnhancerLayoutInputSettings & InheritComputedSettings
-    >
+    const reader = next(options)
+    const settings = reader.settings.extend(defaultLayoutSettings, options)
 
     reader.hookManager.register(`onViewportOffsetAdjust`, () => {
       /**
