@@ -29,7 +29,12 @@ const questions: { question: string; answer: ReactNode }[] = [
   {
     question: "Which formats can it read?",
     answer:
-      "EPUB 3, comics in CBZ or CBR, PDF, plain text and audiobooks. Enhancers can teach it new formats.",
+      "Any format. EPUB 3, comics in CBZ or CBR, PDF, plain text and audiobooks are ready to use, and an enhancer teaches it any other.",
+  },
+  {
+    question: "Do I need a server?",
+    answer:
+      "No. A book can open entirely in the browser, from a file the user picks or downloads, or be served by your own server. The reader asks for a manifest and the resources it lists, and you decide where each one comes from.",
   },
   {
     question: "Does it work with React or React Native?",
