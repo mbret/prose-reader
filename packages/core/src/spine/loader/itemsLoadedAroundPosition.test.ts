@@ -1,5 +1,5 @@
 // @vitest-environment jsdom
-import { afterEach, describe, expect, it, vi } from "vitest"
+import { describe, expect, it, vi } from "vitest"
 import {
   createPrePaginatedManifest,
   createTestReader,
@@ -9,10 +9,6 @@ import {
 } from "../../tests/readerHarness"
 
 installReaderTestEnvironment()
-
-afterEach(() => {
-  vi.useRealTimers()
-})
 
 describe("the items loaded around the position", () => {
   /**

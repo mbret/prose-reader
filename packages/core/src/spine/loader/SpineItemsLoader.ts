@@ -164,7 +164,8 @@ export class SpineItemsLoader extends DestroyableClass {
     return () => {
       const holds = new Set(this.spineItemHoldsSubject.value)
 
-      holds.delete(hold)
+      if (!holds.delete(hold)) return
+
       this.spineItemHoldsSubject.next(holds)
     }
   }

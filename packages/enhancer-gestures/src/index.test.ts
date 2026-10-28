@@ -121,6 +121,10 @@ afterEach(() => {
   vi.useRealTimers()
 })
 
+const excludeFromCleanup = (reader: { destroy: () => void }) => {
+  readers.splice(readers.indexOf(reader), 1)
+}
+
 /**
  * A reader settled on its first page, recording every user navigation and
  * gesture from then on.
@@ -297,8 +301,7 @@ describe("Given a pan moving the page", () => {
     await drag({ x: viewport.width / 2, distance: -60, letGo: false })
 
     expect(isNavigationLocked(reader)).toBe(true)
-    // Destroyed here, not again after the test.
-    readers.splice(readers.indexOf(reader), 1)
+    excludeFromCleanup(reader)
     expect(() => reader.destroy()).not.toThrow()
   })
 })
@@ -360,8 +363,7 @@ describe("Given a reader a gesture was made on", () => {
 
     await drag({ x: viewport.width / 2, distance: 0 })
     const touchActionWhileMounted = container.style.touchAction
-    // Destroyed here, not again after the test.
-    readers.splice(readers.indexOf(reader), 1)
+    excludeFromCleanup(reader)
     reader.destroy()
 
     const addedListeners = addEventListener.mock.calls.map(
