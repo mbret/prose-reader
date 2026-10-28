@@ -535,7 +535,7 @@ const reader = createAppReader({
 reader.settings.update({ confirmMessage: `Voulez-vous quitter le livre ?` })
 ```
 
-The enhancer reads `settings.values` on each click, so an updated message applies from the next one. Unlike the namespaced options above, settings are flat: yours share `reader.settings` with the reader's and every other enhancer's, so give them names no other enhancer uses. Give each one a default, `undefined` for an optional one: the settings hold only the keys their defaults declare.
+The enhancer reads `settings.values` on each click, so an updated message applies from the next one. Unlike the namespaced options above, settings are flat: yours share `reader.settings` with the reader's and every other enhancer's, so give them names no other enhancer uses. Give each one a default, `undefined` for an optional one: the settings drop a key their defaults lack.
 
 ### The container
 

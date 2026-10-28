@@ -5,7 +5,7 @@ sidebar:
   label: "Settings"
 ---
 
-Settings affecting the reader. The enhancers `createReader` is built with add settings of their own to the same `reader.settings`, with [`settings.extend`](#settingsextend), such as [`theme`](/learn/style-and-css#theme). Their types, `EnhancerThemeInputSettings`, `EnhancerFontsInputSettings` and `EnhancerLayoutInputSettings`, are exported by `@prose-reader/core`.
+Settings affecting the reader. Three of the enhancers `createReader` is built with, fonts, layout and [theme](/learn/style-and-css#theme), add theirs to the same `reader.settings` with [`settings.extend`](#settingsextend). Their types, `EnhancerThemeInputSettings`, `EnhancerFontsInputSettings` and `EnhancerLayoutInputSettings`, are exported by `@prose-reader/core`.
 
 ```typescript
 export type InputSettings = {
@@ -51,12 +51,12 @@ Some settings have their `computed` counterpart. When you read the settings you 
 Observable<OutputSettings>
 ```
 
-This observable emits as soon as you subscribe, then once each time the settings change.
+This observable emits as soon as you subscribe, then once each time the settings change. An update a subscriber makes on an emission reaches every subscriber after that emission.
 
 ## `settings.extend`
 
 ```typescript
-extend<AddedSettings>(
+extend<AddedSettings extends object>(
   defaults: SettingsDefaults<AddedSettings>,
   settings: Partial<AddedSettings>,
 ): SettingsInterface<
@@ -67,6 +67,4 @@ extend<AddedSettings>(
 
 Adds an enhancer's settings to the reader's: the keys of `defaults`, each with the value `settings` gives it, or its default when that value is `undefined`. It returns `reader.settings`, typed with the added settings. The other keys of `settings` are left out, so an enhancer passes the options it was created with. [Adding reader settings](/learn/enhancers#adding-reader-settings) shows an enhancer that does.
 
-The settings hold the keys their defaults declare and no other: an option or an update naming a setting that no one declared is left out. `SettingsDefaults` therefore needs a default for every key, `undefined` for an optional one.
-
-An update that changes added settings and others together is applied once, and `values$` emits once for it.
+An option or an update naming a key that no defaults declare is left out, so `SettingsDefaults` needs a default for every key, `undefined` for an optional one.

@@ -1,8 +1,8 @@
 import type { Observable } from "rxjs"
 
 /**
- * A default for every setting, `undefined` for an optional one: settings hold
- * the keys their defaults have, and no other.
+ * A default for every setting, `undefined` for an optional one: settings drop
+ * a key their defaults lack.
  */
 export type SettingsDefaults<Settings> = Settings &
   Record<keyof Settings, unknown>
@@ -30,8 +30,7 @@ export interface SettingsInterface<
    * other keys of `settings` are left out, so an enhancer passes the options
    * it was created with.
    *
-   * Returns these settings, typed with the added ones. An update that changes
-   * added settings and others together is applied, and emitted, once.
+   * Returns these settings, typed with the added ones.
    */
   extend<AddedSettings extends object>(
     defaults: SettingsDefaults<AddedSettings>,
