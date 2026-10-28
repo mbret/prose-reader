@@ -24,8 +24,8 @@ import { Report } from "../../../report"
 import type { ReaderSettingsManager } from "../../../settings/ReaderSettingsManager"
 import { ResourceHandler } from "../../../spineItem/resources/ResourceHandler"
 
-/** Bounds a browser that never reports on a stylesheet. */
-const STYLESHEET_LOAD_TIMEOUT_MS = 5_000
+/** Bounds a browser that never reports on an asset. */
+const ASSET_LOAD_TIMEOUT_MS = 5_000
 
 const CSS_URL = /url\(\s*(['"]?)(.*?)\1\s*\)/g
 
@@ -128,17 +128,24 @@ const isFetchedStylesheet = (
   )
 }
 
-const waitForStylesheet = (link: HTMLLinkElement) =>
+const isImageElement = (
+  element: Element,
+  view: DocumentView,
+): element is HTMLImageElement | SVGImageElement =>
+  element instanceof view.HTMLImageElement ||
+  element instanceof view.SVGImageElement
+
+/**
+ * `load` and `error` are dispatched from a task, so a wait subscribed right
+ * after the reference is swapped cannot miss them.
+ */
+const waitForAssetLoad = (element: Element) =>
   merge(
-    fromEvent(link, "load"),
-    fromEvent(link, "error").pipe(
-      mergeMap(() => throwError(() => new Error(`the stylesheet failed`))),
+    fromEvent(element, "load"),
+    fromEvent(element, "error").pipe(
+      mergeMap(() => throwError(() => new Error(`the asset failed`))),
     ),
-  ).pipe(
-    timeout({ first: STYLESHEET_LOAD_TIMEOUT_MS }),
-    first(),
-    map(() => link.sheet),
-  )
+  ).pipe(timeout({ first: ASSET_LOAD_TIMEOUT_MS }), first())
 
 /**
  * Rules are replaced rather than edited, which Firefox does not allow. Object
@@ -200,6 +207,44 @@ const rewriteFontFaces = ({
     return merge(...rewrites).pipe(ignoreElements())
   })
 
+/**
+ * What the document's load waits for once an element's reference is swapped:
+ * a stylesheet and the fonts it declares, or an image, which the chapter is
+ * measured and drawn with.
+ */
+const waitForSwappedAsset = ({
+  element,
+  url,
+  view,
+  fetchAsset,
+}: {
+  element: Element
+  url: URL
+  view: DocumentView
+  fetchAsset: FetchAsset
+}): Observable<never> => {
+  if (isFetchedStylesheet(element, view)) {
+    return waitForAssetLoad(element).pipe(
+      switchMap(() =>
+        element.sheet
+          ? rewriteFontFaces({
+              sheet: element.sheet,
+              sheetUrl: url,
+              view,
+              fetchAsset,
+            })
+          : EMPTY,
+      ),
+    )
+  }
+
+  if (isImageElement(element, view)) {
+    return waitForAssetLoad(element).pipe(ignoreElements())
+  }
+
+  return EMPTY
+}
+
 /** Never errors: a failed asset is reported and the document loads without it. */
 const loadElementAsset = ({
   element,
@@ -223,22 +268,22 @@ const loadElementAsset = ({
 
     return fetchAsset(url).pipe(
       switchMap((blob) => {
+        // A lazy image away from the viewport would hold the load until the
+        // timeout, so it turns eager before its reference is swapped.
+        if (
+          element instanceof view.HTMLImageElement &&
+          element.loading === "lazy"
+        ) {
+          element.loading = "eager"
+        }
+
         element.setAttributeNS(
           referenceAttribute.namespaceURI,
           referenceAttribute.name,
           view.URL.createObjectURL(blob),
         )
 
-        if (!isFetchedStylesheet(element, view)) return EMPTY
-
-        // `load` is dispatched from a task, after this subscribes
-        return waitForStylesheet(element).pipe(
-          switchMap((sheet) =>
-            sheet
-              ? rewriteFontFaces({ sheet, sheetUrl: url, view, fetchAsset })
-              : EMPTY,
-          ),
-        )
+        return waitForSwappedAsset({ element, url, view, fetchAsset })
       }),
     )
   }).pipe(

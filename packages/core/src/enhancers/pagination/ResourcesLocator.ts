@@ -171,16 +171,17 @@ export class ResourcesLocator {
       meta: toCfiLocatableResource(this.reader, resource),
     }
 
+    // Outside the idle wait: `destroy$` does not replay for a later subscriber.
     return deferIdle(() => {
-      /**
-       * A pre-paginated item gives its page index and absolute pages without
-       * being loaded.
-       */
       const item = this.reader.spineItemsManager.get(
         initialConsolidatedValue.meta.itemIndex ?? 0,
       )
       const isReflowable = item?.renditionLayout === `reflowable`
 
+      /**
+       * Only a reflowable item is kept loaded: a pre-paginated item gives its
+       * page indexes without being loaded.
+       */
       const release =
         options.mode === "shallow" || !isReflowable || !item
           ? () => {}
@@ -234,7 +235,6 @@ export class ResourcesLocator {
             })),
           )
         }, initialConsolidatedValue),
-        takeUntil(this.reader.$.destroy$),
         shareReplay({ refCount: true, bufferSize: 1 }),
       )
 
@@ -246,7 +246,7 @@ export class ResourcesLocator {
       }
 
       return withRelease(consolidate$)
-    })
+    }).pipe(takeUntil(this.reader.$.destroy$))
   }
 
   locateResource<T extends LocatableResource>(
@@ -264,11 +264,12 @@ export class ResourcesLocator {
     | Observable<{ resource: T; meta: ConsolidatedResource }>
     | Observable<{ resource: T; meta: ConsolidatedResource }[]> {
     if (Array.isArray(resource)) {
+      // Outside the idle wait: `destroy$` does not replay for a later subscriber.
       return deferIdle(() =>
         combineLatest(
           resource.map((item) => this.locate(item, options ?? {})),
         ).pipe(defaultIfEmpty([])),
-      )
+      ).pipe(takeUntil(this.reader.$.destroy$))
     }
 
     return this.locate(resource, options ?? {})

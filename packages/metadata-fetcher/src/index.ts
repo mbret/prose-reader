@@ -36,6 +36,7 @@ export type { FetchMetadataOptions } from "./fetchMetadata.ts"
 export { fetchMetadata } from "./fetchMetadata.ts"
 export type { ScoredMetadataCandidate } from "./match/scoreMetadataCandidate.ts"
 export {
+  DEFAULT_METADATA_MATCH_MIN_SCORE,
   METADATA_MATCH_WEIGHTS,
   scoreMetadataCandidate,
 } from "./match/scoreMetadataCandidate.ts"

@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
-import { firstValueFrom, skip } from "rxjs"
-import { describe, expect, it } from "vitest"
+import { first, firstValueFrom, skip } from "rxjs"
+import { describe, expect, it, vi } from "vitest"
 import {
   createTestReader,
   installReaderTestEnvironment,
@@ -17,7 +17,7 @@ type TestReader = ReturnType<typeof createTestReader>
 const getNavigationAgainstCurrentLayout = (reader: TestReader) => {
   const replayed: NavigationAgainstCurrentLayout[] = []
 
-  reader.navigation.internalNavigator.navigationAgainstCurrentLayout$
+  reader.navigation.navigationAgainstCurrentLayout$
     .subscribe((navigationAgainstCurrentLayout) => {
       replayed.push(navigationAgainstCurrentLayout)
     })
@@ -50,7 +50,7 @@ describe("the navigation against the current layout", () => {
 
     const before = await getLastNavigationMade(reader)
     const reports: NavigationAgainstCurrentLayout[] = []
-    reader.navigation.internalNavigator.navigationAgainstCurrentLayout$
+    reader.navigation.navigationAgainstCurrentLayout$
       // the replayed one
       .pipe(skip(1))
       .subscribe((navigationAgainstCurrentLayout) => {
@@ -123,7 +123,7 @@ describe("the navigation against the current layout", () => {
     reader.navigation.navigation$.subscribe((navigation) => {
       navigationsMade.push(navigation)
     })
-    reader.navigation.internalNavigator.navigationAgainstCurrentLayout$.subscribe(
+    reader.navigation.navigationAgainstCurrentLayout$.subscribe(
       (navigationAgainstCurrentLayout) => {
         reports.push(navigationAgainstCurrentLayout)
       },
@@ -152,5 +152,45 @@ describe("the navigation against the current layout", () => {
     expect(
       reportedAgain.filter(({ holdsOnCurrentLayout }) => holdsOnCurrentLayout),
     ).toEqual([])
+  })
+
+  it("voids the navigation being reported, not the one before, when a subscriber requests a layout", async () => {
+    const reader = createTestReader()
+
+    mountTestReader(reader)
+    await settledOn(reader, 0)
+
+    const paginatedItems: (number | undefined)[] = []
+    reader.pagination.state$.subscribe(({ begin }) => {
+      paginatedItems.push(begin.spineItemIndex)
+    })
+    // As an app does when reaching an item makes it change a layout setting.
+    reader.pagination.state$
+      .pipe(first(({ begin }) => begin.spineItemIndex === 1))
+      .subscribe(() => reader.layout())
+
+    reader.navigation.goToSpineItem({ indexOrId: 1, animation: false })
+
+    const navigation = await getLastNavigationMade(reader)
+    const reported = getNavigationAgainstCurrentLayout(reader)
+
+    expect(reported?.navigation).toBe(navigation)
+    expect(reported?.holdsOnCurrentLayout).toBe(false)
+
+    await settledOn(reader, 1)
+
+    expect(paginatedItems.slice(paginatedItems.indexOf(1))).not.toContain(0)
+  })
+
+  it("completes when the reader is destroyed", () => {
+    const reader = createTestReader()
+    const onComplete = vi.fn()
+
+    reader.navigation.navigationAgainstCurrentLayout$.subscribe({
+      complete: onComplete,
+    })
+    reader.destroy()
+
+    expect(onComplete).toHaveBeenCalled()
   })
 })
