@@ -204,13 +204,14 @@ The rules:
   | --- | --- | --- |
   | `isbn`, `gtin` | 1 | identifiers *are* the book |
   | `title` | 0.8 | what a human recognizes it by |
-  | `identifiers` | 0.6 | other identifier systems, scheme-aware |
+  | `identifiers` | 0.6 | other identifier systems, compared within the namespace both sides state |
   | `authors` | 0.5 | compared as people |
   | `series` | 0.3 | |
   | `publishedYear` | 0.2 | year proximity against the candidate's publication data |
   | `publisher`, `languages`, `numberOfPages` | 0.15 | publication details — they must never sink a convincing match alone |
 
-- **Confirmed identity settles it.** An agreeing ISBN or GTIN pins the score to `1` whatever else disagrees, and a provider-confirmed shared identifier does the same when both sides state the same non-`Unknown` scheme. An `Unknown` raw value is not decisive because it could collide with another catalog's identifier. A *contradicting* ISBN or GTIN scores `0`, which sinks a plausible-looking wrong edition. Disjoint provider-specific identifier lists are not treated as contradictions: catalogs naturally use different id spaces. ISBN-10 and ISBN-13 of the same book compare equal (`toIsbn13` is exported).
+- **Confirmed identity settles it.** An agreeing ISBN or GTIN pins the score to `1` whatever else disagrees. A *contradicting* ISBN or GTIN scores `0`, which sinks a plausible-looking wrong edition. ISBN-10 and ISBN-13 of the same book compare equal (`toIsbn13` is exported).
+- **Other identifiers are compared within a namespace both sides state.** A catalog id is read the way [`identifierValue`](/archive-reader/identifiers#reading-a-specific-identifier) reads it, so a Gutenberg URL and a `ProjectGutenberg` number, or a Google Books link and a `GoogleBooks` volume id, are one namespace; any other stated scheme is its own. Ids compare in the spelling their namespace canonicalizes to, so a Google Books volume id is case-sensitive, while a DOI compares without case, as the DOI system defines it. A shared identifier pins the score to `1`. A different id in the same namespace is a disagreement, scored `0` at its weight rather than pinned, since one edition can sit under several records of a catalog. Lists with no namespace in common are not compared at all, and add no `identifiers` signal: an EPUB 3 `urn:uuid` and a catalog's own id are different id spaces, not a contradiction. An untyped value no catalog addresses (`Unknown`, or a `URL` outside the known catalogs) has no namespace, and neither has a blank scheme, so such a value is never compared, even against an equal value of another scheme.
 - **Comparisons are fuzzy where the world is.** Titles compare on character bigrams, against both the candidate's main title and that title composed with its `subtitle` entry — a book states `Dune: A Novel` in one `dc:title` where a catalog splits it in two, and only the comparison string is composed, never the returned metadata. The subtitle asymmetry is repaired on top (`Dune` ≡ `Dune: a novel`, but `Dune: Book One` ≠ `Dune: Messiah`). An explicit conflicting volume, part, or book number makes the title score `0` (`Vol. I` ≠ `vol. 2`) — in **any** compared form, so a bare `Irina` cannot launder the candidate's own `Vol. 1` against a query for `Vol. 2`, and a number the query states in its title is also compared against the candidate's series `position`, where a catalog keeps the same fact. Names compare on their token set (`Herbert, Frank` ≡ `Frank Herbert`); diacritics and punctuation are folded (`Les Misérables` ≡ `Les Miserables`); languages compare on their primary subtag (`en-US` ≡ `en`).
 - **Flat publication evidence uses the best candidate value.** `publisher` and `publishedYear` compare against both the candidate's original and edition publication details when present; the closest value supplies the single signal.
 - **A rating is never evidence.** `aggregateRating` is returned but deliberately not scored: how much a crowd liked a book says nothing about whether it is *this* book, and a popular edition must not outrank the right one.
@@ -311,7 +312,7 @@ const provider = createProjectGutenbergProvider({
 
 **Lookup strategy**, exactly one request: the provider recognizes an official Gutenberg URL in `identifiers` (including `/ebooks/78139`, `/files/78139/…`, `/cache/epub/78139/…`, and the older `/78139` form), or a numeric identifier whose scheme is `ProjectGutenberg`. It then requests Gutenberg's official per-eBook RDF record at `/cache/epub/{id}/pg{id}.rdf`. A title or author alone never triggers the provider, so it neither crawls the website nor returns a fuzzy Gutenberg hit. Arbitrary URLs and identifiers with another authored scheme are ignored.
 
-The confirmed candidate echoes the book's exact input identifier and adds `{ value: "78139", scheme: "ProjectGutenberg" }`. A shared scheme-scoped identifier makes the match decisive even when the catalog and embedded titles differ. A missing RDF record returns no candidate; a failing or malformed response is reported through `failedProviders` like any other provider failure.
+The confirmed candidate carries `{ value: "78139", scheme: "ProjectGutenberg" }`, which the matcher compares with the book's URL as the same Gutenberg id: the match is decisive even when the catalog and embedded titles differ. A missing RDF record returns no candidate; a failing or malformed response is reported through `failedProviders` like any other provider failure.
 
 **Mapping** (per-eBook RDF → `ResolvedMetadata`; same exhaustive-destructure check as the other providers):
 
@@ -364,7 +365,7 @@ const input = {
 }
 ```
 
-An official Google Books website/API URL with scheme `URL` is recognized too. An exact lookup echoes the confirmed volume id as `{ value: id, scheme: "GoogleBooks" }`, so the shared matcher treats it as decisive and `metadataInputFromResolvedArchive` can forward it unchanged for a later refresh. A missing volume id falls through to ISBN/title when available. ISBN searches likewise retain the queried ISBN identifier even when a sparse Google record omits `industryIdentifiers`.
+An official Google Books website/API URL with scheme `URL` is recognized too. Every candidate carries its volume id as `{ value: id, scheme: "GoogleBooks" }`, which the matcher compares with either spelling of the book's id, so an exact lookup is decisive, and `metadataInputFromResolvedArchive` can forward the id unchanged for a later refresh. A missing volume id falls through to ISBN/title when available. ISBN searches likewise retain the queried ISBN identifier even when a sparse Google record omits `industryIdentifiers`.
 
 Each request makes at most three total attempts. Network failures and HTTP `500`, `502`, `503` and `504` responses are retried with abortable exponential backoff and jitter; client errors such as an invalid key are not. When the third attempt fails, or when a successful exact response is malformed, the provider is reported through `failedProviders` normally.
 
@@ -406,7 +407,7 @@ const provider = createOpenLibraryProvider({
 | `fetch` | the global one | for tests, a custom agent, or a caching layer |
 | `userAgent` | — | Open Library's API etiquette asks for an identifying one (app name + contact) and throttles anonymous traffic harder |
 
-**Lookup strategy**, at most four requests: an ISBN search when the book states one — the catalog then verifies the identity for us; an exact `id_project_gutenberg` search when an identifier is an official Project Gutenberg URL or a numeric `ProjectGutenberg` identifier; then a precise title (+ first author) search when those identifiers are unknown to Open Library or absent. When that precise search is empty, a free-text title-and-author query handles records whose work title and subtitle were indexed separately. The Gutenberg crosswalk is applied explicitly by this provider because `id_project_gutenberg` is Open Library's catalog field, not a generic URL convention in the scorer. A query with none of those terms yields no candidates rather than a fishing expedition.
+**Lookup strategy**, at most four requests: an ISBN search when the book states one — the catalog then verifies the identity for us; an exact `id_project_gutenberg` search when an identifier is an official Project Gutenberg URL or a numeric `ProjectGutenberg` identifier; then a precise title (+ first author) search when those identifiers are unknown to Open Library or absent. When that precise search is empty, a free-text title-and-author query handles records whose work title and subtitle were indexed separately. The Gutenberg crosswalk is this provider's own, because `id_project_gutenberg` is a field of Open Library's search index. A query with none of those terms yields no candidates rather than a fishing expedition.
 
 **Mapping** (`search.json` doc → `ResolvedMetadata`; same exhaustive-destructure check as the other providers):
 
@@ -421,7 +422,7 @@ const provider = createOpenLibraryProvider({
 | `number_of_pages_median` | `numberOfPages` | |
 | `ratings_average`, `ratings_count` | `aggregateRating` | the catalog's raw 0–5 mean of the *work*'s ratings, unrounded. `ratings_sortable` is deliberately not mapped: it is Open Library's internal ranking key, not a rating it states |
 | `cover_i` | `cover` | absolute url on the cover service, `confidence: "derived"` |
-| `id_project_gutenberg` | `identifiers` | scheme `ProjectGutenberg`; an exact lookup also echoes the book's original Gutenberg URL so the shared scorer can recognize the agreement |
+| `id_project_gutenberg` | `identifiers` | scheme `ProjectGutenberg`, which the matcher compares with a Gutenberg URL the book states |
 | `key` | `identifiers` | scheme `OpenLibrary`, e.g. `/works/OL893415W`; also `id` and `url` on the match |
 
 An `ISBN` identifier is added **only** when the search was an ISBN lookup, and then it uses the queried value: the API answered "this work has that ISBN", which is a fact about the record. A title-search hit describes a *work*, whose editions each have their own ISBN, so picking one would be fabrication.

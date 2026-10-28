@@ -127,26 +127,6 @@ describe("resolveGoogleBooksVolume", () => {
     })
   })
 
-  it("echoes identifiers only after an exact lookup confirms them", () => {
-    expect(
-      resolveGoogleBooksVolume(
-        { id: "zyTCAlFPjgYC", volumeInfo: { title: "Dune" } },
-        {
-          matchedIdentifier: {
-            value: "https://books.google.com/books?id=zyTCAlFPjgYC",
-            scheme: "URL",
-          },
-        },
-      ).identifiers,
-    ).toEqual([
-      {
-        value: "https://books.google.com/books?id=zyTCAlFPjgYC",
-        scheme: "URL",
-      },
-      { value: "zyTCAlFPjgYC", scheme: "GoogleBooks" },
-    ])
-  })
-
   it("uses the confirmed ISBN when Google omits industry identifiers", () => {
     expect(
       resolveGoogleBooksVolume(

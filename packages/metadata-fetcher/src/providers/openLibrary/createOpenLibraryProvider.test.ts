@@ -1,5 +1,7 @@
 import { mainTitle } from "@prose-reader/archive-reader"
 import { describe, expect, it, vi } from "vitest"
+import { scoreMetadataCandidate } from "../../match/scoreMetadataCandidate.ts"
+import type { FetchMetadataInput } from "../../types/fetchMetadataInput.ts"
 import { createOpenLibraryProvider } from "./createOpenLibraryProvider.ts"
 
 const DUNE_DOC = {
@@ -146,12 +148,10 @@ describe("createOpenLibraryProvider", () => {
     })
     const provider = createOpenLibraryProvider({ fetch: fetchMock })
 
-    const candidates = await provider.search(
-      {
-        identifiers: [{ value: identifierValue, scheme: "URL" }],
-      },
-      context,
-    )
+    const input: FetchMetadataInput = {
+      identifiers: [{ value: identifierValue, scheme: "URL" }],
+    }
+    const candidates = await provider.search(input, context)
     const url = requestedUrl(fetchMock, 0)
 
     expect(fetchMock).toHaveBeenCalledTimes(1)
@@ -159,11 +159,13 @@ describe("createOpenLibraryProvider", () => {
     expect(url.searchParams.get("title")).toBeNull()
     expect(url.searchParams.get("fields")).toContain("id_project_gutenberg")
     expect(candidates[0]?.metadata.identifiers).toEqual([
-      { value: identifierValue, scheme: "URL" },
       { value: "1342", scheme: "ProjectGutenberg" },
       { value: "42671", scheme: "ProjectGutenberg" },
       { value: DUNE_DOC.key, scheme: "OpenLibrary" },
     ])
+    expect(
+      scoreMetadataCandidate(input, candidates[0]?.metadata ?? {}).score,
+    ).toBe(1)
   })
 
   it("falls back to title when Open Library has no Gutenberg cross-reference", async () => {
