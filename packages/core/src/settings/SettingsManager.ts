@@ -2,6 +2,8 @@ import { isShallowEqual } from "@prose-reader/shared"
 import {
   distinctUntilChanged,
   type Observable,
+  observeOn,
+  queueScheduler,
   Subject,
   shareReplay,
 } from "rxjs"
@@ -9,18 +11,15 @@ import { DestroyableClass } from "../utils/DestroyableClass"
 import { mapKeysTo } from "../utils/rxjs"
 import type { SettingsDefaults, SettingsInterface } from "./SettingsInterface"
 
-/**
- * The values `settings` defines for the keys `declaredSettings` has, laid over
- * `declaredSettings`.
- */
-const mergeDeclaredSettings = <Settings extends object>(
+const mergeDefinedValuesIntoDeclaredSettings = <Settings extends object>(
   declaredSettings: Settings,
   settings: Partial<Settings>,
 ): Settings => ({
   ...declaredSettings,
   ...Object.fromEntries(
     Object.entries(settings).filter(
-      ([key, value]) => key in declaredSettings && value !== undefined,
+      ([key, value]) =>
+        Object.hasOwn(declaredSettings, key) && value !== undefined,
     ),
   ),
 })
@@ -41,15 +40,18 @@ export abstract class SettingsManager<
   constructor(initialSettings: Partial<InputSettings>) {
     super()
 
-    this.inputSettings = mergeDeclaredSettings<InputSettings>(
+    this.inputSettings = mergeDefinedValuesIntoDeclaredSettings<InputSettings>(
       this.getDefaultSettings(),
       initialSettings,
     )
     this.outputSettingsUpdateSubject = new Subject()
 
-    this._settings$ = this.outputSettingsUpdateSubject
-      .asObservable()
-      .pipe(shareReplay(1))
+    this._settings$ = this.outputSettingsUpdateSubject.asObservable().pipe(
+      // An update made on an emission reaches every subscriber after that
+      // emission, so none of them ends on the values it replaced.
+      observeOn(queueScheduler),
+      shareReplay(1),
+    )
 
     this._settings$.subscribe()
   }
@@ -81,7 +83,9 @@ export abstract class SettingsManager<
   abstract getDefaultSettings(): SettingsDefaults<InputSettings>
 
   public update(settings: Partial<InputSettings>) {
-    this.commit(mergeDeclaredSettings(this.inputSettings, settings))
+    this.commit(
+      mergeDefinedValuesIntoDeclaredSettings(this.inputSettings, settings),
+    )
   }
 
   public extend<AddedSettings extends object>(
@@ -90,7 +94,10 @@ export abstract class SettingsManager<
   ) {
     this.commit({
       ...this.inputSettings,
-      ...mergeDeclaredSettings<AddedSettings>(defaults, settings),
+      ...mergeDefinedValuesIntoDeclaredSettings<AddedSettings>(
+        defaults,
+        settings,
+      ),
     })
 
     // Cast: these settings now hold the added ones too, a change of type that

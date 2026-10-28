@@ -14,10 +14,6 @@ type FullTestReaderSettings = Parameters<
   ReturnType<typeof createFullTestReader>["settings"]["update"]
 >[0]
 
-/**
- * Settings of the core reader, of the layout enhancer and of the fonts
- * enhancer, alone and together. The first and the seventh change nothing.
- */
 const updatesAcrossEnhancers: FullTestReaderSettings[] = [
   { spreadMode: `auto` },
   { spreadMode: `never` },
@@ -65,19 +61,21 @@ describe("the reader's settings", () => {
 
   it("leave out what no settings declare, at creation and on an update", () => {
     const optionsWithAnUndeclaredSetting = { fontScale: 2, notASetting: true }
-    const updateWithAnUndeclaredSetting = {
+    const updateWithUndeclaredSettings = {
       spreadMode: `never` as const,
       notAnUpdatedSetting: true,
+      toString: `named like a member of every object`,
     }
     const reader = createFullTestReader(optionsWithAnUndeclaredSetting)
 
-    reader.settings.update(updateWithAnUndeclaredSetting)
+    reader.settings.update(updateWithUndeclaredSettings)
 
     expect(reader.settings.values).toEqual(
       expect.objectContaining({ fontScale: 2, spreadMode: `never` }),
     )
     expect(reader.settings.values).not.toHaveProperty(`notASetting`)
     expect(reader.settings.values).not.toHaveProperty(`notAnUpdatedSetting`)
+    expect(Object.hasOwn(reader.settings.values, `toString`)).toBe(false)
   })
 
   it("keep each default over a setting given as undefined", () => {
@@ -133,8 +131,9 @@ describe("the reader's settings", () => {
     )
   })
 
-  it("keep an update made by a subscriber on an emission", () => {
+  it("keep an update made by a subscriber on an emission, and end every subscriber on it", () => {
     const reader = createFullTestReader()
+    const onValuesAfterTheUpdatingSubscriber = vi.fn()
 
     reader.settings.values$.subscribe(function widenMarginsForLargeFont({
       fontScale,
@@ -144,9 +143,13 @@ describe("the reader's settings", () => {
         reader.settings.update({ pageHorizontalMargin: 10 })
       }
     })
+    reader.settings.values$.subscribe(onValuesAfterTheUpdatingSubscriber)
     reader.settings.update({ fontScale: 2 })
 
     expect(reader.settings.values.pageHorizontalMargin).toBe(10)
+    expect(onValuesAfterTheUpdatingSubscriber).toHaveBeenLastCalledWith(
+      reader.settings.values,
+    )
   })
 
   it("lay out for a font scale changed with a setting that does not lay out", () => {
