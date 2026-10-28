@@ -659,7 +659,8 @@ test.describe("Given the chapter after the one being read laid out again", () =>
 
                   queueMicrotask(() => {
                     try {
-                      const { firstItemIndexAwaitingLayout } = reader.spine
+                      const { firstItemIndexAwaitingLayout } =
+                        reader.spine.value
 
                       reader.navigation.turnRight()
 
@@ -690,7 +691,7 @@ test.describe("Given the chapter after the one being read laid out again", () =>
           }
 
           const releaseOnceNoLayoutIsPending = () => {
-            if (reader.spine.isLayoutCurrent) {
+            if (reader.spine.value.firstItemIndexAwaitingLayout === undefined) {
               turnOnceTheNextChapterLoads()
             } else {
               requestAnimationFrame(releaseOnceNoLayoutIsPending)

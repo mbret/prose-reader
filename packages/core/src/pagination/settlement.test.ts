@@ -339,9 +339,14 @@ describe("pagination settlement", () => {
 
     otherItem.release()
     await firstValueFrom(
-      reader.spine.isLayoutCurrent$.pipe(
-        filter((isLayoutCurrent) => !isLayoutCurrent),
-      ),
+      reader.spine
+        .watch("firstItemIndexAwaitingLayout")
+        .pipe(
+          filter(
+            (firstItemIndexAwaitingLayout) =>
+              firstItemIndexAwaitingLayout !== undefined,
+          ),
+        ),
     )
 
     // The pages are about to be recomputed, so what the result says about the
@@ -369,9 +374,14 @@ describe("pagination settlement", () => {
 
     otherItem.release()
     await firstValueFrom(
-      reader.spine.isLayoutCurrent$.pipe(
-        filter((isLayoutCurrent) => !isLayoutCurrent),
-      ),
+      reader.spine
+        .watch("firstItemIndexAwaitingLayout")
+        .pipe(
+          filter(
+            (firstItemIndexAwaitingLayout) =>
+              firstItemIndexAwaitingLayout !== undefined,
+          ),
+        ),
     )
 
     reader.navigation.goToSpineItem({ indexOrId: 0, animation: false })
@@ -565,9 +575,14 @@ describe("pagination settlement", () => {
 
     otherItem.release()
     await firstValueFrom(
-      reader.spine.isLayoutCurrent$.pipe(
-        filter((isLayoutCurrent) => !isLayoutCurrent),
-      ),
+      reader.spine
+        .watch("firstItemIndexAwaitingLayout")
+        .pipe(
+          filter(
+            (firstItemIndexAwaitingLayout) =>
+              firstItemIndexAwaitingLayout !== undefined,
+          ),
+        ),
     )
 
     // The enhancer throttles its enrichment, and must not keep presenting a
@@ -587,7 +602,10 @@ describe("pagination settlement", () => {
 
     const settledWhileStale: PaginationInfo[] = []
     reader.pagination.state$.subscribe((state) => {
-      if (state.isSettled && !reader.spine.isLayoutCurrent) {
+      if (
+        state.isSettled &&
+        reader.spine.value.firstItemIndexAwaitingLayout !== undefined
+      ) {
         settledWhileStale.push(state)
       }
     })
