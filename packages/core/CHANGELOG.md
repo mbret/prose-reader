@@ -3,6 +3,15 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## [35.0.0](https://github.com/mbret/prose-reader/compare/v34.0.0...v35.0.0) (2026-10-28)
+
+### Bug Fixes
+
+* **core:** complete a located resource when the reader is destroyed before the locator sets up ([9777e93](https://github.com/mbret/prose-reader/commit/9777e93f763c2d101de0f44a53d96fce58cbea62))
+* **core:** count a chapter as loaded once its pictures have loaded ([f9cea4e](https://github.com/mbret/prose-reader/commit/f9cea4e5698f1bad9b66081530eea8afa53d71a9))
+* **core:** guard the locator's locate method against destroy itself ([7aed056](https://github.com/mbret/prose-reader/commit/7aed0563b9d2c7a0c614d51b0fd92f9fcd064601))
+
+
 ## [34.0.0](https://github.com/mbret/prose-reader/compare/v33.0.0...v34.0.0) (2026-10-24)
 
 ### ⚠ BREAKING CHANGES

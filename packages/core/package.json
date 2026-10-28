@@ -1,6 +1,6 @@
 {
   "name": "@prose-reader/core",
-  "version": "34.0.0",
+  "version": "35.0.0",
   "description": "The prose reading engine: render EPUB and comics in the browser, with pagination, spreads and navigation, and build your own reader.",
   "keywords": [
     "prose-reader",

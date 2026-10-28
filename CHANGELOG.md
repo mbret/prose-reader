@@ -3,6 +3,35 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## [35.0.0](https://github.com/mbret/prose-reader/compare/v34.0.0...v35.0.0) (2026-10-28)
+
+### ⚠ BREAKING CHANGES
+
+* **react-reader:** the ReactReader props `fontSize`, `onFontSizeChange`,
+  `fontSizeScope`, `onFontSizeScopeChange`, `fontSizeValues`, `spreadMode`,
+  `onSpreadModeChange`, `spreadModeScope`, `onSpreadModeScopeChange` and
+  `spreadModeValues` are replaced by `settings`, `onSettingsChange`,
+  `settingsByScope`, `settingsScopes` and `onSettingsScopesChange`, keyed
+  by `fontScale` and `spreadMode`. A change is reported as
+  `onSettingsChange({ fontScale: 1.5 }, "book")` rather than
+  `onFontSizeChange("book", 1.5)`. A setting whose scope has no value takes
+  the global one.
+
+### Features
+
+* **react-reader:** export the types of the settings props ([7663968](https://github.com/mbret/prose-reader/commit/7663968adc74e481385c48e26522c5d67053526a))
+* **react-reader:** take back in settingsScopes the scopes the app is given ([4579aa0](https://github.com/mbret/prose-reader/commit/4579aa0eab0a6a1203cacf50019e9c7de341d27e))
+* **react-reader:** take the menu settings as one partial with one change callback ([6ef4598](https://github.com/mbret/prose-reader/commit/6ef459859603a45f11e4f8998cfb7deba8fe0be4))
+
+### Bug Fixes
+
+* **core:** complete a located resource when the reader is destroyed before the locator sets up ([9777e93](https://github.com/mbret/prose-reader/commit/9777e93f763c2d101de0f44a53d96fce58cbea62))
+* **core:** count a chapter as loaded once its pictures have loaded ([f9cea4e](https://github.com/mbret/prose-reader/commit/f9cea4e5698f1bad9b66081530eea8afa53d71a9))
+* **core:** guard the locator's locate method against destroy itself ([7aed056](https://github.com/mbret/prose-reader/commit/7aed0563b9d2c7a0c614d51b0fd92f9fcd064601))
+* **react-reader:** show in a scope's tab the value that scope applies ([98b29df](https://github.com/mbret/prose-reader/commit/98b29dffcdb68cd39329605e6257b31b37ebd1e4))
+* **react-reader:** write a setting into the reader at once, the font scale once per drag ([1c0d2fa](https://github.com/mbret/prose-reader/commit/1c0d2fabf54d3adbe2e5b94ab2bc772e72b475f4))
+
+
 ## [34.0.0](https://github.com/mbret/prose-reader/compare/v33.0.0...v34.0.0) (2026-10-24)
 
 ### ⚠ BREAKING CHANGES
