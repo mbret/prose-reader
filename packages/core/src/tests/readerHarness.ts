@@ -276,13 +276,13 @@ export const requestLayoutByUnloadingItem = async (
 
   await vi.waitFor(() => {
     expect(spineItem.value.loadStatus).toBe("loaded")
-    expect(reader.spine.isLayoutCurrent).toBe(true)
+    expect(reader.spine.value.firstItemIndexAwaitingLayout).toBeUndefined()
   })
 
   spineItem.unload()
 
   await firstValueFrom(
-    reader.spine.firstItemIndexAwaitingLayout$.pipe(
+    reader.spine.watch("firstItemIndexAwaitingLayout").pipe(
       filter(
         (firstItemIndexAwaitingLayout) =>
           firstItemIndexAwaitingLayout === spineItemIndex,
