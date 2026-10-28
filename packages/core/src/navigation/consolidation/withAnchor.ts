@@ -90,14 +90,10 @@ export const withAnchor =
       const spineItem = spine.spineItemsManager.get(beginIndex)
 
       /**
-       * Pages describe the latest layout only while no item awaits it, and a
-       * page has a first visible node only once its item is ready.
+       * Pages describe the latest layout only while it is current, and a page
+       * has a first visible node only once its item is ready.
        */
-      if (
-        !spineItem ||
-        spine.firstItemIndexAwaitingLayout !== undefined ||
-        !spineItem.value.isReady
-      )
+      if (!spineItem || !spine.isLayoutCurrent || !spineItem.value.isReady)
         return undefined
 
       const { beginPageIndex } =
@@ -124,11 +120,7 @@ export const withAnchor =
     const getPageHoldingTargetAnchor = (anchorCfi: string) => {
       const { node, offset, spineItem } = cfi.resolveCfi({ cfi: anchorCfi })
 
-      if (
-        !spineItem ||
-        spine.firstItemIndexAwaitingLayout !== undefined ||
-        !spineItem.value.isReady
-      )
+      if (!spineItem || !spine.isLayoutCurrent || !spineItem.value.isReady)
         return undefined
 
       const pageIndex = node

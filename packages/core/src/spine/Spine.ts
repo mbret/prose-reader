@@ -59,12 +59,25 @@ export class Spine extends DestroyableClass {
    *
    * Item flags cannot tell this: a pass clears an item's dirty flag as soon as
    * it lays that item out, long before the pages are recomputed.
+   */
+  public readonly firstItemIndexAwaitingLayout$ =
+    this.firstItemIndexAwaitingLayoutSubject.pipe(distinctUntilChanged())
+
+  /**
+   * Whether the pages describe every item as the latest layout requested lays
+   * it out: no item awaits it in {@link firstItemIndexAwaitingLayout$}. Until
+   * the first pages are published, it is not current.
    *
    * The navigator derives from it whether the latest navigation holds on the
    * current layout, and reads it to decide whether an anchor is final.
    */
-  public readonly firstItemIndexAwaitingLayout$ =
-    this.firstItemIndexAwaitingLayoutSubject.pipe(distinctUntilChanged())
+  public readonly isLayoutCurrent$ = this.firstItemIndexAwaitingLayout$.pipe(
+    map(
+      (firstItemIndexAwaitingLayout) =>
+        firstItemIndexAwaitingLayout === undefined,
+    ),
+    distinctUntilChanged(),
+  )
 
   constructor(
     protected context: Context,
@@ -168,6 +181,11 @@ export class Spine extends DestroyableClass {
   /** {@link firstItemIndexAwaitingLayout$} now. */
   public get firstItemIndexAwaitingLayout() {
     return this.firstItemIndexAwaitingLayoutSubject.getValue()
+  }
+
+  /** {@link isLayoutCurrent$} now. */
+  public get isLayoutCurrent() {
+    return this.firstItemIndexAwaitingLayout === undefined
   }
 
   /**

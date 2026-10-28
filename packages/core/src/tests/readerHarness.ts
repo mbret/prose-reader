@@ -276,7 +276,7 @@ export const requestLayoutByUnloadingItem = async (
 
   await vi.waitFor(() => {
     expect(spineItem.value.loadStatus).toBe("loaded")
-    expect(reader.spine.firstItemIndexAwaitingLayout).toBeUndefined()
+    expect(reader.spine.isLayoutCurrent).toBe(true)
   })
 
   spineItem.unload()
