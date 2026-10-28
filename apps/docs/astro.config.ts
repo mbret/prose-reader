@@ -25,7 +25,7 @@ export default defineConfig({
       title: "prose",
       // The homepage's meta description, and the fallback of any page without one
       description:
-        "Guides and API reference for prose, the open-source engine that renders EPUB, comics and PDF in the browser for the reading apps you build.",
+        "Guides and API reference for prose, the open-source engine that renders any format, from EPUB, comics and PDF to your own, in the reading apps you build.",
       logo: { src: "./src/assets/logo.svg" },
       // Starlight links /favicon.svg itself; the .ico is the fallback for browsers without SVG favicons
       head: [

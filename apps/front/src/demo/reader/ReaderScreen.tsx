@@ -4,7 +4,6 @@ import "@prose-reader/react-reader/index.css"
 import { type ComponentProps, memo, useCallback, useRef } from "react"
 import { useLocation, useNavigate, useParams } from "react-router"
 import { signal, useObserve, useSignalState, useSignalValue } from "reactjrx"
-import { DEMO_BASE_PATH } from "../../constants"
 import { useDocumentTitle } from "../useDocumentTitle"
 import { useServiceWorkerReady } from "../useServiceWorkerReady"
 import { restoreAnnotations, usePersistAnnotations } from "./annotations"
@@ -72,7 +71,7 @@ export const ReaderScreen = memo(() => {
          * a reload) and there is no in-app history to go back to.
          */
         if (locationKey === "default") {
-          navigate(DEMO_BASE_PATH)
+          navigate("/")
         } else {
           navigate(-1)
         }
