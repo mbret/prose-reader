@@ -6,7 +6,7 @@ import {
   takeUntil,
   tap,
 } from "rxjs"
-import type { SettingsInterface } from "../../settings/SettingsInterface"
+import type { ExtendedSettings } from "../../settings/SettingsInterface"
 import { upsertCSSToFrame } from "../../utils/frames"
 import type { EnhancerOutput, RootEnhancer } from "../types/enhancer"
 import type { EnhancerFontsInputSettings } from "./types"
@@ -30,27 +30,20 @@ const defaultFontsSettings: EnhancerFontsInputSettings = {
  * @see 9782714493743
  */
 export const fontsEnhancer =
-  <
-    InheritOptions,
-    InheritOutput extends EnhancerOutput<RootEnhancer>,
-    InheritSettings extends NonNullable<
-      InheritOutput["settings"]["_inputSettings"]
-    >,
-    InheritComputedSettings extends NonNullable<
-      InheritOutput["settings"]["_outputSettings"]
-    >,
-    Output extends Omit<InheritOutput, "settings"> & {
-      settings: SettingsInterface<
-        InheritSettings & EnhancerFontsInputSettings,
-        EnhancerFontsInputSettings & InheritComputedSettings
-      >
-    },
-  >(
+  <InheritOptions, InheritOutput extends EnhancerOutput<RootEnhancer>>(
     next: (options: InheritOptions) => InheritOutput,
   ) =>
-  (options: InheritOptions & Partial<EnhancerFontsInputSettings>): Output => {
+  (
+    options: InheritOptions & Partial<EnhancerFontsInputSettings>,
+  ): Omit<InheritOutput, "settings"> & {
+    settings: ExtendedSettings<
+      InheritOutput["settings"],
+      EnhancerFontsInputSettings
+    >
+  } => {
     const reader = next(options)
-    const settings = reader.settings.extend(defaultFontsSettings, options)
+    const inheritedSettings: InheritOutput["settings"] = reader.settings
+    const settings = inheritedSettings.extend(defaultFontsSettings, options)
 
     const getStyle = () => `
     ${
@@ -135,7 +128,5 @@ export const fontsEnhancer =
       )
       .subscribe()
 
-    // Cast: the reader is a generic `InheritOutput`, which TypeScript cannot
-    // match to `Output`, a type the caller may narrow.
-    return reader as unknown as Output
+    return { ...reader, settings }
   }

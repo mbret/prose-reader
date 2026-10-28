@@ -56,15 +56,18 @@ This observable emits as soon as you subscribe, then once each time the settings
 ## `settings.extend`
 
 ```typescript
-extend<AddedSettings extends object>(
+extend<
+  Self extends SettingsInterface<InputSettings, OutputSettings>,
+  AddedSettings extends object,
+>(
+  this: Self,
   defaults: SettingsDefaults<AddedSettings>,
   settings: Partial<AddedSettings>,
-): SettingsInterface<
-  InputSettings & AddedSettings,
-  OutputSettings & AddedSettings
->
+): ExtendedSettings<Self, AddedSettings>
 ```
 
-Adds an enhancer's settings to the reader's: the keys of `defaults`, each with the value `settings` gives it, or its default when that value is `undefined`. It returns `reader.settings`, typed with the added settings. The other keys of `settings` are left out, so an enhancer passes the options it was created with. [Adding reader settings](/learn/enhancers#adding-reader-settings) shows an enhancer that does.
+Adds an enhancer's settings to the reader's: the keys of `defaults`, each with the value `settings` gives it, or its default when that value is `undefined`. The other keys of `settings` are left out, so an enhancer passes the options it was created with. It throws when one of the keys is already declared, by core or by another enhancer.
 
-An option or an update naming a key that no defaults declare is left out, so `SettingsDefaults` needs a default for every key, `undefined` for an optional one.
+It returns `reader.settings`, typed as the settings it is called on with the added ones. [Adding reader settings](/learn/enhancers#adding-reader-settings) shows an enhancer that adds its settings.
+
+An option or an update naming a key that no defaults declare is left out, so `SettingsDefaults` needs a default for every key, `undefined` for an optional one. An update leaves a setting given as `undefined` as it is.

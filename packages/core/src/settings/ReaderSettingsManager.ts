@@ -14,7 +14,7 @@ import type {
  * component or pushed back into the context.
  */
 export class ReaderSettingsManager
-  extends SettingsManager<CoreInputSettings, CoreOutputSettings>
+  extends SettingsManager<CoreInputSettings, ComputedCoreSettings>
   implements SettingsInterface<CoreInputSettings, CoreOutputSettings>
 {
   constructor(
@@ -26,13 +26,13 @@ export class ReaderSettingsManager
     context
       .watch(["hasVerticalWriting"])
       .pipe(
-        tap(() => this.update(this.values)),
+        tap(() => this.recompute()),
         takeUntil(this.destroy$),
       )
       .subscribe()
   }
 
-  private getComputedSettings(
+  protected getComputedSettings(
     settings: CoreInputSettings,
   ): ComputedCoreSettings {
     const manifest = this.context.manifest
@@ -76,14 +76,6 @@ export class ReaderSettingsManager
     }
 
     return computedSettings
-  }
-
-  getOutputSettings(
-    inputSettings: CoreInputSettings,
-  ): CoreInputSettings & ComputedCoreSettings {
-    const computedSettings = this.getComputedSettings(inputSettings)
-
-    return { ...inputSettings, ...computedSettings }
   }
 
   getDefaultSettings() {

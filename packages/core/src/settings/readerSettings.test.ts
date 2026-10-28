@@ -1,5 +1,7 @@
 import { isShallowEqual } from "@prose-reader/shared"
-import { describe, expect, it, onTestFinished, vi } from "vitest"
+import type { ObservedValueOf } from "rxjs"
+import { describe, expect, expectTypeOf, it, onTestFinished, vi } from "vitest"
+import { createReaderWithEnhancers } from "../createReaderWithEnhancer"
 import { createReader } from "../reader"
 import {
   createFullTestReader,
@@ -7,12 +9,34 @@ import {
   installReaderTestEnvironment,
   mountTestReader,
 } from "../tests/readerHarness"
+import type { ExtendedSettings, SettingsDefaults } from "./SettingsInterface"
 
 installReaderTestEnvironment()
 
 type FullTestReaderSettings = Parameters<
   ReturnType<typeof createFullTestReader>["settings"]["update"]
 >[0]
+
+/** An enhancer adding `defaults` to the reader's settings, as the guide does. */
+const createEnhancerAddingSettings =
+  <AddedSettings extends object>(defaults: SettingsDefaults<AddedSettings>) =>
+  <
+    InheritOptions,
+    InheritOutput extends ReturnType<typeof createReaderWithEnhancers>,
+  >(
+    next: (options: InheritOptions) => InheritOutput,
+  ) =>
+  (
+    options: InheritOptions & Partial<AddedSettings>,
+  ): Omit<InheritOutput, "settings"> & {
+    settings: ExtendedSettings<InheritOutput["settings"], AddedSettings>
+  } => {
+    const reader = next(options)
+    const inheritedSettings: InheritOutput["settings"] = reader.settings
+    const settings = inheritedSettings.extend(defaults, options)
+
+    return { ...reader, settings }
+  }
 
 const updatesAcrossEnhancers: FullTestReaderSettings[] = [
   { spreadMode: `auto` },
@@ -76,6 +100,44 @@ describe("the reader's settings", () => {
     expect(reader.settings.values).not.toHaveProperty(`notASetting`)
     expect(reader.settings.values).not.toHaveProperty(`notAnUpdatedSetting`)
     expect(Object.hasOwn(reader.settings.values, `toString`)).toBe(false)
+  })
+
+  it("type and hold the settings of enhancers added on top of each other", () => {
+    const withConfirmMessage = createEnhancerAddingSettings({
+      confirmMessage: `Leave the book?`,
+    })
+    const withTooltipDelay = createEnhancerAddingSettings({ tooltipDelay: 500 })
+    const reader = withTooltipDelay(
+      withConfirmMessage(createReaderWithEnhancers),
+    )({ manifest: createPrePaginatedManifest(), tooltipDelay: 300 })
+    const onValues = vi.fn()
+
+    onTestFinished(() => reader.destroy())
+
+    reader.settings.values$.subscribe(onValues)
+    reader.settings.update({ confirmMessage: `Quit?`, fontScale: 2 })
+
+    expectTypeOf<ObservedValueOf<typeof reader.settings.values$>>()
+      .toHaveProperty(`confirmMessage`)
+      .toEqualTypeOf<string>()
+    expectTypeOf<ObservedValueOf<typeof reader.settings.values$>>()
+      .toHaveProperty(`tooltipDelay`)
+      .toEqualTypeOf<number>()
+    expect(onValues).toHaveBeenLastCalledWith(
+      expect.objectContaining({
+        confirmMessage: `Quit?`,
+        tooltipDelay: 300,
+        fontScale: 2,
+      }),
+    )
+  })
+
+  it("refuse to add a setting that is already declared", () => {
+    const reader = createFullTestReader()
+
+    expect(() => reader.settings.extend({ fontScale: 1 }, {})).toThrow(
+      `The setting "fontScale" is already declared`,
+    )
   })
 
   it("keep each default over a setting given as undefined", () => {

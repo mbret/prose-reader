@@ -494,9 +494,11 @@ constrain its options only to what it reads, such as
 
 An option the user changes while reading, like the confirm message, can be a reader setting. It then takes its value from `createReader`'s options, changes with `reader.settings.update` and shows in `reader.settings.values$`, next to the reader's own settings. The fonts and layout enhancers `createReader` is built with add theirs this way.
 
-[`reader.settings.extend`](/learn/settings#settingsextend) takes the defaults of your settings and the options your enhancer was created with. It adds the keys of the defaults, each with its value from the options when that value is defined, and returns the reader's settings typed with them. Return them on the reader, so its type includes them:
+[`reader.settings.extend`](/learn/settings#settingsextend) takes the defaults of your settings and the options your enhancer was created with. It adds the keys of the defaults, each with its value from the options when that value is defined, and returns the reader's settings typed with them. Return them on the reader, and declare the reader's type with `ExtendedSettings`, so that it keeps the settings of the enhancers below yours:
 
 ```typescript
+import type { ExtendedSettings } from "@prose-reader/core"
+
 type CreateReader = typeof createReader
 type ReaderOutput = ReturnType<CreateReader>
 
@@ -510,9 +512,14 @@ const defaultConfirmLinksSettings: ConfirmLinksSettings = {
 
 export const confirmLinksEnhancer =
   <InheritOptions, InheritOutput extends ReaderOutput>(next: (options: InheritOptions) => InheritOutput) =>
-  (options: InheritOptions & Partial<ConfirmLinksSettings>) => {
+  (
+    options: InheritOptions & Partial<ConfirmLinksSettings>,
+  ): Omit<InheritOutput, "settings"> & {
+    settings: ExtendedSettings<InheritOutput["settings"], ConfirmLinksSettings>
+  } => {
     const reader = next(options)
-    const settings = reader.settings.extend(defaultConfirmLinksSettings, options)
+    const inheritedSettings: InheritOutput["settings"] = reader.settings
+    const settings = inheritedSettings.extend(defaultConfirmLinksSettings, options)
 
     reader.links$.pipe(takeUntil(reader.$.destroy$)).subscribe((event) => {
       const url = getExternalUrl(reader, event)
@@ -535,7 +542,9 @@ const reader = createAppReader({
 reader.settings.update({ confirmMessage: `Voulez-vous quitter le livre ?` })
 ```
 
-The enhancer reads `settings.values` on each click, so an updated message applies from the next one. Unlike the namespaced options above, settings are flat: yours share `reader.settings` with the reader's and every other enhancer's, so give them names no other enhancer uses. Give each one a default, `undefined` for an optional one: the settings drop a key their defaults lack.
+`inheritedSettings` is typed `InheritOutput["settings"]` on purpose. TypeScript types `reader.settings` itself from `ReaderOutput`, the constraint of `InheritOutput`, and `extend` would then leave out the settings that the enhancers below yours added.
+
+The enhancer reads `settings.values` on each click, so an updated message applies from the next one. Unlike the namespaced options above, settings are flat: yours share `reader.settings` with the reader's and every other enhancer's. `extend` throws when a name is already taken, so give yours names no other enhancer uses. Give each one a default, `undefined` for an optional one: the settings drop a key their defaults lack.
 
 ### The container
 

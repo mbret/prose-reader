@@ -12,7 +12,7 @@ import {
   takeUntil,
   tap,
 } from "rxjs"
-import type { SettingsInterface } from "../../settings/SettingsInterface"
+import type { ExtendedSettings } from "../../settings/SettingsInterface"
 import type { Pages } from "../../spine/Pages"
 import {
   setAttributeIfChanged,
@@ -45,28 +45,21 @@ export type LayoutEnhancerOutput = {
 }
 
 export const layoutEnhancer =
-  <
-    InheritOptions,
-    InheritOutput extends EnhancerOutput<typeof themeEnhancer>,
-    InheritSettings extends NonNullable<
-      InheritOutput["settings"]["_inputSettings"]
-    >,
-    InheritComputedSettings extends NonNullable<
-      InheritOutput["settings"]["_outputSettings"]
-    >,
-    Output extends Omit<InheritOutput, "settings"> &
-      LayoutEnhancerOutput & {
-        settings: SettingsInterface<
-          InheritSettings & EnhancerLayoutInputSettings,
-          EnhancerLayoutInputSettings & InheritComputedSettings
-        >
-      },
-  >(
+  <InheritOptions, InheritOutput extends EnhancerOutput<typeof themeEnhancer>>(
     next: (options: InheritOptions) => InheritOutput,
   ) =>
-  (options: InheritOptions & Partial<EnhancerLayoutInputSettings>): Output => {
+  (
+    options: InheritOptions & Partial<EnhancerLayoutInputSettings>,
+  ): Omit<InheritOutput, "settings"> &
+    LayoutEnhancerOutput & {
+      settings: ExtendedSettings<
+        InheritOutput["settings"],
+        EnhancerLayoutInputSettings
+      >
+    } => {
     const reader = next(options)
-    const settings = reader.settings.extend(defaultLayoutSettings, options)
+    const inheritedSettings: InheritOutput["settings"] = reader.settings
+    const settings = inheritedSettings.extend(defaultLayoutSettings, options)
 
     reader.hookManager.register(`onViewportOffsetAdjust`, () => {
       /**
@@ -264,12 +257,11 @@ export const layoutEnhancer =
       .pipe(takeUntil(reader.$.destroy$))
       .subscribe()
 
-    // Cast: the object is built from a generic `InheritOutput`, which
-    // TypeScript cannot match to `Output`, a type the caller may narrow.
     return {
       ...reader,
+      settings,
       layout$: reader.spine.layout$,
       layoutInfo$,
       coordinates: createCoordinatesApi(reader),
-    } as unknown as Output
+    }
   }
