@@ -12,7 +12,6 @@ import { LuArrowLeft } from "react-icons/lu"
 import { MdDelete } from "react-icons/md"
 import { Link } from "react-router"
 import { DEMO_BASE_PATH } from "../../constants"
-import { useDocumentTitle } from "../useDocumentTitle"
 import { BookTable } from "./BookTable"
 import { AUDIOBOOKS, COMICS, EPUBS, PDFS } from "./constants"
 import { Glossary } from "./Glossary"
@@ -22,11 +21,8 @@ import { useUploadedBooks } from "./useUploadedBooks"
 export const BooksScreen = () => {
   const { data: uploadedBooks, refetch } = useUploadedBooks()
 
-  useDocumentTitle(`Books - prose reader demo`)
-
   return (
     <Container maxW="2xl" py={4} display="flex" flexDirection="column">
-      {/* The landing page is a page of its own, so this is a plain anchor rather than a route */}
       <ChakraLink
         href="/"
         alignSelf="flex-start"
