@@ -341,24 +341,32 @@ describe("pagination settlement", () => {
         filter((isSettled) => !isSettled),
       )
       .subscribe(() => {
-        withdrawals.push(reader.spine.firstItemIndexAwaitingLayout)
+        withdrawals.push(reader.spine.value.firstItemIndexAwaitingLayout)
       })
 
     otherItem.release()
     await firstValueFrom(
-      reader.spine.firstItemIndexAwaitingLayout$.pipe(
-        filter(
-          (firstItemIndexAwaitingLayout) => firstItemIndexAwaitingLayout === 1,
+      reader.spine
+        .watch("firstItemIndexAwaitingLayout")
+        .pipe(
+          filter(
+            (firstItemIndexAwaitingLayout) =>
+              firstItemIndexAwaitingLayout === 1,
+          ),
         ),
-      ),
     )
 
     expect(reader.pagination.state.isSettled).toBe(true)
 
     await firstValueFrom(
-      reader.spine.isLayoutCurrent$.pipe(
-        filter((isLayoutCurrent) => isLayoutCurrent),
-      ),
+      reader.spine
+        .watch("firstItemIndexAwaitingLayout")
+        .pipe(
+          filter(
+            (firstItemIndexAwaitingLayout) =>
+              firstItemIndexAwaitingLayout === undefined,
+          ),
+        ),
     )
     await settledOn(reader, 0)
     await waitFor(50)
@@ -400,7 +408,7 @@ describe("pagination settlement", () => {
         map((state) => ({
           spineItemIndex: state.begin.spineItemIndex,
           firstItemIndexAwaitingLayout:
-            reader.spine.firstItemIndexAwaitingLayout,
+            reader.spine.value.firstItemIndexAwaitingLayout,
         })),
         timeout({ first: 2000, with: () => of(undefined) }),
       ),

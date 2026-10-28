@@ -129,7 +129,7 @@ describe("the navigation against the current layout", () => {
     const madeMeanwhile = await getLastNavigationMade(reader)
 
     expect(madeMeanwhile).not.toBe(before)
-    expect(reader.spine.firstItemIndexAwaitingLayout).toBe(1)
+    expect(reader.spine.value.firstItemIndexAwaitingLayout).toBe(1)
     expect(getNavigationAgainstCurrentLayout(reader)).toEqual({
       navigation: madeMeanwhile,
       holdsOnCurrentLayout: true,
@@ -214,7 +214,7 @@ describe("the navigation against the current layout", () => {
 
     // The navigation has been made, over the layout being replaced.
     expect(navigation.triggeredBy).toBe("user")
-    expect(reader.spine.isLayoutCurrent).toBe(false)
+    expect(reader.spine.value.firstItemIndexAwaitingLayout).toBe(0)
     expect(reported?.navigation).toBe(navigation)
     expect(reported?.holdsOnCurrentLayout).toBe(false)
 

@@ -226,7 +226,7 @@ export class InternalNavigator extends DestroyableClass {
       this.navigation$.pipe(
         map((navigation) => ({ type: "navigation" as const, navigation })),
       ),
-      spine.firstItemIndexAwaitingLayout$.pipe(
+      spine.watch("firstItemIndexAwaitingLayout").pipe(
         // Changes only: the current value is replayed on subscription.
         skip(1),
         map((firstItemIndexAwaitingLayout) => ({
@@ -248,7 +248,7 @@ export class InternalNavigator extends DestroyableClass {
             navigation: event.navigation,
             holdsOnCurrentLayout: holdsOver(
               event.navigation,
-              spine.firstItemIndexAwaitingLayout,
+              spine.value.firstItemIndexAwaitingLayout,
             ),
           }
 

@@ -24,7 +24,7 @@ describe("the first item awaiting layout", () => {
   it("is the first item until the reader is first laid out", () => {
     const reader = createThreeItemsTestReader()
 
-    expect(reader.spine.firstItemIndexAwaitingLayout).toBe(0)
+    expect(reader.spine.value.firstItemIndexAwaitingLayout).toBe(0)
     expect(reader.spine.isLayoutCurrentFor(0)).toBe(false)
   })
 
@@ -43,7 +43,7 @@ describe("the first item awaiting layout", () => {
     // The viewport it measures can change every item.
     reader.layout()
 
-    expect(reader.spine.firstItemIndexAwaitingLayout).toBe(0)
+    expect(reader.spine.value.firstItemIndexAwaitingLayout).toBe(0)
   })
 
   it("keeps the items a completed pass laid out awaiting layout until their pages are published, whatever a later request asks for", async () => {
@@ -58,7 +58,7 @@ describe("the first item awaiting layout", () => {
       expect(
         reader.spineItemsManager.items.map(({ value }) => value.loadStatus),
       ).toEqual(["loaded", "loaded", "loaded"])
-      expect(reader.spine.firstItemIndexAwaitingLayout).toBeUndefined()
+      expect(reader.spine.value.firstItemIndexAwaitingLayout).toBeUndefined()
     })
 
     /**
@@ -84,6 +84,6 @@ describe("the first item awaiting layout", () => {
     await requestLayoutByUnloadingItem(reader, 1)
     await requestedFromTheThirdItem
 
-    expect(reader.spine.firstItemIndexAwaitingLayout).toBe(1)
+    expect(reader.spine.value.firstItemIndexAwaitingLayout).toBe(1)
   })
 })

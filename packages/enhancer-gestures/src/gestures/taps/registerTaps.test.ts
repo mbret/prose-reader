@@ -95,7 +95,7 @@ const createHarness = ({
       watch: () => of(containerElement),
     },
     spine: {
-      element$: of(spineElement),
+      watch: () => of(spineElement),
       locator: {
         getSpineItemPagePositionFromSpinePosition: vi.fn(),
       },
