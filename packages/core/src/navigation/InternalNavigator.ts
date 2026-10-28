@@ -24,7 +24,7 @@ import type { CfiManager } from "../cfi"
 import type { Context } from "../context/Context"
 import { Report } from "../report"
 import type { ReaderSettingsManager } from "../settings/ReaderSettingsManager"
-import type { Spine } from "../spine/Spine"
+import { Spine } from "../spine/Spine"
 import { SpinePosition } from "../spine/types"
 import { DestroyableClass } from "../utils/DestroyableClass"
 import { isDefined } from "../utils/isDefined"
@@ -198,11 +198,8 @@ export class InternalNavigator extends DestroyableClass {
      * Whether the pages describe every item: a navigation holds only then,
      * whichever items a pending layout can change.
      */
-    const isLayoutCurrent$ = spine.watch("firstItemIndexAwaitingLayout").pipe(
-      map(
-        (firstItemIndexAwaitingLayout) =>
-          firstItemIndexAwaitingLayout === undefined,
-      ),
+    const isLayoutCurrent$ = spine.pipe(
+      map(Spine.isLayoutCurrent),
       distinctUntilChanged(),
     )
 
@@ -235,8 +232,7 @@ export class InternalNavigator extends DestroyableClass {
               }
             : {
                 navigation: change,
-                holdsOnCurrentLayout:
-                  spine.value.firstItemIndexAwaitingLayout === undefined,
+                holdsOnCurrentLayout: spine.isLayoutCurrent(),
               },
         undefined,
       ),

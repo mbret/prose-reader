@@ -152,24 +152,44 @@ export class Spine extends ReactiveEntity<SpineState> {
   }
 
   /**
+   * Whether the pages describe every item as the latest layout requested lays
+   * it out, in this state of the spine: no item awaits that layout.
+   */
+  static isLayoutCurrent = ({
+    firstItemIndexAwaitingLayout,
+  }: Pick<SpineState, "firstItemIndexAwaitingLayout">) =>
+    firstItemIndexAwaitingLayout === undefined
+
+  /**
    * Whether the pages describe this item as the latest layout requested lays
-   * it out: whether it comes before the state's
-   * `firstItemIndexAwaitingLayout`. Its place, its pages and what a position
-   * shows of it are then the ones the reader shows, even while a layout of
-   * items after it is pending.
+   * it out, in this state of the spine: whether it comes before the first
+   * item awaiting that layout. Its place, its pages and what a position shows
+   * of it are then the ones the reader shows, even while a layout of items
+   * after it is pending.
    *
    * The navigator reads it to decide whether an anchor is final.
    */
-  public isLayoutCurrentFor(spineItem: SpineItem | number) {
+  static isLayoutCurrentFor = (
+    {
+      firstItemIndexAwaitingLayout,
+    }: Pick<SpineState, "firstItemIndexAwaitingLayout">,
+    spineItem: SpineItem | number,
+  ) => {
     const spineItemIndex =
       typeof spineItem === "number" ? spineItem : spineItem.index
-    const { firstItemIndexAwaitingLayout } = this.value
 
     return (
       firstItemIndexAwaitingLayout === undefined ||
       spineItemIndex < firstItemIndexAwaitingLayout
     )
   }
+
+  /** {@link Spine.isLayoutCurrent} in the current state. */
+  isLayoutCurrent = () => Spine.isLayoutCurrent(this.value)
+
+  /** {@link Spine.isLayoutCurrentFor} in the current state. */
+  isLayoutCurrentFor = (spineItem: SpineItem | number) =>
+    Spine.isLayoutCurrentFor(this.value, spineItem)
 
   public layout(options?: SpineLayoutOptions) {
     this.spineLayout.layout(options)
