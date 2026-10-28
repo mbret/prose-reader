@@ -1,4 +1,3 @@
-import { shallowMergeIfDefined } from "@prose-reader/shared"
 import {
   map,
   type Observable,
@@ -50,13 +49,8 @@ export const fontsEnhancer =
     next: (options: InheritOptions) => InheritOutput,
   ) =>
   (options: InheritOptions & Partial<EnhancerFontsInputSettings>): Output => {
-    const reader = next(shallowMergeIfDefined(defaultFontsSettings, options))
-    // Cast: the reader's settings hold every setting given to them, these
-    // included, but their type only lists the inherited ones.
-    const settings = reader.settings as SettingsInterface<
-      InheritSettings & EnhancerFontsInputSettings,
-      EnhancerFontsInputSettings & InheritComputedSettings
-    >
+    const reader = next(options)
+    const settings = reader.settings.extend(defaultFontsSettings, options)
 
     const getStyle = () => `
     ${
