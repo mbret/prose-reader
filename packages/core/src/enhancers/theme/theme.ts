@@ -3,7 +3,7 @@ import {
   CSS_VAR_THEME_BACKGROUND_COLOR,
   CSS_VAR_THEME_PLACEHOLDER_COLOR,
 } from "../../constants"
-import type { SettingsInterface } from "../../settings/SettingsInterface"
+import type { ExtendedSettings } from "../../settings/SettingsInterface"
 import type { SpineItem } from "../../spineItem/SpineItem"
 import {
   removeStylePropertyIfPresent,
@@ -76,27 +76,20 @@ const getDocumentStyle = ({
 `
 
 export const themeEnhancer =
-  <
-    InheritOptions,
-    InheritOutput extends EnhancerOutput<RootEnhancer>,
-    InheritSettings extends NonNullable<
-      InheritOutput["settings"]["_inputSettings"]
-    >,
-    InheritComputedSettings extends NonNullable<
-      InheritOutput["settings"]["_outputSettings"]
-    >,
-    Output extends Omit<InheritOutput, "settings"> & {
-      settings: SettingsInterface<
-        InheritSettings & EnhancerThemeInputSettings,
-        EnhancerThemeInputSettings & InheritComputedSettings
-      >
-    },
-  >(
+  <InheritOptions, InheritOutput extends EnhancerOutput<RootEnhancer>>(
     next: (options: InheritOptions) => InheritOutput,
   ) =>
-  (options: InheritOptions & Partial<EnhancerThemeInputSettings>): Output => {
+  (
+    options: InheritOptions & Partial<EnhancerThemeInputSettings>,
+  ): Omit<InheritOutput, "settings"> & {
+    settings: ExtendedSettings<
+      InheritOutput["settings"],
+      EnhancerThemeInputSettings
+    >
+  } => {
     const reader = next(options)
-    const settings = reader.settings.extend(defaultThemeSettings, options)
+    const inheritedSettings: InheritOutput["settings"] = reader.settings
+    const settings = inheritedSettings.extend(defaultThemeSettings, options)
     const theme$ = settings.watch([`theme`]).pipe(map(({ theme }) => theme))
 
     /**
@@ -166,7 +159,5 @@ export const themeEnhancer =
       .pipe(takeUntil(reader.$.destroy$))
       .subscribe()
 
-    // Cast: the reader is a generic `InheritOutput`, which TypeScript cannot
-    // match to `Output`, a type the caller may narrow.
-    return reader as unknown as Output
+    return { ...reader, settings }
   }
