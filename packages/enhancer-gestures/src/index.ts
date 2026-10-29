@@ -117,7 +117,7 @@ export const gesturesEnhancer =
 
     const pinchGestures$ = registerPinch({
       reader,
-      recognizable,
+      recognizer: pinchRecognizer,
       settingsManager,
     })
 

@@ -71,6 +71,10 @@ The API is under the `gestures` namespace.
 ```typescript
 type Options = {
   panNavigation?: "pan" | "swipe" | false
+  /**
+   * The highest scale a pinch zooms to, `Infinity` by default.
+   * At `1` or less, a pinch never zooms in.
+   */
   zoomMaxScale?: number
   pinchCancelPan?: boolean
   /**
@@ -80,6 +84,10 @@ type Options = {
   ignore?: string[]
 }
 ```
+
+With [react-reader](/react-reader/getting-started), set `zoomMaxScale` with the
+`zoomMaxScale` prop of `ReactReader` instead, `5` by default: react-reader
+writes it over this setting.
 
 ### `.settings`
 
@@ -150,3 +158,51 @@ reader?.gestures.gestures$.pipe(
 ```
 
 Basically if you want to do something based on a gesture and make sure it does not happen with another effect this observable is a good candidate.
+
+## Resizing text with a pinch
+
+A pinch zooms. To have it resize the text instead, keep it from zooming with a
+`zoomMaxScale` of `1`, and update `fontScale` from the pinch events of
+[`gestures$`](#gesturesusd):
+
+```typescript
+import {
+  asyncScheduler,
+  filter,
+  map,
+  switchMap,
+  takeWhile,
+  throttleTime,
+} from "rxjs"
+
+const reader = createAppReader({ manifest, gestures: { zoomMaxScale: 1 } })
+
+const pinchEvents$ = reader.gestures.gestures$.pipe(
+  filter((gesture) => gesture.type === "pinch"),
+  map(({ gestureEvent }) => gestureEvent),
+)
+
+pinchEvents$
+  .pipe(
+    filter((event) => event.type === "pinchStart"),
+    switchMap(() => {
+      const fontScaleAtPinchStart = reader.settings.values.fontScale
+
+      return pinchEvents$.pipe(
+        takeWhile((event) => event.type !== "pinchEnd", true),
+        // Each change of font scale lays the book out again
+        throttleTime(500, asyncScheduler, { leading: true, trailing: true }),
+        // `scale` counts from the start of the pinch
+        map((event) =>
+          Math.min(Math.max(fontScaleAtPinchStart * event.scale, 0.5), 3),
+        ),
+      )
+    }),
+  )
+  .subscribe((fontScale) => {
+    reader.settings.update({ fontScale })
+  })
+```
+
+The text follows the pinch from the font scale it had when the pinch started,
+between `0.5` and `3` here, and ends at the scale of the pinch's last move.

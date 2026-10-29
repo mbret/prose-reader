@@ -1,29 +1,28 @@
 import type { Reader } from "@prose-reader/core"
-import type { PinchEvent } from "gesturx"
-import { filter, map, switchMap, tap, withLatestFrom } from "rxjs"
+import type { PinchRecognizer } from "gesturx"
+import { filter, map, merge, switchMap, tap, withLatestFrom } from "rxjs"
 import type { GesturesSettingsManager } from "../SettingsManager"
-import type { GestureRecognizable } from "../types"
 
 export const registerPinch = ({
   reader,
-  recognizable,
+  recognizer,
   settingsManager,
 }: {
-  recognizable: GestureRecognizable
   reader: Reader
+  recognizer: PinchRecognizer
   settingsManager: GesturesSettingsManager
 }) => {
-  const pinchStart$ = recognizable.events$.pipe(
-    map(({ event }) => event),
-    filter((event): event is PinchEvent => event.type === "pinchStart"),
+  const pinchStart$ = recognizer.events$.pipe(
+    filter((event) => event.type === "pinchStart"),
+  )
+  const pinchMove$ = recognizer.events$.pipe(
+    filter((event) => event.type === "pinchMove"),
+  )
+  const pinchEnd$ = recognizer.events$.pipe(
+    filter((event) => event.type === "pinchEnd"),
   )
 
-  const pinchMove$ = recognizable.events$.pipe(
-    map(({ event }) => event),
-    filter((event): event is PinchEvent => event.type === "pinchMove"),
-  )
-
-  return pinchStart$.pipe(
+  const zoomedPinchMoves$ = pinchStart$.pipe(
     switchMap(() => {
       const startScale = reader.zoom.state.currentScale
 
@@ -38,7 +37,7 @@ export const registerPinch = ({
            */
           if (viewportState === "busy") return
 
-          // symmetric scaling calculation
+          // `event.scale` counts from the pinch's start, so the zoom follows it from the scale it had then
           const newScale = startScale * event.scale
           const newScaleCappedAtZoomMaxScale = Math.min(
             newScale,
@@ -46,7 +45,7 @@ export const registerPinch = ({
           )
 
           if (!reader.zoom.state.isZooming) {
-            // A zoomMaxScale of 1 or less leaves nothing to zoom in to
+            // Only a pinch that spreads zooms in, and a zoomMaxScale of 1 or less leaves nothing to zoom in to
             if (event.scale > 1 && newScaleCappedAtZoomMaxScale > 1) {
               reader.zoom.enter({
                 animate: false,
@@ -65,11 +64,15 @@ export const registerPinch = ({
             })
           }
         }),
-        map(([event]) => ({
-          type: "pinch" as const,
-          gestureEvent: event,
-        })),
+        map(([event]) => event),
       )
     }),
+  )
+
+  return merge(pinchStart$, zoomedPinchMoves$, pinchEnd$).pipe(
+    map((event) => ({
+      type: "pinch" as const,
+      gestureEvent: event,
+    })),
   )
 }
