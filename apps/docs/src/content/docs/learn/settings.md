@@ -5,7 +5,7 @@ sidebar:
   label: "Settings"
 ---
 
-Settings affecting the reader.
+Settings affecting the reader. Two of the enhancers `createReader` is built with, fonts and layout, add theirs to the same `reader.settings` with [`settings.extend`](#settingsextend). Their types, `EnhancerFontsInputSettings` and `EnhancerLayoutInputSettings`, are exported by `@prose-reader/core`.
 
 ```typescript
 export type InputSettings = {
@@ -51,4 +51,23 @@ Some settings have their `computed` counterpart. When you read the settings you 
 Observable<OutputSettings>
 ```
 
-This observable emits as soon as you subscribe.
+This observable emits as soon as you subscribe, then once each time the settings change. An update a subscriber makes on an emission reaches every subscriber after that emission.
+
+## `settings.extend`
+
+```typescript
+extend<
+  Self extends SettingsInterface<InputSettings, OutputSettings>,
+  AddedSettings extends object,
+>(
+  this: Self,
+  defaults: SettingsDefaults<AddedSettings>,
+  settings: Partial<AddedSettings>,
+): ExtendedSettings<Self, AddedSettings>
+```
+
+Adds an enhancer's settings to the reader's: the keys of `defaults`, each with the value `settings` gives it, or its default when that value is `undefined`. The other keys of `settings` are left out, so an enhancer passes the options it was created with. It throws when one of the keys is already declared, by core or by another enhancer.
+
+It returns `reader.settings`, typed as the settings it is called on with the added ones. [Adding reader settings](/learn/enhancers#adding-reader-settings) shows an enhancer that adds its settings.
+
+An option or an update naming a key that no defaults declare is left out, so `SettingsDefaults` needs a default for every key, `undefined` for an optional one. An update leaves a setting given as `undefined` as it is.

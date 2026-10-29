@@ -4,7 +4,7 @@ import type { InputSettings, OutputSettings } from "./types"
 
 export class GesturesSettingsManager extends SettingsManager<
   InputSettings,
-  OutputSettings
+  Pick<OutputSettings, "panNavigation">
 > {
   constructor(
     initialSettings: Partial<InputSettings>,
@@ -19,16 +19,15 @@ export class GesturesSettingsManager extends SettingsManager<
     reader.settings.values$
       .pipe(
         tap(() => {
-          this.update({})
+          this.recompute()
         }),
         takeUntil(this.destroy$),
       )
       .subscribe()
   }
 
-  getOutputSettings(inputSettings: InputSettings): OutputSettings {
+  protected getComputedSettings(inputSettings: InputSettings) {
     return {
-      ...inputSettings,
       panNavigation:
         this.reader.settings.values.computedPageTurnMode === `scrollable`
           ? false

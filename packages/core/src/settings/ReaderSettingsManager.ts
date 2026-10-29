@@ -14,7 +14,7 @@ import type {
  * component or pushed back into the context.
  */
 export class ReaderSettingsManager
-  extends SettingsManager<CoreInputSettings, CoreOutputSettings>
+  extends SettingsManager<CoreInputSettings, ComputedCoreSettings>
   implements SettingsInterface<CoreInputSettings, CoreOutputSettings>
 {
   constructor(
@@ -26,13 +26,13 @@ export class ReaderSettingsManager
     context
       .watch(["hasVerticalWriting"])
       .pipe(
-        tap(() => this.update(this.values)),
+        tap(() => this.recompute()),
         takeUntil(this.destroy$),
       )
       .subscribe()
   }
 
-  private getComputedSettings(
+  protected getComputedSettings(
     settings: CoreInputSettings,
   ): ComputedCoreSettings {
     const manifest = this.context.manifest
@@ -78,14 +78,6 @@ export class ReaderSettingsManager
     return computedSettings
   }
 
-  getOutputSettings(
-    inputSettings: CoreInputSettings,
-  ): CoreInputSettings & ComputedCoreSettings {
-    const computedSettings = this.getComputedSettings(inputSettings)
-
-    return { ...this.outputSettings, ...inputSettings, ...computedSettings }
-  }
-
   getDefaultSettings() {
     return {
       spreadMode: `auto` as const,
@@ -96,6 +88,8 @@ export class ReaderSettingsManager
       snapAnimationDuration: 300,
       navigationSnapThreshold: { type: "pixels", value: 40 },
       numberOfAdjacentSpineItemToPreLoad: 3,
+      getResource: undefined,
+      getRenderer: undefined,
     } satisfies CoreInputSettings
   }
 }
