@@ -36,6 +36,8 @@ export type KnownMetadataIdentifierScheme =
   | "GoogleBooks"
   | "OpenLibrary"
   | "ProjectGutenberg"
+  | "UUID"
+  | "URN"
   | "URL"
   | "Unknown"
 
