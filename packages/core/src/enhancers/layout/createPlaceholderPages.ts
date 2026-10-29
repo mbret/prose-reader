@@ -1,5 +1,5 @@
 import type { Manifest } from "@prose-reader/shared"
-import { merge, tap } from "rxjs"
+import { tap } from "rxjs"
 import { HTML_PREFIX as HTML_PREFIX_CORE } from "../../constants"
 import type { Reader } from "../../reader"
 import {
@@ -7,17 +7,12 @@ import {
   setPropertyIfChanged,
   setStylePropertyIfChanged,
 } from "../../utils/dom"
-import type { Theme, ThemeEnhancerOutput } from "../theme"
 
 export const HTML_PREFIX = `${HTML_PREFIX_CORE}-enhancer-loading`
 export const CONTAINER_HTML_PREFIX = `${HTML_PREFIX}-container`
 export const LOGO_HTML_PREFIX = `${HTML_PREFIX}-logo`
 export const DETAILS_HTML_PREFIX = `${HTML_PREFIX}-details`
 
-/**
- * We use iframe for loading element mainly to be able to use share hooks / manipulation
- * with iframe. That way the loading element always match whatever style is applied to iframe.
- */
 const defaultLoadingElementCreate = ({
   container,
   item,
@@ -42,29 +37,7 @@ const defaultLoadingElementCreate = ({
   return loadingElementContainer
 }
 
-const getLoadingElementColor = (theme: Theme) => {
-  return theme === `sepia` ? `#939393` : `rgb(202, 202, 202)`
-}
-
-const applyLoadingElementTheme = ({
-  loadingElement,
-  theme,
-}: {
-  loadingElement: HTMLElement
-  theme: Theme
-}) => {
-  setStylePropertyIfChanged(
-    loadingElement.style,
-    `color`,
-    getLoadingElementColor(theme),
-  )
-}
-
-export const createPlaceholderPages = (
-  reader: Reader & {
-    theme: ThemeEnhancerOutput
-  },
-) => {
+export const createPlaceholderPages = (reader: Reader) => {
   const loadingElements = new WeakMap<HTMLElement, HTMLElement>()
 
   reader.hookManager.register(
@@ -79,11 +52,6 @@ export const createPlaceholderPages = (
         item,
       })
 
-      applyLoadingElementTheme({
-        loadingElement,
-        theme: reader.theme.get(),
-      })
-
       loadingElements.set(element, loadingElement)
       element.appendChild(loadingElement)
     },
@@ -94,7 +62,7 @@ export const createPlaceholderPages = (
    * and that it loads otherwise, such as once it loads again. It is written
    * from the item's state at each change of its load status.
    */
-  const itemLoadDetails$ = reader.spineItemsObserver.itemLoadStatusChange$.pipe(
+  return reader.spineItemsObserver.itemLoadStatusChange$.pipe(
     tap(({ item }) => {
       const detailsElement = loadingElements
         .get(item.containerElement)
@@ -114,21 +82,4 @@ export const createPlaceholderPages = (
       )
     }),
   )
-
-  const theme$ = reader.theme.$.theme$.pipe(
-    tap((theme) => {
-      for (const item of reader.spineItemsManager.items) {
-        const loadingElement = loadingElements.get(item.containerElement)
-
-        if (loadingElement) {
-          applyLoadingElementTheme({
-            loadingElement,
-            theme,
-          })
-        }
-      }
-    }),
-  )
-
-  return merge(itemLoadDetails$, theme$)
 }

@@ -492,7 +492,7 @@ constrain its options only to what it reads, such as
 
 ### Adding reader settings
 
-An option the user changes while reading, like the confirm message, can be a reader setting. It then takes its value from `createReader`'s options, changes with `reader.settings.update` and shows in `reader.settings.values$`, next to the reader's own settings. The fonts and layout enhancers `createReader` is built with add theirs this way.
+An option the user changes while reading, like the confirm message, can be a reader setting. It then takes its value from `createReader`'s options, changes with `reader.settings.update` and shows in `reader.settings.values$`, next to the reader's own settings. The fonts, layout and theme enhancers `createReader` is built with add theirs this way.
 
 [`reader.settings.extend`](/learn/settings#settingsextend) takes the defaults of your settings and the options your enhancer was created with. It adds the keys of the defaults, each with its value from the options when that value is defined, and returns the reader's settings typed with them. Return them on the reader, and declare the reader's type with `ExtendedSettings`, so that it keeps the settings of the enhancers below yours:
 

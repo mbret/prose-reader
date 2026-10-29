@@ -21,8 +21,7 @@ import {
 import { upsertCSSToFrame } from "../../utils/frames"
 import { isDefined } from "../../utils/isDefined"
 import { observeResize } from "../../utils/rxjs"
-import type { themeEnhancer } from "../theme"
-import type { EnhancerOutput } from "../types/enhancer"
+import type { EnhancerOutput, RootEnhancer } from "../types/enhancer"
 import { createCoordinatesApi } from "./coordinates"
 import { createMovingSafePan$ } from "./createMovingSafePan$"
 import { createPlaceholderPages } from "./createPlaceholderPages"
@@ -45,7 +44,7 @@ export type LayoutEnhancerOutput = {
 }
 
 export const layoutEnhancer =
-  <InheritOptions, InheritOutput extends EnhancerOutput<typeof themeEnhancer>>(
+  <InheritOptions, InheritOutput extends EnhancerOutput<RootEnhancer>>(
     next: (options: InheritOptions) => InheritOutput,
   ) =>
   (

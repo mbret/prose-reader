@@ -7,13 +7,14 @@ import {
   installReaderTestEnvironment,
   mountTestReader,
   renderTextDocuments,
-} from "../tests/readerHarness"
+} from "../../tests/readerHarness"
 import {
   createTestManifest,
   createTestManifestSpineItems,
-} from "../tests/utils"
-import { CONTAINER_HTML_PREFIX as PLACEHOLDER_CLASS_NAME } from "./layout/createPlaceholderPages"
-import { getThemeBackgroundColor, type Theme } from "./theme"
+} from "../../tests/utils"
+import { CONTAINER_HTML_PREFIX as PLACEHOLDER_CLASS_NAME } from "../layout/createPlaceholderPages"
+import { getThemeBackgroundColor } from "./theme"
+import type { Theme } from "./types"
 
 installReaderTestEnvironment()
 
@@ -127,7 +128,7 @@ describe("theme", () => {
     ]
 
     for (const theme of themesInSwitchOrder) {
-      reader.theme.set(theme)
+      reader.settings.update({ theme })
 
       expect({
         theme,
@@ -138,6 +139,31 @@ describe("theme", () => {
     }
   })
 
+  it("colors a loading item's placeholder text for the theme it is created with, and for a new one", () => {
+    const heldItem = holdItem(`/page_0.jpg`)
+    const reader = createTestReader({
+      getRenderer: heldItem.getRenderer,
+      theme: `sepia`,
+    })
+
+    mountTestReader(reader)
+
+    const textColorAtCreation = getComputedStyle(
+      getLoadingPlaceholder(reader, 0),
+    ).color
+
+    reader.settings.update({ theme: `night` })
+
+    expect({
+      textColorAtCreation,
+      textColorAfterNight: getComputedStyle(getLoadingPlaceholder(reader, 0))
+        .color,
+    }).toEqual({
+      textColorAtCreation: `#939393`,
+      textColorAfterNight: `rgb(202, 202, 202)`,
+    })
+  })
+
   it("getThemeBackgroundColor gives the background the reader paints with each theme", () => {
     const reader = createTestReader()
     const themes: Theme[] = [`bright`, `sepia`, `night`, `publisher`]
@@ -145,7 +171,7 @@ describe("theme", () => {
     mountTestReader(reader)
 
     for (const theme of themes) {
-      reader.theme.set(theme)
+      reader.settings.update({ theme })
 
       expect({ theme, background: getThemeBackgroundColor(theme) }).toEqual({
         theme,
@@ -184,11 +210,18 @@ describe("theme", () => {
       getDocumentBodyPaintedBackground(reader, 1),
     ]).toEqual([themeBackgroundColors.sepia, undefined])
 
-    reader.theme.set(`night`)
+    reader.settings.update({ theme: `night` })
 
     expect([
       getDocumentBodyPaintedBackground(reader, 0),
       getDocumentBodyPaintedBackground(reader, 1),
     ]).toEqual([themeBackgroundColors.night, undefined])
+
+    reader.settings.update({ theme: `publisher` })
+
+    expect([
+      getDocumentBodyPaintedBackground(reader, 0),
+      getDocumentBodyPaintedBackground(reader, 1),
+    ]).toEqual([undefined, undefined])
   })
 })

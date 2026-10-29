@@ -1,6 +1,6 @@
 ---
 title: "Getting started with React Reader"
-description: "Install @prose-reader/react-reader, render ReactReader with your reader instance, persist font size and spread mode, and add enhancers to turn on more menus."
+description: "Install @prose-reader/react-reader, render ReactReader with your reader instance, persist font size and spread mode, set the theme, and add enhancers to turn on more menus."
 sidebar:
   label: "Getting Started"
 ---
@@ -86,16 +86,19 @@ const useReaderInstance = (
 
 ## Settings
 
-The user changes some of the reader's settings from react-reader's menus: the font scale from the font size menu, and the spread mode from the Layout dialog. react-reader writes them into the reader, so don't give them to your reader when you create it: they would be overwritten. Keep them in your app instead. Pass them as `settings`, in the shape `reader.settings` has, and merge what `onSettingsChange` reports into them:
+react-reader manages some of the reader's settings. The user changes two of them from its menus: the font scale from the font size menu, and the spread mode from the Layout dialog. The theme has no menu: your app sets it, for example to follow its own light or dark mode. It colors the book, not react-reader's own interface, which follows its Chakra UI theme.
+
+react-reader writes these settings into the reader. Keep them in your app: pass them as `settings`, in the shape `reader.settings` has, and merge what `onSettingsChange` reports into them:
 
 ```tsx
 import { ReactReader, type ReactReaderSettings } from "@prose-reader/react-reader"
 
 const [settings, setSettings] = useState<ReactReaderSettings>(savedSettings)
+const theme = colorMode === "dark" ? "night" : "bright"
 
 <ReactReader
   reader={reader}
-  settings={settings}
+  settings={{ ...settings, theme }}
   onSettingsChange={(changes) =>
     setSettings((old) => ({ ...old, ...changes }))
   }
@@ -108,10 +111,25 @@ const [settings, setSettings] = useState<ReactReaderSettings>(savedSettings)
 | --- | --- |
 | `fontScale` | Font size |
 | `spreadMode` | Layout |
+| `theme` | None: your app sets it |
 
-`onSettingsChange(changes, from)` receives only the settings that changed. `from` is the scope the user chose the value for, or `"internal"` for a value set on the reader directly, such as by a pinch.
+`onSettingsChange(changes, from)` receives only the settings that changed. `from` is the scope the user chose the value for, or `"internal"` for a value set on the reader directly, such as by a pinch. The theme only comes with `"internal"`, since no menu sets it.
 
 A setting you give no value keeps react-reader's own, for as long as it is mounted. It starts from the value the reader was created with, which is not a change and is not reported. A change in the menus, or by a pinch, still reaches `onSettingsChange`.
+
+react-reader writes the values you give into the reader once it renders with it. Create your reader with the same values, so it starts on them rather than switching to them: a reader created without your theme shows `bright` until then. Read the values when you create the reader, without making them a reason to create it again, since react-reader keeps the reader on them afterwards. In `useReaderInstance`, a ref does that:
+
+```typescript
+const settingsRef = useLiveRef({ ...settings, theme })
+
+useEffect(() => {
+  // ...
+  const instance = createAppReader({ manifest, ...settingsRef.current })
+  // ...
+}, [manifest, containerRef, settingsRef])
+```
+
+`useLiveRef` comes from [reactjrx](https://github.com/mbret/reactjrx). A setting left `undefined`, as before anything is saved, keeps its default.
 
 The package exports the types of these props: `ReactReaderSettings` for the values, `ReactReaderSettingsScope` and `ReactReaderSettingsScopeReference` for the scopes below, and `ReactReaderProps` for every prop of `ReactReader`.
 

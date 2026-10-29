@@ -13,3 +13,4 @@ export const HTML_PREFIX_SPINE_ITEM = `${HTML_PREFIX}-spine-item`
 export const CSS_VAR_ABSOLUTE_VIEWPORT_WIDTH = `--${HTML_PREFIX}-absolute-viewport-width`
 export const CSS_VAR_ABSOLUTE_VIEWPORT_HEIGHT = `--${HTML_PREFIX}-absolute-viewport-height`
 export const CSS_VAR_THEME_BACKGROUND_COLOR = `--${HTML_PREFIX}-theme-background-color`
+export const CSS_VAR_THEME_PLACEHOLDER_COLOR = `--${HTML_PREFIX}-theme-placeholder-color`

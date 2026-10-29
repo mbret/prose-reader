@@ -47,6 +47,8 @@ const updatesAcrossEnhancers: FullTestReaderSettings[] = [
   { pageTurnAnimation: `none`, pageVerticalMargin: 12, lineHeight: 1.4 },
   { fontScale: 2 },
   { spreadMode: `auto` },
+  { theme: `night`, pageTurnAnimation: `slide` },
+  { theme: `night` },
 ]
 
 describe("the reader's settings", () => {
@@ -67,6 +69,7 @@ describe("the reader's settings", () => {
         layoutAutoResize: `container`,
         layoutLayerTransition: true,
         spreadMode: `auto`,
+        theme: `bright`,
       }),
     )
   })
@@ -144,10 +147,15 @@ describe("the reader's settings", () => {
     const reader = createFullTestReader({
       fontScale: undefined,
       spreadMode: undefined,
+      theme: undefined,
     })
 
     expect(reader.settings.values).toEqual(
-      expect.objectContaining({ fontScale: 1, spreadMode: `auto` }),
+      expect.objectContaining({
+        fontScale: 1,
+        spreadMode: `auto`,
+        theme: `bright`,
+      }),
     )
   })
 
@@ -182,6 +190,8 @@ describe("the reader's settings", () => {
       true,
       false,
       true,
+      true,
+      false,
     ])
     expect(resultOfEachUpdate).toEqual(
       resultOfEachUpdate.map(({ update, values, changed }) => ({
