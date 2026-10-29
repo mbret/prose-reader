@@ -36,8 +36,6 @@ export type GestureEvent = ObservedValueOf<GestureRecognizable["events$"]>
 export type InputSettings = {
   panNavigation: "pan" | "swipe" | false
   zoomMaxScale: number
-  // @todo default value
-  // @todo cancel pan if selecting
   pinchCancelPan: boolean
   ignore: string[]
 }

@@ -1,8 +1,7 @@
-import type { HookManager, Reader } from "@prose-reader/core"
+import type { Reader } from "@prose-reader/core"
 import type { PanRecognizer } from "gesturx"
 import { filter, finalize, map, merge, of, switchMap, tap } from "rxjs"
 import type { GesturesSettingsManager } from "../SettingsManager"
-import type { Hook } from "../types"
 
 export const registerPan = ({
   reader,
@@ -11,7 +10,6 @@ export const registerPan = ({
 }: {
   recognizer: PanRecognizer
   reader: Reader
-  hookManager: HookManager<Hook>
   settingsManager: GesturesSettingsManager
 }) => {
   const gestures$ = settingsManager.values$.pipe(

@@ -103,10 +103,6 @@ const createHarness = ({
     recognizer: recognizer as unknown as PanRecognizer,
     // Cast: registerPan only touches this minimal Reader gesture/zoom surface.
     reader: reader as unknown as Reader,
-    // Cast: registerPan does not read hookManager for pan gestures.
-    hookManager: undefined as unknown as Parameters<
-      typeof registerPan
-    >[0]["hookManager"],
     // Cast: registerPan only reads values$ from the settings manager in these tests.
     settingsManager: settingsManager as unknown as GesturesSettingsManager,
   }).subscribe(({ gestureEvent }) => {

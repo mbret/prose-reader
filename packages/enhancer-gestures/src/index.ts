@@ -104,14 +104,12 @@ export const gesturesEnhancer =
     })
 
     const panGestures$ = registerPan({
-      hookManager,
       reader,
       recognizer: panRecognizer,
       settingsManager,
     })
 
     const swipeGestures$ = registerSwipe({
-      hookManager,
       reader,
       recognizable,
       settingsManager,
