@@ -1,13 +1,4 @@
-import {
-  EMPTY,
-  merge,
-  type ObservedValueOf,
-  Subject,
-  switchMap,
-  takeUntil,
-  tap,
-  timer,
-} from "rxjs"
+import { EMPTY, merge, Subject, switchMap, takeUntil, tap, timer } from "rxjs"
 import { HTML_PREFIX } from "../../constants"
 import type { Reader } from "../../reader"
 import {
@@ -46,15 +37,8 @@ export type ZoomControllerState = {
 const ANIMATION_DURATION = 200
 
 export class ZoomController extends ReactiveEntity<ZoomControllerState> {
-  private enterSubject = new Subject<
-    | undefined
-    | {
-        element?: HTMLImageElement
-        scale?: number
-        animate?: boolean
-      }
-  >()
-  private exitSubject = new Subject<{ animate?: boolean } | undefined>()
+  private enterSubject = new Subject<Parameters<ZoomController["enter"]>[0]>()
+  private exitSubject = new Subject<Parameters<ZoomController["exit"]>[0]>()
 
   constructor(protected reader: Reader) {
     super({
@@ -173,16 +157,16 @@ export class ZoomController extends ReactiveEntity<ZoomControllerState> {
     merge(enter$, exit$).pipe(takeUntil(this.destroy$)).subscribe()
   }
 
-  public enter(options?: ObservedValueOf<typeof this.enterSubject>) {
+  public enter(options?: { scale?: number; animate?: boolean }) {
     this.enterSubject.next(options)
   }
 
-  public exit(options?: ObservedValueOf<typeof this.exitSubject>) {
+  public exit(options?: { animate?: boolean }) {
     this.exitSubject.next(options)
   }
 
   public move(
-    position: { x: number; y: number },
+    position: ZoomPosition,
     options?: { constrain?: "within-viewport" },
   ) {
     // no moving needed for scrollable mode
@@ -201,7 +185,7 @@ export class ZoomController extends ReactiveEntity<ZoomControllerState> {
   }
 
   public scaleAt(
-    userScale: number,
+    scale: number,
     options?: { constrain?: "within-viewport" },
   ): void {
     if (!this.value.isZooming) return
@@ -209,10 +193,9 @@ export class ZoomController extends ReactiveEntity<ZoomControllerState> {
     // make sure to prevent animation before applying the new position
     removeStylePropertyIfPresent(this.viewport.element.style, `transition`)
 
-    const roundedScale = Math.ceil(userScale * 100) / 100
-    const newScale = roundedScale
+    const roundedScale = Math.ceil(scale * 100) / 100
 
-    this.updateZoom(newScale, undefined, {
+    this.updateZoom(roundedScale, undefined, {
       constraints:
         options?.constrain === "within-viewport"
           ? (...rest) =>

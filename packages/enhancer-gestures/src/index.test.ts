@@ -268,7 +268,7 @@ describe("Given a pan moving the page", () => {
 
     expect(isNavigationLocked(reader)).toBe(true)
 
-    reader.gestures.settings.update({ fontScaleMaxScale: 4 })
+    reader.gestures.settings.update({ zoomMaxScale: 4 })
     await vi.runAllTimersAsync()
 
     expect(isNavigationLocked(reader)).toBe(false)
@@ -285,7 +285,7 @@ describe("Given a pan moving the page", () => {
 
     reader.navigation.isLocked$.pipe(filter(Boolean), first()).subscribe(() => {
       hasChangedSetting = true
-      reader.gestures.settings.update({ fontScaleMaxScale: 4 })
+      reader.gestures.settings.update({ zoomMaxScale: 4 })
     })
 
     await drag({ x: viewport.width / 2, distance: -60, letGo: false })

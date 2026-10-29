@@ -65,7 +65,6 @@ export const useCreateReader = (
       pageTurnDirection: query.has("vertical") ? `vertical` : `horizontal`,
       pageTurnMode: query.has("free") ? `scrollable` : `controlled`,
       gestures: {
-        fontScalePinchEnabled: true,
         ignore: [
           // ignore gestures within the bookmark area
           `[${BOOKMARK_AREA_DATA_ATTRIBUTE}]`,

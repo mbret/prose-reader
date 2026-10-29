@@ -35,10 +35,6 @@ const createDefaultSettings = (
 ): OutputSettings => ({
   panNavigation,
   pinchCancelPan: true,
-  fontScalePinchEnabled: true,
-  fontScalePinchThrottleTime: 500,
-  fontScaleMaxScale: 5,
-  fontScaleMinScale: 0.2,
   zoomMaxScale: Infinity,
   ignore: [],
 })
@@ -107,10 +103,6 @@ const createHarness = ({
     recognizer: recognizer as unknown as PanRecognizer,
     // Cast: registerPan only touches this minimal Reader gesture/zoom surface.
     reader: reader as unknown as Reader,
-    // Cast: registerPan does not read hookManager for pan gestures.
-    hookManager: undefined as unknown as Parameters<
-      typeof registerPan
-    >[0]["hookManager"],
     // Cast: registerPan only reads values$ from the settings manager in these tests.
     settingsManager: settingsManager as unknown as GesturesSettingsManager,
   }).subscribe(({ gestureEvent }) => {
@@ -184,8 +176,7 @@ describe("registerPan stopping the pan navigator", () => {
     ],
     [
       "a gestures setting changes before it ends",
-      ({ values$ }) =>
-        values$.next({ ...values$.getValue(), fontScaleMaxScale: 4 }),
+      ({ values$ }) => values$.next({ ...values$.getValue(), zoomMaxScale: 4 }),
       { x: 20, y: 0 },
     ],
     [
