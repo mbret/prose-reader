@@ -10,6 +10,7 @@ import {
   timeout,
 } from "rxjs"
 import { describe, expect, it, vi } from "vitest"
+import { Spine } from "../spine/Spine"
 import {
   createEnhancedTestReader,
   createTestReader,
@@ -358,16 +359,7 @@ describe("pagination settlement", () => {
 
     expect(reader.pagination.state.isSettled).toBe(true)
 
-    await firstValueFrom(
-      reader.spine
-        .watch("firstItemIndexAwaitingLayout")
-        .pipe(
-          filter(
-            (firstItemIndexAwaitingLayout) =>
-              firstItemIndexAwaitingLayout === undefined,
-          ),
-        ),
-    )
+    await firstValueFrom(reader.spine.pipe(filter(Spine.isLayoutCurrent)))
     await settledOn(reader, 0)
     await waitFor(50)
 

@@ -24,7 +24,7 @@ import type { CfiManager } from "../cfi"
 import type { Context } from "../context/Context"
 import { Report } from "../report"
 import type { ReaderSettingsManager } from "../settings/ReaderSettingsManager"
-import type { Spine } from "../spine/Spine"
+import { Spine, type SpineState } from "../spine/Spine"
 import { SpinePosition } from "../spine/types"
 import { DestroyableClass } from "../utils/DestroyableClass"
 import { isDefined } from "../utils/isDefined"
@@ -196,17 +196,18 @@ export class InternalNavigator extends DestroyableClass {
     super()
 
     /**
-     * Whether no item from `firstItemIndexAwaitingLayout` on is in view at the
-     * navigation's position: a layout of those items leaves it showing the
-     * same pages. Any part of an item in view counts, more than pagination
-     * needs to count it visible. The viewport is the one laid out, as for
-     * pagination: what a zoom shows around it takes a read of the DOM.
+     * Whether, in this state of the spine, the layout is current for every
+     * item in view at the navigation's position: a layout of the items after
+     * them leaves it showing the same pages. Any part of an item in view
+     * counts, more than pagination needs to count it visible. The viewport is
+     * the one laid out, as for pagination: what a zoom shows around it takes a
+     * read of the DOM.
      */
     const holdsOver = (
       navigation: Navigation,
-      firstItemIndexAwaitingLayout: number | undefined,
+      spineState: Pick<SpineState, "firstItemIndexAwaitingLayout">,
     ) => {
-      if (firstItemIndexAwaitingLayout === undefined) return true
+      if (Spine.isLayoutCurrent(spineState)) return true
 
       const { endIndex } =
         spine.locator.getVisibleSpineItemsFromPosition({
@@ -214,7 +215,9 @@ export class InternalNavigator extends DestroyableClass {
           threshold: { type: "percentage", value: 0 },
         }) ?? {}
 
-      return endIndex !== undefined && endIndex < firstItemIndexAwaitingLayout
+      return (
+        endIndex !== undefined && Spine.isLayoutCurrentFor(spineState, endIndex)
+      )
     }
 
     /**
@@ -226,12 +229,12 @@ export class InternalNavigator extends DestroyableClass {
       this.navigation$.pipe(
         map((navigation) => ({ type: "navigation" as const, navigation })),
       ),
-      spine.watch("firstItemIndexAwaitingLayout").pipe(
+      spine.watch(["firstItemIndexAwaitingLayout"]).pipe(
         // Changes only: the current value is replayed on subscription.
         skip(1),
-        map((firstItemIndexAwaitingLayout) => ({
+        map((spineState) => ({
           type: "layoutCurrencyChange" as const,
-          firstItemIndexAwaitingLayout,
+          spineState,
         })),
       ),
     ).pipe(
@@ -239,17 +242,16 @@ export class InternalNavigator extends DestroyableClass {
         | { type: "navigation"; navigation: Navigation }
         | {
             type: "layoutCurrencyChange"
-            firstItemIndexAwaitingLayout: number | undefined
+            spineState: Pick<SpineState, "firstItemIndexAwaitingLayout">
           },
         NavigationAgainstCurrentLayout | undefined
       >((latest, event) => {
         if (event.type === "navigation")
           return {
             navigation: event.navigation,
-            holdsOnCurrentLayout: holdsOver(
-              event.navigation,
-              spine.value.firstItemIndexAwaitingLayout,
-            ),
+            // the state now, which a change still being reported has reached
+            // before this stream hears of it
+            holdsOnCurrentLayout: holdsOver(event.navigation, spine.value),
           }
 
         /**
@@ -260,7 +262,7 @@ export class InternalNavigator extends DestroyableClass {
          * shows, which no request since has changed.
          */
         return latest?.holdsOnCurrentLayout &&
-          !holdsOver(latest.navigation, event.firstItemIndexAwaitingLayout)
+          !holdsOver(latest.navigation, event.spineState)
           ? { navigation: latest.navigation, holdsOnCurrentLayout: false }
           : latest
       }, undefined),
