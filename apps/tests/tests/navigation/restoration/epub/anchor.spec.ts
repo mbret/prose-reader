@@ -581,6 +581,148 @@ test.describe("Given a page reached by turning pages", () => {
 })
 
 /**
+ * Keeps the chapter at `chapterIndex` loading, in an `item.onDocumentLoad`
+ * hook, the reader's documented way to hold a load, until `release` is called.
+ * Register it before the chapter starts loading: `isHolding` says when its
+ * load has reached the hook.
+ */
+const holdChapterLoad = async (page: Page, chapterIndex: number) =>
+  (await getReader(page)).evaluateHandle((reader, chapterIndex) => {
+    const chapterId = reader.context.manifest.spineItems[chapterIndex]?.id
+
+    if (!chapterId) throw new Error(`no chapter at ${chapterIndex}`)
+
+    let releaseLoad = () => {}
+    const released = new Promise<void>((resolve) => {
+      releaseLoad = resolve
+    })
+    const heldLoad = { isHolding: false, release: () => releaseLoad() }
+
+    reader.hookManager.register("item.onDocumentLoad", async ({ itemId }) => {
+      if (itemId !== chapterId) return
+
+      heldLoad.isHolding = true
+
+      await released
+    })
+
+    return heldLoad
+  }, chapterIndex)
+
+test.describe("Given the chapter after the one being read laid out again", () => {
+  test.beforeEach(async ({ page }) => {
+    await page.setViewportSize(initialSize)
+    // Only the chapters next to the one shown load.
+    await page.goto(`${url}?preload=1`)
+    await waitForSettled(page)
+  })
+
+  test("a page turn is the reading position at once, on the page it lands on", async ({
+    page,
+  }) => {
+    const chapterIndex = await getLongChapterIndex(page)
+    const nextChapterIndex = chapterIndex + 1
+    const heldLoad = await holdChapterLoad(page, nextChapterIndex)
+
+    await navigateToSpineItem({ page, index: chapterIndex })
+    await waitForSettled(page)
+    await expect
+      .poll(() => heldLoad.evaluate(({ isHolding }) => isHolding))
+      .toBe(true)
+
+    /**
+     * The next chapter's load is let go in a frame where no layout is
+     * pending. Its load then ends within the same task, and the spine asks to
+     * lay it out again once its new status has reached every subscriber: the
+     * turn comes right after, while that layout, of a chapter after the page,
+     * is all that is pending.
+     */
+    const atOnce = await (await getReader(page)).evaluate(
+      (reader, { heldLoad, nextChapterIndex }) =>
+        new Promise<{
+          firstItemIndexAwaitingLayout: number | undefined
+          status: ReadingPosition["status"]
+          cfi: string
+          isRootCfi: boolean
+        }>((resolve, reject) => {
+          const turnOnceTheNextChapterLoads = () => {
+            const subscription =
+              reader.spineItemsObserver.itemLoadStatusChange$.subscribe(
+                ({ item, loadStatus }) => {
+                  if (
+                    item.index !== nextChapterIndex ||
+                    loadStatus !== "loaded"
+                  )
+                    return
+
+                  subscription.unsubscribe()
+
+                  queueMicrotask(() => {
+                    try {
+                      const { firstItemIndexAwaitingLayout } =
+                        reader.spine.value
+
+                      reader.navigation.turnRight()
+
+                      let readingPosition: ReadingPosition | undefined
+                      reader.navigation.readingPosition$
+                        .subscribe((value) => {
+                          readingPosition = value
+                        })
+                        .unsubscribe()
+
+                      if (!readingPosition)
+                        throw new Error("no reading position")
+
+                      resolve({
+                        firstItemIndexAwaitingLayout,
+                        status: readingPosition.status,
+                        cfi: readingPosition.cfi,
+                        isRootCfi: reader.cfi.isRootCfi(readingPosition.cfi),
+                      })
+                    } catch (error) {
+                      reject(error)
+                    }
+                  })
+                },
+              )
+
+            heldLoad.release()
+          }
+
+          const releaseOnceNoLayoutIsPending = () => {
+            if (reader.spine.isLayoutCurrent()) {
+              turnOnceTheNextChapterLoads()
+            } else {
+              requestAnimationFrame(releaseOnceNoLayoutIsPending)
+            }
+          }
+
+          releaseOnceNoLayoutIsPending()
+        }),
+      { heldLoad, nextChapterIndex },
+    )
+    await waitForSettled(page)
+
+    const turned = await readPosition(page)
+
+    // The turn came while the next chapter was being laid out again.
+    expect(atOnce.firstItemIndexAwaitingLayout).toBe(nextChapterIndex)
+    expect(turned.spineItemIndex).toBe(chapterIndex)
+    expect(turned.pageIndex).toBe(1)
+
+    /**
+     * Nothing pending could move the page: a chapter's place depends on the
+     * chapters before it only. So the reading position is the first character
+     * of the page the turn lands on at once, the one pagination settles on.
+     */
+    expect(atOnce.status).toBe("success")
+    expect(atOnce.isRootCfi).toBe(false)
+    expect(atOnce.cfi).toBe(turned.cfi)
+  })
+})
+
+/**
  * Drags the page a fifth of the window towards the next one and lets go, with
  * the pan navigator, as a finger does. That is past the snap threshold, so the
  * page turns once let go, and short of half the page, so while held the page

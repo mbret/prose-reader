@@ -38,7 +38,7 @@ export type SpineState = {
    * it lays that item out, long before the pages are recomputed.
    *
    * The navigator derives from it whether the latest navigation holds on the
-   * current layout, and reads it to decide whether an anchor is final.
+   * current layout.
    */
   firstItemIndexAwaitingLayout: number | undefined
 }
@@ -166,6 +166,8 @@ export class Spine extends ReactiveEntity<SpineState> {
    * item awaiting that layout. Its place, its pages and what a position shows
    * of it are then the ones the reader shows, even while a layout of items
    * after it is pending.
+   *
+   * The navigator reads it to decide whether an anchor is final.
    */
   static isLayoutCurrentFor = (
     {
