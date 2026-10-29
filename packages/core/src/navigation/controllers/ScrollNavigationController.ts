@@ -103,11 +103,11 @@ export class ScrollNavigationController
 
     // might be a bit overkill but we want to be sure of sure
     const isSpineScrolling$ = merge(
-      spine.element$.pipe(
+      spine.watch("element").pipe(
         filter(isDefined),
         switchMap((element) => observeResize(element)),
       ),
-      spine.element$.pipe(
+      spine.watch("element").pipe(
         filter(isDefined),
         switchMap((element) => fromEvent(element, "scroll")),
       ),

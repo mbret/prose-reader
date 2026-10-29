@@ -29,7 +29,26 @@ const questions: { question: string; answer: ReactNode }[] = [
   {
     question: "Which formats can it read?",
     answer:
-      "EPUB 3, comics in CBZ or CBR, PDF, plain text and audiobooks. Enhancers can teach it new formats.",
+      "Any format. EPUB 3, comics in CBZ or CBR, PDF, plain text and audiobooks are ready to use, and you can extend it to more.",
+  },
+  {
+    question: "Do I need a server?",
+    answer:
+      "No. A book can open entirely in the browser, from a file the user picks or downloads, or be served by your own server. The reader asks for a manifest and the resources it lists, and you decide where each one comes from.",
+  },
+  {
+    question: "Can I protect books with DRM?",
+    answer: (
+      <>
+        prose ships no DRM of its own yet. The reader asks for a book one
+        resource at a time, so your server or service worker can check access
+        and decrypt each one before the reader gets it. PDF is the exception:
+        pdf.js needs the whole file in the page. A more native DRM integration
+        is in the works: tell us on{" "}
+        <AnswerLink href={links.discord}>Discord</AnswerLink> if you are
+        interested.
+      </>
+    ),
   },
   {
     question: "Does it work with React or React Native?",

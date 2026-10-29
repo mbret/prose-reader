@@ -39,7 +39,7 @@ test.describe("Given an app that lays the book out again as soon as a page turn 
             if (!isTurning || turnNavigation) return
 
             turnNavigation = navigation
-            isLayoutCurrentWhenTurnReported = reader.spine.isLayoutCurrent
+            isLayoutCurrentWhenTurnReported = reader.spine.isLayoutCurrent()
             reader.layout()
             // Replays the current one, synchronously.
             reader.navigation.navigationAgainstCurrentLayout$

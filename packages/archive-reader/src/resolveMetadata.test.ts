@@ -143,7 +143,7 @@ describe("resolveMetadata", () => {
     })
 
     expect(resolved.identifiers).toEqual([
-      { value: "urn:uuid:abc", scheme: "Unknown", unique: true },
+      { value: "urn:uuid:abc", scheme: "URN", unique: true },
       { value: "978-3-16-148410-0", scheme: "ISBN" },
       { value: "9638-5074", scheme: "GTIN" },
     ])

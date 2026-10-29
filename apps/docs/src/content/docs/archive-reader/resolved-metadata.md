@@ -74,8 +74,8 @@ type ResolvedMetadata = {
   identifiers?: {
     value: string
     scheme: "ISBN" | "GTIN" | "DOI" | "GoogleBooks" |
-            "OpenLibrary" | "ProjectGutenberg" | "URL" | "Unknown" |
-            (string & {})
+            "OpenLibrary" | "ProjectGutenberg" | "UUID" | "URN" |
+            "URL" | "Unknown" | (string & {})
     unique?: true
   }[]
   /** a collection is identified by a name, by identifiers, or by both — sources differ */

@@ -86,41 +86,41 @@ const useReaderInstance = (
 
 ## Settings
 
-react-reader manages some of the reader's settings as props of the component. The user changes two of them from its menus: the font size, and the spread mode in the Layout dialog. The theme has no menu: your app sets it, for example to follow its own light or dark mode. It colors the book, not react-reader's own interface, which follows its Chakra UI theme.
+react-reader manages some of the reader's settings. The user changes two of them from its menus: the font scale from the font size menu, and the spread mode from the Layout dialog. The theme has no menu: your app sets it, for example to follow its own light or dark mode. It colors the book, not react-reader's own interface, which follows its Chakra UI theme.
 
-| Setting | Value | Change callback | Scopes | Reader setting |
-| --- | --- | --- | --- | --- |
-| Font size | `fontSize` | `onFontSizeChange` | `fontSizeScope`, `onFontSizeScopeChange`, `fontSizeValues` | `fontScale` |
-| Spread mode | `spreadMode` | `onSpreadModeChange` | `spreadModeScope`, `onSpreadModeScopeChange`, `spreadModeValues` | `spreadMode` |
-| Theme | `theme` | `onThemeChange` | none | `theme` |
-
-Keep the value in your app, save it from the change callback and pass it back as a prop. A theme that follows the app's color mode has nothing to save:
+react-reader writes these settings into the reader. Keep them in your app: pass them as `settings`, in the shape `reader.settings` has, and merge what `onSettingsChange` reports into them:
 
 ```tsx
+import { ReactReader, type ReactReaderSettings } from "@prose-reader/react-reader"
+
+const [settings, setSettings] = useState<ReactReaderSettings>(savedSettings)
+const theme = colorMode === "dark" ? "night" : "bright"
+
 <ReactReader
   reader={reader}
-  fontSize={saved.fontSize}
-  onFontSizeChange={(_scope, fontSize) => save({ fontSize })}
-  spreadMode={saved.spreadMode}
-  onSpreadModeChange={(_scope, spreadMode) => save({ spreadMode })}
-  theme={colorMode === "dark" ? "night" : "bright"}
+  settings={{ ...settings, theme }}
+  onSettingsChange={(changes) =>
+    setSettings((old) => ({ ...old, ...changes }))
+  }
 >
   <div ref={containerRef} style={{ height: "100%", width: "100%" }} />
 </ReactReader>
 ```
 
-The change callback receives the scope whose value the user changed, or `"internal"` for a value that comes from the reader: one set on it directly or, without the value prop, the one it was created with when that is not the default. `onThemeChange` only receives `"internal"`, since react-reader has no theme menu. Without the value prop, react-reader keeps its own copy for as long as it is mounted, starting from the value the reader was created with. Its menus offer to pick a scope only once you pass the scope props.
+| Setting | Menu |
+| --- | --- |
+| `fontScale` | Font size |
+| `spreadMode` | Layout |
+| `theme` | None: your app sets it |
 
-react-reader writes the values into the reader it gets through the `reader` prop. It writes the font size and the spread mode once they have stayed 200 ms, so a slider dragged across sizes writes once, and the theme as soon as it changes.
+`onSettingsChange(changes, from)` receives only the settings that changed. `from` is the scope the user chose the value for, or `"internal"` for a value set on the reader directly, such as by a pinch. The theme only comes with `"internal"`, since no menu sets it.
 
-Create your reader with the same values, so it starts on them rather than switching to them: a reader created without your theme shows `bright` until react-reader writes yours. Read the values when you create the reader, without making them a reason to create it again, since react-reader keeps the reader on them afterwards. In `useReaderInstance`, a ref does that:
+A setting you give no value keeps react-reader's own, for as long as it is mounted. It starts from the value the reader was created with, which is not a change and is not reported. A change in the menus, or by a pinch, still reaches `onSettingsChange`.
+
+react-reader writes the values you give into the reader once it renders with it. Create your reader with the same values, so it starts on them rather than switching to them: a reader created without your theme shows `bright` until then. Read the values when you create the reader, without making them a reason to create it again, since react-reader keeps the reader on them afterwards. In `useReaderInstance`, a ref does that:
 
 ```typescript
-const settingsRef = useLiveRef({
-  fontScale: saved.fontSize,
-  spreadMode: saved.spreadMode,
-  theme: colorMode === "dark" ? "night" : "bright",
-})
+const settingsRef = useLiveRef({ ...settings, theme })
 
 useEffect(() => {
   // ...
@@ -130,6 +130,21 @@ useEffect(() => {
 ```
 
 `useLiveRef` comes from [reactjrx](https://github.com/mbret/reactjrx). A setting left `undefined`, as before anything is saved, keeps its default.
+
+The package exports the types of these props: `ReactReaderSettings` for the values, `ReactReaderSettingsScope` and `ReactReaderSettingsScopeReference` for the scopes below, and `ReactReaderProps` for every prop of `ReactReader`.
+
+### Scopes
+
+The menus can keep a value per scope: global, the book, or the screen (`mobile`, `tablet` or `desktop`). They show a tab per scope once you pass `settingsScopes`, and let the user pick the book's scope once you pass `onSettingsScopesChange`:
+
+| Prop | What it is |
+| --- | --- |
+| `settings` | The global values. |
+| `settingsByScope` | The values of the other scopes, by scope: `book`, `mobile`, `tablet` and `desktop`. |
+| `settingsScopes` | For this book, the scope each setting takes its value from, such as `{ fontScale: "screen" }`. A setting it leaves out takes the global value. |
+| `onSettingsScopesChange(changes)` | The scope the user picked for a setting, such as `{ fontScale: "screen" }`. Keep it and pass it back in `settingsScopes`. |
+
+react-reader resolves the screen scope to `mobile`, `tablet` or `desktop` from the width of the window, at the `md` and `lg` breakpoints of your Chakra theme. A setting takes the value of its scope when that scope has one, and the global value otherwise. `from` is the scope of the tab the value was chosen in, as its screen for the screen scope: merge `changes` into `settings` for `"global"`, and into `settingsByScope[from]` for the other scopes.
 
 ## Toggling features
 

@@ -68,6 +68,8 @@ type KnownMetadataIdentifierScheme =
   | "GoogleBooks"
   | "OpenLibrary"
   | "ProjectGutenberg"
+  | "UUID"
+  | "URN"
   | "URL"
   | "Unknown"
 
@@ -92,7 +94,7 @@ type FetchMetadataInput = {
 }
 ```
 
-Some fields start a request (`title`, `authors`, `series`, identifiers); others disambiguate the candidates that come back (`publisher`, `publishedYear`, languages, page count). ISBN, GTIN and catalog ids all use the same identifier shape: `{ value: "9780441013593", scheme: "ISBN" }` and `{ value: "zyTCAlFPjgYC", scheme: "GoogleBooks" }`. The known schemes give TypeScript autocomplete, while any consumer-defined string remains valid. `Unknown` explicitly preserves a source identifier whose namespace cannot be classified; `URL` means a validated absolute HTTP(S) identifier. Reading a specific identifier back out of an input or a candidate belongs to archive-reader: [`identifierValue`](/archive-reader/identifiers#reading-a-specific-identifier) accepts both the `ISBN` and `GTIN` schemes for either, reads a catalog id out of the reference URL that carries it, and normalizes the authored value — that is what the providers and the matcher use. Fields with no input role — covers, descriptions, subjects, rights, layout and format-specific metadata — are deliberately absent.
+Some fields start a request (`title`, `authors`, `series`, identifiers); others disambiguate the candidates that come back (`publisher`, `publishedYear`, languages, page count). ISBN, GTIN and catalog ids all use the same identifier shape: `{ value: "9780441013593", scheme: "ISBN" }` and `{ value: "zyTCAlFPjgYC", scheme: "GoogleBooks" }`. The known schemes give TypeScript autocomplete, while any consumer-defined string remains valid. `Unknown` explicitly preserves a source identifier whose namespace cannot be classified; `URL` means a validated absolute HTTP(S) identifier; `UUID` and `URN` are what an EPUB's `urn:uuid:` unique identifier and other URNs resolve to. Reading a specific identifier back out of an input or a candidate belongs to archive-reader: [`identifierValue`](/archive-reader/identifiers#reading-a-specific-identifier) accepts both the `ISBN` and `GTIN` schemes for either, reads a catalog id out of the reference URL that carries it, and normalizes the authored value — that is what the providers and the matcher use. Fields with no input role — covers, descriptions, subjects, rights, layout and format-specific metadata — are deliberately absent.
 
 `metadataInputFromResolvedArchive` is the explicit bridge from archive-reader. It only requires the `metadata` projection, so callers do not need to resolve reading order, TOC or sources for a lookup:
 

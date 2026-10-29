@@ -67,6 +67,10 @@ export const registerPinch = ({
             map(([event, viewportState]) => {
               // symmetric scaling calculation
               const newScale = startScale * event.scale
+              const newScaleCappedAtZoomMaxScale = Math.min(
+                newScale,
+                settingsManager.values.zoomMaxScale,
+              )
 
               /**
                * @important
@@ -79,7 +83,13 @@ export const registerPinch = ({
               }
 
               if (!reader.zoom.state.isZooming && event.scale > 1) {
-                reader.zoom.enter({ animate: false, scale: newScale })
+                // A zoomMaxScale of 1 or less leaves nothing to zoom in to
+                if (newScaleCappedAtZoomMaxScale > 1) {
+                  reader.zoom.enter({
+                    animate: false,
+                    scale: newScaleCappedAtZoomMaxScale,
+                  })
+                }
 
                 return event
               }
@@ -88,12 +98,9 @@ export const registerPinch = ({
                 if (newScale < 1) {
                   reader.zoom.exit()
                 } else {
-                  reader.zoom.scaleAt(
-                    Math.min(newScale, settingsManager.values.zoomMaxScale),
-                    {
-                      constrain: "within-viewport",
-                    },
-                  )
+                  reader.zoom.scaleAt(newScaleCappedAtZoomMaxScale, {
+                    constrain: "within-viewport",
+                  })
                 }
 
                 return event
