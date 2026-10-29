@@ -5,11 +5,7 @@ export type ZoomPosition = { x: number; y: number }
 
 export type ZoomEnhancerOutput = {
   zoom: {
-    enter: (params?: {
-      element?: HTMLImageElement
-      scale?: number
-      animate?: boolean
-    }) => void
+    enter: (params?: { scale?: number; animate?: boolean }) => void
     exit: (options?: { animate?: boolean }) => void
     move: (
       position: ZoomPosition,

@@ -18,7 +18,6 @@ type, `ZoomEnhancerOutput`, and `ZoomPosition`.
 
 ```typescript
 (params?: {
-  element?: HTMLImageElement
   scale?: number
   animate?: boolean
 }) => void
@@ -27,7 +26,6 @@ type, `ZoomEnhancerOutput`, and `ZoomPosition`.
 Starts a zoom: `isZooming` becomes `true`, and the viewport scales to `scale`,
 `1` by default, around the center of what the user sees. `animate`, `false` by
 default, eases the change over 200 ms, in controlled page turn mode only.
-`element` has no effect: a zoom always scales the whole viewport.
 
 `.state$` reports the zoom at a scale of `1` first, then at `scale`. Called
 during a zoom, `.enter()` starts a new one, from the center of the viewport.

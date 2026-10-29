@@ -49,7 +49,6 @@ export class ZoomController extends ReactiveEntity<ZoomControllerState> {
   private enterSubject = new Subject<
     | undefined
     | {
-        element?: HTMLImageElement
         scale?: number
         animate?: boolean
       }
