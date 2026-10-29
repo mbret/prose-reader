@@ -25,7 +25,7 @@ export const waitForSettledOnCurrentLayout = async (page: Page) => {
 
   await page.waitForFunction(
     (reader) =>
-      reader.pagination.state.isSettled && reader.spine.isLayoutCurrent,
+      reader.pagination.state.isSettled && reader.spine.isLayoutCurrent(),
     reader,
   )
 }

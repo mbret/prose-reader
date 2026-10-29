@@ -25,7 +25,7 @@ import { useQuickMenu } from "./quickmenu/useQuickMenu"
 import { useQuickMenuToggleGesture } from "./quickmenu/useQuickMenuToggleGesture"
 import { RefitDialog } from "./refit/RefitDialog"
 import { SearchDialog } from "./search/SearchDialog"
-import { useSyncReaderWithManagedSettings } from "./settings/useSyncReaderWithManagedSettings"
+import { SyncReaderWithManagedSettings } from "./settings/SyncReaderWithManagedSettings"
 import { TableOfContentsDialog } from "./toc/TableOfContentsDialog"
 import { useZoomSettings } from "./zoom/useZoomSettings"
 import { ZoomControls } from "./zoom/ZoomControls"
@@ -46,9 +46,13 @@ const Effects = memo(() => {
   useQuickMenuToggleGesture()
   usePreventInteractionOnSelection()
   useSyncAnnotationsWithReader()
-  useSyncReaderWithManagedSettings()
 
-  return <BookmarksEffects />
+  return (
+    <>
+      <SyncReaderWithManagedSettings />
+      <BookmarksEffects />
+    </>
+  )
 })
 
 const InnerReactReader = memo(
@@ -162,18 +166,16 @@ const InnerReactReader = memo(
   },
 )
 
-export const ReactReader = memo(
-  ({
-    children,
-    slots,
-    ...props
-  }: ComponentProps<typeof ReactReaderProvider> & {
-    slots?: {
-      container?: {
-        props?: Omit<ComponentProps<typeof InnerReactReader>, "children">
-      }
+export type ReactReaderProps = ComponentProps<typeof ReactReaderProvider> & {
+  slots?: {
+    container?: {
+      props?: Omit<ComponentProps<typeof InnerReactReader>, "children">
     }
-  }) => {
+  }
+}
+
+export const ReactReader = memo(
+  ({ children, slots, ...props }: ReactReaderProps) => {
     const { container: { props: containerProps = {} } = {} } = slots ?? {}
 
     return (

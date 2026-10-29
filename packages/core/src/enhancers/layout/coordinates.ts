@@ -14,9 +14,15 @@ export const getSpinePositionFromClientPosition = (
 
 export const createCoordinatesApi = (reader: Reader) => {
   return {
-    getSpinePositionFromClientPosition: (position: { x: number; y: number }) =>
-      reader.spine.element
-        ? getSpinePositionFromClientPosition(position, reader.spine.element)
-        : undefined,
+    getSpinePositionFromClientPosition: (position: {
+      x: number
+      y: number
+    }) => {
+      const { element } = reader.spine.value
+
+      return element
+        ? getSpinePositionFromClientPosition(position, element)
+        : undefined
+    },
   }
 }

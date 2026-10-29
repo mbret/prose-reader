@@ -86,28 +86,47 @@ const useReaderInstance = (
 
 ## Settings
 
-The user changes some of the reader's settings from react-reader's menus: the font size, and the spread mode in the Layout dialog. react-reader manages both the same way, as props of the component:
-
-| Setting | Value | Change callback | Scopes | Reader setting |
-| --- | --- | --- | --- | --- |
-| Font size | `fontSize` | `onFontSizeChange` | `fontSizeScope`, `onFontSizeScopeChange`, `fontSizeValues` | `fontScale` |
-| Spread mode | `spreadMode` | `onSpreadModeChange` | `spreadModeScope`, `onSpreadModeScopeChange`, `spreadModeValues` | `spreadMode` |
-
-react-reader writes the value into the reader, so don't give it to your reader when you create it: it would be overwritten. Keep the value in your app, save it from the change callback and pass it back as a prop:
+The user changes some of the reader's settings from react-reader's menus: the font scale from the font size menu, and the spread mode from the Layout dialog. react-reader writes them into the reader, so don't give them to your reader when you create it: they would be overwritten. Keep them in your app instead. Pass them as `settings`, in the shape `reader.settings` has, and merge what `onSettingsChange` reports into them:
 
 ```tsx
+import { ReactReader, type ReactReaderSettings } from "@prose-reader/react-reader"
+
+const [settings, setSettings] = useState<ReactReaderSettings>(savedSettings)
+
 <ReactReader
   reader={reader}
-  fontSize={saved.fontSize}
-  onFontSizeChange={(_scope, fontSize) => save({ fontSize })}
-  spreadMode={saved.spreadMode}
-  onSpreadModeChange={(_scope, spreadMode) => save({ spreadMode })}
+  settings={settings}
+  onSettingsChange={(changes) =>
+    setSettings((old) => ({ ...old, ...changes }))
+  }
 >
   <div ref={containerRef} style={{ height: "100%", width: "100%" }} />
 </ReactReader>
 ```
 
-The change callback receives the scope whose value the user changed, or `"internal"` for a value set on the reader directly. Without the value prop, react-reader keeps its own copy for as long as it is mounted, starting from the value the reader was created with. Its menus offer to pick a scope only once you pass the scope props.
+| Setting | Menu |
+| --- | --- |
+| `fontScale` | Font size |
+| `spreadMode` | Layout |
+
+`onSettingsChange(changes, from)` receives only the settings that changed. `from` is the scope the user chose the value for, or `"internal"` for a value set on the reader directly, such as by a pinch.
+
+A setting you give no value keeps react-reader's own, for as long as it is mounted. It starts from the value the reader was created with, which is not a change and is not reported. A change in the menus, or by a pinch, still reaches `onSettingsChange`.
+
+The package exports the types of these props: `ReactReaderSettings` for the values, `ReactReaderSettingsScope` and `ReactReaderSettingsScopeReference` for the scopes below, and `ReactReaderProps` for every prop of `ReactReader`.
+
+### Scopes
+
+The menus can keep a value per scope: global, the book, or the screen (`mobile`, `tablet` or `desktop`). They show a tab per scope once you pass `settingsScopes`, and let the user pick the book's scope once you pass `onSettingsScopesChange`:
+
+| Prop | What it is |
+| --- | --- |
+| `settings` | The global values. |
+| `settingsByScope` | The values of the other scopes, by scope: `book`, `mobile`, `tablet` and `desktop`. |
+| `settingsScopes` | For this book, the scope each setting takes its value from, such as `{ fontScale: "screen" }`. A setting it leaves out takes the global value. |
+| `onSettingsScopesChange(changes)` | The scope the user picked for a setting, such as `{ fontScale: "screen" }`. Keep it and pass it back in `settingsScopes`. |
+
+react-reader resolves the screen scope to `mobile`, `tablet` or `desktop` from the width of the window, at the `md` and `lg` breakpoints of your Chakra theme. A setting takes the value of its scope when that scope has one, and the global value otherwise. `from` is the scope of the tab the value was chosen in, as its screen for the screen scope: merge `changes` into `settings` for `"global"`, and into `settingsByScope[from]` for the other scopes.
 
 ## Toggling features
 
