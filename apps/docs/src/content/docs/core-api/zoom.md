@@ -17,7 +17,7 @@ type, `ZoomEnhancerOutput`, and `ZoomPosition`.
 ### `.enter()`
 
 ```typescript
-(params?: {
+(options?: {
   scale?: number
   animate?: boolean
 }) => void
