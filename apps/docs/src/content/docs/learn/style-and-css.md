@@ -20,7 +20,7 @@ reader.settings.update({ theme: "sepia" })
 | `night` | `#191717` | `#f1ebeb` |
 | `publisher` | the book's, on a `white` reader | the book's |
 
-The background also fills the reader's container wherever the pages do not cover it, and the placeholder page shown while an item loads, whose text takes a gray that suits the theme. Reflowable documents take the theme's background. The elements in their body take its text color, unless the book's own styles set a more specific one. Pre-paginated documents, such as comic pages and PDF pages, keep their own colors: the theme's background shows around them, and through any part of a page that paints no background.
+The background also fills the reader's container wherever the pages do not cover it, and the placeholder page shown while an item loads. The placeholder's text is `rgb(202, 202, 202)`, or `#939393` with `sepia`. Reflowable documents take the theme's background. The elements in their body take its text color, unless the book's own styles set a more specific one. Pre-paginated documents, such as comic pages and PDF pages, keep their own colors: the theme's background shows around them, and through any part of a page that paints no background.
 
 `getThemeBackgroundColor()` gives the background the reader paints with a theme. Use it to match your interface to the reader as the theme changes:
 
