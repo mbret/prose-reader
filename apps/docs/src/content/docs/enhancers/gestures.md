@@ -12,7 +12,7 @@ so reaching this package through `require()` needs the `require(esm)` support th
 landed unflagged in Node 22.12. `import` and bundler builds are unaffected.
 :::
 
-This enhancer implements common gesture patterns using [https://github.com/mbret/gesturx](https://github.com/mbret/gesturx). Tap on edge  or swipe to turn pages, pinch to change font scale, etc. It implements the most common gestures while trying to stay generic and configurable.
+This enhancer implements common gesture patterns using [https://github.com/mbret/gesturx](https://github.com/mbret/gesturx). Tap on edge  or swipe to turn pages, pinch to zoom, etc. It implements the most common gestures while trying to stay generic and configurable.
 
 ## Getting Started
 
@@ -64,10 +64,6 @@ Gestures start on a press of the primary button: a left click, a finger or a pen
 * **Pinch** to start zooming
 * **Pan** to move zoom position (When zooming)
 
-### Font size change
-
-* **Pinch** to start changing font size. This will take priority over zooming for reflowable books and whenever the user does not start pinching on an image.
-
 ## API
 
 The API is under the `gestures` namespace.
@@ -75,10 +71,6 @@ The API is under the `gestures` namespace.
 ```typescript
 type Options = {
   panNavigation?: "pan" | "swipe" | false
-  fontScalePinchEnabled?: boolean
-  fontScaleMaxScale?: number
-  fontScaleMinScale?: number
-  fontScalePinchThrottleTime?: number
   zoomMaxScale?: number
   pinchCancelPan?: boolean
   /**

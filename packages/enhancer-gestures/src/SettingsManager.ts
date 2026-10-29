@@ -40,10 +40,6 @@ export class GesturesSettingsManager extends SettingsManager<
     return {
       panNavigation: "pan",
       pinchCancelPan: true,
-      fontScalePinchEnabled: true,
-      fontScalePinchThrottleTime: 500,
-      fontScaleMaxScale: 5,
-      fontScaleMinScale: 0.2,
       zoomMaxScale: Infinity,
       ignore: [],
     }

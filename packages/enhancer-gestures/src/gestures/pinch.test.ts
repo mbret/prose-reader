@@ -3,8 +3,8 @@ import type { Reader } from "@prose-reader/core"
 import type { PinchEvent } from "gesturx"
 import { BehaviorSubject, Subject } from "rxjs"
 import { describe, expect, it, vi } from "vitest"
-import type { GesturesSettingsManager } from "../SettingsManager"
-import type { GestureRecognizable, OutputSettings } from "../types"
+import { GesturesSettingsManager } from "../SettingsManager"
+import type { GestureRecognizable } from "../types"
 import { registerPinch } from "./pinch"
 
 const createPinchEvent = (
@@ -34,19 +34,12 @@ const createPinchEvent = (
   }
 }
 
-const createHarness = ({ zoomMaxScale }: { zoomMaxScale: number }) => {
+/**
+ * Drives `registerPinch` with the real gestures settings, so a test without
+ * `zoomMaxScale` runs with every default the enhancer ships.
+ */
+const createHarness = ({ zoomMaxScale }: { zoomMaxScale?: number } = {}) => {
   const events$ = new Subject<{ event: PinchEvent }>()
-  const values$ = new BehaviorSubject<OutputSettings>({
-    panNavigation: "pan",
-    pinchCancelPan: true,
-    // Off, so a pinch only drives the zoom
-    fontScalePinchEnabled: false,
-    fontScalePinchThrottleTime: 500,
-    fontScaleMaxScale: 5,
-    fontScaleMinScale: 0.2,
-    zoomMaxScale,
-    ignore: [],
-  })
   const zoomState = {
     isZooming: false,
     currentScale: 1,
@@ -67,30 +60,33 @@ const createHarness = ({ zoomMaxScale }: { zoomMaxScale: number }) => {
     zoomState.isZooming = false
     zoomState.currentScale = 1
   })
+  const readerSettingsValues = {
+    computedPageTurnMode: "controlled",
+    fontScale: 1,
+  }
+  const updateReaderSettings = vi.fn()
 
+  // Cast: the pinch and the gestures settings only touch this minimal Reader surface.
   const reader = {
     zoom: { state: zoomState, enter, scaleAt, exit },
     viewportState$: new BehaviorSubject("free"),
-  }
-
-  const settingsManager = {
-    values$,
-    get values() {
-      return values$.getValue()
+    settings: {
+      values: readerSettingsValues,
+      values$: new BehaviorSubject(readerSettingsValues),
+      update: updateReaderSettings,
     },
-  }
+  } as unknown as Reader
+
+  const settingsManager = new GesturesSettingsManager(
+    zoomMaxScale === undefined ? {} : { zoomMaxScale },
+    reader,
+  )
 
   const subscription = registerPinch({
     // Cast: registerPinch only reads the recognizable's events stream in these tests.
     recognizable: { events$ } as unknown as GestureRecognizable,
-    // Cast: registerPinch only touches this minimal Reader zoom surface.
-    reader: reader as unknown as Reader,
-    // Cast: registerPinch does not read hookManager.
-    hookManager: undefined as unknown as Parameters<
-      typeof registerPinch
-    >[0]["hookManager"],
-    // Cast: registerPinch only reads values and values$ from the settings manager.
-    settingsManager: settingsManager as unknown as GesturesSettingsManager,
+    reader,
+    settingsManager,
   }).subscribe()
 
   /** One pinch, from two fingers down to two fingers up, through each scale. */
@@ -104,38 +100,43 @@ const createHarness = ({ zoomMaxScale }: { zoomMaxScale: number }) => {
     events$.next({ event: createPinchEvent("pinchEnd", scales.at(-1) ?? 1) })
   }
 
-  return { appliedScales, enter, pinch, subscription, zoomState }
+  const stop = () => {
+    subscription.unsubscribe()
+    settingsManager.destroy()
+  }
+
+  return { appliedScales, enter, pinch, stop, updateReaderSettings, zoomState }
 }
 
 describe("registerPinch and zoomMaxScale", () => {
   it("never takes the zoom past zoomMaxScale, from the step that enters it", () => {
-    const { appliedScales, pinch, subscription } = createHarness({
+    const { appliedScales, pinch, stop } = createHarness({
       zoomMaxScale: 1.5,
     })
 
     pinch(3, 3.2, 2, 1.2)
-    subscription.unsubscribe()
+    stop()
 
     expect(appliedScales).not.toEqual([])
     expect(Math.max(...appliedScales)).toBeLessThanOrEqual(1.5)
   })
 
   it("leaves a pinch of a single step zoomed at zoomMaxScale", () => {
-    const { pinch, subscription, zoomState } = createHarness({
+    const { pinch, stop, zoomState } = createHarness({
       zoomMaxScale: 1.5,
     })
 
     pinch(3)
-    subscription.unsubscribe()
+    stop()
 
     expect(zoomState).toMatchObject({ isZooming: true, currentScale: 1.5 })
   })
 
   it("enters the zoom at the scale of a first step under zoomMaxScale", () => {
-    const { enter, pinch, subscription } = createHarness({ zoomMaxScale: 3 })
+    const { enter, pinch, stop } = createHarness({ zoomMaxScale: 3 })
 
     pinch(1.4)
-    subscription.unsubscribe()
+    stop()
 
     expect(enter).toHaveBeenCalledWith({ animate: false, scale: 1.4 })
   })
@@ -143,15 +144,27 @@ describe("registerPinch and zoomMaxScale", () => {
   it.each([1, 0.5])(
     "does not zoom in when zoomMaxScale is %s",
     (zoomMaxScale) => {
-      const { enter, pinch, subscription, zoomState } = createHarness({
+      const { enter, pinch, stop, zoomState } = createHarness({
         zoomMaxScale,
       })
 
       pinch(2, 3)
-      subscription.unsubscribe()
+      stop()
 
       expect(enter).not.toHaveBeenCalled()
       expect(zoomState.isZooming).toBe(false)
     },
   )
+})
+
+describe("registerPinch and the reader's settings", () => {
+  it("zooms, and changes no reader setting, with the default gestures settings", () => {
+    const { enter, pinch, stop, updateReaderSettings } = createHarness()
+
+    pinch(1.5, 2)
+    stop()
+
+    expect(enter).toHaveBeenCalledTimes(1)
+    expect(updateReaderSettings).not.toHaveBeenCalled()
+  })
 })

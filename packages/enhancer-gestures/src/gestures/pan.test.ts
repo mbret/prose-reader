@@ -35,10 +35,6 @@ const createDefaultSettings = (
 ): OutputSettings => ({
   panNavigation,
   pinchCancelPan: true,
-  fontScalePinchEnabled: true,
-  fontScalePinchThrottleTime: 500,
-  fontScaleMaxScale: 5,
-  fontScaleMinScale: 0.2,
   zoomMaxScale: Infinity,
   ignore: [],
 })
@@ -184,8 +180,7 @@ describe("registerPan stopping the pan navigator", () => {
     ],
     [
       "a gestures setting changes before it ends",
-      ({ values$ }) =>
-        values$.next({ ...values$.getValue(), fontScaleMaxScale: 4 }),
+      ({ values$ }) => values$.next({ ...values$.getValue(), zoomMaxScale: 4 }),
       { x: 20, y: 0 },
     ],
     [
