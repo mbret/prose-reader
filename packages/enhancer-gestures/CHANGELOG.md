@@ -3,6 +3,28 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## [36.0.0](https://github.com/mbret/prose-reader/compare/v35.0.1...v36.0.0) (2026-10-29)
+
+### ⚠ BREAKING CHANGES
+
+* **core:** give the spine a state, with its element and the first item awaiting layout
+* **core:** SettingsInterface loses _inputSettings and
+  _outputSettings, and SettingsManager loses _settings$. A SettingsManager
+  subclass implements getComputedSettings in place of getOutputSettings,
+  returning only the computed settings, and its second type parameter is
+  those computed settings. @prose-reader/shared no longer exports
+  shallowMergeIfDefined.
+
+### Bug Fixes
+
+* **enhancer-gestures:** cap the pinch step that enters a zoom at zoomMaxScale ([1ee516d](https://github.com/mbret/prose-reader/commit/1ee516da77c9e57a76a41d7d9512c3859463fddb))
+
+### Code Refactoring
+
+* **core:** give the spine a state, with its element and the first item awaiting layout ([28efcd4](https://github.com/mbret/prose-reader/commit/28efcd41a9ed7dca52617cdb444b87667fea270a))
+* **core:** type extend from its receiver and merge the computed settings in the base ([72a65d1](https://github.com/mbret/prose-reader/commit/72a65d1e7fdb73f94c465d50ae4149e86a0cf577))
+
+
 ## [35.0.0](https://github.com/mbret/prose-reader/compare/v34.0.0...v35.0.0) (2026-10-28)
 
 **Note:** Version bump only for package @prose-reader/enhancer-gestures

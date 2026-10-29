@@ -3,6 +3,51 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## [36.0.0](https://github.com/mbret/prose-reader/compare/v35.0.1...v36.0.0) (2026-10-29)
+
+### ⚠ BREAKING CHANGES
+
+* **core:** `SettingsInterface` and `SettingsManager` no longer have
+  `_prepareUpdate`, and `reader.settings.values$` no longer emits for an
+  update that changes nothing.
+* **core:** give the spine a state, with its element and the first item awaiting layout
+* **core:** reader.settings keeps only the settings core and its
+  enhancers declare, so an option or an update naming any other key is
+  left out. An enhancer that keeps settings in reader.settings adds them
+  with reader.settings.extend(defaults, options). A SettingsManager
+  subclass returns a default for every key from getDefaultSettings,
+  undefined for an optional one.
+* **core:** SettingsInterface loses _inputSettings and
+  _outputSettings, and SettingsManager loses _settings$. A SettingsManager
+  subclass implements getComputedSettings in place of getOutputSettings,
+  returning only the computed settings, and its second type parameter is
+  those computed settings. @prose-reader/shared no longer exports
+  shallowMergeIfDefined.
+* **core:** the spine layout lifecycle, reader.spine.pages.spineLayout.lifecycle$,
+  emits objects instead of stage names: { stage: "requested",
+  firstItemIndexAwaitingLayout } then { stage: "laidOut" }.
+  reader.spine.isLayoutCurrent$ and isLayoutCurrent, internal in the last
+  release, give way to firstItemIndexAwaitingLayout$,
+  firstItemIndexAwaitingLayout and isLayoutCurrentFor(), which are public.
+
+### Features
+
+* **core:** add an enhancer's settings with reader.settings.extend ([2c82c64](https://github.com/mbret/prose-reader/commit/2c82c64833fe115d0e42efa1c136231050b46bd7))
+
+### Bug Fixes
+
+* **core:** end every settings subscriber on an update made on an emission ([be313fd](https://github.com/mbret/prose-reader/commit/be313fd1eb69be9f0633372bfeecef9b4d93a133))
+* **core:** export SpineLayoutLifecycleEvent from the package ([1eaafb3](https://github.com/mbret/prose-reader/commit/1eaafb3cb0c4a60c773c5a609b9a5e7e6c21b355))
+* **core:** keep a default over a setting given as undefined ([818c6f8](https://github.com/mbret/prose-reader/commit/818c6f80cfe2c9aebfe3ea7be31c1f94bff53f0d))
+* **core:** keep the enhancers' settings in the reader's settings manager ([e8e29ca](https://github.com/mbret/prose-reader/commit/e8e29ca7c4e01b8cbddf47f05901a700986bf12a))
+
+### Code Refactoring
+
+* **core:** give the spine a state, with its element and the first item awaiting layout ([28efcd4](https://github.com/mbret/prose-reader/commit/28efcd41a9ed7dca52617cdb444b87667fea270a))
+* **core:** track which items a pending layout can change ([fd97b2d](https://github.com/mbret/prose-reader/commit/fd97b2dde0837075ca22b9d9ed0791236fb37eb2)), references [#595](https://github.com/mbret/prose-reader/issues/595)
+* **core:** type extend from its receiver and merge the computed settings in the base ([72a65d1](https://github.com/mbret/prose-reader/commit/72a65d1e7fdb73f94c465d50ae4149e86a0cf577))
+
+
 ## [35.0.0](https://github.com/mbret/prose-reader/compare/v34.0.0...v35.0.0) (2026-10-28)
 
 ### Bug Fixes

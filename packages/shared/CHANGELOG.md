@@ -3,6 +3,22 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## [36.0.0](https://github.com/mbret/prose-reader/compare/v35.0.1...v36.0.0) (2026-10-29)
+
+### ⚠ BREAKING CHANGES
+
+* **core:** SettingsInterface loses _inputSettings and
+  _outputSettings, and SettingsManager loses _settings$. A SettingsManager
+  subclass implements getComputedSettings in place of getOutputSettings,
+  returning only the computed settings, and its second type parameter is
+  those computed settings. @prose-reader/shared no longer exports
+  shallowMergeIfDefined.
+
+### Code Refactoring
+
+* **core:** type extend from its receiver and merge the computed settings in the base ([72a65d1](https://github.com/mbret/prose-reader/commit/72a65d1e7fdb73f94c465d50ae4149e86a0cf577))
+
+
 ## [35.0.0](https://github.com/mbret/prose-reader/compare/v34.0.0...v35.0.0) (2026-10-28)
 
 **Note:** Version bump only for package @prose-reader/shared

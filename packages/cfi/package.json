@@ -1,6 +1,6 @@
 {
   "name": "@prose-reader/cfi",
-  "version": "35.0.0",
+  "version": "36.0.0",
   "description": "Parse, resolve, generate, compare and serialize EPUB Canonical Fragment Identifiers (EPUB CFI 1.1).",
   "keywords": [
     "prose-reader",

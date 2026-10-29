@@ -1,6 +1,6 @@
 {
   "name": "@prose-reader/enhancer-koreader",
-  "version": "35.0.0",
+  "version": "36.0.0",
   "description": "KOReader sync for prose: open a reader at the progress a KOReader sync server stores, go to it, and convert a CFI to it.",
   "keywords": [
     "prose-reader",

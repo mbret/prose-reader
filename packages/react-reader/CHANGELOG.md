@@ -3,6 +3,17 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## [36.0.0](https://github.com/mbret/prose-reader/compare/v35.0.1...v36.0.0) (2026-10-29)
+
+### ⚠ BREAKING CHANGES
+
+* **core:** give the spine a state, with its element and the first item awaiting layout
+
+### Code Refactoring
+
+* **core:** give the spine a state, with its element and the first item awaiting layout ([28efcd4](https://github.com/mbret/prose-reader/commit/28efcd41a9ed7dca52617cdb444b87667fea270a))
+
+
 ## [35.0.1](https://github.com/mbret/prose-reader/compare/v35.0.0...v35.0.1) (2026-10-28)
 
 ### Bug Fixes

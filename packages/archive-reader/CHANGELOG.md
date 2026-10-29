@@ -3,6 +3,23 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## [36.0.0](https://github.com/mbret/prose-reader/compare/v35.0.1...v36.0.0) (2026-10-29)
+
+### ⚠ BREAKING CHANGES
+
+* **archive-reader:** `KnownMetadataIdentifierScheme` and
+  `InferredIdentifierScheme` gain `UUID` and `URN`; an exhaustive switch
+  over either must handle them. An untyped `urn:uuid:` or bare UUID now
+  resolves to `UUID` rather than `Unknown` (or, for some, `ISBN` or
+  `GTIN`), any other untyped URN to `URN`, and `urn:isbn:` to `ISBN`
+  whether or not its value is a valid ISBN.
+
+### Bug Fixes
+
+* **archive-reader:** infer a URN's scheme only from a URN RFC 8141 allows ([767a524](https://github.com/mbret/prose-reader/commit/767a524f43636718fe56c977a0a7af13893073af))
+* **archive-reader:** read URN and UUID identifiers by their namespace ([965a755](https://github.com/mbret/prose-reader/commit/965a755004bf0ea599365a1456db03cdf6ed49bd))
+
+
 ## [35.0.0](https://github.com/mbret/prose-reader/compare/v34.0.0...v35.0.0) (2026-10-28)
 
 **Note:** Version bump only for package @prose-reader/archive-reader

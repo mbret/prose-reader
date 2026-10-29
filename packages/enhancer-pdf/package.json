@@ -1,6 +1,6 @@
 {
   "name": "@prose-reader/enhancer-pdf",
-  "version": "35.0.0",
+  "version": "36.0.0",
   "description": "PDF in prose: open a PDF as an archive and render its pages with pdf.js.",
   "keywords": [
     "prose-reader",
