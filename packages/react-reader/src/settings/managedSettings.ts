@@ -1,12 +1,17 @@
 import type { Reader } from "@prose-reader/core"
 
 /**
- * The reader settings the user changes from react-reader's menus, by their
- * name in `reader.settings`. A name added here is taken by the settings props,
- * synced with the reader and kept by react-reader when the app gives it no
- * value; its menu is the only code left to write.
+ * The reader settings react-reader manages, by their name in
+ * `reader.settings`: the ones the user changes from its menus, and the theme,
+ * which the app sets. A name added here is taken by the settings props, synced
+ * with the reader and kept by react-reader when the app gives it no value; a
+ * menu for it is the only code left to write.
  */
-export const MANAGED_SETTING_NAMES = ["fontScale", "spreadMode"] as const
+export const MANAGED_SETTING_NAMES = [
+  "fontScale",
+  "spreadMode",
+  "theme",
+] as const
 
 export type ManagedSettingName = (typeof MANAGED_SETTING_NAMES)[number]
 
