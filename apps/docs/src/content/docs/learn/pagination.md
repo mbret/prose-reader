@@ -102,14 +102,17 @@ reader.pagination.state$.subscribe((state) => {
 })
 ```
 
-Settlement ends as soon as a navigation starts, a layout starts, or a visible
-item stops being ready, or is unloaded after failing, and returns once a
-replacement result has resolved over the new state. A layout is not only one
-you request: the reader lays the spine out again whenever an item finishes
-loading, fails to load or unloads, so settlement can drop briefly while the
-book loads around the page being read. A visible item whose load failed does
-not keep pagination waiting: it settles on it, with the item's start as its
-edge's `cfi`, as the
+Settlement ends as soon as a navigation starts, a layout that can change the
+visible pages starts, or a visible item stops being ready, or is unloaded after
+failing, and returns once a replacement result has resolved over the new state.
+A layout is not only one you request: the reader lays the spine out again
+whenever an item finishes loading, fails to load or unloads, from that item on.
+That can change the visible pages when the item is visible or comes before
+them. One after them leaves the result settled, until the reader restores the
+navigation onto the new layout, a navigation like any other. So settlement can
+drop briefly while the book loads around the page being read. A visible item
+whose load failed does not keep pagination waiting: it settles on it, with the
+item's start as its edge's `cfi`, as the
 [error handling page](/learn/error-handling#errors-in-spine-item) explains. Page
 metrics such as `begin.pageIndexInSpineItem` stay available throughout, so
 navigation controls keep working on estimates while a result is pending.

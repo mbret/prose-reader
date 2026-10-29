@@ -62,10 +62,11 @@ export class PaginationController extends DestroyableClass {
      * current navigation onto every layout that lands, even when the position
      * stays the same: until it has, the viewport still shows the position as
      * it was on the layout replaced, so the restoration is what resolves a
-     * result over a new layout. A layout voiding the navigation, by being
-     * requested or by landing before that restoration, reports the same
-     * navigation again: it only withdraws, and cancels whatever was pending,
-     * which was resolved over the layout being replaced.
+     * result over a new layout. A layout request that can change what the
+     * navigation shows voids it, and reports the same navigation again: it
+     * only withdraws, and cancels whatever was pending, which was resolved
+     * over the layout being replaced. One that cannot leaves the result as it
+     * is.
      *
      * Every report drops settlement first, and cancels whatever the previous
      * one left pending, so a superseded result never reaches the reader. A
