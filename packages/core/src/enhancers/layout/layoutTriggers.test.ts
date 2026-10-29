@@ -274,6 +274,15 @@ describe("Given a setting that changes how the items are placed", () => {
     expect(await secondItemAfterLayout(reader)).toEqual({ left: 0, top: 200 })
   })
 
+  it("lays out once when a page margin changes", async () => {
+    const reader = await mountedAndSettled()
+    const layouts = countLayouts(reader)
+
+    reader.settings.update({ pageHorizontalMargin: 10 })
+
+    expect(layouts()).toBe(1)
+  })
+
   it("lays out once when pageTurnMode changes, and stacks the items", async () => {
     const reader = await mountedAndSettled()
     const layouts = countLayouts(reader)

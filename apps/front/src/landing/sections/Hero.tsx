@@ -138,8 +138,10 @@ export const Hero = () => (
           lineHeight="1.55"
           textWrap="pretty"
         >
-          Render EPUB 3, comics and PDF with a single, framework-agnostic SDK,
-          and ship your own reader, your way.
+          Render any format: EPUB 3, comics and PDF are ready, and you can
+          extend it to more. Serve books from anywhere, entirely in the browser
+          or from your server. One framework-agnostic SDK to ship your own
+          reader, your way.
         </Text>
         <Flex wrap="wrap" gap="3" mt="8">
           <Button asChild size="xl" rounded="xl" fontWeight="semibold">

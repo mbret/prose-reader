@@ -12,7 +12,7 @@ import {
   takeUntil,
   tap,
 } from "rxjs"
-import type { SettingsInterface } from "../../settings/SettingsInterface"
+import type { ExtendedSettings } from "../../settings/SettingsInterface"
 import type { Pages } from "../../spine/Pages"
 import {
   setAttributeIfChanged,
@@ -29,8 +29,14 @@ import { createPlaceholderPages } from "./createPlaceholderPages"
 import { fixIframeScrollbar } from "./fixIframeScrollbar"
 import { fixReflowable } from "./fixReflowable"
 import { flagSpineItems } from "./flagSpineItems"
-import { SettingsManager } from "./SettingsManager"
-import type { EnhancerLayoutInputSettings, OutputSettings } from "./types"
+import type { EnhancerLayoutInputSettings } from "./types"
+
+const defaultLayoutSettings: EnhancerLayoutInputSettings = {
+  layoutAutoResize: `container`,
+  pageHorizontalMargin: 24,
+  pageVerticalMargin: 24,
+  layoutLayerTransition: true,
+}
 
 export type LayoutEnhancerOutput = {
   layout$: Observable<ObservedValueOf<Pages>>
@@ -39,49 +45,21 @@ export type LayoutEnhancerOutput = {
 }
 
 export const layoutEnhancer =
-  <
-    InheritOptions,
-    InheritOutput extends EnhancerOutput<typeof themeEnhancer>,
-    InheritSettings extends NonNullable<
-      InheritOutput["settings"]["_inputSettings"]
-    >,
-    InheritComputedSettings extends NonNullable<
-      InheritOutput["settings"]["_outputSettings"]
-    >,
-    Output extends Omit<InheritOutput, "settings"> &
-      LayoutEnhancerOutput & {
-        settings: SettingsInterface<
-          InheritSettings & EnhancerLayoutInputSettings,
-          OutputSettings & InheritComputedSettings
-        >
-      },
-  >(
+  <InheritOptions, InheritOutput extends EnhancerOutput<typeof themeEnhancer>>(
     next: (options: InheritOptions) => InheritOutput,
   ) =>
-  (options: InheritOptions & Partial<EnhancerLayoutInputSettings>): Output => {
-    const {
-      pageHorizontalMargin,
-      pageVerticalMargin,
-      layoutAutoResize,
-      layoutLayerTransition,
-    } = options
+  (
+    options: InheritOptions & Partial<EnhancerLayoutInputSettings>,
+  ): Omit<InheritOutput, "settings"> &
+    LayoutEnhancerOutput & {
+      settings: ExtendedSettings<
+        InheritOutput["settings"],
+        EnhancerLayoutInputSettings
+      >
+    } => {
     const reader = next(options)
-
-    const settingsManager = new SettingsManager<
-      InheritSettings,
-      InheritComputedSettings
-    >(
-      {
-        pageHorizontalMargin,
-        pageVerticalMargin,
-        layoutAutoResize,
-        layoutLayerTransition,
-      },
-      reader.settings as SettingsInterface<
-        InheritSettings,
-        InheritComputedSettings
-      >,
-    )
+    const inheritedSettings: InheritOutput["settings"] = reader.settings
+    const settings = inheritedSettings.extend(defaultLayoutSettings, options)
 
     reader.hookManager.register(`onViewportOffsetAdjust`, () => {
       /**
@@ -125,8 +103,7 @@ export const layoutEnhancer =
       const mimeType = item.mediaType ?? detectMimeTypeFromName(item.href)
       const isImageType = !!mimeType?.startsWith(`image/`)
 
-      const { pageHorizontalMargin = 0, pageVerticalMargin = 0 } =
-        settingsManager.values
+      const { pageHorizontalMargin, pageVerticalMargin } = settings.values
       const pageSize = reader.viewport.pageSize
 
       if (spineItem?.renditionLayout === `reflowable` && !isImageType) {
@@ -181,7 +158,7 @@ export const layoutEnhancer =
          * Hide document until it's ready
          */
         setStylePropertyIfChanged(documentContainer.style, `opacity`, `0`)
-        if (settingsManager.values.layoutLayerTransition) {
+        if (settings.values.layoutLayerTransition) {
           setStylePropertyIfChanged(
             documentContainer.style,
             `transition`,
@@ -197,7 +174,7 @@ export const layoutEnhancer =
       const element = spineItem?.renderer.documentContainer
 
       // @todo dont remember why i did this but there should be a reason. If i get time to explain
-      if (reader.settings.values.computedPageTurnMode !== `scrollable`) {
+      if (settings.values.computedPageTurnMode !== `scrollable`) {
         // @todo see what's the impact
         if (element) {
           setAttributeIfChanged(element, `tab-index`, `0`)
@@ -231,28 +208,26 @@ export const layoutEnhancer =
      * would lay out again at the same size. A report that leaves the viewport
      * at the size it was laid out at is dropped for the same reason.
      */
-    const layoutOnContainerResize$ = settingsManager
-      .watch("layoutAutoResize")
-      .pipe(
-        switchMap((layoutAutoResize) =>
-          layoutAutoResize === "container"
-            ? reader.context.watch(`rootElement`).pipe(
-                filter(isDefined),
-                switchMap((element) =>
-                  observeResize(element).pipe(debounceTime(100)),
-                ),
-              )
-            : EMPTY,
-        ),
-        filter(() => reader.viewport.hasResizedSinceLayout()),
-        tap(() => {
-          reader.layout()
-        }),
-      )
+    const layoutOnContainerResize$ = settings.watch([`layoutAutoResize`]).pipe(
+      switchMap(({ layoutAutoResize }) =>
+        layoutAutoResize === "container"
+          ? reader.context.watch(`rootElement`).pipe(
+              filter(isDefined),
+              switchMap((element) =>
+                observeResize(element).pipe(debounceTime(100)),
+              ),
+            )
+          : EMPTY,
+      ),
+      filter(() => reader.viewport.hasResizedSinceLayout()),
+      tap(() => {
+        reader.layout()
+      }),
+    )
 
     const movingSafePan$ = createMovingSafePan$(reader)
 
-    settingsManager
+    settings
       .watch([`pageHorizontalMargin`, `pageVerticalMargin`])
       .pipe(
         skip(1),
@@ -284,13 +259,9 @@ export const layoutEnhancer =
 
     return {
       ...reader,
-      destroy: () => {
-        settingsManager.destroy()
-        reader.destroy()
-      },
-      settings: settingsManager,
+      settings,
       layout$: reader.spine.layout$,
       layoutInfo$,
       coordinates: createCoordinatesApi(reader),
-    } as unknown as Output
+    }
   }

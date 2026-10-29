@@ -1,20 +1,11 @@
-import {
-  BehaviorSubject,
-  distinctUntilChanged,
-  filter,
-  map,
-  merge,
-  skip,
-  takeUntil,
-  tap,
-} from "rxjs"
+import { filter, map, merge, scan, skip, takeUntil, tap } from "rxjs"
 import { HTML_PREFIX } from "../constants"
 import type { Context } from "../context/Context"
 import type { ReaderSettingsManager } from "../settings/ReaderSettingsManager"
 import type { createSpineItemLocator as createSpineItemLocationResolver } from "../spineItem/locationResolver"
 import type { SpineItem } from "../spineItem/SpineItem"
-import { DestroyableClass } from "../utils/DestroyableClass"
 import { isDefined } from "../utils/isDefined"
+import { ReactiveEntity } from "../utils/ReactiveEntity"
 import type { Viewport } from "../viewport/Viewport"
 import { createSpineLocator, type SpineLocator } from "./locator/SpineLocator"
 import { Pages } from "./Pages"
@@ -22,28 +13,26 @@ import type { SpineItemsManager } from "./SpineItemsManager"
 import { SpineItemsObserver } from "./SpineItemsObserver"
 import { SpineLayout, type SpineLayoutOptions } from "./SpineLayout"
 
-export class Spine extends DestroyableClass {
-  protected elementSubject = new BehaviorSubject<HTMLElement | undefined>(
-    undefined,
-  )
-  protected spineLayout: SpineLayout
-
-  public locator: SpineLocator
-  public spineItemsObserver: SpineItemsObserver
-  public pages: Pages
-  public element$ = this.elementSubject.asObservable()
-
-  protected isLayoutCurrentSubject = new BehaviorSubject(false)
-
+export type SpineState = {
   /**
-   * Whether the pages describe the latest layout requested. A request makes
-   * them stale the moment it is announced, before anything is done for it,
-   * whether it came through `reader.layout()` or from an item loading or
-   * unloading. A request also cancels everything still running for older
-   * ones, the pass and the page computation both, so the next pages published
-   * are the ones it asked for, and they make the layout current again, before
-   * anything else hears of them. Until the first pages are published there
-   * are none to describe a layout, so it starts not current.
+   * The element holding the spine items, created once the reader is mounted,
+   * and only then.
+   */
+  element: HTMLElement | undefined
+  /**
+   * The first item the pages may no longer describe as the latest layout
+   * requested lays it out: the first one a layout requested since the pages
+   * were last published can change. Every item after it can change too, and
+   * none before it: an item's place depends only on the items before it.
+   * `undefined` while the pages describe every item.
+   *
+   * A request moves it the moment it is announced, before anything is done
+   * for it: back to the first item for `reader.layout()`, which can change
+   * them all, and to the item itself when an item loads or unloads. A request
+   * also cancels everything still running for older ones, the pass and the
+   * page computation both, so the next pages published are the ones it asked
+   * for, and they describe every item again, before anything else hears of
+   * them.
    *
    * Item flags cannot tell this: a pass clears an item's dirty flag as soon as
    * it lays that item out, long before the pages are recomputed.
@@ -51,9 +40,15 @@ export class Spine extends DestroyableClass {
    * The navigator derives from it whether the latest navigation holds on the
    * current layout, and reads it to decide whether an anchor is final.
    */
-  public readonly isLayoutCurrent$ = this.isLayoutCurrentSubject.pipe(
-    distinctUntilChanged(),
-  )
+  firstItemIndexAwaitingLayout: number | undefined
+}
+
+export class Spine extends ReactiveEntity<SpineState> {
+  protected spineLayout: SpineLayout
+
+  public locator: SpineLocator
+  public spineItemsObserver: SpineItemsObserver
+  public pages: Pages
 
   constructor(
     protected context: Context,
@@ -62,7 +57,11 @@ export class Spine extends DestroyableClass {
     protected settings: ReaderSettingsManager,
     protected viewport: Viewport,
   ) {
-    super()
+    /**
+     * Until the first pages are published there are none to describe a
+     * layout, so every item awaits one.
+     */
+    super({ element: undefined, firstItemIndexAwaitingLayout: 0 })
 
     this.spineItemsObserver = new SpineItemsObserver(spineItemsManager)
 
@@ -93,17 +92,36 @@ export class Spine extends DestroyableClass {
     )
 
     merge(
-      this.spineLayout.lifecycle$.pipe(
-        filter((stage) => stage === "requested"),
-        map(() => false),
-      ),
+      this.spineLayout.lifecycle$,
       this.pages.state$.pipe(
         skip(1),
-        map(() => true),
+        map(() => ({ stage: "pagesPublished" as const })),
       ),
     )
-      .pipe(takeUntil(this.destroy$))
-      .subscribe(this.isLayoutCurrentSubject)
+      .pipe(
+        scan((firstItemIndexAwaitingLayout, event) => {
+          if (event.stage === "pagesPublished") return undefined
+
+          // laid out, but the pages describing it are not published yet
+          if (event.stage === "laidOut") return firstItemIndexAwaitingLayout
+
+          /**
+           * A pass that completed before this request keeps its items out of
+           * the next pass, but until its pages are published they await
+           * layout all the same.
+           */
+          return firstItemIndexAwaitingLayout === undefined
+            ? event.firstItemIndexAwaitingLayout
+            : Math.min(
+                firstItemIndexAwaitingLayout,
+                event.firstItemIndexAwaitingLayout,
+              )
+        }, this.value.firstItemIndexAwaitingLayout),
+        takeUntil(this.destroy$),
+      )
+      .subscribe((firstItemIndexAwaitingLayout) => {
+        this.mergeCompare({ firstItemIndexAwaitingLayout })
+      })
 
     const spineElementUpdate$ = context.watch(`rootElement`).pipe(
       filter(isDefined),
@@ -115,11 +133,11 @@ export class Spine extends DestroyableClass {
         `
         element.className = `${HTML_PREFIX}-spine`
 
-        this.elementSubject.next(element)
+        this.mergeCompare({ element })
       }),
     )
 
-    const attachSpineItems$ = this.element$.pipe(
+    const attachSpineItems$ = this.watch("element").pipe(
       filter(isDefined),
       tap((element) => {
         this.spineItemsManager.items.forEach((item) => {
@@ -133,14 +151,43 @@ export class Spine extends DestroyableClass {
       .subscribe()
   }
 
-  public get element() {
-    return this.elementSubject.getValue()
+  /**
+   * Whether the pages describe every item as the latest layout requested lays
+   * it out, in this state of the spine: no item awaits that layout.
+   */
+  static isLayoutCurrent = ({
+    firstItemIndexAwaitingLayout,
+  }: Pick<SpineState, "firstItemIndexAwaitingLayout">) =>
+    firstItemIndexAwaitingLayout === undefined
+
+  /**
+   * Whether the pages describe this item as the latest layout requested lays
+   * it out, in this state of the spine: whether it comes before the first
+   * item awaiting that layout. Its place, its pages and what a position shows
+   * of it are then the ones the reader shows, even while a layout of items
+   * after it is pending.
+   */
+  static isLayoutCurrentFor = (
+    {
+      firstItemIndexAwaitingLayout,
+    }: Pick<SpineState, "firstItemIndexAwaitingLayout">,
+    spineItem: SpineItem | number,
+  ) => {
+    const spineItemIndex =
+      typeof spineItem === "number" ? spineItem : spineItem.index
+
+    return (
+      firstItemIndexAwaitingLayout === undefined ||
+      spineItemIndex < firstItemIndexAwaitingLayout
+    )
   }
 
-  /** {@link isLayoutCurrent$} now. */
-  public get isLayoutCurrent() {
-    return this.isLayoutCurrentSubject.getValue()
-  }
+  /** {@link Spine.isLayoutCurrent} in the current state. */
+  isLayoutCurrent = () => Spine.isLayoutCurrent(this.value)
+
+  /** {@link Spine.isLayoutCurrentFor} in the current state. */
+  isLayoutCurrentFor = (spineItem: SpineItem | number) =>
+    Spine.isLayoutCurrentFor(this.value, spineItem)
 
   public layout(options?: SpineLayoutOptions) {
     this.spineLayout.layout(options)
@@ -166,12 +213,13 @@ export class Spine extends DestroyableClass {
   }
 
   public destroy() {
+    const { element } = this.value
+
     super.destroy()
 
     this.pages.destroy()
     this.spineLayout.destroy()
     this.spineItemsObserver.destroy()
-    this.elementSubject.getValue()?.remove()
-    this.elementSubject.complete()
+    element?.remove()
   }
 }
