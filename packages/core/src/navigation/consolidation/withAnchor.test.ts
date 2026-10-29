@@ -55,7 +55,7 @@ const createSpine = ({
     value: { isReady, loadStatus },
   }
   const spine = {
-    isLayoutCurrent,
+    isLayoutCurrent: () => isLayoutCurrent,
     spineItemsManager: {
       get: () => spineItem,
     },
