@@ -232,7 +232,7 @@ importers:
         version: 7.4.0(@types/node@26.6.5)(sass-embedded@1.105.2)(sass@1.105.2)(terser@5.51.2)(yaml@2.9.0)
       astro-mermaid:
         specifier: ^2.1.0
-        version: 2.1.0(astro@7.4.0(@types/node@26.6.5)(sass-embedded@1.105.2)(sass@1.105.2)(terser@5.51.2)(yaml@2.9.0))(mermaid@11.17.2)
+        version: 2.2.0(astro@7.4.0(@types/node@26.6.5)(sass-embedded@1.105.2)(sass@1.105.2)(terser@5.51.2)(yaml@2.9.0))(mermaid@11.17.2)
       astro-og-canvas:
         specifier: ^0.13.2
         version: 0.13.2(astro@7.4.0(@types/node@26.6.5)(sass-embedded@1.105.2)(sass@1.105.2)(terser@5.51.2)(yaml@2.9.0))
@@ -4171,12 +4171,12 @@ packages:
     peerDependencies:
       astro: ^4.0.0-beta || ^5.0.0-beta || ^3.3.0 || ^6.0.0-beta || ^7.0.0
 
-  astro-mermaid@2.1.0:
-    resolution: {integrity: sha512-fFRUN0BTZh+DZhDiLyblXoO26XqJ1Rr+qK3JGgSu7OBspKHDm59jkztg/aHsrdo1vO/tIq/+xhP/vgT8Mp92XA==}
+  astro-mermaid@2.2.0:
+    resolution: {integrity: sha512-EqkDnv7BaSIW3dQicT4u8zJDfaeoIpyeRVYL0YosJU109TGlxKAUR5xF2qf0LlhJEoG+new41mHNIW7LwPuVwA==}
     peerDependencies:
-      '@mermaid-js/layout-elk': ^0.2.0
+      '@mermaid-js/layout-elk': ^0.2.0 || ^1.0.0
       astro: '>=4'
-      mermaid: ^10.0.0 || ^11.0.0
+      mermaid: ^10.0.0 || ^11.0.0 || ^12.0.0
     peerDependenciesMeta:
       '@mermaid-js/layout-elk':
         optional: true
@@ -13149,7 +13149,7 @@ snapshots:
       rehype-expressive-code: 0.44.2
       url-extras: 0.1.0
 
-  astro-mermaid@2.1.0(astro@7.4.0(@types/node@26.6.5)(sass-embedded@1.105.2)(sass@1.105.2)(terser@5.51.2)(yaml@2.9.0))(mermaid@11.17.2):
+  astro-mermaid@2.2.0(astro@7.4.0(@types/node@26.6.5)(sass-embedded@1.105.2)(sass@1.105.2)(terser@5.51.2)(yaml@2.9.0))(mermaid@11.17.2):
     dependencies:
       astro: 7.4.0(@types/node@26.6.5)(sass-embedded@1.105.2)(sass@1.105.2)(terser@5.51.2)(yaml@2.9.0)
       import-meta-resolve: 4.2.0
