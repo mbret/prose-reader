@@ -164,8 +164,8 @@ same coordinates, its transform included: what the screen shows. The reader
 loads the spine items it shows, with the ones it preloads around them.
 
 `position` is the spine position at the viewport's top-left corner, where a
-navigation puts it, such as the `position` of
-[`reader.navigation.navigation$`](/core-api/navigation#navigationusd).
+navigation puts it, such as the one
+[`reader.navigation.position$`](/core-api/navigation#positionusd) gives.
 Untransformed, the slice is the absolute viewport at the position. Transformed,
 it is the [relative viewport](#relativeviewport), from wherever the transform
 takes the viewport's corner, measured on the page:
@@ -177,21 +177,17 @@ takes the viewport's corner, measured on the page:
   center, which moves the navigation: the slice starts at the position's
   height.
 
-Read it with a navigation that holds on the current layout, as the reader does:
-only then do the position and the places of the spine items agree.
-
 ```typescript
-reader.navigation.navigationAgainstCurrentLayout$
-  .pipe(
-    filter(({ holdsOnCurrentLayout }) => holdsOnCurrentLayout),
-    debounceTime(100),
-  )
-  .subscribe(({ navigation }) => {
-    const { x, y, width, height } = reader.viewport.getVisibleSlice(
-      navigation.position,
-    )
-  })
+reader.navigation.position$.subscribe((position) => {
+  // the part of the book on screen, zoom included
+  const { x, y, width, height } = reader.viewport.getVisibleSlice(position)
+})
 ```
+
+The spine items it shows are the ones whose places overlap it. While a layout
+is pending, those places can still move:
+[`reader.spine.isLayoutCurrent()`](/core-api/spine#islayoutcurrent) says when
+they won't.
 
 :::caution
 It measures the viewport, and the box it is laid out in, with
