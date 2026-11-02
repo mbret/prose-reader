@@ -3,6 +3,24 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## [37.0.0](https://github.com/mbret/prose-reader/compare/v36.0.0...v37.0.0) (2026-11-02)
+
+### ⚠ BREAKING CHANGES
+
+* **enhancer-gestures:** the gestures settings no longer have
+  `fontScalePinchEnabled`, `fontScalePinchThrottleTime`,
+  `fontScaleMinScale` and `fontScaleMaxScale`, and a pinch never changes
+  `fontScale`. Remove those settings from the options and the
+  `gestures.settings.update()` calls you pass. To resize text with a
+  pinch, set `zoomMaxScale` to `1`, so that a pinch never zooms, and
+  update `fontScale` from the pinch events of `reader.gestures.gestures$`.
+
+### Bug Fixes
+
+* **enhancer-gestures:** make a pinch only zoom ([c9d3f4b](https://github.com/mbret/prose-reader/commit/c9d3f4b6e9b7dc483ca48f632c0cf0f44189da7c)), closes [#654](https://github.com/mbret/prose-reader/issues/654)
+* **enhancer-gestures:** report a pinch's start and end on gestures$ ([ecb5bb7](https://github.com/mbret/prose-reader/commit/ecb5bb7d9049c4dd27a5c3bb7d0ae8b52acf2754)), references [#654](https://github.com/mbret/prose-reader/issues/654)
+
+
 ## [36.0.0](https://github.com/mbret/prose-reader/compare/v35.0.1...v36.0.0) (2026-10-29)
 
 ### ⚠ BREAKING CHANGES

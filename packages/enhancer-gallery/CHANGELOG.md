@@ -3,6 +3,18 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## [37.0.0](https://github.com/mbret/prose-reader/compare/v36.0.0...v37.0.0) (2026-11-02)
+
+### ⚠ BREAKING CHANGES
+
+* **core:** `reader.theme` (`set`, `get`, `$.theme$`) and the
+  `ThemeEnhancerOutput` type are removed. Use `reader.settings` instead.
+
+### Features
+
+* **core:** make the theme a reader setting ([e02ffbf](https://github.com/mbret/prose-reader/commit/e02ffbfe3ed86e6f1049e6a12b535545966b1f25))
+
+
 ## [36.0.0](https://github.com/mbret/prose-reader/compare/v35.0.1...v36.0.0) (2026-10-29)
 
 **Note:** Version bump only for package @prose-reader/enhancer-gallery

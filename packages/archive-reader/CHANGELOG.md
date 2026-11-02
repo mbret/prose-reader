@@ -3,6 +3,13 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## [37.0.0](https://github.com/mbret/prose-reader/compare/v36.0.0...v37.0.0) (2026-11-02)
+
+### Features
+
+* **archive-reader:** read a UUID in any spelling, and parse a URN ([7153d5d](https://github.com/mbret/prose-reader/commit/7153d5daf56a862071b5e8621ed466c97d8db461))
+
+
 ## [36.0.0](https://github.com/mbret/prose-reader/compare/v35.0.1...v36.0.0) (2026-10-29)
 
 ### ⚠ BREAKING CHANGES

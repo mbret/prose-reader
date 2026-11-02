@@ -3,6 +3,28 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## [37.0.0](https://github.com/mbret/prose-reader/compare/v36.0.0...v37.0.0) (2026-11-02)
+
+### ⚠ BREAKING CHANGES
+
+* **core:** `reader.theme` (`set`, `get`, `$.theme$`) and the
+  `ThemeEnhancerOutput` type are removed. Use `reader.settings` instead.
+* **core:** `reader.zoom.enter()` no longer takes `element`. It had
+  no effect, so remove it from the calls that pass it.
+
+### Features
+
+* **core:** make the theme a reader setting ([e02ffbf](https://github.com/mbret/prose-reader/commit/e02ffbfe3ed86e6f1049e6a12b535545966b1f25))
+
+### Bug Fixes
+
+* **core:** know where a page turn or a cfi lands while a later chapter's layout is pending ([fa3e776](https://github.com/mbret/prose-reader/commit/fa3e776a14f37972d80ebb76a45b3cd187d41991))
+
+### Code Refactoring
+
+* **core:** drop the element option of the zoom ([c8e782b](https://github.com/mbret/prose-reader/commit/c8e782b2c34b38db469c57703e99cadb7fcea671))
+
+
 ## [36.0.0](https://github.com/mbret/prose-reader/compare/v35.0.1...v36.0.0) (2026-10-29)
 
 ### ⚠ BREAKING CHANGES
