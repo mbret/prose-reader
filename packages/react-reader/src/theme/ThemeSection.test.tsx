@@ -4,15 +4,8 @@ import { ChakraProvider, defaultSystem } from "@chakra-ui/react"
 import { act, type ComponentProps } from "react"
 import { createRoot } from "react-dom/client"
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
-
-const { useReaderMock } = vi.hoisted(() => ({ useReaderMock: vi.fn() }))
-
-vi.mock("../context/useReader", async (importOriginal) => ({
-  ...(await importOriginal<typeof import("../context/useReader")>()),
-  useReader: useReaderMock,
-}))
-
 import { ReactReaderProvider } from "../context/ReactReaderProvider"
+import { asProvidedReader, createTestReader } from "../tests/createTestReader"
 import { ThemeSection } from "./ThemeSection"
 
 type ReactReaderProviderProps = Omit<
@@ -20,24 +13,18 @@ type ReactReaderProviderProps = Omit<
   "children" | "reader"
 >
 
-const createReaderOfBook = ({
-  isFullyPrePaginated,
-}: {
-  isFullyPrePaginated: boolean
-}) => ({
-  context: { value: { isFullyPrePaginated } },
-  settings: { defaults: { fontScale: 1, spreadMode: `auto`, theme: `bright` } },
-})
-
 describe(`ThemeSection`, () => {
   let container: HTMLDivElement
   let root: ReturnType<typeof createRoot>
 
-  const render = async (props: ReactReaderProviderProps) => {
+  const render = async (
+    props: ReactReaderProviderProps,
+    reader = createTestReader(),
+  ) => {
     await act(async () => {
       root.render(
         <ChakraProvider value={defaultSystem}>
-          <ReactReaderProvider reader={undefined} {...props}>
+          <ReactReaderProvider reader={asProvidedReader(reader)} {...props}>
             <ThemeSection />
           </ReactReaderProvider>
         </ChakraProvider>,
@@ -80,9 +67,6 @@ describe(`ThemeSection`, () => {
     container = document.createElement(`div`)
     document.body.appendChild(container)
     root = createRoot(container)
-    useReaderMock.mockReturnValue(
-      createReaderOfBook({ isFullyPrePaginated: false }),
-    )
   })
 
   afterEach(async () => {
@@ -156,9 +140,7 @@ describe(`ThemeSection`, () => {
   ])(
     `says a book keeps its own colors only when it is fully pre-paginated ($isFullyPrePaginated)`,
     async ({ isFullyPrePaginated, isHelperShown }) => {
-      useReaderMock.mockReturnValue(createReaderOfBook({ isFullyPrePaginated }))
-
-      await render({})
+      await render({}, createTestReader({ isFullyPrePaginated }))
 
       expect(
         container.textContent?.includes(`This book keeps its own colors`),

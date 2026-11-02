@@ -4,15 +4,8 @@ import { ChakraProvider, defaultSystem } from "@chakra-ui/react"
 import { act, type ComponentProps } from "react"
 import { createRoot } from "react-dom/client"
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
-
-const { useReaderMock } = vi.hoisted(() => ({ useReaderMock: vi.fn() }))
-
-vi.mock("../context/useReader", async (importOriginal) => ({
-  ...(await importOriginal<typeof import("../context/useReader")>()),
-  useReader: useReaderMock,
-}))
-
 import { ReactReaderProvider } from "../context/ReactReaderProvider"
+import { asProvidedReader, createTestReader } from "../tests/createTestReader"
 import { FontSizeSection } from "./FontSizeSection"
 
 type ReactReaderProviderProps = Omit<
@@ -28,7 +21,10 @@ describe(`FontSizeSection`, () => {
     await act(async () => {
       root.render(
         <ChakraProvider value={defaultSystem}>
-          <ReactReaderProvider reader={undefined} {...props}>
+          <ReactReaderProvider
+            reader={asProvidedReader(createTestReader())}
+            {...props}
+          >
             <FontSizeSection />
           </ReactReaderProvider>
         </ChakraProvider>,
@@ -36,7 +32,11 @@ describe(`FontSizeSection`, () => {
     })
   }
 
-  /** Every scope tab stays mounted, so the hidden tabs hold a font size too. */
+  /**
+   * Every scope tab stays mounted, so the hidden tabs hold a font size too.
+   * The box reads Chakra's state: a click toggles the hidden input itself,
+   * whatever that state becomes.
+   */
   const getShownFontSize = () => {
     const shownPanel = container.querySelector(
       `[role="tabpanel"]:not([hidden])`,
@@ -48,11 +48,18 @@ describe(`FontSizeSection`, () => {
     return {
       inheritedChoice,
       inheritedChoiceLabel: inheritedChoice?.closest(`label`)?.textContent,
-      isInheritedChoiceChecked: inheritedChoice?.checked,
+      isInheritedChoiceChecked:
+        inheritedChoice?.closest(`label`)?.dataset.state === `checked`,
       sliderPercent: shownPanel
         ?.querySelector(`[role="slider"]`)
         ?.getAttribute(`aria-valuenow`),
     }
+  }
+
+  const toggleShownInheritedChoice = async () => {
+    await act(async () => {
+      getShownFontSize().inheritedChoice?.click()
+    })
   }
 
   beforeEach(() => {
@@ -60,11 +67,6 @@ describe(`FontSizeSection`, () => {
     container = document.createElement(`div`)
     document.body.appendChild(container)
     root = createRoot(container)
-    useReaderMock.mockReturnValue({
-      settings: {
-        defaults: { fontScale: 1, spreadMode: `auto`, theme: `bright` },
-      },
-    })
   })
 
   afterEach(async () => {
@@ -74,50 +76,51 @@ describe(`FontSizeSection`, () => {
     container.remove()
   })
 
-  it(`shows a scope tab without a font size of its own at the one it inherits, and keeps that font size as the tab's own once the box is unchecked`, async () => {
+  it(`keeps the font size a scope tab shows as its own once the box is unchecked, even the one it inherits, and goes back to inheriting once it is checked`, async () => {
     const onSettingsChange = vi.fn()
+    const shownFontSizes: Omit<
+      ReturnType<typeof getShownFontSize>,
+      "inheritedChoice"
+    >[] = []
+    const recordShownFontSize = () => {
+      const { inheritedChoice: _, ...shownFontSize } = getShownFontSize()
+
+      shownFontSizes.push(shownFontSize)
+    }
 
     await render({
-      settings: { fontScale: 1.2 },
+      defaultSettings: { fontScale: 1.2 },
       settingsScopes: { fontScale: `book` },
       onSettingsChange,
     })
-    const { inheritedChoice, ...shownFontSize } = getShownFontSize()
-    await act(async () => {
-      inheritedChoice?.click()
-    })
+    recordShownFontSize()
+    await toggleShownInheritedChoice()
+    recordShownFontSize()
+    await toggleShownInheritedChoice()
+    recordShownFontSize()
 
-    expect({ shownFontSize, reported: onSettingsChange.mock.calls }).toEqual({
-      shownFontSize: {
-        inheritedChoiceLabel: `Same as global (120%)`,
-        isInheritedChoiceChecked: true,
-        sliderPercent: `120`,
-      },
-      reported: [[{ fontScale: 1.2 }, `book`]],
-    })
-  })
-
-  it(`sets a scope tab with a font size of its own, even the one it inherits, back to inheriting once the box is checked`, async () => {
-    const onSettingsChange = vi.fn()
-
-    await render({
-      settings: { fontScale: 1.2 },
-      settingsByScope: { book: { fontScale: 1.2 } },
-      settingsScopes: { fontScale: `book` },
-      onSettingsChange,
-    })
-    const { inheritedChoice, ...shownFontSize } = getShownFontSize()
-    await act(async () => {
-      inheritedChoice?.click()
-    })
-
-    expect({ shownFontSize, reported: onSettingsChange.mock.calls }).toEqual({
-      shownFontSize: {
-        inheritedChoiceLabel: `Same as global (120%)`,
-        isInheritedChoiceChecked: false,
-        sliderPercent: `120`,
-      },
-      reported: [[{ fontScale: undefined }, `book`]],
+    expect({ shownFontSizes, reported: onSettingsChange.mock.calls }).toEqual({
+      shownFontSizes: [
+        {
+          inheritedChoiceLabel: `Same as global (120%)`,
+          isInheritedChoiceChecked: true,
+          sliderPercent: `120`,
+        },
+        {
+          inheritedChoiceLabel: `Same as global (120%)`,
+          isInheritedChoiceChecked: false,
+          sliderPercent: `120`,
+        },
+        {
+          inheritedChoiceLabel: `Same as global (120%)`,
+          isInheritedChoiceChecked: true,
+          sliderPercent: `120`,
+        },
+      ],
+      reported: [
+        [{ fontScale: 1.2 }, `book`],
+        [{ fontScale: undefined }, `book`],
+      ],
     })
   })
 

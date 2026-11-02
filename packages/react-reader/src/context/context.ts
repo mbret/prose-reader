@@ -19,12 +19,11 @@ import type {
 
 export type PrivateContextType = {
   /**
-   * react-reader's own value for each scope, picked in a menu or set on the
-   * reader directly while the app gave no value with that scope in effect. It
-   * fills in only for values the app does not keep: once the app keeps one,
-   * its own value for that scope stays as it was, and comes back if the app
-   * drops its value by itself. Lost on unmount, and the book scope's on a new
-   * reader.
+   * The value react-reader keeps for each scope: the last one picked in a menu
+   * or set on the reader directly while the app gave none with that scope in
+   * effect. The app's value for a scope hides it, and picking Default or Same
+   * as global clears it. Lost on unmount, and the book scope's when the reader
+   * changes.
    */
   uncontrolledSettingsByScope: Partial<
     Record<ReactReaderSettingsScopeReference, ReactReaderSettings>
@@ -75,8 +74,9 @@ export type PublicContextType = {
   settings?: ReactReaderSettings
   /**
    * The app's defaults for the settings react-reader manages: what a setting
-   * takes when no scope gives it a value, before the reader's own default.
-   * They are not choices of the user and are never reported.
+   * takes when neither its scope in effect nor the global scope gives it a
+   * value. They take precedence over `reader.settings.defaults`, and
+   * react-reader never reports them.
    */
   defaultSettings?: ReactReaderSettings
   /**

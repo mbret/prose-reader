@@ -8,27 +8,25 @@ import type { ReactReaderSettingsScopeReference } from "./types"
 const INHERITED_CHOICE_RADIO_VALUE = "inherited"
 
 /**
- * A scope's value for a setting: the value it inherits first, then a radio per
- * value, with `labels` holding every value. `value` is the scope's own value,
- * `undefined` when it inherits, which `onValueChange` reports too.
+ * A scope's value for a setting: a radio for the value it inherits, then one
+ * per value in `labels`. `onValueChange` reports the inherited choice as
+ * `undefined`.
  */
 export const SettingRadioGroup = <Value extends string>({
   labels,
   scope,
-  value,
-  inheritedValue,
+  values: { ownValue, inheritedValue },
   disabled,
   onValueChange,
 }: {
   labels: Record<Value, string>
   scope: ReactReaderSettingsScopeReference
-  value: Value | undefined
-  inheritedValue: Value | undefined
+  values: { ownValue: Value | undefined; inheritedValue: Value | undefined }
   disabled?: boolean
   onValueChange: (value: Value | undefined) => void
 }) => (
   <RadioGroup
-    value={value ?? INHERITED_CHOICE_RADIO_VALUE}
+    value={ownValue ?? INHERITED_CHOICE_RADIO_VALUE}
     disabled={disabled}
     onValueChange={function selectSettingValue({ value: selectedValue }) {
       if (selectedValue === INHERITED_CHOICE_RADIO_VALUE) {

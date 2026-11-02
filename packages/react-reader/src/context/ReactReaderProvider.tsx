@@ -1,6 +1,7 @@
 import { isShallowEqual } from "@prose-reader/shared"
 import { type ComponentProps, memo, useCallback, useEffect } from "react"
 import { signal, useConstant, useMemoCompare, useSignalValue } from "reactjrx"
+import { getUncontrolledSettingsByScopeForReader } from "../settings/settingValues"
 import {
   getDefaultValue,
   type PrivateContextType,
@@ -59,22 +60,19 @@ const SignalProvider = ({
   const memoizedProps = useMemoCompare(props, isShallowEqual)
 
   useEffect(() => {
-    valueSignal.update((old) => {
-      const isSameReader = old.reader === memoizedProps.reader
-
-      return {
-        ...old,
-        ...memoizedProps,
-        uncontrolledSettingsByScope: isSameReader
-          ? old.uncontrolledSettingsByScope
-          : { ...old.uncontrolledSettingsByScope, book: undefined },
-        onFontSizeMenuOpenChange: uncontrolledOnFontSizeMenuOpenChange,
-        fontSizeMenuOpen: uncontrolledFontSizeMenuOpenValue,
-        onRefitMenuOpenChange: uncontrolledOnRefitMenuOpenChange,
-        refitMenuOpen: uncontrolledRefitMenuOpenValue,
-        _onQuickMenuOpenChange,
-      }
-    })
+    valueSignal.update((old) => ({
+      ...old,
+      ...memoizedProps,
+      uncontrolledSettingsByScope: getUncontrolledSettingsByScopeForReader(
+        old,
+        memoizedProps.reader,
+      ),
+      onFontSizeMenuOpenChange: uncontrolledOnFontSizeMenuOpenChange,
+      fontSizeMenuOpen: uncontrolledFontSizeMenuOpenValue,
+      onRefitMenuOpenChange: uncontrolledOnRefitMenuOpenChange,
+      refitMenuOpen: uncontrolledRefitMenuOpenValue,
+      _onQuickMenuOpenChange,
+    }))
   }, [
     memoizedProps,
     _onQuickMenuOpenChange,

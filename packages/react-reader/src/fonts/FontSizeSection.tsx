@@ -9,11 +9,6 @@ import { FontScaleSlider } from "./FontScaleSlider"
 const toFontScalePercentLabel = (fontScale: number) =>
   `${Math.round(fontScale * 100)}%`
 
-/**
- * The font scale of each scope: the slider at the value it takes, and a
- * checkbox to set it back to the value it inherits. Unchecking the box keeps
- * the value shown as the scope's own.
- */
 export const FontSizeSection = memo(function FontSizeSection() {
   const fontScale = useManagedSetting("fontScale")
 
@@ -24,21 +19,24 @@ export const FontSizeSection = memo(function FontSizeSection() {
         activeScope={fontScale.activeScope}
         onActiveScopeChange={fontScale.onActiveScopeChange}
         renderScopeValue={(scope) => {
-          const fontScaleOfScope = fontScale.getValueForScope(scope)
-          const inheritedFontScale = fontScale.getInheritedValueForScope(scope)
+          const {
+            ownValue: ownFontScale,
+            inheritedValue: inheritedFontScale,
+            appliedValue: appliedFontScale,
+          } = fontScale.getValuesForScope(scope)
 
-          if (fontScaleOfScope === undefined) return null
+          if (appliedFontScale === undefined) return null
 
           return (
             <Stack gap={4}>
               <Checkbox
-                checked={fontScale.getOwnValueForScope(scope) === undefined}
-                onCheckedChange={function changeToInheritedFontScale({
+                checked={ownFontScale === undefined}
+                onCheckedChange={function toggleInheritedFontScale({
                   checked,
                 }) {
                   fontScale.changeValueForScope(
                     scope,
-                    checked === true ? undefined : fontScaleOfScope,
+                    checked === true ? undefined : appliedFontScale,
                   )
                 }}
               >
@@ -50,7 +48,7 @@ export const FontSizeSection = memo(function FontSizeSection() {
                 )}
               </Checkbox>
               <FontScaleSlider
-                fontScale={fontScaleOfScope}
+                fontScale={appliedFontScale}
                 onFontScaleChange={function changeFontScale(changedFontScale) {
                   fontScale.changeValueForScope(scope, changedFontScale)
                 }}

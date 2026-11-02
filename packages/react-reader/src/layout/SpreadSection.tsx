@@ -14,7 +14,6 @@ const SPREAD_MODE_LABELS: Record<CoreInputSettings["spreadMode"], string> = {
   never: "Always one page",
 }
 
-/** The spread mode, a setting react-reader manages like the font scale. */
 export const SpreadSection = memo(() => {
   const reader = useReader()
   const spreadMode = useManagedSetting("spreadMode")
@@ -56,8 +55,7 @@ export const SpreadSection = memo(() => {
               <SettingRadioGroup
                 labels={SPREAD_MODE_LABELS}
                 scope={scope}
-                value={spreadMode.getOwnValueForScope(scope)}
-                inheritedValue={spreadMode.getInheritedValueForScope(scope)}
+                values={spreadMode.getValuesForScope(scope)}
                 disabled={!spreadState.isSpreadAllowed}
                 onValueChange={function changeSpreadMode(selectedSpreadMode) {
                   spreadMode.changeValueForScope(scope, selectedSpreadMode)
