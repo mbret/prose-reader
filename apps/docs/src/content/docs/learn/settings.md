@@ -56,7 +56,7 @@ This observable emits as soon as you subscribe, then once each time the settings
 ## `settings.defaults`
 
 ```typescript
-InputSettings
+Readonly<InputSettings>
 ```
 
 The value each setting starts from when it is given none, the settings added with [`settings.extend`](#settingsextend) included. The values the reader was created with and its updates leave it as it is: `reader.settings.defaults.theme` is `bright`, whatever theme the reader shows.
