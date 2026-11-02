@@ -50,7 +50,7 @@ test("should show each thumbnail's page on the reader's current theme", async ({
     const reader = await getReader(page)
 
     await reader.evaluate((reader, theme) => {
-      reader.theme.set(theme)
+      reader.settings.update({ theme })
     }, theme)
 
     const readerBackground = await page

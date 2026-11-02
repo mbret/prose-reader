@@ -3,9 +3,9 @@ export type { Manifest } from "@prose-reader/shared"
 import { createReaderWithEnhancers as createReader } from "./createReaderWithEnhancer"
 
 export {
+  type EnhancerThemeInputSettings,
   getThemeBackgroundColor,
   type Theme,
-  type ThemeEnhancerOutput,
 } from "./enhancers/theme"
 export { HookManager } from "./hooks/HookManager"
 export { SettingsManager } from "./settings/SettingsManager"
