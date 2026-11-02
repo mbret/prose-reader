@@ -3,6 +3,14 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## [38.0.0](https://github.com/mbret/prose-reader/compare/v37.0.0...v38.0.0) (2026-11-02)
+
+**Note:** Version bump only for package @prose-reader/react-native
+
+
+
+
+
 ## [37.0.0](https://github.com/mbret/prose-reader/compare/v36.0.0...v37.0.0) (2026-11-02)
 
 **Note:** Version bump only for package @prose-reader/react-native

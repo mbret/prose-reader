@@ -3,6 +3,13 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## [38.0.0](https://github.com/mbret/prose-reader/compare/v37.0.0...v38.0.0) (2026-11-02)
+
+### Features
+
+* **react-reader:** add a theme menu ([f706b0a](https://github.com/mbret/prose-reader/commit/f706b0a1216c6877f9559832499bace4d12e2704))
+
+
 ## [37.0.0](https://github.com/mbret/prose-reader/compare/v36.0.0...v37.0.0) (2026-11-02)
 
 ### ⚠ BREAKING CHANGES

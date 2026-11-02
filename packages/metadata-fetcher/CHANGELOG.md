@@ -3,6 +3,36 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## [38.0.0](https://github.com/mbret/prose-reader/compare/v37.0.0...v38.0.0) (2026-11-02)
+
+### ⚠ BREAKING CHANGES
+
+* **metadata-fetcher:** `googleBooksLookupFromInput`, `GoogleBooksLookup` and
+  `projectGutenbergLookupFromInput` are removed; use
+  `identifierValue(input.identifiers, "GoogleBooks")` or
+  `identifierValue(input.identifiers, "ProjectGutenberg")` from
+  `@prose-reader/archive-reader`. The `matchedIdentifier` option of
+  `resolveGoogleBooksVolume` and `resolveProjectGutenbergRecord`, and the
+  `matchedProjectGutenbergIdentifier` option of `resolveOpenLibraryDoc`,
+  are removed, and candidates no longer carry the input's identifier
+  spelling.
+
+### Features
+
+* **metadata-fetcher:** retry rate limits, honouring Retry-After ([bc3cd75](https://github.com/mbret/prose-reader/commit/bc3cd7531de8327e609df2ef1be0fba791f8c32a))
+
+### Bug Fixes
+
+* **metadata-fetcher:** compare identifiers only within a shared namespace ([697b34f](https://github.com/mbret/prose-reader/commit/697b34f202ad12c180b435270570950a4205d2b9))
+* **metadata-fetcher:** compare UUIDs and URNs in their own namespace ([5595b91](https://github.com/mbret/prose-reader/commit/5595b9144e70755988b5e4b8a1a1869c191631e6))
+* **metadata-fetcher:** leave a blank-scheme URN unscoped, and compare URNs as RFC 8141 does ([dea0dff](https://github.com/mbret/prose-reader/commit/dea0dff6217f2ab943f68606386b9b9aa37f147d)), references [#623](https://github.com/mbret/prose-reader/issues/623)
+* **metadata-fetcher:** release the body of a response nobody reads ([2585fcf](https://github.com/mbret/prose-reader/commit/2585fcf88fb93a04836e0f38ef50ef9e5dbf4798))
+
+### Code Refactoring
+
+* **metadata-fetcher:** stop copying the input identifier onto candidates ([4dbc7e2](https://github.com/mbret/prose-reader/commit/4dbc7e2ccfa1186e7956711d7d9d12f7aabc184d))
+
+
 ## [37.0.0](https://github.com/mbret/prose-reader/compare/v36.0.0...v37.0.0) (2026-11-02)
 
 **Note:** Version bump only for package @prose-reader/metadata-fetcher

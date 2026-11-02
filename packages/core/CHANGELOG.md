@@ -3,6 +3,14 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## [38.0.0](https://github.com/mbret/prose-reader/compare/v37.0.0...v38.0.0) (2026-11-02)
+
+### Bug Fixes
+
+* **core:** keep pagination settled and the loader measuring through a later chapter's layout ([13c62e9](https://github.com/mbret/prose-reader/commit/13c62e9817d894922e83aabbea3a33008a0cf1b7))
+* **core:** wait for the layout of every item the loader shows ([d6917f5](https://github.com/mbret/prose-reader/commit/d6917f5aa7c0903fe83a8feddd966820548f9171))
+
+
 ## [37.0.0](https://github.com/mbret/prose-reader/compare/v36.0.0...v37.0.0) (2026-11-02)
 
 ### ⚠ BREAKING CHANGES
