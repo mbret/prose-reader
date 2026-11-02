@@ -320,7 +320,7 @@ The confirmed candidate carries `{ value: "78139", scheme: "ProjectGutenberg" }`
 
 | Project Gutenberg RDF | Resolved | |
 | --- | --- | --- |
-| `pgterms:ebook@rdf:about` | `identifiers` | numeric scheme `ProjectGutenberg`; the exact matched input identifier is preserved too |
+| `pgterms:ebook@rdf:about` | `identifiers` | numeric scheme `ProjectGutenberg`, which the matcher compares with a Gutenberg URL the book states |
 | `dcterms:title` | `title`, `titles` | |
 | `dcterms:creator`, `marcrel:*` | `contributors` | common MARC relators normalize to roles such as `author`, `translator`, `editor`, and `illustrator`; unknown codes remain verbatim |
 | `dcterms:issued` | `publication.edition.date` | Gutenberg ebook release date, parsed through day precision when available; it is not the work's original publication date |
