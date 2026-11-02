@@ -314,7 +314,7 @@ const provider = createProjectGutenbergProvider({
 
 **Lookup strategy**, exactly one request: the provider recognizes an official Gutenberg URL in `identifiers` (including `/ebooks/78139`, `/files/78139/…`, `/cache/epub/78139/…`, and the older `/78139` form), or a numeric identifier whose scheme is `ProjectGutenberg`. It then requests Gutenberg's official per-eBook RDF record at `/cache/epub/{id}/pg{id}.rdf`. A title or author alone never triggers the provider, so it neither crawls the website nor returns a fuzzy Gutenberg hit. Arbitrary URLs and identifiers with another authored scheme are ignored.
 
-The confirmed candidate echoes the book's exact input identifier and adds `{ value: "78139", scheme: "ProjectGutenberg" }`. A shared scheme-scoped identifier makes the match decisive even when the catalog and embedded titles differ. A missing RDF record returns no candidate; a failing or malformed response is reported through `failedProviders` like any other provider failure.
+The confirmed candidate carries `{ value: "78139", scheme: "ProjectGutenberg" }`, which the matcher compares with the book's URL as the same Gutenberg id: the match is decisive even when the catalog and embedded titles differ. A missing RDF record returns no candidate; a failing or malformed response is reported through `failedProviders` like any other provider failure.
 
 **Mapping** (per-eBook RDF → `ResolvedMetadata`; same exhaustive-destructure check as the other providers):
 
@@ -367,7 +367,7 @@ const input = {
 }
 ```
 
-An official Google Books website/API URL with scheme `URL` is recognized too. An exact lookup echoes the confirmed volume id as `{ value: id, scheme: "GoogleBooks" }`, so the shared matcher treats it as decisive and `metadataInputFromResolvedArchive` can forward it unchanged for a later refresh. A missing volume id falls through to ISBN/title when available. ISBN searches likewise retain the queried ISBN identifier even when a sparse Google record omits `industryIdentifiers`.
+An official Google Books website/API URL with scheme `URL` is recognized too. Every candidate carries its volume id as `{ value: id, scheme: "GoogleBooks" }`, which the matcher compares with either spelling of the book's id, so an exact lookup is decisive, and `metadataInputFromResolvedArchive` can forward the id unchanged for a later refresh. A missing volume id falls through to ISBN/title when available. ISBN searches likewise retain the queried ISBN identifier even when a sparse Google record omits `industryIdentifiers`.
 
 Each request makes at most three total attempts. Network failures and HTTP `500`, `502`, `503` and `504` responses are retried with abortable exponential backoff and jitter; client errors such as an invalid key are not. When the third attempt fails, or when a successful exact response is malformed, the provider is reported through `failedProviders` normally.
 
@@ -424,7 +424,7 @@ const provider = createOpenLibraryProvider({
 | `number_of_pages_median` | `numberOfPages` | |
 | `ratings_average`, `ratings_count` | `aggregateRating` | the catalog's raw 0–5 mean of the *work*'s ratings, unrounded. `ratings_sortable` is deliberately not mapped: it is Open Library's internal ranking key, not a rating it states |
 | `cover_i` | `cover` | absolute url on the cover service, `confidence: "derived"` |
-| `id_project_gutenberg` | `identifiers` | scheme `ProjectGutenberg`; an exact lookup also echoes the book's original Gutenberg URL so the shared scorer can recognize the agreement |
+| `id_project_gutenberg` | `identifiers` | scheme `ProjectGutenberg`, which the matcher compares with a Gutenberg URL the book states |
 | `key` | `identifiers` | scheme `OpenLibrary`, e.g. `/works/OL893415W`; also `id` and `url` on the match |
 
 An `ISBN` identifier is added **only** when the search was an ISBN lookup, and then it uses the queried value: the API answered "this work has that ISBN", which is a fact about the record. A title-search hit describes a *work*, whose editions each have their own ISBN, so picking one would be fabrication.

@@ -11,7 +11,7 @@ import {
   MetadataProviderResponseError,
   responseErrorStatus,
 } from "../responseError.ts"
-import { googleBooksLookupFromInput } from "./identifier.ts"
+import { GOOGLE_BOOKS_IDENTIFIER_SCHEME } from "./identifier.ts"
 import { type GoogleBooksVolume, parseGoogleBooksVolume } from "./parse.ts"
 import {
   googleBooksVolumeUrl,
@@ -217,16 +217,15 @@ export const createGoogleBooksSearch = (
   }
 
   return async (input, context) => {
-    const googleBooks = googleBooksLookupFromInput(input)
+    const volumeId = identifierValue(
+      input.identifiers,
+      GOOGLE_BOOKS_IDENTIFIER_SCHEME,
+    )
 
-    if (googleBooks !== undefined) {
-      const record = await findByVolumeId(googleBooks.id, context)
+    if (volumeId !== undefined) {
+      const record = await findByVolumeId(volumeId, context)
 
-      if (record !== undefined) {
-        return toCandidates([record], {
-          matchedIdentifier: googleBooks.identifier,
-        })
-      }
+      if (record !== undefined) return toCandidates([record])
     }
 
     const isbn = identifierValue(input.identifiers, "ISBN")

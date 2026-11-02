@@ -59,10 +59,7 @@ describe("createProjectGutenbergProvider", () => {
               "Wilhelm Meister's apprenticeship and travels, vol. 2 (of 2)",
           },
         ],
-        identifiers: [
-          { value: "http://www.gutenberg.org/78139", scheme: "URL" },
-          { value: "78139", scheme: "ProjectGutenberg" },
-        ],
+        identifiers: [{ value: "78139", scheme: "ProjectGutenberg" }],
       },
     })
     expect(scoreMetadataCandidate(input, candidate?.metadata ?? {}).score).toBe(
