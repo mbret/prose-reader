@@ -13,6 +13,12 @@ export interface SettingsInterface<
 > {
   update(settings: Partial<InputSettings>): void
 
+  /**
+   * The value each setting starts from when it is given none, the settings
+   * `extend` added included.
+   */
+  readonly defaults: InputSettings
+
   values$: Observable<OutputSettings>
 
   values: OutputSettings

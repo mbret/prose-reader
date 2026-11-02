@@ -53,6 +53,14 @@ Observable<OutputSettings>
 
 This observable emits as soon as you subscribe, then once each time the settings change. An update a subscriber makes on an emission reaches every subscriber after that emission.
 
+## `settings.defaults`
+
+```typescript
+InputSettings
+```
+
+The value each setting starts from when it is given none, the settings added with [`settings.extend`](#settingsextend) included. The values the reader was created with and its updates leave it as it is: `reader.settings.defaults.theme` is `bright`, whatever theme the reader shows.
+
 ## `settings.extend`
 
 ```typescript
@@ -66,7 +74,7 @@ extend<
 ): ExtendedSettings<Self, AddedSettings>
 ```
 
-Adds an enhancer's settings to the reader's: the keys of `defaults`, each with the value `settings` gives it, or its default when that value is `undefined`. The other keys of `settings` are left out, so an enhancer passes the options it was created with. It throws when one of the keys is already declared, by core or by another enhancer.
+Adds an enhancer's settings to the reader's: the keys of `defaults`, each with the value `settings` gives it, or its default when that value is `undefined`. The `defaults` join [`settings.defaults`](#settingsdefaults). The other keys of `settings` are left out, so an enhancer passes the options it was created with. It throws when one of the keys is already declared, by core or by another enhancer.
 
 It returns `reader.settings`, typed as the settings it is called on with the added ones. [Adding reader settings](/learn/enhancers#adding-reader-settings) shows an enhancer that adds its settings.
 
