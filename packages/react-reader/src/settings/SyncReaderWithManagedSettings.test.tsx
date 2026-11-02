@@ -724,5 +724,29 @@ describe(`SyncReaderWithManagedSettings`, () => {
         secondReaderUpdates: [[{ theme: `sepia` }]],
       })
     })
+
+    it(`stops listening to a reader once it is replaced, and to any reader once unmounted`, async () => {
+      const firstReader = createTestReader()
+      const secondReader = createTestReader()
+      const onSettingsChange = vi.fn()
+
+      await render({ reader: asProvidedReader(firstReader), onSettingsChange })
+      await render({ reader: asProvidedReader(secondReader), onSettingsChange })
+      await act(async () => {
+        firstReader.settings.update({ spreadMode: `never` })
+      })
+      const secondReaderUpdatesBeforeUnmount = [
+        ...secondReader.settings.update.mock.calls,
+      ]
+      await act(async () => {
+        root.unmount()
+      })
+      secondReader.settings.update({ spreadMode: `always` })
+
+      expect({
+        reported: onSettingsChange.mock.calls,
+        secondReaderUpdatesBeforeUnmount,
+      }).toEqual({ reported: [], secondReaderUpdatesBeforeUnmount: [] })
+    })
   })
 })

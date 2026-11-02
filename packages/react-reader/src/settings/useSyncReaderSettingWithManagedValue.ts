@@ -1,6 +1,6 @@
 import { useCallback, useEffect } from "react"
 import { useLiveRef, useSubscribe } from "reactjrx"
-import { distinctUntilChanged, filter, map } from "rxjs"
+import { distinctUntilChanged, filter, map, tap } from "rxjs"
 import {
   useReaderContext,
   useReaderContextValue,
@@ -68,15 +68,13 @@ export const useSyncReaderSettingWithManagedValue = <
 
   const reportReaderValuesOtherThanValueInEffect = useCallback(
     function reportReaderValuesOtherThanValueInEffect() {
-      return reader?.settings.values$
-        .pipe(
-          map((settings) => settings[name]),
-          distinctUntilChanged(),
-          filter(function isOtherThanValueInEffect(readerValue) {
-            return readerValue !== valueInEffectRef.current
-          }),
-        )
-        .subscribe(function reportInternalChange(readerValue) {
+      return reader?.settings.values$.pipe(
+        map((settings) => settings[name]),
+        distinctUntilChanged(),
+        filter(function isOtherThanValueInEffect(readerValue) {
+          return readerValue !== valueInEffectRef.current
+        }),
+        tap(function reportInternalChange(readerValue) {
           changeManagedSettingValue(
             context,
             name,
@@ -84,7 +82,8 @@ export const useSyncReaderSettingWithManagedValue = <
             readerValue,
             "internal",
           )
-        })
+        }),
+      )
     },
     [reader, name, context, scopeInEffectRef, valueInEffectRef],
   )
