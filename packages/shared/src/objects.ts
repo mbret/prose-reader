@@ -67,23 +67,3 @@ export const groupBy = <T, K extends keyof any>(
     },
     {} as Record<K, T[]>,
   )
-
-export function shallowMergeIfDefined<T extends object, U extends object>(
-  obj1: T,
-  obj2: U,
-): T & U {
-  const result = { ...obj1 } as T & U
-
-  for (const key in obj2) {
-    if (Object.hasOwn(obj2, key)) {
-      // biome-ignore lint/suspicious/noExplicitAny: TODO
-      const value = (obj2 as any)[key]
-      if (value !== undefined || !(key in obj1)) {
-        // biome-ignore lint/suspicious/noExplicitAny: TODO
-        ;(result as any)[key] = value
-      }
-    }
-  }
-
-  return result
-}

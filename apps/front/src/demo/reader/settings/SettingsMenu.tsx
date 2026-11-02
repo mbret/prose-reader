@@ -1,5 +1,4 @@
 import { Heading, HStack, Stack } from "@chakra-ui/react"
-import type { Theme } from "@prose-reader/core"
 import type React from "react"
 import { useEffect, useState } from "react"
 import {
@@ -35,7 +34,6 @@ export const SettingsMenu = ({
   localSettings: LocalSettings
 }) => {
   const { reader } = useReader()
-  const [theme, setTheme] = useState<Theme>(reader?.theme.get() || `publisher`)
   const readerSettings = useReaderSettings()
   const [verticalMarginSliderValue, setVerticalMarginSliderValue] = useState(0)
   const [horizontalMarginSliderValue, setHorizontalMarginSliderValue] =
@@ -111,27 +109,6 @@ export const SettingsMenu = ({
             <Radio value="100">small</Radio>
             <Radio value="publisher">default (publisher)</Radio>
             <Radio value="900">big</Radio>
-          </HStack>
-        </RadioGroup>
-      </Field>
-      <Field
-        label="Theme"
-        helperText="Change the weight of the text in the entire book (if supported by current font)"
-      >
-        <RadioGroup
-          defaultValue="default"
-          onValueChange={(e) => {
-            const value = (e.value ?? "publisher") as Theme
-            setTheme(value)
-            reader.theme.set(value)
-          }}
-          value={theme}
-        >
-          <HStack gap="24px">
-            <Radio value="publisher">default (publisher)</Radio>
-            <Radio value="sepia">sepia</Radio>
-            <Radio value="bright">bright</Radio>
-            <Radio value="night">night</Radio>
           </HStack>
         </RadioGroup>
       </Field>

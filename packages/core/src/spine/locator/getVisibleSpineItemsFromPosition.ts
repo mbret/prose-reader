@@ -1,33 +1,31 @@
-import type { ReaderSettingsManager } from "../../settings/ReaderSettingsManager"
 import type { SpineItem } from "../../spineItem/SpineItem"
-import { translateSpinePositionToRelativeViewport } from "../../viewport/translateSpinePositionToRelativeViewport"
 import { ViewportSlicePosition } from "../../viewport/types"
 import type { Viewport } from "../../viewport/Viewport"
 import type { SpineItemsManager } from "../SpineItemsManager"
 import type { SpineLayout } from "../SpineLayout"
-import type { SpinePosition, UnboundSpinePosition } from "../types"
+import { type SpinePosition, UnboundSpinePosition } from "../types"
 import { getItemVisibilityForPosition } from "./getItemVisibilityForPosition"
 import { getSpineItemFromPosition } from "./getSpineItemFromPosition"
 
-export const getVisibleSpineItemsFromPosition = ({
-  position,
+/**
+ * The first and last spine items a slice of the spine shows, each enough to
+ * reach the threshold. When none does, the spine item the slice starts in, or
+ * else the first one.
+ */
+export const getVisibleSpineItemsFromSlice = ({
+  slice,
   threshold,
   restrictToScreen,
   spineItemsManager,
   spineLayout,
-  useAbsoluteViewport = true,
-  viewport,
 }: {
-  position: SpinePosition | UnboundSpinePosition
+  slice: ViewportSlicePosition
   threshold:
     | { type: "percentage"; value: number }
     | { type: "pixels"; value: number }
   restrictToScreen?: boolean
   spineItemsManager: SpineItemsManager
-  settings: ReaderSettingsManager
   spineLayout: SpineLayout
-  useAbsoluteViewport?: boolean
-  viewport: Viewport
 }):
   | {
       beginIndex: number
@@ -36,23 +34,10 @@ export const getVisibleSpineItemsFromPosition = ({
   | undefined => {
   const fallbackSpineItem =
     getSpineItemFromPosition({
-      position,
+      position: new UnboundSpinePosition({ x: slice.x, y: slice.y }),
       spineItemsManager,
       spineLayout,
     }) || spineItemsManager.get(0)
-
-  const viewportInfo = useAbsoluteViewport
-    ? viewport.absoluteViewport
-    : viewport.relativeViewport
-  const relativeSpinePosition = translateSpinePositionToRelativeViewport(
-    position,
-    viewport.absoluteViewport,
-    viewportInfo,
-  )
-  const viewportPosition = ViewportSlicePosition.from(
-    relativeSpinePosition,
-    viewportInfo,
-  )
 
   const spineItemsVisible: SpineItem[] = []
 
@@ -61,7 +46,7 @@ export const getVisibleSpineItemsFromPosition = ({
     const { visible } = getItemVisibilityForPosition({
       itemPosition,
       threshold,
-      viewportPosition,
+      viewportPosition: slice,
       restrictToScreen,
     })
 
@@ -83,3 +68,20 @@ export const getVisibleSpineItemsFromPosition = ({
     endIndex: endItemIndex ?? 0,
   }
 }
+
+/**
+ * The first and last spine items the absolute viewport shows at a position:
+ * what a navigation there shows, whatever a zoom shows around it.
+ */
+export const getVisibleSpineItemsFromPosition = ({
+  position,
+  viewport,
+  ...options
+}: Omit<Parameters<typeof getVisibleSpineItemsFromSlice>[0], "slice"> & {
+  position: SpinePosition | UnboundSpinePosition
+  viewport: Viewport
+}) =>
+  getVisibleSpineItemsFromSlice({
+    ...options,
+    slice: ViewportSlicePosition.from(position, viewport.absoluteViewport),
+  })

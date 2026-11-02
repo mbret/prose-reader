@@ -11,7 +11,9 @@ test.describe("Given a prepaginated book with first page on spread right", () =>
         height: 300,
       })
 
-      await page.goto("http://localhost:3333/tests/prepaginated/index.html")
+      await page.goto(
+        "http://localhost:3333/tests/prepaginated/index.html?preload=0",
+      )
 
       await waitForSpineItemReady(page, [0])
 
@@ -38,7 +40,9 @@ test.describe("Given a prepaginated book with first page on spread right", () =>
         height: 300,
       })
 
-      await page.goto("http://localhost:3333/tests/prepaginated/index.html")
+      await page.goto(
+        "http://localhost:3333/tests/prepaginated/index.html?preload=0",
+      )
 
       await waitForSettled(page)
 

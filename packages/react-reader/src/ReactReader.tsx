@@ -25,7 +25,8 @@ import { useQuickMenu } from "./quickmenu/useQuickMenu"
 import { useQuickMenuToggleGesture } from "./quickmenu/useQuickMenuToggleGesture"
 import { RefitDialog } from "./refit/RefitDialog"
 import { SearchDialog } from "./search/SearchDialog"
-import { useSyncReaderWithManagedSettings } from "./settings/useSyncReaderWithManagedSettings"
+import { SyncReaderWithManagedSettings } from "./settings/SyncReaderWithManagedSettings"
+import { ThemeDialog } from "./theme/ThemeDialog"
 import { TableOfContentsDialog } from "./toc/TableOfContentsDialog"
 import { useZoomSettings } from "./zoom/useZoomSettings"
 import { ZoomControls } from "./zoom/ZoomControls"
@@ -46,9 +47,13 @@ const Effects = memo(() => {
   useQuickMenuToggleGesture()
   usePreventInteractionOnSelection()
   useSyncAnnotationsWithReader()
-  useSyncReaderWithManagedSettings()
 
-  return <BookmarksEffects />
+  return (
+    <>
+      <SyncReaderWithManagedSettings />
+      <BookmarksEffects />
+    </>
+  )
 })
 
 const InnerReactReader = memo(
@@ -70,6 +75,7 @@ const InnerReactReader = memo(
     >(undefined)
     const [isGalleryOpen, setIsGalleryOpen] = useState(false)
     const [isLayoutOpen, setIsLayoutOpen] = useState(false)
+    const [isThemeOpen, setIsThemeOpen] = useState(false)
     const [quickMenuOpen, setQuickMenuOpen] = useQuickMenu()
 
     const onNavigate = useCallback(() => {
@@ -97,6 +103,8 @@ const InnerReactReader = memo(
           setIsGalleryOpen(true)
         } else if (item === "layout") {
           setIsLayoutOpen(true)
+        } else if (item === "theme") {
+          setIsThemeOpen(true)
         }
         onItemClick?.(item)
       },
@@ -125,6 +133,7 @@ const InnerReactReader = memo(
           <GalleryDialog open={isGalleryOpen} setOpen={setIsGalleryOpen} />
           <RefitDialog />
           <LayoutDialog open={isLayoutOpen} setOpen={setIsLayoutOpen} />
+          <ThemeDialog open={isThemeOpen} setOpen={setIsThemeOpen} />
           <QuickMenu onItemClick={_onItemClick} />
           <ZoomControls />
           <AnnotateControls />
@@ -162,18 +171,16 @@ const InnerReactReader = memo(
   },
 )
 
-export const ReactReader = memo(
-  ({
-    children,
-    slots,
-    ...props
-  }: ComponentProps<typeof ReactReaderProvider> & {
-    slots?: {
-      container?: {
-        props?: Omit<ComponentProps<typeof InnerReactReader>, "children">
-      }
+export type ReactReaderProps = ComponentProps<typeof ReactReaderProvider> & {
+  slots?: {
+    container?: {
+      props?: Omit<ComponentProps<typeof InnerReactReader>, "children">
     }
-  }) => {
+  }
+}
+
+export const ReactReader = memo(
+  ({ children, slots, ...props }: ReactReaderProps) => {
     const { container: { props: containerProps = {} } = {} } = slots ?? {}
 
     return (

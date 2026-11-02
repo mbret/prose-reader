@@ -7,7 +7,7 @@ import { SpineItem } from "./SpineItem"
 export const Spine = memo(({ children }: { children: React.ReactNode }) => {
   const reader = useReader()
   const { data: spineElement } = useObserve(
-    () => reader?.spine.element$,
+    () => reader?.spine.watch("element"),
     [reader],
   )
   const spineItems = reader?.spineItemsManager.items

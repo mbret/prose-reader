@@ -81,7 +81,7 @@ The absolute viewport represents the dimensions given when creating the reader a
 <div class="figures"><figure><img src="/images/viewport-relative.webp" alt="A manga page at half its size, with the next page beside it" width="188" height="334"><figcaption>Relative viewport (scale: 0.5)</figcaption></figure> <figure><img src="/images/viewport-absolute.webp" alt="The same manga page filling the screen" width="188" height="334"><figcaption>Absolute viewport</figcaption></figure></div>
 
 :::note
-Some calculations will always use the absolute viewport (eg: navigation) to keep consistency and correct results while other behaviors might take advantage of the relative viewport. For example, prose will always load documents that are visible on the relative viewport.
+Some calculations will always use the absolute viewport (eg: navigation) to keep consistency and correct results while other behaviors might take advantage of the relative viewport. For example, prose will always load documents that are visible on the relative viewport, which [`reader.viewport.getVisibleSlice()`](/core-api/viewport#getvisibleslice) places in the book.
 :::
 
 

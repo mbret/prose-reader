@@ -187,7 +187,7 @@ describe("Given a reader mounted into a foreign document", () => {
     )
     expect(scrollNavigator?.ownerDocument).toBe(foreignDocument)
     expect(reader.viewport.value.element.ownerDocument).toBe(foreignDocument)
-    expect(reader.spine.element?.ownerDocument).toBe(foreignDocument)
+    expect(reader.spine.value.element?.ownerDocument).toBe(foreignDocument)
     expect(reader.spineItemsManager.items[0]?.element.ownerDocument).toBe(
       foreignDocument,
     )

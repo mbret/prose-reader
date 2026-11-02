@@ -1,10 +1,9 @@
-import { Box, useBreakpointValue } from "@chakra-ui/react"
+import { Box } from "@chakra-ui/react"
 import { ReactReader } from "@prose-reader/react-reader"
 import "@prose-reader/react-reader/index.css"
 import { type ComponentProps, memo, useCallback, useRef } from "react"
 import { useLocation, useNavigate, useParams } from "react-router"
 import { signal, useObserve, useSignalState, useSignalValue } from "reactjrx"
-import { DEMO_BASE_PATH } from "../../constants"
 import { useDocumentTitle } from "../useDocumentTitle"
 import { useServiceWorkerReady } from "../useServiceWorkerReady"
 import { restoreAnnotations, usePersistAnnotations } from "./annotations"
@@ -13,9 +12,8 @@ import { BookLoading } from "./BookLoading"
 import { isMenuOpenSignal, MenuDialog } from "./navigation/MenuDialog"
 import { useBookBoundariesReachedToast } from "./navigation/useBookBoundariesReachedToast"
 import { useBookSettings } from "./settings/useBookSettings"
-import { useFontSizeSettings } from "./settings/useFontSizeSettings"
+import { useReactReaderSettingsProps } from "./settings/useReactReaderSettingsProps"
 import { useSettings } from "./settings/useSettings"
-import { useSpreadModeSettings } from "./settings/useSpreadModeSettings"
 import { useUpdateReaderSettings } from "./settings/useUpdateReaderSettings"
 import { isQuickMenuOpenSignal, useResetStateOnUnMount } from "./states"
 import { isClientStreamedBook } from "./streaming"
@@ -44,11 +42,6 @@ export const ReaderScreen = memo(() => {
   const isQuickMenuOpen = useSignalValue(isQuickMenuOpenSignal)
   const navigate = useNavigate()
   const { key: locationKey } = useLocation()
-  const breakpointValue = useBreakpointValue<"mobile" | "tablet" | "desktop">({
-    base: "mobile",
-    md: "tablet",
-    lg: "desktop",
-  })
 
   useDocumentTitle(manifest?.title ?? `Reader - prose reader demo`)
 
@@ -59,8 +52,8 @@ export const ReaderScreen = memo(() => {
   usePersistAnnotations(annotationsSignal, epubKey)
   useBookBoundariesReachedToast()
 
-  const fontSize = useFontSizeSettings(bookSettingsSignal, breakpointValue)
-  const spreadMode = useSpreadModeSettings(bookSettingsSignal, breakpointValue)
+  const reactReaderSettingsProps =
+    useReactReaderSettingsProps(bookSettingsSignal)
 
   const onItemClick = useCallback(
     (
@@ -78,7 +71,7 @@ export const ReaderScreen = memo(() => {
          * a reload) and there is no in-app history to go back to.
          */
         if (locationKey === "default") {
-          navigate(DEMO_BASE_PATH)
+          navigate("/")
         } else {
           navigate(-1)
         }
@@ -97,16 +90,7 @@ export const ReaderScreen = memo(() => {
         reader={reader}
         quickMenuOpen={isQuickMenuOpen}
         onQuickMenuOpenChange={isQuickMenuOpenSignal.update}
-        fontSize={fontSize.value}
-        onFontSizeChange={fontSize.onChange}
-        fontSizeValues={fontSize.values}
-        onFontSizeScopeChange={fontSize.onScopeChange}
-        fontSizeScope={fontSize.scopeReference}
-        spreadMode={spreadMode.value}
-        onSpreadModeChange={spreadMode.onChange}
-        spreadModeValues={spreadMode.values}
-        onSpreadModeScopeChange={spreadMode.onScopeChange}
-        spreadModeScope={spreadMode.scopeReference}
+        {...reactReaderSettingsProps}
         slots={{
           container: {
             props: {

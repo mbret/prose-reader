@@ -1,6 +1,6 @@
 import { StrictMode } from "react"
 import { createRoot } from "react-dom/client"
-import { BrowserRouter, Navigate, Route, Routes } from "react-router"
+import { BrowserRouter } from "react-router"
 import "./index.css"
 import { DEMO_BASE_PATH } from "../constants"
 import { Provider } from "./components/ui/provider"
@@ -13,17 +13,15 @@ if (!container) {
 }
 
 /**
- * demo.html is served for every path under `DEMO_BASE_PATH`. The landing page
- * is a page of its own, so a link to it is a plain anchor, not a route.
+ * demo.html is served for every path under `DEMO_BASE_PATH`, the router's
+ * basename. The landing page is a page of its own, so a link to it is a plain
+ * anchor, not a route.
  */
 createRoot(container).render(
   <StrictMode>
-    <BrowserRouter>
+    <BrowserRouter basename={DEMO_BASE_PATH}>
       <Provider>
-        <Routes>
-          <Route path={`${DEMO_BASE_PATH}/*`} element={<DemoRoutes />} />
-          <Route path="*" element={<Navigate to={DEMO_BASE_PATH} replace />} />
-        </Routes>
+        <DemoRoutes />
       </Provider>
     </BrowserRouter>
   </StrictMode>,

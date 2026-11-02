@@ -283,7 +283,7 @@ describe("scoreMetadataCandidate", () => {
     )
   })
 
-  it("makes a matching Google Books volume id decisive", () => {
+  it("makes a matching Google Books volume id decisive, however its scheme is spelled", () => {
     const result = score(
       {
         title: "A local title",
@@ -291,7 +291,7 @@ describe("scoreMetadataCandidate", () => {
       },
       {
         titles: [{ value: "The catalog title" }],
-        identifiers: [{ value: "zytcalfpjgyc", scheme: "googlebooks" }],
+        identifiers: [{ value: "zyTCAlFPjgYC", scheme: "googlebooks" }],
       },
     )
 
@@ -301,7 +301,107 @@ describe("scoreMetadataCandidate", () => {
     )
   })
 
-  it("does not make an Unknown identifier match decisive", () => {
+  it("does not equate Google Books volume ids that differ only in case", () => {
+    const result = score(
+      {
+        title: "Dune",
+        identifiers: [
+          {
+            value: "https://books.google.com/books?id=zytcalfpjgyc",
+            scheme: "URL",
+          },
+        ],
+      },
+      {
+        titles: [{ value: "Neuromancer" }],
+        identifiers: [{ value: "zyTCAlFPjgYC", scheme: "GoogleBooks" }],
+      },
+    )
+
+    expect(result.signals).toContainEqual(
+      expect.objectContaining({ field: "identifiers", score: 0 }),
+    )
+    expect(result.score).toBeLessThan(0.5)
+  })
+
+  it("compares DOIs regardless of case, which the DOI system ignores", () => {
+    const result = score(
+      {
+        title: "A local title",
+        identifiers: [{ value: "10.1000/ABC.123", scheme: "DOI" }],
+      },
+      {
+        titles: [{ value: "The catalog title" }],
+        identifiers: [
+          { value: "https://doi.org/10.1000/abc.123", scheme: "URL" },
+        ],
+      },
+    )
+
+    expect(result.score).toBe(1)
+  })
+
+  it("does not scope an identifier to a blank scheme", () => {
+    const result = score(
+      {
+        title: "Dune",
+        identifiers: [{ value: "catalog-42", scheme: "" }],
+      },
+      {
+        titles: [{ value: "Neuromancer" }],
+        identifiers: [{ value: "catalog-42", scheme: "  " }],
+      },
+    )
+
+    expect(result.signals.map((signal) => signal.field)).toEqual(["title"])
+    expect(result.score).toBeLessThan(0.5)
+  })
+
+  it("makes a Gutenberg URL agree, decisively, with a ProjectGutenberg id", () => {
+    const result = score(
+      {
+        title: "A locally edited title",
+        identifiers: [
+          { value: "http://www.gutenberg.org/78139", scheme: "URL" },
+        ],
+      },
+      {
+        titles: [{ value: "The catalog title" }],
+        identifiers: [{ value: "78139", scheme: "ProjectGutenberg" }],
+      },
+    )
+
+    expect(result.score).toBe(1)
+    expect(result.signals).toContainEqual(
+      expect.objectContaining({
+        field: "identifiers",
+        score: 1,
+        query: "URL:http://www.gutenberg.org/78139",
+        candidate: "ProjectGutenberg:78139",
+      }),
+    )
+  })
+
+  it("scores a different id of the same catalog as a disagreement, not a contradiction", () => {
+    const result = score(
+      {
+        title: "Dune",
+        identifiers: [{ value: "zyTCAlFPjgYC", scheme: "GoogleBooks" }],
+      },
+      {
+        titles: [{ value: "Dune" }],
+        identifiers: [{ value: "B1hSG45JCX4C", scheme: "GoogleBooks" }],
+      },
+    )
+
+    expect(result.signals).toContainEqual(
+      expect.objectContaining({ field: "identifiers", score: 0 }),
+    )
+    expect(result.score).toBeGreaterThan(0)
+    expect(result.score).toBeLessThan(1)
+  })
+
+  it("does not compare an Unknown value against a catalog id, even an equal one", () => {
     const result = score(
       {
         title: "Dune",
@@ -313,13 +413,131 @@ describe("scoreMetadataCandidate", () => {
       },
     )
 
-    expect(result.score).toBeLessThan(1)
-    expect(result.signals).toContainEqual(
-      expect.objectContaining({ field: "identifiers", score: 1 }),
+    expect(result.signals.map((signal) => signal.field)).toEqual(["title"])
+  })
+
+  it.each(["UUID", "Unknown"])(
+    "does not compare an EPUB urn:uuid stated as %s with a catalog's own id",
+    (scheme) => {
+      const query: FetchMetadataInput = {
+        title: "Dune",
+        authors: ["Frank Herbert"],
+        identifiers: [
+          { value: "urn:uuid:5b1a4ef0-3c4e-4a3c-9a59-3f1c1c7c0d11", scheme },
+        ],
+      }
+      const candidate: ResolvedMetadata = {
+        titles: [{ value: "Dune Messiah" }],
+        contributors: [{ name: "Frank Herbert", roles: ["author"] }],
+        identifiers: [{ value: "B1hSG45JCX4C", scheme: "GoogleBooks" }],
+      }
+
+      const result = score(query, candidate)
+
+      expect(result.signals.map((signal) => signal.field)).toEqual([
+        "title",
+        "authors",
+      ])
+      expect(result).toEqual(
+        score({ ...query, identifiers: undefined }, candidate),
+      )
+    },
+  )
+
+  it("compares one UUID in every spelling and case", () => {
+    const uuid = "5b1a4ef0-3c4e-4a3c-9a59-3f1c1c7c0d11"
+
+    for (const [queryIdentifier, candidateIdentifier] of [
+      [
+        { value: `urn:uuid:${uuid}`, scheme: "UUID" },
+        { value: uuid, scheme: "UUID" },
+      ],
+      [
+        { value: `urn:uuid:${uuid.toUpperCase()}`, scheme: "UUID" },
+        { value: `urn:uuid:${uuid}`, scheme: "UUID" },
+      ],
+      [
+        { value: `urn:uuid:${uuid}`, scheme: "Unknown" },
+        { value: uuid, scheme: "uuid" },
+      ],
+    ] as const) {
+      const result = score(
+        { title: "A local title", identifiers: [queryIdentifier] },
+        {
+          titles: [{ value: "The catalog title" }],
+          identifiers: [candidateIdentifier],
+        },
+      )
+
+      expect(result.signals).toContainEqual(
+        expect.objectContaining({ field: "identifiers", score: 1 }),
+      )
+      expect(result.score).toBe(1)
+    }
+  })
+
+  it("compares a URN's percent-encoded octets whatever their case", () => {
+    const result = score(
+      {
+        title: "A local title",
+        identifiers: [{ value: "urn:example:a123%2Cz456", scheme: "URN" }],
+      },
+      {
+        titles: [{ value: "The catalog title" }],
+        identifiers: [{ value: "urn:example:a123%2cz456", scheme: "URN" }],
+      },
+    )
+
+    expect(result.score).toBe(1)
+  })
+
+  it("does not scope a URN whose scheme is blank", () => {
+    for (const value of [
+      "urn:nbn:de:101:1-2011",
+      "urn:uuid:5b1a4ef0-3c4e-4a3c-9a59-3f1c1c7c0d11",
+    ]) {
+      const result = score(
+        { title: "Dune", identifiers: [{ value, scheme: " " }] },
+        {
+          titles: [{ value: "Neuromancer" }],
+          identifiers: [{ value, scheme: "URN" }],
+        },
+      )
+
+      expect(result.signals.map((signal) => signal.field)).toEqual(["title"])
+    }
+  })
+
+  it("scopes a URN by the namespace it names", () => {
+    const nbn = { value: "urn:nbn:de:101:1-2011", scheme: "URN" }
+    const titled = (identifiers: ResolvedMetadata["identifiers"]) => ({
+      titles: [{ value: "Dune" }],
+      identifiers,
+    })
+
+    expect(
+      score(
+        { title: "Dune", identifiers: [nbn] },
+        titled([{ value: "urn:issn:0167-6423", scheme: "URN" }]),
+      ).signals.map((signal) => signal.field),
+    ).toEqual(["title"])
+    expect(
+      score(
+        { title: "Neuromancer", identifiers: [nbn] },
+        titled([{ value: "URN:NBN:de:101:1-2011", scheme: "Unknown" }]),
+      ).score,
+    ).toBe(1)
+    expect(
+      score(
+        { title: "Dune", identifiers: [nbn] },
+        titled([{ value: "urn:nbn:de:101:1-2012", scheme: "URN" }]),
+      ).signals,
+    ).toContainEqual(
+      expect.objectContaining({ field: "identifiers", score: 0 }),
     )
   })
 
-  it("does not treat disjoint provider identifier spaces as decisive contradictions", () => {
+  it("does not compare identifiers of disjoint provider id spaces", () => {
     const result = score(
       {
         title: "Dune",
@@ -327,11 +545,41 @@ describe("scoreMetadataCandidate", () => {
       },
       {
         titles: [{ value: "Dune" }],
-        identifiers: [{ value: "two", scheme: "CatalogB" }],
+        identifiers: [
+          { value: "two", scheme: "CatalogB" },
+          { value: "/works/OL893415W", scheme: "OpenLibrary" },
+        ],
       },
     )
 
-    expect(result.score).toBeGreaterThan(0.5)
+    expect(result.signals.map((signal) => signal.field)).toEqual(["title"])
+    expect(result.score).toBe(1)
+  })
+
+  it("shows only the identifiers it compared", () => {
+    const result = score(
+      {
+        identifiers: [
+          { value: "urn:uuid:5b1a4ef0", scheme: "Unknown" },
+          { value: "OL893415W", scheme: "OpenLibrary" },
+        ],
+      },
+      {
+        identifiers: [
+          { value: "zyTCAlFPjgYC", scheme: "GoogleBooks" },
+          { value: "/works/OL893415W", scheme: "OpenLibrary" },
+        ],
+      },
+    )
+
+    expect(result.signals).toEqual([
+      expect.objectContaining({
+        field: "identifiers",
+        score: 1,
+        query: "OpenLibrary:OL893415W",
+        candidate: "OpenLibrary:/works/OL893415W",
+      }),
+    ])
   })
 
   it("compares languages on their primary subtag", () => {

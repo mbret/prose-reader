@@ -3,6 +3,136 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## [36.0.0](https://github.com/mbret/prose-reader/compare/v35.0.1...v36.0.0) (2026-10-29)
+
+### ⚠ BREAKING CHANGES
+
+* **core:** `SettingsInterface` and `SettingsManager` no longer have
+  `_prepareUpdate`, and `reader.settings.values$` no longer emits for an
+  update that changes nothing.
+* **core:** give the spine a state, with its element and the first item awaiting layout
+* **core:** reader.settings keeps only the settings core and its
+  enhancers declare, so an option or an update naming any other key is
+  left out. An enhancer that keeps settings in reader.settings adds them
+  with reader.settings.extend(defaults, options). A SettingsManager
+  subclass returns a default for every key from getDefaultSettings,
+  undefined for an optional one.
+* **core:** SettingsInterface loses _inputSettings and
+  _outputSettings, and SettingsManager loses _settings$. A SettingsManager
+  subclass implements getComputedSettings in place of getOutputSettings,
+  returning only the computed settings, and its second type parameter is
+  those computed settings. @prose-reader/shared no longer exports
+  shallowMergeIfDefined.
+* **core:** the spine layout lifecycle, reader.spine.pages.spineLayout.lifecycle$,
+  emits objects instead of stage names: { stage: "requested",
+  firstItemIndexAwaitingLayout } then { stage: "laidOut" }.
+  reader.spine.isLayoutCurrent$ and isLayoutCurrent, internal in the last
+  release, give way to firstItemIndexAwaitingLayout$,
+  firstItemIndexAwaitingLayout and isLayoutCurrentFor(), which are public.
+
+### Features
+
+* **core:** add an enhancer's settings with reader.settings.extend ([2c82c64](https://github.com/mbret/prose-reader/commit/2c82c64833fe115d0e42efa1c136231050b46bd7))
+
+### Bug Fixes
+
+* **core:** end every settings subscriber on an update made on an emission ([be313fd](https://github.com/mbret/prose-reader/commit/be313fd1eb69be9f0633372bfeecef9b4d93a133))
+* **core:** export SpineLayoutLifecycleEvent from the package ([1eaafb3](https://github.com/mbret/prose-reader/commit/1eaafb3cb0c4a60c773c5a609b9a5e7e6c21b355))
+* **core:** keep a default over a setting given as undefined ([818c6f8](https://github.com/mbret/prose-reader/commit/818c6f80cfe2c9aebfe3ea7be31c1f94bff53f0d))
+* **core:** keep the enhancers' settings in the reader's settings manager ([e8e29ca](https://github.com/mbret/prose-reader/commit/e8e29ca7c4e01b8cbddf47f05901a700986bf12a))
+
+### Code Refactoring
+
+* **core:** give the spine a state, with its element and the first item awaiting layout ([28efcd4](https://github.com/mbret/prose-reader/commit/28efcd41a9ed7dca52617cdb444b87667fea270a))
+* **core:** track which items a pending layout can change ([fd97b2d](https://github.com/mbret/prose-reader/commit/fd97b2dde0837075ca22b9d9ed0791236fb37eb2)), references [#595](https://github.com/mbret/prose-reader/issues/595)
+* **core:** type extend from its receiver and merge the computed settings in the base ([72a65d1](https://github.com/mbret/prose-reader/commit/72a65d1e7fdb73f94c465d50ae4149e86a0cf577))
+
+
+## [35.0.0](https://github.com/mbret/prose-reader/compare/v34.0.0...v35.0.0) (2026-10-28)
+
+### Bug Fixes
+
+* **core:** complete a located resource when the reader is destroyed before the locator sets up ([9777e93](https://github.com/mbret/prose-reader/commit/9777e93f763c2d101de0f44a53d96fce58cbea62))
+* **core:** count a chapter as loaded once its pictures have loaded ([f9cea4e](https://github.com/mbret/prose-reader/commit/f9cea4e5698f1bad9b66081530eea8afa53d71a9))
+* **core:** guard the locator's locate method against destroy itself ([7aed056](https://github.com/mbret/prose-reader/commit/7aed0563b9d2c7a0c614d51b0fd92f9fcd064601))
+
+
+## [34.0.0](https://github.com/mbret/prose-reader/compare/v33.0.0...v34.0.0) (2026-10-24)
+
+### ⚠ BREAKING CHANGES
+
+* **core:** the reader no longer exposes its spine items loader,
+  `reader.spine.spineItemsLoader` in 32.x. Call
+  `reader.keepSpineItemLoaded(spineItem)` for each spine item instead of
+  its `forceOpen(spineItems)`: it takes an index, an id or a SpineItem,
+  and its release releases once however many times it is called.
+  `reader.destroy()` destroys the loader.
+
+### Bug Fixes
+
+* **core:** complete navigationAgainstCurrentLayout$ when the reader is destroyed ([1e6d55e](https://github.com/mbret/prose-reader/commit/1e6d55e744429306bd0ee5b582c59459e9b16f7a))
+* **core:** complete the items observer's streams when the reader is destroyed ([9edabc2](https://github.com/mbret/prose-reader/commit/9edabc2f8a9c6f0b63080caba09f8a040f1aca11))
+* **core:** release the container's listeners when the reader is destroyed ([f2f9191](https://github.com/mbret/prose-reader/commit/f2f9191594b2636982c9ae3f8fbba461462c2d49))
+* **core:** stop a located resource's consolidation when the reader is destroyed ([97ffe0e](https://github.com/mbret/prose-reader/commit/97ffe0e057d2efd340491a3238f410f513410887))
+* **core:** stop the spine's layout work when the reader is destroyed ([a05c988](https://github.com/mbret/prose-reader/commit/a05c9882ccacb9d00133a5bdfca009b528e37f79))
+* **core:** void the navigation being reported when a subscriber requests a layout ([a0f89f0](https://github.com/mbret/prose-reader/commit/a0f89f0d8f38631249014e4c71c239e927a9c255))
+
+### Performance Improvements
+
+* **core:** lay out the spine from the first chapter a load affects ([8d8fdb5](https://github.com/mbret/prose-reader/commit/8d8fdb59455272b93600b736d3e5585de4ac3865))
+
+### Code Refactoring
+
+* **core:** replace reader.spineItemsLoader with reader.keepSpineItemLoaded() ([2c40b04](https://github.com/mbret/prose-reader/commit/2c40b04d4d2996a02bbaa01e068b56adf208be93))
+
+
+## [33.0.0](https://github.com/mbret/prose-reader/compare/v32.0.0...v33.0.0) (2026-10-23)
+
+### ⚠ BREAKING CHANGES
+
+* **core:** `reader.spine.spineItemsLoader` is now
+  `reader.spineItemsLoader`. `reader.context.bridgeEvent` no longer carries
+  `navigation$`, `position$` and `pagination$`, nor their subjects: read
+  `reader.navigation.navigation$`, `reader.navigation.position$` and
+  `reader.pagination.state$`. The `Spine` constructor no longer takes a
+  `Pagination`.
+
+### Features
+
+* **core:** export the background each theme paints ([15777de](https://github.com/mbret/prose-reader/commit/15777ded1e157612a81f21f251b3d66022170ecb))
+
+### Code Refactoring
+
+* **core:** let the navigator own which navigation holds on the current layout ([0c102de](https://github.com/mbret/prose-reader/commit/0c102dee8e542a4fbcdadca0f85bde4d1569d262)), closes [#596](https://github.com/mbret/prose-reader/issues/596)
+
+
+## [32.0.0](https://github.com/mbret/prose-reader/compare/v31.0.0...v32.0.0) (2026-10-21)
+
+### Bug Fixes
+
+* **core:** measure the preload window from the navigation restored onto the current layout ([b993200](https://github.com/mbret/prose-reader/commit/b993200caf3aaa784c545c6f86b42f991b253e31))
+* **core:** preload the chapters around a position only once the layout is current ([197e0b3](https://github.com/mbret/prose-reader/commit/197e0b3ac2abfc4bdcc360e0553fcbbca0f6b10b))
+
+
+## [31.0.0](https://github.com/mbret/prose-reader/compare/v30.3.0...v31.0.0) (2026-10-21)
+
+### ⚠ BREAKING CHANGES
+
+* **core:** `reader.spine.isLayoutCurrent$` and
+  `reader.spine.isLayoutCurrent` are no longer in the published types. Read
+  `reader.pagination.state.isSettled` instead, which is only true over a
+  current layout.
+
+### Bug Fixes
+
+* **core:** paint the reader and its loading placeholder with the theme ([90afe98](https://github.com/mbret/prose-reader/commit/90afe983152acd7879b9cd10dee50379dfdb0c9b))
+* **core:** stop theming pre-paginated documents when the theme changes ([0687ed6](https://github.com/mbret/prose-reader/commit/0687ed6efb8fe8ee1956d64339da4de83fb2395d))
+
+### Code Refactoring
+
+* **core:** keep the spine's layout currency out of the published types ([81c28eb](https://github.com/mbret/prose-reader/commit/81c28eb02180505ce2dd0baed7a6463ef4555d64))
+
+
 ## [30.2.0](https://github.com/mbret/prose-reader/compare/v30.1.2...v30.2.0) (2026-10-20)
 
 ### Features

@@ -53,9 +53,13 @@ async function run() {
 
   console.log(manifest)
 
+  const preload = new URLSearchParams(window.location.search).get("preload")
+
   const reader = createReader({
     manifest,
-    numberOfAdjacentSpineItemToPreLoad: 0,
+    ...(preload !== null && {
+      numberOfAdjacentSpineItemToPreLoad: Number(preload),
+    }),
     pageTurnAnimation: "none",
     layoutLayerTransition: false,
     getResource: (item) => {

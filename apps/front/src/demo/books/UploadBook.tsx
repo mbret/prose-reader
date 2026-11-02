@@ -15,6 +15,7 @@ export const UploadBook = () => {
       "application/epub+zip": [".epub"],
       "application/zip": [".cbz", ".epub"],
       "application/x-cbz": [".cbz"],
+      "application/pdf": [".pdf"],
     },
     maxFiles: 1,
   })
