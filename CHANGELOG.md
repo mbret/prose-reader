@@ -3,6 +3,236 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## [36.0.0](https://github.com/mbret/prose-reader/compare/v35.0.1...v36.0.0) (2026-10-29)
+
+### ⚠ BREAKING CHANGES
+
+* **archive-reader:** `KnownMetadataIdentifierScheme` and
+  `InferredIdentifierScheme` gain `UUID` and `URN`; an exhaustive switch
+  over either must handle them. An untyped `urn:uuid:` or bare UUID now
+  resolves to `UUID` rather than `Unknown` (or, for some, `ISBN` or
+  `GTIN`), any other untyped URN to `URN`, and `urn:isbn:` to `ISBN`
+  whether or not its value is a valid ISBN.
+* **core:** `SettingsInterface` and `SettingsManager` no longer have
+  `_prepareUpdate`, and `reader.settings.values$` no longer emits for an
+  update that changes nothing.
+* **core:** give the spine a state, with its element and the first item awaiting layout
+* **core:** reader.settings keeps only the settings core and its
+  enhancers declare, so an option or an update naming any other key is
+  left out. An enhancer that keeps settings in reader.settings adds them
+  with reader.settings.extend(defaults, options). A SettingsManager
+  subclass returns a default for every key from getDefaultSettings,
+  undefined for an optional one.
+* **core:** SettingsInterface loses _inputSettings and
+  _outputSettings, and SettingsManager loses _settings$. A SettingsManager
+  subclass implements getComputedSettings in place of getOutputSettings,
+  returning only the computed settings, and its second type parameter is
+  those computed settings. @prose-reader/shared no longer exports
+  shallowMergeIfDefined.
+* **core:** the spine layout lifecycle, reader.spine.pages.spineLayout.lifecycle$,
+  emits objects instead of stage names: { stage: "requested",
+  firstItemIndexAwaitingLayout } then { stage: "laidOut" }.
+  reader.spine.isLayoutCurrent$ and isLayoutCurrent, internal in the last
+  release, give way to firstItemIndexAwaitingLayout$,
+  firstItemIndexAwaitingLayout and isLayoutCurrentFor(), which are public.
+
+### Features
+
+* **core:** add an enhancer's settings with reader.settings.extend ([2c82c64](https://github.com/mbret/prose-reader/commit/2c82c64833fe115d0e42efa1c136231050b46bd7))
+* **front:** answer whether books can be protected with DRM ([3fa9c49](https://github.com/mbret/prose-reader/commit/3fa9c49e173a6ddae10c9b9775b6262a03698490))
+* **front:** let the demo open uploaded PDFs ([c1b28df](https://github.com/mbret/prose-reader/commit/c1b28df4aae8b6d832e9f07d5a244f96ad151676))
+* **front:** open the demo on its book list ([7bc8565](https://github.com/mbret/prose-reader/commit/7bc8565f260b982bed086ea0038ea7c0c92e26d8))
+* **front:** say prose renders any format and serves books from anywhere ([d36a1b4](https://github.com/mbret/prose-reader/commit/d36a1b4c643465d203de773dfe1824ca9455621b))
+
+### Bug Fixes
+
+* **archive-reader:** infer a URN's scheme only from a URN RFC 8141 allows ([767a524](https://github.com/mbret/prose-reader/commit/767a524f43636718fe56c977a0a7af13893073af))
+* **archive-reader:** read URN and UUID identifiers by their namespace ([965a755](https://github.com/mbret/prose-reader/commit/965a755004bf0ea599365a1456db03cdf6ed49bd))
+* **core:** end every settings subscriber on an update made on an emission ([be313fd](https://github.com/mbret/prose-reader/commit/be313fd1eb69be9f0633372bfeecef9b4d93a133))
+* **core:** export SpineLayoutLifecycleEvent from the package ([1eaafb3](https://github.com/mbret/prose-reader/commit/1eaafb3cb0c4a60c773c5a609b9a5e7e6c21b355))
+* **core:** keep a default over a setting given as undefined ([818c6f8](https://github.com/mbret/prose-reader/commit/818c6f80cfe2c9aebfe3ea7be31c1f94bff53f0d))
+* **core:** keep the enhancers' settings in the reader's settings manager ([e8e29ca](https://github.com/mbret/prose-reader/commit/e8e29ca7c4e01b8cbddf47f05901a700986bf12a))
+* **enhancer-gestures:** cap the pinch step that enters a zoom at zoomMaxScale ([1ee516d](https://github.com/mbret/prose-reader/commit/1ee516da77c9e57a76a41d7d9512c3859463fddb))
+* **front:** drop what the demo's home screen leaves behind ([bf503ec](https://github.com/mbret/prose-reader/commit/bf503ec910456d54834a2fb12a7687ad0cd2cca7))
+* **front:** keep the social card readable at preview size ([c2140b4](https://github.com/mbret/prose-reader/commit/c2140b4f6c7c111af260f2c83c1cfe24466095ef))
+* **front:** say PDF is the exception in the DRM answer ([8ffe066](https://github.com/mbret/prose-reader/commit/8ffe066c94efbe7094c57d68075569cb932f15fc))
+* **front:** stop saying a streamer serves PDFs ([0d80cde](https://github.com/mbret/prose-reader/commit/0d80cde51162ae75ebebca7a7f7926a8fae75ef7))
+* keep the website and docs descriptions short enough for search results ([0d7f305](https://github.com/mbret/prose-reader/commit/0d7f30528e4a4f5d7e556438abe6bd80e753da1d))
+* list the recommended places to serve books first ([41d4083](https://github.com/mbret/prose-reader/commit/41d408310c42a7557d33d26f2b1a6380c3d8407e))
+* say you can extend prose to more formats ([c1f6348](https://github.com/mbret/prose-reader/commit/c1f6348963857b6915bb72342e46765b9e3207c9))
+
+### Code Refactoring
+
+* **core:** give the spine a state, with its element and the first item awaiting layout ([28efcd4](https://github.com/mbret/prose-reader/commit/28efcd41a9ed7dca52617cdb444b87667fea270a))
+* **core:** track which items a pending layout can change ([fd97b2d](https://github.com/mbret/prose-reader/commit/fd97b2dde0837075ca22b9d9ed0791236fb37eb2)), references [#595](https://github.com/mbret/prose-reader/issues/595)
+* **core:** type extend from its receiver and merge the computed settings in the base ([72a65d1](https://github.com/mbret/prose-reader/commit/72a65d1e7fdb73f94c465d50ae4149e86a0cf577))
+
+
+## [35.0.1](https://github.com/mbret/prose-reader/compare/v35.0.0...v35.0.1) (2026-10-28)
+
+### Bug Fixes
+
+* **react-reader:** do not report the values a reader starts with ([bc05daf](https://github.com/mbret/prose-reader/commit/bc05daff49eb49306fc25ad072caef8d2d2e97d8))
+
+
+## [35.0.0](https://github.com/mbret/prose-reader/compare/v34.0.0...v35.0.0) (2026-10-28)
+
+### ⚠ BREAKING CHANGES
+
+* **react-reader:** the ReactReader props `fontSize`, `onFontSizeChange`,
+  `fontSizeScope`, `onFontSizeScopeChange`, `fontSizeValues`, `spreadMode`,
+  `onSpreadModeChange`, `spreadModeScope`, `onSpreadModeScopeChange` and
+  `spreadModeValues` are replaced by `settings`, `onSettingsChange`,
+  `settingsByScope`, `settingsScopes` and `onSettingsScopesChange`, keyed
+  by `fontScale` and `spreadMode`. A change is reported as
+  `onSettingsChange({ fontScale: 1.5 }, "book")` rather than
+  `onFontSizeChange("book", 1.5)`. A setting whose scope has no value takes
+  the global one.
+
+### Features
+
+* **react-reader:** export the types of the settings props ([7663968](https://github.com/mbret/prose-reader/commit/7663968adc74e481385c48e26522c5d67053526a))
+* **react-reader:** take back in settingsScopes the scopes the app is given ([4579aa0](https://github.com/mbret/prose-reader/commit/4579aa0eab0a6a1203cacf50019e9c7de341d27e))
+* **react-reader:** take the menu settings as one partial with one change callback ([6ef4598](https://github.com/mbret/prose-reader/commit/6ef459859603a45f11e4f8998cfb7deba8fe0be4))
+
+### Bug Fixes
+
+* **core:** complete a located resource when the reader is destroyed before the locator sets up ([9777e93](https://github.com/mbret/prose-reader/commit/9777e93f763c2d101de0f44a53d96fce58cbea62))
+* **core:** count a chapter as loaded once its pictures have loaded ([f9cea4e](https://github.com/mbret/prose-reader/commit/f9cea4e5698f1bad9b66081530eea8afa53d71a9))
+* **core:** guard the locator's locate method against destroy itself ([7aed056](https://github.com/mbret/prose-reader/commit/7aed0563b9d2c7a0c614d51b0fd92f9fcd064601))
+* **react-reader:** show in a scope's tab the value that scope applies ([98b29df](https://github.com/mbret/prose-reader/commit/98b29dffcdb68cd39329605e6257b31b37ebd1e4))
+* **react-reader:** write a setting into the reader at once, the font scale once per drag ([1c0d2fa](https://github.com/mbret/prose-reader/commit/1c0d2fabf54d3adbe2e5b94ab2bc772e72b475f4))
+
+
+## [34.0.0](https://github.com/mbret/prose-reader/compare/v33.0.0...v34.0.0) (2026-10-24)
+
+### ⚠ BREAKING CHANGES
+
+* **deps:** `@prose-reader/core` is now a peer dependency of
+  `@prose-reader/enhancer-gallery`, `enhancer-audio`, `enhancer-gestures`
+  and `enhancer-search`. Install the core the enhancer was released with,
+  or a later one of the same major: npm refuses to install the enhancer
+  next to any other, and pnpm and yarn report an unmet peer, where a
+  second core used to be installed.
+* **core:** the reader no longer exposes its spine items loader,
+  `reader.spine.spineItemsLoader` in 32.x. Call
+  `reader.keepSpineItemLoaded(spineItem)` for each spine item instead of
+  its `forceOpen(spineItems)`: it takes an index, an id or a SpineItem,
+  and its release releases once however many times it is called.
+  `reader.destroy()` destroys the loader.
+
+### Features
+
+* **metadata-fetcher:** export the default minScore ([4c8a88c](https://github.com/mbret/prose-reader/commit/4c8a88c62db3c4e4e7e06674fe466b1fcbc1307a))
+
+### Bug Fixes
+
+* **core:** complete navigationAgainstCurrentLayout$ when the reader is destroyed ([1e6d55e](https://github.com/mbret/prose-reader/commit/1e6d55e744429306bd0ee5b582c59459e9b16f7a))
+* **core:** complete the items observer's streams when the reader is destroyed ([9edabc2](https://github.com/mbret/prose-reader/commit/9edabc2f8a9c6f0b63080caba09f8a040f1aca11))
+* **core:** release the container's listeners when the reader is destroyed ([f2f9191](https://github.com/mbret/prose-reader/commit/f2f9191594b2636982c9ae3f8fbba461462c2d49))
+* **core:** stop a located resource's consolidation when the reader is destroyed ([97ffe0e](https://github.com/mbret/prose-reader/commit/97ffe0e057d2efd340491a3238f410f513410887))
+* **core:** stop the spine's layout work when the reader is destroyed ([a05c988](https://github.com/mbret/prose-reader/commit/a05c9882ccacb9d00133a5bdfca009b528e37f79))
+* **core:** void the navigation being reported when a subscriber requests a layout ([a0f89f0](https://github.com/mbret/prose-reader/commit/a0f89f0d8f38631249014e4c71c239e927a9c255))
+* **deps:** make @prose-reader/core a peer of the gallery, audio, gestures and search enhancers ([8591888](https://github.com/mbret/prose-reader/commit/8591888fa3b9bdd07100e75a02cbab6e49279321)), references [#597](https://github.com/mbret/prose-reader/issues/597)
+* **enhancer-gestures:** complete the gesture stream for a subscriber arriving after destroy ([7fc1aee](https://github.com/mbret/prose-reader/commit/7fc1aeea73d1b349db593b1871782b408728f9b8))
+* **enhancer-gestures:** release the container when the reader is destroyed ([391c506](https://github.com/mbret/prose-reader/commit/391c506e9703555db53de6cf3aa7a40b2d275be7))
+
+### Performance Improvements
+
+* **core:** lay out the spine from the first chapter a load affects ([8d8fdb5](https://github.com/mbret/prose-reader/commit/8d8fdb59455272b93600b736d3e5585de4ac3865))
+
+### Code Refactoring
+
+* **core:** replace reader.spineItemsLoader with reader.keepSpineItemLoaded() ([2c40b04](https://github.com/mbret/prose-reader/commit/2c40b04d4d2996a02bbaa01e068b56adf208be93))
+
+
+## [33.0.0](https://github.com/mbret/prose-reader/compare/v32.0.0...v33.0.0) (2026-10-23)
+
+### ⚠ BREAKING CHANGES
+
+* **core:** `reader.spine.spineItemsLoader` is now
+  `reader.spineItemsLoader`. `reader.context.bridgeEvent` no longer carries
+  `navigation$`, `position$` and `pagination$`, nor their subjects: read
+  `reader.navigation.navigation$`, `reader.navigation.position$` and
+  `reader.pagination.state$`. The `Spine` constructor no longer takes a
+  `Pagination`.
+
+### Features
+
+* **core:** export the background each theme paints ([15777de](https://github.com/mbret/prose-reader/commit/15777ded1e157612a81f21f251b3d66022170ecb))
+
+### Bug Fixes
+
+* **enhancer-gallery:** paint the reader's theme behind a snapshot's page ([fb90d5f](https://github.com/mbret/prose-reader/commit/fb90d5f923fb5b69d12ed736986238f46031ebce))
+
+### Code Refactoring
+
+* **core:** let the navigator own which navigation holds on the current layout ([0c102de](https://github.com/mbret/prose-reader/commit/0c102dee8e542a4fbcdadca0f85bde4d1569d262)), closes [#596](https://github.com/mbret/prose-reader/issues/596)
+
+
+## [32.0.0](https://github.com/mbret/prose-reader/compare/v31.0.0...v32.0.0) (2026-10-21)
+
+### ⚠ BREAKING CHANGES
+
+* **react-reader:** `@prose-reader/react-reader` takes `react` and
+  `react-dom` 19.x as peer dependencies.
+* `@prose-reader/react-reader` takes `reactjrx` 2.x as a
+  peer dependency. Apps using it upgrade reactjrx to 2.x.
+
+### Bug Fixes
+
+* **core:** measure the preload window from the navigation restored onto the current layout ([b993200](https://github.com/mbret/prose-reader/commit/b993200caf3aaa784c545c6f86b42f991b253e31))
+* **core:** preload the chapters around a position only once the layout is current ([197e0b3](https://github.com/mbret/prose-reader/commit/197e0b3ac2abfc4bdcc360e0553fcbbca0f6b10b))
+
+### Miscellaneous Chores
+
+* move to reactjrx 2 ([c56bc9e](https://github.com/mbret/prose-reader/commit/c56bc9e2c405139f1a374cc25080317d98eddd13))
+* **react-reader:** require React 19 ([20c3548](https://github.com/mbret/prose-reader/commit/20c3548ec93de85e177dae6ca8ca7720432c30bd))
+
+
+## [31.0.0](https://github.com/mbret/prose-reader/compare/v30.3.0...v31.0.0) (2026-10-21)
+
+### ⚠ BREAKING CHANGES
+
+* **core:** `reader.spine.isLayoutCurrent$` and
+  `reader.spine.isLayoutCurrent` are no longer in the published types. Read
+  `reader.pagination.state.isSettled` instead, which is only true over a
+  current layout.
+
+### Bug Fixes
+
+* **core:** paint the reader and its loading placeholder with the theme ([90afe98](https://github.com/mbret/prose-reader/commit/90afe983152acd7879b9cd10dee50379dfdb0c9b))
+* **core:** stop theming pre-paginated documents when the theme changes ([0687ed6](https://github.com/mbret/prose-reader/commit/0687ed6efb8fe8ee1956d64339da4de83fb2395d))
+
+### Code Refactoring
+
+* **core:** keep the spine's layout currency out of the published types ([81c28eb](https://github.com/mbret/prose-reader/commit/81c28eb02180505ce2dd0baed7a6463ef4555d64))
+
+
+## [30.3.0](https://github.com/mbret/prose-reader/compare/v30.2.0...v30.3.0) (2026-10-21)
+
+### Features
+
+* **front:** give the website a link preview and structured data ([545e7aa](https://github.com/mbret/prose-reader/commit/545e7aa98a14b8191f922481634f7cb1d60c29ef))
+* **front:** list the website's pages in a sitemap ([9c1764f](https://github.com/mbret/prose-reader/commit/9c1764f5566ee153d4c188e5b575d6638471433b))
+* **front:** redirect demo.prose-reader.com to the demo ([cf078df](https://github.com/mbret/prose-reader/commit/cf078dfcdf710650613a3631455e641953092cfd))
+* **metadata-fetcher:** export FETCHED_METADATA_VERSION ([86e8f72](https://github.com/mbret/prose-reader/commit/86e8f720dc3eabd7021f200ec5ae22b6fc55f575))
+
+### Bug Fixes
+
+* **docs:** redirect prose-reader-docs.vercel.app to doc.prose-reader.com ([e77cb3d](https://github.com/mbret/prose-reader/commit/e77cb3d0cefbea007323c335448b312f77dcd44c))
+* **front:** answer unknown paths with a 404 page ([030ba0e](https://github.com/mbret/prose-reader/commit/030ba0e294fa4a2957d43adf0aea900d4562a033))
+* **front:** give each feature card's link a text of its own ([68bb335](https://github.com/mbret/prose-reader/commit/68bb33560298e50c69799cfa4d9885eaf604ddd4))
+* **front:** keep the books the demo opens out of search results ([a19c8a8](https://github.com/mbret/prose-reader/commit/a19c8a845a17ed0e471822c24270f2bfc46bb29c))
+* **front:** serve each page of the website at one URL ([d0e41dd](https://github.com/mbret/prose-reader/commit/d0e41dd6cc079b082071a7be6ef1e4627b1be8a2))
+
+### Performance Improvements
+
+* **docs:** serve the screenshots as WebP, at the size they are shown ([c7d1395](https://github.com/mbret/prose-reader/commit/c7d13956d9254ac6a4a53af51d9db3f85d66d7d0))
+* **front:** load the landing page's fonts along with its script ([273108f](https://github.com/mbret/prose-reader/commit/273108f038a885e166e6e2e8c5f1bec3aa58f811))
+* **metadata-fetcher:** let bundlers drop what the imports do not reach ([2bd393c](https://github.com/mbret/prose-reader/commit/2bd393c68d78a9e686165ac666e1c7ff4aea5d89))
+
+
 ## [30.2.0](https://github.com/mbret/prose-reader/compare/v30.1.2...v30.2.0) (2026-10-20)
 
 ### Features
