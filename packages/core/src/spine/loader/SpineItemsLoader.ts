@@ -15,7 +15,6 @@ import {
   withLatestFrom,
 } from "rxjs"
 import type { Context } from "../../context/Context"
-import type { Navigator } from "../../navigation/Navigator"
 import type { NavigationAgainstCurrentLayout } from "../../navigation/types"
 import type { ReaderSettingsManager } from "../../settings/ReaderSettingsManager"
 import type { SpineItemReference } from "../../spineItem/SpineItem"
@@ -40,8 +39,6 @@ export class SpineItemsLoader extends DestroyableClass {
     protected viewport: Viewport,
     /** See `InternalNavigator.navigationAgainstCurrentLayout$`. */
     navigationAgainstCurrentLayout$: Observable<NavigationAgainstCurrentLayout>,
-    /** What the screen shows at a navigation's position, zoom included. */
-    getVisibleSlice: Navigator["getVisibleSlice"],
   ) {
     super()
 
@@ -90,7 +87,7 @@ export class SpineItemsLoader extends DestroyableClass {
       map(([{ position }, spineState]) => {
         const { beginIndex = 0, endIndex = 0 } =
           spine.locator.getVisibleSpineItemsFromSlice({
-            slice: getVisibleSlice(position),
+            slice: viewport.getVisibleSlice(position),
             threshold: { type: "percentage", value: 0 },
           }) || {}
 

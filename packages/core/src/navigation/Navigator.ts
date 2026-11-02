@@ -14,8 +14,6 @@ import { Report } from "../report"
 import type { ReaderSettingsManager } from "../settings/ReaderSettingsManager"
 import type { Spine } from "../spine/Spine"
 import type { SpineItemsManager } from "../spine/SpineItemsManager"
-import type { SpinePosition, UnboundSpinePosition } from "../spine/types"
-import { ViewportSlicePosition } from "../viewport/types"
 import type { Viewport } from "../viewport/Viewport"
 import { ControlledNavigationController } from "./controllers/ControlledNavigationController"
 import { ScrollNavigationController } from "./controllers/ScrollNavigationController"
@@ -86,30 +84,6 @@ export const createNavigator = ({
   const getActiveNavigationModeController = () =>
     navigationModeControllers.find((controller) => controller.isActive()) ??
     controlledNavigationController
-
-  /**
-   * The part of the spine the screen shows while the navigation is at
-   * `position`, zoom included: the relative viewport, centered on the area
-   * the navigation shows there.
-   *
-   * Paginated, the navigation shows the absolute viewport, and a zoom scales
-   * the viewport around its center without moving the navigation. Scrolled,
-   * the navigation is the top of the screen at any scale, and shows the
-   * relative viewport from there: a zoom scrolls the book to keep its
-   * center, which moves the navigation instead.
-   */
-  const getVisibleSlice = (position: SpinePosition | UnboundSpinePosition) => {
-    const navigationVisibleArea =
-      getActiveNavigationModeController().getNavigationVisibleArea()
-    const { width, height } = viewport.relativeViewport
-
-    return ViewportSlicePosition.from({
-      x: position.x + (navigationVisibleArea.width - width) / 2,
-      y: position.y + (navigationVisibleArea.height - height) / 2,
-      width,
-      height,
-    })
-  }
 
   const navigationModeLayout$ = merge(
     ...navigationModeControllers.flatMap((controller) =>
@@ -190,7 +164,6 @@ export const createNavigator = ({
     position$,
     /** Where the reader is in the book: the cfi to save and reopen at. */
     readingPosition$: internalNavigator.readingPosition$,
-    getVisibleSlice,
   }
 }
 

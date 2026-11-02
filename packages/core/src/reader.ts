@@ -127,7 +127,6 @@ export const createReader = ({
     settingsManager,
     viewport,
     navigator.navigationAgainstCurrentLayout$,
-    navigator.getVisibleSlice,
   )
   const paginationController = new PaginationController(
     context,

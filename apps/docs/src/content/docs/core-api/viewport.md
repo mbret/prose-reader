@@ -131,10 +131,8 @@ Navigation and pagination compute with it, see
 
 The area the viewport shows once transformed, such as by a zoom: the absolute
 viewport divided by `.scaleFactor`. Zoomed out to half the size, it is twice as
-large as the absolute viewport. Which part of the book it shows depends on how
-the navigation mode zooms:
-[`reader.navigation.getVisibleSlice()`](/core-api/navigation#getvisibleslice)
-gives it.
+large as the absolute viewport. Which part of the book it shows:
+[`.getVisibleSlice()`](#getvisibleslice).
 
 ### `.scaleFactor` { #scalefactor }
 
@@ -151,6 +149,54 @@ has no rendered size.
 Reading `.scaleFactor` or `.relativeViewport` measures the element with
 `getBoundingClientRect()`, which can make the browser compute styles and
 layout. Read them when you need the value, not on every frame.
+:::
+
+## What it shows
+
+### `.getVisibleSlice()` { #getvisibleslice }
+
+```typescript
+(position: SpinePosition | UnboundSpinePosition) => DOMRect
+```
+
+The part of the book the viewport shows while the book is at `position`, in the
+same coordinates, its transform included: what the screen shows. The reader
+loads the spine items it shows, with the ones it preloads around them.
+
+`position` is the spine position at the viewport's top-left corner, where a
+navigation puts it, such as the `position` of
+[`reader.navigation.navigation$`](/core-api/navigation#navigationusd).
+Untransformed, the slice is the absolute viewport at the position. Transformed,
+it is the [relative viewport](#relativeviewport), from wherever the transform
+takes the viewport's corner, measured on the page:
+
+- a paginated zoom scales the viewport around its center, so zoomed out the
+  slice reaches past the absolute viewport on every side, and the slice
+  follows the viewport where `reader.zoom.move()` moves it;
+- a scrolled zoom scales the viewport from its top and scrolls to keep its
+  center, which moves the navigation: the slice starts at the position's
+  height.
+
+Read it with a navigation that holds on the current layout, as the reader does:
+only then do the position and the places of the spine items agree.
+
+```typescript
+reader.navigation.navigationAgainstCurrentLayout$
+  .pipe(
+    filter(({ holdsOnCurrentLayout }) => holdsOnCurrentLayout),
+    debounceTime(100),
+  )
+  .subscribe(({ navigation }) => {
+    const { x, y, width, height } = reader.viewport.getVisibleSlice(
+      navigation.position,
+    )
+  })
+```
+
+:::caution
+It measures the viewport, and the box it is laid out in, with
+`getBoundingClientRect()`, as `.scaleFactor` does. Read it when you need it,
+not on every frame.
 :::
 
 ## Spreads

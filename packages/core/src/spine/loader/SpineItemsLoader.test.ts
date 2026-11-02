@@ -20,17 +20,6 @@ import { SpineItemsLoader } from "./SpineItemsLoader"
 
 type VisibleRange = { beginIndex: number; endIndex: number }
 
-/** A screen that shows the absolute viewport from the position, unzoomed. */
-const getUnzoomedVisibleSlice = (
-  position: SpinePositionType | UnboundSpinePosition,
-) =>
-  ViewportSlicePosition.from({
-    x: position.x,
-    y: position.y,
-    width: 100,
-    height: 100,
-  })
-
 /** The loader's debounce, and a little more for it to run. */
 const LOADER_DEBOUNCE_MS = 150
 
@@ -43,16 +32,18 @@ afterEach(() => {
 
 /**
  * A mounted loader over two items, reading the visible range from
- * `getVisibleRange` for the slice the screen shows, without preloading. The
- * screen shows `getVisibleSlice` at the navigation's position, the absolute
- * viewport from it unless a test zooms.
+ * `getVisibleRange` for the slice the viewport shows, without preloading. The
+ * viewport shows the absolute viewport at the navigation's position, unless a
+ * test gives what it shows with `getVisibleSlice`, as a transform would.
  */
 const createHarness = ({
   getVisibleRange,
-  getVisibleSlice = getUnzoomedVisibleSlice,
+  getVisibleSlice,
 }: {
   getVisibleRange: (slice: ViewportSlicePosition) => VisibleRange
-  getVisibleSlice?: typeof getUnzoomedVisibleSlice
+  getVisibleSlice?: (
+    position: SpinePositionType | UnboundSpinePosition,
+  ) => ViewportSlicePosition
 }) => {
   const context = new Context(createTestManifest())
 
@@ -68,6 +59,10 @@ const createHarness = ({
   vi.spyOn(viewport.value.element, "clientWidth", "get").mockReturnValue(100)
   vi.spyOn(viewport.value.element, "clientHeight", "get").mockReturnValue(100)
   viewport.layout()
+
+  if (getVisibleSlice) {
+    vi.spyOn(viewport, "getVisibleSlice").mockImplementation(getVisibleSlice)
+  }
 
   const items = [
     { load: vi.fn(), unload: vi.fn() },
@@ -133,7 +128,6 @@ const createHarness = ({
     settings,
     viewport,
     navigationAgainstCurrentLayout,
-    getVisibleSlice,
   )
 
   cleanup = () => {
@@ -165,13 +159,13 @@ const createHarness = ({
 }
 
 describe("SpineItemsLoader", () => {
-  describe("Given a screen that shows the book away from the navigation's position", () => {
+  describe("Given a viewport that shows the book away from the navigation's position", () => {
     /**
-     * Zoomed, the screen shows another part of the book than the absolute
-     * viewport at the navigation's position. Here it shows the second item,
-     * where the navigation is on the first.
+     * Transformed, as by a zoom, the viewport shows another part of the book
+     * than the absolute viewport at the navigation's position. Here it shows
+     * the second item, where the navigation is on the first.
      */
-    it("loads the items the screen shows", async () => {
+    it("loads the items the viewport shows", async () => {
       const {
         items: [item0, item1],
       } = createHarness({
@@ -197,7 +191,7 @@ describe("SpineItemsLoader", () => {
   })
 
   describe("Given the viewport geometry changes without a position change", () => {
-    it("reloads visible spine items from what the screen shows now", async () => {
+    it("reloads visible spine items from what the viewport shows now", async () => {
       let visibleRange = { beginIndex: 0, endIndex: 0 }
       const {
         items: [item0, item1],

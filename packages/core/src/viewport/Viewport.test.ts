@@ -1,6 +1,7 @@
 import { describe, expect, it, vi } from "vitest"
 import { Context } from "../context/Context"
 import { ReaderSettingsManager } from "../settings/ReaderSettingsManager"
+import { SpinePosition } from "../spine/types"
 import { createTestManifest } from "../tests/utils"
 import { Viewport } from "./Viewport"
 
@@ -98,5 +99,116 @@ describe("Given a viewport asked what a size would show", () => {
 
     expect(viewport.value.isSpread).toBe(viewport.wouldSpreadAt(landscape))
     expect(viewport.value.isSpread).toBe(true)
+  })
+})
+
+describe("Given a viewport laid out in a box, asked what it shows of the spine", () => {
+  const position = new SpinePosition({ x: 1000, y: 2000 })
+
+  /**
+   * The viewport laid out at 100 px in a box at the page's corner unless
+   * given another, which can be scrolled, and drawn at `renderedBox` by its
+   * transform.
+   */
+  const viewportRenderedAt = (
+    renderedBox: DOMRect,
+    {
+      layoutBoxCorner = { left: 0, top: 0 },
+      layoutBoxScroll = { left: 0, top: 0 },
+    } = {},
+  ) => {
+    const { viewport } = laidOutViewport()
+    const { element } = viewport.value
+    const layoutBox = document.createElement("div")
+
+    vi.spyOn(layoutBox, "getBoundingClientRect").mockReturnValue(
+      new DOMRect(layoutBoxCorner.left, layoutBoxCorner.top, 100, 100),
+    )
+    Object.defineProperties(layoutBox, {
+      scrollLeft: { get: () => layoutBoxScroll.left },
+      scrollTop: { get: () => layoutBoxScroll.top },
+    })
+    Object.defineProperties(element, {
+      offsetParent: { get: () => layoutBox },
+      offsetLeft: { get: () => 0 },
+      offsetTop: { get: () => 0 },
+    })
+    vi.spyOn(element, "getBoundingClientRect").mockReturnValue(renderedBox)
+
+    return viewport
+  }
+
+  it("is the absolute viewport at the position, untransformed", () => {
+    const viewport = viewportRenderedAt(new DOMRect(0, 0, 100, 100))
+
+    expect(viewport.getVisibleSlice(position)).toMatchObject({
+      x: 1000,
+      y: 2000,
+      width: 100,
+      height: 100,
+    })
+  })
+
+  it("is the absolute viewport at the position, not rendered", () => {
+    const viewport = viewportRenderedAt(new DOMRect(0, 0, 0, 0), {
+      layoutBoxCorner: { left: 10, top: 20 },
+    })
+
+    expect(viewport.getVisibleSlice(position)).toMatchObject({
+      x: 1000,
+      y: 2000,
+      width: 100,
+      height: 100,
+    })
+  })
+
+  /** As a paginated zoom scales it. */
+  it("reaches half a viewport past it on every side, zoomed out to half around its center", () => {
+    const viewport = viewportRenderedAt(new DOMRect(25, 25, 50, 50))
+
+    expect(viewport.getVisibleSlice(position)).toMatchObject({
+      x: 950,
+      y: 1950,
+      width: 200,
+      height: 200,
+    })
+  })
+
+  /** As a paginated zoom moves it, with `reader.zoom.move()`. */
+  it("follows the transform, zoomed out to half and moved right", () => {
+    const viewport = viewportRenderedAt(new DOMRect(50, 25, 50, 50))
+
+    expect(viewport.getVisibleSlice(position)).toMatchObject({
+      x: 900,
+      y: 1950,
+      width: 200,
+      height: 200,
+    })
+  })
+
+  /** As a scrolled zoom scales it, scrolling to keep its center instead. */
+  it("starts at the position's height, zoomed out to half from its top", () => {
+    const viewport = viewportRenderedAt(new DOMRect(25, 0, 50, 50))
+
+    expect(viewport.getVisibleSlice(position)).toMatchObject({
+      x: 950,
+      y: 2000,
+      width: 200,
+      height: 200,
+    })
+  })
+
+  /** As a scrolled book is: the position counts the scroll already. */
+  it("does not count a scroll of the box it is laid out in", () => {
+    const viewport = viewportRenderedAt(new DOMRect(0, -300, 100, 100), {
+      layoutBoxScroll: { left: 0, top: 300 },
+    })
+
+    expect(viewport.getVisibleSlice(position)).toMatchObject({
+      x: 1000,
+      y: 2000,
+      width: 100,
+      height: 100,
+    })
   })
 })

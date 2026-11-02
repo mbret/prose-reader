@@ -294,52 +294,6 @@ of book reached" with lazy-load awareness, compose with readiness signals (see
 reader.navigation.outOfSpineBoundary$
 ```
 
-## What the screen shows
-
-### `.getVisibleSlice()` { #getvisibleslice }
-
-```typescript
-(position: SpinePosition | UnboundSpinePosition) => DOMRect
-```
-
-The part of the book the screen shows while the navigation is at `position`,
-zoom included, in the same coordinates as the position. The reader loads the
-spine items it shows, with the ones it preloads around them.
-
-It is the [relative viewport](/core-api/viewport#relativeviewport), centered on
-what the navigation shows at the position:
-
-- paginated, the navigation shows the
-  [absolute viewport](/core-api/viewport#absoluteviewport), and a zoom scales
-  the viewport around its center without moving the navigation, so zoomed out
-  the slice reaches past the absolute viewport on every side;
-- scrolled, the navigation is the top of the screen at any scale, so the slice
-  starts at the position: a zoom scrolls the book to keep its center, which
-  moves the navigation instead.
-
-Unzoomed, it is the absolute viewport at the position, in both modes. Read it
-with a navigation that holds on the current layout, as the reader does: only
-then do the position and the places of the spine items agree.
-
-```typescript
-reader.navigation.navigationAgainstCurrentLayout$
-  .pipe(
-    filter(({ holdsOnCurrentLayout }) => holdsOnCurrentLayout),
-    debounceTime(100),
-  )
-  .subscribe(({ navigation }) => {
-    const { x, y, width, height } = reader.navigation.getVisibleSlice(
-      navigation.position,
-    )
-  })
-```
-
-:::caution
-It measures the viewport to know its scale, as
-[`reader.viewport.scaleFactor`](/core-api/viewport#scalefactor) does. Read it
-when you need it, not on every frame.
-:::
-
 ## Panning
 
 ### `.panNavigator`
