@@ -1,10 +1,12 @@
 import {
+  type DerivableIdentifierScheme,
   identifierValue,
   isIsbnBearingScheme,
   METADATA_CATALOG_SCHEMES,
   type MetadataIdentifier,
   mainTitle,
   normalizeIdentifierScheme,
+  parseUrn,
   type ResolvedMetadata,
 } from "@prose-reader/archive-reader"
 import type { FetchMetadataInput } from "../types/fetchMetadataInput.ts"
@@ -71,8 +73,26 @@ type ScopedIdentifier = {
   readonly identifier: MetadataIdentifier
 }
 
-/** Schemes that say how a value was written, not what assigned it. */
-const UNSCOPED_SCHEMES: ReadonlySet<string> = new Set(["url", "uri", "unknown"])
+/**
+ * The schemes archive-reader reads in every spelling it accepts and answers
+ * in one: a catalog's id, from its URL too, and a UUID, bare or as a
+ * `urn:uuid:` URN, in either case.
+ */
+const CANONICALIZED_SCHEMES = [
+  ...METADATA_CATALOG_SCHEMES,
+  "UUID",
+] as const satisfies ReadonlyArray<DerivableIdentifierScheme>
+
+/**
+ * Schemes that say how a value was written, not what assigned it: a link, a
+ * URN, or nothing at all.
+ */
+const REFERENCE_SCHEMES: ReadonlySet<string> = new Set([
+  "url",
+  "uri",
+  "urn",
+  "unknown",
+])
 
 /**
  * Namespaces whose ids ignore case by definition: the DOI Handbook makes a
@@ -95,22 +115,36 @@ const scopedIn = (
 })
 
 /**
+ * A URN's namespace-specific string as RFC 8141 compares it: an octet
+ * percent-encoded as `%2c` is the same as one encoded as `%2C`.
+ */
+const comparableNamespaceSpecificString = (
+  namespaceSpecificString: string,
+): string =>
+  namespaceSpecificString.replace(/%[0-9a-f]{2}/gi, (percentEncodedOctet) =>
+    percentEncodedOctet.toUpperCase(),
+  )
+
+/**
  * The namespace an identifier is scoped to, or `undefined` when nothing says
- * which one assigned it. A catalog id is read the way archive-reader reads it,
- * so a Gutenberg URL and a `ProjectGutenberg` number land in the same
- * namespace; another stated scheme is its own namespace. An untyped value no
- * catalog addresses — an `Unknown` string, a publisher's web page — has
- * none: it cannot contradict a catalog's id, nor be confirmed by one. Neither
- * has a blank scheme, which states nothing.
+ * which one assigned it. A catalog id and a UUID are read the way
+ * archive-reader reads them, so a Gutenberg URL and a `ProjectGutenberg`
+ * number land in one namespace, as do every spelling of a UUID; any other URN
+ * is scoped by the namespace it names; another stated scheme is its own
+ * namespace. A value written some other way, with no scheme to say what
+ * assigned it — an `Unknown` string, a publisher's web page — has none: it
+ * cannot contradict a catalog's id, nor be confirmed by one. Nor has any value
+ * whose scheme is blank, a URN included: a blank scheme states nothing, and
+ * archive-reader reads no reference out of it either.
  */
 const scopedIdentifier = (
   identifier: MetadataIdentifier,
 ): ScopedIdentifier | undefined => {
-  for (const catalogScheme of METADATA_CATALOG_SCHEMES) {
-    const value = identifierValue([identifier], catalogScheme)
+  for (const canonicalizedScheme of CANONICALIZED_SCHEMES) {
+    const value = identifierValue([identifier], canonicalizedScheme)
 
     if (value !== undefined) {
-      return scopedIn(catalogScheme.toLowerCase(), value, identifier)
+      return scopedIn(canonicalizedScheme.toLowerCase(), value, identifier)
     }
   }
 
@@ -121,9 +155,21 @@ const scopedIdentifier = (
 
   const namespace = normalizeIdentifierScheme(scheme).toLowerCase()
 
-  return UNSCOPED_SCHEMES.has(namespace)
-    ? undefined
-    : scopedIn(namespace, value, identifier)
+  if (!REFERENCE_SCHEMES.has(namespace)) {
+    return scopedIn(namespace, value, identifier)
+  }
+
+  // A URN names its namespace itself: `urn:nbn:…` and `urn:issn:…` are two
+  // id spaces, which their one `URN` scheme would have lumped together.
+  const urn = parseUrn(value)
+
+  return urn !== undefined
+    ? scopedIn(
+        `urn:${urn.namespaceIdentifier}`,
+        comparableNamespaceSpecificString(urn.namespaceSpecificString),
+        identifier,
+      )
+    : undefined
 }
 
 const identifierLabel = ({ identifier }: ScopedIdentifier): string =>
