@@ -476,6 +476,38 @@ describe("scoreMetadataCandidate", () => {
     }
   })
 
+  it("compares a URN's percent-encoded octets whatever their case", () => {
+    const result = score(
+      {
+        title: "A local title",
+        identifiers: [{ value: "urn:example:a123%2Cz456", scheme: "URN" }],
+      },
+      {
+        titles: [{ value: "The catalog title" }],
+        identifiers: [{ value: "urn:example:a123%2cz456", scheme: "URN" }],
+      },
+    )
+
+    expect(result.score).toBe(1)
+  })
+
+  it("does not scope a URN whose scheme is blank", () => {
+    for (const value of [
+      "urn:nbn:de:101:1-2011",
+      "urn:uuid:5b1a4ef0-3c4e-4a3c-9a59-3f1c1c7c0d11",
+    ]) {
+      const result = score(
+        { title: "Dune", identifiers: [{ value, scheme: " " }] },
+        {
+          titles: [{ value: "Neuromancer" }],
+          identifiers: [{ value, scheme: "URN" }],
+        },
+      )
+
+      expect(result.signals.map((signal) => signal.field)).toEqual(["title"])
+    }
+  })
+
   it("scopes a URN by the namespace it names", () => {
     const nbn = { value: "urn:nbn:de:101:1-2011", scheme: "URN" }
     const titled = (identifiers: ResolvedMetadata["identifiers"]) => ({

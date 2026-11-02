@@ -115,6 +115,17 @@ const scopedIn = (
 })
 
 /**
+ * A URN's namespace-specific string as RFC 8141 compares it: an octet
+ * percent-encoded as `%2c` is the same as one encoded as `%2C`.
+ */
+const comparableNamespaceSpecificString = (
+  namespaceSpecificString: string,
+): string =>
+  namespaceSpecificString.replace(/%[0-9a-f]{2}/gi, (percentEncodedOctet) =>
+    percentEncodedOctet.toUpperCase(),
+  )
+
+/**
  * The namespace an identifier is scoped to, or `undefined` when nothing says
  * which one assigned it. A catalog id and a UUID are read the way
  * archive-reader reads them, so a Gutenberg URL and a `ProjectGutenberg`
@@ -122,8 +133,9 @@ const scopedIn = (
  * is scoped by the namespace it names; another stated scheme is its own
  * namespace. A value written some other way, with no scheme to say what
  * assigned it — an `Unknown` string, a publisher's web page — has none: it
- * cannot contradict a catalog's id, nor be confirmed by one. A blank scheme
- * states nothing either.
+ * cannot contradict a catalog's id, nor be confirmed by one. Nor has any value
+ * whose scheme is blank, a URN included: a blank scheme states nothing, and
+ * archive-reader reads no reference out of it either.
  */
 const scopedIdentifier = (
   identifier: MetadataIdentifier,
@@ -136,17 +148,14 @@ const scopedIdentifier = (
     }
   }
 
+  const scheme = stated(identifier.scheme)
   const value = stated(identifier.value)
 
-  if (value === undefined) return undefined
+  if (scheme === undefined || value === undefined) return undefined
 
-  const scheme = stated(identifier.scheme)
-  const namespace =
-    scheme !== undefined
-      ? normalizeIdentifierScheme(scheme).toLowerCase()
-      : undefined
+  const namespace = normalizeIdentifierScheme(scheme).toLowerCase()
 
-  if (namespace !== undefined && !REFERENCE_SCHEMES.has(namespace)) {
+  if (!REFERENCE_SCHEMES.has(namespace)) {
     return scopedIn(namespace, value, identifier)
   }
 
@@ -157,7 +166,7 @@ const scopedIdentifier = (
   return urn !== undefined
     ? scopedIn(
         `urn:${urn.namespaceIdentifier}`,
-        urn.namespaceSpecificString,
+        comparableNamespaceSpecificString(urn.namespaceSpecificString),
         identifier,
       )
     : undefined
