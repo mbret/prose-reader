@@ -1,5 +1,4 @@
 import type {
-  MetadataIdentifier,
   ResolvedContributor,
   ResolvedContributorRole,
   ResolvedCover,
@@ -149,7 +148,6 @@ export const resolveProjectGutenbergRecord = (
   record: ProjectGutenbergRecord,
   options: {
     readonly baseUrl: string
-    readonly matchedIdentifier: MetadataIdentifier
   },
 ): ResolvedMetadata => {
   const {
@@ -175,18 +173,8 @@ export const resolveProjectGutenbergRecord = (
   unhandled satisfies Record<string, never>
 
   const identifiers = [
-    options.matchedIdentifier,
     { value: id, scheme: PROJECT_GUTENBERG_IDENTIFIER_SCHEME },
-  ].filter(
-    (identifier, index, all) =>
-      all.findIndex(
-        (other) =>
-          other.value.trim().toLowerCase() ===
-            identifier.value.trim().toLowerCase() &&
-          other.scheme.trim().toLowerCase() ===
-            identifier.scheme.trim().toLowerCase(),
-      ) === index,
-  )
+  ]
   const subjects = [
     ...new Set([...(recordSubjects ?? []), ...(bookshelves ?? [])]),
   ].slice(0, PROJECT_GUTENBERG_MAX_SUBJECTS)
