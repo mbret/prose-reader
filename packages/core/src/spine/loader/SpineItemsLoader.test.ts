@@ -8,7 +8,7 @@ import type {
 import { ReaderSettingsManager } from "../../settings/ReaderSettingsManager"
 import { createTestManifest, waitFor } from "../../tests/utils"
 import { Viewport } from "../../viewport/Viewport"
-import type { SpineLocator } from "../locator/SpineLocator"
+import type { Spine, SpineState } from "../Spine"
 import type { SpineItemsManager } from "../SpineItemsManager"
 import {
   SpinePosition,
@@ -67,10 +67,15 @@ const createHarness = ({
     ({ position }: { position: SpinePositionType }) =>
       getVisibleRange(position),
   )
-  // Cast: these tests exercise the loader's trigger wiring, not locator internals.
-  const spineLocator = {
-    getVisibleSpineItemsFromPosition,
-  } as unknown as SpineLocator
+  /** The first item a pending layout can change: none until a test asks. */
+  const spineLayoutState = new BehaviorSubject<
+    Pick<SpineState, "firstItemIndexAwaitingLayout">
+  >({ firstItemIndexAwaitingLayout: undefined })
+  // Cast: the loader only reads the locator and watches the layout state.
+  const spine = {
+    locator: { getVisibleSpineItemsFromPosition },
+    watch: () => spineLayoutState,
+  } as unknown as Spine
 
   /**
    * The latest navigation, as the navigator reports it: one made over the
@@ -108,7 +113,7 @@ const createHarness = ({
   const loader = new SpineItemsLoader(
     context,
     spineItemsManager,
-    spineLocator,
+    spine,
     settings,
     viewport,
     navigationAgainstCurrentLayout,
@@ -120,6 +125,7 @@ const createHarness = ({
     settings.destroy()
     viewport.destroy()
     navigationAgainstCurrentLayout.complete()
+    spineLayoutState.complete()
   }
 
   return {
@@ -128,6 +134,12 @@ const createHarness = ({
     viewport,
     navigateOverCurrentLayout,
     voidNavigation,
+    requestLayoutFrom: (spineItemIndex: number) => {
+      spineLayoutState.next({ firstItemIndexAwaitingLayout: spineItemIndex })
+    },
+    publishPages: () => {
+      spineLayoutState.next({ firstItemIndexAwaitingLayout: undefined })
+    },
     getVisibleSpineItemsFromPosition,
     clearCalls: () => {
       vi.clearAllMocks()
@@ -206,6 +218,65 @@ describe("SpineItemsLoader", () => {
       expect(item1?.load).toHaveBeenCalled()
       expect(item0?.unload).toHaveBeenCalled()
       expect(item0?.load).not.toHaveBeenCalled()
+    })
+  })
+
+  describe("Given a layout of an item in view, the navigation holding", () => {
+    /**
+     * Zoomed out, the viewport shows more items than the navigation holds
+     * over. A layout of one of those leaves the navigation holding, while the
+     * place of that item and of the ones after it are unknown. Here the
+     * second item comes into view as it is laid out again.
+     */
+    it("neither loads nor unloads until that layout is done, then measures", async () => {
+      let visibleRange = { beginIndex: 0, endIndex: 0 }
+      const {
+        items: [item0, item1],
+        requestLayoutFrom,
+        publishPages,
+        viewport,
+        clearCalls,
+      } = createHarness({ getVisibleRange: () => visibleRange })
+
+      await waitFor(LOADER_DEBOUNCE_MS)
+      clearCalls()
+
+      visibleRange = { beginIndex: 0, endIndex: 1 }
+      requestLayoutFrom(1)
+      viewport.layout()
+      await waitFor(LOADER_DEBOUNCE_MS)
+
+      for (const item of [item0, item1]) {
+        expect(item?.load).not.toHaveBeenCalled()
+        expect(item?.unload).not.toHaveBeenCalled()
+      }
+
+      publishPages()
+      await waitFor(LOADER_DEBOUNCE_MS)
+
+      expect(item1?.load).toHaveBeenCalled()
+      expect(item0?.unload).not.toHaveBeenCalled()
+    })
+
+    it("measures at once when only items after the ones in view await layout", async () => {
+      const {
+        items: [item0, item1],
+        requestLayoutFrom,
+        viewport,
+        clearCalls,
+      } = createHarness({
+        getVisibleRange: () => ({ beginIndex: 0, endIndex: 0 }),
+      })
+
+      await waitFor(LOADER_DEBOUNCE_MS)
+      clearCalls()
+
+      requestLayoutFrom(1)
+      viewport.layout()
+      await waitFor(LOADER_DEBOUNCE_MS)
+
+      expect(item0?.load).toHaveBeenCalled()
+      expect(item1?.unload).toHaveBeenCalled()
     })
   })
 

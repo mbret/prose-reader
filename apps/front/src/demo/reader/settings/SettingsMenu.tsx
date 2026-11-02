@@ -1,5 +1,4 @@
 import { Heading, HStack, Stack } from "@chakra-ui/react"
-import type { Theme } from "@prose-reader/core"
 import type React from "react"
 import { useEffect, useState } from "react"
 import {
@@ -110,22 +109,6 @@ export const SettingsMenu = ({
             <Radio value="100">small</Radio>
             <Radio value="publisher">default (publisher)</Radio>
             <Radio value="900">big</Radio>
-          </HStack>
-        </RadioGroup>
-      </Field>
-      <Field label="Theme" helperText="Change the colors of the reader">
-        <RadioGroup
-          onValueChange={(e) => {
-            const value = (e.value ?? "publisher") as Theme
-            reader.settings.update({ theme: value })
-          }}
-          value={readerSettings?.theme}
-        >
-          <HStack gap="24px">
-            <Radio value="publisher">default (publisher)</Radio>
-            <Radio value="sepia">sepia</Radio>
-            <Radio value="bright">bright</Radio>
-            <Radio value="night">night</Radio>
           </HStack>
         </RadioGroup>
       </Field>

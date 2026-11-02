@@ -18,12 +18,12 @@ import {
  * applies, only the global value can be edited.
  */
 export const SettingScopes = memo(function SettingScopes({
-  scopeHelperText,
+  settingLabel,
   activeScope,
   onActiveScopeChange,
   renderScopeValue,
 }: {
-  scopeHelperText: string
+  settingLabel: string
   activeScope: ReactReaderSettingsScopeReference | undefined
   onActiveScopeChange: ((scope: ReactReaderSettingsScope) => void) | undefined
   renderScopeValue: (scope: ReactReaderSettingsScopeReference) => ReactNode
@@ -42,7 +42,9 @@ export const SettingScopes = memo(function SettingScopes({
     <>
       <Fieldset.Root>
         <Fieldset.Legend>Scope</Fieldset.Legend>
-        <Fieldset.HelperText>{scopeHelperText}</Fieldset.HelperText>
+        <Fieldset.HelperText>
+          The scope this book takes its {settingLabel} from.
+        </Fieldset.HelperText>
         <Fieldset.Content>
           <RadioGroup
             value={getScopeForReference(activeScope) ?? "global"}

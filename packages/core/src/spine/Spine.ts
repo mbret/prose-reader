@@ -38,7 +38,7 @@ export type SpineState = {
    * it lays that item out, long before the pages are recomputed.
    *
    * The navigator derives from it whether the latest navigation holds on the
-   * current layout.
+   * current layout: whether a pending layout can change what it shows.
    */
   firstItemIndexAwaitingLayout: number | undefined
 }

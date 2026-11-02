@@ -38,7 +38,7 @@ export const FontSizeControlsDialog = memo(() => {
         <DialogBody>
           <Stack gap={4} flex={1}>
             <SettingScopes
-              scopeHelperText="The scope to which apply the font size for this book."
+              settingLabel="font size"
               activeScope={fontScale.activeScope}
               onActiveScopeChange={fontScale.onActiveScopeChange}
               renderScopeValue={(scope) => (

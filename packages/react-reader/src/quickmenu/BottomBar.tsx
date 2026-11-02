@@ -8,6 +8,7 @@ import {
   LuColumns2,
   LuGalleryHorizontal,
   LuNotebookPen,
+  LuPalette,
   LuSearch,
   LuTableOfContents,
   LuZoomIn,
@@ -25,6 +26,7 @@ import { useObserve } from "reactjrx"
 import { map } from "rxjs"
 import { AudioControlsSection } from "../audio/AudioControlsSection"
 import { useHasVisibleAudioTracks } from "../audio/useHasVisibleAudioTracks"
+import type { PublicContextType } from "../context/context"
 import {
   hasAnnotationsEnhancer,
   hasGalleryEnhancer,
@@ -43,16 +45,7 @@ export const BottomBar = memo(
     onItemClick,
   }: {
     open: boolean
-    onItemClick: (
-      item:
-        | "annotations"
-        | "search"
-        | "help"
-        | "toc"
-        | "bookmarks"
-        | "gallery"
-        | "layout",
-    ) => void
+    onItemClick: NonNullable<PublicContextType["onItemClick"]>
   }) => {
     const boxRef = useRef<HTMLDivElement>(null)
     const reader = useReader()
@@ -262,6 +255,14 @@ export const BottomBar = memo(
                   variant="ghost"
                 >
                   <BiFontSize />
+                </IconButton>
+                <IconButton
+                  aria-label="Theme"
+                  size="lg"
+                  variant="ghost"
+                  onClick={() => onItemClick("theme")}
+                >
+                  <LuPalette />
                 </IconButton>
                 <IconButton
                   aria-label="Layout"
