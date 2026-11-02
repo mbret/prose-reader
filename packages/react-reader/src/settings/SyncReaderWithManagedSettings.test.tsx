@@ -4,7 +4,16 @@ import { ChakraProvider, defaultSystem } from "@chakra-ui/react"
 import type { Theme } from "@prose-reader/core"
 import { act, type ComponentProps, type ReactNode, useState } from "react"
 import { createRoot } from "react-dom/client"
-import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
+import { config } from "rxjs"
+import {
+  afterEach,
+  beforeEach,
+  describe,
+  expect,
+  it,
+  onTestFinished,
+  vi,
+} from "vitest"
 import { ReactReaderProvider } from "../context/ReactReaderProvider"
 import {
   asProvidedReader,
@@ -618,6 +627,43 @@ describe(`SyncReaderWithManagedSettings`, () => {
         { spreadMode: `always` },
         `internal`,
       )
+    })
+
+    it(`keeps reporting values set on the reader directly after the app fails to handle one`, async () => {
+      const reader = createTestReader()
+      const onSettingsChange = vi
+        .fn()
+        .mockImplementationOnce(function failToSaveTheFirstChange() {
+          throw new Error(`The settings could not be saved`)
+        })
+      const onUnhandledError = vi.fn()
+
+      config.onUnhandledError = onUnhandledError
+      onTestFinished(function restoreUnhandledErrorReporting() {
+        config.onUnhandledError = null
+      })
+
+      await render({ reader: asProvidedReader(reader), onSettingsChange })
+      await act(async () => {
+        reader.settings.update({ spreadMode: `never` })
+      })
+      await act(async () => {
+        reader.settings.update({ spreadMode: `always` })
+      })
+      await act(async () => {
+        await new Promise((resolve) => setTimeout(resolve))
+      })
+
+      expect({
+        reported: onSettingsChange.mock.calls,
+        unhandledErrors: onUnhandledError.mock.calls.length,
+      }).toEqual({
+        reported: [
+          [{ spreadMode: `never` }, `internal`],
+          [{ spreadMode: `always` }, `internal`],
+        ],
+        unhandledErrors: 1,
+      })
     })
 
     it(`keeps a value set on the reader directly as the value of the scope in effect, when the app only listens`, async () => {
