@@ -148,8 +148,6 @@ const resolvedContributors = (
   )
 
 export type ResolveGoogleBooksVolumeOptions = {
-  /** Exact Google Books identifier that this response confirmed. */
-  readonly matchedIdentifier?: MetadataIdentifier
   /** ISBN query that this response confirmed, even if the payload omits it. */
   readonly matchedIsbn?: string
 }
@@ -190,9 +188,6 @@ export const resolveGoogleBooksVolume = (
     industryIdentifiers ?? [],
   )
   const identifiers = dedupeIdentifiers([
-    ...(options.matchedIdentifier !== undefined
-      ? [options.matchedIdentifier]
-      : []),
     ...(options.matchedIsbn !== undefined
       ? [{ value: options.matchedIsbn, scheme: "ISBN" }]
       : []),
