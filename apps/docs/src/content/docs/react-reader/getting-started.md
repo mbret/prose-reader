@@ -113,9 +113,9 @@ const theme = colorMode === "dark" ? "night" : "bright"
 | `spreadMode` | Layout |
 | `theme` | None: your app sets it |
 
-`onSettingsChange(changes, from)` receives only the settings that changed. `from` is the scope the user chose the value for, or `"internal"` for a value set on the reader directly, such as by a pinch. The theme only comes with `"internal"`, since no menu sets it.
+`onSettingsChange(changes, from)` receives only the settings that changed. `from` is the scope the user chose the value for, or `"internal"` for a value set on the reader directly, with `reader.settings.update()`. The theme only comes with `"internal"`, since no menu sets it.
 
-A setting you give no value keeps react-reader's own, for as long as it is mounted. It starts from the value the reader was created with, which is not a change and is not reported. A change in the menus, or by a pinch, still reaches `onSettingsChange`.
+A setting you give no value keeps react-reader's own, for as long as it is mounted. It starts from the value the reader was created with, which is not a change and is not reported. A change in the menus, or one made on the reader directly, still reaches `onSettingsChange`.
 
 react-reader writes the values you give into the reader once it renders with it. Create your reader with the same values, so it starts on them rather than switching to them: a reader created without your theme shows `bright` until then. Read the values when you create the reader, without making them a reason to create it again, since react-reader keeps the reader on them afterwards. In `useReaderInstance`, a ref does that:
 

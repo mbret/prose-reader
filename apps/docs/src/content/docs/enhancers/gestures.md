@@ -12,7 +12,7 @@ so reaching this package through `require()` needs the `require(esm)` support th
 landed unflagged in Node 22.12. `import` and bundler builds are unaffected.
 :::
 
-This enhancer implements common gesture patterns using [https://github.com/mbret/gesturx](https://github.com/mbret/gesturx). Tap on edge  or swipe to turn pages, pinch to change font scale, etc. It implements the most common gestures while trying to stay generic and configurable.
+This enhancer implements common gesture patterns using [https://github.com/mbret/gesturx](https://github.com/mbret/gesturx). Tap on edge  or swipe to turn pages, pinch to zoom, etc. It implements the most common gestures while trying to stay generic and configurable.
 
 ## Getting Started
 
@@ -64,10 +64,6 @@ Gestures start on a press of the primary button: a left click, a finger or a pen
 * **Pinch** to start zooming
 * **Pan** to move zoom position (When zooming)
 
-### Font size change
-
-* **Pinch** to start changing font size. This will take priority over zooming for reflowable books and whenever the user does not start pinching on an image.
-
 ## API
 
 The API is under the `gestures` namespace.
@@ -75,10 +71,10 @@ The API is under the `gestures` namespace.
 ```typescript
 type Options = {
   panNavigation?: "pan" | "swipe" | false
-  fontScalePinchEnabled?: boolean
-  fontScaleMaxScale?: number
-  fontScaleMinScale?: number
-  fontScalePinchThrottleTime?: number
+  /**
+   * The highest scale a pinch zooms to, `Infinity` by default.
+   * At `1` or less, a pinch never zooms in.
+   */
   zoomMaxScale?: number
   pinchCancelPan?: boolean
   /**
@@ -88,6 +84,10 @@ type Options = {
   ignore?: string[]
 }
 ```
+
+With [react-reader](/react-reader/getting-started), set `zoomMaxScale` with the
+`zoomMaxScale` prop of `ReactReader` instead, `5` by default: react-reader
+writes it over this setting.
 
 ### `.settings`
 
@@ -158,3 +158,51 @@ reader?.gestures.gestures$.pipe(
 ```
 
 Basically if you want to do something based on a gesture and make sure it does not happen with another effect this observable is a good candidate.
+
+## Resizing text with a pinch
+
+A pinch zooms. To have it resize the text instead, keep it from zooming with a
+`zoomMaxScale` of `1`, and update `fontScale` from the pinch events of
+[`gestures$`](#gesturesusd):
+
+```typescript
+import {
+  asyncScheduler,
+  filter,
+  map,
+  switchMap,
+  takeWhile,
+  throttleTime,
+} from "rxjs"
+
+const reader = createAppReader({ manifest, gestures: { zoomMaxScale: 1 } })
+
+const pinchEvents$ = reader.gestures.gestures$.pipe(
+  filter((gesture) => gesture.type === "pinch"),
+  map(({ gestureEvent }) => gestureEvent),
+)
+
+pinchEvents$
+  .pipe(
+    filter((event) => event.type === "pinchStart"),
+    switchMap(() => {
+      const fontScaleAtPinchStart = reader.settings.values.fontScale
+
+      return pinchEvents$.pipe(
+        takeWhile((event) => event.type !== "pinchEnd", true),
+        // Each change of font scale lays the book out again
+        throttleTime(500, asyncScheduler, { leading: true, trailing: true }),
+        // `scale` counts from the start of the pinch
+        map((event) =>
+          Math.min(Math.max(fontScaleAtPinchStart * event.scale, 0.5), 3),
+        ),
+      )
+    }),
+  )
+  .subscribe((fontScale) => {
+    reader.settings.update({ fontScale })
+  })
+```
+
+The text follows the pinch from the font scale it had when the pinch started,
+between `0.5` and `3` here, and ends at the scale of the pinch's last move.

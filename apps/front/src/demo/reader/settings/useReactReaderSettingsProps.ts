@@ -13,8 +13,8 @@ const NO_READER_SETTINGS_SCOPES: ReaderSettingsScopes = {}
 /**
  * ReactReader's settings props, from what the demo stores: the global values
  * and the values per screen with the local settings, the book's values and the
- * scope of each setting with the book's settings. A value the reader reports
- * as `"internal"`, such as a pinch's, is not saved.
+ * scope of each setting with the book's settings. A value set on the reader
+ * directly, which ReactReader reports as `"internal"`, is not saved.
  */
 export const useReactReaderSettingsProps = (
   bookSettingsSignal: Signal<BookSettings>,

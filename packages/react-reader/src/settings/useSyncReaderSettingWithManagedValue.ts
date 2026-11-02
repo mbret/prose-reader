@@ -19,7 +19,8 @@ import { useScreenSettingsScopeReference } from "./useScreenSettingsScopeReferen
  * not reported: the value in effect replaces it, or, without one, react-reader
  * adopts it as its own, which is how it starts from the value the reader was
  * created with. A value the reader takes after that and that is not the value
- * in effect, such as by a pinch, is reported to the app as `"internal"` and
+ * in effect, such as one set outside react-reader with
+ * `reader.settings.update()`, is reported to the app as `"internal"` and
  * adopted as react-reader's own.
  */
 export const useSyncReaderSettingWithManagedValue = <
