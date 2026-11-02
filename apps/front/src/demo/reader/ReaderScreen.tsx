@@ -45,15 +45,19 @@ export const ReaderScreen = memo(() => {
 
   useDocumentTitle(manifest?.title ?? `Reader - prose reader demo`)
 
-  useCreateReader(manifest, readerContainerRef, epubKey)
+  const reactReaderSettingsProps =
+    useReactReaderSettingsProps(bookSettingsSignal)
+  const { settings, defaultSettings } = reactReaderSettingsProps
+
+  useCreateReader(manifest, readerContainerRef, epubKey, {
+    ...settings,
+    theme: settings.theme ?? defaultSettings.theme,
+  })
   useUpdateReaderSettings({ localSettings })
   usePersistReadingPosition(epubKey)
   useResetStateOnUnMount()
   usePersistAnnotations(annotationsSignal, epubKey)
   useBookBoundariesReachedToast()
-
-  const reactReaderSettingsProps =
-    useReactReaderSettingsProps(bookSettingsSignal)
 
   const onItemClick = useCallback(
     (

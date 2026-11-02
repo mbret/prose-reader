@@ -4,6 +4,7 @@ import type {
 } from "@prose-reader/react-reader"
 import { useCallback, useMemo } from "react"
 import { type Signal, useSignalValue } from "reactjrx"
+import { useColorMode } from "../../components/ui/color-mode"
 import type { BookSettings, ReaderSettingsScopes } from "./useBookSettings"
 import { useSettings } from "./useSettings"
 
@@ -14,13 +15,22 @@ const NO_READER_SETTINGS_SCOPES: ReaderSettingsScopes = {}
  * ReactReader's settings props, from what the demo stores: the global values
  * and the values per screen with the local settings, the book's values and the
  * scope of each setting with the book's settings. A value set on the reader
- * directly, which ReactReader reports as `"internal"`, is not saved.
+ * directly, which ReactReader reports as `"internal"`, is not saved. The
+ * default theme follows the demo's color mode.
  */
 export const useReactReaderSettingsProps = (
   bookSettingsSignal: Signal<BookSettings>,
 ) => {
   const [localSettings, setLocalSettings] = useSettings()
   const bookSettings = useSignalValue(bookSettingsSignal)
+  const { colorMode } = useColorMode()
+
+  const defaultSettings = useMemo(
+    (): ReactReaderSettings => ({
+      theme: colorMode === "dark" ? "night" : "bright",
+    }),
+    [colorMode],
+  )
 
   const settingsByScope = useMemo(
     () => ({
@@ -72,6 +82,7 @@ export const useReactReaderSettingsProps = (
 
   return {
     settings: localSettings.readerSettings,
+    defaultSettings,
     settingsByScope,
     settingsScopes:
       bookSettings.readerSettingsScopes ?? NO_READER_SETTINGS_SCOPES,

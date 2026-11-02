@@ -7,11 +7,14 @@ import { gesturesEnhancer } from "@prose-reader/enhancer-gestures"
 import { pdfEnhancer } from "@prose-reader/enhancer-pdf"
 import { refitEnhancer } from "@prose-reader/enhancer-refit"
 import { searchEnhancer } from "@prose-reader/enhancer-search"
-import { BOOKMARK_AREA_DATA_ATTRIBUTE } from "@prose-reader/react-reader"
+import {
+  BOOKMARK_AREA_DATA_ATTRIBUTE,
+  type ReactReaderSettings,
+} from "@prose-reader/react-reader"
 import type { Manifest } from "@prose-reader/shared"
 import pdfjsViewerInlineCss from "pdfjs-dist/web/pdf_viewer.css?inline"
 import { type RefObject, useEffect } from "react"
-import { SIGNAL_RESET } from "reactjrx"
+import { SIGNAL_RESET, useLiveRef } from "reactjrx"
 import { of } from "rxjs"
 import { getFileKeyFromUrl } from "../streamer/utils.shared"
 import { webStreamer } from "../streamer/webStreamer"
@@ -42,12 +45,18 @@ export const createAppReader = refitEnhancer(
  * manifest and the container, mount it right away and destroy it on
  * cleanup. Because destroy() is the true inverse of create+mount, this
  * effect is naturally safe with react strict mode re-running effects.
+ *
+ * The reader starts on `managedSettings`, as they are when it is created,
+ * rather than switching to them once ReactReader renders with it.
  */
 export const useCreateReader = (
   manifest: Manifest | undefined,
   containerRef: RefObject<HTMLElement | null>,
   bookKey: string,
+  managedSettings: ReactReaderSettings,
 ) => {
+  const managedSettingsRef = useLiveRef(managedSettings)
+
   useEffect(() => {
     const containerElement = containerRef.current
 
@@ -57,6 +66,7 @@ export const useCreateReader = (
     const readingPosition = localStorage.getItem(getReadingPositionKey(bookKey))
 
     const readerOptions: Parameters<typeof createAppReader>[0] = {
+      ...managedSettingsRef.current,
       manifest,
       target: readingPosition
         ? { type: "cfi", value: readingPosition }
@@ -97,5 +107,5 @@ export const useCreateReader = (
 
       webStreamer.prune()
     }
-  }, [manifest, containerRef, bookKey])
+  }, [manifest, containerRef, bookKey, managedSettingsRef])
 }
