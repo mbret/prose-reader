@@ -123,7 +123,7 @@ export const createReader = ({
   const spineItemsLoader = new SpineItemsLoader(
     context,
     spineItemsManager,
-    spine.locator,
+    spine,
     settingsManager,
     viewport,
     navigator.navigationAgainstCurrentLayout$,

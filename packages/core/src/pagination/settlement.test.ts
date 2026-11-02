@@ -5,7 +5,9 @@ import {
   first,
   firstValueFrom,
   map,
+  of,
   skip,
+  timeout,
 } from "rxjs"
 import { describe, expect, it, vi } from "vitest"
 import { Spine } from "../spine/Spine"
@@ -16,6 +18,7 @@ import {
   holdItemLayout,
   installReaderTestEnvironment,
   mountTestReader,
+  requestLayoutByUnloadingItem,
   setTestViewport,
   settledOn,
 } from "../tests/readerHarness"
@@ -316,12 +319,12 @@ describe("pagination settlement", () => {
     expect(reloaded.begin.spineItemIndex).toBe(1)
   })
 
-  it("withdraws settlement while the spine relays out for another item, and settles again once on the new layout", async () => {
+  it("keeps the result settled while the spine relays out for an item after the page being read", async () => {
     /**
      * Item 1 is not visible. When its load finishes, the spine lays it and the
      * items after it out again on its own, without any request through
-     * `reader.layout()`. The page being read is before it, but the pages are
-     * computed for the whole spine, and the result is resolved over them.
+     * `reader.layout()`. The page being read is before it: it keeps its place
+     * and its pages, which the result describes.
      */
     const otherItem = holdItem("/page_1.jpg")
     const reader = createTestReader({ getRenderer: otherItem.getRenderer })
@@ -329,61 +332,89 @@ describe("pagination settlement", () => {
     mountTestReader(reader)
     await settledOn(reader, 0)
 
-    const settlement: boolean[] = []
+    // what is awaiting layout as each withdrawal happens
+    const withdrawals: (number | undefined)[] = []
     reader.pagination.state$
       .pipe(
         skip(1),
         map((state) => state.isSettled),
         distinctUntilChanged(),
+        filter((isSettled) => !isSettled),
       )
-      .subscribe((isSettled) => settlement.push(isSettled))
+      .subscribe(() => {
+        withdrawals.push(reader.spine.value.firstItemIndexAwaitingLayout)
+      })
 
     otherItem.release()
     await firstValueFrom(
-      reader.spine.pipe(
-        filter((spineState) => !Spine.isLayoutCurrent(spineState)),
-      ),
+      reader.spine
+        .watch("firstItemIndexAwaitingLayout")
+        .pipe(
+          filter(
+            (firstItemIndexAwaitingLayout) =>
+              firstItemIndexAwaitingLayout === 1,
+          ),
+        ),
     )
 
-    // The pages are about to be recomputed, so what the result says about the
-    // page being read may no longer hold.
-    expect(reader.pagination.state.isSettled).toBe(false)
+    expect(reader.pagination.state.isSettled).toBe(true)
 
+    await firstValueFrom(reader.spine.pipe(filter(Spine.isLayoutCurrent)))
     await settledOn(reader, 0)
     await waitFor(50)
 
     /**
-     * Withdrawn once, settled once. The pages become current again a moment
-     * before the result for them resolves, and granting settlement back to
-     * the withdrawn result in that moment would publish positions resolved
-     * over the replaced layout, then withdraw them again.
+     * Never withdrawn while that layout was pending. Once its pages are
+     * published, the navigator restores the navigation onto them, a
+     * navigation like any other, and the result resolved for it settles.
      */
-    expect(settlement).toEqual([false, true])
+    expect(
+      withdrawals.filter(
+        (firstItemIndexAwaitingLayout) =>
+          firstItemIndexAwaitingLayout !== undefined,
+      ),
+    ).toEqual([])
+    expect(reader.pagination.state.isSettled).toBe(true)
   })
 
-  it("does not settle a navigation while the spine relays out for another item", async () => {
-    const otherItem = holdItem("/page_1.jpg")
-    const reader = createTestReader({ getRenderer: otherItem.getRenderer })
+  it("settles a navigation made while the spine relays out for an item after it, without waiting for that layout", async () => {
+    const laterItem = holdItemLayout("/page_1.jpg")
+    const reader = createTestReader({ getRenderer: laterItem.getRenderer })
 
     mountTestReader(reader)
     await settledOn(reader, 0)
 
-    otherItem.release()
-    await firstValueFrom(
-      reader.spine.pipe(
-        filter((spineState) => !Spine.isLayoutCurrent(spineState)),
+    /**
+     * Item 1, after the page being read, is released, which lays the spine
+     * out again from it, and its layout is held: that layout stays pending
+     * for the rest of the test.
+     */
+    laterItem.hold()
+    await requestLayoutByUnloadingItem(reader, 1)
+
+    const settledWhileThatLayoutIsPending = firstValueFrom(
+      reader.pagination.state$.pipe(
+        // the result from before the navigation
+        skip(1),
+        filter((state) => state.isSettled),
+        map((state) => ({
+          spineItemIndex: state.begin.spineItemIndex,
+          firstItemIndexAwaitingLayout:
+            reader.spine.value.firstItemIndexAwaitingLayout,
+        })),
+        timeout({ first: 2000, with: () => of(undefined) }),
       ),
     )
 
     reader.navigation.goToSpineItem({ indexOrId: 0, animation: false })
 
-    // Nothing was requested through `reader.layout()`, but the pages it would
-    // resolve over are about to be replaced all the same.
-    expect(reader.pagination.state.isSettled).toBe(false)
+    // Settled on the pages shown, which the pending layout cannot change.
+    expect(await settledWhileThatLayoutIsPending).toEqual({
+      spineItemIndex: 0,
+      firstItemIndexAwaitingLayout: 1,
+    })
 
-    const next = await settledOn(reader, 0)
-
-    expect(next.begin.spineItemIndex).toBe(0)
+    laterItem.release()
   })
 
   it("does not settle while the spine is still laying out, even once the visible item has been laid out", async () => {
@@ -555,29 +586,27 @@ describe("pagination settlement", () => {
     expect(reader.pagination.state.isSettled).toBe(true)
   })
 
-  it("withdraws the enriched result while the spine relays out for another item", async () => {
-    const otherItem = holdItem("/page_1.jpg")
-    const reader = createEnhancedTestReader({
-      getRenderer: otherItem.getRenderer,
-    })
+  it("withdraws the enriched result while the spine relays out for an item before the page being read", async () => {
+    const reader = createEnhancedTestReader()
 
     mountTestReader(reader)
-    await settledOn(reader, 0)
+    reader.navigation.goToSpineItem({ indexOrId: 1, animation: false })
+    await settledOn(reader, 1)
 
-    otherItem.release()
-    await firstValueFrom(
-      reader.spine.pipe(
-        filter((spineState) => !Spine.isLayoutCurrent(spineState)),
-      ),
-    )
+    /**
+     * Item 0 is released, which lays the spine out again from it, without
+     * any request through `reader.layout()`: the page being read, after it,
+     * can move.
+     */
+    await requestLayoutByUnloadingItem(reader, 0)
 
     // The enhancer throttles its enrichment, and must not keep presenting a
     // settlement the core result has withdrawn without any new trigger.
     expect(reader.pagination.state.isSettled).toBe(false)
 
-    const next = await settledOn(reader, 0)
+    const next = await settledOn(reader, 1)
 
-    expect(next.begin.spineItemIndex).toBe(0)
+    expect(next.begin.spineItemIndex).toBe(1)
   })
 
   it("does not settle on a layout replaced while its pages are being published", async () => {
@@ -586,9 +615,16 @@ describe("pagination settlement", () => {
     mountTestReader(reader)
     await settledOn(reader, 0)
 
+    // settled while a pending layout can change an item the result describes
     const settledWhileStale: PaginationInfo[] = []
     reader.pagination.state$.subscribe((state) => {
-      if (state.isSettled && !reader.spine.isLayoutCurrent()) {
+      const lastItemIndex = state.end.spineItemIndex
+
+      if (
+        state.isSettled &&
+        (lastItemIndex === undefined ||
+          !reader.spine.isLayoutCurrentFor(lastItemIndex))
+      ) {
         settledWhileStale.push(state)
       }
     })
