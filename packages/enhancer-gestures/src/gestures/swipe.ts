@@ -1,8 +1,8 @@
-import type { HookManager, Reader } from "@prose-reader/core"
+import type { Reader } from "@prose-reader/core"
 import type { SwipeEvent } from "gesturx"
 import { EMPTY, filter, map, switchMap, tap } from "rxjs"
 import type { GesturesSettingsManager } from "../SettingsManager"
-import type { GestureEvent, GestureRecognizable, Hook } from "../types"
+import type { GestureEvent, GestureRecognizable } from "../types"
 
 const isSwipeEvent = (event: GestureEvent["event"]): event is SwipeEvent =>
   event.type === "swipe"
@@ -14,7 +14,6 @@ export const registerSwipe = ({
 }: {
   recognizable: GestureRecognizable
   reader: Reader
-  hookManager: HookManager<Hook>
   settingsManager: GesturesSettingsManager
 }) => {
   const gestures$ = settingsManager.values$.pipe(

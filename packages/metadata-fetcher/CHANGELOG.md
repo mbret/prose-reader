@@ -3,6 +3,64 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## [36.0.0](https://github.com/mbret/prose-reader/compare/v35.0.1...v36.0.0) (2026-10-29)
+
+**Note:** Version bump only for package @prose-reader/metadata-fetcher
+
+
+
+
+
+## [35.0.0](https://github.com/mbret/prose-reader/compare/v34.0.0...v35.0.0) (2026-10-28)
+
+**Note:** Version bump only for package @prose-reader/metadata-fetcher
+
+
+
+
+
+## [34.0.0](https://github.com/mbret/prose-reader/compare/v33.0.0...v34.0.0) (2026-10-24)
+
+### Features
+
+* **metadata-fetcher:** export the default minScore ([4c8a88c](https://github.com/mbret/prose-reader/commit/4c8a88c62db3c4e4e7e06674fe466b1fcbc1307a))
+
+
+## [33.0.0](https://github.com/mbret/prose-reader/compare/v32.0.0...v33.0.0) (2026-10-23)
+
+**Note:** Version bump only for package @prose-reader/metadata-fetcher
+
+
+
+
+
+## [32.0.0](https://github.com/mbret/prose-reader/compare/v31.0.0...v32.0.0) (2026-10-21)
+
+**Note:** Version bump only for package @prose-reader/metadata-fetcher
+
+
+
+
+
+## [31.0.0](https://github.com/mbret/prose-reader/compare/v30.3.0...v31.0.0) (2026-10-21)
+
+**Note:** Version bump only for package @prose-reader/metadata-fetcher
+
+
+
+
+
+## [30.3.0](https://github.com/mbret/prose-reader/compare/v30.2.0...v30.3.0) (2026-10-21)
+
+### Features
+
+* **metadata-fetcher:** export FETCHED_METADATA_VERSION ([86e8f72](https://github.com/mbret/prose-reader/commit/86e8f720dc3eabd7021f200ec5ae22b6fc55f575))
+
+### Performance Improvements
+
+* **metadata-fetcher:** let bundlers drop what the imports do not reach ([2bd393c](https://github.com/mbret/prose-reader/commit/2bd393c68d78a9e686165ac666e1c7ff4aea5d89))
+
+
 ## [30.2.0](https://github.com/mbret/prose-reader/compare/v30.1.2...v30.2.0) (2026-10-20)
 
 **Note:** Version bump only for package @prose-reader/metadata-fetcher
