@@ -1,7 +1,7 @@
 /* @vitest-environment happy-dom */
 
 import { ChakraProvider, defaultSystem } from "@chakra-ui/react"
-import type { CoreInputSettings } from "@prose-reader/core"
+import type { CoreInputSettings, Theme } from "@prose-reader/core"
 import { act, type ComponentProps, type ReactNode, useState } from "react"
 import { createRoot } from "react-dom/client"
 import { BehaviorSubject } from "rxjs"
@@ -9,6 +9,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
 
 type ManagedReaderSettings = Pick<CoreInputSettings, "spreadMode"> & {
   fontScale: number
+  theme?: Theme
 }
 
 /**
@@ -233,6 +234,15 @@ describe(`SyncReaderWithManagedSettings`, () => {
     await render({ reader: undefined, settings: { spreadMode: `never` } })
 
     expect(reader.settings.values.spreadMode).toBe(`never`)
+  })
+
+  it(`writes the app's theme into the reader at once`, async () => {
+    const reader = createReaderWithSettings({ theme: `bright` })
+    testReader.set(reader)
+
+    await render({ reader: undefined, settings: { theme: `night` } })
+
+    expect(reader.settings.values.theme).toBe(`night`)
   })
 
   it(`takes a setting's value from its scope, and from the global values when its scope has none`, async () => {

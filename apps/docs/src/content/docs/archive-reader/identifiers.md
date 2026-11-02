@@ -44,7 +44,7 @@ const isbn = identifierValue(metadata.identifiers, "ISBN") // "9780441013593" | 
 const gtin = identifierValue(metadata.identifiers, "GTIN") // "9780441013593" | undefined
 ```
 
-One function answers for every scheme it can derive — `ISBN`, `GTIN`, `GoogleBooks`, `OpenLibrary`, `ProjectGutenberg` and `DOI` — so the options are visible at the call site rather than being separate exports to discover.
+One function answers for every scheme it can derive — `ISBN`, `GTIN`, `GoogleBooks`, `OpenLibrary`, `ProjectGutenberg`, `DOI` and `UUID` — so the options are visible at the call site rather than being separate exports to discover.
 
 Asking for either reads `ISBN` **and** `GTIN` identifiers, because the two are one namespace in practice: an ISBN-13 *is* a GTIN-13 in the Bookland (`978`/`979`) range, and [ComicInfo](#comicinfo) has no ISBN field at all — a comic announces its ISBN through `GTIN`, which stays labelled `GTIN` because that is what the source said. Filtering on `scheme === "ISBN"` therefore silently misses every comic ISBN, and filtering on `GTIN` misses every EPUB one. `isIsbnBearingScheme(scheme)` is exported for code that needs the same scheme test on its own, and `normalizeIdentifierScheme(scheme)` for code comparing a scheme it was handed: publications author these by hand, so `opf:scheme="isbn"` and an `identifier-type` of `ISBN` name the one namespace. A scheme outside the vocabulary keeps the spelling the publication chose.
 
@@ -59,7 +59,7 @@ const volume = identifierValue(metadata.identifiers, "GoogleBooks")
 // "k028AAAACAAJ" | undefined
 ```
 
-It accepts `GoogleBooks`, `OpenLibrary`, `ProjectGutenberg` and `DOI`, canonicalizing the authored value — a padded Gutenberg number, a bare Open Library id, a `doi:`-prefixed name. A reference URL is only read when the publication left the identifier untyped (`URL`, `Unknown`, or a `uri` custom scheme): an identifier another catalog already claims is left alone.
+It accepts `GoogleBooks`, `OpenLibrary`, `ProjectGutenberg` and `DOI`, canonicalizing the authored value — a padded Gutenberg number, a bare Open Library id, a `doi:`-prefixed name. A reference URL is only read when the identifier's scheme says how the value is written rather than what assigned it (`URL`, `URN`, `Unknown`, or a `uri` custom scheme): an identifier another catalog already claims is left alone.
 
 `catalogIdentifierFromUrl` exposes the same crosswalk for a single URL, for code holding a link rather than a metadata list:
 
@@ -84,6 +84,33 @@ None of this rewrites anything: `identifiers` still reports the authored URL as 
 The authored `value` needs normalizing before use: it is preserved as the publication wrote it, so it arrives hyphenated (`978-0-441-01359-3`), prefixed (`urn:isbn:9780441013593`), or padded with free text. It returns the canonical form — 10 or 13 characters for an ISBN, digits only for a GTIN.
 
 Asking for an `ISBN` also declines a value that is not a book number, whichever scheme announced it. A retail barcode scanned off a comic's cover (`4006381333931`) is a valid GTIN-13 but sits outside the Bookland range, so it is not reported as an ISBN even when the publication labels it `opf:scheme="ISBN"`. A barcode of another GTIN length is not reduced to its leading digits either: no ISBN is carved out of a longer number the publication printed. Only the derivation declines — the identifier itself stays in `identifiers` exactly as authored, so nothing is lost. Check digits are not verified: a mistyped one still identifies the intended book.
+
+### UUIDs and URNs
+
+An EPUB's unique identifier is usually a UUID, written `urn:uuid:a1b0d67e-…`, or bare under calibre's `opf:scheme="uuid"`. Both resolve to the `UUID` scheme, and `identifierValue` reads them as one value: the bare UUID, in the lower case RFC 9562 writes it in, since it reads the hex digits in either case.
+
+```typescript
+identifierValue(
+  [{ value: "urn:uuid:A1B0D67E-2E81-4DF5-9E67-A64CBE366809", scheme: "UUID" }],
+  "UUID",
+)
+// "a1b0d67e-2e81-4df5-9e67-a64cbe366809"
+```
+
+A `URN` or untyped identifier answers only as a `urn:uuid:`: a bare UUID an untyped identifier carries is not reinterpreted, as with a catalog's bare id.
+
+`parseUrn` splits any URN into the namespace it names and its name in that namespace, following RFC 8141, for code comparing or routing URNs:
+
+```typescript
+import { parseUrn } from "@prose-reader/archive-reader"
+
+parseUrn("urn:nbn:de:101:1-2011")
+// { namespaceIdentifier: "nbn", namespaceSpecificString: "de:101:1-2011" }
+
+parseUrn("urn:example:[x]") // undefined: RFC 8141 does not allow it
+```
+
+The namespace identifier comes back in lower case, since RFC 8141 does not distinguish its case, and the namespace-specific string as written. The optional `?+`, `?=` and `#` components are checked and left out, because RFC 8141 does not count them when it compares two URNs.
 
 ## EPUB and OPF
 
