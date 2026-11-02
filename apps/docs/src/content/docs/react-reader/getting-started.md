@@ -142,7 +142,7 @@ const settingsRef = useLiveRef(readerSettings)
 <ReactReader reader={reader} settings={readerSettings} /* ... */ />
 ```
 
-To follow your app's mode again once the user has picked a theme, remove `theme` from the saved settings.
+The Theme dialog shows the theme for your app's mode as checked, and picking it again reports nothing. To keep that theme after your app's mode changes, the user picks another theme, then this one. To follow your app's mode again once the user has picked a theme, remove `theme` from the saved settings.
 
 The package exports the types of these props: `ReactReaderSettings` for the values, `ReactReaderSettingsScope` and `ReactReaderSettingsScopeReference` for the scopes below, and `ReactReaderProps` for every prop of `ReactReader`.
 
