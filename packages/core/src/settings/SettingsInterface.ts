@@ -17,7 +17,7 @@ export interface SettingsInterface<
    * The value each setting starts from when it is given none, the settings
    * `extend` added included.
    */
-  readonly defaults: InputSettings
+  readonly defaults: Readonly<InputSettings>
 
   values$: Observable<OutputSettings>
 
