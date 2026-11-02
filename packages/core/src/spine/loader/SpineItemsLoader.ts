@@ -15,6 +15,7 @@ import {
   withLatestFrom,
 } from "rxjs"
 import type { Context } from "../../context/Context"
+import type { Navigator } from "../../navigation/Navigator"
 import type { NavigationAgainstCurrentLayout } from "../../navigation/types"
 import type { ReaderSettingsManager } from "../../settings/ReaderSettingsManager"
 import type { SpineItemReference } from "../../spineItem/SpineItem"
@@ -39,6 +40,8 @@ export class SpineItemsLoader extends DestroyableClass {
     protected viewport: Viewport,
     /** See `InternalNavigator.navigationAgainstCurrentLayout$`. */
     navigationAgainstCurrentLayout$: Observable<NavigationAgainstCurrentLayout>,
+    /** What the screen shows at a navigation's position, zoom included. */
+    getVisibleSlice: Navigator["getVisibleSlice"],
   ) {
     super()
 
@@ -72,13 +75,13 @@ export class SpineItemsLoader extends DestroyableClass {
     )
 
     /**
-     * The items in view around which the window is measured, as the viewport
-     * shows them, zoom included. Zoomed out it shows more items than the
-     * navigation holds over, which is what pagination shows: a layout of one
-     * of those leaves the navigation holding, yet the places of that item and
-     * the ones after it are unknown until the layout is done. So the window
-     * also waits for the layout of every item in view, and is measured once
-     * its pages are published.
+     * The items in view around which the window is measured, as the screen
+     * shows them at the navigation's position, zoom included. Zoomed out it
+     * shows more items than the navigation holds over, which is what
+     * pagination shows: a layout of one of those leaves the navigation
+     * holding, yet the places of that item and the ones after it are unknown
+     * until the layout is done. So the window also waits for the layout of
+     * every item in view, and is measured once its pages are published.
      */
     const visibleSpineItemsToMeasureFrom$ = combineLatest([
       navigationToMeasureFrom$,
@@ -86,10 +89,9 @@ export class SpineItemsLoader extends DestroyableClass {
     ]).pipe(
       map(([{ position }, spineState]) => {
         const { beginIndex = 0, endIndex = 0 } =
-          spine.locator.getVisibleSpineItemsFromPosition({
-            position,
+          spine.locator.getVisibleSpineItemsFromSlice({
+            slice: getVisibleSlice(position),
             threshold: { type: "percentage", value: 0 },
-            useAbsoluteViewport: false,
           }) || {}
 
         return Spine.isLayoutCurrentFor(spineState, endIndex)

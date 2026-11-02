@@ -131,7 +131,10 @@ Navigation and pagination compute with it, see
 
 The area the viewport shows once transformed, such as by a zoom: the absolute
 viewport divided by `.scaleFactor`. Zoomed out to half the size, it is twice as
-large as the absolute viewport.
+large as the absolute viewport. Which part of the book it shows depends on how
+the navigation mode zooms:
+[`reader.navigation.getVisibleSlice()`](/core-api/navigation#getvisibleslice)
+gives it.
 
 ### `.scaleFactor` { #scalefactor }
 
