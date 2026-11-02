@@ -74,6 +74,45 @@ describe("the reader's settings", () => {
     )
   })
 
+  it("keep each setting's declared default in their defaults, whatever it was created with or updated to", () => {
+    const reader = createFullTestReader({
+      fontScale: 1.5,
+      spreadMode: `never`,
+      theme: `night`,
+    })
+
+    reader.settings.update({
+      fontScale: 2,
+      spreadMode: `always`,
+      theme: `sepia`,
+    })
+
+    expect(reader.settings.defaults).toEqual(
+      expect.objectContaining({
+        fontScale: 1,
+        spreadMode: `auto`,
+        theme: `bright`,
+      }),
+    )
+  })
+
+  it("add the defaults an enhancer declares to their defaults, not the values it was created with", () => {
+    const withTooltipDelay = createEnhancerAddingSettings({ tooltipDelay: 500 })
+    const reader = withTooltipDelay(createReaderWithEnhancers)({
+      manifest: createPrePaginatedManifest(),
+      tooltipDelay: 300,
+    })
+
+    onTestFinished(() => reader.destroy())
+
+    expectTypeOf<typeof reader.settings.defaults>()
+      .toHaveProperty(`tooltipDelay`)
+      .toEqualTypeOf<number>()
+    expect(reader.settings.defaults).toEqual(
+      expect.objectContaining({ tooltipDelay: 500, fontScale: 1 }),
+    )
+  })
+
   it("hold no enhancer's setting in a reader without enhancers, whatever its options carry", () => {
     const optionsWithAFontsSetting = {
       manifest: createPrePaginatedManifest(),
