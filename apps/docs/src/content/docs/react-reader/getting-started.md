@@ -86,7 +86,7 @@ const useReaderInstance = (
 
 ## Settings
 
-react-reader manages the reader settings the user changes from its menus: the font scale from the font size menu, the spread mode from the Layout dialog, and the theme from the Theme dialog. The theme colors the book, not react-reader's own interface, which follows its Chakra UI theme.
+react-reader manages three of the reader's settings. The user changes each from one of its menus: the font scale from the Font size dialog, the spread mode from the Layout dialog, and the theme from the Theme dialog. The theme colors the book. react-reader's own interface follows your Chakra UI theme.
 
 react-reader writes these settings into the reader. Keep them in your app: pass them as `settings`, in the shape `reader.settings` has, and merge what `onSettingsChange` reports into them:
 
@@ -116,21 +116,10 @@ const [settings, setSettings] = useState<ReactReaderSettings>(savedSettings)
 
 A setting you give no value keeps react-reader's own, for as long as it is mounted. It starts from the value the reader was created with, which is not a change and is not reported. A change in the menus, or one made on the reader directly, still reaches `onSettingsChange`.
 
-To start the theme from your app's light or dark mode, give that theme while the user has not picked one. The theme then follows your app's mode until they pick one:
-
-```tsx
-const readerSettings = {
-  ...settings,
-  theme: settings.theme ?? (colorMode === "dark" ? "night" : "bright"),
-}
-
-<ReactReader reader={reader} settings={readerSettings} /* ... */ />
-```
-
-react-reader writes the values you give into the reader once it renders with it. Create your reader with the same values, so it starts on them rather than switching to them: a reader created without your theme shows `bright` until then. Read the values when you create the reader, without making them a reason to create it again, since react-reader keeps the reader on them afterwards. In `useReaderInstance`, a ref does that:
+react-reader writes the values you give into the reader once it renders with it. Create your reader with the same values, so it starts on them rather than switching to them: a reader created without the saved theme shows `bright` until then. Read the values when you create the reader, without making them a reason to create it again, since react-reader keeps the reader on them afterwards. In `useReaderInstance`, a ref does that:
 
 ```typescript
-const settingsRef = useLiveRef(readerSettings)
+const settingsRef = useLiveRef(settings)
 
 useEffect(() => {
   // ...
@@ -140,6 +129,20 @@ useEffect(() => {
 ```
 
 `useLiveRef` comes from [reactjrx](https://github.com/mbret/reactjrx). A setting left `undefined`, as before anything is saved, keeps its default.
+
+The theme can follow your app's light or dark mode until the user picks one. Give the theme for that mode while `settings.theme` is undefined, to `ReactReader` and to the reader you create alike:
+
+```tsx
+const readerSettings = {
+  ...settings,
+  theme: settings.theme ?? (colorMode === "dark" ? "night" : "bright"),
+}
+const settingsRef = useLiveRef(readerSettings)
+
+<ReactReader reader={reader} settings={readerSettings} /* ... */ />
+```
+
+To follow your app's mode again once the user has picked a theme, remove `theme` from the saved settings.
 
 The package exports the types of these props: `ReactReaderSettings` for the values, `ReactReaderSettingsScope` and `ReactReaderSettingsScopeReference` for the scopes below, and `ReactReaderProps` for every prop of `ReactReader`.
 
