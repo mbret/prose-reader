@@ -23,7 +23,7 @@ const steps = [
   {
     title: "Serve the book",
     description:
-      "A streamer, in a service worker or on your server, turns an EPUB, a comic archive or a PDF into a manifest and the resources it lists.",
+      "A streamer, in a service worker or on your server, turns a book into a manifest and the resources it lists.",
     code: `const manifest = await fetch(
   "/streamer/my-book/manifest",
 ).then((res) => res.json())`,

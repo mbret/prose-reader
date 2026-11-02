@@ -3,6 +3,89 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## [36.0.0](https://github.com/mbret/prose-reader/compare/v35.0.1...v36.0.0) (2026-10-29)
+
+### ⚠ BREAKING CHANGES
+
+* **core:** give the spine a state, with its element and the first item awaiting layout
+
+### Code Refactoring
+
+* **core:** give the spine a state, with its element and the first item awaiting layout ([28efcd4](https://github.com/mbret/prose-reader/commit/28efcd41a9ed7dca52617cdb444b87667fea270a))
+
+
+## [35.0.1](https://github.com/mbret/prose-reader/compare/v35.0.0...v35.0.1) (2026-10-28)
+
+### Bug Fixes
+
+* **react-reader:** do not report the values a reader starts with ([bc05daf](https://github.com/mbret/prose-reader/commit/bc05daff49eb49306fc25ad072caef8d2d2e97d8))
+
+
+## [35.0.0](https://github.com/mbret/prose-reader/compare/v34.0.0...v35.0.0) (2026-10-28)
+
+### ⚠ BREAKING CHANGES
+
+* **react-reader:** the ReactReader props `fontSize`, `onFontSizeChange`,
+  `fontSizeScope`, `onFontSizeScopeChange`, `fontSizeValues`, `spreadMode`,
+  `onSpreadModeChange`, `spreadModeScope`, `onSpreadModeScopeChange` and
+  `spreadModeValues` are replaced by `settings`, `onSettingsChange`,
+  `settingsByScope`, `settingsScopes` and `onSettingsScopesChange`, keyed
+  by `fontScale` and `spreadMode`. A change is reported as
+  `onSettingsChange({ fontScale: 1.5 }, "book")` rather than
+  `onFontSizeChange("book", 1.5)`. A setting whose scope has no value takes
+  the global one.
+
+### Features
+
+* **react-reader:** export the types of the settings props ([7663968](https://github.com/mbret/prose-reader/commit/7663968adc74e481385c48e26522c5d67053526a))
+* **react-reader:** take back in settingsScopes the scopes the app is given ([4579aa0](https://github.com/mbret/prose-reader/commit/4579aa0eab0a6a1203cacf50019e9c7de341d27e))
+* **react-reader:** take the menu settings as one partial with one change callback ([6ef4598](https://github.com/mbret/prose-reader/commit/6ef459859603a45f11e4f8998cfb7deba8fe0be4))
+
+### Bug Fixes
+
+* **react-reader:** show in a scope's tab the value that scope applies ([98b29df](https://github.com/mbret/prose-reader/commit/98b29dffcdb68cd39329605e6257b31b37ebd1e4))
+* **react-reader:** write a setting into the reader at once, the font scale once per drag ([1c0d2fa](https://github.com/mbret/prose-reader/commit/1c0d2fabf54d3adbe2e5b94ab2bc772e72b475f4))
+
+
+## [34.0.0](https://github.com/mbret/prose-reader/compare/v33.0.0...v34.0.0) (2026-10-24)
+
+**Note:** Version bump only for package @prose-reader/react-reader
+
+
+
+
+
+## [33.0.0](https://github.com/mbret/prose-reader/compare/v32.0.0...v33.0.0) (2026-10-23)
+
+**Note:** Version bump only for package @prose-reader/react-reader
+
+
+
+
+
+## [32.0.0](https://github.com/mbret/prose-reader/compare/v31.0.0...v32.0.0) (2026-10-21)
+
+### ⚠ BREAKING CHANGES
+
+* **react-reader:** `@prose-reader/react-reader` takes `react` and
+  `react-dom` 19.x as peer dependencies.
+* `@prose-reader/react-reader` takes `reactjrx` 2.x as a
+  peer dependency. Apps using it upgrade reactjrx to 2.x.
+
+### Miscellaneous Chores
+
+* move to reactjrx 2 ([c56bc9e](https://github.com/mbret/prose-reader/commit/c56bc9e2c405139f1a374cc25080317d98eddd13))
+* **react-reader:** require React 19 ([20c3548](https://github.com/mbret/prose-reader/commit/20c3548ec93de85e177dae6ca8ca7720432c30bd))
+
+
+## [31.0.0](https://github.com/mbret/prose-reader/compare/v30.3.0...v31.0.0) (2026-10-21)
+
+**Note:** Version bump only for package @prose-reader/react-reader
+
+
+
+
+
 ## [30.2.0](https://github.com/mbret/prose-reader/compare/v30.1.2...v30.2.0) (2026-10-20)
 
 **Note:** Version bump only for package @prose-reader/react-reader

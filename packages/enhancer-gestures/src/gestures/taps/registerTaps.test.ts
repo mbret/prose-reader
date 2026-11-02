@@ -51,10 +51,6 @@ const createTapEvent = (
 const createDefaultSettings = (): OutputSettings => ({
   panNavigation: false,
   pinchCancelPan: true,
-  fontScalePinchEnabled: true,
-  fontScalePinchThrottleTime: 500,
-  fontScaleMaxScale: 5,
-  fontScaleMinScale: 0.2,
   zoomMaxScale: Infinity,
   ignore: [],
 })
@@ -95,7 +91,7 @@ const createHarness = ({
       watch: () => of(containerElement),
     },
     spine: {
-      element$: of(spineElement),
+      watch: () => of(spineElement),
       locator: {
         getSpineItemPagePositionFromSpinePosition: vi.fn(),
       },

@@ -8,12 +8,14 @@ import type { DocumentLoadStatus } from "../spineItem/renderer/DocumentRenderer"
 import { DocumentRenderer } from "../spineItem/renderer/DocumentRenderer"
 import {
   createEnhancedTestReader,
+  createPrePaginatedManifest,
   createTestReader,
   holdItem,
   holdItemDocumentLoadHooks,
   installReaderTestEnvironment,
   mountTestReader,
   renderTextDocuments,
+  requestLayoutByUnloadingItem,
   setTestViewport,
   settledOn,
   TextDocumentRenderer,
@@ -1064,4 +1066,159 @@ describe("reading position of a cfi into a document", () => {
       ])
     },
   )
+})
+
+describe("reading position while the spine is laid out again", () => {
+  /** Three items of one page each, every one loaded by default. */
+  const createThreeItemsTestReader = () =>
+    createTestReader({
+      manifest: createPrePaginatedManifest({
+        pageSpreads: [undefined, undefined, undefined],
+      }),
+    })
+
+  const getItem = (
+    reader: ReturnType<typeof createTestReader>,
+    index: number,
+  ) => {
+    const item = reader.spineItemsManager.get(index)
+
+    if (!item) throw new Error(`item ${index} is missing`)
+
+    return item
+  }
+
+  it("is the page a turn goes to at once, when the layout can only move later items", async () => {
+    const reader = createThreeItemsTestReader()
+
+    mountTestReader(reader)
+    reader.navigation.goToSpineItem({ indexOrId: 1, animation: false })
+    await settledOn(reader, 1)
+
+    // The third item is laid out again, and the spine with it from there.
+    await requestLayoutByUnloadingItem(reader, 2)
+
+    expect(reader.spine.isLayoutCurrentFor(0)).toBe(true)
+
+    const positions: ReadingPosition[] = []
+    reader.navigation.readingPosition$
+      .pipe(skip(1))
+      .subscribe((position) => positions.push(position))
+
+    reader.navigation.turnLeft()
+
+    const settled = await settledOn(reader, 0)
+
+    /**
+     * The first item's page is the one the reader shows, whatever the third
+     * item's layout does to the spine after it: the turn's place is known when
+     * the turn happens, and nothing stands in for it.
+     */
+    expect(positions).toEqual([
+      {
+        cfi: settled.begin.cfi,
+        percentageEstimateOfBook: 0,
+        status: "success",
+      },
+    ])
+  })
+
+  it("is the place a cfi names at once, in an item the layout cannot move", async () => {
+    const cfiNamingTextInFirstItem = "epubcfi(/6/2[0]!/4/2/1:2)"
+    const reader = createTestReader({ getRenderer: renderTextDocuments })
+
+    mountTestReader(reader)
+    await settledOn(reader, 0)
+
+    // The second item is laid out again, and the spine with it from there.
+    await requestLayoutByUnloadingItem(reader, 1)
+
+    expect(reader.spine.isLayoutCurrentFor(0)).toBe(true)
+
+    const positions: ReadingPosition[] = []
+    reader.navigation.readingPosition$
+      .pipe(skip(1))
+      .subscribe((position) => positions.push(position))
+
+    reader.navigation.goToCfi(cfiNamingTextInFirstItem, { animate: false })
+    await settledOn(reader, 0)
+
+    /**
+     * The first item keeps its place and its document, which shows the place
+     * the cfi names: the page holding it is known when the navigation
+     * happens, and nothing stands in for it.
+     */
+    expect(positions).toEqual([
+      {
+        cfi: cfiNamingTextInFirstItem,
+        percentageEstimateOfBook: 0,
+        status: "success",
+      },
+    ])
+  })
+
+  it("is its item's start while the layout can move that item, and its page once laid out", async () => {
+    const reader = createThreeItemsTestReader()
+
+    mountTestReader(reader)
+    reader.navigation.goToSpineItem({ indexOrId: 2, animation: false })
+    await settledOn(reader, 2)
+
+    /**
+     * The second item, before the third, is laid out again: until the spine
+     * is laid out again the third item's place, and so the page at a position
+     * in it, is not known.
+     */
+    await requestLayoutByUnloadingItem(reader, 1)
+
+    expect(reader.spine.isLayoutCurrentFor(2)).toBe(false)
+
+    reader.navigation.goToSpineItem({ indexOrId: 2, animation: false })
+
+    expect(await firstValueFrom(reader.navigation.readingPosition$)).toEqual({
+      cfi: reader.cfi.generateRootCfi(getItem(reader, 2).item),
+      percentageEstimateOfBook: 2 / 3,
+      status: "pending",
+    })
+
+    const settled = await settledOn(reader, 2)
+
+    expect(await firstValueFrom(reader.navigation.readingPosition$)).toEqual({
+      cfi: settled.begin.cfi,
+      percentageEstimateOfBook: 2 / 3,
+      status: "success",
+    })
+  })
+
+  it("is its item's start while a layout of the reader is pending, and its page once laid out", async () => {
+    const reader = createThreeItemsTestReader()
+
+    mountTestReader(reader)
+    reader.navigation.goToSpineItem({ indexOrId: 1, animation: false })
+    await settledOn(reader, 1)
+
+    /**
+     * As a resize or a setting asks for: the viewport it measures can change
+     * every page, the first item's included.
+     */
+    reader.layout()
+
+    expect(reader.spine.isLayoutCurrentFor(0)).toBe(false)
+
+    reader.navigation.turnLeft()
+
+    expect(await firstValueFrom(reader.navigation.readingPosition$)).toEqual({
+      cfi: reader.cfi.generateRootCfi(getItem(reader, 0).item),
+      percentageEstimateOfBook: 0,
+      status: "pending",
+    })
+
+    const settled = await settledOn(reader, 0)
+
+    expect(await firstValueFrom(reader.navigation.readingPosition$)).toEqual({
+      cfi: settled.begin.cfi,
+      percentageEstimateOfBook: 0,
+      status: "success",
+    })
+  })
 })

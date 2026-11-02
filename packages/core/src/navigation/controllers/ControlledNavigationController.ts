@@ -70,7 +70,7 @@ export class ControlledNavigationController
       context.document.createElement(`div`),
     )
 
-    const elementInit$ = this.spine.element$.pipe(
+    const elementInit$ = this.spine.watch("element").pipe(
       filter(isDefined),
       withLatestFrom(this.element$),
       tap(([spineElement, element]) => {

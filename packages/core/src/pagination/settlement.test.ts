@@ -8,6 +8,7 @@ import {
   skip,
 } from "rxjs"
 import { describe, expect, it, vi } from "vitest"
+import { Spine } from "../spine/Spine"
 import {
   createEnhancedTestReader,
   createTestReader,
@@ -339,8 +340,8 @@ describe("pagination settlement", () => {
 
     otherItem.release()
     await firstValueFrom(
-      reader.spine.isLayoutCurrent$.pipe(
-        filter((isLayoutCurrent) => !isLayoutCurrent),
+      reader.spine.pipe(
+        filter((spineState) => !Spine.isLayoutCurrent(spineState)),
       ),
     )
 
@@ -369,8 +370,8 @@ describe("pagination settlement", () => {
 
     otherItem.release()
     await firstValueFrom(
-      reader.spine.isLayoutCurrent$.pipe(
-        filter((isLayoutCurrent) => !isLayoutCurrent),
+      reader.spine.pipe(
+        filter((spineState) => !Spine.isLayoutCurrent(spineState)),
       ),
     )
 
@@ -565,8 +566,8 @@ describe("pagination settlement", () => {
 
     otherItem.release()
     await firstValueFrom(
-      reader.spine.isLayoutCurrent$.pipe(
-        filter((isLayoutCurrent) => !isLayoutCurrent),
+      reader.spine.pipe(
+        filter((spineState) => !Spine.isLayoutCurrent(spineState)),
       ),
     )
 
@@ -587,7 +588,7 @@ describe("pagination settlement", () => {
 
     const settledWhileStale: PaginationInfo[] = []
     reader.pagination.state$.subscribe((state) => {
-      if (state.isSettled && !reader.spine.isLayoutCurrent) {
+      if (state.isSettled && !reader.spine.isLayoutCurrent()) {
         settledWhileStale.push(state)
       }
     })

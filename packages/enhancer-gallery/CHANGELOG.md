@@ -3,6 +3,88 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## [36.0.0](https://github.com/mbret/prose-reader/compare/v35.0.1...v36.0.0) (2026-10-29)
+
+**Note:** Version bump only for package @prose-reader/enhancer-gallery
+
+
+
+
+
+## [35.0.0](https://github.com/mbret/prose-reader/compare/v34.0.0...v35.0.0) (2026-10-28)
+
+**Note:** Version bump only for package @prose-reader/enhancer-gallery
+
+
+
+
+
+## [34.0.0](https://github.com/mbret/prose-reader/compare/v33.0.0...v34.0.0) (2026-10-24)
+
+### ⚠ BREAKING CHANGES
+
+* **deps:** `@prose-reader/core` is now a peer dependency of
+  `@prose-reader/enhancer-gallery`, `enhancer-audio`, `enhancer-gestures`
+  and `enhancer-search`. Install the core the enhancer was released with,
+  or a later one of the same major: npm refuses to install the enhancer
+  next to any other, and pnpm and yarn report an unmet peer, where a
+  second core used to be installed.
+* **core:** the reader no longer exposes its spine items loader,
+  `reader.spine.spineItemsLoader` in 32.x. Call
+  `reader.keepSpineItemLoaded(spineItem)` for each spine item instead of
+  its `forceOpen(spineItems)`: it takes an index, an id or a SpineItem,
+  and its release releases once however many times it is called.
+  `reader.destroy()` destroys the loader.
+
+### Bug Fixes
+
+* **deps:** make @prose-reader/core a peer of the gallery, audio, gestures and search enhancers ([8591888](https://github.com/mbret/prose-reader/commit/8591888fa3b9bdd07100e75a02cbab6e49279321)), references [#597](https://github.com/mbret/prose-reader/issues/597)
+
+### Code Refactoring
+
+* **core:** replace reader.spineItemsLoader with reader.keepSpineItemLoaded() ([2c40b04](https://github.com/mbret/prose-reader/commit/2c40b04d4d2996a02bbaa01e068b56adf208be93))
+
+
+## [33.0.0](https://github.com/mbret/prose-reader/compare/v32.0.0...v33.0.0) (2026-10-23)
+
+### ⚠ BREAKING CHANGES
+
+* **core:** `reader.spine.spineItemsLoader` is now
+  `reader.spineItemsLoader`. `reader.context.bridgeEvent` no longer carries
+  `navigation$`, `position$` and `pagination$`, nor their subjects: read
+  `reader.navigation.navigation$`, `reader.navigation.position$` and
+  `reader.pagination.state$`. The `Spine` constructor no longer takes a
+  `Pagination`.
+
+### Features
+
+* **core:** export the background each theme paints ([15777de](https://github.com/mbret/prose-reader/commit/15777ded1e157612a81f21f251b3d66022170ecb))
+
+### Bug Fixes
+
+* **enhancer-gallery:** paint the reader's theme behind a snapshot's page ([fb90d5f](https://github.com/mbret/prose-reader/commit/fb90d5f923fb5b69d12ed736986238f46031ebce))
+
+### Code Refactoring
+
+* **core:** let the navigator own which navigation holds on the current layout ([0c102de](https://github.com/mbret/prose-reader/commit/0c102dee8e542a4fbcdadca0f85bde4d1569d262)), closes [#596](https://github.com/mbret/prose-reader/issues/596)
+
+
+## [32.0.0](https://github.com/mbret/prose-reader/compare/v31.0.0...v32.0.0) (2026-10-21)
+
+**Note:** Version bump only for package @prose-reader/enhancer-gallery
+
+
+
+
+
+## [31.0.0](https://github.com/mbret/prose-reader/compare/v30.3.0...v31.0.0) (2026-10-21)
+
+**Note:** Version bump only for package @prose-reader/enhancer-gallery
+
+
+
+
+
 ## [30.2.0](https://github.com/mbret/prose-reader/compare/v30.1.2...v30.2.0) (2026-10-20)
 
 **Note:** Version bump only for package @prose-reader/enhancer-gallery

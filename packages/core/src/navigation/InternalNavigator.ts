@@ -24,7 +24,7 @@ import type { CfiManager } from "../cfi"
 import type { Context } from "../context/Context"
 import { Report } from "../report"
 import type { ReaderSettingsManager } from "../settings/ReaderSettingsManager"
-import type { Spine } from "../spine/Spine"
+import { Spine } from "../spine/Spine"
 import { SpinePosition } from "../spine/types"
 import { DestroyableClass } from "../utils/DestroyableClass"
 import { isDefined } from "../utils/isDefined"
@@ -195,6 +195,15 @@ export class InternalNavigator extends DestroyableClass {
     super()
 
     /**
+     * Whether the pages describe every item: a navigation holds only then,
+     * whichever items a pending layout can change.
+     */
+    const isLayoutCurrent$ = spine.pipe(
+      map(Spine.isLayoutCurrent),
+      distinctUntilChanged(),
+    )
+
+    /**
      * Any change of layout currency voids the latest navigation: a request
      * replaces the layout it was made over, and pages being published make
      * current a layout it was not restored onto yet.
@@ -205,7 +214,7 @@ export class InternalNavigator extends DestroyableClass {
      */
     this.navigationAgainstCurrentLayout$ = merge(
       this.navigation$,
-      spine.isLayoutCurrent$.pipe(
+      isLayoutCurrent$.pipe(
         // Changes only: the current value is replayed on subscription.
         skip(1),
         map((): typeof layoutCurrencyChanged => layoutCurrencyChanged),
@@ -223,7 +232,7 @@ export class InternalNavigator extends DestroyableClass {
               }
             : {
                 navigation: change,
-                holdsOnCurrentLayout: spine.isLayoutCurrent,
+                holdsOnCurrentLayout: spine.isLayoutCurrent(),
               },
         undefined,
       ),

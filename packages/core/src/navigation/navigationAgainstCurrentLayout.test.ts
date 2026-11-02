@@ -98,7 +98,7 @@ describe("the navigation against the current layout", () => {
 
     // The navigation has been made, over the layout being replaced.
     expect(navigation.triggeredBy).toBe("user")
-    expect(reader.spine.isLayoutCurrent).toBe(false)
+    expect(reader.spine.isLayoutCurrent()).toBe(false)
     expect(reported?.navigation).toBe(navigation)
     expect(reported?.holdsOnCurrentLayout).toBe(false)
 
