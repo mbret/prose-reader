@@ -1,14 +1,9 @@
-import type { CoreInputSettings, Theme } from "@prose-reader/core"
 import { BehaviorSubject } from "rxjs"
 import { vi } from "vitest"
 import type { PublicContextType } from "../context/context"
+import type { ManagedSettingValues } from "../settings/managedSettings"
 
-type ManagedReaderSettings = Pick<CoreInputSettings, "spreadMode"> & {
-  fontScale: number
-  theme: Theme
-}
-
-const READER_DEFAULT_SETTINGS: ManagedReaderSettings = {
+const READER_DEFAULT_SETTINGS: ManagedSettingValues = {
   fontScale: 1,
   spreadMode: `auto`,
   theme: `bright`,
@@ -23,10 +18,10 @@ export const createTestReader = ({
   settings = {},
   isFullyPrePaginated = false,
 }: {
-  settings?: Partial<ManagedReaderSettings>
+  settings?: Partial<ManagedSettingValues>
   isFullyPrePaginated?: boolean
 } = {}) => {
-  const values$ = new BehaviorSubject<ManagedReaderSettings>({
+  const values$ = new BehaviorSubject<ManagedSettingValues>({
     ...READER_DEFAULT_SETTINGS,
     ...settings,
   })
@@ -40,7 +35,7 @@ export const createTestReader = ({
         return values$.value
       },
       update: vi.fn(function updateSettings(
-        changes: Partial<ManagedReaderSettings>,
+        changes: Partial<ManagedSettingValues>,
       ) {
         values$.next({ ...values$.value, ...changes })
       }),
