@@ -207,6 +207,41 @@ const createHarness = ({
     })
   }
 
+  /**
+   * happy-dom never loads an image from its `srcset`, and reports it complete
+   * at once. Holding images, this holds each one without a `src` as a browser
+   * loading the candidate it picks would, until the test loads or fails it.
+   * It runs before the renderer hears that the frame loaded.
+   */
+  if (holdsImages) {
+    hookManager.register(`item.onDocumentCreated`, ({ documentContainer }) => {
+      if (!(documentContainer instanceof HTMLIFrameElement)) return
+
+      documentContainer.addEventListener(`load`, () => {
+        const imagesWithoutSrc =
+          documentContainer.contentDocument?.querySelectorAll(
+            `img:not([src])`,
+          ) ?? []
+
+        for (const image of imagesWithoutSrc) {
+          let isComplete = false
+
+          Object.defineProperty(image, `complete`, { get: () => isComplete })
+          imageRequests.push({
+            load: () => {
+              isComplete = true
+              image.dispatchEvent(new Event(`load`))
+            },
+            fail: () => {
+              isComplete = true
+              image.dispatchEvent(new Event(`error`))
+            },
+          })
+        }
+      })
+    })
+  }
+
   document.body.appendChild(containerElement)
 
   const renderer = new HtmlRenderer({
@@ -607,6 +642,21 @@ describe(`HtmlRenderer`, () => {
       )
     })
 
+    it(`marks a lazy image with only a srcset eager`, async () => {
+      const { load, waitForLoaded, getDocument } = setup({
+        documentHref,
+        resources,
+      })
+
+      load(documentWith(``, `<img loading="lazy" srcset="images/a.png 1x" />`))
+
+      await waitForLoaded()
+
+      expect(getDocument()?.querySelector(`img`)?.getAttribute(`loading`)).toBe(
+        `eager`,
+      )
+    })
+
     it(`does not load when it unloads while an image is loading, and revokes the image's blob url`, async () => {
       const { load, waitForImageRequests, renderer, getDocument } = setup({
         documentHref,
@@ -713,6 +763,57 @@ describe(`HtmlRenderer`, () => {
       expect(getDocument()?.querySelector(`img`)?.getAttribute(`loading`)).toBe(
         `eager`,
       )
+    })
+
+    describe(`with only a srcset, which the reader has no reference to swap in`, () => {
+      it(`is not loaded until that image has loaded, though its frame has`, async () => {
+        useRxjsFakeTimers()
+
+        const {
+          load,
+          waitForImageRequests,
+          waitForFrameLoaded,
+          waitForLoaded,
+          renderer,
+        } = setup({
+          documentHref,
+          resources,
+          holdsImages: true,
+          servesAtUrls: true,
+        })
+
+        load(documentWith(``, `<img srcset="images/a.png 1x" />`))
+
+        const [image] = await waitForImageRequests(1)
+
+        await waitForFrameLoaded()
+        // well short of the 5 seconds the reader waits for an image at most
+        await vi.advanceTimersByTimeAsync(1_000)
+
+        expect(renderer.value.loadStatus).toBe(`loading`)
+
+        image?.load()
+
+        await waitForLoaded()
+      })
+
+      it(`marks it eager when lazy`, async () => {
+        const { load, waitForLoaded, getDocument } = setup({
+          documentHref,
+          resources,
+          servesAtUrls: true,
+        })
+
+        load(
+          documentWith(``, `<img loading="lazy" srcset="images/a.png 1x" />`),
+        )
+
+        await waitForLoaded()
+
+        expect(
+          getDocument()?.querySelector(`img`)?.getAttribute(`loading`),
+        ).toBe(`eager`)
+      })
     })
   })
 
