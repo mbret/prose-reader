@@ -6,49 +6,15 @@ import { act, type ComponentProps, type ReactNode, useState } from "react"
 import { createRoot } from "react-dom/client"
 import { BehaviorSubject } from "rxjs"
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
+import { ReactReaderProvider } from "../context/ReactReaderProvider"
+import type { ManagedSettingName } from "./managedSettings"
+import { SyncReaderWithManagedSettings } from "./SyncReaderWithManagedSettings"
+import { useManagedSetting } from "./useManagedSetting"
 
 type ManagedReaderSettings = Pick<CoreInputSettings, "spreadMode"> & {
   fontScale: number
-  theme?: Theme
+  theme: Theme
 }
-
-/**
- * The reader the components get from `useReader`. Like the real hook, which
- * reads the context, a component using it renders again when it changes.
- */
-const { testReader } = vi.hoisted(() => {
-  let reader: unknown
-  const listeners = new Set<() => void>()
-
-  return {
-    testReader: {
-      get: () => reader,
-      set: (nextReader: unknown) => {
-        reader = nextReader
-        for (const listener of listeners) listener()
-      },
-      subscribe: (listener: () => void) => {
-        listeners.add(listener)
-
-        return () => {
-          listeners.delete(listener)
-        }
-      },
-    },
-  }
-})
-
-vi.mock("../context/useReader", async () => {
-  const { useSyncExternalStore } = await import("react")
-
-  return {
-    useReader: () => useSyncExternalStore(testReader.subscribe, testReader.get),
-  }
-})
-
-import { ReactReaderProvider } from "../context/ReactReaderProvider"
-import { SyncReaderWithManagedSettings } from "./SyncReaderWithManagedSettings"
-import { useManagedSetting } from "./useManagedSetting"
 
 type ReactReaderProviderProps = Omit<
   ComponentProps<typeof ReactReaderProvider>,
@@ -59,17 +25,24 @@ type SettingsChange = Parameters<
   NonNullable<ReactReaderProviderProps["onSettingsChange"]>
 >
 
+/** What the reader declares as defaults, whatever it was created with. */
+const READER_DEFAULT_SETTINGS: ManagedReaderSettings = {
+  fontScale: 1,
+  spreadMode: `auto`,
+  theme: `bright`,
+}
+
 const createReaderWithSettings = (
   initialSettings: Partial<ManagedReaderSettings> = {},
 ) => {
   const values$ = new BehaviorSubject<ManagedReaderSettings>({
-    fontScale: 1,
-    spreadMode: `auto`,
+    ...READER_DEFAULT_SETTINGS,
     ...initialSettings,
   })
 
   return {
     settings: {
+      defaults: READER_DEFAULT_SETTINGS,
       values$,
       get values() {
         return values$.value
@@ -83,29 +56,77 @@ const createReaderWithSettings = (
   }
 }
 
+type TestReader = ReturnType<typeof createReaderWithSettings>
+
+const asProvidedReader = (reader: TestReader | undefined) =>
+  // Cast: the fake holds only the settings react-reader syncs, not a whole
+  // reader, and the provider takes a whole reader.
+  reader as unknown as ReactReaderProviderProps["reader"]
+
+/** What a menu of a setting sees of it, as of the last render. */
+const createSettingMenu = <Name extends ManagedSettingName>(name: Name) => {
+  const seen: { current?: ReturnType<typeof useManagedSetting<Name>> } = {}
+  const SettingMenu = () => {
+    seen.current = useManagedSetting(name)
+
+    return null
+  }
+
+  return { seen, SettingMenu }
+}
+
 /**
- * An app that saves every change react-reader reports into its settings and
- * passes them back, as react-reader's guide shows.
+ * An app that saves every change react-reader reports and passes it back, as
+ * react-reader's guide shows: a global or internal change into `settings`, a
+ * scope's into `settingsByScope`, and the scope picked for a setting into
+ * `settingsScopes`.
  */
 const AppSavingEveryChange = ({
+  reader,
+  defaultSettings,
   initialSettings,
-  savedChanges,
+  savedChanges = [],
+  children,
 }: {
-  initialSettings: ReactReaderProviderProps["settings"]
-  savedChanges: SettingsChange[]
+  reader: TestReader | undefined
+  defaultSettings?: ReactReaderProviderProps["defaultSettings"]
+  initialSettings?: ReactReaderProviderProps["settings"]
+  savedChanges?: SettingsChange[]
+  children?: ReactNode
 }) => {
   const [settings, setSettings] = useState(initialSettings)
+  const [settingsByScope, setSettingsByScope] = useState<
+    NonNullable<ReactReaderProviderProps["settingsByScope"]>
+  >({})
+  const [settingsScopes, setSettingsScopes] = useState<
+    NonNullable<ReactReaderProviderProps["settingsScopes"]>
+  >({})
 
   return (
     <ReactReaderProvider
-      reader={undefined}
+      reader={asProvidedReader(reader)}
+      defaultSettings={defaultSettings}
       settings={settings}
+      settingsByScope={settingsByScope}
+      settingsScopes={settingsScopes}
       onSettingsChange={function saveSettings(changes, from) {
         savedChanges.push([changes, from])
-        setSettings((old) => ({ ...old, ...changes }))
+
+        if (from === `global` || from === `internal`) {
+          setSettings((old) => ({ ...old, ...changes }))
+        } else {
+          setSettingsByScope((old) => ({
+            ...old,
+            [from]: { ...old[from], ...changes },
+          }))
+        }
+      }}
+      onSettingsScopesChange={function saveSettingsScopes(changes) {
+        setSettingsScopes((old) => ({ ...old, ...changes }))
       }}
     >
       <SyncReaderWithManagedSettings />
+      {children}
     </ReactReaderProvider>
   )
 }
@@ -146,10 +167,11 @@ describe(`SyncReaderWithManagedSettings`, () => {
     })
   }
 
-  const render = async (props: ReactReaderProviderProps) => {
+  const render = async (props: ReactReaderProviderProps, menu?: ReactNode) => {
     await renderInChakra(
       <ReactReaderProvider {...props}>
         <SyncReaderWithManagedSettings />
+        {menu}
       </ReactReaderProvider>,
     )
   }
@@ -159,23 +181,11 @@ describe(`SyncReaderWithManagedSettings`, () => {
    * the returned object holds as of the last render.
    */
   const renderWithSpreadModeMenu = async (props: ReactReaderProviderProps) => {
-    const spreadModeMenu: {
-      current?: ReturnType<typeof useManagedSetting<"spreadMode">>
-    } = {}
-    const SpreadModeMenu = () => {
-      spreadModeMenu.current = useManagedSetting(`spreadMode`)
+    const spreadModeMenu = createSettingMenu(`spreadMode`)
 
-      return null
-    }
+    await render(props, <spreadModeMenu.SettingMenu />)
 
-    await renderInChakra(
-      <ReactReaderProvider {...props}>
-        <SyncReaderWithManagedSettings />
-        <SpreadModeMenu />
-      </ReactReaderProvider>,
-    )
-
-    return spreadModeMenu
+    return spreadModeMenu.seen
   }
 
   beforeEach(() => {
@@ -187,7 +197,6 @@ describe(`SyncReaderWithManagedSettings`, () => {
     await act(async () => {
       root.unmount()
     })
-    testReader.set(undefined)
     setWindowWidth(DEFAULT_WINDOW_WIDTH)
   })
 
@@ -197,60 +206,65 @@ describe(`SyncReaderWithManagedSettings`, () => {
       spreadMode: `auto`,
     })
     const savedChanges: SettingsChange[] = []
-    const renderApp = async () => {
+    const renderApp = async (providedReader: TestReader | undefined) => {
       await renderInChakra(
         <AppSavingEveryChange
+          reader={providedReader}
           initialSettings={{ fontScale: 1.5, spreadMode: `never` }}
           savedChanges={savedChanges}
         />,
       )
     }
 
-    await renderApp()
-    await act(async () => {
-      testReader.set(reader)
-    })
+    await renderApp(undefined)
+    await renderApp(reader)
 
     expect(reader.settings.values).toEqual({
       fontScale: 1.5,
       spreadMode: `never`,
+      theme: `bright`,
     })
     expect(savedChanges).toEqual([])
   })
 
   it(`writes the app's font scale into the reader`, async () => {
     const reader = createReaderWithSettings()
-    testReader.set(reader)
 
-    await render({ reader: undefined, settings: { fontScale: 1.5 } })
+    await render({
+      reader: asProvidedReader(reader),
+      settings: { fontScale: 1.5 },
+    })
 
     expect(reader.settings.values.fontScale).toBe(1.5)
   })
 
   it(`writes the app's spread mode into the reader at once`, async () => {
     const reader = createReaderWithSettings()
-    testReader.set(reader)
 
-    await render({ reader: undefined, settings: { spreadMode: `never` } })
+    await render({
+      reader: asProvidedReader(reader),
+      settings: { spreadMode: `never` },
+    })
 
     expect(reader.settings.values.spreadMode).toBe(`never`)
   })
 
   it(`writes the app's theme into the reader at once`, async () => {
     const reader = createReaderWithSettings({ theme: `bright` })
-    testReader.set(reader)
 
-    await render({ reader: undefined, settings: { theme: `night` } })
+    await render({
+      reader: asProvidedReader(reader),
+      settings: { theme: `night` },
+    })
 
     expect(reader.settings.values.theme).toBe(`night`)
   })
 
   it(`takes a setting's value from its scope, and from the global values when its scope has none`, async () => {
     const reader = createReaderWithSettings()
-    testReader.set(reader)
 
     await render({
-      reader: undefined,
+      reader: asProvidedReader(reader),
       settings: { fontScale: 1.2, spreadMode: `never` },
       settingsByScope: { book: { spreadMode: `always` } },
       settingsScopes: { fontScale: `book`, spreadMode: `book` },
@@ -259,16 +273,106 @@ describe(`SyncReaderWithManagedSettings`, () => {
     expect(reader.settings.values).toEqual({
       fontScale: 1.2,
       spreadMode: `always`,
+      theme: `bright`,
+    })
+  })
+
+  it(`takes defaultSettings for a setting no scope gives a value, under the global and scope values`, async () => {
+    const reader = createReaderWithSettings()
+
+    await render({
+      reader: asProvidedReader(reader),
+      defaultSettings: { fontScale: 1.2, spreadMode: `never`, theme: `sepia` },
+      settings: { spreadMode: `always`, theme: `night` },
+      settingsByScope: { book: { theme: `publisher` } },
+      settingsScopes: { theme: `book` },
+    })
+
+    expect(reader.settings.values).toEqual({
+      fontScale: 1.2,
+      spreadMode: `always`,
+      theme: `publisher`,
+    })
+  })
+
+  it(`writes the reader's declared default over the value it was created with when the app passes none`, async () => {
+    const reader = createReaderWithSettings({ spreadMode: `always` })
+
+    await render({ reader: asProvidedReader(reader) })
+
+    expect(reader.settings.values.spreadMode).toBe(`auto`)
+  })
+
+  it(`shows on the global tab the reader's declared default as the value it inherits, and no value of its own, when the app passes none`, async () => {
+    const reader = createReaderWithSettings({ spreadMode: `always` })
+
+    const spreadModeMenu = await renderWithSpreadModeMenu({
+      reader: asProvidedReader(reader),
+    })
+
+    expect({
+      ownSpreadMode: spreadModeMenu.current?.getOwnValueForScope(`global`),
+      inheritedSpreadMode:
+        spreadModeMenu.current?.getInheritedValueForScope(`global`),
+    }).toEqual({ ownSpreadMode: undefined, inheritedSpreadMode: `auto` })
+  })
+
+  it(`inherits the reader's declared default on the global tab, not the value the reader was created with, and applies it once picked`, async () => {
+    const reader = createReaderWithSettings({ fontScale: 1.5 })
+    const fontScaleMenu = createSettingMenu(`fontScale`)
+
+    await renderInChakra(
+      <AppSavingEveryChange
+        reader={reader}
+        initialSettings={{ fontScale: 1.5 }}
+      >
+        <fontScaleMenu.SettingMenu />
+      </AppSavingEveryChange>,
+    )
+    const inheritedFontScale =
+      fontScaleMenu.seen.current?.getInheritedValueForScope(`global`)
+    await act(async () => {
+      fontScaleMenu.seen.current?.changeValueForScope(`global`, undefined)
+    })
+
+    expect({
+      inheritedFontScale,
+      readerFontScale: reader.settings.values.fontScale,
+    }).toEqual({ inheritedFontScale: 1, readerFontScale: 1 })
+  })
+
+  it(`does not report the value the reader arrives with, and reports a value it takes afterwards as an internal change it keeps`, async () => {
+    const reader = createReaderWithSettings({ spreadMode: `always` })
+    const onSettingsChange = vi.fn()
+    const props = { onSettingsChange }
+
+    await renderWithSpreadModeMenu({ ...props, reader: undefined })
+    const spreadModeMenu = await renderWithSpreadModeMenu({
+      ...props,
+      reader: asProvidedReader(reader),
+    })
+    const spreadModeOnArrival = reader.settings.values.spreadMode
+    await act(async () => {
+      reader.settings.update({ spreadMode: `never` })
+    })
+
+    expect({
+      spreadModeOnArrival,
+      reported: onSettingsChange.mock.calls,
+      shownSpreadMode: spreadModeMenu.current?.getValueForScope(`global`),
+    }).toEqual({
+      spreadModeOnArrival: `auto`,
+      reported: [[{ spreadMode: `never` }, `internal`]],
+      shownSpreadMode: `never`,
     })
   })
 
   it(`reports a spread mode set on the reader directly as an internal change`, async () => {
     const reader = createReaderWithSettings({ spreadMode: `never` })
     const onSettingsChange = vi.fn()
-    testReader.set(reader)
 
     await render({
-      reader: undefined,
+      reader: asProvidedReader(reader),
       settings: { spreadMode: `never` },
       onSettingsChange,
     })
@@ -282,55 +386,36 @@ describe(`SyncReaderWithManagedSettings`, () => {
     )
   })
 
-  it(`keeps the spread mode the reader was created with when the app passes none`, async () => {
-    const reader = createReaderWithSettings({ spreadMode: `always` })
-    testReader.set(reader)
-
-    await render({ reader: undefined })
-
-    expect(reader.settings.values.spreadMode).toBe(`always`)
-    expect(reader.settings.update).not.toHaveBeenCalledWith({
-      spreadMode: `auto`,
-    })
-  })
-
-  it(`shows the spread mode the reader was created with in the menu when the app passes none`, async () => {
-    const reader = createReaderWithSettings({ spreadMode: `always` })
-    testReader.set(reader)
-
-    const spreadModeMenu = await renderWithSpreadModeMenu({ reader: undefined })
-
-    expect(spreadModeMenu.current?.getValueForScope(`global`)).toBe(`always`)
-  })
-
-  it(`shows the spread mode the reader arrives with when the app passes none, and reports only the values it takes afterwards`, async () => {
-    const reader = createReaderWithSettings({ spreadMode: `always` })
+  it(`does not keep a value set on the reader directly while the app gives one, so dropping the app's value falls to defaultSettings`, async () => {
+    const reader = createReaderWithSettings()
     const onSettingsChange = vi.fn()
-
-    const spreadModeMenu = await renderWithSpreadModeMenu({
-      reader: undefined,
+    const props = {
+      reader: asProvidedReader(reader),
+      defaultSettings: { spreadMode: `always` },
       onSettingsChange,
-    })
+    } as const
+
+    await render({ ...props, settings: { spreadMode: `never` } })
     await act(async () => {
-      testReader.set(reader)
+      reader.settings.update({ spreadMode: `auto` })
     })
+    await render({ ...props, settings: {} })
 
-    expect(spreadModeMenu.current?.getValueForScope(`global`)).toBe(`always`)
-
-    await act(async () => {
-      reader.settings.update({ spreadMode: `never` })
+    expect({
+      reported: onSettingsChange.mock.calls,
+      readerSpreadMode: reader.settings.values.spreadMode,
+    }).toEqual({
+      reported: [[{ spreadMode: `auto` }, `internal`]],
+      readerSpreadMode: `always`,
     })
-
-    expect(onSettingsChange.mock.calls).toEqual([
-      [{ spreadMode: `never` }, `internal`],
-    ])
   })
 
   it(`writes a spread mode chosen in the menu into the reader when the app passes none`, async () => {
     const reader = createReaderWithSettings({ spreadMode: `auto` })
-    testReader.set(reader)
 
-    const spreadModeMenu = await renderWithSpreadModeMenu({ reader: undefined })
+    const spreadModeMenu = await renderWithSpreadModeMenu({
+      reader: asProvidedReader(reader),
+    })
     await act(async () => {
       spreadModeMenu.current?.changeValueForScope(`global`, `never`)
     })
@@ -342,10 +427,9 @@ describe(`SyncReaderWithManagedSettings`, () => {
   it(`applies a spread mode chosen in the menu, and reports it once, when the app only listens`, async () => {
     const reader = createReaderWithSettings({ spreadMode: `auto` })
     const onSettingsChange = vi.fn()
-    testReader.set(reader)
 
     const spreadModeMenu = await renderWithSpreadModeMenu({
-      reader: undefined,
+      reader: asProvidedReader(reader),
       onSettingsChange,
     })
     await act(async () => {
@@ -358,13 +442,106 @@ describe(`SyncReaderWithManagedSettings`, () => {
     ])
   })
 
+  it(`sets a scope back to the value it inherits, and reports undefined with that scope, when the app only listens`, async () => {
+    const reader = createReaderWithSettings()
+    const onSettingsChange = vi.fn()
+
+    const spreadModeMenu = await renderWithSpreadModeMenu({
+      reader: asProvidedReader(reader),
+      onSettingsChange,
+    })
+    await act(async () => {
+      spreadModeMenu.current?.changeValueForScope(`global`, `never`)
+    })
+    await act(async () => {
+      spreadModeMenu.current?.changeValueForScope(`global`, undefined)
+    })
+
+    expect({
+      reported: onSettingsChange.mock.calls,
+      ownSpreadMode: spreadModeMenu.current?.getOwnValueForScope(`global`),
+      readerSpreadMode: reader.settings.values.spreadMode,
+    }).toEqual({
+      reported: [
+        [{ spreadMode: `never` }, `global`],
+        [{ spreadMode: undefined }, `global`],
+      ],
+      ownSpreadMode: undefined,
+      readerSpreadMode: `auto`,
+    })
+  })
+
+  it(`keeps the reader on the theme the scope in effect applies, through picks, a change of the app's default, a scope change and a return to Default`, async () => {
+    const reader = createReaderWithSettings()
+    const themeMenu = createSettingMenu(`theme`)
+    const savedChanges: SettingsChange[] = []
+    const readerThemeAgainstThemeInEffect: {
+      readerTheme: Theme
+      themeInEffect: Theme | undefined
+    }[] = []
+    const renderAppWithDefaultTheme = (defaultTheme: Theme) =>
+      renderInChakra(
+        <AppSavingEveryChange
+          reader={reader}
+          defaultSettings={{ theme: defaultTheme }}
+          savedChanges={savedChanges}
+        >
+          <themeMenu.SettingMenu />
+        </AppSavingEveryChange>,
+      )
+    const recordReaderThemeAgainstThemeInEffect = () => {
+      const menu = themeMenu.seen.current
+
+      readerThemeAgainstThemeInEffect.push({
+        readerTheme: reader.settings.values.theme,
+        themeInEffect: menu?.getValueForScope(menu.activeScope ?? `global`),
+      })
+    }
+
+    await renderAppWithDefaultTheme(`night`)
+    recordReaderThemeAgainstThemeInEffect()
+    await act(async () => {
+      themeMenu.seen.current?.changeValueForScope(`global`, `sepia`)
+    })
+    recordReaderThemeAgainstThemeInEffect()
+    await act(async () => {
+      themeMenu.seen.current?.changeValueForScope(`global`, `night`)
+    })
+    recordReaderThemeAgainstThemeInEffect()
+    await renderAppWithDefaultTheme(`bright`)
+    recordReaderThemeAgainstThemeInEffect()
+    await act(async () => {
+      themeMenu.seen.current?.onActiveScopeChange?.(`book`)
+    })
+    recordReaderThemeAgainstThemeInEffect()
+    await act(async () => {
+      themeMenu.seen.current?.changeValueForScope(`global`, undefined)
+    })
+    recordReaderThemeAgainstThemeInEffect()
+
+    expect({ readerThemeAgainstThemeInEffect, savedChanges }).toEqual({
+      readerThemeAgainstThemeInEffect: [
+        { readerTheme: `night`, themeInEffect: `night` },
+        { readerTheme: `sepia`, themeInEffect: `sepia` },
+        { readerTheme: `night`, themeInEffect: `night` },
+        { readerTheme: `night`, themeInEffect: `night` },
+        { readerTheme: `night`, themeInEffect: `night` },
+        { readerTheme: `bright`, themeInEffect: `bright` },
+      ],
+      savedChanges: [
+        [{ theme: `sepia` }, `global`],
+        [{ theme: `night` }, `global`],
+        [{ theme: undefined }, `global`],
+      ],
+    })
+  })
+
   it(`reports a value chosen for a scope with that scope, leaving the app's value in effect`, async () => {
     const reader = createReaderWithSettings({ spreadMode: `never` })
     const onSettingsChange = vi.fn()
-    testReader.set(reader)
 
     const spreadModeMenu = await renderWithSpreadModeMenu({
-      reader: undefined,
+      reader: asProvidedReader(reader),
       settings: { spreadMode: `never` },
       settingsScopes: { spreadMode: `book` },
       onSettingsChange,
@@ -380,11 +557,90 @@ describe(`SyncReaderWithManagedSettings`, () => {
     expect(reader.settings.values.spreadMode).toBe(`never`)
   })
 
-  it(`shows in a scope's tab the value that scope applies, the global one when it has none`, async () => {
-    testReader.set(createReaderWithSettings())
+  it(`keeps a value chosen for a screen other than the one in effect as that screen's own, and applies it on that screen, when the app only listens`, async () => {
+    // The window grows rather than shrinks: happy-dom 21.0.3 starts each media
+    // query listener as not matching, so a query that matches when listened to
+    // never reports that it stopped.
+    setWindowWidth(400)
+    const reader = createReaderWithSettings()
 
     const spreadModeMenu = await renderWithSpreadModeMenu({
-      reader: undefined,
+      reader: asProvidedReader(reader),
+      settingsScopes: { spreadMode: `screen` },
+      onSettingsChange: vi.fn(),
+    })
+    await act(async () => {
+      spreadModeMenu.current?.changeValueForScope(`desktop`, `never`)
+    })
+    const beforeTheWindowIsDesktop = {
+      ownDesktopSpreadMode:
+        spreadModeMenu.current?.getOwnValueForScope(`desktop`),
+      readerSpreadMode: reader.settings.values.spreadMode,
+    }
+    await act(async () => {
+      setWindowWidth(1200)
+    })
+
+    expect({
+      beforeTheWindowIsDesktop,
+      readerSpreadModeOnDesktop: reader.settings.values.spreadMode,
+    }).toEqual({
+      beforeTheWindowIsDesktop: {
+        ownDesktopSpreadMode: `never`,
+        readerSpreadMode: `auto`,
+      },
+      readerSpreadModeOnDesktop: `never`,
+    })
+  })
+
+  it(`keeps react-reader's own book value while the reader stays, whatever else the app passes again`, async () => {
+    const reader = createReaderWithSettings()
+    const props = {
+      reader: asProvidedReader(reader),
+      settingsScopes: { spreadMode: `book` },
+    } as const
+
+    const spreadModeMenu = await renderWithSpreadModeMenu({
+      ...props,
+      onSettingsChange: function listenToSettings() {},
+    })
+    await act(async () => {
+      spreadModeMenu.current?.changeValueForScope(`book`, `never`)
+    })
+    await renderWithSpreadModeMenu({
+      ...props,
+      onSettingsChange: function listenToSettingsAgain() {},
+    })
+
+    expect(reader.settings.values.spreadMode).toBe(`never`)
+  })
+
+  it(`drops react-reader's own book value when the reader is replaced, so the new reader never takes it`, async () => {
+    const firstReader = createReaderWithSettings()
+    const secondReader = createReaderWithSettings()
+    const settingsScopes = { spreadMode: `book` } as const
+
+    const spreadModeMenu = await renderWithSpreadModeMenu({
+      reader: asProvidedReader(firstReader),
+      settingsScopes,
+    })
+    await act(async () => {
+      spreadModeMenu.current?.changeValueForScope(`book`, `never`)
+    })
+    await renderWithSpreadModeMenu({
+      reader: asProvidedReader(secondReader),
+      settingsScopes,
+    })
+
+    expect({
+      firstReaderSpreadMode: firstReader.settings.values.spreadMode,
+      secondReaderUpdates: secondReader.settings.update.mock.calls,
+    }).toEqual({ firstReaderSpreadMode: `never`, secondReaderUpdates: [] })
+  })
+
+  it(`shows in a scope's tab the value that scope applies, the global one when it has none`, async () => {
+    const spreadModeMenu = await renderWithSpreadModeMenu({
+      reader: asProvidedReader(createReaderWithSettings()),
       settings: { spreadMode: `never` },
       settingsByScope: { book: { spreadMode: `always` } },
       settingsScopes: { spreadMode: `book` },
@@ -397,10 +653,9 @@ describe(`SyncReaderWithManagedSettings`, () => {
   it(`takes the value of the screen the book is read on for a setting with the screen scope, without another value first`, async () => {
     setWindowWidth(800)
     const reader = createReaderWithSettings({ spreadMode: `auto` })
-    testReader.set(reader)
 
     await render({
-      reader: undefined,
+      reader: asProvidedReader(reader),
       settings: { spreadMode: `never` },
       settingsByScope: {
         tablet: { spreadMode: `always` },
@@ -416,43 +671,35 @@ describe(`SyncReaderWithManagedSettings`, () => {
 
   it(`shows the screen the book is read on as the scope in effect, from a menu's first render`, async () => {
     setWindowWidth(800)
-    testReader.set(createReaderWithSettings())
+    const reader = createReaderWithSettings()
     const activeScopes: unknown[] = []
     const SpreadModeMenu = () => {
       activeScopes.push(useManagedSetting(`spreadMode`).activeScope)
 
       return null
     }
-    const renderReaderWithMenu = (menu: ReactNode) =>
-      renderInChakra(
-        <ReactReaderProvider
-          reader={undefined}
-          settingsScopes={{ spreadMode: `screen` }}
-        >
-          <SyncReaderWithManagedSettings />
-          {menu}
-        </ReactReaderProvider>,
-      )
+    const props = {
+      reader: asProvidedReader(reader),
+      settingsScopes: { spreadMode: `screen` },
+    } as const
 
-    await renderReaderWithMenu(null)
-    await renderReaderWithMenu(<SpreadModeMenu />)
+    await render(props)
+    await render(props, <SpreadModeMenu />)
 
     expect(activeScopes[0]).toBe(`tablet`)
   })
 
   it(`offers the scopes once the app passes settingsScopes`, async () => {
-    testReader.set(createReaderWithSettings())
+    const reader = asProvidedReader(createReaderWithSettings())
 
-    const menuWithoutScopes = await renderWithSpreadModeMenu({
-      reader: undefined,
-    })
+    const menuWithoutScopes = await renderWithSpreadModeMenu({ reader })
 
     expect(menuWithoutScopes.current?.activeScope).toBeUndefined()
     expect(menuWithoutScopes.current?.onActiveScopeChange).toBeUndefined()
 
     const onSettingsScopesChange = vi.fn()
     const menuWithScopes = await renderWithSpreadModeMenu({
-      reader: undefined,
+      reader,
       settingsScopes: {},
       onSettingsScopesChange,
     })

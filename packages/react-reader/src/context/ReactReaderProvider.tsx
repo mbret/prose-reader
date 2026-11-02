@@ -59,15 +59,22 @@ const SignalProvider = ({
   const memoizedProps = useMemoCompare(props, isShallowEqual)
 
   useEffect(() => {
-    valueSignal.update((old) => ({
-      ...old,
-      ...memoizedProps,
-      onFontSizeMenuOpenChange: uncontrolledOnFontSizeMenuOpenChange,
-      fontSizeMenuOpen: uncontrolledFontSizeMenuOpenValue,
-      onRefitMenuOpenChange: uncontrolledOnRefitMenuOpenChange,
-      refitMenuOpen: uncontrolledRefitMenuOpenValue,
-      _onQuickMenuOpenChange,
-    }))
+    valueSignal.update((old) => {
+      const isSameReader = old.reader === memoizedProps.reader
+
+      return {
+        ...old,
+        ...memoizedProps,
+        uncontrolledSettingsByScope: isSameReader
+          ? old.uncontrolledSettingsByScope
+          : { ...old.uncontrolledSettingsByScope, book: undefined },
+        onFontSizeMenuOpenChange: uncontrolledOnFontSizeMenuOpenChange,
+        fontSizeMenuOpen: uncontrolledFontSizeMenuOpenValue,
+        onRefitMenuOpenChange: uncontrolledOnRefitMenuOpenChange,
+        refitMenuOpen: uncontrolledRefitMenuOpenValue,
+        _onQuickMenuOpenChange,
+      }
+    })
   }, [
     memoizedProps,
     _onQuickMenuOpenChange,

@@ -1,4 +1,4 @@
-import { Button, Stack } from "@chakra-ui/react"
+import { Button } from "@chakra-ui/react"
 import { memo } from "react"
 import {
   DialogActionTrigger,
@@ -11,16 +11,13 @@ import {
   DialogTitle,
 } from "../components/ui/dialog"
 import { useReaderContextValue } from "../context/useReaderContext"
-import { SettingScopes } from "../settings/SettingScopes"
-import { useManagedSetting } from "../settings/useManagedSetting"
-import { FontScaleSlider } from "./FontScaleSlider"
+import { FontSizeSection } from "./FontSizeSection"
 
 export const FontSizeControlsDialog = memo(() => {
   const { fontSizeMenuOpen, onFontSizeMenuOpenChange } = useReaderContextValue([
     "fontSizeMenuOpen",
     "onFontSizeMenuOpenChange",
   ])
-  const fontScale = useManagedSetting("fontScale")
 
   return (
     <DialogRoot
@@ -36,21 +33,7 @@ export const FontSizeControlsDialog = memo(() => {
           <DialogTitle>Font size</DialogTitle>
         </DialogHeader>
         <DialogBody>
-          <Stack gap={4} flex={1}>
-            <SettingScopes
-              settingLabel="font size"
-              activeScope={fontScale.activeScope}
-              onActiveScopeChange={fontScale.onActiveScopeChange}
-              renderScopeValue={(scope) => (
-                <FontScaleSlider
-                  fontScale={fontScale.getValueForScope(scope) ?? 1}
-                  onFontScaleChange={(changedFontScale) => {
-                    fontScale.changeValueForScope(scope, changedFontScale)
-                  }}
-                />
-              )}
-            />
-          </Stack>
+          <FontSizeSection />
         </DialogBody>
         <DialogFooter>
           <DialogActionTrigger asChild>

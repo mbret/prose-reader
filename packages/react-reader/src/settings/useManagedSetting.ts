@@ -1,18 +1,22 @@
 import { useCallback } from "react"
+import { useReader } from "../context/useReader"
 import {
   useReaderContext,
   useReaderContextValue,
 } from "../context/useReaderContext"
-import {
-  getAppSettingValueInEffect,
-  getAppSettingValueWhenScopeInEffect,
-  getSettingScopeReferenceInEffect,
-} from "./appSettingValues"
 import type {
   ManagedSettingName,
   ManagedSettingValues,
   ReactReaderSettings,
 } from "./managedSettings"
+import {
+  getAppSettingValueWhenScopeInEffect,
+  getInheritedSettingValueForScope,
+  getOwnSettingValueForScope,
+  getSettingScopeReferenceInEffect,
+  getSettingValueForScope,
+  withUncontrolledSettingChangesForScope,
+} from "./settingValues"
 import type {
   ReactReaderSettingsScope,
   ReactReaderSettingsScopeReference,
@@ -21,49 +25,69 @@ import { useScreenSettingsScopeReference } from "./useScreenSettingsScopeReferen
 
 /**
  * What a menu needs to edit a setting react-reader manages: its scopes, the
- * value of each, and a change, which is reported to the app and, when the app
- * gives the setting no value, applied to react-reader's own.
+ * value of each, and a change. A change is reported to the app and, when the
+ * app gives no value with that scope in effect, kept as react-reader's own.
+ * `undefined` sets a scope back to the value it inherits.
  */
 export const useManagedSetting = <Name extends ManagedSettingName>(
   name: Name,
 ) => {
   const context = useReaderContext()
+  const reader = useReader()
   const screen = useScreenSettingsScopeReference()
-  const appSettingValues = useReaderContextValue([
+  const settingSources = useReaderContextValue([
     "settings",
     "settingsByScope",
     "settingsScopes",
+    "defaultSettings",
     "onSettingsScopesChange",
-    "uncontrolledSettings",
+    "uncontrolledSettingsByScope",
   ])
+  const readerDefaultSettingValues = reader?.settings.defaults
 
-  /** What a scope's tab shows: the value the setting takes with that scope. */
+  /** `undefined` when the scope takes the value it inherits. */
+  const getOwnValueForScope = (scope: ReactReaderSettingsScopeReference) =>
+    getOwnSettingValueForScope(settingSources, name, scope)
+
+  const getInheritedValueForScope = (
+    scope: ReactReaderSettingsScopeReference,
+  ) =>
+    getInheritedSettingValueForScope(
+      settingSources,
+      name,
+      scope,
+      readerDefaultSettingValues,
+    )
+
+  /** The value the setting takes when the scope is in effect. */
   const getValueForScope = (scope: ReactReaderSettingsScopeReference) =>
-    getAppSettingValueWhenScopeInEffect(appSettingValues, name, scope) ??
-    appSettingValues.uncontrolledSettings[name]
+    getSettingValueForScope(
+      settingSources,
+      name,
+      scope,
+      readerDefaultSettingValues,
+    )
 
   const changeValueForScope = useCallback(
     function changeValueForScope(
       scope: ReactReaderSettingsScopeReference,
-      value: ManagedSettingValues[Name],
+      value: ManagedSettingValues[Name] | undefined,
     ) {
       const changes: ReactReaderSettings = {}
-      const isValueInEffectReactReaderOwn =
-        getAppSettingValueInEffect(context.value, name, screen) === undefined &&
-        scope === getSettingScopeReferenceInEffect(context.value, name, screen)
+      const isInheritedValuePicked = value === undefined
+      const hasAppValueWithScopeInEffect =
+        getAppSettingValueWhenScopeInEffect(context.value, name, scope) !==
+        undefined
 
       changes[name] = value
 
-      if (isValueInEffectReactReaderOwn) {
-        context.update((old) => ({
-          ...old,
-          uncontrolledSettings: { ...old.uncontrolledSettings, ...changes },
-        }))
+      if (isInheritedValuePicked || !hasAppValueWithScopeInEffect) {
+        context.update(withUncontrolledSettingChangesForScope(scope, changes))
       }
 
       context.value.onSettingsChange?.(changes, scope)
     },
-    [name, context, screen],
+    [name, context],
   )
 
   const changeScope = useCallback(
@@ -79,12 +103,14 @@ export const useManagedSetting = <Name extends ManagedSettingName>(
   )
 
   return {
-    activeScope: appSettingValues.settingsScopes
-      ? getSettingScopeReferenceInEffect(appSettingValues, name, screen)
+    activeScope: settingSources.settingsScopes
+      ? getSettingScopeReferenceInEffect(settingSources, name, screen)
       : undefined,
-    onActiveScopeChange: appSettingValues.onSettingsScopesChange
+    onActiveScopeChange: settingSources.onSettingsScopesChange
       ? changeScope
       : undefined,
+    getOwnValueForScope,
+    getInheritedValueForScope,
     getValueForScope,
     changeValueForScope,
   }

@@ -9,16 +9,12 @@ import { SettingScopes } from "../settings/SettingScopes"
 import { useManagedSetting } from "../settings/useManagedSetting"
 
 const SPREAD_MODE_LABELS: Record<CoreInputSettings["spreadMode"], string> = {
-  auto: "Automatic, from the screen and the book (default)",
+  auto: "Automatic, from the screen and the book",
   always: "Always two pages",
   never: "Always one page",
 }
 
-/**
- * The spread mode, a setting react-reader manages like the font scale: the
- * reader follows the app's value when it gives one, react-reader's own
- * otherwise.
- */
+/** The spread mode, a setting react-reader manages like the font scale. */
 export const SpreadSection = memo(() => {
   const reader = useReader()
   const spreadMode = useManagedSetting("spreadMode")
@@ -59,7 +55,9 @@ export const SpreadSection = memo(() => {
             renderScopeValue={(scope) => (
               <SettingRadioGroup
                 labels={SPREAD_MODE_LABELS}
-                value={spreadMode.getValueForScope(scope)}
+                scope={scope}
+                value={spreadMode.getOwnValueForScope(scope)}
+                inheritedValue={spreadMode.getInheritedValueForScope(scope)}
                 disabled={!spreadState.isSpreadAllowed}
                 onValueChange={function changeSpreadMode(selectedSpreadMode) {
                   spreadMode.changeValueForScope(scope, selectedSpreadMode)

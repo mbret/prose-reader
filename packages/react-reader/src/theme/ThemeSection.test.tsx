@@ -24,7 +24,10 @@ const createReaderOfBook = ({
   isFullyPrePaginated,
 }: {
   isFullyPrePaginated: boolean
-}) => ({ context: { value: { isFullyPrePaginated } } })
+}) => ({
+  context: { value: { isFullyPrePaginated } },
+  settings: { defaults: { fontScale: 1, spreadMode: `auto`, theme: `bright` } },
+})
 
 describe(`ThemeSection`, () => {
   let container: HTMLDivElement
@@ -52,7 +55,24 @@ describe(`ThemeSection`, () => {
       ...(shownPanel?.querySelectorAll<HTMLInputElement>(
         `input[type="radio"]`,
       ) ?? []),
-    ]
+    ].map((radio) => ({
+      radio,
+      label: radio.closest(`label`)?.textContent,
+    }))
+  }
+
+  const getShownThemeChoices = () =>
+    getShownThemeRadios().map(({ radio, label }) => ({
+      label,
+      checked: radio.checked,
+    }))
+
+  const pickShownThemeChoice = async (pickedLabel: string) => {
+    await act(async () => {
+      getShownThemeRadios()
+        .find(({ label }) => label === pickedLabel)
+        ?.radio.click()
+    })
   }
 
   beforeEach(() => {
@@ -72,35 +92,61 @@ describe(`ThemeSection`, () => {
     container.remove()
   })
 
-  it(`shows the themes with its scope's value checked, and reports a pick with that scope`, async () => {
+  it(`offers the theme the global tab inherits first, checked while the tab has no theme of its own, and reports a pick of the theme it names`, async () => {
+    const onSettingsChange = vi.fn()
+
+    await render({ defaultSettings: { theme: `night` }, onSettingsChange })
+    const shownThemeChoices = getShownThemeChoices()
+    await pickShownThemeChoice(`Night`)
+
+    expect({
+      shownThemeChoices,
+      reported: onSettingsChange.mock.calls,
+    }).toEqual({
+      shownThemeChoices: [
+        { label: `Default (Night)`, checked: true },
+        { label: `Bright`, checked: false },
+        { label: `Sepia`, checked: false },
+        { label: `Night`, checked: false },
+        { label: `The book's own colors`, checked: false },
+      ],
+      reported: [[{ theme: `night` }, `global`]],
+    })
+  })
+
+  it(`checks the global tab's own theme, and names the reader's default as the one it inherits without defaultSettings`, async () => {
+    await render({ settings: { theme: `sepia` } })
+
+    expect(getShownThemeChoices().filter(({ checked }) => checked)).toEqual([
+      { label: `Sepia`, checked: true },
+    ])
+    expect(getShownThemeChoices()[0]?.label).toBe(`Default (Bright)`)
+  })
+
+  it(`checks a scope tab's own theme, and reports picking Same as global as undefined with that scope`, async () => {
     const onSettingsChange = vi.fn()
 
     await render({
-      settings: { theme: `bright` },
+      settings: { theme: `night` },
       settingsByScope: { book: { theme: `sepia` } },
       settingsScopes: { theme: `book` },
       onSettingsChange,
     })
+    const shownThemeChoices = getShownThemeChoices()
+    await pickShownThemeChoice(`Same as global (Night)`)
 
-    const shownThemes = getShownThemeRadios().map(({ value, checked }) => ({
-      value,
-      checked,
-    }))
-
-    await act(async () => {
-      getShownThemeRadios()
-        .find(({ value }) => value === `night`)
-        ?.click()
-    })
-
-    expect({ shownThemes, reported: onSettingsChange.mock.calls }).toEqual({
-      shownThemes: [
-        { value: `bright`, checked: false },
-        { value: `sepia`, checked: true },
-        { value: `night`, checked: false },
-        { value: `publisher`, checked: false },
+    expect({
+      shownThemeChoices,
+      reported: onSettingsChange.mock.calls,
+    }).toEqual({
+      shownThemeChoices: [
+        { label: `Same as global (Night)`, checked: false },
+        { label: `Bright`, checked: false },
+        { label: `Sepia`, checked: true },
+        { label: `Night`, checked: false },
+        { label: `The book's own colors`, checked: false },
       ],
-      reported: [[{ theme: `night` }, `book`]],
+      reported: [[{ theme: undefined }, `book`]],
     })
   })
 

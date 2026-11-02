@@ -19,12 +19,16 @@ import type {
 
 export type PrivateContextType = {
   /**
-   * react-reader's own values for the settings the app gives no value, starting
-   * from the reader's. This way the Reader works as intended but:
-   * - there are no persistent settings
-   * - the settings are valid only for the current mount runtime
+   * react-reader's own value for each scope, picked in a menu or set on the
+   * reader directly while the app gave no value with that scope in effect. It
+   * fills in only for values the app does not keep: once the app keeps one,
+   * its own value for that scope stays as it was, and comes back if the app
+   * drops its value by itself. Lost on unmount, and the book scope's on a new
+   * reader.
    */
-  uncontrolledSettings: ReactReaderSettings
+  uncontrolledSettingsByScope: Partial<
+    Record<ReactReaderSettingsScopeReference, ReactReaderSettings>
+  >
   refitMenuOpen: boolean
   onRefitMenuOpenChange: (open: boolean) => void
   fontSizeMenuOpen: boolean
@@ -70,8 +74,16 @@ export type PublicContextType = {
    */
   settings?: ReactReaderSettings
   /**
+   * The app's defaults for the settings react-reader manages: what a setting
+   * takes when no scope gives it a value, before the reader's own default.
+   * They are not choices of the user and are never reported.
+   */
+  defaultSettings?: ReactReaderSettings
+  /**
    * The settings whose value the user chose in a menu, with the scope it was
-   * chosen for, or `"internal"` for a value set on the reader directly.
+   * chosen for, or `"internal"` for a value set on the reader directly. A
+   * setting reported as `undefined` was set back to Default or Same as global:
+   * that scope no longer has a value of its own.
    */
   onSettingsChange?: (
     changes: ReactReaderSettings,
@@ -119,7 +131,7 @@ export const getDefaultValue = (): ReaderContextType => ({
   onRefitMenuOpenChange: () => {},
   fontSizeMenuOpen: false,
   onFontSizeMenuOpenChange: () => {},
-  uncontrolledSettings: {},
+  uncontrolledSettingsByScope: {},
   enableFloatingProgress: true,
   selectedHighlight: undefined,
 })
