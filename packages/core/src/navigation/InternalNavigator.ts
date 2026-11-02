@@ -201,7 +201,8 @@ export class InternalNavigator extends DestroyableClass {
      * them leaves it showing the same pages. Any part of an item in view
      * counts, more than pagination needs to count it visible. The viewport is
      * the one laid out, as for pagination: what a zoom shows around it takes a
-     * read of the DOM.
+     * read of the DOM. The loader, which measures what a zoom shows, waits for
+     * the layout of those items itself.
      */
     const holdsOver = (
       navigation: Navigation,
