@@ -143,7 +143,7 @@ export abstract class SettingsManager<
     return this as unknown as ExtendedSettings<Self, AddedSettings>
   }
 
-  get defaults() {
+  get defaults(): Readonly<InputSettings> {
     return this.declaredDefaults
   }
 
