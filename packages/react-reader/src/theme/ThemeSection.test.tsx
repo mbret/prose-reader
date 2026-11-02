@@ -3,18 +3,13 @@
 import { ChakraProvider, defaultSystem } from "@chakra-ui/react"
 import { act, type ComponentProps } from "react"
 import { createRoot } from "react-dom/client"
-import { of } from "rxjs"
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
 
-/** The reader the section gets from `useReader`, set before each render. */
-const { testReader } = vi.hoisted(() => {
-  const testReader: { current: unknown } = { current: undefined }
+const { useReaderMock } = vi.hoisted(() => ({ useReaderMock: vi.fn() }))
 
-  return { testReader }
-})
-
-vi.mock("../context/useReader", () => ({
-  useReader: () => testReader.current,
+vi.mock("../context/useReader", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("../context/useReader")>()),
+  useReader: useReaderMock,
 }))
 
 import { ReactReaderProvider } from "../context/ReactReaderProvider"
@@ -29,12 +24,7 @@ const createReaderOfBook = ({
   isFullyPrePaginated,
 }: {
   isFullyPrePaginated: boolean
-}) => ({
-  context: {
-    watch: (key: string) =>
-      key === `isFullyPrePaginated` ? of(isFullyPrePaginated) : of(undefined),
-  },
-})
+}) => ({ context: { value: { isFullyPrePaginated } } })
 
 describe(`ThemeSection`, () => {
   let container: HTMLDivElement
@@ -52,7 +42,7 @@ describe(`ThemeSection`, () => {
     })
   }
 
-  /** The theme radios of the scope tab on screen; every tab stays mounted. */
+  /** Every scope tab stays mounted, so the hidden tabs hold radios too. */
   const getShownThemeRadios = () => {
     const shownPanel = container.querySelector(
       `[role="tabpanel"]:not([hidden])`,
@@ -70,7 +60,9 @@ describe(`ThemeSection`, () => {
     container = document.createElement(`div`)
     document.body.appendChild(container)
     root = createRoot(container)
-    testReader.current = createReaderOfBook({ isFullyPrePaginated: false })
+    useReaderMock.mockReturnValue(
+      createReaderOfBook({ isFullyPrePaginated: false }),
+    )
   })
 
   afterEach(async () => {
@@ -112,26 +104,19 @@ describe(`ThemeSection`, () => {
     })
   })
 
-  it(`says a fully pre-paginated book keeps its own colors, and nothing for another`, async () => {
-    const helperText = `This book keeps its own colors`
+  it.each([
+    { isFullyPrePaginated: false, isHelperShown: false },
+    { isFullyPrePaginated: true, isHelperShown: true },
+  ])(
+    `says a book keeps its own colors only when it is fully pre-paginated ($isFullyPrePaginated)`,
+    async ({ isFullyPrePaginated, isHelperShown }) => {
+      useReaderMock.mockReturnValue(createReaderOfBook({ isFullyPrePaginated }))
 
-    await render({})
+      await render({})
 
-    const isShownForReflowableBook = container.textContent?.includes(helperText)
-
-    testReader.current = createReaderOfBook({ isFullyPrePaginated: true })
-    await act(async () => {
-      root.unmount()
-    })
-    root = createRoot(container)
-    await render({})
-
-    expect({
-      isShownForReflowableBook,
-      isShownForPrePaginatedBook: container.textContent?.includes(helperText),
-    }).toEqual({
-      isShownForReflowableBook: false,
-      isShownForPrePaginatedBook: true,
-    })
-  })
+      expect(
+        container.textContent?.includes(`This book keeps its own colors`),
+      ).toBe(isHelperShown)
+    },
+  )
 })

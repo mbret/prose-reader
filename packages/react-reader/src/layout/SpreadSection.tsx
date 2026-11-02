@@ -3,9 +3,8 @@ import type { CoreInputSettings } from "@prose-reader/core"
 import { memo } from "react"
 import { useObserve } from "reactjrx"
 import { combineLatest, map, NEVER } from "rxjs"
-import { isKeyOf } from "../common/utils"
-import { Radio, RadioGroup } from "../components/ui/radio"
 import { useReader } from "../context/useReader"
+import { SettingRadioGroup } from "../settings/SettingRadioGroup"
 import { SettingScopes } from "../settings/SettingScopes"
 import { useManagedSetting } from "../settings/useManagedSetting"
 
@@ -54,27 +53,18 @@ export const SpreadSection = memo(() => {
       <Fieldset.Content>
         <Stack gap={4}>
           <SettingScopes
-            scopeHelperText="The scope to which apply the spread for this book."
+            settingLabel="spread"
             activeScope={spreadMode.activeScope}
             onActiveScopeChange={spreadMode.onActiveScopeChange}
             renderScopeValue={(scope) => (
-              <RadioGroup
+              <SettingRadioGroup
+                labels={SPREAD_MODE_LABELS}
                 value={spreadMode.getValueForScope(scope)}
                 disabled={!spreadState.isSpreadAllowed}
-                onValueChange={function selectSpreadMode({ value }) {
-                  if (value !== null && isKeyOf(SPREAD_MODE_LABELS, value)) {
-                    spreadMode.changeValueForScope(scope, value)
-                  }
+                onValueChange={function changeSpreadMode(selectedSpreadMode) {
+                  spreadMode.changeValueForScope(scope, selectedSpreadMode)
                 }}
-              >
-                <Stack gap={2}>
-                  {Object.entries(SPREAD_MODE_LABELS).map(([mode, label]) => (
-                    <Radio value={mode} key={mode}>
-                      {label}
-                    </Radio>
-                  ))}
-                </Stack>
-              </RadioGroup>
+              />
             )}
           />
         </Stack>

@@ -12,7 +12,6 @@ import {
 } from "../components/ui/dialog"
 import { ThemeSection } from "./ThemeSection"
 
-/** The colors the book is shown in. */
 export const ThemeDialog = memo(function ThemeDialog({
   open,
   setOpen,

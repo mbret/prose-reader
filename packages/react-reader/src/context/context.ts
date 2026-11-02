@@ -65,9 +65,8 @@ export type PublicContextType = {
   onQuickMenuOpenChange?: Dispatch<SetStateAction<boolean>>
   zoomMaxScale?: number
   /**
-   * The global values of the reader settings the user changes from
-   * react-reader's menus. They apply unless `settingsScopes` points a setting
-   * to another scope.
+   * The global values of the reader settings react-reader manages. They apply
+   * unless `settingsScopes` points a setting to another scope.
    */
   settings?: ReactReaderSettings
   /**
