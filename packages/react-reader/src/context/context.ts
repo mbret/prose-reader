@@ -58,15 +58,15 @@ export type PublicContextType = {
       | "more"
       | "back"
       | "gallery"
-      | "layout",
+      | "layout"
+      | "theme",
   ) => void
   quickMenuOpen?: boolean
   onQuickMenuOpenChange?: Dispatch<SetStateAction<boolean>>
   zoomMaxScale?: number
   /**
-   * The global values of the reader settings react-reader manages: the ones
-   * the user changes from its menus, and the theme. They apply unless
-   * `settingsScopes` points a setting to another scope.
+   * The global values of the reader settings react-reader manages. They apply
+   * unless `settingsScopes` points a setting to another scope.
    */
   settings?: ReactReaderSettings
   /**
