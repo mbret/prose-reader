@@ -416,31 +416,92 @@ describe("scoreMetadataCandidate", () => {
     expect(result.signals.map((signal) => signal.field)).toEqual(["title"])
   })
 
-  it("does not compare an EPUB urn:uuid with a catalog's own id", () => {
-    const query: FetchMetadataInput = {
-      title: "Dune",
-      authors: ["Frank Herbert"],
-      identifiers: [
-        {
-          value: "urn:uuid:5b1a4ef0-3c4e-4a3c-9a59-3f1c1c7c0d11",
-          scheme: "Unknown",
-        },
+  it.each(["UUID", "Unknown"])(
+    "does not compare an EPUB urn:uuid stated as %s with a catalog's own id",
+    (scheme) => {
+      const query: FetchMetadataInput = {
+        title: "Dune",
+        authors: ["Frank Herbert"],
+        identifiers: [
+          { value: "urn:uuid:5b1a4ef0-3c4e-4a3c-9a59-3f1c1c7c0d11", scheme },
+        ],
+      }
+      const candidate: ResolvedMetadata = {
+        titles: [{ value: "Dune Messiah" }],
+        contributors: [{ name: "Frank Herbert", roles: ["author"] }],
+        identifiers: [{ value: "B1hSG45JCX4C", scheme: "GoogleBooks" }],
+      }
+
+      const result = score(query, candidate)
+
+      expect(result.signals.map((signal) => signal.field)).toEqual([
+        "title",
+        "authors",
+      ])
+      expect(result).toEqual(
+        score({ ...query, identifiers: undefined }, candidate),
+      )
+    },
+  )
+
+  it("compares one UUID in every spelling and case", () => {
+    const uuid = "5b1a4ef0-3c4e-4a3c-9a59-3f1c1c7c0d11"
+
+    for (const [queryIdentifier, candidateIdentifier] of [
+      [
+        { value: `urn:uuid:${uuid}`, scheme: "UUID" },
+        { value: uuid, scheme: "UUID" },
       ],
-    }
-    const candidate: ResolvedMetadata = {
-      titles: [{ value: "Dune Messiah" }],
-      contributors: [{ name: "Frank Herbert", roles: ["author"] }],
-      identifiers: [{ value: "B1hSG45JCX4C", scheme: "GoogleBooks" }],
-    }
+      [
+        { value: `urn:uuid:${uuid.toUpperCase()}`, scheme: "UUID" },
+        { value: `urn:uuid:${uuid}`, scheme: "UUID" },
+      ],
+      [
+        { value: `urn:uuid:${uuid}`, scheme: "Unknown" },
+        { value: uuid, scheme: "uuid" },
+      ],
+    ] as const) {
+      const result = score(
+        { title: "A local title", identifiers: [queryIdentifier] },
+        {
+          titles: [{ value: "The catalog title" }],
+          identifiers: [candidateIdentifier],
+        },
+      )
 
-    const result = score(query, candidate)
+      expect(result.signals).toContainEqual(
+        expect.objectContaining({ field: "identifiers", score: 1 }),
+      )
+      expect(result.score).toBe(1)
+    }
+  })
 
-    expect(result.signals.map((signal) => signal.field)).toEqual([
-      "title",
-      "authors",
-    ])
-    expect(result).toEqual(
-      score({ ...query, identifiers: undefined }, candidate),
+  it("scopes a URN by the namespace it names", () => {
+    const nbn = { value: "urn:nbn:de:101:1-2011", scheme: "URN" }
+    const titled = (identifiers: ResolvedMetadata["identifiers"]) => ({
+      titles: [{ value: "Dune" }],
+      identifiers,
+    })
+
+    expect(
+      score(
+        { title: "Dune", identifiers: [nbn] },
+        titled([{ value: "urn:issn:0167-6423", scheme: "URN" }]),
+      ).signals.map((signal) => signal.field),
+    ).toEqual(["title"])
+    expect(
+      score(
+        { title: "Neuromancer", identifiers: [nbn] },
+        titled([{ value: "URN:NBN:de:101:1-2011", scheme: "Unknown" }]),
+      ).score,
+    ).toBe(1)
+    expect(
+      score(
+        { title: "Dune", identifiers: [nbn] },
+        titled([{ value: "urn:nbn:de:101:1-2012", scheme: "URN" }]),
+      ).signals,
+    ).toContainEqual(
+      expect.objectContaining({ field: "identifiers", score: 0 }),
     )
   })
 
