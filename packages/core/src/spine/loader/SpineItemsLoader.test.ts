@@ -7,12 +7,14 @@ import type {
 } from "../../navigation/types"
 import { ReaderSettingsManager } from "../../settings/ReaderSettingsManager"
 import { createTestManifest, waitFor } from "../../tests/utils"
+import { ViewportSlicePosition } from "../../viewport/types"
 import { Viewport } from "../../viewport/Viewport"
-import type { SpineLocator } from "../locator/SpineLocator"
+import type { Spine, SpineState } from "../Spine"
 import type { SpineItemsManager } from "../SpineItemsManager"
 import {
   SpinePosition,
   type SpinePosition as SpinePositionType,
+  type UnboundSpinePosition,
 } from "../types"
 import { SpineItemsLoader } from "./SpineItemsLoader"
 
@@ -30,12 +32,18 @@ afterEach(() => {
 
 /**
  * A mounted loader over two items, reading the visible range from
- * `getVisibleRange` for the position it is given, without preloading.
+ * `getVisibleRange` for the slice the viewport shows, without preloading. The
+ * viewport shows the absolute viewport at the navigation's position, unless a
+ * test gives what it shows with `getVisibleSlice`, as a transform would.
  */
 const createHarness = ({
   getVisibleRange,
+  getVisibleSlice,
 }: {
-  getVisibleRange: (position: SpinePositionType) => VisibleRange
+  getVisibleRange: (slice: ViewportSlicePosition) => VisibleRange
+  getVisibleSlice?: (
+    position: SpinePositionType | UnboundSpinePosition,
+  ) => ViewportSlicePosition
 }) => {
   const context = new Context(createTestManifest())
 
@@ -52,6 +60,10 @@ const createHarness = ({
   vi.spyOn(viewport.value.element, "clientHeight", "get").mockReturnValue(100)
   viewport.layout()
 
+  if (getVisibleSlice) {
+    vi.spyOn(viewport, "getVisibleSlice").mockImplementation(getVisibleSlice)
+  }
+
   const items = [
     { load: vi.fn(), unload: vi.fn() },
     { load: vi.fn(), unload: vi.fn() },
@@ -63,14 +75,18 @@ const createHarness = ({
     getSpineItemIndex: (index: number) => (items[index] ? index : undefined),
   } as unknown as SpineItemsManager
 
-  const getVisibleSpineItemsFromPosition = vi.fn(
-    ({ position }: { position: SpinePositionType }) =>
-      getVisibleRange(position),
+  const getVisibleSpineItemsFromSlice = vi.fn(
+    ({ slice }: { slice: ViewportSlicePosition }) => getVisibleRange(slice),
   )
-  // Cast: these tests exercise the loader's trigger wiring, not locator internals.
-  const spineLocator = {
-    getVisibleSpineItemsFromPosition,
-  } as unknown as SpineLocator
+  /** The first item a pending layout can change: none until a test asks. */
+  const spineLayoutState = new BehaviorSubject<
+    Pick<SpineState, "firstItemIndexAwaitingLayout">
+  >({ firstItemIndexAwaitingLayout: undefined })
+  // Cast: the loader only reads the locator and watches the layout state.
+  const spine = {
+    locator: { getVisibleSpineItemsFromSlice },
+    watch: () => spineLayoutState,
+  } as unknown as Spine
 
   /**
    * The latest navigation, as the navigator reports it: one made over the
@@ -108,7 +124,7 @@ const createHarness = ({
   const loader = new SpineItemsLoader(
     context,
     spineItemsManager,
-    spineLocator,
+    spine,
     settings,
     viewport,
     navigationAgainstCurrentLayout,
@@ -120,6 +136,7 @@ const createHarness = ({
     settings.destroy()
     viewport.destroy()
     navigationAgainstCurrentLayout.complete()
+    spineLayoutState.complete()
   }
 
   return {
@@ -128,7 +145,13 @@ const createHarness = ({
     viewport,
     navigateOverCurrentLayout,
     voidNavigation,
-    getVisibleSpineItemsFromPosition,
+    requestLayoutFrom: (spineItemIndex: number) => {
+      spineLayoutState.next({ firstItemIndexAwaitingLayout: spineItemIndex })
+    },
+    publishPages: () => {
+      spineLayoutState.next({ firstItemIndexAwaitingLayout: undefined })
+    },
+    getVisibleSpineItemsFromSlice,
     clearCalls: () => {
       vi.clearAllMocks()
     },
@@ -136,13 +159,44 @@ const createHarness = ({
 }
 
 describe("SpineItemsLoader", () => {
+  describe("Given a viewport that shows the book away from the navigation's position", () => {
+    /**
+     * Transformed, as by a zoom, the viewport shows another part of the book
+     * than the absolute viewport at the navigation's position. Here it shows
+     * the second item, where the navigation is on the first.
+     */
+    it("loads the items the viewport shows", async () => {
+      const {
+        items: [item0, item1],
+      } = createHarness({
+        getVisibleSlice: (position) =>
+          ViewportSlicePosition.from({
+            x: position.x + 100,
+            y: position.y,
+            width: 100,
+            height: 100,
+          }),
+        getVisibleRange: ({ x }) =>
+          x < 100
+            ? { beginIndex: 0, endIndex: 0 }
+            : { beginIndex: 1, endIndex: 1 },
+      })
+
+      await waitFor(LOADER_DEBOUNCE_MS)
+
+      expect(item1?.load).toHaveBeenCalled()
+      expect(item0?.unload).toHaveBeenCalled()
+      expect(item0?.load).not.toHaveBeenCalled()
+    })
+  })
+
   describe("Given the viewport geometry changes without a position change", () => {
-    it("reloads visible spine items from the current relative viewport", async () => {
+    it("reloads visible spine items from what the viewport shows now", async () => {
       let visibleRange = { beginIndex: 0, endIndex: 0 }
       const {
         items: [item0, item1],
         viewport,
-        getVisibleSpineItemsFromPosition,
+        getVisibleSpineItemsFromSlice,
         clearCalls,
       } = createHarness({ getVisibleRange: () => visibleRange })
 
@@ -158,7 +212,7 @@ describe("SpineItemsLoader", () => {
 
       await waitFor(LOADER_DEBOUNCE_MS)
 
-      expect(getVisibleSpineItemsFromPosition).toHaveBeenCalled()
+      expect(getVisibleSpineItemsFromSlice).toHaveBeenCalled()
       expect(item0?.unload).toHaveBeenCalled()
       expect(item1?.load).toHaveBeenCalled()
     })
@@ -206,6 +260,65 @@ describe("SpineItemsLoader", () => {
       expect(item1?.load).toHaveBeenCalled()
       expect(item0?.unload).toHaveBeenCalled()
       expect(item0?.load).not.toHaveBeenCalled()
+    })
+  })
+
+  describe("Given a layout of an item in view, the navigation holding", () => {
+    /**
+     * Zoomed out, the viewport shows more items than the navigation holds
+     * over. A layout of one of those leaves the navigation holding, while the
+     * place of that item and of the ones after it are unknown. Here the
+     * second item comes into view as it is laid out again.
+     */
+    it("neither loads nor unloads until that layout is done, then measures", async () => {
+      let visibleRange = { beginIndex: 0, endIndex: 0 }
+      const {
+        items: [item0, item1],
+        requestLayoutFrom,
+        publishPages,
+        viewport,
+        clearCalls,
+      } = createHarness({ getVisibleRange: () => visibleRange })
+
+      await waitFor(LOADER_DEBOUNCE_MS)
+      clearCalls()
+
+      visibleRange = { beginIndex: 0, endIndex: 1 }
+      requestLayoutFrom(1)
+      viewport.layout()
+      await waitFor(LOADER_DEBOUNCE_MS)
+
+      for (const item of [item0, item1]) {
+        expect(item?.load).not.toHaveBeenCalled()
+        expect(item?.unload).not.toHaveBeenCalled()
+      }
+
+      publishPages()
+      await waitFor(LOADER_DEBOUNCE_MS)
+
+      expect(item1?.load).toHaveBeenCalled()
+      expect(item0?.unload).not.toHaveBeenCalled()
+    })
+
+    it("measures at once when only items after the ones in view await layout", async () => {
+      const {
+        items: [item0, item1],
+        requestLayoutFrom,
+        viewport,
+        clearCalls,
+      } = createHarness({
+        getVisibleRange: () => ({ beginIndex: 0, endIndex: 0 }),
+      })
+
+      await waitFor(LOADER_DEBOUNCE_MS)
+      clearCalls()
+
+      requestLayoutFrom(1)
+      viewport.layout()
+      await waitFor(LOADER_DEBOUNCE_MS)
+
+      expect(item0?.load).toHaveBeenCalled()
+      expect(item1?.unload).toHaveBeenCalled()
     })
   })
 

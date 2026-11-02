@@ -34,7 +34,10 @@ export const registerTaps = ({
 }) => {
   const gestures$ = recognizable.events$.pipe(
     filter((event) => event.recognizer === recognizer),
-    withLatestFrom(reader.context.watch(`rootElement`), reader.spine.element$),
+    withLatestFrom(
+      reader.context.watch(`rootElement`),
+      reader.spine.watch(`element`),
+    ),
     switchMap(([{ event }, containerElement, spineElement]) => {
       if (!containerElement || !spineElement) return EMPTY
 

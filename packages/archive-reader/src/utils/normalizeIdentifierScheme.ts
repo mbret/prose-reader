@@ -17,6 +17,8 @@ const CANONICAL_SPELLINGS: Record<
   googlebooks: "GoogleBooks",
   openlibrary: "OpenLibrary",
   projectgutenberg: "ProjectGutenberg",
+  uuid: "UUID",
+  urn: "URN",
   url: "URL",
   unknown: "Unknown",
 }

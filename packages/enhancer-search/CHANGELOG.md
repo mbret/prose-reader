@@ -3,6 +3,62 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## [36.0.0](https://github.com/mbret/prose-reader/compare/v35.0.1...v36.0.0) (2026-10-29)
+
+**Note:** Version bump only for package @prose-reader/enhancer-search
+
+
+
+
+
+## [35.0.0](https://github.com/mbret/prose-reader/compare/v34.0.0...v35.0.0) (2026-10-28)
+
+**Note:** Version bump only for package @prose-reader/enhancer-search
+
+
+
+
+
+## [34.0.0](https://github.com/mbret/prose-reader/compare/v33.0.0...v34.0.0) (2026-10-24)
+
+### ⚠ BREAKING CHANGES
+
+* **deps:** `@prose-reader/core` is now a peer dependency of
+  `@prose-reader/enhancer-gallery`, `enhancer-audio`, `enhancer-gestures`
+  and `enhancer-search`. Install the core the enhancer was released with,
+  or a later one of the same major: npm refuses to install the enhancer
+  next to any other, and pnpm and yarn report an unmet peer, where a
+  second core used to be installed.
+
+### Bug Fixes
+
+* **deps:** make @prose-reader/core a peer of the gallery, audio, gestures and search enhancers ([8591888](https://github.com/mbret/prose-reader/commit/8591888fa3b9bdd07100e75a02cbab6e49279321)), references [#597](https://github.com/mbret/prose-reader/issues/597)
+
+
+## [33.0.0](https://github.com/mbret/prose-reader/compare/v32.0.0...v33.0.0) (2026-10-23)
+
+**Note:** Version bump only for package @prose-reader/enhancer-search
+
+
+
+
+
+## [32.0.0](https://github.com/mbret/prose-reader/compare/v31.0.0...v32.0.0) (2026-10-21)
+
+**Note:** Version bump only for package @prose-reader/enhancer-search
+
+
+
+
+
+## [31.0.0](https://github.com/mbret/prose-reader/compare/v30.3.0...v31.0.0) (2026-10-21)
+
+**Note:** Version bump only for package @prose-reader/enhancer-search
+
+
+
+
+
 ## [30.2.0](https://github.com/mbret/prose-reader/compare/v30.1.2...v30.2.0) (2026-10-20)
 
 **Note:** Version bump only for package @prose-reader/enhancer-search

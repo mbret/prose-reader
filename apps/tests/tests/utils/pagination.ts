@@ -17,6 +17,20 @@ export const waitForSettled = async (page: Page) => {
 }
 
 /**
+ * The reader exists, its current result has settled, and the layout that
+ * result was found on is still the current one.
+ */
+export const waitForSettledOnCurrentLayout = async (page: Page) => {
+  const reader = await getReader(page)
+
+  await page.waitForFunction(
+    (reader) =>
+      reader.pagination.state.isSettled && reader.spine.isLayoutCurrent(),
+    reader,
+  )
+}
+
+/**
  * Resizes the window and resolves once the reader has laid out for the new
  * size and its result has settled. Unlike a navigation, a resize reaches the
  * reader after the call that makes it has returned, so the result already on

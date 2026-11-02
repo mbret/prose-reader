@@ -3,6 +3,78 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## [36.0.0](https://github.com/mbret/prose-reader/compare/v35.0.1...v36.0.0) (2026-10-29)
+
+### ⚠ BREAKING CHANGES
+
+* **core:** give the spine a state, with its element and the first item awaiting layout
+* **core:** SettingsInterface loses _inputSettings and
+  _outputSettings, and SettingsManager loses _settings$. A SettingsManager
+  subclass implements getComputedSettings in place of getOutputSettings,
+  returning only the computed settings, and its second type parameter is
+  those computed settings. @prose-reader/shared no longer exports
+  shallowMergeIfDefined.
+
+### Bug Fixes
+
+* **enhancer-gestures:** cap the pinch step that enters a zoom at zoomMaxScale ([1ee516d](https://github.com/mbret/prose-reader/commit/1ee516da77c9e57a76a41d7d9512c3859463fddb))
+
+### Code Refactoring
+
+* **core:** give the spine a state, with its element and the first item awaiting layout ([28efcd4](https://github.com/mbret/prose-reader/commit/28efcd41a9ed7dca52617cdb444b87667fea270a))
+* **core:** type extend from its receiver and merge the computed settings in the base ([72a65d1](https://github.com/mbret/prose-reader/commit/72a65d1e7fdb73f94c465d50ae4149e86a0cf577))
+
+
+## [35.0.0](https://github.com/mbret/prose-reader/compare/v34.0.0...v35.0.0) (2026-10-28)
+
+**Note:** Version bump only for package @prose-reader/enhancer-gestures
+
+
+
+
+
+## [34.0.0](https://github.com/mbret/prose-reader/compare/v33.0.0...v34.0.0) (2026-10-24)
+
+### ⚠ BREAKING CHANGES
+
+* **deps:** `@prose-reader/core` is now a peer dependency of
+  `@prose-reader/enhancer-gallery`, `enhancer-audio`, `enhancer-gestures`
+  and `enhancer-search`. Install the core the enhancer was released with,
+  or a later one of the same major: npm refuses to install the enhancer
+  next to any other, and pnpm and yarn report an unmet peer, where a
+  second core used to be installed.
+
+### Bug Fixes
+
+* **deps:** make @prose-reader/core a peer of the gallery, audio, gestures and search enhancers ([8591888](https://github.com/mbret/prose-reader/commit/8591888fa3b9bdd07100e75a02cbab6e49279321)), references [#597](https://github.com/mbret/prose-reader/issues/597)
+* **enhancer-gestures:** complete the gesture stream for a subscriber arriving after destroy ([7fc1aee](https://github.com/mbret/prose-reader/commit/7fc1aeea73d1b349db593b1871782b408728f9b8))
+* **enhancer-gestures:** release the container when the reader is destroyed ([391c506](https://github.com/mbret/prose-reader/commit/391c506e9703555db53de6cf3aa7a40b2d275be7))
+
+
+## [33.0.0](https://github.com/mbret/prose-reader/compare/v32.0.0...v33.0.0) (2026-10-23)
+
+**Note:** Version bump only for package @prose-reader/enhancer-gestures
+
+
+
+
+
+## [32.0.0](https://github.com/mbret/prose-reader/compare/v31.0.0...v32.0.0) (2026-10-21)
+
+**Note:** Version bump only for package @prose-reader/enhancer-gestures
+
+
+
+
+
+## [31.0.0](https://github.com/mbret/prose-reader/compare/v30.3.0...v31.0.0) (2026-10-21)
+
+**Note:** Version bump only for package @prose-reader/enhancer-gestures
+
+
+
+
+
 ## [30.2.0](https://github.com/mbret/prose-reader/compare/v30.1.2...v30.2.0) (2026-10-20)
 
 **Note:** Version bump only for package @prose-reader/enhancer-gestures

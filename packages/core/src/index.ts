@@ -3,9 +3,9 @@ export type { Manifest } from "@prose-reader/shared"
 import { createReaderWithEnhancers as createReader } from "./createReaderWithEnhancer"
 
 export {
+  type EnhancerThemeInputSettings,
   getThemeBackgroundColor,
   type Theme,
-  type ThemeEnhancerOutput,
 } from "./enhancers/theme"
 export { HookManager } from "./hooks/HookManager"
 export { SettingsManager } from "./settings/SettingsManager"
@@ -45,6 +45,7 @@ export * from "./spine/Pages"
 export * from "./spine/Spine"
 export * from "./spine/SpineItemsManager"
 export * from "./spine/SpineItemsObserver"
+export type { SpineLayoutLifecycleEvent } from "./spine/SpineLayout"
 export * from "./spine/types"
 export * from "./spineItem/SpineItem"
 export { SpineItem } from "./spineItem/SpineItem"

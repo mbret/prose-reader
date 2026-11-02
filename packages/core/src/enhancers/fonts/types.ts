@@ -10,7 +10,8 @@ export type EnhancerFontsInputSettings = {
   fontScale: number
   /**
    * @description
-   * Set the line height of the text. The default value is 1
+   * Set the line height of the text. The default, `publisher`, keeps the
+   * book's own.
    */
   lineHeight: number | `publisher`
   /**

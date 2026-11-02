@@ -70,7 +70,7 @@ const features: {
     icon: LuLayers,
     title: "Enhancers",
     description:
-      "Add gestures, search, annotations or your own features to the reader.",
+      "Add new formats, gestures, search, annotations or features of your own.",
     href: links.enhancers,
     linkTopic: "enhancers",
   },
@@ -86,7 +86,7 @@ const features: {
     icon: LuServer,
     title: "Streamer",
     description:
-      "Serve books from a service worker, from Node or from React Native.",
+      "Serve books from anywhere: a service worker, a Node server, React Native or the page itself.",
     href: links.streamer,
     linkTopic: "the streamer",
   },

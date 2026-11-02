@@ -11,9 +11,13 @@ async function run() {
       : "sous-le-vent.epub",
   )
 
+  const preload = new URLSearchParams(window.location.search).get("preload")
+
   const reader = createReader({
     ...book,
-    numberOfAdjacentSpineItemToPreLoad: 0,
+    ...(preload !== null && {
+      numberOfAdjacentSpineItemToPreLoad: Number(preload),
+    }),
     pageTurnAnimation: "none",
     layoutLayerTransition: false,
   })

@@ -6,13 +6,18 @@ import {
 } from "../constants"
 import type { Context } from "../context/Context"
 import type { ReaderSettingsManager } from "../settings/ReaderSettingsManager"
+import type { SpinePosition, UnboundSpinePosition } from "../spine/types"
 import {
   removeStylePropertyIfPresent,
   setStylePropertyIfChanged,
 } from "../utils/dom"
 import { ReactiveEntity } from "../utils/ReactiveEntity"
 import { shouldUseSpreadModeForViewport } from "./spreadMode"
-import { AbsoluteViewport, RelativeViewport } from "./types"
+import {
+  AbsoluteViewport,
+  RelativeViewport,
+  ViewportSlicePosition,
+} from "./types"
 
 type State = {
   element: HTMLElement
@@ -168,17 +173,22 @@ export class Viewport extends ReactiveEntity<State> {
    * would count a resize that has not been laid out yet as part of the scale.
    */
   public get scaleFactor() {
-    const { element } = this.value
-    const layoutWidth = element.clientWidth
+    return this.getScaleOfRenderedBox(
+      this.value.element.getBoundingClientRect(),
+    )
+  }
+
+  /** The scale the element is rendered at, given its rendered box. */
+  private getScaleOfRenderedBox(renderedBox: DOMRect | undefined) {
+    const layoutWidth = this.value.element.clientWidth
 
     if (!layoutWidth) return 1
 
-    const viewportRect = element.getBoundingClientRect()
     // Fall back to no-zoom (`1`) when the rendered rect is unavailable
     // (detached element, `display: none`, jsdom). A 0-width rect would
     // otherwise yield a 0 scale and propagate `Infinity` through every
     // consumer that divides by `scaleFactor` (e.g. spine-coord clamping).
-    const measuredWidth = viewportRect?.width || layoutWidth
+    const measuredWidth = renderedBox?.width || layoutWidth
 
     return measuredWidth / layoutWidth
   }
@@ -190,20 +200,74 @@ export class Viewport extends ReactiveEntity<State> {
    * Inversely if the viewport is zoomed in, we see less left and right items.
    *
    * This is mostly useful for detecting what should be visible, navigable, etc.
+   * Where it is in the book: `getVisibleSlice()`.
    *
    * @important
    * Contains long floating values.
-   *
-   * @todo take position of translate into consideration in something
-   * like relativeViewportPosition or even better a ViewportSlicePosition
    */
   public get relativeViewport() {
+    return this.getRelativeViewportAtScale(this.scaleFactor)
+  }
+
+  private getRelativeViewportAtScale(scale: number) {
     const absoluteViewport = this.absoluteViewport
-    const relativeScale = this.scaleFactor
 
     return new RelativeViewport({
-      width: absoluteViewport.width / relativeScale,
-      height: absoluteViewport.height / relativeScale,
+      width: absoluteViewport.width / scale,
+      height: absoluteViewport.height / scale,
+    })
+  }
+
+  /**
+   * The part of the spine the viewport shows while the book is at `position`,
+   * the spine position at its top-left corner, where a navigation puts it:
+   * paginated, the navigation moves the spine under the viewport, and
+   * scrolled, it scrolls the viewport along the spine.
+   *
+   * Transformed, such as by a zoom, the viewport shows the relative viewport,
+   * from wherever the transform takes its corner: a paginated zoom scales it
+   * around its center, then `reader.zoom.move()` moves it, and a scrolled
+   * zoom scales it from its top. That corner is measured on the page, against
+   * the box the viewport is laid out in, the way the scale is. Not rendered,
+   * it is the absolute viewport at the position.
+   */
+  public getVisibleSlice(position: SpinePosition | UnboundSpinePosition) {
+    const { element } = this.value
+    const renderedBox = element.getBoundingClientRect()
+    const scale = this.getScaleOfRenderedBox(renderedBox)
+    const { width, height } = this.getRelativeViewportAtScale(scale)
+    const { offsetParent } = element
+
+    if (!renderedBox.width || !offsetParent) {
+      return ViewportSlicePosition.from({
+        x: position.x,
+        y: position.y,
+        width,
+        height,
+      })
+    }
+
+    /**
+     * Where the viewport's corner would be on the page untransformed: in the
+     * box it is laid out in, scrolled with it, as a scrolled book is.
+     */
+    const layoutBox = offsetParent.getBoundingClientRect()
+    const untransformedLeft =
+      layoutBox.left +
+      offsetParent.clientLeft +
+      element.offsetLeft -
+      offsetParent.scrollLeft
+    const untransformedTop =
+      layoutBox.top +
+      offsetParent.clientTop +
+      element.offsetTop -
+      offsetParent.scrollTop
+
+    return ViewportSlicePosition.from({
+      x: position.x + (untransformedLeft - renderedBox.left) / scale,
+      y: position.y + (untransformedTop - renderedBox.top) / scale,
+      width,
+      height,
     })
   }
 

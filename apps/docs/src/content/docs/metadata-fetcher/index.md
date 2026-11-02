@@ -68,6 +68,8 @@ type KnownMetadataIdentifierScheme =
   | "GoogleBooks"
   | "OpenLibrary"
   | "ProjectGutenberg"
+  | "UUID"
+  | "URN"
   | "URL"
   | "Unknown"
 
@@ -92,7 +94,7 @@ type FetchMetadataInput = {
 }
 ```
 
-Some fields start a request (`title`, `authors`, `series`, identifiers); others disambiguate the candidates that come back (`publisher`, `publishedYear`, languages, page count). ISBN, GTIN and catalog ids all use the same identifier shape: `{ value: "9780441013593", scheme: "ISBN" }` and `{ value: "zyTCAlFPjgYC", scheme: "GoogleBooks" }`. The known schemes give TypeScript autocomplete, while any consumer-defined string remains valid. `Unknown` explicitly preserves a source identifier whose namespace cannot be classified; `URL` means a validated absolute HTTP(S) identifier. Reading a specific identifier back out of an input or a candidate belongs to archive-reader: [`identifierValue`](/archive-reader/identifiers#reading-a-specific-identifier) accepts both the `ISBN` and `GTIN` schemes for either, reads a catalog id out of the reference URL that carries it, and normalizes the authored value — that is what the providers and the matcher use. Fields with no input role — covers, descriptions, subjects, rights, layout and format-specific metadata — are deliberately absent.
+Some fields start a request (`title`, `authors`, `series`, identifiers); others disambiguate the candidates that come back (`publisher`, `publishedYear`, languages, page count). ISBN, GTIN and catalog ids all use the same identifier shape: `{ value: "9780441013593", scheme: "ISBN" }` and `{ value: "zyTCAlFPjgYC", scheme: "GoogleBooks" }`. The known schemes give TypeScript autocomplete, while any consumer-defined string remains valid. `Unknown` explicitly preserves a source identifier whose namespace cannot be classified; `URL` means a validated absolute HTTP(S) identifier; `UUID` and `URN` are what an EPUB's `urn:uuid:` unique identifier and other URNs resolve to. Reading a specific identifier back out of an input or a candidate belongs to archive-reader: [`identifierValue`](/archive-reader/identifiers#reading-a-specific-identifier) accepts both the `ISBN` and `GTIN` schemes for either, reads a catalog id out of the reference URL that carries it, and normalizes the authored value — that is what the providers and the matcher use. Fields with no input role — covers, descriptions, subjects, rights, layout and format-specific metadata — are deliberately absent.
 
 `metadataInputFromResolvedArchive` is the explicit bridge from archive-reader. It only requires the `metadata` projection, so callers do not need to resolve reading order, TOC or sources for a lookup:
 
@@ -204,13 +206,14 @@ The rules:
   | --- | --- | --- |
   | `isbn`, `gtin` | 1 | identifiers *are* the book |
   | `title` | 0.8 | what a human recognizes it by |
-  | `identifiers` | 0.6 | other identifier systems, scheme-aware |
+  | `identifiers` | 0.6 | other identifier systems, compared within the namespace both sides state |
   | `authors` | 0.5 | compared as people |
   | `series` | 0.3 | |
   | `publishedYear` | 0.2 | year proximity against the candidate's publication data |
   | `publisher`, `languages`, `numberOfPages` | 0.15 | publication details — they must never sink a convincing match alone |
 
-- **Confirmed identity settles it.** An agreeing ISBN or GTIN pins the score to `1` whatever else disagrees, and a provider-confirmed shared identifier does the same when both sides state the same non-`Unknown` scheme. An `Unknown` raw value is not decisive because it could collide with another catalog's identifier. A *contradicting* ISBN or GTIN scores `0`, which sinks a plausible-looking wrong edition. Disjoint provider-specific identifier lists are not treated as contradictions: catalogs naturally use different id spaces. ISBN-10 and ISBN-13 of the same book compare equal (`toIsbn13` is exported).
+- **Confirmed identity settles it.** An agreeing ISBN or GTIN pins the score to `1` whatever else disagrees. A *contradicting* ISBN or GTIN scores `0`, which sinks a plausible-looking wrong edition. ISBN-10 and ISBN-13 of the same book compare equal (`toIsbn13` is exported).
+- **Other identifiers are compared within a namespace both sides state.** A catalog id is read the way [`identifierValue`](/archive-reader/identifiers#reading-a-specific-identifier) reads it, so a Gutenberg URL and a `ProjectGutenberg` number, or a Google Books link and a `GoogleBooks` volume id, are one namespace; any other stated scheme is its own. A UUID is read the same way, so its bare and `urn:uuid:` spellings, in either case, are one value, and any other URN is scoped by the namespace it names and compared as RFC 8141 compares URNs, whatever the case of that namespace or of a percent-encoded octet: a `urn:nbn:` and a `urn:issn:` identifier are never compared. Ids compare in the spelling their namespace canonicalizes to, so a Google Books volume id is case-sensitive, while a DOI compares without case, as the DOI system defines it. A shared identifier pins the score to `1`. A different id in the same namespace is a disagreement, scored `0` at its weight rather than pinned, since one edition can sit under several records of a catalog. Lists with no namespace in common are not compared at all, and add no `identifiers` signal: an EPUB 3 `urn:uuid` and a catalog's own id are different id spaces, not a contradiction. An untyped value that is neither a URN nor a known catalog's URL (an `Unknown` string, a publisher's web page) has no namespace, and nor has any value whose scheme is blank, a URN included, so neither is ever compared, even against an equal value of another scheme.
 - **Comparisons are fuzzy where the world is.** Titles compare on character bigrams, against both the candidate's main title and that title composed with its `subtitle` entry — a book states `Dune: A Novel` in one `dc:title` where a catalog splits it in two, and only the comparison string is composed, never the returned metadata. The subtitle asymmetry is repaired on top (`Dune` ≡ `Dune: a novel`, but `Dune: Book One` ≠ `Dune: Messiah`). An explicit conflicting volume, part, or book number makes the title score `0` (`Vol. I` ≠ `vol. 2`) — in **any** compared form, so a bare `Irina` cannot launder the candidate's own `Vol. 1` against a query for `Vol. 2`, and a number the query states in its title is also compared against the candidate's series `position`, where a catalog keeps the same fact. Names compare on their token set (`Herbert, Frank` ≡ `Frank Herbert`); diacritics and punctuation are folded (`Les Misérables` ≡ `Les Miserables`); languages compare on their primary subtag (`en-US` ≡ `en`).
 - **Flat publication evidence uses the best candidate value.** `publisher` and `publishedYear` compare against both the candidate's original and edition publication details when present; the closest value supplies the single signal.
 - **A rating is never evidence.** `aggregateRating` is returned but deliberately not scored: how much a crowd liked a book says nothing about whether it is *this* book, and a popular edition must not outrank the right one.
@@ -261,7 +264,14 @@ const throttled = fetched.failedProviders.filter(({ status }) => status === 429)
 
 Each entry carries the catalog's HTTP `status` when the failure was a response — `429` (ask again later), `5xx` (the catalog is down), `4xx` (we asked wrong) — and no status when it wasn't one, which is itself the answer: a network error, an unparseable payload, a bug. Three states are distinguishable: a provider in `sources` answered, one in `failedProviders` threw, one in neither was never asked (narrowed out by the `providers` option).
 
-`fetchMetadata` itself does not retry or interpret `Retry-After`; providers own that policy because only they know which operations are idempotent and which failures their catalog treats as transient. The built-in Google Books provider retries its transient failures as described below. A provider that exhausts its own retries is reported here normally.
+`fetchMetadata` itself does not retry or interpret `Retry-After`; providers own that policy because only they know which operations are idempotent and which failures their catalog treats as transient. The built-in providers share one:
+
+- Each request makes at most three attempts.
+- A network failure, a rate limit (`429`) and an outage (`500`, `502`, `503`, `504`) are retried with abortable exponential backoff and jitter, bounded at 3 seconds per wait. Cancelling through `signal` interrupts a wait.
+- When the catalog sends `Retry-After`, the provider waits exactly that long instead. A `Retry-After` beyond the 3-second bound is not waited out: the provider gives up at once, since an earlier retry would only be refused again.
+- Client errors, such as an invalid key, are not retried.
+
+A provider that exhausts its retries, or gives up on a long `Retry-After`, is reported here normally, with its status.
 
 Cancelling through `signal` is the one exception: it rejects, since the caller asked for it.
 
@@ -309,15 +319,15 @@ const provider = createProjectGutenbergProvider({
 | `fetch` | the global one | for tests, a custom agent, or a caching layer |
 | `userAgent` | — | optional identifying user agent |
 
-**Lookup strategy**, exactly one request: the provider recognizes an official Gutenberg URL in `identifiers` (including `/ebooks/78139`, `/files/78139/…`, `/cache/epub/78139/…`, and the older `/78139` form), or a numeric identifier whose scheme is `ProjectGutenberg`. It then requests Gutenberg's official per-eBook RDF record at `/cache/epub/{id}/pg{id}.rdf`. A title or author alone never triggers the provider, so it neither crawls the website nor returns a fuzzy Gutenberg hit. Arbitrary URLs and identifiers with another authored scheme are ignored.
+**Lookup strategy**, exactly one request, retried under the built-in providers' [retry policy](#error-policy): the provider recognizes an official Gutenberg URL in `identifiers` (including `/ebooks/78139`, `/files/78139/…`, `/cache/epub/78139/…`, and the older `/78139` form), or a numeric identifier whose scheme is `ProjectGutenberg`. It then requests Gutenberg's official per-eBook RDF record at `/cache/epub/{id}/pg{id}.rdf`. A title or author alone never triggers the provider, so it neither crawls the website nor returns a fuzzy Gutenberg hit. Arbitrary URLs and identifiers with another authored scheme are ignored.
 
-The confirmed candidate echoes the book's exact input identifier and adds `{ value: "78139", scheme: "ProjectGutenberg" }`. A shared scheme-scoped identifier makes the match decisive even when the catalog and embedded titles differ. A missing RDF record returns no candidate; a failing or malformed response is reported through `failedProviders` like any other provider failure.
+The confirmed candidate carries `{ value: "78139", scheme: "ProjectGutenberg" }`, which the matcher compares with the book's URL as the same Gutenberg id: the match is decisive even when the catalog and embedded titles differ. A missing RDF record returns no candidate; a failing or malformed response is reported through `failedProviders` like any other provider failure.
 
 **Mapping** (per-eBook RDF → `ResolvedMetadata`; same exhaustive-destructure check as the other providers):
 
 | Project Gutenberg RDF | Resolved | |
 | --- | --- | --- |
-| `pgterms:ebook@rdf:about` | `identifiers` | numeric scheme `ProjectGutenberg`; the exact matched input identifier is preserved too |
+| `pgterms:ebook@rdf:about` | `identifiers` | numeric scheme `ProjectGutenberg`, which the matcher compares with a Gutenberg URL the book states |
 | `dcterms:title` | `title`, `titles` | |
 | `dcterms:creator`, `marcrel:*` | `contributors` | common MARC relators normalize to roles such as `author`, `translator`, `editor`, and `illustrator`; unknown codes remain verbatim |
 | `dcterms:issued` | `publication.edition.date` | Gutenberg ebook release date, parsed through day precision when available; it is not the work's original publication date |
@@ -364,9 +374,9 @@ const input = {
 }
 ```
 
-An official Google Books website/API URL with scheme `URL` is recognized too. An exact lookup echoes the confirmed volume id as `{ value: id, scheme: "GoogleBooks" }`, so the shared matcher treats it as decisive and `metadataInputFromResolvedArchive` can forward it unchanged for a later refresh. A missing volume id falls through to ISBN/title when available. ISBN searches likewise retain the queried ISBN identifier even when a sparse Google record omits `industryIdentifiers`.
+An official Google Books website/API URL with scheme `URL` is recognized too. Every candidate carries its volume id as `{ value: id, scheme: "GoogleBooks" }`, which the matcher compares with either spelling of the book's id, so an exact lookup is decisive, and `metadataInputFromResolvedArchive` can forward the id unchanged for a later refresh. A missing volume id falls through to ISBN/title when available. ISBN searches likewise retain the queried ISBN identifier even when a sparse Google record omits `industryIdentifiers`.
 
-Each request makes at most three total attempts. Network failures and HTTP `500`, `502`, `503` and `504` responses are retried with abortable exponential backoff and jitter; client errors such as an invalid key are not. When the third attempt fails, or when a successful exact response is malformed, the provider is reported through `failedProviders` normally.
+Each request follows the built-in providers' [retry policy](#error-policy): rate limits and outages are retried, honouring `Retry-After`, and client errors such as an invalid key are not. When the last attempt fails, or when a successful exact response is malformed, the provider is reported through `failedProviders` normally.
 
 **Mapping** (Google Books Volume → `ResolvedMetadata`; the resolver names every parsed field and asserts the rest is empty, so a field added to the parser fails the build until someone decides what becomes of it):
 
@@ -406,7 +416,7 @@ const provider = createOpenLibraryProvider({
 | `fetch` | the global one | for tests, a custom agent, or a caching layer |
 | `userAgent` | — | Open Library's API etiquette asks for an identifying one (app name + contact) and throttles anonymous traffic harder |
 
-**Lookup strategy**, at most four requests: an ISBN search when the book states one — the catalog then verifies the identity for us; an exact `id_project_gutenberg` search when an identifier is an official Project Gutenberg URL or a numeric `ProjectGutenberg` identifier; then a precise title (+ first author) search when those identifiers are unknown to Open Library or absent. When that precise search is empty, a free-text title-and-author query handles records whose work title and subtitle were indexed separately. The Gutenberg crosswalk is applied explicitly by this provider because `id_project_gutenberg` is Open Library's catalog field, not a generic URL convention in the scorer. A query with none of those terms yields no candidates rather than a fishing expedition.
+**Lookup strategy**, at most four requests: an ISBN search when the book states one — the catalog then verifies the identity for us; an exact `id_project_gutenberg` search when an identifier is an official Project Gutenberg URL or a numeric `ProjectGutenberg` identifier; then a precise title (+ first author) search when those identifiers are unknown to Open Library or absent. When that precise search is empty, a free-text title-and-author query handles records whose work title and subtitle were indexed separately. The Gutenberg crosswalk is this provider's own, because `id_project_gutenberg` is a field of Open Library's search index. A query with none of those terms yields no candidates rather than a fishing expedition. Each request follows the built-in providers' [retry policy](#error-policy). Open Library throttles anonymous and fast traffic with `429`, which the policy retries.
 
 **Mapping** (`search.json` doc → `ResolvedMetadata`; same exhaustive-destructure check as the other providers):
 
@@ -421,7 +431,7 @@ const provider = createOpenLibraryProvider({
 | `number_of_pages_median` | `numberOfPages` | |
 | `ratings_average`, `ratings_count` | `aggregateRating` | the catalog's raw 0–5 mean of the *work*'s ratings, unrounded. `ratings_sortable` is deliberately not mapped: it is Open Library's internal ranking key, not a rating it states |
 | `cover_i` | `cover` | absolute url on the cover service, `confidence: "derived"` |
-| `id_project_gutenberg` | `identifiers` | scheme `ProjectGutenberg`; an exact lookup also echoes the book's original Gutenberg URL so the shared scorer can recognize the agreement |
+| `id_project_gutenberg` | `identifiers` | scheme `ProjectGutenberg`, which the matcher compares with a Gutenberg URL the book states |
 | `key` | `identifiers` | scheme `OpenLibrary`, e.g. `/works/OL893415W`; also `id` and `url` on the match |
 
 An `ISBN` identifier is added **only** when the search was an ISBN lookup, and then it uses the queried value: the API answered "this work has that ISBN", which is a fact about the record. A title-search hit describes a *work*, whose editions each have their own ISBN, so picking one would be fabrication.
@@ -453,7 +463,7 @@ The image is published with every release, tagged with the version and `latest`,
 
 Both metadata routes answer with the `FetchedMetadata` entity verbatim. The options above (`limit`, `minScore`, `includeRaw`, plus a `providers` filter) are query parameters, and the deployment defaults are environment variables.
 
-The service does no per-client rate limiting: who a client is, which address is real and how often each may call depend on your infrastructure and your own provider quotas, so that limit belongs to the proxy or gateway in front of it. It does bound its own capacity — `MAX_CONCURRENT_LOOKUPS` (default `32`) caps the lookups one process runs at once, and a lookup beyond it answers `503` with `Retry-After`. This package has no limit of its own either: it reports a catalog's `429` in `failedProviders`, and backing off is the caller's decision.
+The service does no per-client rate limiting: who a client is, which address is real and how often each may call depend on your infrastructure and your own provider quotas, so that limit belongs to the proxy or gateway in front of it. It does bound its own capacity — `MAX_CONCURRENT_LOOKUPS` (default `32`) caps the lookups one process runs at once, and a lookup beyond it answers `503` with `Retry-After`. This package has no limit of its own either. A built-in provider retries a catalog's `429` briefly, as its [retry policy](#error-policy) describes; one that persists is reported in `failedProviders`, and backing off further is the caller's decision.
 
 For development, `pnpm run start:metadata-fetcher` starts the same image with the source bind-mounted: editing the express app or this package restarts it — node runs both as TypeScript, so nothing is rebuilt. It also serves a playground at `/` — enter metadata manually or choose an EPUB/CBZ/ZIP file, then inspect each candidate, its score and the signals behind it. In both cases the playground posts the canonical `FetchMetadataInput` JSON to `/metadata`, so the browser's network inspector shows the exact input an SDK consumer would provide. Uploaded files have no application-level size limit: archive-reader resolves them in memory and discards them before that compact input is posted, with no disk or browser storage. The playground is development-only: the production image sets `NODE_ENV=production`, and the route is then never registered.
 
@@ -525,20 +535,40 @@ Rules of thumb:
     throw new MetadataProviderResponseError(response.status, "My Catalog search failed")
   }
   ```
-- **Use `retryWithBackoff`** when an idempotent provider request has known transient failures. `attempts` counts the initial call, and cancellation interrupts the next delay. Pass the same signal to the request when it should cancel an active call too. The helper deliberately leaves the retry predicate to the provider:
+- **Use `retryWithBackoff`** when an idempotent provider request has known transient failures. `attempts` counts the initial call, and cancellation interrupts the next delay. Pass the same signal to the request when it should cancel an active call too. The helper deliberately leaves the retry predicate to the provider. `requestedDelayMs` lets a failure name its own delay, such as a rate limit's `Retry-After`, in place of the backoff; a delay longer than `maxDelayMs` rethrows at once instead of retrying early. `parseRetryAfterHeader` reads the header, the error carries it as `retryAfterMs`, and `responseErrorRetryAfterMs` reads it back from any error carrying one. Cancel the body of a response you do not read: Node's `fetch` keeps its connection busy until garbage collection, and failed attempts would pile up sockets:
 
   ```typescript
   import {
+    MetadataProviderResponseError,
+    parseRetryAfterHeader,
+    responseErrorRetryAfterMs,
     responseErrorStatus,
     retryWithBackoff,
   } from "@prose-reader/metadata-fetcher"
 
-  const response = await retryWithBackoff(() => requestCatalog({ signal }), {
-    attempts: 3,
-    initialDelayMs: 1_000,
-    signal,
-    shouldRetry: (error) => responseErrorStatus(error) === 503,
-  })
+  const response = await retryWithBackoff(
+    async () => {
+      const response = await fetch(url, { signal })
+
+      if (!response.ok) {
+        await response.body?.cancel()
+
+        throw new MetadataProviderResponseError(response.status, "My Catalog search failed", {
+          retryAfterMs: parseRetryAfterHeader(response.headers.get("Retry-After")),
+        })
+      }
+
+      return response
+    },
+    {
+      attempts: 3,
+      initialDelayMs: 1_000,
+      maxDelayMs: 5_000,
+      signal,
+      shouldRetry: (error) => [429, 503].includes(responseErrorStatus(error) ?? 0),
+      requestedDelayMs: responseErrorRetryAfterMs,
+    },
+  )
   ```
 - **Forward `signal`** to every request you make.
 - **Treat `limit` as a page-size hint**; the fetch caps the ranked result anyway.

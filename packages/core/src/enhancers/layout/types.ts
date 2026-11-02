@@ -12,5 +12,3 @@ export type EnhancerLayoutInputSettings = {
    */
   layoutLayerTransition: boolean
 }
-
-export type OutputSettings = EnhancerLayoutInputSettings

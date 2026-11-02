@@ -61,8 +61,8 @@ https://github.com/mbret/prose-reader/issues/357.
 
 ## Work on your own book
 
-Visit http://localhost:9000/demo/books and upload your own book, which you can
-then open.
+Visit http://localhost:9000/demo and upload your own book, which you can then
+open.
 
 ## Search engines and link previews
 

@@ -5,11 +5,12 @@ import type {
 import { booklandIsbn } from "./booklandIsbn.ts"
 import {
   catalogRule,
-  isUntypedReferenceScheme,
+  isReferenceScheme,
   type MetadataCatalogScheme,
 } from "./catalogIdentifiers.ts"
 import { normalizeGtin } from "./normalizeGtin.ts"
 import { normalizeIdentifierScheme } from "./normalizeIdentifierScheme.ts"
+import { canonicalUuid, uuidFromUrn } from "./uuid.ts"
 
 /**
  * Whether a scheme can carry an ISBN or a GTIN. The two are one namespace in
@@ -34,19 +35,22 @@ export const isIsbnBearingScheme = (
  * Schemes a publication's value can be derived for. Narrower than
  * {@link MetadataIdentifierScheme}: a scheme is here only when knowing it lets
  * us both recognize the identifiers that carry it and canonicalize what they
- * authored. `URL` and `Unknown` describe how a value was stated rather than
- * what assigned it, so there is nothing to derive for them.
+ * authored. `URL`, `URN` and `Unknown` describe how a value was stated rather
+ * than what assigned it, so there is nothing to derive for them.
  */
 export type DerivableIdentifierScheme =
-  | Extract<MetadataIdentifierScheme, "ISBN" | "GTIN">
+  | Extract<MetadataIdentifierScheme, "ISBN" | "GTIN" | "UUID">
   | MetadataCatalogScheme
 
 type DerivationRule = {
   /** Whether an identifier of this scheme can carry the derived value. */
   readonly carries: (scheme: MetadataIdentifierScheme) => boolean
   readonly normalizeValue: (value: string) => string | undefined
-  /** Reads the value out of an untyped reference URL, for catalogs that have one. */
-  readonly valueFromUrl?: (value: string) => string | undefined
+  /**
+   * Reads the value out of the reference an identifier can state it as — a
+   * catalog's URL, a UUID's `urn:uuid:` — for the schemes that have one.
+   */
+  readonly valueFromReference?: (value: string) => string | undefined
 }
 
 const isbnBearingRule = (
@@ -55,10 +59,15 @@ const isbnBearingRule = (
 
 const catalogDerivationRule = (
   scheme: MetadataCatalogScheme,
-): DerivationRule => ({
-  carries: (candidate) => normalizeIdentifierScheme(candidate) === scheme,
-  ...catalogRule(scheme),
-})
+): DerivationRule => {
+  const catalog = catalogRule(scheme)
+
+  return {
+    carries: (candidate) => normalizeIdentifierScheme(candidate) === scheme,
+    normalizeValue: catalog.normalizeValue,
+    valueFromReference: catalog.valueFromUrl,
+  }
+}
 
 const DERIVATION_RULES: Record<DerivableIdentifierScheme, DerivationRule> = {
   ISBN: isbnBearingRule(booklandIsbn),
@@ -67,6 +76,11 @@ const DERIVATION_RULES: Record<DerivableIdentifierScheme, DerivationRule> = {
   OpenLibrary: catalogDerivationRule("OpenLibrary"),
   ProjectGutenberg: catalogDerivationRule("ProjectGutenberg"),
   DOI: catalogDerivationRule("DOI"),
+  UUID: {
+    carries: (scheme) => normalizeIdentifierScheme(scheme) === "UUID",
+    normalizeValue: (value) => canonicalUuid(value) ?? uuidFromUrn(value),
+    valueFromReference: uuidFromUrn,
+  },
 }
 
 /**
@@ -83,6 +97,10 @@ const DERIVATION_RULES: Record<DerivableIdentifierScheme, DerivationRule> = {
  * - A catalog scheme also reads an untyped reference URL it addresses, since a
  *   comic can only state one as a `Web` link. An identifier another catalog
  *   already claims is left alone.
+ * - `UUID` reads a UUID written bare or as a `urn:uuid:` URN, in either case,
+ *   and answers in the lower case RFC 9562 writes it in. A `URN` or untyped
+ *   identifier answers only as a `urn:uuid:`, the way an untyped URL answers
+ *   for a catalog.
  *
  * A derivation that declines to answer loses nothing: the identifier itself
  * stays in `identifiers` exactly as authored.
@@ -102,7 +120,7 @@ export const identifierValue = (
        */
       const value =
         rule.normalizeValue(identifier.value) ??
-        rule.valueFromUrl?.(identifier.value)
+        rule.valueFromReference?.(identifier.value)
 
       if (value !== undefined) return value
 
@@ -110,13 +128,14 @@ export const identifierValue = (
     }
 
     /**
-     * Untyped identifiers only answer through a URL: a bare opaque string is
-     * never reinterpreted as some catalog's id just because it could be one.
+     * An identifier of a reference scheme only answers through the reference
+     * itself, a URL or a URN: a bare opaque string is never reinterpreted as
+     * some catalog's id, or a UUID, just because it could be one.
      */
-    if (rule.valueFromUrl === undefined) continue
-    if (!isUntypedReferenceScheme(identifier.scheme)) continue
+    if (rule.valueFromReference === undefined) continue
+    if (!isReferenceScheme(identifier.scheme)) continue
 
-    const value = rule.valueFromUrl(identifier.value)
+    const value = rule.valueFromReference(identifier.value)
 
     if (value !== undefined) return value
   }

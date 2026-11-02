@@ -23,14 +23,10 @@ const record: ProjectGutenbergRecord = {
 }
 
 describe("resolveProjectGutenbergRecord", () => {
-  it("normalizes a record and preserves the exact matched URL", () => {
+  it("normalizes a record", () => {
     expect(
       resolveProjectGutenbergRecord(record, {
         baseUrl: "https://www.gutenberg.org",
-        matchedIdentifier: {
-          value: "http://www.gutenberg.org/78139",
-          scheme: "URL",
-        },
       }),
     ).toEqual({
       titles: [{ value: "Wilhelm Meister, vol. 2" }],
@@ -49,10 +45,7 @@ describe("resolveProjectGutenbergRecord", () => {
         { name: "Goethe, Johann Wolfgang von", roles: ["author"] },
         { name: "Carlyle, Thomas", roles: ["translator", "editor"] },
       ],
-      identifiers: [
-        { value: "http://www.gutenberg.org/78139", scheme: "URL" },
-        { value: "78139", scheme: "ProjectGutenberg" },
-      ],
+      identifiers: [{ value: "78139", scheme: "ProjectGutenberg" }],
       cover: {
         uri: "https://www.gutenberg.org/cover.jpg",
         mediaType: "image/jpeg",
@@ -61,22 +54,10 @@ describe("resolveProjectGutenbergRecord", () => {
     })
   })
 
-  it("does not duplicate an already canonical identifier", () => {
-    expect(
-      resolveProjectGutenbergRecord(record, {
-        baseUrl: "https://www.gutenberg.org",
-        matchedIdentifier: { value: "78139", scheme: "ProjectGutenberg" },
-      }).identifiers,
-    ).toEqual([{ value: "78139", scheme: "ProjectGutenberg" }])
-  })
-
   it("drops invalid dates and non-HTTP cover URLs", () => {
     const metadata = resolveProjectGutenbergRecord(
       { ...record, issued: "2026-99-99", cover: { uri: "javascript:bad" } },
-      {
-        baseUrl: "https://www.gutenberg.org",
-        matchedIdentifier: { value: "78139", scheme: "ProjectGutenberg" },
-      },
+      { baseUrl: "https://www.gutenberg.org" },
     )
 
     expect(metadata.publication?.edition).toEqual({
@@ -95,10 +76,7 @@ describe("resolveProjectGutenbergRecord", () => {
         ...record,
         originalPublication: "$bFirst$bSecond$c1896, reprinted 1901",
       },
-      {
-        baseUrl: "https://www.gutenberg.org",
-        matchedIdentifier: { value: "78139", scheme: "ProjectGutenberg" },
-      },
+      { baseUrl: "https://www.gutenberg.org" },
     )
 
     expect(metadata.publication?.original).toBeUndefined()
