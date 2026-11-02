@@ -3,16 +3,17 @@ import type { CoreInputSettings } from "@prose-reader/core"
 import { memo } from "react"
 import { useObserve } from "reactjrx"
 import { combineLatest, map, NEVER } from "rxjs"
+import { isKeyOf } from "../common/utils"
 import { Radio, RadioGroup } from "../components/ui/radio"
 import { useReader } from "../context/useReader"
 import { SettingScopes } from "../settings/SettingScopes"
 import { useManagedSetting } from "../settings/useManagedSetting"
 
-const SPREAD_MODES: CoreInputSettings["spreadMode"][] = [
-  "auto",
-  "always",
-  "never",
-]
+const SPREAD_MODE_LABELS: Record<CoreInputSettings["spreadMode"], string> = {
+  auto: "Automatic, from the screen and the book (default)",
+  always: "Always two pages",
+  never: "Always one page",
+}
 
 /**
  * The spread mode, a setting react-reader manages like the font scale: the
@@ -60,22 +61,18 @@ export const SpreadSection = memo(() => {
               <RadioGroup
                 value={spreadMode.getValueForScope(scope)}
                 disabled={!spreadState.isSpreadAllowed}
-                onValueChange={({ value }) => {
-                  const selectedSpreadMode = SPREAD_MODES.find(
-                    (mode) => mode === value,
-                  )
-
-                  if (selectedSpreadMode) {
-                    spreadMode.changeValueForScope(scope, selectedSpreadMode)
+                onValueChange={function selectSpreadMode({ value }) {
+                  if (value !== null && isKeyOf(SPREAD_MODE_LABELS, value)) {
+                    spreadMode.changeValueForScope(scope, value)
                   }
                 }}
               >
                 <Stack gap={2}>
-                  <Radio value="auto">
-                    Automatic, from the screen and the book (default)
-                  </Radio>
-                  <Radio value="always">Always two pages</Radio>
-                  <Radio value="never">Always one page</Radio>
+                  {Object.entries(SPREAD_MODE_LABELS).map(([mode, label]) => (
+                    <Radio value={mode} key={mode}>
+                      {label}
+                    </Radio>
+                  ))}
                 </Stack>
               </RadioGroup>
             )}
