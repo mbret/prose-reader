@@ -21,7 +21,7 @@ function QuickMenuToggle({
       type="button"
       data-toggle-quick-menu
       onClick={function toggleQuickMenu() {
-        onQuickMenuOpenChange(!quickMenuOpen)
+        onQuickMenuOpenChange((open) => !open)
       }}
     />
   )
@@ -93,6 +93,30 @@ describe(`ReactReader`, () => {
     }).toEqual({
       stateWithQuickMenuClosed: `open`,
       stateWithQuickMenuOpen: `closed`,
+    })
+  })
+
+  it(`keeps its own quick menu, and reports each change, when the app only listens to it`, async () => {
+    const reader = createMountedReader()
+    const onQuickMenuRendered = vi.fn<(quickMenuOpen: boolean) => void>()
+    const onAppQuickMenuOpenChange = vi.fn()
+
+    await render(
+      <ReactReader
+        reader={reader}
+        onQuickMenuOpenChange={onAppQuickMenuOpenChange}
+      >
+        <QuickMenuToggle onQuickMenuRendered={onQuickMenuRendered} />
+      </ReactReader>,
+    )
+    await clickQuickMenuToggle()
+
+    expect({
+      quickMenuOpen: onQuickMenuRendered.mock.lastCall?.[0],
+      appQuickMenuOpenChanges: onAppQuickMenuOpenChange.mock.calls,
+    }).toEqual({
+      quickMenuOpen: true,
+      appQuickMenuOpenChanges: [[true]],
     })
   })
 })
