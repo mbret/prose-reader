@@ -742,6 +742,67 @@ describe(`ReactReaderProvider and ReactReader`, () => {
     })
   })
 
+  it(`opens react-reader's own quick menu unless the app controls it`, async () => {
+    const { createOnePageReader } = createReaderFactory()
+    const onQuickMenuRendered = vi.fn<(quickMenuOpen: boolean) => void>()
+    const onAppQuickMenuOpenChange = vi.fn()
+
+    function QuickMenuUser() {
+      const { quickMenuOpen, onQuickMenuOpenChange } = useReaderViewContext()
+
+      onQuickMenuRendered(quickMenuOpen)
+
+      return (
+        <button
+          type="button"
+          data-open-quick-menu
+          onClick={function openQuickMenu() {
+            onQuickMenuOpenChange(true)
+          }}
+        />
+      )
+    }
+
+    const clickToOpenQuickMenu = () =>
+      act(async () => {
+        container
+          .querySelector<HTMLButtonElement>(`[data-open-quick-menu]`)
+          ?.click()
+      })
+
+    await render(
+      <ReactReaderProvider createReader={createOnePageReader}>
+        <ReactReader key="own">
+          <QuickMenuUser />
+        </ReactReader>
+      </ReactReaderProvider>,
+    )
+    await clickToOpenQuickMenu()
+    const ownQuickMenuOpen = onQuickMenuRendered.mock.lastCall?.[0]
+    await render(
+      <ReactReaderProvider createReader={createOnePageReader}>
+        <ReactReader
+          key="app"
+          quickMenuOpen={false}
+          onQuickMenuOpenChange={onAppQuickMenuOpenChange}
+        >
+          <QuickMenuUser />
+        </ReactReader>
+      </ReactReaderProvider>,
+    )
+    await clickToOpenQuickMenu()
+
+    expect({
+      ownQuickMenuOpen,
+      appQuickMenuOpen: onQuickMenuRendered.mock.lastCall?.[0],
+      appQuickMenuOpenChanges: onAppQuickMenuOpenChange.mock.calls,
+    }).toEqual({
+      ownQuickMenuOpen: true,
+      appQuickMenuOpen: false,
+      appQuickMenuOpenChanges: [[true]],
+    })
+  })
+
   it(`clears the selected highlight when it destroys the reader`, async () => {
     const firstBook = createReaderFactory()
     const secondBook = createReaderFactory()
