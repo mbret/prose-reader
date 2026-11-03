@@ -1,4 +1,4 @@
-import type { CreateReaderOptions, Reader } from "@prose-reader/core"
+import type { CreateReaderOptions, Manifest, Reader } from "@prose-reader/core"
 import { from, map, mergeMap, of } from "rxjs"
 import { isPdfJsArchive } from "./createArchiveFromPdf"
 import { PdfRenderer } from "./renderer/PdfRenderer"
@@ -15,6 +15,9 @@ export const pdfEnhancer =
     next: (options: InheritOptions) => InheritOutput,
   ) =>
   (options: InheritOptions & EnhancerOptions): InheritOutput => {
+    const getResourceFromReaderOptions = (item: Manifest["items"][number]) =>
+      options.getResource?.(item) ?? of(undefined)
+
     const reader = next({
       ...options,
       /**
@@ -36,15 +39,20 @@ export const pdfEnhancer =
 
         return maybeFactory
       },
+      /**
+       * An item `getArchiveForItem` gives a pdf archive for is a page only this
+       * enhancer can serve, so the archive comes first. Any other item goes to
+       * the `getResource` the reader was given.
+       */
       getResource: (item) =>
         options.pdf.getArchiveForItem(item).pipe(
           mergeMap((archive) => {
-            if (!archive) return of(undefined)
+            if (!archive) return getResourceFromReaderOptions(item)
 
             if (!isPdfJsArchive(archive)) {
               console.warn(`You provided an invalid pdf archive`)
 
-              return of(undefined)
+              return getResourceFromReaderOptions(item)
             }
 
             // `createArchiveFromPdf` holds its package document, then one
