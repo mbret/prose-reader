@@ -47,12 +47,13 @@ export const ReaderScreen = memo(() => {
 
   const reactReaderSettingsProps =
     useReactReaderSettingsProps(bookSettingsSignal)
-  const { settings, defaultSettings } = reactReaderSettingsProps
 
-  useCreateReader(manifest, readerContainerRef, epubKey, {
-    ...settings,
-    theme: settings.theme ?? defaultSettings.theme,
-  })
+  useCreateReader(
+    manifest,
+    readerContainerRef,
+    epubKey,
+    reactReaderSettingsProps.settings,
+  )
   useUpdateReaderSettings({ localSettings })
   usePersistReadingPosition(epubKey)
   useResetStateOnUnMount()
