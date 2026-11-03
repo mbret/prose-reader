@@ -1,5 +1,5 @@
 import type { CreateReaderOptions, Manifest, Reader } from "@prose-reader/core"
-import { from, map, mergeMap, of } from "rxjs"
+import { from, map, of, switchMap } from "rxjs"
 import { isPdfJsArchive } from "./createArchiveFromPdf"
 import { PdfRenderer } from "./renderer/PdfRenderer"
 import type { EnhancerOptions } from "./types"
@@ -42,11 +42,12 @@ export const pdfEnhancer =
       /**
        * An item `getArchiveForItem` gives a pdf archive for is a page only this
        * enhancer can serve, so the archive comes first. Any other item goes to
-       * the `getResource` the reader was given.
+       * the `getResource` the reader was given. When `getArchiveForItem` answers
+       * more than once, its last answer decides.
        */
       getResource: (item) =>
         options.pdf.getArchiveForItem(item).pipe(
-          mergeMap((archive) => {
+          switchMap((archive) => {
             if (!archive) return getResourceFromReaderOptions(item)
 
             if (!isPdfJsArchive(archive)) {

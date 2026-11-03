@@ -1,8 +1,8 @@
 /* @vitest-environment happy-dom */
 
-import { createArchive } from "@prose-reader/archive-reader"
+import { type Archive, createArchive } from "@prose-reader/archive-reader"
 import { createReader, type Manifest } from "@prose-reader/core"
-import { lastValueFrom, type Observable, of } from "rxjs"
+import { lastValueFrom, type Observable, of, Subject } from "rxjs"
 import { afterEach, describe, expect, it, onTestFinished, vi } from "vitest"
 import { pdfEnhancer } from "./pdfEnhancer"
 
@@ -80,5 +80,38 @@ describe(`pdfEnhancer`, () => {
 
     expect(resource).toBe(chapterResponse)
     expect(warn).toHaveBeenCalledWith(`You provided an invalid pdf archive`)
+  })
+
+  it(`serves an item by the last answer of getArchiveForItem, dropping the resource an earlier answer asked for`, async () => {
+    const archiveForItem$ = new Subject<Archive | undefined>()
+    const resourceForEarlierAnswer$ = new Subject<Response>()
+    const resourceForLastAnswer = new Response(`<html>last</html>`)
+    const reader = pdfEnhancer(createReader)({
+      manifest,
+      getResource: vi
+        .fn<() => Observable<Response>>()
+        .mockReturnValueOnce(resourceForEarlierAnswer$)
+        .mockReturnValueOnce(of(resourceForLastAnswer)),
+      pdf: {
+        pdfjsViewerInlineCss: ``,
+        getArchiveForItem: () => archiveForItem$,
+      },
+    })
+
+    onTestFinished(() => {
+      reader.destroy()
+    })
+
+    const resource = resourceFrom(
+      reader.settings.values.getResource?.(chapterItem),
+    )
+
+    archiveForItem$.next(undefined)
+    archiveForItem$.next(undefined)
+    archiveForItem$.complete()
+    resourceForEarlierAnswer$.next(new Response(`<html>earlier</html>`))
+    resourceForEarlierAnswer$.complete()
+
+    expect(await resource).toBe(resourceForLastAnswer)
   })
 })
