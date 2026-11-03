@@ -162,6 +162,52 @@ describe("Given a mounted reader", () => {
   })
 })
 
+describe("Given a destroyed reader", () => {
+  it("says it is destroyed through its context", () => {
+    const reader = createTestReader()
+    const wasDestroyedBefore = reader.context.isDestroyed
+
+    reader.destroy()
+
+    expect({
+      wasDestroyedBefore,
+      isDestroyed: reader.context.isDestroyed,
+    }).toEqual({ wasDestroyedBefore: false, isDestroyed: true })
+  })
+
+  it("refuses to be mounted, and leaves the container and the document untouched", () => {
+    const reader = createTestReader()
+
+    reader.destroy()
+
+    expect(() => reader.mount(container)).toThrowError(/is destroyed/)
+    expect({
+      children: container.children.length,
+      hasContainerClass: container.classList.contains(CONTAINER_CLASS),
+      hasReaderIdAttribute: container.hasAttribute(
+        HTML_ATTRIBUTE_DATA_READER_ID,
+      ),
+      stylesheet: document.getElementById(
+        `${HTML_STYLE_PREFIX}-core-${reader.id}`,
+      ),
+    }).toEqual({
+      children: 0,
+      hasContainerClass: false,
+      hasReaderIdAttribute: false,
+      stylesheet: null,
+    })
+  })
+
+  it("refuses to be mounted again after it was mounted, as destroyed rather than mounted", () => {
+    const reader = createTestReader()
+
+    reader.mount(container)
+    reader.destroy()
+
+    expect(() => reader.mount(container)).toThrowError(/is destroyed/)
+  })
+})
+
 describe("Given a reader mounted into a foreign document", () => {
   it("builds its subtree and stylesheet in the mount document, not the global one", () => {
     const foreignDocument = document.implementation.createHTMLDocument()

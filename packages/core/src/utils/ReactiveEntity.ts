@@ -20,7 +20,7 @@ export class ReactiveEntity<
 > extends Observable<T> {
   protected stateSubject: BehaviorSubject<T>
   protected _destroy$ = new Subject<void>()
-  protected isDestroyed = false
+  private destroyed = false
 
   public state$: Observable<T>
 
@@ -67,12 +67,17 @@ export class ReactiveEntity<
     return this.stateSubject.value
   }
 
+  /** Whether `destroy()` has run. A destroyed entity emits nothing more. */
+  public get isDestroyed() {
+    return this.destroyed
+  }
+
   public destroy$ = this._destroy$.asObservable()
 
   public destroy() {
-    if (this.isDestroyed) return
+    if (this.destroyed) return
 
-    this.isDestroyed = true
+    this.destroyed = true
 
     this.stateSubject.complete()
     // emit before completing, `takeUntil(destroy$)` only reacts to emissions

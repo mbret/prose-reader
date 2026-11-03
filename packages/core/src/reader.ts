@@ -154,6 +154,12 @@ export const createReader = ({
    * create a new one.
    */
   const mount = (containerElement: HTMLElement) => {
+    if (context.isDestroyed) {
+      throw new Error(
+        `This reader is destroyed. Create a new reader to render a book.`,
+      )
+    }
+
     if (context.value.rootElement) {
       throw new Error(
         `This reader is already mounted. A reader renders a single book, destroy it and create a new reader instead.`,
