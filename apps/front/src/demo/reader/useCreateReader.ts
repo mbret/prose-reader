@@ -37,10 +37,7 @@ export const createAppReader = refitEnhancer(
   ),
 )
 
-/**
- * A reader lives for a single book: we create it once we have the manifest
- * and destroy it on cleanup. ReactReader mounts it.
- */
+/** ReactReader mounts the reader this creates. */
 export const useCreateReader = (
   manifest: Manifest | undefined,
   bookKey: string,
