@@ -23,7 +23,8 @@ export type PrivateContextType = {
   reader: ReactReaderReader | undefined
   /**
    * react-reader's own values for the settings the app gives no value, starting
-   * from the reader's. This way the Reader works as intended but:
+   * from the first reader's and given to every reader created after it. This
+   * way the Reader works as intended but:
    * - there are no persistent settings
    * - the settings are valid only for the current mount runtime
    */

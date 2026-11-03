@@ -47,7 +47,7 @@ const MyAppReader = ({ manifest }: { manifest: Manifest | undefined }) => {
 
 `ReactReader` owns the reader's lifecycle. It creates the reader with `createReader`, writes the [settings](#settings) it manages into it, mounts it in the element the book shows in, and destroys it when it unmounts or when `createReader` changes.
 
-- Memoize `createReader`: a new function creates a new reader, so an inline one would create one on every render.
+- Memoize `createReader`: a new function creates a new reader. An inline one creates a reader on every render, and with `onReaderChange={setReader}` it never stops.
 - Return a new reader on each call. Hiding `ReactReader` in an `<Activity>` destroys its reader, and showing it again calls `createReader` again: give the reader the position to open at, with `target`, when it is called.
 - Leave it `undefined` until you can create the reader, while the manifest loads for example.
 
@@ -89,7 +89,7 @@ const [settings, setSettings] = useState<ReactReaderSettings>(savedSettings)
 
 `onSettingsChange(changes, from)` receives only the settings that changed. `from` is the scope the user chose the value for, or `"internal"` for a value set on the reader directly, with `reader.settings.update()`.
 
-A setting you give no value keeps react-reader's own, for as long as `ReactReader` renders. It starts from the value the reader was created with, which is not a change and is not reported. A change in the menus, or one made on the reader directly, still reaches `onSettingsChange`.
+A setting you give no value keeps react-reader's own, for as long as `ReactReader` renders. It starts from the value the first reader was created with, which is not a change and is not reported, and every reader created after it gets it. To give each book its own value, pass it in `settings`. A change in the menus, or one made on the reader directly, still reaches `onSettingsChange`.
 
 `ReactReader` writes the values in effect into the reader before it mounts it, so its first layout uses them, and keeps the reader on them without creating it again.
 

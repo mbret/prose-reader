@@ -185,9 +185,10 @@ export type ReactReaderProps<
   /**
    * Creates the reader. `ReactReader` writes the settings it manages into it,
    * mounts it, and destroys it when it unmounts or when `createReader`
-   * changes, so a new function creates a new reader. Return a new reader on
-   * each call: it is called again when `ReactReader` shows after an
-   * `<Activity>` hid it. Leave it `undefined` until a reader can be created.
+   * changes. Memoize it: a new function creates a new reader, so an inline
+   * one creates a reader on every render. Return a new reader on each call:
+   * it is called again when `ReactReader` shows after an `<Activity>` hid it.
+   * Leave it `undefined` until a reader can be created.
    */
   createReader?: () => TReader
   /** The reader `ReactReader` created, then `undefined` once it destroyed it. */
