@@ -84,9 +84,9 @@ const useReaderInstance = (
 }
 ```
 
-### Using the reader
+## Using the reader
 
-`useReader()` gives the reader you pass to `ReactReader` to any component under it, such as its children. It follows the `reader` prop one render behind, so it is `undefined` on the first render:
+`useReader()` returns the reader you pass to `ReactReader`, in any component under it:
 
 ```tsx
 import { useReader } from "@prose-reader/react-reader"
@@ -97,9 +97,18 @@ const PageNumber = () => {
 }
 ```
 
-`useReader()` returns a reader with the gestures enhancer. Declare the type of your reader, once in your app, and it returns that type, with the APIs of your enhancers. The `reader` prop of `ReactReader` then takes that type:
+It updates one render after the `reader` prop changes:
+
+- On the first render of `ReactReader`, it returns `undefined`.
+- After the prop changes, it returns the previous reader for one more render. With `useReaderInstance`, that reader is already destroyed.
+
+Outside `ReactReader`, `useReader()` throws.
+
+By default, `useReader()` types the reader with the gestures enhancer only. Declare the type of your reader once in your app. `useReader()` then returns that type, with the APIs of your enhancers. The `reader` prop of `ReactReader` takes that type too:
 
 ```typescript
+import type { createAppReader } from "./createAppReader"
+
 declare module "@prose-reader/react-reader" {
   interface Register {
     reader: ReturnType<typeof createAppReader>
@@ -107,7 +116,7 @@ declare module "@prose-reader/react-reader" {
 }
 ```
 
-The declared reader needs the gestures enhancer: without it, `useReader()` ignores the declaration. The package exports the resolved type as `ReactReaderReader`.
+The declared reader needs the gestures enhancer. Without it, react-reader ignores the declaration: `useReader()` and the `reader` prop keep the default type. The package exports the type in use, declared or default, as `ReactReaderReader`.
 
 ## Settings
 

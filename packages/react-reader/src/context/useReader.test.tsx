@@ -1,84 +1,19 @@
 /* @vitest-environment happy-dom */
 
-import { ChakraProvider, defaultSystem } from "@chakra-ui/react"
-import { createReader, type Manifest } from "@prose-reader/core"
-import { gesturesEnhancer } from "@prose-reader/enhancer-gestures"
-import { act, type ReactNode } from "react"
-import { createRoot } from "react-dom/client"
-import { NEVER } from "rxjs"
-import {
-  afterEach,
-  beforeEach,
-  describe,
-  expect,
-  it,
-  onTestFinished,
-  vi,
-} from "vitest"
+import { describe, expect, it, vi } from "vitest"
 import { ReactReader } from "../ReactReader"
+import { createMountedReader } from "../tests/createMountedReader"
+import { setUpRenderRoot } from "../tests/setUpRenderRoot"
 import { useReader } from "./useReader"
 
-const ONE_PAGE_MANIFEST: Manifest = {
-  filename: `comic`,
-  mediaType: `application/epub+zip`,
-  title: `comic`,
-  renditionLayout: `pre-paginated`,
-  renditionSpread: undefined,
-  readingDirection: `ltr`,
-  spineItems: [
-    {
-      id: `page-1`,
-      href: `/page_1.jpg`,
-      containerUri: `page_1.jpg`,
-      index: 0,
-      renditionLayout: `pre-paginated`,
-      progressionWeight: 0,
-    },
-  ],
-  items: [],
-}
-
-const createAppReader = gesturesEnhancer(createReader)
-
 describe(`useReader`, () => {
-  let container: HTMLDivElement
-  let root: ReturnType<typeof createRoot>
+  const { render } = setUpRenderRoot()
 
-  const render = async (element: ReactNode) => {
-    await act(async () => {
-      root.render(
-        <ChakraProvider value={defaultSystem}>{element}</ChakraProvider>,
-      )
-    })
-  }
-
-  beforeEach(() => {
-    Object.assign(globalThis, { IS_REACT_ACT_ENVIRONMENT: true })
-    container = document.createElement(`div`)
-    document.body.appendChild(container)
-    root = createRoot(container)
-  })
-
-  afterEach(async () => {
-    await act(async () => {
-      root.unmount()
-    })
-    container.remove()
-  })
-
-  it(`follows the reader passed to ReactReader one render behind`, async () => {
-    const readerElement = document.createElement(`div`)
-    document.body.appendChild(readerElement)
-    const reader = createAppReader({
-      manifest: ONE_PAGE_MANIFEST,
-      getResource: () => NEVER,
-    })
-    reader.mount(readerElement)
-    onTestFinished(function destroyReader() {
-      reader.destroy()
-      readerElement.remove()
-    })
+  it(`gives the components under ReactReader the reader passed to it, then undefined once it has none`, async () => {
+    const reader = createMountedReader()
     const onReaderRendered = vi.fn()
+    const nameRenderedReader = (rendered: unknown) =>
+      rendered === reader ? `the reader` : rendered
 
     function ReaderUser() {
       onReaderRendered(useReader())
@@ -91,16 +26,43 @@ describe(`useReader`, () => {
         <ReaderUser />
       </ReactReader>,
     )
+    const readerWhilePassed = nameRenderedReader(
+      onReaderRendered.mock.lastCall?.[0],
+    )
     await render(
       <ReactReader reader={undefined}>
         <ReaderUser />
       </ReactReader>,
     )
 
-    expect(
-      onReaderRendered.mock.calls.map(function nameReader([rendered]) {
-        return rendered === reader ? `the reader` : rendered
-      }),
-    ).toEqual([undefined, `the reader`, `the reader`, undefined])
+    expect({
+      readerWhilePassed,
+      readerOnceUnset: nameRenderedReader(onReaderRendered.mock.lastCall?.[0]),
+    }).toEqual({
+      readerWhilePassed: `the reader`,
+      readerOnceUnset: undefined,
+    })
+  })
+
+  it(`throws outside ReactReader`, async () => {
+    function ReaderUser() {
+      useReader()
+
+      return null
+    }
+
+    const renderOutsideReactReader = async () => {
+      try {
+        await render(<ReaderUser />)
+      } catch (error) {
+        return error instanceof Error ? error.message : error
+      }
+
+      return undefined
+    }
+
+    expect(await renderOutsideReactReader()).toBe(
+      `useReader needs a ReactReader above it`,
+    )
   })
 })

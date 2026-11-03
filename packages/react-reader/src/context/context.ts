@@ -18,9 +18,9 @@ import type {
 } from "../settings/types"
 
 /**
- * Declares the type of the reader you pass to `ReactReader`, so `useReader()`
- * returns it with the APIs of its enhancers. That reader needs the gestures
- * enhancer, or `useReader()` ignores the declaration:
+ * Add `reader` to this interface to declare the type of the reader you pass
+ * to `ReactReader`. `useReader()` then returns a reader of that type, with the
+ * APIs of its enhancers:
  *
  * ```ts
  * declare module "@prose-reader/react-reader" {
@@ -29,6 +29,9 @@ import type {
  *   }
  * }
  * ```
+ *
+ * The reader needs the gestures enhancer. Without it, react-reader ignores
+ * the declaration.
  */
 // biome-ignore lint/suspicious/noEmptyInterface: an app adds `reader` by declaration merging
 export interface Register {}
@@ -36,13 +39,14 @@ export interface Register {}
 type ReaderWithGestures = Reader & GesturesEnhancerAPI
 
 /**
- * The reader `Register` declares, or a reader with the gestures enhancer when
- * `Register` declares none, or one without that enhancer.
+ * The reader type that `Register` declares. If `Register` declares no reader,
+ * or a reader without the gestures enhancer, it is a reader with the gestures
+ * enhancer only.
  */
 export type ReactReaderReader = Register extends {
-  reader: infer RegisteredReader extends ReaderWithGestures
+  reader: infer RegisteredReader extends ReaderWithGestures | undefined
 }
-  ? RegisteredReader
+  ? NonNullable<RegisteredReader>
   : ReaderWithGestures
 
 export type PrivateContextType = {
@@ -152,6 +156,6 @@ export const getDefaultValue = (): ReaderContextType => ({
   selectedHighlight: undefined,
 })
 
-export const ReaderContext = createContext(
-  signal({ default: getDefaultValue() }),
-)
+export const ReaderContext = createContext<
+  Signal<ReaderContextType> | undefined
+>(undefined)
