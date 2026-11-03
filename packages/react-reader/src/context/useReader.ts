@@ -5,14 +5,14 @@ import type { AudioEnhancerAPI } from "@prose-reader/enhancer-audio"
 import type { GalleryEnhancerAPI } from "@prose-reader/enhancer-gallery"
 import type { RefitEnhancerAPI } from "@prose-reader/enhancer-refit"
 import type { SearchEnhancerAPI } from "@prose-reader/enhancer-search"
-import type { ReaderContextType } from "./context"
+import type { ReactReaderReader } from "./context"
 import { useReaderContextValue } from "./useReaderContext"
 
-// Annotated rather than inferred: an enhanced reader is a large enough type
-// that declaration emit gives up serialising the inferred one (TS7056), and
-// every `.d.ts` mentioning it would otherwise re-expand it in full. Indexing
-// the context keeps this hook in step with what the provider actually holds.
-export const useReader = (): ReaderContextType["reader"] => {
+/**
+ * The reader of the `ReactReaderProvider` above: `undefined` until the
+ * provider created it, and once it destroyed it. `Register` declares its type.
+ */
+export const useReader = (): ReactReaderReader | undefined => {
   const { reader } = useReaderContextValue(["reader"])
 
   return reader

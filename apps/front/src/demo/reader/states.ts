@@ -1,15 +1,15 @@
+import { useReader } from "@prose-reader/react-reader"
 import { useEffect } from "react"
 import { SIGNAL_RESET, signal, useObserve } from "reactjrx"
-import { useReader } from "./useReader"
 
 export const usePagination = () => {
-  const { reader } = useReader()
+  const reader = useReader()
 
   return useObserve(() => reader?.pagination.state$, [reader])
 }
 
 export const useIsPrePaginated = () => {
-  const { reader } = useReader()
+  const reader = useReader()
   const manifest = reader?.context.manifest
 
   return (
@@ -21,7 +21,7 @@ export const useIsPrePaginated = () => {
 }
 
 export const useIsComics = () => {
-  const { reader } = useReader()
+  const reader = useReader()
   const manifest = reader?.context.manifest
   const isPrePaginated = useIsPrePaginated()
 

@@ -17,22 +17,57 @@ import type {
   ReactReaderSettingsScopeReference,
 } from "../settings/types"
 
-export type PrivateContextType = {
+/**
+ * Declares the type of the reader your `createReader` returns, so
+ * `useReader()` returns it with the APIs of its enhancers:
+ *
+ * ```ts
+ * declare module "@prose-reader/react-reader" {
+ *   interface Register {
+ *     reader: ReturnType<typeof createAppReader>
+ *   }
+ * }
+ * ```
+ */
+// biome-ignore lint/suspicious/noEmptyInterface: an app adds `reader` by declaration merging
+export interface Register {}
+
+type ReaderWithGestures = Reader & GesturesEnhancerAPI
+
+/**
+ * The reader `Register` declares, or a reader with the gestures enhancer when
+ * it declares none.
+ */
+export type ReactReaderReader = Register extends {
+  reader: infer RegisteredReader extends ReaderWithGestures
+}
+  ? RegisteredReader
+  : ReaderWithGestures
+
+/** The state of the menus, which the view owns. */
+export type ViewStateContextType = {
+  _quickMenuOpen: boolean
+  _onQuickMenuOpenChange: Dispatch<SetStateAction<boolean>>
+  fontSizeMenuOpen: boolean
+  onFontSizeMenuOpenChange: (open: boolean) => void
+  refitMenuOpen: boolean
+  onRefitMenuOpenChange: (open: boolean) => void
+}
+
+export type PrivateContextType = ViewStateContextType & {
+  reader: ReactReaderReader | undefined
+  /** The element the view renders for the reader to mount in. */
+  readerElement: HTMLElement | undefined
   /**
    * react-reader's own values for the settings the app gives no value, starting
-   * from the reader's. This way the Reader works as intended but:
+   * from the first reader's and given to every reader created after it. This
+   * way the Reader works as intended but:
    * - there are no persistent settings
    * - the settings are valid only for the current mount runtime
    */
   uncontrolledSettings: ReactReaderSettings
-  refitMenuOpen: boolean
-  onRefitMenuOpenChange: (open: boolean) => void
-  fontSizeMenuOpen: boolean
-  onFontSizeMenuOpenChange: (open: boolean) => void
   notificationsSubject: Subject<ReaderNotification>
   quickMenuBottomBarBoundingBoxSignal: Signal<ResizeObserverEntry | undefined>
-  _quickMenuOpen: boolean
-  _onQuickMenuOpenChange: Dispatch<SetStateAction<boolean>>
   selectedHighlight:
     | {
         highlight?: RuntimeAnnotation
@@ -44,25 +79,8 @@ export type PrivateContextType = {
     | undefined
 }
 
-export type PublicContextType = {
-  reader: (Reader & GesturesEnhancerAPI) | undefined
-  enableFloatingTime?: boolean
-  enableFloatingProgress?: boolean
-  onItemClick?: (
-    item:
-      | "annotations"
-      | "search"
-      | "help"
-      | "toc"
-      | "bookmarks"
-      | "more"
-      | "back"
-      | "gallery"
-      | "layout"
-      | "theme",
-  ) => void
-  quickMenuOpen?: boolean
-  onQuickMenuOpenChange?: Dispatch<SetStateAction<boolean>>
+/** The props of `ReactReaderProvider` it copies into the context. */
+export type ProviderContextType = {
   zoomMaxScale?: number
   /**
    * The global values of the reader settings react-reader manages. They apply
@@ -105,12 +123,44 @@ export type PublicContextType = {
   onAnnotationDelete?: (id: string) => void
 }
 
-export type ReaderContextType = PrivateContextType & PublicContextType
+/** The props of `ReactReader` it copies into the context. */
+export type ViewContextType = {
+  enableFloatingTime?: boolean
+  enableFloatingProgress?: boolean
+  onItemClick?: (
+    item:
+      | "annotations"
+      | "search"
+      | "help"
+      | "toc"
+      | "bookmarks"
+      | "more"
+      | "back"
+      | "gallery"
+      | "layout"
+      | "theme",
+  ) => void
+  quickMenuOpen?: boolean
+  onQuickMenuOpenChange?: Dispatch<SetStateAction<boolean>>
+}
+
+/**
+ * Every key of `T`, for a write that replaces all of them: a prop the app
+ * stops passing goes back to `undefined` instead of keeping its last value.
+ */
+export type EveryKeyOf<T> = {
+  [Key in keyof Required<T>]: T[Key & keyof T] | undefined
+}
+
+export type ReaderContextType = PrivateContextType &
+  ProviderContextType &
+  ViewContextType
 
 export const getDefaultValue = (): ReaderContextType => ({
   _quickMenuOpen: false,
   _onQuickMenuOpenChange: (prev) => prev,
   reader: undefined,
+  readerElement: undefined,
   quickMenuBottomBarBoundingBoxSignal: signal<ResizeObserverEntry | undefined>({
     default: undefined,
   }),
@@ -124,6 +174,6 @@ export const getDefaultValue = (): ReaderContextType => ({
   selectedHighlight: undefined,
 })
 
-export const ReaderContext = createContext(
-  signal({ default: getDefaultValue() }),
-)
+export const ReaderContext = createContext<
+  Signal<ReaderContextType> | undefined
+>(undefined)

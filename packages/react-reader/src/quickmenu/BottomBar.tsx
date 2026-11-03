@@ -26,7 +26,7 @@ import { useObserve } from "reactjrx"
 import { map } from "rxjs"
 import { AudioControlsSection } from "../audio/AudioControlsSection"
 import { useHasVisibleAudioTracks } from "../audio/useHasVisibleAudioTracks"
-import type { PublicContextType } from "../context/context"
+import type { ViewContextType } from "../context/context"
 import {
   hasAnnotationsEnhancer,
   hasGalleryEnhancer,
@@ -45,7 +45,7 @@ export const BottomBar = memo(
     onItemClick,
   }: {
     open: boolean
-    onItemClick: NonNullable<PublicContextType["onItemClick"]>
+    onItemClick: NonNullable<ViewContextType["onItemClick"]>
   }) => {
     const boxRef = useRef<HTMLDivElement>(null)
     const reader = useReader()

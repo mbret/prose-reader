@@ -1,4 +1,7 @@
-import type { PrivateContextType, PublicContextType } from "../context/context"
+import type {
+  PrivateContextType,
+  ProviderContextType,
+} from "../context/context"
 import {
   MANAGED_SETTING_NAMES,
   type ManagedSettingName,
@@ -11,7 +14,7 @@ import type {
 } from "./types"
 
 type AppSettingValues = Pick<
-  PublicContextType,
+  ProviderContextType,
   "settings" | "settingsByScope" | "settingsScopes"
 >
 

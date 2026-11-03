@@ -1,16 +1,31 @@
 import { Box, type BoxProps, Presence } from "@chakra-ui/react"
-import { type ComponentProps, memo, useCallback, useState } from "react"
+import { isShallowEqual } from "@prose-reader/shared"
+import {
+  type ComponentProps,
+  memo,
+  type ReactNode,
+  useCallback,
+  useLayoutEffect,
+  useState,
+} from "react"
+import { useMemoCompare } from "reactjrx"
 import { AnnotateControls } from "./annotations/AnnotateControls"
 import { AnnotationDrawer } from "./annotations/AnnotationDrawer"
 import { AnnotationsDialog } from "./annotations/AnnotationsDialog"
 import { BookmarkPageMarkers } from "./annotations/bookmarks/BookmarkPageMarkers"
 import { useBookmarkOnCornerTap } from "./annotations/bookmarks/useBookmarkOnCornerTap"
 import { usePreventInteractionOnSelection } from "./annotations/usePreventInteractionOnSelection"
-import { useSyncAnnotationsWithReader } from "./annotations/useSyncAnnotationsWithReader"
 import { Spine } from "./common/Spine"
 import { Toaster } from "./components/ui/toaster"
-import { ReactReaderProvider } from "./context/ReactReaderProvider"
-import { useReaderContextValue } from "./context/useReaderContext"
+import type {
+  EveryKeyOf,
+  ViewContextType,
+  ViewStateContextType,
+} from "./context/context"
+import {
+  useReaderContext,
+  useReaderContextValue,
+} from "./context/useReaderContext"
 import { FontSizeControlsDialog } from "./fonts/FontSizeControlsDialog"
 import { GalleryDialog } from "./gallery/GalleryDialog"
 import { HelpDialog } from "./help/HelpDialog"
@@ -23,12 +38,11 @@ import { useNotifications } from "./notifications/useNotifications"
 import { QuickMenu } from "./quickmenu/QuickMenu"
 import { useQuickMenu } from "./quickmenu/useQuickMenu"
 import { useQuickMenuToggleGesture } from "./quickmenu/useQuickMenuToggleGesture"
+import { ReaderElement } from "./ReaderElement"
 import { RefitDialog } from "./refit/RefitDialog"
 import { SearchDialog } from "./search/SearchDialog"
-import { SyncReaderWithManagedSettings } from "./settings/SyncReaderWithManagedSettings"
 import { ThemeDialog } from "./theme/ThemeDialog"
 import { TableOfContentsDialog } from "./toc/TableOfContentsDialog"
-import { useZoomSettings } from "./zoom/useZoomSettings"
 import { ZoomControls } from "./zoom/ZoomControls"
 
 const ANIMATION_NAME_IN_OUT = { _open: "fade-in", _closed: "fade-out" }
@@ -41,19 +55,12 @@ const BookmarksEffects = memo(() => {
 })
 
 const Effects = memo(() => {
-  useZoomSettings()
   useInterceptExternalLinks()
   useNotifications()
   useQuickMenuToggleGesture()
   usePreventInteractionOnSelection()
-  useSyncAnnotationsWithReader()
 
-  return (
-    <>
-      <SyncReaderWithManagedSettings />
-      <BookmarksEffects />
-    </>
-  )
+  return <BookmarksEffects />
 })
 
 const InnerReactReader = memo(
@@ -171,7 +178,12 @@ const InnerReactReader = memo(
   },
 )
 
-export type ReactReaderProps = ComponentProps<typeof ReactReaderProvider> & {
+export type ReactReaderProps = ViewContextType & {
+  /**
+   * Renders after the element of the reader. Position it absolutely to show
+   * it over the book.
+   */
+  children?: ReactNode
   slots?: {
     container?: {
       props?: Omit<ComponentProps<typeof InnerReactReader>, "children">
@@ -179,14 +191,54 @@ export type ReactReaderProps = ComponentProps<typeof ReactReaderProvider> & {
   }
 }
 
-export const ReactReader = memo(
-  ({ children, slots, ...props }: ReactReaderProps) => {
-    const { container: { props: containerProps = {} } = {} } = slots ?? {}
+/**
+ * Shows the reader of the `ReactReaderProvider` above, with react-reader's
+ * menus. Hiding it, in an `<Activity>` for example, keeps the reader.
+ */
+export const ReactReader = memo(function ReactReader({
+  children,
+  slots,
+  enableFloatingTime,
+  enableFloatingProgress = true,
+  onItemClick,
+  quickMenuOpen,
+  onQuickMenuOpenChange,
+}: ReactReaderProps) {
+  const context = useReaderContext()
+  const [isQuickMenuOpen, setIsQuickMenuOpen] = useState(false)
+  const [isFontSizeMenuOpen, setIsFontSizeMenuOpen] = useState(false)
+  const [isRefitMenuOpen, setIsRefitMenuOpen] = useState(false)
+  const viewProps = useMemoCompare<
+    EveryKeyOf<ViewContextType> & ViewStateContextType
+  >(
+    {
+      enableFloatingTime,
+      enableFloatingProgress,
+      onItemClick,
+      quickMenuOpen,
+      onQuickMenuOpenChange,
+      _quickMenuOpen: isQuickMenuOpen,
+      _onQuickMenuOpenChange: setIsQuickMenuOpen,
+      fontSizeMenuOpen: isFontSizeMenuOpen,
+      onFontSizeMenuOpenChange: setIsFontSizeMenuOpen,
+      refitMenuOpen: isRefitMenuOpen,
+      onRefitMenuOpenChange: setIsRefitMenuOpen,
+    },
+    isShallowEqual,
+  )
+  const { container: { props: containerProps = {} } = {} } = slots ?? {}
 
-    return (
-      <ReactReaderProvider {...props}>
-        <InnerReactReader {...containerProps}>{children}</InnerReactReader>
-      </ReactReaderProvider>
-    )
-  },
-)
+  useLayoutEffect(
+    function copyPropsIntoContext() {
+      context.update((old) => ({ ...old, ...viewProps }))
+    },
+    [context, viewProps],
+  )
+
+  return (
+    <InnerReactReader {...containerProps}>
+      <ReaderElement />
+      {children}
+    </InnerReactReader>
+  )
+})

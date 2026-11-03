@@ -1,10 +1,10 @@
 import type { AnnotationsEnhancerAPI } from "@prose-reader/enhancer-annotations"
-import type { ReaderContextType } from "../context/context"
+import type { ReactReaderReader } from "../context/context"
 import { hasAnnotationsEnhancer, useReader } from "../context/useReader"
 
-// Named and annotated for the same reason as `useReader`'s return type.
-type ReaderWithAnnotations = NonNullable<ReaderContextType["reader"]> &
-  AnnotationsEnhancerAPI
+// Annotated rather than inferred: declaration emit gives up serialising an
+// inferred enhanced reader (TS7056).
+type ReaderWithAnnotations = ReactReaderReader & AnnotationsEnhancerAPI
 
 export const useReaderWithAnnotations = ():
   | ReaderWithAnnotations

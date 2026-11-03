@@ -1,4 +1,5 @@
 import { Heading, HStack, Stack } from "@chakra-ui/react"
+import { useReader } from "@prose-reader/react-reader"
 import type React from "react"
 import { useEffect, useState } from "react"
 import {
@@ -12,7 +13,6 @@ import { OtherSettings } from "../../common/OtherSettings"
 import { Field } from "../../components/ui/field"
 import { Radio, RadioGroup } from "../../components/ui/radio"
 import { Slider } from "../../components/ui/slider"
-import { useReader } from "../useReader"
 import { useReaderSettings } from "./useReaderSettings"
 import type { LocalSettings } from "./useSettings"
 
@@ -33,7 +33,7 @@ export const SettingsMenu = ({
   setLocalSettings: React.Dispatch<React.SetStateAction<LocalSettings>>
   localSettings: LocalSettings
 }) => {
-  const { reader } = useReader()
+  const reader = useReader()
   const readerSettings = useReaderSettings()
   const [verticalMarginSliderValue, setVerticalMarginSliderValue] = useState(0)
   const [horizontalMarginSliderValue, setHorizontalMarginSliderValue] =
