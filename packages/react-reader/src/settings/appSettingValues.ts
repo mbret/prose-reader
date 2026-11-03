@@ -1,7 +1,9 @@
-import type { PublicContextType } from "../context/context"
-import type {
-  ManagedSettingName,
-  ManagedSettingValues,
+import type { PrivateContextType, PublicContextType } from "../context/context"
+import {
+  MANAGED_SETTING_NAMES,
+  type ManagedSettingName,
+  type ManagedSettingValues,
+  type ReactReaderSettings,
 } from "./managedSettings"
 import type {
   ReactReaderSettingsScopeReference,
@@ -60,3 +62,42 @@ export const getAppSettingValueInEffect = <Name extends ManagedSettingName>(
     name,
     getSettingScopeReferenceInEffect(appSettingValues, name, screen),
   )
+
+type ManagedSettingSources = AppSettingValues &
+  Pick<PrivateContextType, "uncontrolledSettings">
+
+export const getManagedSettingValueWhenScopeInEffect = <
+  Name extends ManagedSettingName,
+>(
+  sources: ManagedSettingSources,
+  name: Name,
+  scope: ReactReaderSettingsScopeReference,
+): ManagedSettingValues[Name] | undefined =>
+  getAppSettingValueWhenScopeInEffect(sources, name, scope) ??
+  sources.uncontrolledSettings[name]
+
+export const getManagedSettingValueInEffect = <Name extends ManagedSettingName>(
+  sources: ManagedSettingSources,
+  name: Name,
+  screen: ScreenSettingsScopeReference,
+): ManagedSettingValues[Name] | undefined =>
+  getManagedSettingValueWhenScopeInEffect(
+    sources,
+    name,
+    getSettingScopeReferenceInEffect(sources, name, screen),
+  )
+
+export const getManagedSettingValuesInEffect = (
+  sources: ManagedSettingSources,
+  screen: ScreenSettingsScopeReference,
+): ReactReaderSettings => {
+  const valuesInEffect: ReactReaderSettings = {}
+
+  const addValueInEffect = <Name extends ManagedSettingName>(name: Name) => {
+    valuesInEffect[name] = getManagedSettingValueInEffect(sources, name, screen)
+  }
+
+  MANAGED_SETTING_NAMES.forEach(addValueInEffect)
+
+  return valuesInEffect
+}
