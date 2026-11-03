@@ -5,7 +5,7 @@ import { createReader, type Manifest } from "@prose-reader/core"
 import { gesturesEnhancer } from "@prose-reader/enhancer-gestures"
 import { Activity, act, type ReactNode, StrictMode } from "react"
 import { createRoot } from "react-dom/client"
-import { filter, map, of } from "rxjs"
+import { filter, map, NEVER } from "rxjs"
 import {
   afterEach,
   beforeEach,
@@ -18,6 +18,7 @@ import {
 import { MAX_ZOOM_SCALE } from "./constants"
 import { useReaderViewContext } from "./context/ReaderViewContext"
 import { useReader } from "./context/useReader"
+import { useReaderContext } from "./context/useReaderContext"
 import { ReactReader } from "./ReactReader"
 import { ReactReaderProvider } from "./ReactReaderProvider"
 import type { ReactReaderSettings } from "./settings/managedSettings"
@@ -53,7 +54,7 @@ const createReaderFactory = (creationSettings: ReactReaderSettings = {}) => {
   const createOnePageReader = vi.fn(function createOnePageReader() {
     const reader = createAppReader({
       manifest: ONE_PAGE_MANIFEST,
-      getResource: () => of(new Response(``)),
+      getResource: () => NEVER,
       ...creationSettings,
     })
 
@@ -162,6 +163,7 @@ describe(`ReactReaderProvider and ReactReader`, () => {
   it(`creates the reader on the settings it manages, and mounts it in the element of ReactReader`, async () => {
     const { createOnePageReader, onMounted, getCreatedReaders } =
       createReaderFactory()
+    const onSettingsChange = vi.fn()
     const appSettings = {
       fontScale: 1.5,
       spreadMode: `never`,
@@ -172,6 +174,7 @@ describe(`ReactReaderProvider and ReactReader`, () => {
       <ReactReaderProvider
         createReader={createOnePageReader}
         settings={appSettings}
+        onSettingsChange={onSettingsChange}
       >
         <ReactReader />
       </ReactReaderProvider>,
@@ -180,11 +183,13 @@ describe(`ReactReaderProvider and ReactReader`, () => {
 
     expect({
       settingsWhenMounted: onMounted.mock.calls,
+      settingsChangesReported: onSettingsChange.mock.calls,
       isReaderElementInReactReader: isElementInReactReader(
         reader?.context.value.rootElement,
       ),
     }).toEqual({
       settingsWhenMounted: [[appSettings]],
+      settingsChangesReported: [],
       isReaderElementInReactReader: true,
     })
   })
@@ -403,7 +408,36 @@ describe(`ReactReaderProvider and ReactReader`, () => {
     })
   })
 
-  it(`creates the reader once it has both createReader and a ReactReader`, async () => {
+  it(`creates the reader once createReader arrives under a mounted ReactReader`, async () => {
+    const { createOnePageReader, getCreatedReaders } = createReaderFactory()
+
+    await render(
+      <ReactReaderProvider createReader={undefined}>
+        <ReactReader />
+      </ReactReaderProvider>,
+    )
+    const creationsWithoutCreateReader = createOnePageReader.mock.calls.length
+    await render(
+      <ReactReaderProvider createReader={createOnePageReader}>
+        <ReactReader />
+      </ReactReaderProvider>,
+    )
+    const [reader] = getCreatedReaders()
+
+    expect({
+      creationsWithoutCreateReader,
+      creations: createOnePageReader.mock.calls.length,
+      isReaderElementInReactReader: isElementInReactReader(
+        reader?.context.value.rootElement,
+      ),
+    }).toEqual({
+      creationsWithoutCreateReader: 0,
+      creations: 1,
+      isReaderElementInReactReader: true,
+    })
+  })
+
+  it(`creates no reader in the element of a ReactReader that unmounts as createReader arrives`, async () => {
     const { createOnePageReader } = createReaderFactory()
 
     await render(
@@ -560,6 +594,39 @@ describe(`ReactReaderProvider and ReactReader`, () => {
     })
   })
 
+  it(`moves to a new reader when one ReactReader replaces another in the same render`, async () => {
+    const { createOnePageReader, onDestroyed, getCreatedReaders } =
+      createReaderFactory()
+    const renderWithReactReaderKey = (key: string) =>
+      render(
+        <ReactReaderProvider createReader={createOnePageReader}>
+          <ReactReader key={key} />
+        </ReactReaderProvider>,
+      )
+
+    await renderWithReactReaderKey(`first`)
+    await renderWithReactReaderKey(`next`)
+    const [firstReader, nextReader] = getCreatedReaders()
+    const [firstDestroyedAt] = onDestroyed.mock.invocationCallOrder
+    const [, nextCreatedAt] = createOnePageReader.mock.invocationCallOrder
+
+    expect({
+      destroyed: nameReaders(onDestroyed.mock.calls, {
+        firstReader,
+        nextReader,
+      }),
+      isFirstDestroyedBeforeNextCreated:
+        Number(firstDestroyedAt) < Number(nextCreatedAt),
+      isNextReaderElementInReactReader: isElementInReactReader(
+        nextReader?.context.value.rootElement,
+      ),
+    }).toEqual({
+      destroyed: [`firstReader`],
+      isFirstDestroyedBeforeNextCreated: true,
+      isNextReaderElementInReactReader: true,
+    })
+  })
+
   it(`destroys the reader once React removes a ReactReader that an Activity hides`, async () => {
     const { createOnePageReader, onDestroyed, getCreatedReaders } =
       createReaderFactory()
@@ -672,6 +739,45 @@ describe(`ReactReaderProvider and ReactReader`, () => {
         quickMenuOpen: false,
         fontSizeMenuOpen: false,
       },
+    })
+  })
+
+  it(`clears the selected highlight when it destroys the reader`, async () => {
+    const firstBook = createReaderFactory()
+    const secondBook = createReaderFactory()
+    const onContextRendered =
+      vi.fn<(context: ReturnType<typeof useReaderContext>) => void>()
+
+    function ContextUser() {
+      onContextRendered(useReaderContext())
+
+      return null
+    }
+
+    await render(
+      <ReactReaderProvider createReader={firstBook.createOnePageReader}>
+        <ReactReader />
+        <ContextUser />
+      </ReactReaderProvider>,
+    )
+    const [context] = onContextRendered.mock.lastCall ?? []
+    await act(async () => {
+      context?.update((old) => ({ ...old, selectedHighlight: {} }))
+    })
+    const selectedHighlightOnFirstReader = context?.value.selectedHighlight
+    await render(
+      <ReactReaderProvider createReader={secondBook.createOnePageReader}>
+        <ReactReader />
+        <ContextUser />
+      </ReactReaderProvider>,
+    )
+
+    expect({
+      selectedHighlightOnFirstReader,
+      selectedHighlightOnSecondReader: context?.value.selectedHighlight,
+    }).toEqual({
+      selectedHighlightOnFirstReader: {},
+      selectedHighlightOnSecondReader: undefined,
     })
   })
 
