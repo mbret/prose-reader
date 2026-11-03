@@ -3,7 +3,7 @@
 import { createArchive } from "@prose-reader/archive-reader"
 import { createReader, type Manifest } from "@prose-reader/core"
 import { lastValueFrom, type Observable, of } from "rxjs"
-import { afterEach, describe, expect, it, vi } from "vitest"
+import { afterEach, describe, expect, it, onTestFinished, vi } from "vitest"
 import { pdfEnhancer } from "./pdfEnhancer"
 
 const chapterItem: Manifest["items"][number] = {
@@ -38,6 +38,10 @@ const createReaderGivenGetResource = (
     },
   })
 
+  onTestFinished(() => {
+    reader.destroy()
+  })
+
   return { reader, chapterResponse, getResourceGiven }
 }
 
@@ -60,8 +64,6 @@ describe(`pdfEnhancer`, () => {
 
     expect(resource).toBe(chapterResponse)
     expect(getResourceGiven).toHaveBeenCalledWith(chapterItem)
-
-    reader.destroy()
   })
 
   it(`leaves an item whose archive is not a pdf to the getResource the reader was given, with a warning`, async () => {
@@ -78,7 +80,5 @@ describe(`pdfEnhancer`, () => {
 
     expect(resource).toBe(chapterResponse)
     expect(warn).toHaveBeenCalledWith(`You provided an invalid pdf archive`)
-
-    reader.destroy()
   })
 })
