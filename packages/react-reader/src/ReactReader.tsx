@@ -32,7 +32,6 @@ import { SpreadRotationHint } from "./navigation/SpreadRotationHint"
 import { useInterceptExternalLinks } from "./navigation/useInterceptExternalLinks"
 import { useNotifications } from "./notifications/useNotifications"
 import { QuickMenu } from "./quickmenu/QuickMenu"
-import { useQuickMenu } from "./quickmenu/useQuickMenu"
 import { useQuickMenuToggleGesture } from "./quickmenu/useQuickMenuToggleGesture"
 import { RefitDialog } from "./refit/RefitDialog"
 import { SearchDialog } from "./search/SearchDialog"
@@ -74,7 +73,12 @@ const InnerReactReader = memo(
   }: {
     children: React.ReactNode
   } & BoxProps) => {
-    const { enableFloatingTime, onItemClick } = useReaderViewContext()
+    const {
+      enableFloatingTime,
+      onItemClick,
+      quickMenuOpen,
+      onQuickMenuOpenChange,
+    } = useReaderViewContext()
     const [isTableOfContentsOpen, setIsTableOfContentsOpen] = useState(false)
     const [isHelpOpen, setIsHelpOpen] = useState(false)
     const [isSearchOpen, setIsSearchOpen] = useState(false)
@@ -84,16 +88,15 @@ const InnerReactReader = memo(
     const [isGalleryOpen, setIsGalleryOpen] = useState(false)
     const [isLayoutOpen, setIsLayoutOpen] = useState(false)
     const [isThemeOpen, setIsThemeOpen] = useState(false)
-    const [quickMenuOpen, setQuickMenuOpen] = useQuickMenu()
 
     const onNavigate = useCallback(() => {
       setIsTableOfContentsOpen(false)
       setIsHelpOpen(false)
       setIsSearchOpen(false)
       setIsAnnotationsOpenWith(undefined)
-      setQuickMenuOpen(false)
+      onQuickMenuOpenChange(false)
       setIsGalleryOpen(false)
-    }, [setQuickMenuOpen])
+    }, [onQuickMenuOpenChange])
 
     const _onItemClick: NonNullable<typeof onItemClick> = useCallback(
       (item) => {

@@ -6,7 +6,6 @@ import {
 import { useReaderContextValue } from "../context/useReaderContext"
 import { BottomBar } from "./BottomBar"
 import { TopBar } from "./TopBar"
-import { useQuickMenu } from "./useQuickMenu"
 
 export const QuickMenu = memo(
   ({
@@ -14,8 +13,8 @@ export const QuickMenu = memo(
   }: {
     onItemClick: NonNullable<ReaderViewProps["onItemClick"]>
   }) => {
-    const [quickMenuOpen] = useQuickMenu()
-    const { refitMenuOpen, fontSizeMenuOpen } = useReaderViewContext()
+    const { quickMenuOpen, refitMenuOpen, fontSizeMenuOpen } =
+      useReaderViewContext()
     const { selectedHighlight } = useReaderContextValue(["selectedHighlight"])
 
     return (
