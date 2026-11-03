@@ -1,52 +1,40 @@
 import { isShallowEqual } from "@prose-reader/shared"
-import { type ComponentProps, memo, useEffect } from "react"
+import { memo, type ReactNode, useEffect } from "react"
 import { signal, useConstant, useMemoCompare } from "reactjrx"
 import {
-  type EveryKeyOf,
   getDefaultValue,
   type PublicContextType,
   ReaderContext,
 } from "./context"
 
-const SignalProvider = ({
+export const ReactReaderProvider = memo(function ReactReaderProvider({
   children,
-  reader,
-  zoomMaxScale,
-  settings,
-  onSettingsChange,
-  settingsByScope,
-  settingsScopes,
-  onSettingsScopesChange,
-  annotations,
-  onAnnotationCreate,
-  onAnnotationUpdate,
-  onAnnotationDelete,
+  ...props
 }: {
-  children: React.ReactNode
-} & PublicContextType) => {
+  children: ReactNode
+} & PublicContextType) {
   const valueSignal = useConstant(() => signal({ default: getDefaultValue() }))
-  const providerProps = useMemoCompare<EveryKeyOf<PublicContextType>>(
-    {
-      reader,
-      zoomMaxScale,
-      settings,
-      onSettingsChange,
-      settingsByScope,
-      settingsScopes,
-      onSettingsScopesChange,
-      annotations,
-      onAnnotationCreate,
-      onAnnotationUpdate,
-      onAnnotationDelete,
-    },
-    isShallowEqual,
-  )
+  const memoizedProps = useMemoCompare(props, isShallowEqual)
 
   useEffect(
-    function copyPropsIntoContext() {
-      valueSignal.update((old) => ({ ...old, ...providerProps }))
+    function replacePropsInContext() {
+      // A prop the app stops passing must not keep its last value.
+      valueSignal.update(
+        ({
+          uncontrolledSettings,
+          notificationsSubject,
+          quickMenuBottomBarBoundingBoxSignal,
+          selectedHighlight,
+        }) => ({
+          uncontrolledSettings,
+          notificationsSubject,
+          quickMenuBottomBarBoundingBoxSignal,
+          selectedHighlight,
+          ...memoizedProps,
+        }),
+      )
     },
-    [providerProps, valueSignal],
+    [memoizedProps, valueSignal],
   )
 
   return (
@@ -54,10 +42,4 @@ const SignalProvider = ({
       {children}
     </ReaderContext.Provider>
   )
-}
-
-export const ReactReaderProvider = memo(
-  ({ children, ...props }: ComponentProps<typeof SignalProvider>) => {
-    return <SignalProvider {...props}>{children}</SignalProvider>
-  },
-)
+})

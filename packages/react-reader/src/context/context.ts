@@ -82,14 +82,6 @@ export type PublicContextType = {
   onAnnotationDelete?: (id: string) => void
 }
 
-/**
- * Every key of `T`, for a write that replaces all of them: a prop the app
- * stops passing goes back to `undefined` instead of keeping its last value.
- */
-export type EveryKeyOf<T> = {
-  [Key in keyof Required<T>]: T[Key & keyof T] | undefined
-}
-
 export type ReaderContextType = PrivateContextType & PublicContextType
 
 export const getDefaultValue = (): ReaderContextType => ({
