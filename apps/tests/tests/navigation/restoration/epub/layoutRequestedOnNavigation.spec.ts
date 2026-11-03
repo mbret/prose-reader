@@ -1,5 +1,4 @@
 import { expect, test } from "@playwright/test"
-import { waitForSettledOnCurrentLayout } from "../../../utils/pagination"
 import { getReader } from "../../../utils/reader"
 
 const url = "http://localhost:3333/tests/navigation/restoration/epub/index.html"
@@ -16,16 +15,13 @@ test.describe("Given an app that lays the book out again as soon as a page turn 
     await page.setViewportSize({ width: 536, height: 842 })
     await page.goto(`${url}?cfi=${encodeURIComponent("epubcfi(/6/14!/4/2)")}`)
 
-    // The turn has to land on the current layout for the layout to void it.
-    await waitForSettledOnCurrentLayout(page)
-
     const reader = await getReader(page)
 
     const turn = await reader.evaluate(async (reader) => {
       const pageOf = ({ begin }: typeof reader.pagination.state) =>
         `${begin.spineItemIndex}:${begin.pageIndexInSpineItem}`
-      const pageBeforeTurn = pageOf(reader.pagination.state)
       const pagesReported: string[] = []
+      let pageBeforeTurn: string | undefined
       let isTurning = false
       let turnNavigation: unknown
       let isLayoutCurrentWhenTurnReported: boolean | undefined
@@ -58,8 +54,31 @@ test.describe("Given an app that lays the book out again as soon as a page turn 
         })
       })
 
-      isTurning = true
-      reader.navigation.turnRight()
+      /**
+       * The turn has to land on the current layout for the layout to void it.
+       * It is made in the frame where pagination is found settled on the
+       * current layout, as a chapter loading around could lay the book out
+       * again in between.
+       */
+      await new Promise<void>((resolve) => {
+        const turnOnceSettledOnCurrentLayout = () => {
+          if (
+            !reader.pagination.state.isSettled ||
+            !reader.spine.isLayoutCurrent()
+          ) {
+            requestAnimationFrame(turnOnceSettledOnCurrentLayout)
+
+            return
+          }
+
+          pageBeforeTurn = pageOf(reader.pagination.state)
+          isTurning = true
+          reader.navigation.turnRight()
+          resolve()
+        }
+
+        turnOnceSettledOnCurrentLayout()
+      })
       await settledAfterLayout
 
       return {

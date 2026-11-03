@@ -1,4 +1,7 @@
 import {
+  defer,
+  EMPTY,
+  endWith,
   from,
   fromEvent,
   map,
@@ -6,6 +9,7 @@ import {
   of,
   switchMap,
   take,
+  timeout,
 } from "rxjs"
 import {
   injectCSS as injectCSSToDocument,
@@ -119,15 +123,57 @@ export const waitForFrameLoad = (stream: Observable<HTMLIFrameElement>) =>
     }),
   )
 
+/** Bounds a font whose request never ends, such as a stalled response. */
+const FONT_LOAD_TIMEOUT_MS = 5_000
+
+/**
+ * Completes once no font the document lays its text out with is loading.
+ * Laying the text out requests its fonts, and each is waited for itself:
+ * WebKit settles `document.fonts.ready` once a font has been loading for
+ * longer than its block period, before it is in. A font that comes in can
+ * change which others the text needs, such as for a glyph it lacks, so the
+ * text is laid out again until none is loading. Each font is waited for once,
+ * up to 5 seconds, so the wait ends whatever a browser reports after. A font
+ * that fails, or is not in by then, leaves the text in its fallback.
+ */
+const waitForDocumentFonts = (
+  document: Document,
+  awaitedFonts: ReadonlySet<FontFace> = new Set(),
+): Observable<never> =>
+  defer(() => {
+    // Measuring the root lays the document out, which requests its fonts.
+    document.documentElement?.getBoundingClientRect()
+
+    const loadingFonts = Array.from(document.fonts).filter(
+      (font) => font.status === `loading` && !awaitedFonts.has(font),
+    )
+
+    if (!loadingFonts.length) return EMPTY
+
+    return from(
+      Promise.allSettled(loadingFonts.map((font) => font.loaded)),
+    ).pipe(
+      timeout({ first: FONT_LOAD_TIMEOUT_MS, with: () => of(undefined) }),
+      switchMap(() =>
+        waitForDocumentFonts(
+          document,
+          new Set([...awaitedFonts, ...loadingFonts]),
+        ),
+      ),
+    )
+  })
+
+/**
+ * Emits the frame once its document can be measured and shown: its text is
+ * laid out with the fonts it uses.
+ */
 export const waitForFrameReady = (stream: Observable<HTMLIFrameElement>) =>
   stream.pipe(
     switchMap((frame) => {
-      const readyPromise = frame?.contentDocument?.fonts.ready
+      const document = frame.contentDocument
 
-      if (readyPromise) {
-        return from(readyPromise).pipe(map(() => frame))
-      }
+      if (!document) return of(frame)
 
-      return of(frame)
+      return waitForDocumentFonts(document).pipe(endWith(frame))
     }),
   )

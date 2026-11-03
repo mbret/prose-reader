@@ -171,7 +171,7 @@ export class PdfRenderer extends DocumentRenderer {
               viewport: this.pageProxy.getViewport({ scale: 1 }),
             })
 
-            return from(this.textLayer.render())
+            return from(this.textLayer.render()).pipe(map(() => frameElement))
           }),
           waitForFrameReady,
         )
