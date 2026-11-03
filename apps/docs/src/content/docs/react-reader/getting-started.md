@@ -1,6 +1,6 @@
 ---
 title: "Getting started with React Reader"
-description: "Install @prose-reader/react-reader, render ReactReader with your reader instance, persist the font size, spread mode and theme, and add enhancers to turn on more menus."
+description: "Install @prose-reader/react-reader, render ReactReaderProvider with your reader and ReactReader as its view, persist the font size, spread mode and theme, and add enhancers to turn on more menus."
 sidebar:
   label: "Getting Started"
 ---
@@ -28,82 +28,97 @@ import { gesturesEnhancer } from "@prose-reader/enhancer-gestures"
 export const createAppReader = gesturesEnhancer(createReader)
 ```
 
+`ReactReaderProvider` holds the reader and renders nothing itself. `ReactReader` is the view: the element the book shows in, and react-reader's menus. Render both inside your `ChakraProvider`, since react-reader reads your Chakra theme:
+
 ```tsx
 import type { Manifest } from "@prose-reader/core"
-import { ReactReader } from "@prose-reader/react-reader"
-import { useRef } from "react"
+import { ReactReader, ReactReaderProvider } from "@prose-reader/react-reader"
+import { useMemo } from "react"
 // Don't forget to import the package css
 import "@prose-reader/react-reader/index.css"
 
 const MyAppReader = ({ manifest }: { manifest: Manifest | undefined }) => {
-  const containerRef = useRef<HTMLDivElement | null>(null)
-  // You own the creation of your reader instance,
-  // see `useReaderInstance` below
-  const readerInstance = useReaderInstance(manifest, containerRef)
-  
-  // Then we handle the rendering
+  const createReader = useMemo(
+    () => manifest && (() => createAppReader({ manifest })),
+    [manifest],
+  )
+
   return (
-    <ReactReader
-      reader={readerInstance}
-    >
-      <div ref={containerRef} style={{ height: "100%", width: "100%" }} />
-    </ReactReader>
+    <ReactReaderProvider createReader={createReader}>
+      <ReactReader />
+    </ReactReaderProvider>
   )
 }
 ```
 
-A reader lives for a single book, so the idiomatic React pattern is one effect that creates and mounts the reader together, with `destroy()` as its cleanup. `destroy()` removes the reader's elements, classes, attributes, styles and listeners from the container, so the effect is safe with strict mode re-running effects:
+`ReactReaderProvider` creates the reader with `createReader` once `ReactReader` renders, writes the [settings](#settings) it manages into it, and mounts it in the element of `ReactReader`. It destroys the reader when it unmounts, or when `createReader` changes.
 
-```typescript
-import { useEffect, useState, type RefObject } from "react"
-import type { Manifest } from "@prose-reader/core"
+- Memoize `createReader`: a new function creates a new reader, so an inline one creates a reader on every render.
+- Return a new reader on each call: a `ReactReader` rendered again gets a new reader.
+- Leave it `undefined` until you can create the reader, while the manifest loads for example.
 
-const useReaderInstance = (
-  manifest: Manifest | undefined,
-  containerRef: RefObject<HTMLElement | null>,
-) => {
-  const [reader, setReader] = useState<ReturnType<typeof createAppReader>>()
+Children of `ReactReader` render after the element of the reader: position them absolutely, as a loading screen would be, to show them over the book.
 
-  useEffect(() => {
-    const containerElement = containerRef.current
+### Lifecycle
 
-    if (!manifest || !containerElement) return
+- Render `ReactReaderProvider` above anything that hides the view, such as an `<Activity>` or a tab, and `ReactReader` inside it. Hiding `ReactReader` keeps the reader and its reading position: its element stays in the document. The settings your app changes meanwhile reach the reader.
+- When `ReactReader` unmounts, the provider destroys the reader. The next `ReactReader` gets a new reader in its own element, since a reader cannot move to another element.
+- A `ReactReader` that unmounts while an `<Activity>` hides it cannot tell the provider: the reader stays until `createReader` changes, another `ReactReader` renders, or the provider unmounts.
+- Render one `ReactReader` under a provider. A second one throws.
 
-    const instance = createAppReader({ manifest })
+:::caution
+While its element is hidden, the reader lays the book out in an area of zero size. Until the element shows again, `reader.pagination` reports the first page, and the pointer events the browser sends as the reader hides throw errors. Showing the element lays the book out again at the reading position.
+:::
 
-    instance.mount(containerElement)
-    setReader(instance)
+### Using the reader
 
-    return () => {
-      instance.destroy()
-      setReader(undefined)
-    }
-  }, [manifest, containerRef])
+`useReader()` gives the reader to any component under `ReactReaderProvider`, the children of `ReactReader` among them, once the provider mounted it. It is `undefined` before, and once the provider destroyed it:
 
-  return reader
+```tsx
+import { useReader } from "@prose-reader/react-reader"
+
+const PageNumber = () => {
+  const reader = useReader()
+  // ...
 }
 ```
+
+`useReader()` returns a reader with the gestures enhancer. Declare the type of the reader `createReader` returns, once in your app, and it returns that type, with the APIs of your enhancers:
+
+```typescript
+declare module "@prose-reader/react-reader" {
+  interface Register {
+    reader: ReturnType<typeof createAppReader>
+  }
+}
+```
+
+The package exports this type as `ReactReaderReader`.
 
 ## Settings
 
 react-reader manages three of the reader's settings. The user changes each from one of its menus: the font scale from the Font size dialog, the spread mode from the Layout dialog, and the theme from the Theme dialog. The theme colors the book. react-reader's own interface follows your Chakra UI theme.
 
-react-reader writes these settings into the reader. Keep them in your app: pass them as `settings`, in the shape `reader.settings` has, and merge what `onSettingsChange` reports into them:
+react-reader writes these settings into the reader. Keep them in your app: pass them to `ReactReaderProvider` as `settings`, in the shape `reader.settings` has, and merge what `onSettingsChange` reports into them:
 
 ```tsx
-import { ReactReader, type ReactReaderSettings } from "@prose-reader/react-reader"
+import {
+  ReactReader,
+  ReactReaderProvider,
+  type ReactReaderSettings,
+} from "@prose-reader/react-reader"
 
 const [settings, setSettings] = useState<ReactReaderSettings>(savedSettings)
 
-<ReactReader
-  reader={reader}
+<ReactReaderProvider
+  createReader={createReader}
   settings={settings}
   onSettingsChange={(changes) =>
     setSettings((old) => ({ ...old, ...changes }))
   }
 >
-  <div ref={containerRef} style={{ height: "100%", width: "100%" }} />
-</ReactReader>
+  <ReactReader />
+</ReactReaderProvider>
 ```
 
 | Setting | Menu |
@@ -114,41 +129,30 @@ const [settings, setSettings] = useState<ReactReaderSettings>(savedSettings)
 
 `onSettingsChange(changes, from)` receives only the settings that changed. `from` is the scope the user chose the value for, or `"internal"` for a value set on the reader directly, with `reader.settings.update()`.
 
-A setting you give no value keeps react-reader's own, for as long as it is mounted. It starts from the value the reader was created with, which is not a change and is not reported. A change in the menus, or one made on the reader directly, still reaches `onSettingsChange`.
+A setting you give no value keeps react-reader's own, for as long as the provider renders. It starts from the value the first reader was created with, which is not a change and is not reported, and every reader created after it gets it. To give each book its own value, pass it in `settings`. A change in the menus, or one made on the reader directly, still reaches `onSettingsChange`.
 
-react-reader writes the values you give into the reader once it renders with it. Create your reader with the same values, so it starts on them rather than switching to them: a reader created without the saved theme shows `bright` until then. Read the values when you create the reader, without making them a reason to create it again, since react-reader keeps the reader on them afterwards. In `useReaderInstance`, a ref does that:
+The provider writes the values in effect into the reader before it mounts it, so its first layout uses them, and keeps the reader on them without creating it again.
 
-```typescript
-const settingsRef = useLiveRef(settings)
-
-useEffect(() => {
-  // ...
-  const instance = createAppReader({ manifest, ...settingsRef.current })
-  // ...
-}, [manifest, containerRef, settingsRef])
-```
-
-`useLiveRef` comes from [reactjrx](https://github.com/mbret/reactjrx). A setting left `undefined`, as before anything is saved, keeps its default.
-
-The theme can follow your app's light or dark mode until the user picks one. Give the theme for that mode while `settings.theme` is undefined, to `ReactReader` and to the reader you create alike:
+The theme can follow your app's light or dark mode until the user picks one. Give the theme for that mode while `settings.theme` is undefined:
 
 ```tsx
 const readerSettings = {
   ...settings,
   theme: settings.theme ?? (colorMode === "dark" ? "night" : "bright"),
 }
-const settingsRef = useLiveRef(readerSettings)
 
-<ReactReader reader={reader} settings={readerSettings} /* ... */ />
+<ReactReaderProvider createReader={createReader} settings={readerSettings}>
+  <ReactReader />
+</ReactReaderProvider>
 ```
 
 The Theme dialog shows the theme for your app's mode as checked, and picking it again reports nothing. To keep that theme after your app's mode changes, the user picks another theme, then this one. To follow your app's mode again once the user has picked a theme, remove `theme` from the saved settings.
 
-The package exports the types of these props: `ReactReaderSettings` for the values, `ReactReaderSettingsScope` and `ReactReaderSettingsScopeReference` for the scopes below, and `ReactReaderProps` for every prop of `ReactReader`.
+The package exports the types of these props: `ReactReaderSettings` for the values, `ReactReaderSettingsScope` and `ReactReaderSettingsScopeReference` for the scopes below, and `ReactReaderProviderProps` and `ReactReaderProps` for every prop of `ReactReaderProvider` and `ReactReader`.
 
 ### Scopes
 
-The menus can keep a value per scope: global, the book, or the screen (`mobile`, `tablet` or `desktop`). They show a tab per scope once you pass `settingsScopes`, and let the user pick the book's scope once you pass `onSettingsScopesChange`:
+The menus can keep a value per scope: global, the book, or the screen (`mobile`, `tablet` or `desktop`). They show a tab per scope once you pass `settingsScopes` to the provider, and let the user pick the book's scope once you pass `onSettingsScopesChange`:
 
 | Prop | What it is |
 | --- | --- |

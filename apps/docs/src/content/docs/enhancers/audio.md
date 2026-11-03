@@ -226,15 +226,17 @@ When the user navigates pages, the enhancer automatically selects the first audi
 
 ### React Integration
 
-If you are using `@prose-reader/react-reader`, there are hooks available to consume the audio state:
+With [react-reader](/react-reader/getting-started), a component under `ReactReaderProvider` gets the reader from `useReader()`. Once you [declare the type of your reader](/react-reader/getting-started#using-the-reader), `reader.audio` is typed:
 
-```typescript
-import { useAudioState } from "@prose-reader/react-reader"
+```tsx
+import { useReader } from "@prose-reader/react-reader"
+import { useObserve } from "reactjrx"
 
 const MyAudioControls = () => {
-  const audioState = useAudioState()
+  const reader = useReader()
+  const { data: audioState } = useObserve(() => reader?.audio.state$, [reader])
 
-  if (!audioState) return null
+  if (!reader || !audioState) return null
 
   return (
     <div>
@@ -246,16 +248,6 @@ const MyAudioControls = () => {
       </span>
     </div>
   )
-}
-```
-
-You can check whether the reader has the audio enhancer using the provided type guard:
-
-```typescript
-import { hasAudioEnhancer } from "@prose-reader/react-reader"
-
-if (hasAudioEnhancer(reader)) {
-  reader.audio.play()
 }
 ```
 
