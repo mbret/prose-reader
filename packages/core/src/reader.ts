@@ -149,9 +149,9 @@ export const createReader = ({
    * Attach the reader to the DOM and start rendering the book.
    *
    * This is a one-shot operation, a reader renders a single book into a
-   * single container. Calling it a second time throws. If you need to open
-   * another book or move to another container, destroy the reader and
-   * create a new one.
+   * single container. Calling it a second time, or on a destroyed reader,
+   * throws. If you need to open another book or move to another container,
+   * destroy the reader and create a new one.
    */
   const mount = (containerElement: HTMLElement) => {
     if (context.isDestroyed) {

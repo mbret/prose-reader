@@ -41,6 +41,6 @@ type ContextState = {
 
 Read a value with `reader.context.value`, or follow it with `reader.context.watch(key)`, which emits the current value as soon as you subscribe and again whenever it changes.
 
-`reader.context.isDestroyed` is `true` once `reader.destroy()` has run. A destroyed reader cannot be mounted: `mount()` throws.
+`reader.context.isDestroyed` is `true` once `reader.destroy()` has been called. A destroyed reader cannot be mounted: `mount()` throws.
 
 Whether two pages are shown side by side is not part of the context: the viewport decides it with its size, within what `isSpreadAllowed` permits. See [Spread mode](/learn/viewport#spread-mode).
