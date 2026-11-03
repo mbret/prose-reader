@@ -43,8 +43,8 @@ export function ReaderElement() {
       // A passive cleanup runs once React removed the element of an unmounted
       // view. An `<Activity>` hiding the view leaves the element in the
       // document, and React tells nothing when it removes it later: until the
-      // view shows again, an observer of the whole document reads
-      // `isConnected` after each batch of changes to the page.
+      // view shows again, an observer of the element's root node, the document
+      // or a shadow root, reads `isConnected` after each batch of changes.
       return function takeBackReaderElementOnceRemoved() {
         if (!readerElement.isConnected) {
           takeBackReaderElement()
@@ -62,7 +62,7 @@ export function ReaderElement() {
         )
 
         hiddenReaderElementRemovalObserver.observe(
-          readerElement.ownerDocument,
+          readerElement.getRootNode(),
           {
             childList: true,
             subtree: true,
