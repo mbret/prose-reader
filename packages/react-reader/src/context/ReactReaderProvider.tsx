@@ -2,6 +2,7 @@ import { isShallowEqual } from "@prose-reader/shared"
 import { type ComponentProps, memo, useEffect } from "react"
 import { signal, useConstant, useMemoCompare } from "reactjrx"
 import {
+  type EveryKeyOf,
   getDefaultValue,
   type PublicContextType,
   ReaderContext,
@@ -9,19 +10,44 @@ import {
 
 const SignalProvider = ({
   children,
-  ...props
+  reader,
+  zoomMaxScale,
+  settings,
+  onSettingsChange,
+  settingsByScope,
+  settingsScopes,
+  onSettingsScopesChange,
+  annotations,
+  onAnnotationCreate,
+  onAnnotationUpdate,
+  onAnnotationDelete,
 }: {
   children: React.ReactNode
 } & PublicContextType) => {
   const valueSignal = useConstant(() => signal({ default: getDefaultValue() }))
-  const memoizedProps = useMemoCompare(props, isShallowEqual)
+  const providerProps = useMemoCompare<EveryKeyOf<PublicContextType>>(
+    {
+      reader,
+      zoomMaxScale,
+      settings,
+      onSettingsChange,
+      settingsByScope,
+      settingsScopes,
+      onSettingsScopesChange,
+      annotations,
+      onAnnotationCreate,
+      onAnnotationUpdate,
+      onAnnotationDelete,
+    },
+    isShallowEqual,
+  )
 
-  useEffect(() => {
-    valueSignal.update((old) => ({
-      ...old,
-      ...memoizedProps,
-    }))
-  }, [memoizedProps, valueSignal])
+  useEffect(
+    function copyPropsIntoContext() {
+      valueSignal.update((old) => ({ ...old, ...providerProps }))
+    },
+    [providerProps, valueSignal],
+  )
 
   return (
     <ReaderContext.Provider value={valueSignal}>

@@ -15,6 +15,7 @@ import {
   onTestFinished,
   vi,
 } from "vitest"
+import { MAX_ZOOM_SCALE } from "./constants"
 import { useReaderViewContext } from "./context/ReaderViewContext"
 import { ReactReader } from "./ReactReader"
 
@@ -89,6 +90,26 @@ describe(`ReactReader`, () => {
       root.unmount()
     })
     container.remove()
+  })
+
+  it(`puts back the default of a prop the app stops passing`, async () => {
+    const reader = createMountedReader()
+
+    await render(
+      <ReactReader reader={reader} zoomMaxScale={3}>
+        {null}
+      </ReactReader>,
+    )
+    const zoomMaxScaleWhenPassed = reader.gestures.settings.values.zoomMaxScale
+    await render(<ReactReader reader={reader}>{null}</ReactReader>)
+
+    expect({
+      zoomMaxScaleWhenPassed,
+      zoomMaxScaleOnceDropped: reader.gestures.settings.values.zoomMaxScale,
+    }).toEqual({
+      zoomMaxScaleWhenPassed: 3,
+      zoomMaxScaleOnceDropped: MAX_ZOOM_SCALE,
+    })
   })
 
   it(`opens its own quick menu unless the app controls it`, async () => {
