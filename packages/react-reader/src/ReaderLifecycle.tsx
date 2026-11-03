@@ -20,18 +20,21 @@ export function ReaderLifecycle({
 
   useEffect(
     function createReaderInTheViewElement() {
-      const readerElementInDocument = readerElement?.isConnected
-        ? readerElement
-        : undefined
+      // The view takes its element back in the commit that removes it, before
+      // this render's `readerElement` follows.
+      const readerElementStillLent =
+        context.value.readerElement === readerElement
+          ? readerElement
+          : undefined
 
-      if (!createReader || !readerElementInDocument) return
+      if (!createReader || !readerElementStillLent) return
 
       const reader = createReader()
 
       reader.settings.update(
         getManagedSettingValuesInEffect(context.value, screenRef.current),
       )
-      reader.mount(readerElementInDocument)
+      reader.mount(readerElementStillLent)
       context.update((old) => ({ ...old, reader }))
 
       return function destroyReader() {

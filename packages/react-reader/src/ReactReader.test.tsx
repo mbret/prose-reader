@@ -437,6 +437,41 @@ describe(`ReactReaderProvider and ReactReader`, () => {
     })
   })
 
+  it(`creates the reader in a ReactReader rendered into a container that joins the document later`, async () => {
+    const { createOnePageReader, getCreatedReaders } = createReaderFactory()
+    const detachedContainer = document.createElement(`div`)
+    const detachedRoot = createRoot(detachedContainer)
+
+    onTestFinished(async function removeDetachedRoot() {
+      await act(async () => {
+        detachedRoot.unmount()
+      })
+      detachedContainer.remove()
+    })
+
+    await act(async () => {
+      detachedRoot.render(
+        <ChakraProvider value={defaultSystem}>
+          <ReactReaderProvider createReader={createOnePageReader}>
+            <ReactReader />
+          </ReactReaderProvider>
+        </ChakraProvider>,
+      )
+    })
+    await act(async () => {
+      document.body.appendChild(detachedContainer)
+    })
+    const [reader] = getCreatedReaders()
+
+    expect({
+      creations: createOnePageReader.mock.calls.length,
+      isReaderElementInReactReader:
+        detachedContainer
+          .querySelector(`[data-prose-react-reader]`)
+          ?.contains(reader?.context.value.rootElement ?? null) ?? false,
+    }).toEqual({ creations: 1, isReaderElementInReactReader: true })
+  })
+
   it(`creates no reader in the element of a ReactReader that unmounts as createReader arrives`, async () => {
     const { createOnePageReader } = createReaderFactory()
 
