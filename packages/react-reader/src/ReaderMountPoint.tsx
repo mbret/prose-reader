@@ -26,18 +26,19 @@ export function ReaderMountPoint<TReader extends ReactReaderReader>({
       if (!createReader || !readerElement) return
 
       const reader = createReader()
+      const onReaderChangeAtCreation = onReaderChangeRef.current
 
       reader.settings.update(
         getManagedSettingValuesInEffect(context.value, screenRef.current),
       )
       reader.mount(readerElement)
       context.update((old): ReaderContextType => ({ ...old, reader }))
-      onReaderChangeRef.current?.(reader)
+      onReaderChangeAtCreation?.(reader)
 
       return function destroyReader() {
         reader.destroy()
         context.update((old) => ({ ...old, reader: undefined }))
-        onReaderChangeRef.current?.(undefined)
+        onReaderChangeAtCreation?.(undefined)
       }
     },
     [createReader, context, screenRef, onReaderChangeRef],

@@ -289,6 +289,43 @@ describe(`ReactReader`, () => {
     })
   })
 
+  it(`tells the onReaderChange that received a reader when it destroys it`, async () => {
+    const firstBook = createReaderFactory()
+    const secondBook = createReaderFactory()
+    const onFirstBookReaderChange = vi.fn()
+    const onSecondBookReaderChange = vi.fn()
+
+    await render(
+      <ReactReader
+        createReader={firstBook.createOnePageReader}
+        onReaderChange={onFirstBookReaderChange}
+      />,
+    )
+    await render(
+      <ReactReader
+        createReader={secondBook.createOnePageReader}
+        onReaderChange={onSecondBookReaderChange}
+      />,
+    )
+    const [firstReader] = firstBook.getCreatedReaders()
+    const [secondReader] = secondBook.getCreatedReaders()
+    const readers = { firstReader, secondReader }
+
+    expect({
+      firstBookReaderChanges: nameReaders(
+        onFirstBookReaderChange.mock.calls,
+        readers,
+      ),
+      secondBookReaderChanges: nameReaders(
+        onSecondBookReaderChange.mock.calls,
+        readers,
+      ),
+    }).toEqual({
+      firstBookReaderChanges: [`firstReader`, undefined],
+      secondBookReaderChanges: [`secondReader`],
+    })
+  })
+
   it(`mounts the next reader on the values react-reader kept as its own`, async () => {
     const firstBook = createReaderFactory()
     const secondBook = createReaderFactory()
