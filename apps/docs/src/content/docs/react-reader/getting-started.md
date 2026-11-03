@@ -30,59 +30,39 @@ export const createAppReader = gesturesEnhancer(createReader)
 
 ```tsx
 import type { Manifest } from "@prose-reader/core"
-import { ReactReader } from "@prose-reader/react-reader"
-import { useRef } from "react"
+import { ReactReader, type ReactReaderSettings } from "@prose-reader/react-reader"
+import { useMemo } from "react"
 // Don't forget to import the package css
 import "@prose-reader/react-reader/index.css"
 
 const MyAppReader = ({ manifest }: { manifest: Manifest | undefined }) => {
-  const containerRef = useRef<HTMLDivElement | null>(null)
-  // You own the creation of your reader instance,
-  // see `useReaderInstance` below
-  const readerInstance = useReaderInstance(manifest, containerRef)
-  
-  // Then we handle the rendering
-  return (
-    <ReactReader
-      reader={readerInstance}
-    >
-      <div ref={containerRef} style={{ height: "100%", width: "100%" }} />
-    </ReactReader>
+  const createReader = useMemo(
+    () =>
+      manifest &&
+      ((settings: ReactReaderSettings) =>
+        createAppReader({ manifest, ...settings })),
+    [manifest],
   )
+
+  return <ReactReader createReader={createReader} />
 }
 ```
 
-A reader lives for a single book, so the idiomatic React pattern is one effect that creates and mounts the reader together, with `destroy()` as its cleanup. `destroy()` removes the reader's elements, classes, attributes, styles and listeners from the container, so the effect is safe with strict mode re-running effects:
+`ReactReader` owns the reader's lifecycle. It calls `createReader` with the values of the [settings](#settings) it manages, mounts the reader in the element the book shows in, and destroys it when it unmounts or when `createReader` changes.
 
-```typescript
-import { useEffect, useState, type RefObject } from "react"
-import type { Manifest } from "@prose-reader/core"
+- Memoize `createReader`: a new function creates a new reader, for another book for example.
+- Leave it `undefined` until you can create the reader, while the manifest loads for example.
+- Hiding `ReactReader` in an `<Activity>` destroys its reader, and showing it again creates a new one.
 
-const useReaderInstance = (
-  manifest: Manifest | undefined,
-  containerRef: RefObject<HTMLElement | null>,
-) => {
-  const [reader, setReader] = useState<ReturnType<typeof createAppReader>>()
+`onReaderChange` gives you the reader once `ReactReader` created it, typed as `createReader` returns it, then `undefined` once it destroyed it:
 
-  useEffect(() => {
-    const containerElement = containerRef.current
+```tsx
+const [reader, setReader] = useState<ReturnType<typeof createAppReader>>()
 
-    if (!manifest || !containerElement) return
-
-    const instance = createAppReader({ manifest })
-
-    instance.mount(containerElement)
-    setReader(instance)
-
-    return () => {
-      instance.destroy()
-      setReader(undefined)
-    }
-  }, [manifest, containerRef])
-
-  return reader
-}
+<ReactReader createReader={createReader} onReaderChange={setReader} />
 ```
+
+`reader.mounted$` turns `true` once `ReactReader` has mounted the reader, to hide a loading screen for example. Children render inside `ReactReader`, after the reader's element: position them absolutely, as a loading screen would be, to show them over the book.
 
 ## Settings
 
@@ -96,14 +76,12 @@ import { ReactReader, type ReactReaderSettings } from "@prose-reader/react-reade
 const [settings, setSettings] = useState<ReactReaderSettings>(savedSettings)
 
 <ReactReader
-  reader={reader}
+  createReader={createReader}
   settings={settings}
   onSettingsChange={(changes) =>
     setSettings((old) => ({ ...old, ...changes }))
   }
->
-  <div ref={containerRef} style={{ height: "100%", width: "100%" }} />
-</ReactReader>
+/>
 ```
 
 | Setting | Menu |
@@ -114,32 +92,18 @@ const [settings, setSettings] = useState<ReactReaderSettings>(savedSettings)
 
 `onSettingsChange(changes, from)` receives only the settings that changed. `from` is the scope the user chose the value for, or `"internal"` for a value set on the reader directly, with `reader.settings.update()`.
 
-A setting you give no value keeps react-reader's own, for as long as it is mounted. It starts from the value the reader was created with, which is not a change and is not reported. A change in the menus, or one made on the reader directly, still reaches `onSettingsChange`.
+A setting you give no value keeps react-reader's own, for as long as `ReactReader` renders. It starts from the value the reader was created with, which is not a change and is not reported. A change in the menus, or one made on the reader directly, still reaches `onSettingsChange`.
 
-react-reader writes the values you give into the reader once it renders with it. Create your reader with the same values, so it starts on them rather than switching to them: a reader created without the saved theme shows `bright` until then. Read the values when you create the reader, without making them a reason to create it again, since react-reader keeps the reader on them afterwards. In `useReaderInstance`, a ref does that:
+`ReactReader` passes the values in effect to `createReader`. Spread them into your reader's options, as above, so its first layout uses them. A setting with no value is left out, and keeps the reader's default. Later changes reach the reader without creating it again.
 
-```typescript
-const settingsRef = useLiveRef(settings)
-
-useEffect(() => {
-  // ...
-  const instance = createAppReader({ manifest, ...settingsRef.current })
-  // ...
-}, [manifest, containerRef, settingsRef])
-```
-
-`useLiveRef` comes from [reactjrx](https://github.com/mbret/reactjrx). A setting left `undefined`, as before anything is saved, keeps its default.
-
-The theme can follow your app's light or dark mode until the user picks one. Give the theme for that mode while `settings.theme` is undefined, to `ReactReader` and to the reader you create alike:
+The theme can follow your app's light or dark mode until the user picks one. Give the theme for that mode while `settings.theme` is undefined:
 
 ```tsx
 const readerSettings = {
   ...settings,
   theme: settings.theme ?? (colorMode === "dark" ? "night" : "bright"),
 }
-const settingsRef = useLiveRef(readerSettings)
-
-<ReactReader reader={reader} settings={readerSettings} /* ... */ />
+<ReactReader createReader={createReader} settings={readerSettings} /* ... */ />
 ```
 
 The Theme dialog shows the theme for your app's mode as checked, and picking it again reports nothing. To keep that theme after your app's mode changes, the user picks another theme, then this one. To follow your app's mode again once the user has picked a theme, remove `theme` from the saved settings.

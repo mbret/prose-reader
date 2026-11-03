@@ -1,5 +1,5 @@
 import { isShallowEqual } from "@prose-reader/shared"
-import { type ComponentProps, memo, useCallback, useEffect } from "react"
+import { type ComponentProps, memo, useCallback, useLayoutEffect } from "react"
 import { signal, useConstant, useMemoCompare, useSignalValue } from "reactjrx"
 import {
   getDefaultValue,
@@ -58,25 +58,30 @@ const SignalProvider = ({
 
   const memoizedProps = useMemoCompare(props, isShallowEqual)
 
-  useEffect(() => {
-    valueSignal.update((old) => ({
-      ...old,
-      ...memoizedProps,
-      onFontSizeMenuOpenChange: uncontrolledOnFontSizeMenuOpenChange,
-      fontSizeMenuOpen: uncontrolledFontSizeMenuOpenValue,
-      onRefitMenuOpenChange: uncontrolledOnRefitMenuOpenChange,
-      refitMenuOpen: uncontrolledRefitMenuOpenValue,
+  // A layout effect, so the effects of the same commit, the one creating the
+  // reader among them, read the props it copies.
+  useLayoutEffect(
+    function copyPropsIntoContext() {
+      valueSignal.update((old) => ({
+        ...old,
+        ...memoizedProps,
+        onFontSizeMenuOpenChange: uncontrolledOnFontSizeMenuOpenChange,
+        fontSizeMenuOpen: uncontrolledFontSizeMenuOpenValue,
+        onRefitMenuOpenChange: uncontrolledOnRefitMenuOpenChange,
+        refitMenuOpen: uncontrolledRefitMenuOpenValue,
+        _onQuickMenuOpenChange,
+      }))
+    },
+    [
+      memoizedProps,
       _onQuickMenuOpenChange,
-    }))
-  }, [
-    memoizedProps,
-    _onQuickMenuOpenChange,
-    valueSignal,
-    uncontrolledFontSizeMenuOpenValue,
-    uncontrolledOnFontSizeMenuOpenChange,
-    uncontrolledRefitMenuOpenValue,
-    uncontrolledOnRefitMenuOpenChange,
-  ])
+      valueSignal,
+      uncontrolledFontSizeMenuOpenValue,
+      uncontrolledOnFontSizeMenuOpenChange,
+      uncontrolledRefitMenuOpenValue,
+      uncontrolledOnRefitMenuOpenChange,
+    ],
+  )
 
   return (
     <ReaderContext.Provider value={valueSignal}>
