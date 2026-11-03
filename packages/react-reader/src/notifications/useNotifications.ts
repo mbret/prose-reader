@@ -14,14 +14,11 @@ import {
 } from "rxjs"
 import { toaster } from "../components/ui/toaster"
 import { useReaderContextValue } from "../context/useReaderContext"
-import { useFontSizeNotifications } from "../fonts/useFontSizeNotifications"
 
 export const useNotifications = () => {
   const { notificationsSubject } = useReaderContextValue([
     "notificationsSubject",
   ])
-
-  useFontSizeNotifications()
 
   const notifications = useCallback(
     () =>

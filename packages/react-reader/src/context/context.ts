@@ -4,7 +4,7 @@ import type {
   RuntimeAnnotation,
 } from "@prose-reader/enhancer-annotations"
 import type { EnhancerAPI as GesturesEnhancerAPI } from "@prose-reader/enhancer-gestures"
-import { createContext, type Dispatch, type SetStateAction } from "react"
+import { createContext } from "react"
 import { type Signal, signal } from "reactjrx"
 import { Subject } from "rxjs"
 import type { ReaderNotification } from "../notifications/types"
@@ -57,14 +57,8 @@ export type PrivateContextType = {
    * - the settings are valid only for the current mount runtime
    */
   uncontrolledSettings: ReactReaderSettings
-  refitMenuOpen: boolean
-  onRefitMenuOpenChange: (open: boolean) => void
-  fontSizeMenuOpen: boolean
-  onFontSizeMenuOpenChange: (open: boolean) => void
   notificationsSubject: Subject<ReaderNotification>
   quickMenuBottomBarBoundingBoxSignal: Signal<ResizeObserverEntry | undefined>
-  _quickMenuOpen: boolean
-  _onQuickMenuOpenChange: Dispatch<SetStateAction<boolean>>
   selectedHighlight:
     | {
         highlight?: RuntimeAnnotation
@@ -78,23 +72,6 @@ export type PrivateContextType = {
 
 export type PublicContextType = {
   reader: ReactReaderReader | undefined
-  enableFloatingTime?: boolean
-  enableFloatingProgress?: boolean
-  onItemClick?: (
-    item:
-      | "annotations"
-      | "search"
-      | "help"
-      | "toc"
-      | "bookmarks"
-      | "more"
-      | "back"
-      | "gallery"
-      | "layout"
-      | "theme",
-  ) => void
-  quickMenuOpen?: boolean
-  onQuickMenuOpenChange?: Dispatch<SetStateAction<boolean>>
   zoomMaxScale?: number
   /**
    * The global values of the reader settings react-reader manages. They apply
@@ -140,19 +117,12 @@ export type PublicContextType = {
 export type ReaderContextType = PrivateContextType & PublicContextType
 
 export const getDefaultValue = (): ReaderContextType => ({
-  _quickMenuOpen: false,
-  _onQuickMenuOpenChange: (prev) => prev,
   reader: undefined,
   quickMenuBottomBarBoundingBoxSignal: signal<ResizeObserverEntry | undefined>({
     default: undefined,
   }),
   notificationsSubject: new Subject<ReaderNotification>(),
-  refitMenuOpen: false,
-  onRefitMenuOpenChange: () => {},
-  fontSizeMenuOpen: false,
-  onFontSizeMenuOpenChange: () => {},
   uncontrolledSettings: {},
-  enableFloatingProgress: true,
   selectedHighlight: undefined,
 })
 
