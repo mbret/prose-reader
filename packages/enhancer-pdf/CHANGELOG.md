@@ -3,6 +3,14 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## [38.0.1](https://github.com/mbret/prose-reader/compare/v38.0.0...v38.0.1) (2026-11-03)
+
+### Bug Fixes
+
+* **enhancer-pdf:** leave the items it does not serve to the reader's getResource ([7bf2ef3](https://github.com/mbret/prose-reader/commit/7bf2ef3578df6a7f18b37feb7d16ab308dd9d1f8))
+* **enhancer-pdf:** serve an item by the last answer of getArchiveForItem ([c45db7f](https://github.com/mbret/prose-reader/commit/c45db7fb6d71d055564280762be3ec58a114a7b8))
+
+
 ## [38.0.0](https://github.com/mbret/prose-reader/compare/v37.0.0...v38.0.0) (2026-11-02)
 
 **Note:** Version bump only for package @prose-reader/enhancer-pdf
