@@ -1,4 +1,9 @@
-import { Box, type BoxProps, Presence } from "@chakra-ui/react"
+import {
+  Box,
+  type BoxProps,
+  Presence,
+  useControllableState,
+} from "@chakra-ui/react"
 import {
   type ComponentProps,
   memo,
@@ -201,8 +206,11 @@ export const ReactReader = memo(function ReactReader({
   onQuickMenuOpenChange,
   ...props
 }: ReactReaderProps) {
-  const [isUncontrolledQuickMenuOpen, setIsUncontrolledQuickMenuOpen] =
-    useState(false)
+  const [isQuickMenuOpen, setIsQuickMenuOpen] = useControllableState({
+    value: quickMenuOpen,
+    defaultValue: false,
+    onChange: onQuickMenuOpenChange,
+  })
   const [isFontSizeMenuOpen, setIsFontSizeMenuOpen] = useState(false)
   const [isRefitMenuOpen, setIsRefitMenuOpen] = useState(false)
   const readerView = useMemo(
@@ -210,9 +218,8 @@ export const ReactReader = memo(function ReactReader({
       enableFloatingTime,
       enableFloatingProgress,
       onItemClick,
-      quickMenuOpen: quickMenuOpen ?? isUncontrolledQuickMenuOpen,
-      onQuickMenuOpenChange:
-        onQuickMenuOpenChange ?? setIsUncontrolledQuickMenuOpen,
+      quickMenuOpen: isQuickMenuOpen,
+      onQuickMenuOpenChange: setIsQuickMenuOpen,
       fontSizeMenuOpen: isFontSizeMenuOpen,
       onFontSizeMenuOpenChange: setIsFontSizeMenuOpen,
       refitMenuOpen: isRefitMenuOpen,
@@ -222,9 +229,8 @@ export const ReactReader = memo(function ReactReader({
       enableFloatingTime,
       enableFloatingProgress,
       onItemClick,
-      quickMenuOpen,
-      isUncontrolledQuickMenuOpen,
-      onQuickMenuOpenChange,
+      isQuickMenuOpen,
+      setIsQuickMenuOpen,
       isFontSizeMenuOpen,
       isRefitMenuOpen,
     ],
