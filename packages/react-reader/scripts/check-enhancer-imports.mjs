@@ -2,6 +2,7 @@ import { readdir, readFile } from "node:fs/promises"
 import path from "node:path"
 import { fileURLToPath } from "node:url"
 import ts from "typescript"
+import { TEST_FILES } from "../../../config/testFiles.mts"
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url))
 const packageDir = path.resolve(__dirname, "..")
@@ -37,8 +38,14 @@ const formatLocation = (sourceFile, start) => {
   return `${line + 1}:${character + 1}`
 }
 
+const isTestFile = (filePath) =>
+  TEST_FILES.some((testFiles) =>
+    path.matchesGlob(path.relative(packageDir, filePath), testFiles),
+  )
+
 const main = async () => {
-  const files = await collectSourceFiles(targetDir)
+  const sourceFiles = await collectSourceFiles(targetDir)
+  const files = sourceFiles.filter((filePath) => !isTestFile(filePath))
   const violations = []
 
   for (const filePath of files) {
