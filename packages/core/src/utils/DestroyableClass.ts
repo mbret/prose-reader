@@ -1,15 +1,20 @@
 import { Subject } from "rxjs"
 
 export class DestroyableClass {
-  protected isDestroyed = false
+  private destroyed = false
   private destroySubject = new Subject<void>()
 
   protected destroy$ = this.destroySubject.asObservable()
 
-  public destroy() {
-    if (this.isDestroyed) return
+  /** Whether `destroy()` has been called. */
+  public get isDestroyed() {
+    return this.destroyed
+  }
 
-    this.isDestroyed = true
+  public destroy() {
+    if (this.destroyed) return
+
+    this.destroyed = true
 
     this.destroySubject.next()
     this.destroySubject.complete()

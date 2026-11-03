@@ -67,7 +67,7 @@ export class ReactiveEntity<
     return this.stateSubject.value
   }
 
-  /** Whether `destroy()` has run. A destroyed entity emits nothing more. */
+  /** Whether `destroy()` has been called. */
   public get isDestroyed() {
     return this.destroyed
   }
