@@ -15,12 +15,13 @@ const ReaderEffects = memo(function ReaderEffects() {
 
 export type ReactReaderProviderProps = ProviderContextType & {
   /**
-   * Creates the reader. The provider writes the settings it manages into it,
-   * mounts it in the element of its `ReactReader`, and destroys it when the
-   * provider unmounts, when `createReader` changes, or when `ReactReader`
-   * unmounts. Memoize it: a new function creates a new reader. Return a new
-   * reader on each call: a `ReactReader` rendered again gets a new one. Leave
-   * it `undefined` until a reader can be created.
+   * Creates the reader. The provider writes the settings it manages into the
+   * reader and mounts it in the element of its `ReactReader`. It destroys the
+   * reader when the provider unmounts, when `createReader` changes, or when
+   * the `ReactReader` unmounts while it shows. Memoize it: a new function
+   * creates a new reader. Return a new reader on each call: the provider
+   * calls it again for the next `ReactReader`. Pass `undefined` until you can
+   * create the reader.
    */
   createReader: (() => ReactReaderReader) | undefined
   children?: ReactNode
@@ -29,8 +30,8 @@ export type ReactReaderProviderProps = ProviderContextType & {
 /**
  * Holds the reader and the settings react-reader manages, and renders nothing
  * itself. Render it above `ReactReader`, the view, and above whatever hides
- * the view: the reader lives as long as the provider and the element of its
- * view.
+ * the view. Hiding the provider, in an `<Activity>` for example, destroys the
+ * reader. Hiding `ReactReader` keeps it.
  */
 export function ReactReaderProvider({
   createReader,

@@ -51,28 +51,28 @@ const MyAppReader = ({ manifest }: { manifest: Manifest | undefined }) => {
 }
 ```
 
-`ReactReaderProvider` creates the reader with `createReader` once `ReactReader` renders, writes the [settings](#settings) it manages into it, and mounts it in the element of `ReactReader`. It destroys the reader when it unmounts, or when `createReader` changes.
+`ReactReaderProvider` creates the reader with `createReader` once `ReactReader` mounts, writes the [settings](#settings) it manages into it, and mounts it in the element of `ReactReader`. It destroys the reader when it unmounts, or when `createReader` changes.
 
 - Memoize `createReader`: a new function creates a new reader, so an inline one creates a reader on every render.
-- Return a new reader on each call: a `ReactReader` rendered again gets a new reader.
-- Leave it `undefined` until you can create the reader, while the manifest loads for example.
+- Return a new reader on each call: the provider calls it again for the next `ReactReader`.
+- Pass `undefined` until you can create the reader, while the manifest loads for example.
 
-Children of `ReactReader` render after the element of the reader: position them absolutely, as a loading screen would be, to show them over the book.
+Children of `ReactReader` render after the element the book shows in. To show one over the book, such as a loading screen, position it absolutely.
 
 ### Lifecycle
 
-- Render `ReactReaderProvider` above anything that hides the view, such as an `<Activity>` or a tab, and `ReactReader` inside it. Hiding `ReactReader` keeps the reader and its reading position: its element stays in the document. The settings your app changes meanwhile reach the reader.
+- Render `ReactReaderProvider` above anything that hides the view, such as an `<Activity>` or a tab, and `ReactReader` inside it. Hiding `ReactReader` keeps the reader, since its element stays in the document, and the settings your app changes meanwhile reach the reader. Hiding the provider destroys the reader, and showing it again creates a new one.
 - When `ReactReader` unmounts, the provider destroys the reader. The next `ReactReader` gets a new reader in its own element, since a reader cannot move to another element.
-- A `ReactReader` that unmounts while an `<Activity>` hides it cannot tell the provider: the reader stays until `createReader` changes, another `ReactReader` renders, or the provider unmounts.
+- A `ReactReader` that unmounts while an `<Activity>` hides it cannot tell the provider: the reader stays until `createReader` changes, another `ReactReader` mounts, or the provider unmounts.
 - Render one `ReactReader` under a provider. A second one throws.
 
 :::caution
-While its element is hidden, the reader lays the book out in an area of zero size. Until the element shows again, `reader.pagination` reports the first page, and the pointer events the browser sends as the reader hides throw errors. Showing the element lays the book out again at the reading position.
+With the default `layoutAutoResize`, the reader lays the book out again when its element changes size, and a hidden element has a size of zero. While the element is hidden, `reader.pagination` reports the first page, and the pointer events the browser sends as the element hides make core throw a `TypeError`. [#684](https://github.com/mbret/prose-reader/issues/684) tracks the fix.
 :::
 
 ### Using the reader
 
-`useReader()` gives the reader to any component under `ReactReaderProvider`, the children of `ReactReader` among them, once the provider mounted it. It is `undefined` before, and once the provider destroyed it:
+`useReader()` gives the reader to any component under `ReactReaderProvider`, such as the children of `ReactReader`, after the provider mounts it. It is `undefined` before that, and after the provider destroys it:
 
 ```tsx
 import { useReader } from "@prose-reader/react-reader"
@@ -93,7 +93,7 @@ declare module "@prose-reader/react-reader" {
 }
 ```
 
-The package exports this type as `ReactReaderReader`.
+The declared reader needs the gestures enhancer: without it, `useReader()` ignores the declaration. The package exports the resolved type as `ReactReaderReader`.
 
 ## Settings
 
@@ -129,9 +129,9 @@ const [settings, setSettings] = useState<ReactReaderSettings>(savedSettings)
 
 `onSettingsChange(changes, from)` receives only the settings that changed. `from` is the scope the user chose the value for, or `"internal"` for a value set on the reader directly, with `reader.settings.update()`.
 
-A setting you give no value keeps react-reader's own, for as long as the provider renders. It starts from the value the first reader was created with, which is not a change and is not reported, and every reader created after it gets it. To give each book its own value, pass it in `settings`. A change in the menus, or one made on the reader directly, still reaches `onSettingsChange`.
+A setting you give no value keeps react-reader's own value while the provider is mounted. That value starts as the one the first reader was created with, which is not a change and is not reported. Every reader created after the first gets it. To give each book its own value, pass it in `settings`. A change in the menus, or one made on the reader directly, still reaches `onSettingsChange`.
 
-The provider writes the values in effect into the reader before it mounts it, so its first layout uses them, and keeps the reader on them without creating it again.
+The provider writes these settings into the reader before it mounts the reader, so the first layout uses them. It then keeps the reader on them without creating a new reader.
 
 The theme can follow your app's light or dark mode until the user picks one. Give the theme for that mode while `settings.theme` is undefined:
 

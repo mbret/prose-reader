@@ -38,8 +38,8 @@ export function ReaderContextProvider({
     isShallowEqual,
   )
 
-  // A layout effect, so the passive effects of the same commit, the reader's
-  // creation among them, read the props it copies.
+  // A layout effect runs before the passive effects of its commit, so the
+  // reader's creation reads the props it copies.
   useLayoutEffect(
     function copyPropsIntoContext() {
       context.update((old) => ({ ...old, ...providerProps }))
