@@ -8,6 +8,7 @@ import {
   type UserConfig,
 } from "vite"
 import dts, { type PluginOptions as DtsOptions } from "vite-plugin-dts"
+import { TEST_FILES } from "./testFiles.mjs"
 
 type Entry = string | Record<string, string>
 
@@ -42,13 +43,6 @@ interface LibConfigOptions {
 }
 
 /**
- * Test files are type-checked with the package but are not part of it. The
- * runtime bundle only carries what the entry reaches; the declarations must
- * not carry more.
- */
-const TEST_FILES = ["src/**/*.test.ts", "src/**/*.test.tsx", "src/tests/**/*"]
-
-/**
  * The declaration build every package shares. Options merge over the
  * defaults, so a package adds `staticImport` or a `tsconfigPath` without
  * restating what is excluded.
@@ -63,6 +57,8 @@ export const dtsPlugin = (options: DtsOptions = {}) =>
   dts({
     entryRoot: "src",
     include: ["src/**/*"],
+    // The runtime bundle only carries what the entry reaches; the declarations
+    // must not carry more.
     exclude: TEST_FILES,
     afterDiagnostic: (diagnostics) => {
       const errors = diagnostics.filter(

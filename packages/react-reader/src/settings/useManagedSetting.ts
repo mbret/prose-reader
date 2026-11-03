@@ -5,7 +5,7 @@ import {
 } from "../context/useReaderContext"
 import {
   getAppSettingValueInEffect,
-  getAppSettingValueWhenScopeInEffect,
+  getManagedSettingValueWhenScopeInEffect,
   getSettingScopeReferenceInEffect,
 } from "./appSettingValues"
 import type {
@@ -39,8 +39,7 @@ export const useManagedSetting = <Name extends ManagedSettingName>(
 
   /** What a scope's tab shows: the value the setting takes with that scope. */
   const getValueForScope = (scope: ReactReaderSettingsScopeReference) =>
-    getAppSettingValueWhenScopeInEffect(appSettingValues, name, scope) ??
-    appSettingValues.uncontrolledSettings[name]
+    getManagedSettingValueWhenScopeInEffect(appSettingValues, name, scope)
 
   const changeValueForScope = useCallback(
     function changeValueForScope(
