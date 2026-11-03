@@ -1,14 +1,12 @@
 import { Box, type BoxProps, Presence } from "@chakra-ui/react"
-import { isShallowEqual } from "@prose-reader/shared"
 import {
   type ComponentProps,
   memo,
   type ReactNode,
   useCallback,
-  useLayoutEffect,
+  useMemo,
   useState,
 } from "react"
-import { useMemoCompare } from "reactjrx"
 import { AnnotateControls } from "./annotations/AnnotateControls"
 import { AnnotationDrawer } from "./annotations/AnnotationDrawer"
 import { AnnotationsDialog } from "./annotations/AnnotationsDialog"
@@ -17,15 +15,12 @@ import { useBookmarkOnCornerTap } from "./annotations/bookmarks/useBookmarkOnCor
 import { usePreventInteractionOnSelection } from "./annotations/usePreventInteractionOnSelection"
 import { Spine } from "./common/Spine"
 import { Toaster } from "./components/ui/toaster"
-import type {
-  EveryKeyOf,
-  ViewContextType,
-  ViewStateContextType,
-} from "./context/context"
 import {
-  useReaderContext,
-  useReaderContextValue,
-} from "./context/useReaderContext"
+  ReaderViewContext,
+  type ReaderViewContextType,
+  type ReaderViewProps,
+  useReaderViewContext,
+} from "./context/ReaderViewContext"
 import { FontSizeControlsDialog } from "./fonts/FontSizeControlsDialog"
 import { GalleryDialog } from "./gallery/GalleryDialog"
 import { HelpDialog } from "./help/HelpDialog"
@@ -70,10 +65,7 @@ const InnerReactReader = memo(
   }: {
     children: React.ReactNode
   } & BoxProps) => {
-    const { enableFloatingTime, onItemClick } = useReaderContextValue([
-      "enableFloatingTime",
-      "onItemClick",
-    ])
+    const { enableFloatingTime, onItemClick } = useReaderViewContext()
     const [isTableOfContentsOpen, setIsTableOfContentsOpen] = useState(false)
     const [isHelpOpen, setIsHelpOpen] = useState(false)
     const [isSearchOpen, setIsSearchOpen] = useState(false)
@@ -178,7 +170,7 @@ const InnerReactReader = memo(
   },
 )
 
-export type ReactReaderProps = ViewContextType & {
+export type ReactReaderProps = ReaderViewProps & {
   /**
    * Renders after the element of the reader. Position it absolutely to show
    * it over the book.
@@ -204,41 +196,42 @@ export const ReactReader = memo(function ReactReader({
   quickMenuOpen,
   onQuickMenuOpenChange,
 }: ReactReaderProps) {
-  const context = useReaderContext()
-  const [isQuickMenuOpen, setIsQuickMenuOpen] = useState(false)
-  const [isFontSizeMenuOpen, setIsFontSizeMenuOpen] = useState(false)
-  const [isRefitMenuOpen, setIsRefitMenuOpen] = useState(false)
-  const viewProps = useMemoCompare<
-    EveryKeyOf<ViewContextType> & ViewStateContextType
-  >(
-    {
+  const [isUncontrolledQuickMenuOpen, setIsUncontrolledQuickMenuOpen] =
+    useState(false)
+  const [fontSizeMenuOpen, onFontSizeMenuOpenChange] = useState(false)
+  const [refitMenuOpen, onRefitMenuOpenChange] = useState(false)
+  const readerView = useMemo(
+    (): ReaderViewContextType => ({
+      enableFloatingTime,
+      enableFloatingProgress,
+      onItemClick,
+      quickMenuOpen: quickMenuOpen ?? isUncontrolledQuickMenuOpen,
+      onQuickMenuOpenChange:
+        onQuickMenuOpenChange ?? setIsUncontrolledQuickMenuOpen,
+      fontSizeMenuOpen,
+      onFontSizeMenuOpenChange,
+      refitMenuOpen,
+      onRefitMenuOpenChange,
+    }),
+    [
       enableFloatingTime,
       enableFloatingProgress,
       onItemClick,
       quickMenuOpen,
+      isUncontrolledQuickMenuOpen,
       onQuickMenuOpenChange,
-      _quickMenuOpen: isQuickMenuOpen,
-      _onQuickMenuOpenChange: setIsQuickMenuOpen,
-      fontSizeMenuOpen: isFontSizeMenuOpen,
-      onFontSizeMenuOpenChange: setIsFontSizeMenuOpen,
-      refitMenuOpen: isRefitMenuOpen,
-      onRefitMenuOpenChange: setIsRefitMenuOpen,
-    },
-    isShallowEqual,
+      fontSizeMenuOpen,
+      refitMenuOpen,
+    ],
   )
   const { container: { props: containerProps = {} } = {} } = slots ?? {}
 
-  useLayoutEffect(
-    function copyPropsIntoContext() {
-      context.update((old) => ({ ...old, ...viewProps }))
-    },
-    [context, viewProps],
-  )
-
   return (
-    <InnerReactReader {...containerProps}>
-      <ReaderElement />
-      {children}
-    </InnerReactReader>
+    <ReaderViewContext.Provider value={readerView}>
+      <InnerReactReader {...containerProps}>
+        <ReaderElement />
+        {children}
+      </InnerReactReader>
+    </ReaderViewContext.Provider>
   )
 })

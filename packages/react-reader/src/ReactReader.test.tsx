@@ -16,6 +16,7 @@ import {
   vi,
 } from "vitest"
 import { MAX_ZOOM_SCALE } from "./constants"
+import { useReaderViewContext } from "./context/ReaderViewContext"
 import { useReader } from "./context/useReader"
 import { ReactReader } from "./ReactReader"
 import { ReactReaderProvider } from "./ReactReaderProvider"
@@ -556,6 +557,89 @@ describe(`ReactReaderProvider and ReactReader`, () => {
       destroyedOnceUnmounted: [`firstReader`],
       creations: 2,
       isNextReaderElementInReactReader: true,
+    })
+  })
+
+  it(`opens a ReactReader that mounts again with its menus closed, and keeps them while an Activity hides it`, async () => {
+    const { createOnePageReader } = createReaderFactory()
+    const onMenusRendered =
+      vi.fn<
+        (menus: { quickMenuOpen: boolean; fontSizeMenuOpen: boolean }) => void
+      >()
+
+    function MenusUser() {
+      const { quickMenuOpen, fontSizeMenuOpen, onFontSizeMenuOpenChange } =
+        useReaderViewContext()
+
+      onMenusRendered({ quickMenuOpen, fontSizeMenuOpen })
+
+      return (
+        <button
+          type="button"
+          data-open-font-size-menu
+          onClick={function openFontSizeMenu() {
+            onFontSizeMenuOpenChange(true)
+          }}
+        />
+      )
+    }
+
+    const renderReactReader = (reactReader: ReactNode) =>
+      render(
+        <ReactReaderProvider createReader={createOnePageReader}>
+          {reactReader}
+        </ReactReaderProvider>,
+      )
+    const getLastMenus = () => onMenusRendered.mock.lastCall?.[0]
+
+    await renderReactReader(
+      <Activity mode="visible">
+        <ReactReader key="first">
+          <MenusUser />
+        </ReactReader>
+      </Activity>,
+    )
+    await act(async () => {
+      container
+        .querySelector<HTMLButtonElement>(`[data-open-font-size-menu]`)
+        ?.click()
+    })
+    const menusOnceOpened = getLastMenus()
+    await renderReactReader(
+      <Activity mode="hidden">
+        <ReactReader key="first">
+          <MenusUser />
+        </ReactReader>
+      </Activity>,
+    )
+    await renderReactReader(
+      <Activity mode="visible">
+        <ReactReader key="first">
+          <MenusUser />
+        </ReactReader>
+      </Activity>,
+    )
+    const menusOnceShownAgain = getLastMenus()
+    onMenusRendered.mockClear()
+    await renderReactReader(
+      <ReactReader key="next">
+        <MenusUser />
+      </ReactReader>,
+    )
+    const [menusOnFirstRenderOfTheNextReactReader] =
+      onMenusRendered.mock.calls[0] ?? []
+
+    expect({
+      menusOnceOpened,
+      menusOnceShownAgain,
+      menusOnFirstRenderOfTheNextReactReader,
+    }).toEqual({
+      menusOnceOpened: { quickMenuOpen: false, fontSizeMenuOpen: true },
+      menusOnceShownAgain: { quickMenuOpen: false, fontSizeMenuOpen: true },
+      menusOnFirstRenderOfTheNextReactReader: {
+        quickMenuOpen: false,
+        fontSizeMenuOpen: false,
+      },
     })
   })
 

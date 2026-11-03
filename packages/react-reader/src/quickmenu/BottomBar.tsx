@@ -26,7 +26,10 @@ import { useObserve } from "reactjrx"
 import { map } from "rxjs"
 import { AudioControlsSection } from "../audio/AudioControlsSection"
 import { useHasVisibleAudioTracks } from "../audio/useHasVisibleAudioTracks"
-import type { ViewContextType } from "../context/context"
+import {
+  type ReaderViewProps,
+  useReaderViewContext,
+} from "../context/ReaderViewContext"
 import {
   hasAnnotationsEnhancer,
   hasGalleryEnhancer,
@@ -45,19 +48,15 @@ export const BottomBar = memo(
     onItemClick,
   }: {
     open: boolean
-    onItemClick: NonNullable<ViewContextType["onItemClick"]>
+    onItemClick: NonNullable<ReaderViewProps["onItemClick"]>
   }) => {
     const boxRef = useRef<HTMLDivElement>(null)
     const reader = useReader()
-    const {
-      quickMenuBottomBarBoundingBoxSignal,
-      onFontSizeMenuOpenChange,
-      onRefitMenuOpenChange,
-    } = useReaderContextValue([
+    const { quickMenuBottomBarBoundingBoxSignal } = useReaderContextValue([
       "quickMenuBottomBarBoundingBoxSignal",
-      "onFontSizeMenuOpenChange",
-      "onRefitMenuOpenChange",
     ])
+    const { onFontSizeMenuOpenChange, onRefitMenuOpenChange } =
+      useReaderViewContext()
     const { data: navigation } = useObserve(
       () => reader?.navigation.state$,
       [reader],

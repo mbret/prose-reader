@@ -1,20 +1,7 @@
-import { useReaderContextValue } from "../context/useReaderContext"
+import { useReaderViewContext } from "../context/ReaderViewContext"
 
 export const useQuickMenu = () => {
-  const {
-    quickMenuOpen,
-    onQuickMenuOpenChange,
-    _quickMenuOpen,
-    _onQuickMenuOpenChange,
-  } = useReaderContextValue([
-    "quickMenuOpen",
-    "onQuickMenuOpenChange",
-    "_quickMenuOpen",
-    "_onQuickMenuOpenChange",
-  ])
+  const { quickMenuOpen, onQuickMenuOpenChange } = useReaderViewContext()
 
-  return [
-    quickMenuOpen ?? _quickMenuOpen,
-    onQuickMenuOpenChange ?? _onQuickMenuOpenChange,
-  ] as const
+  return [quickMenuOpen, onQuickMenuOpenChange] as const
 }
