@@ -10,6 +10,9 @@ const targetDir = path.join(packageDir, "src")
 // stay optional at runtime just like the other enhancer packages.
 const enhancerPackagePattern = /^@prose-reader\/(enhancer-|cbz(\/|$))/
 
+const isShippedSourceFile = (fileName) =>
+  /\.(ts|tsx)$/.test(fileName) && !/\.test\.(ts|tsx)$/.test(fileName)
+
 const collectSourceFiles = async (directory) => {
   const entries = await readdir(directory, {
     withFileTypes: true,
@@ -24,7 +27,7 @@ const collectSourceFiles = async (directory) => {
 
       if (!entry.isFile()) return []
 
-      return /\.(ts|tsx)$/.test(entry.name) ? [entryPath] : []
+      return isShippedSourceFile(entry.name) ? [entryPath] : []
     }),
   )
 
