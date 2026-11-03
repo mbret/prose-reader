@@ -107,8 +107,7 @@ describe(`ReactReaderProvider and ReactReader`, () => {
   const render = (element: ReactNode) =>
     renderRoot(<ChakraProvider value={defaultSystem}>{element}</ChakraProvider>)
 
-  /** Renders in a root of its own, and gives the message of what it throws. */
-  const renderUntilItThrows = async (element: ReactNode) => {
+  const renderAndGetThrownMessage = async (element: ReactNode) => {
     const throwingContainer = document.createElement(`div`)
     document.body.appendChild(throwingContainer)
     const throwingRoot = createRoot(throwingContainer)
@@ -465,6 +464,44 @@ describe(`ReactReaderProvider and ReactReader`, () => {
     })
   })
 
+  it(`destroys the reader while an Activity hides the provider, and creates a new one in the same element when it shows again`, async () => {
+    const { createOnePageReader, onDestroyed, getCreatedReaders } =
+      createReaderFactory()
+    const renderInActivity = (mode: `visible` | `hidden`) =>
+      render(
+        <Activity mode={mode}>
+          <ReactReaderProvider createReader={createOnePageReader}>
+            <ReactReader />
+          </ReactReaderProvider>
+        </Activity>,
+      )
+
+    await renderInActivity(`visible`)
+    await renderInActivity(`hidden`)
+    const [hiddenReader] = getCreatedReaders()
+    const destroyedWhileHidden = nameReaders(onDestroyed.mock.calls, {
+      hiddenReader,
+    })
+    await renderInActivity(`visible`)
+    const [, shownReader] = getCreatedReaders()
+
+    expect({
+      destroyedWhileHidden,
+      creations: createOnePageReader.mock.calls.length,
+      isShownReaderInTheSameElement:
+        shownReader?.context.value.rootElement ===
+        hiddenReader?.context.value.rootElement,
+      isShownReaderElementInReactReader: isElementInReactReader(
+        shownReader?.context.value.rootElement,
+      ),
+    }).toEqual({
+      destroyedWhileHidden: [`hiddenReader`],
+      creations: 2,
+      isShownReaderInTheSameElement: true,
+      isShownReaderElementInReactReader: true,
+    })
+  })
+
   it(`keeps one reader when strict mode runs the effects twice, also as an Activity shows ReactReader again`, async () => {
     const { createOnePageReader, onDestroyed } = createReaderFactory()
     const renderInActivity = (mode: `visible` | `hidden`) =>
@@ -540,7 +577,7 @@ describe(`ReactReaderProvider and ReactReader`, () => {
   it(`throws when a second ReactReader renders under the same provider`, async () => {
     const { createOnePageReader } = createReaderFactory()
 
-    const error = await renderUntilItThrows(
+    const error = await renderAndGetThrownMessage(
       <ReactReaderProvider createReader={createOnePageReader}>
         <ReactReader />
         <ReactReader />
@@ -557,7 +594,7 @@ describe(`ReactReaderProvider and ReactReader`, () => {
       return null
     }
 
-    const error = await renderUntilItThrows(<ReaderUser />)
+    const error = await renderAndGetThrownMessage(<ReaderUser />)
 
     expect(error).toBe(
       `ReactReader and useReader need a ReactReaderProvider above them`,
