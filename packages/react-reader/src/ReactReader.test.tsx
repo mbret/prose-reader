@@ -15,6 +15,7 @@ import {
   onTestFinished,
   vi,
 } from "vitest"
+import { useReader } from "./context/useReader"
 import { ReactReader } from "./ReactReader"
 import type { ReactReaderSettings } from "./settings/managedSettings"
 import { setWindowWidth } from "./tests/setWindowWidth"
@@ -75,6 +76,19 @@ const createReaderFactory = (creationSettings: ReactReaderSettings = {}) => {
 
   return { createOnePageReader, onMounted, onDestroyed, getCreatedReaders }
 }
+
+const nameReaders = (
+  calls: unknown[][],
+  readers: Record<string, AppReader | undefined>,
+) =>
+  calls.map(function nameReader([reader]) {
+    if (reader === undefined) return undefined
+
+    const [name = `an unknown reader`] =
+      Object.entries(readers).find(([, known]) => known === reader) ?? []
+
+    return name
+  })
 
 const DEFAULT_WINDOW_WIDTH = window.innerWidth
 
@@ -216,12 +230,12 @@ describe(`ReactReader`, () => {
     const [, readerGoneAt] = onReaderChange.mock.invocationCallOrder
 
     expect({
-      readerChanges: onReaderChange.mock.calls,
-      destroyed: onDestroyed.mock.calls,
+      readerChanges: nameReaders(onReaderChange.mock.calls, { reader }),
+      destroyed: nameReaders(onDestroyed.mock.calls, { reader }),
       isDestroyedBeforeReported: Number(destroyedAt) < Number(readerGoneAt),
     }).toEqual({
-      readerChanges: [[reader], [undefined]],
-      destroyed: [[reader]],
+      readerChanges: [`reader`, undefined],
+      destroyed: [`reader`],
       isDestroyedBeforeReported: true,
     })
   })
@@ -257,7 +271,10 @@ describe(`ReactReader`, () => {
       secondBook.createOnePageReader.mock.invocationCallOrder
 
     expect({
-      readerChanges: onReaderChange.mock.calls,
+      readerChanges: nameReaders(onReaderChange.mock.calls, {
+        firstReader,
+        secondReader,
+      }),
       secondBookSettingsWhenMounted: secondBook.onMounted.mock.calls,
       isFirstDestroyedBeforeSecondCreated:
         Number(firstDestroyedAt) < Number(secondCreatedAt),
@@ -265,7 +282,7 @@ describe(`ReactReader`, () => {
         secondReader?.context.value.rootElement,
       ),
     }).toEqual({
-      readerChanges: [[firstReader], [undefined], [secondReader]],
+      readerChanges: [`firstReader`, undefined, `secondReader`],
       secondBookSettingsWhenMounted: [[secondBookSettings]],
       isFirstDestroyedBeforeSecondCreated: true,
       isSecondElementInReactReader: true,
@@ -306,7 +323,7 @@ describe(`ReactReader`, () => {
 
     expect({
       creations: createOnePageReader.mock.calls.length,
-      destroyed: onDestroyed.mock.calls,
+      destroyed: nameReaders(onDestroyed.mock.calls, {}),
     }).toEqual({ creations: 1, destroyed: [] })
   })
 
@@ -321,7 +338,7 @@ describe(`ReactReader`, () => {
 
     expect({
       creations: createOnePageReader.mock.calls.length,
-      destroyed: onDestroyed.mock.calls,
+      destroyed: nameReaders(onDestroyed.mock.calls, {}),
     }).toEqual({ creations: 1, destroyed: [] })
   })
 
@@ -340,13 +357,16 @@ describe(`ReactReader`, () => {
 
     expect({
       creations: createOnePageReader.mock.calls.length,
-      destroyed: onDestroyed.mock.calls,
+      destroyed: nameReaders(onDestroyed.mock.calls, {
+        strictModeReader,
+        liveReader,
+      }),
       isLiveReaderElementInReactReader: isElementInReactReader(
         liveReader?.context.value.rootElement,
       ),
     }).toEqual({
       creations: 2,
-      destroyed: [[strictModeReader]],
+      destroyed: [`strictModeReader`],
       isLiveReaderElementInReactReader: true,
     })
   })
@@ -367,13 +387,56 @@ describe(`ReactReader`, () => {
     const [hiddenReader, shownReader] = getCreatedReaders()
 
     expect({
-      destroyed: onDestroyed.mock.calls,
+      destroyed: nameReaders(onDestroyed.mock.calls, {
+        hiddenReader,
+        shownReader,
+      }),
       isShownReaderElementInReactReader: isElementInReactReader(
         shownReader?.context.value.rootElement,
       ),
     }).toEqual({
-      destroyed: [[hiddenReader]],
+      destroyed: [`hiddenReader`],
       isShownReaderElementInReactReader: true,
+    })
+  })
+
+  it(`destroys the reader and stops using it when createReader goes back to undefined`, async () => {
+    const { createOnePageReader, onDestroyed, getCreatedReaders } =
+      createReaderFactory()
+    const onReaderChange = vi.fn()
+    const onReaderRendered = vi.fn()
+
+    function ReaderUser() {
+      onReaderRendered(useReader())
+
+      return null
+    }
+
+    await render(
+      <ReactReader
+        createReader={createOnePageReader}
+        onReaderChange={onReaderChange}
+      >
+        <ReaderUser />
+      </ReactReader>,
+    )
+    await render(
+      <ReactReader onReaderChange={onReaderChange}>
+        <ReaderUser />
+      </ReactReader>,
+    )
+    const [reader] = getCreatedReaders()
+
+    expect({
+      readerChanges: nameReaders(onReaderChange.mock.calls, { reader }),
+      destroyed: nameReaders(onDestroyed.mock.calls, { reader }),
+      readerLastRendered: nameReaders(onReaderRendered.mock.calls, {
+        reader,
+      }).at(-1),
+    }).toEqual({
+      readerChanges: [`reader`, undefined],
+      destroyed: [`reader`],
+      readerLastRendered: undefined,
     })
   })
 
