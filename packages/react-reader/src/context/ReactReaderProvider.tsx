@@ -1,5 +1,5 @@
 import { isShallowEqual } from "@prose-reader/shared"
-import { type ComponentProps, memo, useEffect } from "react"
+import { memo, type ReactNode, useEffect } from "react"
 import { signal, useConstant, useMemoCompare } from "reactjrx"
 import {
   getDefaultValue,
@@ -7,31 +7,39 @@ import {
   ReaderContext,
 } from "./context"
 
-const SignalProvider = ({
+export const ReactReaderProvider = memo(function ReactReaderProvider({
   children,
   ...props
 }: {
-  children: React.ReactNode
-} & PublicContextType) => {
+  children: ReactNode
+} & PublicContextType) {
   const valueSignal = useConstant(() => signal({ default: getDefaultValue() }))
   const memoizedProps = useMemoCompare(props, isShallowEqual)
 
-  useEffect(() => {
-    valueSignal.update((old) => ({
-      ...old,
-      ...memoizedProps,
-    }))
-  }, [memoizedProps, valueSignal])
+  useEffect(
+    function replacePropsInContext() {
+      // A prop the app stops passing must not keep its last value.
+      valueSignal.update(
+        ({
+          uncontrolledSettings,
+          notificationsSubject,
+          quickMenuBottomBarBoundingBoxSignal,
+          selectedHighlight,
+        }) => ({
+          uncontrolledSettings,
+          notificationsSubject,
+          quickMenuBottomBarBoundingBoxSignal,
+          selectedHighlight,
+          ...memoizedProps,
+        }),
+      )
+    },
+    [memoizedProps, valueSignal],
+  )
 
   return (
     <ReaderContext.Provider value={valueSignal}>
       {children}
     </ReaderContext.Provider>
   )
-}
-
-export const ReactReaderProvider = memo(
-  ({ children, ...props }: ComponentProps<typeof SignalProvider>) => {
-    return <SignalProvider {...props}>{children}</SignalProvider>
-  },
-)
+})
