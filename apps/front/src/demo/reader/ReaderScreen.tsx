@@ -46,8 +46,7 @@ const ReaderScreenView = memo(function ReaderScreenView({
 
   useEffect(
     function exposeReaderForDebugging() {
-      // @ts-expect-error
-      window.reader = reader
+      Reflect.set(window, "reader", reader)
     },
     [reader],
   )
