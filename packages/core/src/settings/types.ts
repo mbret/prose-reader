@@ -57,7 +57,8 @@ export type CoreInputSettings = {
    * origin, `getResource` gives a `URL` or nothing for it, and the item is not one the reader wraps
    * in an html page (a JPEG, PNG, WebP or AVIF image, or a plain text file). The frame's `src` is
    * then that url, so the document and the requests it makes go through the network and any service
-   * worker.
+   * worker. The page counts as loaded once its frame fires `load` and its images, lazy ones included,
+   * have loaded or failed, or have reported neither for 5 seconds.
    *
    * Anything else is fetched and built into a page by the reader, which the frame loads from a blob
    * url. A relative reference in such a page reaches neither the network nor a service worker. The
