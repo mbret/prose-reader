@@ -198,8 +198,8 @@ export const ReactReader = memo(function ReactReader({
 }: ReactReaderProps) {
   const [isUncontrolledQuickMenuOpen, setIsUncontrolledQuickMenuOpen] =
     useState(false)
-  const [fontSizeMenuOpen, onFontSizeMenuOpenChange] = useState(false)
-  const [refitMenuOpen, onRefitMenuOpenChange] = useState(false)
+  const [isFontSizeMenuOpen, setIsFontSizeMenuOpen] = useState(false)
+  const [isRefitMenuOpen, setIsRefitMenuOpen] = useState(false)
   const readerView = useMemo(
     (): ReaderViewContextType => ({
       enableFloatingTime,
@@ -208,10 +208,10 @@ export const ReactReader = memo(function ReactReader({
       quickMenuOpen: quickMenuOpen ?? isUncontrolledQuickMenuOpen,
       onQuickMenuOpenChange:
         onQuickMenuOpenChange ?? setIsUncontrolledQuickMenuOpen,
-      fontSizeMenuOpen,
-      onFontSizeMenuOpenChange,
-      refitMenuOpen,
-      onRefitMenuOpenChange,
+      fontSizeMenuOpen: isFontSizeMenuOpen,
+      onFontSizeMenuOpenChange: setIsFontSizeMenuOpen,
+      refitMenuOpen: isRefitMenuOpen,
+      onRefitMenuOpenChange: setIsRefitMenuOpen,
     }),
     [
       enableFloatingTime,
@@ -220,8 +220,8 @@ export const ReactReader = memo(function ReactReader({
       quickMenuOpen,
       isUncontrolledQuickMenuOpen,
       onQuickMenuOpenChange,
-      fontSizeMenuOpen,
-      refitMenuOpen,
+      isFontSizeMenuOpen,
+      isRefitMenuOpen,
     ],
   )
   const { container: { props: containerProps = {} } = {} } = slots ?? {}
