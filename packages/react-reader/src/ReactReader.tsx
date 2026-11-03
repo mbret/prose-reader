@@ -1,5 +1,11 @@
 import { Box, type BoxProps, Presence } from "@chakra-ui/react"
-import { type ComponentProps, memo, useCallback, useState } from "react"
+import {
+  type ComponentProps,
+  memo,
+  type ReactNode,
+  useCallback,
+  useState,
+} from "react"
 import { AnnotateControls } from "./annotations/AnnotateControls"
 import { AnnotationDrawer } from "./annotations/AnnotationDrawer"
 import { AnnotationsDialog } from "./annotations/AnnotationsDialog"
@@ -9,13 +15,13 @@ import { usePreventInteractionOnSelection } from "./annotations/usePreventIntera
 import { useSyncAnnotationsWithReader } from "./annotations/useSyncAnnotationsWithReader"
 import { Spine } from "./common/Spine"
 import { Toaster } from "./components/ui/toaster"
+import type { PublicContextType } from "./context/context"
 import { ReactReaderProvider } from "./context/ReactReaderProvider"
 import { useReaderContextValue } from "./context/useReaderContext"
 import { FontSizeControlsDialog } from "./fonts/FontSizeControlsDialog"
 import { GalleryDialog } from "./gallery/GalleryDialog"
 import { HelpDialog } from "./help/HelpDialog"
 import { LayoutDialog } from "./layout/LayoutDialog"
-import { MountReaderWithManagedSettings } from "./MountReaderWithManagedSettings"
 import { FloatingProgress } from "./navigation/FloatingProgress"
 import { FloatingTime } from "./navigation/FloatingTime"
 import { SpreadRotationHint } from "./navigation/SpreadRotationHint"
@@ -24,6 +30,7 @@ import { useNotifications } from "./notifications/useNotifications"
 import { QuickMenu } from "./quickmenu/QuickMenu"
 import { useQuickMenu } from "./quickmenu/useQuickMenu"
 import { useQuickMenuToggleGesture } from "./quickmenu/useQuickMenuToggleGesture"
+import { ReaderMountPoint } from "./ReaderMountPoint"
 import { RefitDialog } from "./refit/RefitDialog"
 import { SearchDialog } from "./search/SearchDialog"
 import { ThemeDialog } from "./theme/ThemeDialog"
@@ -56,7 +63,7 @@ const InnerReactReader = memo(
     children,
     ...rest
   }: {
-    children?: React.ReactNode
+    children: React.ReactNode
   } & BoxProps) => {
     const { enableFloatingTime, onItemClick } = useReaderContextValue([
       "enableFloatingTime",
@@ -118,7 +125,7 @@ const InnerReactReader = memo(
           data-prose-react-reader
           {...rest}
         >
-          <MountReaderWithManagedSettings />
+          <ReaderMountPoint />
           {children}
           <Spine>
             <BookmarkPageMarkers />
@@ -167,7 +174,8 @@ const InnerReactReader = memo(
   },
 )
 
-export type ReactReaderProps = ComponentProps<typeof ReactReaderProvider> & {
+export type ReactReaderProps = PublicContextType & {
+  children?: ReactNode
   slots?: {
     container?: {
       props?: Omit<ComponentProps<typeof InnerReactReader>, "children">
