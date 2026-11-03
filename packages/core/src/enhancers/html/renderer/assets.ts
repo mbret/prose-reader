@@ -245,6 +245,39 @@ const waitForSwappedAsset = ({
   return EMPTY
 }
 
+/**
+ * A lazy image away from the viewport would hold the load until the timeout,
+ * so it turns eager, before its reference is swapped if it is.
+ */
+const loadImageEagerly = ({
+  element,
+  view,
+}: {
+  element: Element
+  view: DocumentView
+}) => {
+  if (element instanceof view.HTMLImageElement && element.loading === "lazy") {
+    element.loading = "eager"
+  }
+}
+
+/**
+ * What the document's load waits for when an element keeps its reference, or
+ * has none the reader swaps, such as an image with a `srcset` and no `src`:
+ * an image still loading, such as a lazy one, which the frame's `load` does
+ * not wait for.
+ */
+const waitForUnswappedAsset = ({
+  element,
+  view,
+}: {
+  element: Element
+  view: DocumentView
+}): Observable<never> =>
+  element instanceof view.HTMLImageElement && !element.complete
+    ? waitForAssetLoad(element).pipe(ignoreElements())
+    : EMPTY
+
 /** Never errors: a failed asset is reported and the document loads without it. */
 const loadElementAsset = ({
   element,
@@ -258,24 +291,24 @@ const loadElementAsset = ({
   fetchAsset: FetchAsset
 }): Observable<never> => {
   const referenceAttribute = getAssetReferenceAttribute(element)
-
-  if (!referenceAttribute) return EMPTY
-
-  const reference = referenceAttribute.value
+  const reference =
+    referenceAttribute?.value ?? element.getAttribute(`srcset`) ?? ``
 
   return defer(() => {
-    const url = new URL(reference, documentUrl)
+    if (!referenceAttribute) {
+      loadImageEagerly({ element, view })
+
+      return waitForUnswappedAsset({ element, view })
+    }
+
+    const url = new URL(referenceAttribute.value, documentUrl)
 
     return fetchAsset(url).pipe(
+      defaultIfEmpty(undefined),
       switchMap((blob) => {
-        // A lazy image away from the viewport would hold the load until the
-        // timeout, so it turns eager before its reference is swapped.
-        if (
-          element instanceof view.HTMLImageElement &&
-          element.loading === "lazy"
-        ) {
-          element.loading = "eager"
-        }
+        loadImageEagerly({ element, view })
+
+        if (!blob) return waitForUnswappedAsset({ element, view })
 
         element.setAttributeNS(
           referenceAttribute.namespaceURI,
