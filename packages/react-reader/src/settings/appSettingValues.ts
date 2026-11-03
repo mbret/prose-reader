@@ -1,7 +1,9 @@
-import type { PublicContextType } from "../context/context"
-import type {
-  ManagedSettingName,
-  ManagedSettingValues,
+import type { PrivateContextType, PublicContextType } from "../context/context"
+import {
+  MANAGED_SETTING_NAMES,
+  type ManagedSettingName,
+  type ManagedSettingValues,
+  type ReactReaderSettings,
 } from "./managedSettings"
 import type {
   ReactReaderSettingsScopeReference,
@@ -60,3 +62,39 @@ export const getAppSettingValueInEffect = <Name extends ManagedSettingName>(
     name,
     getSettingScopeReferenceInEffect(appSettingValues, name, screen),
   )
+
+type ManagedSettingSources = AppSettingValues &
+  Pick<PrivateContextType, "uncontrolledSettings">
+
+/**
+ * The value a setting takes for this book, on this screen: the app's, or
+ * react-reader's own when the app gives none.
+ */
+export const getManagedSettingValueInEffect = <Name extends ManagedSettingName>(
+  sources: ManagedSettingSources,
+  name: Name,
+  screen: ScreenSettingsScopeReference,
+): ManagedSettingValues[Name] | undefined =>
+  getAppSettingValueInEffect(sources, name, screen) ??
+  sources.uncontrolledSettings[name]
+
+/**
+ * The values the settings react-reader manages take for this book, on this
+ * screen. A setting with no value is left out.
+ */
+export const getManagedSettingValuesInEffect = (
+  sources: ManagedSettingSources,
+  screen: ScreenSettingsScopeReference,
+): ReactReaderSettings => {
+  const valuesInEffect: ReactReaderSettings = {}
+
+  const addValueInEffect = <Name extends ManagedSettingName>(name: Name) => {
+    const valueInEffect = getManagedSettingValueInEffect(sources, name, screen)
+
+    if (valueInEffect !== undefined) valuesInEffect[name] = valueInEffect
+  }
+
+  MANAGED_SETTING_NAMES.forEach(addValueInEffect)
+
+  return valuesInEffect
+}
