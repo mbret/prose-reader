@@ -7,6 +7,7 @@ import {
 import type { Context } from "../context/Context"
 import type { ReaderSettingsManager } from "../settings/ReaderSettingsManager"
 import type { SpinePosition, UnboundSpinePosition } from "../spine/types"
+import { getRenderedScale } from "../utils/coordinates"
 import {
   removeStylePropertyIfPresent,
   setStylePropertyIfChanged,
@@ -179,18 +180,11 @@ export class Viewport extends ReactiveEntity<State> {
   }
 
   /** The scale the element is rendered at, given its rendered box. */
-  private getScaleOfRenderedBox(renderedBox: DOMRect | undefined) {
-    const layoutWidth = this.value.element.clientWidth
-
-    if (!layoutWidth) return 1
-
-    // Fall back to no-zoom (`1`) when the rendered rect is unavailable
-    // (detached element, `display: none`, jsdom). A 0-width rect would
-    // otherwise yield a 0 scale and propagate `Infinity` through every
-    // consumer that divides by `scaleFactor` (e.g. spine-coord clamping).
-    const measuredWidth = renderedBox?.width || layoutWidth
-
-    return measuredWidth / layoutWidth
+  private getScaleOfRenderedBox(renderedBox: DOMRect) {
+    return getRenderedScale({
+      renderedSize: renderedBox.width,
+      layoutSize: this.value.element.clientWidth,
+    })
   }
 
   /**
