@@ -41,9 +41,7 @@ export const getSettingScopeReferenceInEffect = (
  * The value the app gives a setting when a scope is in effect: the scope's, or
  * the global one when the scope has none.
  */
-export const getAppSettingValueWhenScopeInEffect = <
-  Name extends ManagedSettingName,
->(
+const getAppSettingValueWhenScopeInEffect = <Name extends ManagedSettingName>(
   appSettingValues: AppSettingValues,
   name: Name,
   scope: ReactReaderSettingsScopeReference,
