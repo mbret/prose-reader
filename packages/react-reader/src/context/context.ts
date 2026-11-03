@@ -17,7 +17,10 @@ import type {
   ReactReaderSettingsScopeReference,
 } from "../settings/types"
 
+export type ReactReaderReader = Reader & GesturesEnhancerAPI
+
 export type PrivateContextType = {
+  reader: ReactReaderReader | undefined
   /**
    * react-reader's own values for the settings the app gives no value, starting
    * from the reader's. This way the Reader works as intended but:
@@ -45,7 +48,6 @@ export type PrivateContextType = {
 }
 
 export type PublicContextType = {
-  reader: (Reader & GesturesEnhancerAPI) | undefined
   enableFloatingTime?: boolean
   enableFloatingProgress?: boolean
   onItemClick?: (

@@ -1,5 +1,11 @@
 import { Box, type BoxProps, Presence } from "@chakra-ui/react"
-import { type ComponentProps, memo, useCallback, useState } from "react"
+import {
+  type ComponentProps,
+  memo,
+  type ReactNode,
+  useCallback,
+  useState,
+} from "react"
 import { AnnotateControls } from "./annotations/AnnotateControls"
 import { AnnotationDrawer } from "./annotations/AnnotationDrawer"
 import { AnnotationsDialog } from "./annotations/AnnotationsDialog"
@@ -9,6 +15,7 @@ import { usePreventInteractionOnSelection } from "./annotations/usePreventIntera
 import { useSyncAnnotationsWithReader } from "./annotations/useSyncAnnotationsWithReader"
 import { Spine } from "./common/Spine"
 import { Toaster } from "./components/ui/toaster"
+import type { PublicContextType, ReactReaderReader } from "./context/context"
 import { ReactReaderProvider } from "./context/ReactReaderProvider"
 import { useReaderContextValue } from "./context/useReaderContext"
 import { FontSizeControlsDialog } from "./fonts/FontSizeControlsDialog"
@@ -23,6 +30,7 @@ import { useNotifications } from "./notifications/useNotifications"
 import { QuickMenu } from "./quickmenu/QuickMenu"
 import { useQuickMenu } from "./quickmenu/useQuickMenu"
 import { useQuickMenuToggleGesture } from "./quickmenu/useQuickMenuToggleGesture"
+import { ReaderMountPoint } from "./ReaderMountPoint"
 import { RefitDialog } from "./refit/RefitDialog"
 import { SearchDialog } from "./search/SearchDialog"
 import { SyncReaderWithManagedSettings } from "./settings/SyncReaderWithManagedSettings"
@@ -171,7 +179,20 @@ const InnerReactReader = memo(
   },
 )
 
-export type ReactReaderProps = ComponentProps<typeof ReactReaderProvider> & {
+export type ReactReaderProps<
+  TReader extends ReactReaderReader = ReactReaderReader,
+> = PublicContextType & {
+  /**
+   * Creates the reader. `ReactReader` writes the settings it manages into it,
+   * mounts it, and destroys it when it unmounts or when `createReader`
+   * changes, so a new function creates a new reader. Return a new reader on
+   * each call: it is called again when `ReactReader` shows after an
+   * `<Activity>` hid it. Leave it `undefined` until a reader can be created.
+   */
+  createReader?: () => TReader
+  /** The reader `ReactReader` created, then `undefined` once it destroyed it. */
+  onReaderChange?: (reader: TReader | undefined) => void
+  children?: ReactNode
   slots?: {
     container?: {
       props?: Omit<ComponentProps<typeof InnerReactReader>, "children">
@@ -179,14 +200,24 @@ export type ReactReaderProps = ComponentProps<typeof ReactReaderProvider> & {
   }
 }
 
-export const ReactReader = memo(
-  ({ children, slots, ...props }: ReactReaderProps) => {
-    const { container: { props: containerProps = {} } = {} } = slots ?? {}
+export function ReactReader<TReader extends ReactReaderReader>({
+  children,
+  slots,
+  createReader,
+  onReaderChange,
+  ...props
+}: ReactReaderProps<TReader>) {
+  const { container: { props: containerProps = {} } = {} } = slots ?? {}
 
-    return (
-      <ReactReaderProvider {...props}>
-        <InnerReactReader {...containerProps}>{children}</InnerReactReader>
-      </ReactReaderProvider>
-    )
-  },
-)
+  return (
+    <ReactReaderProvider {...props}>
+      <InnerReactReader {...containerProps}>
+        <ReaderMountPoint
+          createReader={createReader}
+          onReaderChange={onReaderChange}
+        />
+        {children}
+      </InnerReactReader>
+    </ReactReaderProvider>
+  )
+}

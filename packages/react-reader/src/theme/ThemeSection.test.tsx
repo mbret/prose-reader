@@ -34,7 +34,7 @@ describe(`ThemeSection`, () => {
     await act(async () => {
       root.render(
         <ChakraProvider value={defaultSystem}>
-          <ReactReaderProvider reader={undefined} {...props}>
+          <ReactReaderProvider {...props}>
             <ThemeSection />
           </ReactReaderProvider>
         </ChakraProvider>,
