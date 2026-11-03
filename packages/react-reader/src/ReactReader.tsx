@@ -15,6 +15,7 @@ import { FontSizeControlsDialog } from "./fonts/FontSizeControlsDialog"
 import { GalleryDialog } from "./gallery/GalleryDialog"
 import { HelpDialog } from "./help/HelpDialog"
 import { LayoutDialog } from "./layout/LayoutDialog"
+import { MountReaderWithManagedSettings } from "./MountReaderWithManagedSettings"
 import { FloatingProgress } from "./navigation/FloatingProgress"
 import { FloatingTime } from "./navigation/FloatingTime"
 import { SpreadRotationHint } from "./navigation/SpreadRotationHint"
@@ -25,7 +26,6 @@ import { useQuickMenu } from "./quickmenu/useQuickMenu"
 import { useQuickMenuToggleGesture } from "./quickmenu/useQuickMenuToggleGesture"
 import { RefitDialog } from "./refit/RefitDialog"
 import { SearchDialog } from "./search/SearchDialog"
-import { SyncReaderWithManagedSettings } from "./settings/SyncReaderWithManagedSettings"
 import { ThemeDialog } from "./theme/ThemeDialog"
 import { TableOfContentsDialog } from "./toc/TableOfContentsDialog"
 import { useZoomSettings } from "./zoom/useZoomSettings"
@@ -48,12 +48,7 @@ const Effects = memo(() => {
   usePreventInteractionOnSelection()
   useSyncAnnotationsWithReader()
 
-  return (
-    <>
-      <SyncReaderWithManagedSettings />
-      <BookmarksEffects />
-    </>
-  )
+  return <BookmarksEffects />
 })
 
 const InnerReactReader = memo(
@@ -61,7 +56,7 @@ const InnerReactReader = memo(
     children,
     ...rest
   }: {
-    children: React.ReactNode
+    children?: React.ReactNode
   } & BoxProps) => {
     const { enableFloatingTime, onItemClick } = useReaderContextValue([
       "enableFloatingTime",
@@ -113,7 +108,6 @@ const InnerReactReader = memo(
 
     return (
       <>
-        <Effects />
         <Box
           position="absolute"
           top={0}
@@ -124,6 +118,7 @@ const InnerReactReader = memo(
           data-prose-react-reader
           {...rest}
         >
+          <MountReaderWithManagedSettings />
           {children}
           <Spine>
             <BookmarkPageMarkers />
@@ -166,6 +161,7 @@ const InnerReactReader = memo(
           </Presence>
           <Toaster />
         </Box>
+        <Effects />
       </>
     )
   },

@@ -12,7 +12,7 @@ const SignalProvider = ({
   children,
   ...props
 }: {
-  children: React.ReactNode
+  children?: React.ReactNode
 } & PublicContextType) => {
   const valueSignal = useConstant(() => signal({ default: getDefaultValue() }))
   /**

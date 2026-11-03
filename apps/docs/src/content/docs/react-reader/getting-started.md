@@ -31,58 +31,47 @@ export const createAppReader = gesturesEnhancer(createReader)
 ```tsx
 import type { Manifest } from "@prose-reader/core"
 import { ReactReader } from "@prose-reader/react-reader"
-import { useRef } from "react"
 // Don't forget to import the package css
 import "@prose-reader/react-reader/index.css"
 
 const MyAppReader = ({ manifest }: { manifest: Manifest | undefined }) => {
-  const containerRef = useRef<HTMLDivElement | null>(null)
   // You own the creation of your reader instance,
   // see `useReaderInstance` below
-  const readerInstance = useReaderInstance(manifest, containerRef)
-  
-  // Then we handle the rendering
-  return (
-    <ReactReader
-      reader={readerInstance}
-    >
-      <div ref={containerRef} style={{ height: "100%", width: "100%" }} />
-    </ReactReader>
-  )
+  const readerInstance = useReaderInstance(manifest)
+
+  return <ReactReader reader={readerInstance} />
 }
 ```
 
-A reader lives for a single book, so the idiomatic React pattern is one effect that creates and mounts the reader together, with `destroy()` as its cleanup. `destroy()` removes the reader's elements, classes, attributes, styles and listeners from the container, so the effect is safe with strict mode re-running effects:
+`ReactReader` renders the element the reader shows the book in, and mounts the reader there once it has written the [settings](#settings) it manages into it. Create the reader without calling `mount()`: a reader already mounted elsewhere makes `ReactReader` throw. Use `reader.mounted$` to know when the book shows, to hide a loading screen for example. Anything you pass as `children` renders over the reader.
+
+A reader lives for a single book, so the idiomatic React pattern is one effect that creates the reader, with `destroy()` as its cleanup. Each reader you pass gets an element of its own, and `ReactReader` skips a reader that is already destroyed, so the effect is safe with strict mode re-running effects:
 
 ```typescript
-import { useEffect, useState, type RefObject } from "react"
+import { useEffect, useState } from "react"
 import type { Manifest } from "@prose-reader/core"
 
-const useReaderInstance = (
-  manifest: Manifest | undefined,
-  containerRef: RefObject<HTMLElement | null>,
-) => {
+const useReaderInstance = (manifest: Manifest | undefined) => {
   const [reader, setReader] = useState<ReturnType<typeof createAppReader>>()
 
   useEffect(() => {
-    const containerElement = containerRef.current
-
-    if (!manifest || !containerElement) return
+    if (!manifest) return
 
     const instance = createAppReader({ manifest })
 
-    instance.mount(containerElement)
     setReader(instance)
 
     return () => {
       instance.destroy()
       setReader(undefined)
     }
-  }, [manifest, containerRef])
+  }, [manifest])
 
   return reader
 }
 ```
+
+Give each `ReactReader` its own reader, and destroy the reader when you stop rendering it.
 
 ## Settings
 
@@ -101,9 +90,7 @@ const [settings, setSettings] = useState<ReactReaderSettings>(savedSettings)
   onSettingsChange={(changes) =>
     setSettings((old) => ({ ...old, ...changes }))
   }
->
-  <div ref={containerRef} style={{ height: "100%", width: "100%" }} />
-</ReactReader>
+/>
 ```
 
 | Setting | Menu |
@@ -114,30 +101,17 @@ const [settings, setSettings] = useState<ReactReaderSettings>(savedSettings)
 
 `onSettingsChange(changes, from)` receives only the settings that changed. `from` is the scope the user chose the value for, or `"internal"` for a value set on the reader directly, with `reader.settings.update()`.
 
-A setting you give no value keeps react-reader's own, for as long as it is mounted. It starts from the value the reader was created with, which is not a change and is not reported. A change in the menus, or one made on the reader directly, still reaches `onSettingsChange`.
+A setting you give no value keeps react-reader's own, for as long as `ReactReader` renders. It starts from the value the reader was created with, which is not a change and is not reported. A change in the menus, or one made on the reader directly, still reaches `onSettingsChange`.
 
-react-reader writes the values you give into the reader once it renders with it. Create your reader with the same values, so it starts on them rather than switching to them: a reader created without the saved theme shows `bright` until then. Read the values when you create the reader, without making them a reason to create it again, since react-reader keeps the reader on them afterwards. In `useReaderInstance`, a ref does that:
+react-reader writes these values into the reader before it mounts it, so the reader's first layout uses them, and you don't give them to `createReader`. Pass the settings you load in the same render as the reader: a value that arrives later applies as a change, after the first layout.
 
-```typescript
-const settingsRef = useLiveRef(settings)
-
-useEffect(() => {
-  // ...
-  const instance = createAppReader({ manifest, ...settingsRef.current })
-  // ...
-}, [manifest, containerRef, settingsRef])
-```
-
-`useLiveRef` comes from [reactjrx](https://github.com/mbret/reactjrx). A setting left `undefined`, as before anything is saved, keeps its default.
-
-The theme can follow your app's light or dark mode until the user picks one. Give the theme for that mode while `settings.theme` is undefined, to `ReactReader` and to the reader you create alike:
+The theme can follow your app's light or dark mode until the user picks one. Give the theme for that mode while `settings.theme` is undefined:
 
 ```tsx
 const readerSettings = {
   ...settings,
   theme: settings.theme ?? (colorMode === "dark" ? "night" : "bright"),
 }
-const settingsRef = useLiveRef(readerSettings)
 
 <ReactReader reader={reader} settings={readerSettings} /* ... */ />
 ```
