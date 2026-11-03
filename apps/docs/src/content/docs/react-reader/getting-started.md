@@ -43,9 +43,11 @@ const MyAppReader = ({ manifest }: { manifest: Manifest | undefined }) => {
 }
 ```
 
-`ReactReader` renders the element the reader shows the book in, and mounts the reader there once it has written the [settings](#settings) it manages into it. Create the reader without calling `mount()`: a reader already mounted elsewhere makes `ReactReader` throw. Use `reader.mounted$` to know when the book shows, to hide a loading screen for example. Anything you pass as `children` renders over the reader.
+`ReactReader` renders the element the reader shows the book in, and mounts the reader there once it has written the [settings](#settings) it manages into the reader. Create the reader without calling `mount()`: a reader already mounted into another element makes `ReactReader` throw. `reader.mounted$` turns `true` once `ReactReader` has mounted the reader, to hide a loading screen for example.
 
-A reader lives for a single book, so the idiomatic React pattern is one effect that creates the reader, with `destroy()` as its cleanup. Each reader you pass gets an element of its own, and `ReactReader` skips a reader that is already destroyed, so the effect is safe with strict mode re-running effects:
+Children render inside `ReactReader`, after the reader's element: position them absolutely, as a loading screen would be, to show them over the book.
+
+A reader lives for a single book, so the idiomatic React pattern is one effect that creates the reader, with `destroy()` as its cleanup. `destroy()` undoes everything the reader did, so the effect is safe when React runs it again, in strict mode for example:
 
 ```typescript
 import { useEffect, useState } from "react"
@@ -71,7 +73,9 @@ const useReaderInstance = (manifest: Manifest | undefined) => {
 }
 ```
 
-Give each `ReactReader` its own reader, and destroy the reader when you stop rendering it.
+A reader renders into one element for its lifetime. Give each `ReactReader` its own reader, and a new one whenever it remounts, with a new `key` or under another parent. Destroy the reader when you stop rendering it.
+
+To switch books, pass the new reader, with or without a new `key`: `ReactReader` gives each reader an element of its own, and skips a reader that is already destroyed.
 
 ## Settings
 
@@ -103,7 +107,7 @@ const [settings, setSettings] = useState<ReactReaderSettings>(savedSettings)
 
 A setting you give no value keeps react-reader's own, for as long as `ReactReader` renders. It starts from the value the reader was created with, which is not a change and is not reported. A change in the menus, or one made on the reader directly, still reaches `onSettingsChange`.
 
-react-reader writes these values into the reader before it mounts it, so the reader's first layout uses them, and you don't give them to `createReader`. Pass the settings you load in the same render as the reader: a value that arrives later applies as a change, after the first layout.
+react-reader writes the values you give into the reader before it mounts it, so the reader's first layout uses them: you don't pass them to `createReader` as well. Pass the settings you load no later than the render that first passes the reader. A value that arrives later applies as a change, after the first layout.
 
 The theme can follow your app's light or dark mode until the user picks one. Give the theme for that mode while `settings.theme` is undefined:
 
