@@ -18,10 +18,9 @@ export type ReactReaderProviderProps = ProviderContextType & {
    * Creates the reader. The provider writes the settings it manages into the
    * reader and mounts it in the element of its `ReactReader`. It destroys the
    * reader when the provider unmounts, when `createReader` changes, or when
-   * the `ReactReader` unmounts while it shows. Memoize it: a new function
-   * creates a new reader. Return a new reader on each call: the provider
-   * calls it again for the next `ReactReader`. Pass `undefined` until you can
-   * create the reader.
+   * the `ReactReader` unmounts. Memoize it: a new function creates a new
+   * reader. Return a new reader on each call: the provider calls it again for
+   * the next `ReactReader`. Pass `undefined` until you can create the reader.
    */
   createReader: (() => ReactReaderReader) | undefined
   children?: ReactNode

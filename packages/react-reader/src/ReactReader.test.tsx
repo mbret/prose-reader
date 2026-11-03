@@ -560,6 +560,38 @@ describe(`ReactReaderProvider and ReactReader`, () => {
     })
   })
 
+  it(`destroys the reader once React removes a ReactReader that an Activity hides`, async () => {
+    const { createOnePageReader, onDestroyed, getCreatedReaders } =
+      createReaderFactory()
+    const renderWithReactReader = (reactReader: ReactNode) =>
+      render(
+        <ReactReaderProvider createReader={createOnePageReader}>
+          {reactReader}
+        </ReactReaderProvider>,
+      )
+
+    await renderWithReactReader(
+      <Activity mode="visible">
+        <ReactReader />
+      </Activity>,
+    )
+    await renderWithReactReader(
+      <Activity mode="hidden">
+        <ReactReader />
+      </Activity>,
+    )
+    const [reader] = getCreatedReaders()
+    const destroyedWhileHidden = nameReaders(onDestroyed.mock.calls, {
+      reader,
+    })
+    await renderWithReactReader(null)
+
+    expect({
+      destroyedWhileHidden,
+      destroyedOnceRemoved: nameReaders(onDestroyed.mock.calls, { reader }),
+    }).toEqual({ destroyedWhileHidden: [], destroyedOnceRemoved: [`reader`] })
+  })
+
   it(`opens a ReactReader that mounts again with its menus closed, and keeps them while an Activity hides it`, async () => {
     const { createOnePageReader } = createReaderFactory()
     const onMenusRendered =

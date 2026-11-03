@@ -62,8 +62,7 @@ Children of `ReactReader` render after the element the book shows in. To show on
 ### Lifecycle
 
 - Render `ReactReaderProvider` above anything that hides the view, such as an `<Activity>` or a tab, and `ReactReader` inside it. Hiding `ReactReader` keeps the reader, since its element stays in the document, and the settings your app changes meanwhile reach the reader. Hiding the provider destroys the reader, and showing it again creates a new one.
-- When `ReactReader` unmounts, the provider destroys the reader. The next `ReactReader` gets a new reader in its own element, since a reader cannot move to another element.
-- A `ReactReader` that unmounts while an `<Activity>` hides it cannot tell the provider: the reader stays until `createReader` changes, another `ReactReader` mounts, or the provider unmounts.
+- When `ReactReader` unmounts, the provider destroys the reader, also when an `<Activity>` hides it first. The next `ReactReader` gets a new reader in its own element, since a reader cannot move to another element.
 - Render one `ReactReader` under a provider. A second one throws.
 
 :::caution

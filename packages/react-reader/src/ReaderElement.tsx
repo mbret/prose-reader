@@ -10,12 +10,15 @@ import { useReaderContext } from "./context/useReaderContext"
 export function ReaderElement() {
   const context = useReaderContext()
   const readerElementRef = useRef<HTMLDivElement>(null)
+  const hiddenReaderElementRemovalObserverRef = useRef<MutationObserver>(null)
 
   useEffect(
     function lendReaderElementToProvider() {
       const readerElement = readerElementRef.current
 
       if (!readerElement) return
+
+      hiddenReaderElementRemovalObserverRef.current?.disconnect()
 
       const lentReaderElement = context.value.readerElement
       const isElementOfAnotherViewInDocument =
@@ -29,16 +32,44 @@ export function ReaderElement() {
 
       context.update((old) => ({ ...old, readerElement }))
 
-      return function takeBackReaderElementOnceRemoved() {
-        const isReaderElementInDocument = readerElement.isConnected
-
-        if (isReaderElementInDocument) return
-
+      function takeBackReaderElement() {
         context.update((old) =>
           old.readerElement === readerElement
             ? { ...old, readerElement: undefined }
             : old,
         )
+      }
+
+      // A passive cleanup runs once React removed the element of an unmounted
+      // view. An `<Activity>` hiding the view leaves the element in the
+      // document, and React tells nothing when it removes it later: until the
+      // view shows again, an observer of the whole document reads
+      // `isConnected` after each batch of changes to the page.
+      return function takeBackReaderElementOnceRemoved() {
+        if (!readerElement.isConnected) {
+          takeBackReaderElement()
+
+          return
+        }
+
+        const hiddenReaderElementRemovalObserver = new MutationObserver(
+          function takeBackHiddenReaderElementOnceRemoved() {
+            if (readerElement.isConnected) return
+
+            hiddenReaderElementRemovalObserver.disconnect()
+            takeBackReaderElement()
+          },
+        )
+
+        hiddenReaderElementRemovalObserver.observe(
+          readerElement.ownerDocument,
+          {
+            childList: true,
+            subtree: true,
+          },
+        )
+        hiddenReaderElementRemovalObserverRef.current =
+          hiddenReaderElementRemovalObserver
       }
     },
     [context],
