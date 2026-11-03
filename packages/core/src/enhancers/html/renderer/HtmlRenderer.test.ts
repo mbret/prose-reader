@@ -1077,6 +1077,27 @@ describe(`HtmlRenderer`, () => {
       await waitForLoaded()
     })
 
+    it(`loads without one that never comes in, once it stops waiting for it`, async () => {
+      useRxjsFakeTimers()
+
+      const { load, waitForFontRequests, waitForLoaded, renderer } = setup({
+        documentHref,
+        resources: {},
+        fontFamilies: [`Free Serif`],
+      })
+
+      load(documentWith(``))
+
+      await waitForFontRequests(1)
+      await vi.advanceTimersByTimeAsync(4_000)
+
+      expect(renderer.value.loadStatus).toBe(`loading`)
+
+      await vi.advanceTimersByTimeAsync(1_000)
+
+      await waitForLoaded()
+    })
+
     it(`waits for one its text requests once another is in`, async () => {
       const {
         load,

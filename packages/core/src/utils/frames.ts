@@ -9,6 +9,7 @@ import {
   of,
   switchMap,
   take,
+  timeout,
 } from "rxjs"
 import {
   injectCSS as injectCSSToDocument,
@@ -122,6 +123,9 @@ export const waitForFrameLoad = (stream: Observable<HTMLIFrameElement>) =>
     }),
   )
 
+/** Bounds a font whose request never ends, such as a stalled response. */
+const FONT_LOAD_TIMEOUT_MS = 5_000
+
 /**
  * Completes once no font the document lays its text out with is loading.
  * Laying the text out requests its fonts, and each is waited for itself:
@@ -129,8 +133,8 @@ export const waitForFrameLoad = (stream: Observable<HTMLIFrameElement>) =>
  * longer than its block period, before it is in. A font that comes in can
  * change which others the text needs, such as for a glyph it lacks, so the
  * text is laid out again until none is loading. Each font is waited for once,
- * so the wait ends whatever a browser reports after. A font that fails leaves
- * the text in its fallback.
+ * up to 5 seconds, so the wait ends whatever a browser reports after. A font
+ * that fails, or is not in by then, leaves the text in its fallback.
  */
 const waitForDocumentFonts = (
   document: Document,
@@ -149,6 +153,7 @@ const waitForDocumentFonts = (
     return from(
       Promise.allSettled(loadingFonts.map((font) => font.loaded)),
     ).pipe(
+      timeout({ first: FONT_LOAD_TIMEOUT_MS, with: () => of(undefined) }),
       switchMap(() =>
         waitForDocumentFonts(
           document,
