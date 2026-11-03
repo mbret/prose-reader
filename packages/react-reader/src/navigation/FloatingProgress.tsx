@@ -1,14 +1,11 @@
 import { Box, Presence, Text } from "@chakra-ui/react"
-import { useReaderContextValue } from "../context/useReaderContext"
+import { useReaderViewContext } from "../context/ReaderViewContext"
 import { usePagination } from "../pagination/usePagination"
 
 const ANIMATION_NAME_IN_OUT = { _open: "fade-in", _closed: "fade-out" }
 
 export const FloatingProgress = () => {
-  const { enableFloatingProgress, quickMenuOpen } = useReaderContextValue([
-    "enableFloatingProgress",
-    "quickMenuOpen",
-  ])
+  const { enableFloatingProgress, quickMenuOpen } = useReaderViewContext()
   const pagination = usePagination()
   const roundedProgress = Math.floor(
     (pagination?.percentageEstimateOfBook ?? 0) * 100,

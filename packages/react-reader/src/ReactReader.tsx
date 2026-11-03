@@ -1,5 +1,11 @@
 import { Box, type BoxProps, Presence } from "@chakra-ui/react"
-import { type ComponentProps, memo, useCallback, useState } from "react"
+import {
+  type ComponentProps,
+  memo,
+  useCallback,
+  useMemo,
+  useState,
+} from "react"
 import { AnnotateControls } from "./annotations/AnnotateControls"
 import { AnnotationDrawer } from "./annotations/AnnotationDrawer"
 import { AnnotationsDialog } from "./annotations/AnnotationsDialog"
@@ -10,7 +16,12 @@ import { useSyncAnnotationsWithReader } from "./annotations/useSyncAnnotationsWi
 import { Spine } from "./common/Spine"
 import { Toaster } from "./components/ui/toaster"
 import { ReactReaderProvider } from "./context/ReactReaderProvider"
-import { useReaderContextValue } from "./context/useReaderContext"
+import {
+  ReaderViewContext,
+  type ReaderViewContextType,
+  type ReaderViewProps,
+  useReaderViewContext,
+} from "./context/ReaderViewContext"
 import { FontSizeControlsDialog } from "./fonts/FontSizeControlsDialog"
 import { GalleryDialog } from "./gallery/GalleryDialog"
 import { HelpDialog } from "./help/HelpDialog"
@@ -63,10 +74,7 @@ const InnerReactReader = memo(
   }: {
     children: React.ReactNode
   } & BoxProps) => {
-    const { enableFloatingTime, onItemClick } = useReaderContextValue([
-      "enableFloatingTime",
-      "onItemClick",
-    ])
+    const { enableFloatingTime, onItemClick } = useReaderViewContext()
     const [isTableOfContentsOpen, setIsTableOfContentsOpen] = useState(false)
     const [isHelpOpen, setIsHelpOpen] = useState(false)
     const [isSearchOpen, setIsSearchOpen] = useState(false)
@@ -171,22 +179,60 @@ const InnerReactReader = memo(
   },
 )
 
-export type ReactReaderProps = ComponentProps<typeof ReactReaderProvider> & {
-  slots?: {
-    container?: {
-      props?: Omit<ComponentProps<typeof InnerReactReader>, "children">
+export type ReactReaderProps = ComponentProps<typeof ReactReaderProvider> &
+  ReaderViewProps & {
+    slots?: {
+      container?: {
+        props?: Omit<ComponentProps<typeof InnerReactReader>, "children">
+      }
     }
   }
-}
 
-export const ReactReader = memo(
-  ({ children, slots, ...props }: ReactReaderProps) => {
-    const { container: { props: containerProps = {} } = {} } = slots ?? {}
+export const ReactReader = memo(function ReactReader({
+  children,
+  slots,
+  enableFloatingTime,
+  enableFloatingProgress = true,
+  onItemClick,
+  quickMenuOpen,
+  onQuickMenuOpenChange,
+  ...props
+}: ReactReaderProps) {
+  const [isUncontrolledQuickMenuOpen, setIsUncontrolledQuickMenuOpen] =
+    useState(false)
+  const [isFontSizeMenuOpen, setIsFontSizeMenuOpen] = useState(false)
+  const [isRefitMenuOpen, setIsRefitMenuOpen] = useState(false)
+  const readerView = useMemo(
+    (): ReaderViewContextType => ({
+      enableFloatingTime,
+      enableFloatingProgress,
+      onItemClick,
+      quickMenuOpen: quickMenuOpen ?? isUncontrolledQuickMenuOpen,
+      onQuickMenuOpenChange:
+        onQuickMenuOpenChange ?? setIsUncontrolledQuickMenuOpen,
+      fontSizeMenuOpen: isFontSizeMenuOpen,
+      onFontSizeMenuOpenChange: setIsFontSizeMenuOpen,
+      refitMenuOpen: isRefitMenuOpen,
+      onRefitMenuOpenChange: setIsRefitMenuOpen,
+    }),
+    [
+      enableFloatingTime,
+      enableFloatingProgress,
+      onItemClick,
+      quickMenuOpen,
+      isUncontrolledQuickMenuOpen,
+      onQuickMenuOpenChange,
+      isFontSizeMenuOpen,
+      isRefitMenuOpen,
+    ],
+  )
+  const { container: { props: containerProps = {} } = {} } = slots ?? {}
 
-    return (
-      <ReactReaderProvider {...props}>
+  return (
+    <ReactReaderProvider {...props}>
+      <ReaderViewContext.Provider value={readerView}>
         <InnerReactReader {...containerProps}>{children}</InnerReactReader>
-      </ReactReaderProvider>
-    )
-  },
-)
+      </ReaderViewContext.Provider>
+    </ReactReaderProvider>
+  )
+})

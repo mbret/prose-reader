@@ -15,17 +15,14 @@ import {
 import { Field } from "../components/ui/field"
 import { Radio, RadioGroup } from "../components/ui/radio"
 import { Slider } from "../components/ui/slider"
+import { useReaderViewContext } from "../context/ReaderViewContext"
 import { hasRefitEnhancer, useReader } from "../context/useReader"
-import { useReaderContextValue } from "../context/useReaderContext"
 
 type OptionValue = RefitEnhancerOptions["viewportFit"]
 
 export const RefitDialog = memo(() => {
   const defaultCustomWidth = 60
-  const { refitMenuOpen, onRefitMenuOpenChange } = useReaderContextValue([
-    "refitMenuOpen",
-    "onRefitMenuOpenChange",
-  ])
+  const { refitMenuOpen, onRefitMenuOpenChange } = useReaderViewContext()
   const reader = useReader()
   const readerWithRefit = hasRefitEnhancer(reader) ? reader : undefined
   const { data: refitSettings } = useObserve(
