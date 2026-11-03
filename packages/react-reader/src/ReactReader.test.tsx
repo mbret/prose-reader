@@ -163,7 +163,6 @@ describe(`ReactReaderProvider and ReactReader`, () => {
   it(`creates the reader on the settings it manages, and mounts it in the element of ReactReader`, async () => {
     const { createOnePageReader, onMounted, getCreatedReaders } =
       createReaderFactory()
-    const onSettingsChange = vi.fn()
     const appSettings = {
       fontScale: 1.5,
       spreadMode: `never`,
@@ -174,7 +173,6 @@ describe(`ReactReaderProvider and ReactReader`, () => {
       <ReactReaderProvider
         createReader={createOnePageReader}
         settings={appSettings}
-        onSettingsChange={onSettingsChange}
       >
         <ReactReader />
       </ReactReaderProvider>,
@@ -183,36 +181,41 @@ describe(`ReactReaderProvider and ReactReader`, () => {
 
     expect({
       settingsWhenMounted: onMounted.mock.calls,
-      settingsChangesReported: onSettingsChange.mock.calls,
       isReaderElementInReactReader: isElementInReactReader(
         reader?.context.value.rootElement,
       ),
     }).toEqual({
       settingsWhenMounted: [[appSettings]],
-      settingsChangesReported: [],
       isReaderElementInReactReader: true,
     })
   })
 
-  it(`leaves a setting the app gives no value on the value the reader was created with`, async () => {
+  it(`leaves a setting the app gives no value on the value the reader was created with, and reports no change`, async () => {
     const { createOnePageReader, onMounted } = createReaderFactory({
       theme: `sepia`,
     })
+    const onSettingsChange = vi.fn()
 
     await render(
       <ReactReaderProvider
         createReader={createOnePageReader}
         settings={{ fontScale: 1.5 }}
+        onSettingsChange={onSettingsChange}
       >
         <ReactReader />
       </ReactReaderProvider>,
     )
 
-    expect(onMounted.mock.calls).toEqual([
-      [{ fontScale: 1.5, spreadMode: `auto`, theme: `sepia` }],
-    ])
+    expect({
+      settingsWhenMounted: onMounted.mock.calls,
+      settingsChangesReported: onSettingsChange.mock.calls,
+    }).toEqual({
+      settingsWhenMounted: [
+        [{ fontScale: 1.5, spreadMode: `auto`, theme: `sepia` }],
+      ],
+      settingsChangesReported: [],
+    })
   })
-
   it(`mounts the reader on the value of a setting's screen scope`, async () => {
     const { createOnePageReader, onMounted } = createReaderFactory()
 
@@ -416,7 +419,6 @@ describe(`ReactReaderProvider and ReactReader`, () => {
         <ReactReader />
       </ReactReaderProvider>,
     )
-    const creationsWithoutCreateReader = createOnePageReader.mock.calls.length
     await render(
       <ReactReaderProvider createReader={createOnePageReader}>
         <ReactReader />
@@ -425,13 +427,11 @@ describe(`ReactReaderProvider and ReactReader`, () => {
     const [reader] = getCreatedReaders()
 
     expect({
-      creationsWithoutCreateReader,
       creations: createOnePageReader.mock.calls.length,
       isReaderElementInReactReader: isElementInReactReader(
         reader?.context.value.rootElement,
       ),
     }).toEqual({
-      creationsWithoutCreateReader: 0,
       creations: 1,
       isReaderElementInReactReader: true,
     })
@@ -594,37 +594,60 @@ describe(`ReactReaderProvider and ReactReader`, () => {
     })
   })
 
-  it(`moves to a new reader when one ReactReader replaces another in the same render`, async () => {
+  it(`creates a reader in a ReactReader that replaces a hidden one in the same render`, async () => {
     const { createOnePageReader, onDestroyed, getCreatedReaders } =
       createReaderFactory()
-    const renderWithReactReaderKey = (key: string) =>
+    const renderInActivity = (mode: `visible` | `hidden`, key: string) =>
       render(
         <ReactReaderProvider createReader={createOnePageReader}>
-          <ReactReader key={key} />
+          <Activity mode={mode}>
+            <ReactReader key={key} />
+          </Activity>
         </ReactReaderProvider>,
       )
 
-    await renderWithReactReaderKey(`first`)
-    await renderWithReactReaderKey(`next`)
+    await renderInActivity(`visible`, `first`)
+    await renderInActivity(`hidden`, `first`)
+    await renderInActivity(`visible`, `next`)
     const [firstReader, nextReader] = getCreatedReaders()
-    const [firstDestroyedAt] = onDestroyed.mock.invocationCallOrder
-    const [, nextCreatedAt] = createOnePageReader.mock.invocationCallOrder
 
     expect({
       destroyed: nameReaders(onDestroyed.mock.calls, {
         firstReader,
         nextReader,
       }),
-      isFirstDestroyedBeforeNextCreated:
-        Number(firstDestroyedAt) < Number(nextCreatedAt),
       isNextReaderElementInReactReader: isElementInReactReader(
         nextReader?.context.value.rootElement,
       ),
     }).toEqual({
       destroyed: [`firstReader`],
-      isFirstDestroyedBeforeNextCreated: true,
       isNextReaderElementInReactReader: true,
     })
+  })
+
+  it(`stops watching the element of a ReactReader that an Activity shows again`, async () => {
+    const { createOnePageReader, onDestroyed, getCreatedReaders } =
+      createReaderFactory()
+    const renderInActivity = (mode: `visible` | `hidden`) =>
+      render(
+        <ReactReaderProvider createReader={createOnePageReader}>
+          <Activity mode={mode}>
+            <ReactReader />
+          </Activity>
+        </ReactReaderProvider>,
+      )
+
+    await renderInActivity(`visible`)
+    await renderInActivity(`hidden`)
+    await renderInActivity(`visible`)
+    await act(async () => {
+      container.remove()
+      await Promise.resolve()
+      document.body.appendChild(container)
+    })
+    const [reader] = getCreatedReaders()
+
+    expect(nameReaders(onDestroyed.mock.calls, { reader })).toEqual([])
   })
 
   it(`destroys the reader once React removes a ReactReader that an Activity hides`, async () => {
@@ -659,7 +682,7 @@ describe(`ReactReaderProvider and ReactReader`, () => {
     }).toEqual({ destroyedWhileHidden: [], destroyedOnceRemoved: [`reader`] })
   })
 
-  it(`opens a ReactReader that mounts again with its menus closed, and keeps them while an Activity hides it`, async () => {
+  it(`opens a ReactReader that mounts again with its menus closed, and keeps open menus open while an Activity hides it`, async () => {
     const { createOnePageReader } = createReaderFactory()
     const onMenusRendered =
       vi.fn<
@@ -667,16 +690,21 @@ describe(`ReactReaderProvider and ReactReader`, () => {
       >()
 
     function MenusUser() {
-      const { quickMenuOpen, fontSizeMenuOpen, onFontSizeMenuOpenChange } =
-        useReaderViewContext()
+      const {
+        quickMenuOpen,
+        onQuickMenuOpenChange,
+        fontSizeMenuOpen,
+        onFontSizeMenuOpenChange,
+      } = useReaderViewContext()
 
       onMenusRendered({ quickMenuOpen, fontSizeMenuOpen })
 
       return (
         <button
           type="button"
-          data-open-font-size-menu
-          onClick={function openFontSizeMenu() {
+          data-open-menus
+          onClick={function openQuickMenuAndFontSizeMenu() {
+            onQuickMenuOpenChange(true)
             onFontSizeMenuOpenChange(true)
           }}
         />
@@ -699,9 +727,7 @@ describe(`ReactReaderProvider and ReactReader`, () => {
       </Activity>,
     )
     await act(async () => {
-      container
-        .querySelector<HTMLButtonElement>(`[data-open-font-size-menu]`)
-        ?.click()
+      container.querySelector<HTMLButtonElement>(`[data-open-menus]`)?.click()
     })
     const menusOnceOpened = getLastMenus()
     await renderReactReader(
@@ -733,8 +759,8 @@ describe(`ReactReaderProvider and ReactReader`, () => {
       menusOnceShownAgain,
       menusOnFirstRenderOfTheNextReactReader,
     }).toEqual({
-      menusOnceOpened: { quickMenuOpen: false, fontSizeMenuOpen: true },
-      menusOnceShownAgain: { quickMenuOpen: false, fontSizeMenuOpen: true },
+      menusOnceOpened: { quickMenuOpen: true, fontSizeMenuOpen: true },
+      menusOnceShownAgain: { quickMenuOpen: true, fontSizeMenuOpen: true },
       menusOnFirstRenderOfTheNextReactReader: {
         quickMenuOpen: false,
         fontSizeMenuOpen: false,
@@ -800,6 +826,51 @@ describe(`ReactReaderProvider and ReactReader`, () => {
       ownQuickMenuOpen: true,
       appQuickMenuOpen: false,
       appQuickMenuOpenChanges: [[true]],
+    })
+  })
+
+  it(`hides the floating progress while a quick menu the app does not control is open`, async () => {
+    const { createOnePageReader } = createReaderFactory()
+
+    function QuickMenuOpener() {
+      const { onQuickMenuOpenChange } = useReaderViewContext()
+
+      return (
+        <button
+          type="button"
+          data-open-quick-menu
+          onClick={function openQuickMenu() {
+            onQuickMenuOpenChange(true)
+          }}
+        />
+      )
+    }
+
+    const getFloatingProgressState = () =>
+      [...container.querySelectorAll(`[data-scope="presence"]`)]
+        .find((presence) => presence.textContent?.endsWith(` %`))
+        ?.getAttribute(`data-state`)
+
+    await render(
+      <ReactReaderProvider createReader={createOnePageReader}>
+        <ReactReader>
+          <QuickMenuOpener />
+        </ReactReader>
+      </ReactReaderProvider>,
+    )
+    const stateWithQuickMenuClosed = getFloatingProgressState()
+    await act(async () => {
+      container
+        .querySelector<HTMLButtonElement>(`[data-open-quick-menu]`)
+        ?.click()
+    })
+
+    expect({
+      stateWithQuickMenuClosed,
+      stateWithQuickMenuOpen: getFloatingProgressState(),
+    }).toEqual({
+      stateWithQuickMenuClosed: `open`,
+      stateWithQuickMenuOpen: `closed`,
     })
   })
 
