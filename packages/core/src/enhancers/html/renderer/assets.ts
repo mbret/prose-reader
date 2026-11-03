@@ -107,8 +107,22 @@ const createAssetFetcher = (
 type FetchAsset = ReturnType<typeof createAssetFetcher>
 
 /**
+ * Whether a reference resolves against the element's base url, as the browser
+ * needs to fetch it. A relative one does not in a document loaded from a blob.
+ */
+const resolvesAgainstBaseUrl = (element: Element, reference: string) => {
+  try {
+    return !!new URL(reference, element.baseURI)
+  } catch {
+    return false
+  }
+}
+
+/**
  * The browser only fetches, and reports `load` or `error` for, the links it
- * processes. Waiting on any other (eg: `rel="pronunciation"`) never ends.
+ * processes and whose reference resolves. Waiting on any other (eg:
+ * `rel="pronunciation"`, or a relative reference in a document loaded from a
+ * blob) never ends.
  * @see https://html.spec.whatwg.org/multipage/links.html#link-type-stylesheet
  */
 const isFetchedStylesheet = (
@@ -120,9 +134,12 @@ const isFetchedStylesheet = (
   const mimeType = element.type.split(";")[0]?.trim().toLowerCase()
   // link types are case-insensitive, the token list is not
   const relations = Array.from(element.relList, (token) => token.toLowerCase())
+  const reference = element.getAttribute("href")
 
   return (
     relations.includes("stylesheet") &&
+    !!reference &&
+    resolvesAgainstBaseUrl(element, reference) &&
     !element.hasAttribute("disabled") &&
     (!mimeType || mimeType === "text/css")
   )
@@ -262,10 +279,37 @@ const loadImageEagerly = ({
 }
 
 /**
+ * A stylesheet the document has no sheet of: it failed, or it is still
+ * loading. WebKit fires the frame's `load`, and settles `document.fonts.ready`,
+ * before a stylesheet another frame is already fetching has arrived. Nothing
+ * tells the two apart, so its load starts again, from a copy of the element put
+ * in its place: a request in flight is joined, one that failed fails again,
+ * and either way the copy reports it.
+ */
+const waitForRestartedStylesheet = ({
+  element,
+  view,
+}: {
+  element: HTMLLinkElement
+  view: DocumentView
+}): Observable<never> => {
+  const copy = element.cloneNode()
+
+  if (!(copy instanceof view.HTMLLinkElement)) return EMPTY
+
+  // In place, as cfis count the element's index.
+  element.after(copy)
+  element.remove()
+
+  return waitForAssetLoad(copy).pipe(ignoreElements())
+}
+
+/**
  * What the document's load waits for when an element keeps its reference, or
  * has none the reader swaps, such as an image with a `srcset` and no `src`:
- * an image still loading, such as a lazy one, which the frame's `load` does
- * not wait for.
+ * - a stylesheet the document has no sheet of yet;
+ * - an image still loading, such as a lazy one, which the frame's `load` does
+ *   not wait for.
  */
 const waitForUnswappedAsset = ({
   element,
@@ -273,10 +317,17 @@ const waitForUnswappedAsset = ({
 }: {
   element: Element
   view: DocumentView
-}): Observable<never> =>
-  element instanceof view.HTMLImageElement && !element.complete
-    ? waitForAssetLoad(element).pipe(ignoreElements())
-    : EMPTY
+}): Observable<never> => {
+  if (isFetchedStylesheet(element, view) && !element.sheet) {
+    return waitForRestartedStylesheet({ element, view })
+  }
+
+  if (element instanceof view.HTMLImageElement && !element.complete) {
+    return waitForAssetLoad(element).pipe(ignoreElements())
+  }
+
+  return EMPTY
+}
 
 /** Never errors: a failed asset is reported and the document loads without it. */
 const loadElementAsset = ({
