@@ -17,6 +17,34 @@ import type {
   ReactReaderSettingsScopeReference,
 } from "../settings/types"
 
+/**
+ * Declares the type of the reader you pass to `ReactReader`, so `useReader()`
+ * returns it with the APIs of its enhancers. That reader needs the gestures
+ * enhancer, or `useReader()` ignores the declaration:
+ *
+ * ```ts
+ * declare module "@prose-reader/react-reader" {
+ *   interface Register {
+ *     reader: ReturnType<typeof createAppReader>
+ *   }
+ * }
+ * ```
+ */
+// biome-ignore lint/suspicious/noEmptyInterface: an app adds `reader` by declaration merging
+export interface Register {}
+
+type ReaderWithGestures = Reader & GesturesEnhancerAPI
+
+/**
+ * The reader `Register` declares, or a reader with the gestures enhancer when
+ * `Register` declares none, or one without that enhancer.
+ */
+export type ReactReaderReader = Register extends {
+  reader: infer RegisteredReader extends ReaderWithGestures
+}
+  ? RegisteredReader
+  : ReaderWithGestures
+
 export type PrivateContextType = {
   /**
    * react-reader's own values for the settings the app gives no value, starting
@@ -45,7 +73,7 @@ export type PrivateContextType = {
 }
 
 export type PublicContextType = {
-  reader: (Reader & GesturesEnhancerAPI) | undefined
+  reader: ReactReaderReader | undefined
   enableFloatingTime?: boolean
   enableFloatingProgress?: boolean
   onItemClick?: (

@@ -84,6 +84,31 @@ const useReaderInstance = (
 }
 ```
 
+### Using the reader
+
+`useReader()` gives the reader you pass to `ReactReader` to any component under it, such as its children. It follows the `reader` prop one render behind, so it is `undefined` on the first render:
+
+```tsx
+import { useReader } from "@prose-reader/react-reader"
+
+const PageNumber = () => {
+  const reader = useReader()
+  // ...
+}
+```
+
+`useReader()` returns a reader with the gestures enhancer. Declare the type of your reader, once in your app, and it returns that type, with the APIs of your enhancers. The `reader` prop of `ReactReader` then takes that type:
+
+```typescript
+declare module "@prose-reader/react-reader" {
+  interface Register {
+    reader: ReturnType<typeof createAppReader>
+  }
+}
+```
+
+The declared reader needs the gestures enhancer: without it, `useReader()` ignores the declaration. The package exports the resolved type as `ReactReaderReader`.
+
 ## Settings
 
 react-reader manages three of the reader's settings. The user changes each from one of its menus: the font scale from the Font size dialog, the spread mode from the Layout dialog, and the theme from the Theme dialog. The theme colors the book. react-reader's own interface follows your Chakra UI theme.
