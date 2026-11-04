@@ -20,7 +20,7 @@ import { usePreventInteractionOnSelection } from "./annotations/usePreventIntera
 import { useSyncAnnotationsWithReader } from "./annotations/useSyncAnnotationsWithReader"
 import { Spine } from "./common/Spine"
 import { Toaster } from "./components/ui/toaster"
-import { ReactReaderProvider } from "./context/ReactReaderProvider"
+import { ReaderContextProvider } from "./context/ReaderContextProvider"
 import {
   ReaderViewContext,
   type ReaderViewContextType,
@@ -187,7 +187,7 @@ const InnerReactReader = memo(
   },
 )
 
-export type ReactReaderProps = ComponentProps<typeof ReactReaderProvider> &
+export type ReactReaderProps = ComponentProps<typeof ReaderContextProvider> &
   ReaderViewProps & {
     slots?: {
       container?: {
@@ -238,10 +238,10 @@ export const ReactReader = memo(function ReactReader({
   const { container: { props: containerProps = {} } = {} } = slots ?? {}
 
   return (
-    <ReactReaderProvider {...props}>
+    <ReaderContextProvider {...props}>
       <ReaderViewContext.Provider value={readerView}>
         <InnerReactReader {...containerProps}>{children}</InnerReactReader>
       </ReaderViewContext.Provider>
-    </ReactReaderProvider>
+    </ReaderContextProvider>
   )
 })
