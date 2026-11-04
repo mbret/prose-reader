@@ -12,11 +12,11 @@ vi.mock("../context/useReader", async (importOriginal) => ({
   useReader: useReaderMock,
 }))
 
-import { ReactReaderProvider } from "../context/ReactReaderProvider"
+import { ReaderContextProvider } from "../context/ReaderContextProvider"
 import { ThemeSection } from "./ThemeSection"
 
-type ReactReaderProviderProps = Omit<
-  ComponentProps<typeof ReactReaderProvider>,
+type ReaderContextProviderProps = Omit<
+  ComponentProps<typeof ReaderContextProvider>,
   "children" | "reader"
 >
 
@@ -30,13 +30,13 @@ describe(`ThemeSection`, () => {
   let container: HTMLDivElement
   let root: ReturnType<typeof createRoot>
 
-  const render = async (props: ReactReaderProviderProps) => {
+  const render = async (props: ReaderContextProviderProps) => {
     await act(async () => {
       root.render(
         <ChakraProvider value={defaultSystem}>
-          <ReactReaderProvider reader={undefined} {...props}>
+          <ReaderContextProvider reader={undefined} {...props}>
             <ThemeSection />
-          </ReactReaderProvider>
+          </ReaderContextProvider>
         </ChakraProvider>,
       )
     })

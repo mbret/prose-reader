@@ -7,7 +7,7 @@ import {
   ReaderContext,
 } from "./context"
 
-export const ReactReaderProvider = memo(function ReactReaderProvider({
+export const ReaderContextProvider = memo(function ReaderContextProvider({
   children,
   ...props
 }: {

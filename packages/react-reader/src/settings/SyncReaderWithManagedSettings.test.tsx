@@ -46,17 +46,18 @@ vi.mock("../context/useReader", async () => {
   }
 })
 
-import { ReactReaderProvider } from "../context/ReactReaderProvider"
+import { ReaderContextProvider } from "../context/ReaderContextProvider"
+import { setWindowWidth } from "../tests/setWindowWidth"
 import { SyncReaderWithManagedSettings } from "./SyncReaderWithManagedSettings"
 import { useManagedSetting } from "./useManagedSetting"
 
-type ReactReaderProviderProps = Omit<
-  ComponentProps<typeof ReactReaderProvider>,
+type ReaderContextProviderProps = Omit<
+  ComponentProps<typeof ReaderContextProvider>,
   "children"
 >
 
 type SettingsChange = Parameters<
-  NonNullable<ReactReaderProviderProps["onSettingsChange"]>
+  NonNullable<ReaderContextProviderProps["onSettingsChange"]>
 >
 
 const createReaderWithSettings = (
@@ -91,13 +92,13 @@ const AppSavingEveryChange = ({
   initialSettings,
   savedChanges,
 }: {
-  initialSettings: ReactReaderProviderProps["settings"]
+  initialSettings: ReaderContextProviderProps["settings"]
   savedChanges: SettingsChange[]
 }) => {
   const [settings, setSettings] = useState(initialSettings)
 
   return (
-    <ReactReaderProvider
+    <ReaderContextProvider
       reader={undefined}
       settings={settings}
       onSettingsChange={function saveSettings(changes, from) {
@@ -106,31 +107,8 @@ const AppSavingEveryChange = ({
       }}
     >
       <SyncReaderWithManagedSettings />
-    </ReactReaderProvider>
+    </ReaderContextProvider>
   )
-}
-
-const hasViewportControl = (
-  happyDOM: unknown,
-): happyDOM is {
-  setViewport: (viewport: { width: number; height: number }) => void
-} =>
-  typeof happyDOM === `object` &&
-  happyDOM !== null &&
-  `setViewport` in happyDOM &&
-  typeof happyDOM.setViewport === `function`
-
-/** Sets the width of the window happy-dom emulates, which media queries follow. */
-const setWindowWidth = (width: number) => {
-  const happyDOM: unknown = Reflect.get(window, `happyDOM`)
-
-  if (!hasViewportControl(happyDOM)) {
-    throw new Error(
-      `These tests run in happy-dom, to control the window's width`,
-    )
-  }
-
-  happyDOM.setViewport({ width, height: window.innerHeight })
 }
 
 const DEFAULT_WINDOW_WIDTH = window.innerWidth
@@ -146,11 +124,11 @@ describe(`SyncReaderWithManagedSettings`, () => {
     })
   }
 
-  const render = async (props: ReactReaderProviderProps) => {
+  const render = async (props: ReaderContextProviderProps) => {
     await renderInChakra(
-      <ReactReaderProvider {...props}>
+      <ReaderContextProvider {...props}>
         <SyncReaderWithManagedSettings />
-      </ReactReaderProvider>,
+      </ReaderContextProvider>,
     )
   }
 
@@ -158,7 +136,9 @@ describe(`SyncReaderWithManagedSettings`, () => {
    * Mounts the sync with what a spread mode menu sees of the setting, which
    * the returned object holds as of the last render.
    */
-  const renderWithSpreadModeMenu = async (props: ReactReaderProviderProps) => {
+  const renderWithSpreadModeMenu = async (
+    props: ReaderContextProviderProps,
+  ) => {
     const spreadModeMenu: {
       current?: ReturnType<typeof useManagedSetting<"spreadMode">>
     } = {}
@@ -169,10 +149,10 @@ describe(`SyncReaderWithManagedSettings`, () => {
     }
 
     await renderInChakra(
-      <ReactReaderProvider {...props}>
+      <ReaderContextProvider {...props}>
         <SyncReaderWithManagedSettings />
         <SpreadModeMenu />
-      </ReactReaderProvider>,
+      </ReaderContextProvider>,
     )
 
     return spreadModeMenu
@@ -425,13 +405,13 @@ describe(`SyncReaderWithManagedSettings`, () => {
     }
     const renderReaderWithMenu = (menu: ReactNode) =>
       renderInChakra(
-        <ReactReaderProvider
+        <ReaderContextProvider
           reader={undefined}
           settingsScopes={{ spreadMode: `screen` }}
         >
           <SyncReaderWithManagedSettings />
           {menu}
-        </ReactReaderProvider>,
+        </ReaderContextProvider>,
       )
 
     await renderReaderWithMenu(null)
