@@ -5,7 +5,11 @@ import { act, type ComponentProps } from "react"
 import { createRoot } from "react-dom/client"
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
 import { ReaderContextProvider } from "../context/ReaderContextProvider"
-import { asProvidedReader, createTestReader } from "../tests/createTestReader"
+import {
+  asProvidedReader,
+  createTestReader,
+  type TestReader,
+} from "../tests/createTestReader"
 import { ReaderInContext } from "../tests/ReaderInContext"
 import { FontSizeSection } from "./FontSizeSection"
 
@@ -18,18 +22,24 @@ describe(`FontSizeSection`, () => {
   let container: HTMLDivElement
   let root: ReturnType<typeof createRoot>
 
-  const render = async (props: ReaderContextProviderProps) => {
+  const renderWithReader = async (
+    props: ReaderContextProviderProps,
+    reader: TestReader | undefined,
+  ) => {
     await act(async () => {
       root.render(
         <ChakraProvider value={defaultSystem}>
           <ReaderContextProvider {...props}>
-            <ReaderInContext reader={asProvidedReader(createTestReader())} />
+            <ReaderInContext reader={asProvidedReader(reader)} />
             <FontSizeSection />
           </ReaderContextProvider>
         </ChakraProvider>,
       )
     })
   }
+
+  const render = (props: ReaderContextProviderProps) =>
+    renderWithReader(props, createTestReader())
 
   /**
    * Every scope tab stays mounted, so the hidden tabs hold a font size too.
@@ -120,6 +130,18 @@ describe(`FontSizeSection`, () => {
         [{ fontScale: 1.2 }, `book`],
         [{ fontScale: undefined }, `book`],
       ],
+    })
+  })
+
+  it(`keeps the box and the slider, at 100%, while there is no reader to give a default`, async () => {
+    await renderWithReader({}, undefined)
+
+    const { inheritedChoice: _, ...shownFontSize } = getShownFontSize()
+
+    expect(shownFontSize).toEqual({
+      inheritedChoiceLabel: `Default`,
+      isInheritedChoiceChecked: true,
+      sliderPercent: `100`,
     })
   })
 

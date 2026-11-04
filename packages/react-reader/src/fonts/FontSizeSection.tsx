@@ -6,6 +6,8 @@ import { SettingScopes } from "../settings/SettingScopes"
 import { useManagedSetting } from "../settings/useManagedSetting"
 import { FontScaleSlider } from "./FontScaleSlider"
 
+const FONT_SCALE_SHOWN_WITHOUT_A_VALUE = 1
+
 const toFontScalePercentLabel = (fontScale: number) =>
   `${Math.round(fontScale * 100)}%`
 
@@ -25,7 +27,8 @@ export const FontSizeSection = memo(function FontSizeSection() {
             appliedValue: appliedFontScale,
           } = fontScale.getValuesForScope(scope)
 
-          if (appliedFontScale === undefined) return null
+          const shownFontScale =
+            appliedFontScale ?? FONT_SCALE_SHOWN_WITHOUT_A_VALUE
 
           return (
             <Stack gap={4}>
@@ -36,7 +39,7 @@ export const FontSizeSection = memo(function FontSizeSection() {
                 }) {
                   fontScale.changeValueForScope(
                     scope,
-                    checked === true ? undefined : appliedFontScale,
+                    checked === true ? undefined : shownFontScale,
                   )
                 }}
               >
@@ -48,7 +51,7 @@ export const FontSizeSection = memo(function FontSizeSection() {
                 )}
               </Checkbox>
               <FontScaleSlider
-                fontScale={appliedFontScale}
+                fontScale={shownFontScale}
                 onFontScaleChange={function changeFontScale(changedFontScale) {
                   fontScale.changeValueForScope(scope, changedFontScale)
                 }}
