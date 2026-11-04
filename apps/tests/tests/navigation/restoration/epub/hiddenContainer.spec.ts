@@ -168,3 +168,96 @@ test.describe("Given a reader on a page after the first of its chapter", () => {
     })
   })
 })
+
+/**
+ * A cfi names a place in a chapter's text, which a hidden frame cannot
+ * measure: every node in it measures 0 by 0.
+ */
+test.describe("Given a reader on the first page of a chapter it has loaded", () => {
+  test.describe("when it navigates to a cfi of that chapter while hidden, then is shown", () => {
+    test("should land on the cfi's page, and report it as the reading position", async ({
+      page,
+    }) => {
+      const pageErrors = collectPageErrors(page)
+      const reader = await openChapter(page)
+
+      // The cfi of a page after the first, found while the reader is shown.
+      for (const _ of [1, 2, 3, 4]) {
+        await reader.evaluate((reader) => {
+          reader.navigation.turnRight()
+        })
+        await waitForSettled(page)
+      }
+
+      const target = await reader.evaluate(({ pagination }) => ({
+        cfi: pagination.state.begin.cfi,
+        page: `${pagination.state.begin.spineItemIndex}:${pagination.state.begin.pageIndexInSpineItem}`,
+      }))
+
+      expect(target.page).toBe(`${chapterSpineItemIndex}:4`)
+
+      const targetCfi = target.cfi
+
+      if (!targetCfi) throw new Error("the page has no cfi once settled")
+
+      await reader.evaluate((reader, spineItemIndex) => {
+        reader.navigation.goToSpineItem({
+          indexOrId: spineItemIndex,
+          animation: false,
+        })
+      }, chapterSpineItemIndex)
+      await waitForSettled(page)
+
+      await reader.evaluate(async (reader, cfi) => {
+        const container = document.getElementById("app")
+
+        if (!container) throw new Error("the page has no #app container")
+
+        container.style.display = "none"
+
+        // The browser lays the hidden page out, and reports the container's
+        // new size to its observers, the reader's among them.
+        await new Promise<void>((resolve) => {
+          const observer = new ResizeObserver(([entry]) => {
+            if (entry?.contentRect.width !== 0) return
+
+            observer.disconnect()
+            resolve()
+          })
+
+          observer.observe(container)
+        })
+
+        reader.navigation.goToCfi(cfi)
+      }, targetCfi)
+
+      await reader.evaluate(() => {
+        document.getElementById("app")?.style.removeProperty("display")
+      })
+
+      // The navigation runs once the reader is shown, and lands there.
+      await expect
+        .poll(() =>
+          reader.evaluate(
+            ({ pagination }) =>
+              `${pagination.state.begin.spineItemIndex}:${pagination.state.begin.pageIndexInSpineItem}`,
+          ),
+        )
+        .toBe(target.page)
+      await waitForSettledOnCurrentLayout(page)
+
+      const shown = await reader.evaluate(({ pagination }) => {
+        const { readingPositions } = window as unknown as ScenarioWindow
+
+        return {
+          page: `${pagination.state.begin.spineItemIndex}:${pagination.state.begin.pageIndexInSpineItem}`,
+          readingPosition: readingPositions[readingPositions.length - 1],
+        }
+      })
+
+      expect(shown.page).toBe(target.page)
+      expect(shown.readingPosition?.cfi).toBe(targetCfi)
+      expect(pageErrors).toEqual([])
+    })
+  })
+})
