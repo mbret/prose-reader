@@ -48,6 +48,18 @@ By default (`layoutAutoResize: "container"`) the reader lays itself out again on
 * Make sure the container itself changes size, for example by sizing it relative to the window rather than with a fixed width and height.
 * If you set `layoutAutoResize` to `false`, the reader no longer watches the container, and you need to call `layout()` yourself after changing its size.
 
+## My reader is hidden in a tab or an Activity
+
+You can hide the container the reader is mounted into with `display: none`, as a tab panel that is not selected or a hidden React `<Activity>` does, and keep the reader. Hidden, the container measures 0 by 0, and the reader neither lays out nor loads spine items at that size:
+
+* The pages and the reading position keep the values they had. A layout that was running when the container was hidden runs again once it is shown.
+* A layout asked for while the container is hidden, by a setting such as the font scale or by a chapter that finishes loading, runs once the container is shown again. Until then the pagination is not settled: it describes the layout before the request.
+* A navigation made while the container is hidden takes effect, and the chapters around it load once the container is shown. An HTML chapter, as in an EPUB, still loading when the container is hidden counts as loaded once the container is shown, when its fonts can load.
+* Shown again at the size it had, the container needs no new layout. With `layoutAutoResize: "container"`, the default, a container shown at another size is laid out for it, as for any resize.
+* A reader mounted into a hidden container opens its book once the container is shown. Until then, it has no reading position.
+
+A container with a width but no height, such as one whose height is not set, has no size either, and the reader waits in the same way. [`reader.viewport.isSized$`](/core-api/viewport#issizedusd) tells whether the container has a size.
+
 ## I have a vertical reading book but the first page is using slide turn
 
 Vertical writing books do not support slide turn animation yet however we cannot prevent sliding until we detect the book being vertical. Some vertical books do not indicate whether they are vertical or not in the first cover page nor in the manifest. To prevent this problem you can:

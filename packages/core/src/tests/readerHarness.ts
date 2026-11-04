@@ -66,8 +66,8 @@ export const createPrePaginatedManifest = ({
 const createdReaders: { destroy: () => void }[] = []
 
 /** jsdom has no layout, so element sizes come from here. */
-const defaultViewport = { width: 100, height: 200 }
-let viewport = { ...defaultViewport }
+export const defaultTestViewport = { width: 100, height: 200 }
+let viewport = { ...defaultTestViewport }
 
 /**
  * jsdom has no ResizeObserver. This one never reports on its own: a test calls
@@ -75,17 +75,20 @@ let viewport = { ...defaultViewport }
  * reader does with one is under the test's control.
  */
 const watchingResizeObservers = new Set<TestResizeObserver>()
-let createdResizeObservers = 0
+const createdResizeObservers = new Set<TestResizeObserver>()
 
 class TestResizeObserver {
-  private readonly targets = new Set<Element>()
+  readonly targets = new Set<Element>()
+  /** Every element it has observed, to tell observers apart by target. */
+  readonly observedTargets = new Set<Element>()
 
   constructor(private readonly callback: ResizeObserverCallback) {
-    createdResizeObservers += 1
+    createdResizeObservers.add(this)
   }
 
   observe(target: Element) {
     this.targets.add(target)
+    this.observedTargets.add(target)
     watchingResizeObservers.add(this)
   }
 
@@ -106,11 +109,24 @@ class TestResizeObserver {
   }
 }
 
-/** How many observers were ever created, and how many are observing now. */
-export const resizeObservers = () => ({
-  created: createdResizeObservers,
-  watching: watchingResizeObservers.size,
-})
+/**
+ * How many observers were ever created, and how many are observing now: of
+ * `target` only when given, such as the container, since the viewport is
+ * observed too while a layout waits on its size.
+ */
+export const resizeObservers = (target?: Element) => {
+  const isOfTarget = (targets: Set<Element>) =>
+    target === undefined || targets.has(target)
+
+  return {
+    created: [...createdResizeObservers].filter(({ observedTargets }) =>
+      isOfTarget(observedTargets),
+    ).length,
+    watching: [...watchingResizeObservers].filter(({ targets }) =>
+      isOfTarget(targets),
+    ).length,
+  }
+}
 
 /** Delivers an observation to every observer that is observing something. */
 export const notifyResize = () => {
@@ -404,9 +420,9 @@ export const installReaderTestEnvironment = () => {
     for (const reader of createdReaders.splice(0)) reader.destroy()
     vi.useRealTimers()
     document.getElementById("test-container")?.remove()
-    viewport = { ...defaultViewport }
+    viewport = { ...defaultTestViewport }
     watchingResizeObservers.clear()
-    createdResizeObservers = 0
+    createdResizeObservers.clear()
   })
 }
 

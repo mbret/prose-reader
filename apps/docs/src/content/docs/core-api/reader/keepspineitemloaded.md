@@ -37,7 +37,7 @@ The function that releases the hold:
 
 ## When the document loads
 
-The reader picks the spine items to load after every navigation and every layout, once the viewport is free and the book is laid out. A new hold makes it pick again, so the item loads shortly after the call, not by the time it returns. Before the reader is mounted, it loads once the reader is mounted and laid out.
+The reader picks the spine items to load after every navigation and every layout, once the viewport is free and has a size, and the book is laid out. A new hold makes it pick again, so the item loads shortly after the call, not by the time it returns. Before the reader is mounted, it loads once the reader is mounted and laid out.
 
 Wait for the item before you use what only its loaded document gives: its `isReady$` emits `true` once the document is loaded and laid out.
 

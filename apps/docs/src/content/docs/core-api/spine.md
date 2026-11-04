@@ -76,6 +76,11 @@ updates its state before the pages reach anything else. A newer request
 cancels everything still running for older ones, so the pages published then
 are the ones it asked for. It is `0` until the first pages are published.
 
+A layout runs only while the viewport has a size, see
+[`reader.viewport.isSized$`](/core-api/viewport#issizedusd). A request made
+while its container is hidden waits, and so does `firstItemIndexAwaitingLayout`,
+until the container is shown again.
+
 Read it before you use where a page is, with `.isLayoutCurrent()` or
 `.isLayoutCurrentFor()`: while it is a number, the pages of that item and of the
 ones after it describe the layout before the request. A spine item's place in

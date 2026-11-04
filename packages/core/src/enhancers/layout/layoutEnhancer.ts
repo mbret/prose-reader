@@ -205,7 +205,10 @@ export const layoutEnhancer =
      * observer lives as long as `layoutAutoResize` is on, not as long as the
      * settings object: a new observer reports the size it starts with, which
      * would lay out again at the same size. A report that leaves the viewport
-     * at the size it was laid out at is dropped for the same reason.
+     * at the size it was laid out at is dropped for the same reason, and so is
+     * one of a container with no size, hidden under `display: none` for
+     * example: its layout would wait for a size, and run once the container is
+     * shown again, even at the size it was laid out at.
      */
     const layoutOnContainerResize$ = settings.watch([`layoutAutoResize`]).pipe(
       switchMap(({ layoutAutoResize }) =>
@@ -218,7 +221,7 @@ export const layoutEnhancer =
             )
           : EMPTY,
       ),
-      filter(() => reader.viewport.hasResizedSinceLayout()),
+      filter(() => reader.viewport.hasNewSizeSinceLayout()),
       tap(() => {
         reader.layout()
       }),

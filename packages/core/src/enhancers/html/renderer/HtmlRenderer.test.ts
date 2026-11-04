@@ -249,6 +249,16 @@ const createHarness = ({
     context,
   )
   const viewport = new Viewport(context, settings)
+  // happy-dom lays nothing out: the size a shown container gives the viewport
+  let viewportSize = { width: 100, height: 100 }
+
+  vi.spyOn(viewport.value.element, `clientWidth`, `get`).mockImplementation(
+    () => viewportSize.width,
+  )
+  vi.spyOn(viewport.value.element, `clientHeight`, `get`).mockImplementation(
+    () => viewportSize.height,
+  )
+
   const hookManager = new HookManager()
   const containerElement = document.createElement(`div`)
   let hasFrameLoaded = false
@@ -420,6 +430,11 @@ const createHarness = ({
     waitForSwappedSvgImages,
     waitForLoaded: () =>
       vi.waitFor(() => expect(renderer.value.loadStatus).toBe(`loaded`)),
+    /** Resizes the viewport, and reports it as a browser does once laid out. */
+    resizeViewport: (size: { width: number; height: number }) => {
+      viewportSize = size
+      reportResize()
+    },
     cleanup: () => {
       renderer.destroy()
       viewport.destroy()
@@ -429,6 +444,45 @@ const createHarness = ({
     },
   }
 }
+
+const resizeReports = new Set<() => void>()
+
+/** How many resize observers watch an element, such as the viewport's. */
+const watchingResizeObservers = () => resizeReports.size
+
+const reportResize = () => {
+  for (const report of [...resizeReports]) report()
+}
+
+/** A resize observer that reports only when a test resizes the viewport. */
+class TestResizeObserver {
+  private readonly report: () => void
+
+  constructor(callback: ResizeObserverCallback) {
+    // Cast: the viewport reads no entry, nor the observer it is given.
+    this.report = () => callback([], this as unknown as ResizeObserver)
+  }
+
+  observe() {
+    resizeReports.add(this.report)
+  }
+
+  unobserve() {
+    resizeReports.delete(this.report)
+  }
+
+  disconnect() {
+    resizeReports.delete(this.report)
+  }
+}
+
+beforeAll(() => {
+  vi.stubGlobal(`ResizeObserver`, TestResizeObserver)
+})
+
+afterAll(() => {
+  vi.unstubAllGlobals()
+})
 
 /**
  * happy-dom has no `document.fonts`, which the renderer waits on. Its `ready`
@@ -478,6 +532,32 @@ const setup = (params: Parameters<typeof createHarness>[0]) => {
 }
 
 describe(`HtmlRenderer`, () => {
+  /**
+   * Hidden under `display: none`, the viewport measures 0 by 0, and so does
+   * the frame: the browser requests none of its fonts, which then read as
+   * ready before they arrive.
+   */
+  describe(`given a viewport with no size, as when its container is hidden`, () => {
+    it(`is not loaded until the viewport has a size`, async () => {
+      const { load, resizeViewport, renderer, waitForLoaded } = setup({
+        documentHref: `file://EPUB/chapter.xhtml`,
+        resources: {},
+      })
+
+      resizeViewport({ width: 0, height: 0 })
+      load(documentWith(``))
+
+      // the document waits on the viewport's size
+      await vi.waitFor(() => expect(watchingResizeObservers()).toBe(1))
+
+      expect(renderer.value.loadStatus).toBe(`loading`)
+
+      resizeViewport({ width: 100, height: 100 })
+
+      await waitForLoaded()
+    })
+  })
+
   describe(`given a document with links the browser never fetches`, () => {
     const head = `
       <link rel="stylesheet" href="css/epub.css" />

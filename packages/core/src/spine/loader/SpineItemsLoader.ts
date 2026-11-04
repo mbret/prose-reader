@@ -5,7 +5,6 @@ import {
   debounceTime,
   distinctUntilChanged,
   filter,
-  first,
   map,
   merge,
   type Observable,
@@ -20,6 +19,7 @@ import type { ReaderSettingsManager } from "../../settings/ReaderSettingsManager
 import type { SpineItemReference } from "../../spineItem/SpineItem"
 import { DestroyableClass } from "../../utils/DestroyableClass"
 import { isDefined } from "../../utils/isDefined"
+import { runWhileSized } from "../../viewport/runWhileSized"
 import type { Viewport } from "../../viewport/Viewport"
 import { Spine } from "../Spine"
 import type { SpineItemsManager } from "../SpineItemsManager"
@@ -135,7 +135,13 @@ export class SpineItemsLoader extends DestroyableClass {
       // Dropping pre-mount events is safe: mounting lays the reader out, and
       // the navigation restored onto that layout fires this stream again.
       filter(() => isDefined(this.context.value.rootElement)),
-      switchMap(() => visibleSpineItemsToMeasureFrom$.pipe(first())),
+      /**
+       * A document loaded while the viewport has no size has no layout
+       * either. The items load and unload once the viewport has a size.
+       */
+      switchMap(() =>
+        runWhileSized(this.viewport, visibleSpineItemsToMeasureFrom$),
+      ),
       withLatestFrom(heldSpineItemIndexes$),
       map(([{ beginIndex, endIndex }, heldSpineItemIndexes]) => {
         const { numberOfAdjacentSpineItemToPreLoad } = settings.values
