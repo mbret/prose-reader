@@ -1,7 +1,11 @@
 import { expect, type Page, test } from "@playwright/test"
 import type { ReadingPosition } from "@prose-reader/core"
 import { navigateToSpineItem } from "../../../utils"
-import { resizeAndSettle, waitForSettled } from "../../../utils/pagination"
+import {
+  nextRestoration,
+  resizeAndSettle,
+  waitForSettled,
+} from "../../../utils/pagination"
 import { getReader } from "../../../utils/reader"
 import { isCfiPositionVisible } from "../../../utils/visibility"
 
@@ -504,6 +508,54 @@ test.describe("Given a page reached by turning pages", () => {
     expect(restored.cfi).toBe(position.cfi)
     expect(restored.readingPosition).toBe(position.cfi)
     expect(restored.readingProgression).toBe(position.readingProgression)
+  })
+
+  /**
+   * Restoration resolves a page's anchor after every layout, since a layout
+   * can move text to another page and keep the chapter's size. The anchor is
+   * the first character of the page turned to, so a layout that changes
+   * nothing must find it on that page, whichever page of the chapter it is.
+   */
+  test("a layout that changes nothing keeps each page of a chapter", async ({
+    page,
+  }) => {
+    const chapterIndex = await getLongChapterIndex(page)
+    const reader = await getReader(page)
+
+    await navigateToSpineItem({ page, index: chapterIndex })
+    await waitForSettled(page)
+
+    const { numberOfPages } = await readPosition(page)
+
+    expect(numberOfPages).toBeGreaterThan(2)
+
+    for (let pageIndex = 1; pageIndex < numberOfPages; pageIndex++) {
+      await reader.evaluate((reader) => {
+        reader.navigation.turnRight()
+      })
+      await waitForSettled(page)
+
+      const turned = await readPosition(page)
+
+      expect(turned).toMatchObject({ spineItemIndex: chapterIndex, pageIndex })
+      expect(turned.isRootCfi).toBe(false)
+
+      const restored = await nextRestoration(page)
+
+      await reader.evaluate((reader) => {
+        reader.layout()
+      })
+      await restored()
+
+      expect(
+        await readPosition(page),
+        `page ${pageIndex} once laid out again`,
+      ).toMatchObject({
+        spineItemIndex: chapterIndex,
+        pageIndex,
+        readingPosition: turned.cfi,
+      })
+    }
   })
 
   test("the reading position saved at another size reopens the book on the same page", async ({

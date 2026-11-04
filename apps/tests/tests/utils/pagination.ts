@@ -119,3 +119,63 @@ export const resizeAndSettle = async (
 
   await pendingSettlement.evaluate(({ settled }) => settled)
 }
+
+/**
+ * Arms a wait for the next restoration, and returns it. Call it before the
+ * action that lays the reader out, then await what it returns: it resolves
+ * once a layout has voided the current navigation and the reader has restored
+ * it onto the new pages, and its result has settled.
+ *
+ * Restoration can land where the navigation already was, so nothing on screen
+ * tells when it happened. A layout that changes nothing is one such case.
+ */
+export const nextRestoration = async (page: Page) => {
+  const reader = await getReader(page)
+
+  // Wrapped in an object, so that the handle comes back with the wait still
+  // pending: a promise returned as is would be awaited before the action.
+  const pendingRestoration = await reader.evaluateHandle((reader) => {
+    const restored = new Promise<void>((resolve, reject) => {
+      let replaying = true
+      let isVoided = false
+      const timer = setTimeout(
+        () =>
+          reject(
+            new Error(
+              isVoided
+                ? "the navigation was not restored onto the new layout within 10s"
+                : "no layout voided the navigation within 10s",
+            ),
+          ),
+        10_000,
+      )
+      const subscription =
+        reader.navigation.navigationAgainstCurrentLayout$.subscribe(
+          ({ navigation, holdsOnCurrentLayout }) => {
+            // The current value, replayed on subscribe, predates the action.
+            if (replaying) return
+
+            if (!holdsOnCurrentLayout) {
+              isVoided = true
+
+              return
+            }
+
+            if (!isVoided || navigation.triggeredBy !== "restoration") return
+
+            subscription.unsubscribe()
+            clearTimeout(timer)
+            resolve()
+          },
+        )
+      replaying = false
+    })
+
+    return { restored }
+  })
+
+  return async () => {
+    await pendingRestoration.evaluate(({ restored }) => restored)
+    await waitForSettled(page)
+  }
+}
