@@ -25,13 +25,18 @@ import { restoreNavigationForControlledPageTurnMode } from "./restoreNavigationF
 
 /**
  * Two items of two pages each, in a viewport 50 wide and 100 high: an item is
- * 100 by 100, laid out side by side. No document loads, so the first item's
- * readiness is set.
+ * 100 by 100, laid out side by side. No document loads, so what the first
+ * item's document would tell is set: its readiness and how its text is
+ * written.
  */
 const createLaidOutTwoPageItems = async ({
   isFirstItemReady = false,
+  firstItemReadingDirection = "ltr",
+  isFirstItemUsingVerticalWriting = false,
 }: {
   isFirstItemReady?: boolean
+  firstItemReadingDirection?: "ltr" | "rtl"
+  isFirstItemUsingVerticalWriting?: boolean
 } = {}) => {
   const context = new Context(
     createTestManifest({
@@ -85,6 +90,12 @@ const createLaidOutTwoPageItems = async ({
   if (!firstItem) throw new Error("the manifest has no first item")
 
   vi.spyOn(firstItem, "isReady$", "get").mockReturnValue(of(isFirstItemReady))
+  vi.spyOn(firstItem, "readingDirection", "get").mockReturnValue(
+    firstItemReadingDirection,
+  )
+  vi.spyOn(firstItem, "isUsingVerticalWriting").mockReturnValue(
+    isFirstItemUsingVerticalWriting,
+  )
 
   const restore = (
     navigation: InternalNavigationEntry & NavigationConsolidation,
@@ -147,23 +158,35 @@ describe(`Given a backward navigation to a new item`, () => {
 describe(`Given a navigation on the second page of an item whose size did not change`, () => {
   const restoreWithAnchorNowOnFirstPage = async (
     anchor: Pick<InternalNavigationAnchor, "cfi" | "isPageElement">,
-    { isItemReady = true }: { isItemReady?: boolean } = {},
+    {
+      isItemReady = true,
+      readingDirection,
+      isUsingVerticalWriting,
+      spineItemWidthAtNavigation = 100,
+    }: {
+      isItemReady?: boolean
+      readingDirection?: "ltr" | "rtl"
+      isUsingVerticalWriting?: boolean
+      spineItemWidthAtNavigation?: number
+    } = {},
   ) => {
     const { navigationResolver, restore } = await createLaidOutTwoPageItems({
       isFirstItemReady: isItemReady,
+      firstItemReadingDirection: readingDirection,
+      isFirstItemUsingVerticalWriting: isUsingVerticalWriting,
     })
 
-    vi.spyOn(navigationResolver, "getNavigationForCfi").mockReturnValue(
-      new SpinePosition({ x: 0, y: 0 }),
-    )
+    const getNavigationForCfi = vi
+      .spyOn(navigationResolver, "getNavigationForCfi")
+      .mockReturnValue(new SpinePosition({ x: 0, y: 0 }))
 
-    return restore({
+    const position = await restore({
       target: { type: "cfi", value: anchor.cfi },
       position: new SpinePosition({ x: 50, y: 0 }),
       requestedPosition: new SpinePosition({ x: 50, y: 0 }),
       positionInSpineItem: new SpineItemPosition({ x: 50, y: 0 }),
       spineItem: 0,
-      spineItemWidth: 100,
+      spineItemWidth: spineItemWidthAtNavigation,
       spineItemHeight: 100,
       spineItemLeft: 0,
       spineItemTop: 0,
@@ -174,6 +197,11 @@ describe(`Given a navigation on the second page of an item whose size did not ch
       type: `api`,
       id: Symbol(),
     })
+
+    return {
+      position,
+      isAnchorResolved: getNavigationForCfi.mock.calls.length > 0,
+    }
   }
 
   it.each([
@@ -181,25 +209,63 @@ describe(`Given a navigation on the second page of an item whose size did not ch
     { anchor: "the element a target names", cfi: "epubcfi(/6/2!/4/2:0)" },
   ])(`restores to the page holding $anchor now`, async ({ cfi }) => {
     expect(
-      await restoreWithAnchorNowOnFirstPage({ cfi, isPageElement: false }),
+      (await restoreWithAnchorNowOnFirstPage({ cfi, isPageElement: false }))
+        .position,
     ).toMatchObject(new SpinePosition({ x: 0, y: 0 }))
   })
 
   it(`keeps its page when its anchor is an element of the page, which can start on the page before`, async () => {
     expect(
-      await restoreWithAnchorNowOnFirstPage({
-        cfi: "epubcfi(/6/2!/4/2:0)",
-        isPageElement: true,
-      }),
+      (
+        await restoreWithAnchorNowOnFirstPage({
+          cfi: "epubcfi(/6/2!/4/2:0)",
+          isPageElement: true,
+        })
+      ).position,
     ).toMatchObject(new SpinePosition({ x: 50, y: 0 }))
   })
 
+  it(`restores an anchor that is an element of the page once the item resized`, async () => {
+    expect(
+      (
+        await restoreWithAnchorNowOnFirstPage(
+          { cfi: "epubcfi(/6/2!/4/2:0)", isPageElement: true },
+          { spineItemWidthAtNavigation: 150 },
+        )
+      ).position,
+    ).toMatchObject(new SpinePosition({ x: 0, y: 0 }))
+  })
+
+  /**
+   * The reader cannot tell which page of such an item a node is on: in
+   * vertical writing it knows only the first, and right to left it finds the
+   * last page the node's text reaches. The items here are laid out side by
+   * side, as a vertical item is not, so the test checks that the anchor is
+   * not resolved rather than where the reader lands.
+   */
+  it.each([
+    { writing: "right to left", options: { readingDirection: "rtl" as const } },
+    { writing: "vertically", options: { isUsingVerticalWriting: true } },
+  ])(
+    `does not resolve its anchor in an item written $writing`,
+    async ({ options }) => {
+      const { isAnchorResolved } = await restoreWithAnchorNowOnFirstPage(
+        { cfi: "epubcfi(/6/2!/4/2/1:12)", isPageElement: false },
+        options,
+      )
+
+      expect(isAnchorResolved).toBe(false)
+    },
+  )
+
   it(`keeps its page while the item's document is not ready, which holds no anchor to find`, async () => {
     expect(
-      await restoreWithAnchorNowOnFirstPage(
-        { cfi: "epubcfi(/6/2!/4/2/1:12)", isPageElement: false },
-        { isItemReady: false },
-      ),
+      (
+        await restoreWithAnchorNowOnFirstPage(
+          { cfi: "epubcfi(/6/2!/4/2/1:12)", isPageElement: false },
+          { isItemReady: false },
+        )
+      ).position,
     ).toMatchObject(new SpinePosition({ x: 50, y: 0 }))
   })
 })

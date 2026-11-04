@@ -50,12 +50,21 @@ export const restoreNavigationForControlledPageTurnMode = ({
         spineItemWidthDifference !== 0 || spineItemHeighDifference !== 0
 
       /**
-       * Whether the item's pages can have moved since the navigation: its size
-       * changed, or its document became ready, which can move its elements
-       * without changing its size.
+       * The item's size changed, or its document became ready, which can move
+       * its elements without changing its size, since the navigation.
        */
-      const hasSpineItemChanged =
+      const hasSpineItemResizedOrBecameReady =
         hasSpineItemGrewOrShrink || (isReady && !navigation.spineItemIsReady)
+
+      /**
+       * Whether the reader can tell which page of this item a node is on. In
+       * vertical writing it knows no page but the first. Right to left, it
+       * measures the leftmost box of the node's text, on the last page that
+       * text reaches.
+       */
+      const canFindPageOfNode =
+        !spineItem.isUsingVerticalWriting() &&
+        spineItem.readingDirection === "ltr"
 
       const { anchor } = navigation
 
@@ -67,9 +76,13 @@ export const restoreNavigationForControlledPageTurnMode = ({
        * layout. A layout can move a reflowable item's text to another page and
        * keep the item's size, as a smaller font that keeps the page count does.
        *
-       * An anchor that is an element of the page is resolved only when the item
-       * changed. The element can start on an earlier page, and resolving it
-       * after every layout would take the reader back to that page.
+       * In two cases the anchor is resolved only once the item resized or
+       * became ready:
+       * - An anchor that is an element of the page can start on an earlier
+       *   page. Resolving it after every layout would take the reader back to
+       *   that page.
+       * - In an item where the reader cannot tell a node's page, resolving the
+       *   anchor would take the reader to another page.
        *
        * A cfi naming only its item names no place to return to: a stand-in's,
        * or a page's that shows no node. It resolves to the item's start, which
@@ -79,7 +92,8 @@ export const restoreNavigationForControlledPageTurnMode = ({
       if (
         anchor &&
         !cfiManager.isRootCfi(anchor.cfi) &&
-        ((isReady && !anchor.isPageElement) || hasSpineItemChanged)
+        ((isReady && canFindPageOfNode && !anchor.isPageElement) ||
+          hasSpineItemResizedOrBecameReady)
       ) {
         const cfiResultPosition = navigationResolver.getNavigationForCfi(
           anchor.cfi,

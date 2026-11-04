@@ -145,8 +145,8 @@ export type ReadingPosition = {
    *   found, moves it to that place once its item's document shows it there,
    *   before the page holding it is laid out.
    * - `success`: the place the target names, or otherwise the first character
-   *   of the page the navigation lands on, and where the page holding it
-   *   starts.
+   *   of the page the navigation lands on, or the element that page starts
+   *   with when no text does, and where the page holding it starts.
    * - `error`: the spine item the navigation goes to failed to load, so no
    *   place in it can be found. `cfi` is what the reader knew by then: that
    *   item's start, or the place the target names.
@@ -166,8 +166,9 @@ export type ReadingPosition = {
  *   what a selector found, once its item's document shows it there. The page
  *   holding it is not laid out yet.
  * - `final`: the place the target names, or otherwise the first character of
- *   the page the navigation lands on, and where the page holding it starts. It
- *   stays until the next navigation.
+ *   the page the navigation lands on, or the element that page starts with
+ *   when no text does, and where the page holding it starts. It stays until
+ *   the next navigation.
  * - `error`: the spine item the navigation goes to failed to load while the
  *   anchor stood in or was the target's place, which it keeps. It stays until
  *   the next navigation.
