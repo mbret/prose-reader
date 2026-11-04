@@ -23,6 +23,7 @@ import type { ReaderSettingsManager } from "../settings/ReaderSettingsManager"
 import type { DocumentLoadStatus } from "../spineItem/renderer/DocumentRenderer"
 import type { SpineItem } from "../spineItem/SpineItem"
 import { DestroyableClass } from "../utils/DestroyableClass"
+import { runWhileSized } from "../viewport/runWhileSized"
 import type { Viewport } from "../viewport/Viewport"
 import type { SpineItemsManager } from "./SpineItemsManager"
 import type { SpineItemsObserver } from "./SpineItemsObserver"
@@ -265,7 +266,17 @@ export class SpineLayout extends DestroyableClass {
       ? of(undefined)
       : timer(50)
 
-    const laidOut$ = defer(() => {
+    /**
+     * A pass runs while the viewport has a size. Hidden, the viewport measures
+     * 0 by 0 and the items' documents have no layout, so a pass would put
+     * every item at the start of the spine and the reader on its first page.
+     * If the viewport loses its size during a pass, the pass stops, and starts
+     * again from the measurement once the viewport has a size again.
+     */
+    const layOutWhileSized = (): Observable<readonly LaidOutSpineItem[]> =>
+      runWhileSized(this.viewport, pass$)
+
+    const pass$: Observable<readonly LaidOutSpineItem[]> = defer(() => {
       if (measuresViewport) this.viewport.layout()
 
       this.spineItemsManager.items
@@ -276,7 +287,19 @@ export class SpineLayout extends DestroyableClass {
 
       return wait$
     }).pipe(
-      switchMap(() => this.layOutItems(keptItems)),
+      /**
+       * The browser reports a hide at its next rendering update, which can
+       * come after the wait. A pass that finds no size here starts again on a
+       * new subscription, which measures the viewport, and observes it afresh.
+       */
+      switchMap(() =>
+        this.viewport.hasSize()
+          ? this.layOutItems(keptItems)
+          : layOutWhileSized(),
+      ),
+    )
+
+    const laidOut$ = layOutWhileSized().pipe(
       map(
         (laidOutItems): SpineLayoutState => ({
           stage: "laidOut",

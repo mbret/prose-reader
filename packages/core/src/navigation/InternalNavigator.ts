@@ -316,6 +316,30 @@ export class InternalNavigator extends DestroyableClass {
       share(),
     )
 
+    /**
+     * Whether the viewport has a size, from one observer for the navigator's
+     * life: a pan navigates on every pointer move, and measuring the viewport
+     * each time would force a style and layout pass each time.
+     */
+    const isViewportSized$ = viewport.isSized$.pipe(
+      shareReplay({ bufferSize: 1, refCount: false }),
+    )
+
+    /**
+     * A navigation asked for while the viewport has no size, its container
+     * hidden, waits for one: a target such as a cfi names a place in a
+     * document, which a hidden frame cannot measure. The latest one replaces
+     * the ones before it.
+     */
+    const userNavigationWhileSized$ = userNavigationInBook$.pipe(
+      switchMap((navigation) =>
+        isViewportSized$.pipe(
+          first((isSized) => isSized),
+          map(() => navigation),
+        ),
+      ),
+    )
+
     const startOfBook: NavigationTarget = {
       type: "position",
       value: new SpinePosition({ x: 0, y: 0 }),
@@ -351,7 +375,10 @@ export class InternalNavigator extends DestroyableClass {
       takeUntil(userNavigationInBook$),
     )
 
-    const navigationFromUser$ = merge(firstNavigation$, userNavigationInBook$)
+    const navigationFromUser$ = merge(
+      firstNavigation$,
+      userNavigationWhileSized$,
+    )
       .pipe(
         withLatestFrom(this.navigationSubject, isNavigationLocked$),
         mapUserNavigationToInternal,

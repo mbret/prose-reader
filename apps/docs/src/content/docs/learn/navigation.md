@@ -141,7 +141,8 @@ target [`navigate`](/core-api/navigation) does. Without it, the reader
 opens at the start of the book. The reader goes there once its chapters are
 first laid out, with every enhancer in place, so the reading position never
 passes through the start of the book on the way, and a saved position is never
-overwritten by the cover.
+overwritten by the cover. Mounted into a hidden container, the reader lays the
+book out, and goes there, once the container is shown.
 
 A saved position can go stale when the book changes, or get corrupted. One
 that names nothing in the book opens it at its start, as without a target. One

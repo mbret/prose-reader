@@ -1,4 +1,13 @@
-import { Subject } from "rxjs"
+import {
+  defer,
+  distinctUntilChanged,
+  EMPTY,
+  map,
+  type Observable,
+  Subject,
+  startWith,
+  takeUntil,
+} from "rxjs"
 import {
   CSS_VAR_ABSOLUTE_VIEWPORT_HEIGHT,
   CSS_VAR_ABSOLUTE_VIEWPORT_WIDTH,
@@ -7,11 +16,13 @@ import {
 import type { Context } from "../context/Context"
 import type { ReaderSettingsManager } from "../settings/ReaderSettingsManager"
 import type { SpinePosition, UnboundSpinePosition } from "../spine/types"
+import { getRenderedScale } from "../utils/coordinates"
 import {
   removeStylePropertyIfPresent,
   setStylePropertyIfChanged,
 } from "../utils/dom"
 import { ReactiveEntity } from "../utils/ReactiveEntity"
+import { observeResize } from "../utils/rxjs"
 import { shouldUseSpreadModeForViewport } from "./spreadMode"
 import {
   AbsoluteViewport,
@@ -47,6 +58,15 @@ type State = {
   height: number
 }
 
+/** Whether a measured size has a width and a height to lay the book out at. */
+const isSizeToLayOutAt = ({
+  width,
+  height,
+}: {
+  width: number
+  height: number
+}) => width > 0 && height > 0
+
 export class Viewport extends ReactiveEntity<State> {
   private layoutSubject = new Subject<void>()
   /** Emits after the viewport is measured for a layout. */
@@ -80,15 +100,47 @@ export class Viewport extends ReactiveEntity<State> {
   }
 
   /**
-   * Whether the element no longer has the size of the last layout, so that
-   * laying out again would change anything. It measures the element, which
-   * costs a style and layout pass when the DOM is dirty.
+   * Whether the element has a width and a height to lay the book out at.
+   * Hidden, as under `display: none`, or out of the document, it measures 0
+   * by 0. It measures the element, which costs a style and layout pass when
+   * the DOM is dirty.
    */
-  public hasResizedSinceLayout() {
-    const { width, height } = this.measure()
-
-    return width !== this.value.width || height !== this.value.height
+  public hasSize() {
+    return isSizeToLayOutAt(this.measure())
   }
+
+  /**
+   * Whether the element has a size, and not the one of the last layout, so
+   * that laying out again would change anything. A resize to no size changes
+   * nothing: no layout runs until the element has a size again. It measures
+   * the element, which costs a style and layout pass when the DOM is dirty.
+   */
+  public hasNewSizeSinceLayout() {
+    const size = this.measure()
+
+    return (
+      isSizeToLayOutAt(size) &&
+      (size.width !== this.value.width || size.height !== this.value.height)
+    )
+  }
+
+  /**
+   * Whether the element has a size, measured as soon as you subscribe, then
+   * each time a resize changes it, as when its container is hidden or shown.
+   * Each subscriber observes the element with its own observer, whose first
+   * report gives the size as it is then. It completes when the reader is
+   * destroyed, at once for a subscriber that comes after.
+   */
+  public readonly isSized$: Observable<boolean> = defer(() =>
+    this.isDestroyed
+      ? EMPTY
+      : observeResize(this.value.element).pipe(
+          map(() => this.hasSize()),
+          startWith(this.hasSize()),
+          distinctUntilChanged(),
+          takeUntil(this.destroy$),
+        ),
+  )
 
   private syncAbsoluteViewportCssVariables(layout: {
     width: number
@@ -120,10 +172,11 @@ export class Viewport extends ReactiveEntity<State> {
   /**
    * Measures the viewport for a reader layout, and decides from that size and
    * the `spreadMode` setting whether it shows a spread. The spine's layout pass
-   * calls this first, since everything it lays out depends on the viewport's
-   * size. Nothing else should: the size recorded here has to stay the one the
-   * items were laid out for, which is how a resize is told apart from a report
-   * of the same size. It is one-way and never requests a reader layout itself.
+   * calls this first, while the element has a size, since everything it lays
+   * out depends on the viewport's size. Nothing else should: the size recorded
+   * here has to stay the one the items were laid out for, which is how a
+   * resize is told apart from a report of the same size. It is one-way and
+   * never requests a reader layout itself.
    */
   public layout() {
     const size = this.measure()
@@ -179,18 +232,11 @@ export class Viewport extends ReactiveEntity<State> {
   }
 
   /** The scale the element is rendered at, given its rendered box. */
-  private getScaleOfRenderedBox(renderedBox: DOMRect | undefined) {
-    const layoutWidth = this.value.element.clientWidth
-
-    if (!layoutWidth) return 1
-
-    // Fall back to no-zoom (`1`) when the rendered rect is unavailable
-    // (detached element, `display: none`, jsdom). A 0-width rect would
-    // otherwise yield a 0 scale and propagate `Infinity` through every
-    // consumer that divides by `scaleFactor` (e.g. spine-coord clamping).
-    const measuredWidth = renderedBox?.width || layoutWidth
-
-    return measuredWidth / layoutWidth
+  private getScaleOfRenderedBox(renderedBox: DOMRect) {
+    return getRenderedScale({
+      renderedSize: renderedBox.width,
+      layoutSize: this.value.element.clientWidth,
+    })
   }
 
   /**
