@@ -1,5 +1,5 @@
-import { useCallback, useEffect } from "react"
-import { useLiveRef, useSubscribe } from "reactjrx"
+import { useEffect } from "react"
+import { useLiveRef } from "reactjrx"
 import { distinctUntilChanged, filter, map } from "rxjs"
 import { useReader } from "../context/useReader"
 import {
@@ -62,9 +62,9 @@ export const useSyncReaderSettingWithManagedValue = <
     [reader, name, valueInEffect],
   )
 
-  const adoptValuesTheReaderTakes = useCallback(
+  useEffect(
     function adoptValuesTheReaderTakes() {
-      return reader?.settings.values$
+      const subscription = reader?.settings.values$
         .pipe(
           map((settings) => settings[name]),
           distinctUntilChanged(),
@@ -100,9 +100,11 @@ export const useSyncReaderSettingWithManagedValue = <
             uncontrolledSettings: { ...old.uncontrolledSettings, ...changes },
           }))
         })
+
+      return function stopAdoptingValuesTheReaderTakes() {
+        subscription?.unsubscribe()
+      }
     },
     [reader, name, context, valueInEffectRef],
   )
-
-  useSubscribe(adoptValuesTheReaderTakes)
 }
