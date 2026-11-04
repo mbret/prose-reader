@@ -38,14 +38,16 @@ export abstract class SettingsManager<
 {
   protected inputSettings: InputSettings
   protected outputSettings?: InputSettings & ComputedSettings
+  private declaredDefaults: InputSettings
   private outputSettingsUpdateSubject: Subject<InputSettings & ComputedSettings>
   private outputSettings$: Observable<InputSettings & ComputedSettings>
 
   constructor(initialSettings: Partial<InputSettings>) {
     super()
 
+    this.declaredDefaults = this.getDefaultSettings()
     this.inputSettings = mergeDefinedValuesIntoDeclaredSettings<InputSettings>(
-      this.getDefaultSettings(),
+      this.declaredDefaults,
       initialSettings,
     )
     this.outputSettingsUpdateSubject = new Subject()
@@ -90,7 +92,7 @@ export abstract class SettingsManager<
     inputSettings: InputSettings,
   ): ComputedSettings
 
-  abstract getDefaultSettings(): SettingsDefaults<InputSettings>
+  protected abstract getDefaultSettings(): SettingsDefaults<InputSettings>
 
   /**
    * Computes the settings again, for a computed setting that also depends on
@@ -118,7 +120,7 @@ export abstract class SettingsManager<
     settings: Partial<AddedSettings>,
   ): ExtendedSettings<Self, AddedSettings> {
     const alreadyDeclaredSetting = Object.keys(defaults).find((key) =>
-      Object.hasOwn(this.inputSettings, key),
+      Object.hasOwn(this.declaredDefaults, key),
     )
 
     if (alreadyDeclaredSetting !== undefined) {
@@ -127,6 +129,7 @@ export abstract class SettingsManager<
       )
     }
 
+    this.declaredDefaults = { ...this.declaredDefaults, ...defaults }
     this.commit({
       ...this.inputSettings,
       ...mergeDefinedValuesIntoDeclaredSettings<AddedSettings>(
@@ -138,6 +141,10 @@ export abstract class SettingsManager<
     // Cast: these settings now hold the added ones too, a change of type that
     // TypeScript cannot follow on `this`.
     return this as unknown as ExtendedSettings<Self, AddedSettings>
+  }
+
+  get defaults(): Readonly<InputSettings> {
+    return this.declaredDefaults
   }
 
   get values() {

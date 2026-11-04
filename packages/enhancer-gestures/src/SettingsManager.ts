@@ -35,7 +35,7 @@ export class GesturesSettingsManager extends SettingsManager<
     }
   }
 
-  getDefaultSettings(): InputSettings {
+  protected getDefaultSettings(): InputSettings {
     return {
       panNavigation: "pan",
       pinchCancelPan: true,

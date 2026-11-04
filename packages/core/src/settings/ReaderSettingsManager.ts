@@ -78,7 +78,7 @@ export class ReaderSettingsManager
     return computedSettings
   }
 
-  getDefaultSettings() {
+  protected getDefaultSettings() {
     return {
       spreadMode: `auto` as const,
       pageTurnAnimation: `slide`,
