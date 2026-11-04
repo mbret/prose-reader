@@ -187,8 +187,7 @@ export class SpineItem extends ReactiveEntity<SpineItemState> {
 
   /**
    * Whether the item's document is loaded and laid out: true from the first
-   * layout after the document loads, until it unloads. A later layout leaves
-   * it true.
+   * layout after the document loads, until it unloads.
    */
   public get isReady$() {
     return this.watch(`isReady`)
