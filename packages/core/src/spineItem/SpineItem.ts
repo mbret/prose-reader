@@ -186,8 +186,9 @@ export class SpineItem extends ReactiveEntity<SpineItemState> {
   }
 
   /**
-   * Renderer loaded + spine item layout done
-   * Will switch back and forth every new layout.
+   * Whether the item's document is loaded and laid out: true from the first
+   * layout after the document loads, until it unloads. A later layout leaves
+   * it true.
    */
   public get isReady$() {
     return this.watch(`isReady`)
