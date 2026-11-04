@@ -10,7 +10,7 @@ import {
   useState,
 } from "react"
 import { useLocation, useNavigate, useParams } from "react-router"
-import { signal, useSignalState, useSignalValue } from "reactjrx"
+import { signal, useObserve, useSignalState, useSignalValue } from "reactjrx"
 import { useDocumentTitle } from "../useDocumentTitle"
 import { useServiceWorkerReady } from "../useServiceWorkerReady"
 import { restoreAnnotations, usePersistAnnotations } from "./annotations"
@@ -40,6 +40,7 @@ const ReaderScreenView = memo(function ReaderScreenView({
   const waitingForServiceWorker =
     !isClientStreamedBook(epubKey) && !serviceWorkerReady
   const [localSettings, setLocalSettings] = useSettings()
+  const { data: isReaderMounted } = useObserve(() => reader?.mounted$, [reader])
 
   useUpdateReaderSettings({ localSettings })
   usePersistReadingPosition(epubKey)
@@ -47,8 +48,11 @@ const ReaderScreenView = memo(function ReaderScreenView({
 
   useEffect(
     function exposeReaderForDebugging() {
-      // @ts-expect-error expose the reader in the console for debugging
       window.reader = reader
+
+      return function hideReaderFromConsole() {
+        window.reader = undefined
+      }
     },
     [reader],
   )
@@ -56,7 +60,7 @@ const ReaderScreenView = memo(function ReaderScreenView({
   return (
     <>
       {hasManifestError && <BookError url={epubKey} />}
-      {!reader && !hasManifestError && (
+      {!isReaderMounted && !hasManifestError && (
         <BookLoading waitingForServiceWorker={waitingForServiceWorker} />
       )}
       <MenuDialog
@@ -140,7 +144,6 @@ export const ReaderScreen = memo(() => {
     <>
       {/* React hoists it into the head: the books the demo opens stay out of search results */}
       <meta name="robots" content="noindex" />
-      {/* not wrapping the reader within for now since hot reload break the reader container */}
       <ReactReader
         onItemClick={onItemClick}
         reader={reader}
