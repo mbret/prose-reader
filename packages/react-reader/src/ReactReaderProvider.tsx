@@ -28,9 +28,7 @@ export type ReactReaderProviderProps = ProviderContextType & {
 
 /**
  * Holds the reader and the settings react-reader manages, and renders nothing
- * itself. Render it above `ReactReader`, the view, and above whatever hides
- * the view. Hiding the provider, in an `<Activity>` for example, destroys the
- * reader. Hiding `ReactReader` keeps it.
+ * itself. Render it above `ReactReader`, the view.
  */
 export function ReactReaderProvider({
   createReader,
@@ -39,9 +37,11 @@ export function ReactReaderProvider({
 }: ReactReaderProviderProps) {
   return (
     <ReaderContextProvider {...props}>
-      <ReaderLifecycle createReader={createReader} />
       <ReaderEffects />
       {children}
+      {/* After the view: an <Activity> showing both again runs the view's
+      effect first, which lends its element back before the reader is created. */}
+      <ReaderLifecycle createReader={createReader} />
     </ReaderContextProvider>
   )
 }
