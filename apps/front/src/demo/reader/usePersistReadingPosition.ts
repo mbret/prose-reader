@@ -1,6 +1,6 @@
+import { useReader } from "@prose-reader/react-reader"
 import { useCallback } from "react"
 import { useSubscribe } from "reactjrx"
-import { useReader } from "./useReader"
 
 export const getReadingPositionKey = (bookKey: string) =>
   `book-${bookKey}-reading-position`
@@ -12,7 +12,7 @@ export const getReadingPositionKey = (bookKey: string) =>
  * page back after a rotation.
  */
 export const usePersistReadingPosition = (bookKey: string) => {
-  const { reader } = useReader()
+  const reader = useReader()
 
   const persistReadingPosition = useCallback(
     () =>

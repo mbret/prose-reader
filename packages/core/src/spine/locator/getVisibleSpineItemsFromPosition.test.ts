@@ -72,14 +72,14 @@ const createTestEnvironment = () => {
     })
   })
 
-  return { settings, spineItemsManager, spineLayout, viewport }
+  return { spineItemsManager, spineLayout, viewport }
 }
 
 describe("Given single page items and no spread", () => {
   describe("when position is in half of the first item", () => {
     describe("and threshold of 0.51", () => {
       it("should not recognize second item", () => {
-        const { settings, spineItemsManager, spineLayout, viewport } =
+        const { spineItemsManager, spineLayout, viewport } =
           createTestEnvironment()
 
         spineLayout.layout()
@@ -87,7 +87,6 @@ describe("Given single page items and no spread", () => {
         const { beginIndex, endIndex } =
           getVisibleSpineItemsFromPosition({
             position: new SpinePosition({ x: 50, y: 0 }),
-            settings,
             // biome-ignore lint/suspicious/noExplicitAny: TODO
             spineItemsManager: spineItemsManager as any,
             threshold: { type: "percentage", value: 0.51 },
@@ -103,7 +102,7 @@ describe("Given single page items and no spread", () => {
 
     describe("and threshold of 0.50", () => {
       it("should not recognize second item", () => {
-        const { settings, spineItemsManager, spineLayout, viewport } =
+        const { spineItemsManager, spineLayout, viewport } =
           createTestEnvironment()
 
         spineLayout.layout()
@@ -111,7 +110,6 @@ describe("Given single page items and no spread", () => {
         const { beginIndex, endIndex } =
           getVisibleSpineItemsFromPosition({
             position: new SpinePosition({ x: 50, y: 0 }),
-            settings,
             // biome-ignore lint/suspicious/noExplicitAny: TODO
             spineItemsManager: spineItemsManager as any,
             threshold: { type: "percentage", value: 0.5 },
@@ -127,7 +125,7 @@ describe("Given single page items and no spread", () => {
 
     describe("and threshold of 0.49", () => {
       it("should recognize second item", async () => {
-        const { settings, spineItemsManager, spineLayout, viewport } =
+        const { spineItemsManager, spineLayout, viewport } =
           createTestEnvironment()
 
         spineLayout.layout()
@@ -137,7 +135,6 @@ describe("Given single page items and no spread", () => {
         const { beginIndex, endIndex } =
           getVisibleSpineItemsFromPosition({
             position: new SpinePosition({ x: 50, y: 0 }),
-            settings,
             // biome-ignore lint/suspicious/noExplicitAny: TODO
             spineItemsManager: spineItemsManager as any,
             threshold: { type: "percentage", value: 0.49 },

@@ -1,15 +1,15 @@
 import { Fieldset } from "@chakra-ui/react"
+import { useReader } from "@prose-reader/react-reader"
 import { Field } from "../components/ui/field"
 import {
   NumberInputField,
   NumberInputRoot,
 } from "../components/ui/number-input"
 import { useReaderSettings } from "../reader/settings/useReaderSettings"
-import { useReader } from "../reader/useReader"
 
 export const OtherSettings = () => {
   const settings = useReaderSettings()
-  const { reader } = useReader()
+  const reader = useReader()
 
   return (
     <Fieldset.Root>

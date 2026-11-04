@@ -12,7 +12,7 @@ See [Conventional Commits](https://conventionalcommits.org) for commit guideline
   over either must handle them. An untyped `urn:uuid:` or bare UUID now
   resolves to `UUID` rather than `Unknown` (or, for some, `ISBN` or
   `GTIN`), any other untyped URN to `URN`, and `urn:isbn:` to `ISBN`
-  whether or not its value is a valid ISBN.
+  when its value is a valid ISBN, `URN` otherwise.
 
 ### Bug Fixes
 

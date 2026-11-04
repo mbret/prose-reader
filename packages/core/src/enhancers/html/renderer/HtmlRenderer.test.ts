@@ -36,7 +36,81 @@ const XLINK_NAMESPACE = `http://www.w3.org/1999/xlink`
 
 type Resource = { mediaType: string; body: string }
 
+const ONE_PIXEL_PNG_DATA_URL = `data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNkYAAAAAYAAjCB0C8AAAAASUVORK5CYII=`
+
 type HeldRequest = { load: () => void; fail: () => void }
+
+/** The part of a `FontFace` the renderer reads. */
+type TestFontFace = {
+  family: string
+  readonly status: FontFaceLoadStatus
+  loaded: Promise<unknown>
+}
+
+/**
+ * The font faces of each document, as its `document.fonts` lists them.
+ * happy-dom has no `document.fonts`.
+ */
+const fontFacesByDocument = new WeakMap<Document, TestFontFace[]>()
+
+/**
+ * A font face a document lists, `unloaded` until the document is measured,
+ * as laying the document out requests the fonts its text uses, then held
+ * until the test loads or fails it.
+ */
+const listHeldFontFace = ({
+  frameDocument,
+  family,
+  onRequest,
+}: {
+  frameDocument: Document
+  family: string
+  onRequest: (request: HeldRequest) => void
+}) => {
+  let status: FontFaceLoadStatus = `unloaded`
+  const request = Promise.withResolvers<void>()
+  const loaded = request.promise.then(
+    () => {
+      status = `loaded`
+    },
+    (error) => {
+      status = `error`
+
+      throw error
+    },
+  )
+
+  // A face nothing waits on would report its failure as unhandled.
+  loaded.catch(() => undefined)
+
+  const face: TestFontFace = {
+    family,
+    get status() {
+      return status
+    },
+    loaded,
+  }
+
+  const root = frameDocument.documentElement
+  const measureRoot = root.getBoundingClientRect.bind(root)
+
+  root.getBoundingClientRect = () => {
+    if (status === `unloaded`) {
+      status = `loading`
+      onRequest({
+        load: () => request.resolve(),
+        fail: () => request.reject(new Error(`${family} failed`)),
+      })
+    }
+
+    return measureRoot()
+  }
+
+  fontFacesByDocument.set(frameDocument, [
+    ...(fontFacesByDocument.get(frameDocument) ?? []),
+    face,
+  ])
+}
 
 const svgWith = (image: string) =>
   `<svg xmlns="${SVG_NAMESPACE}" xmlns:xlink="${XLINK_NAMESPACE}">${image}</svg>`
@@ -58,40 +132,64 @@ const readObjectUrl = async (url: string | null | undefined) =>
 /**
  * Serves the frame's blob urls through happy-dom's fetch interceptor, holding
  * each stylesheet, and each image when asked, until the test loads or fails
- * it.
+ * it. With `servesAtUrls`, `getResource` gives nothing, and the interceptor
+ * serves the document and its resources at their urls instead, as a server or
+ * a service worker does, answering any other url of the page's origin with a
+ * 404.
  */
 const createHarness = ({
   documentHref,
   resources,
   failingResources = [],
   holdsImages = false,
+  servesAtUrls = false,
+  fontFamilies = [],
 }: {
   documentHref: string
   resources: Record<string, Resource>
   failingResources?: string[]
   holdsImages?: boolean
+  servesAtUrls?: boolean
+  /** The fonts the document's text uses, each held once requested. */
+  fontFamilies?: string[]
 }) => {
   const happyDOMWindow = getHappyDOMWindow()
   const stylesheetRequests: HeldRequest[] = []
   const imageRequests: HeldRequest[] = []
+  const fontRequests: HeldRequest[] = []
+  const served: Record<string, Resource> = { ...resources }
+  let holdsStylesheets = true
+
+  const getRequestedResource = async (
+    url: string,
+  ): Promise<Resource | undefined> => {
+    const blob = resolveObjectURL(url)
+
+    if (blob) return { mediaType: blob.type, body: await blob.text() }
+
+    return servesAtUrls ? served[url] : undefined
+  }
 
   happyDOMWindow.happyDOM.settings.enableImageFileLoading = true
   happyDOMWindow.happyDOM.settings.fetch.interceptor = {
     beforeAsyncRequest: async ({ request, window: requestWindow }) => {
-      const blob = resolveObjectURL(request.url)
+      const resource = await getRequestedResource(request.url)
 
-      if (!blob) return undefined
+      if (!resource) {
+        return servesAtUrls && request.url.startsWith(window.location.origin)
+          ? new requestWindow.Response(``, { status: 404 })
+          : undefined
+      }
 
-      const body = await blob.text()
       const respond = () =>
-        new requestWindow.Response(body, {
-          headers: { "content-type": blob.type },
+        new requestWindow.Response(resource.body, {
+          headers: { "content-type": resource.mediaType },
         })
 
       const heldRequests =
-        blob.type === `text/css`
+        resource.mediaType === `text/css` && holdsStylesheets
           ? stylesheetRequests
-          : holdsImages && blob.type.startsWith(`image/`)
+          : holdsImages && resource.mediaType.startsWith(`image/`)
             ? imageRequests
             : undefined
 
@@ -100,7 +198,7 @@ const createHarness = ({
       return new Promise((resolve, reject) => {
         heldRequests.push({
           load: () => resolve(respond()),
-          fail: () => reject(new Error(`${blob.type} failed`)),
+          fail: () => reject(new Error(`${resource.mediaType} failed`)),
         })
       })
     },
@@ -130,7 +228,6 @@ const createHarness = ({
       ],
     }),
   )
-  const served: Record<string, Resource> = { ...resources }
   const settings = new ReaderSettingsManager(
     {
       getResource: (resourceItem) => {
@@ -141,18 +238,36 @@ const createHarness = ({
         const resource = served[resourceItem.href]
 
         return of(
-          resource &&
-            new Response(resource.body, {
-              headers: { "content-type": resource.mediaType },
-            }),
+          resource && !servesAtUrls
+            ? new Response(resource.body, {
+                headers: { "content-type": resource.mediaType },
+              })
+            : undefined,
         )
       },
     },
     context,
   )
   const viewport = new Viewport(context, settings)
+  // happy-dom lays nothing out: the size a shown container gives the viewport
+  let viewportSize = { width: 100, height: 100 }
+
+  vi.spyOn(viewport.value.element, `clientWidth`, `get`).mockImplementation(
+    () => viewportSize.width,
+  )
+  vi.spyOn(viewport.value.element, `clientHeight`, `get`).mockImplementation(
+    () => viewportSize.height,
+  )
+
   const hookManager = new HookManager()
   const containerElement = document.createElement(`div`)
+  let hasFrameLoaded = false
+
+  hookManager.register(`item.onDocumentCreated`, ({ documentContainer }) => {
+    documentContainer.addEventListener(`load`, () => {
+      hasFrameLoaded = true
+    })
+  })
 
   /**
    * happy-dom never loads an SVG image, so this reports each one loaded once
@@ -184,6 +299,59 @@ const createHarness = ({
     })
   }
 
+  /**
+   * happy-dom never loads an image from its `srcset`, and reports it complete
+   * at once. Holding images, this holds each one without a `src` as a browser
+   * loading the candidate it picks would, until the test loads or fails it.
+   * It runs before the renderer hears that the frame loaded.
+   */
+  if (holdsImages) {
+    hookManager.register(`item.onDocumentCreated`, ({ documentContainer }) => {
+      if (!(documentContainer instanceof HTMLIFrameElement)) return
+
+      documentContainer.addEventListener(`load`, () => {
+        const imagesWithoutSrc =
+          documentContainer.contentDocument?.querySelectorAll(
+            `img:not([src])`,
+          ) ?? []
+
+        for (const image of imagesWithoutSrc) {
+          let isComplete = false
+
+          Object.defineProperty(image, `complete`, { get: () => isComplete })
+          imageRequests.push({
+            load: () => {
+              isComplete = true
+              image.dispatchEvent(new Event(`load`))
+            },
+            fail: () => {
+              isComplete = true
+              image.dispatchEvent(new Event(`error`))
+            },
+          })
+        }
+      })
+    })
+  }
+
+  hookManager.register(`item.onDocumentCreated`, ({ documentContainer }) => {
+    if (!(documentContainer instanceof HTMLIFrameElement)) return
+
+    documentContainer.addEventListener(`load`, () => {
+      const frameDocument = documentContainer.contentDocument
+
+      if (!frameDocument) return
+
+      for (const family of fontFamilies) {
+        listHeldFontFace({
+          frameDocument,
+          family,
+          onRequest: (request) => fontRequests.push(request),
+        })
+      }
+    })
+  })
+
   document.body.appendChild(containerElement)
 
   const renderer = new HtmlRenderer({
@@ -214,6 +382,8 @@ const createHarness = ({
   return {
     renderer,
     getDocument,
+    waitForFrameLoaded: () =>
+      vi.waitFor(() => expect(hasFrameLoaded).toBe(true)),
     load: (body: string) => {
       served[documentHref] = { mediaType: `application/xhtml+xml`, body }
       renderer.load()
@@ -224,6 +394,33 @@ const createHarness = ({
 
         return stylesheetRequests
       }),
+    /** Answers the stylesheet requests held, and those made from now on. */
+    releaseStylesheets: () => {
+      holdsStylesheets = false
+
+      for (const request of stylesheetRequests) request.load()
+    },
+    waitForFontRequests: (count: number) =>
+      vi.waitFor(() => {
+        expect(
+          fontRequests,
+          `the fonts laying the document out requested`,
+        ).toHaveLength(count)
+
+        return fontRequests
+      }),
+    /** Lists one more font the document's text uses, held once requested. */
+    listFontFace: (family: string) => {
+      const frameDocument = getDocument()
+
+      if (!frameDocument) throw new Error(`no document to list a font in`)
+
+      listHeldFontFace({
+        frameDocument,
+        family,
+        onRequest: (request) => fontRequests.push(request),
+      })
+    },
     waitForImageRequests: (count: number) =>
       vi.waitFor(() => {
         expect(imageRequests).toHaveLength(count)
@@ -233,6 +430,11 @@ const createHarness = ({
     waitForSwappedSvgImages,
     waitForLoaded: () =>
       vi.waitFor(() => expect(renderer.value.loadStatus).toBe(`loaded`)),
+    /** Resizes the viewport, and reports it as a browser does once laid out. */
+    resizeViewport: (size: { width: number; height: number }) => {
+      viewportSize = size
+      reportResize()
+    },
     cleanup: () => {
       renderer.destroy()
       viewport.destroy()
@@ -243,11 +445,61 @@ const createHarness = ({
   }
 }
 
-/** happy-dom has no `document.fonts`, which the renderer waits on. */
+const resizeReports = new Set<() => void>()
+
+/** How many resize observers watch an element, such as the viewport's. */
+const watchingResizeObservers = () => resizeReports.size
+
+const reportResize = () => {
+  for (const report of [...resizeReports]) report()
+}
+
+/** A resize observer that reports only when a test resizes the viewport. */
+class TestResizeObserver {
+  private readonly report: () => void
+
+  constructor(callback: ResizeObserverCallback) {
+    // Cast: the viewport reads no entry, nor the observer it is given.
+    this.report = () => callback([], this as unknown as ResizeObserver)
+  }
+
+  observe() {
+    resizeReports.add(this.report)
+  }
+
+  unobserve() {
+    resizeReports.delete(this.report)
+  }
+
+  disconnect() {
+    resizeReports.delete(this.report)
+  }
+}
+
+beforeAll(() => {
+  vi.stubGlobal(`ResizeObserver`, TestResizeObserver)
+})
+
+afterAll(() => {
+  vi.unstubAllGlobals()
+})
+
+/**
+ * happy-dom has no `document.fonts`, which the renderer waits on. Its `ready`
+ * is settled whatever is loading, as WebKit's is once a font has been loading
+ * for longer than its block period.
+ */
 beforeAll(() => {
   Object.defineProperty(HappyDOMDocument.prototype, `fonts`, {
     configurable: true,
-    get: () => ({ ready: Promise.resolve() }),
+    get(this: Document) {
+      const faces = fontFacesByDocument.get(this) ?? []
+
+      return {
+        ready: Promise.resolve(),
+        [Symbol.iterator]: () => faces[Symbol.iterator](),
+      }
+    },
   })
 })
 
@@ -280,6 +532,32 @@ const setup = (params: Parameters<typeof createHarness>[0]) => {
 }
 
 describe(`HtmlRenderer`, () => {
+  /**
+   * Hidden under `display: none`, the viewport measures 0 by 0, and so does
+   * the frame: the browser requests none of its fonts, which then read as
+   * ready before they arrive.
+   */
+  describe(`given a viewport with no size, as when its container is hidden`, () => {
+    it(`is not loaded until the viewport has a size`, async () => {
+      const { load, resizeViewport, renderer, waitForLoaded } = setup({
+        documentHref: `file://EPUB/chapter.xhtml`,
+        resources: {},
+      })
+
+      resizeViewport({ width: 0, height: 0 })
+      load(documentWith(``))
+
+      // the document waits on the viewport's size
+      await vi.waitFor(() => expect(watchingResizeObservers()).toBe(1))
+
+      expect(renderer.value.loadStatus).toBe(`loading`)
+
+      resizeViewport({ width: 100, height: 100 })
+
+      await waitForLoaded()
+    })
+  })
+
   describe(`given a document with links the browser never fetches`, () => {
     const head = `
       <link rel="stylesheet" href="css/epub.css" />
@@ -406,6 +684,24 @@ describe(`HtmlRenderer`, () => {
       await vi.advanceTimersByTimeAsync(1_000)
 
       await waitForLoaded()
+    })
+
+    it(`does not wait for one the archive does not have, whose reference the browser cannot resolve against the document's blob url`, async () => {
+      useRxjsFakeTimers()
+
+      const { load, waitForFrameLoaded, renderer, getDocument } = setup({
+        documentHref: `file://EPUB/chapter.xhtml`,
+        resources,
+      })
+
+      load(documentWith(`<link rel="stylesheet" href="css/missing.css" />`))
+
+      await waitForFrameLoaded()
+      // well short of the 5 seconds the reader waits for a stylesheet at most
+      await vi.advanceTimersByTimeAsync(1_000)
+
+      expect(getDocument()?.URL).toMatch(/^blob:/)
+      expect(renderer.value.loadStatus).toBe(`loaded`)
     })
 
     it(`waits for one whose relation is written in another case`, async () => {
@@ -582,6 +878,21 @@ describe(`HtmlRenderer`, () => {
       )
     })
 
+    it(`marks a lazy image with only a srcset eager`, async () => {
+      const { load, waitForLoaded, getDocument } = setup({
+        documentHref,
+        resources,
+      })
+
+      load(documentWith(``, `<img loading="lazy" srcset="images/a.png 1x" />`))
+
+      await waitForLoaded()
+
+      expect(getDocument()?.querySelector(`img`)?.getAttribute(`loading`)).toBe(
+        `eager`,
+      )
+    })
+
     it(`does not load when it unloads while an image is loading, and revokes the image's blob url`, async () => {
       const { load, waitForImageRequests, renderer, getDocument } = setup({
         documentHref,
@@ -608,6 +919,293 @@ describe(`HtmlRenderer`, () => {
 
       expect(loadStatuses).not.toContain(`loaded`)
       expect(await readObjectUrl(imageUrl)).toBeUndefined()
+    })
+  })
+
+  describe(`given a document loaded by its url, with images`, () => {
+    // On the page's origin, so the frame loads the document from its url.
+    const documentHref = `${window.location.origin}/EPUB/chapter.xhtml`
+    const resources = {
+      [`${window.location.origin}/EPUB/images/a.png`]: {
+        mediaType: `image/png`,
+        body: `a`,
+      },
+    }
+
+    it(`is not loaded until each of them has loaded, though its frame has`, async () => {
+      useRxjsFakeTimers()
+
+      const {
+        load,
+        waitForImageRequests,
+        waitForFrameLoaded,
+        waitForLoaded,
+        renderer,
+        getDocument,
+      } = setup({
+        documentHref,
+        resources,
+        holdsImages: true,
+        servesAtUrls: true,
+      })
+
+      load(documentWith(``, `<img src="images/a.png" />`))
+
+      const [image] = await waitForImageRequests(1)
+
+      await waitForFrameLoaded()
+      // well short of the 5 seconds the reader waits for an image at most
+      await vi.advanceTimersByTimeAsync(1_000)
+
+      expect(getDocument()?.URL).toBe(documentHref)
+      expect(renderer.value.loadStatus).toBe(`loading`)
+
+      image?.load()
+
+      await waitForLoaded()
+    })
+
+    it(`does not wait for an image that has already loaded`, async () => {
+      useRxjsFakeTimers()
+
+      const { load, waitForFrameLoaded, renderer, getDocument } = setup({
+        documentHref,
+        resources,
+        servesAtUrls: true,
+      })
+
+      // A data url loads as the document is parsed, before its frame's load.
+      load(documentWith(``, `<img src="${ONE_PIXEL_PNG_DATA_URL}" />`))
+
+      await waitForFrameLoaded()
+      // well short of the 5 seconds the reader waits for an image at most
+      await vi.advanceTimersByTimeAsync(1_000)
+
+      expect(getDocument()?.querySelector(`img`)?.complete).toBe(true)
+      expect(renderer.value.loadStatus).toBe(`loaded`)
+    })
+
+    it(`marks a lazy image eager`, async () => {
+      const { load, waitForLoaded, getDocument } = setup({
+        documentHref,
+        resources,
+        servesAtUrls: true,
+      })
+
+      load(documentWith(``, `<img loading="lazy" src="images/a.png" />`))
+
+      await waitForLoaded()
+
+      expect(getDocument()?.querySelector(`img`)?.getAttribute(`loading`)).toBe(
+        `eager`,
+      )
+    })
+
+    describe(`with only a srcset, which the reader has no reference to swap in`, () => {
+      it(`is not loaded until that image has loaded, though its frame has`, async () => {
+        useRxjsFakeTimers()
+
+        const {
+          load,
+          waitForImageRequests,
+          waitForFrameLoaded,
+          waitForLoaded,
+          renderer,
+        } = setup({
+          documentHref,
+          resources,
+          holdsImages: true,
+          servesAtUrls: true,
+        })
+
+        load(documentWith(``, `<img srcset="images/a.png 1x" />`))
+
+        const [image] = await waitForImageRequests(1)
+
+        await waitForFrameLoaded()
+        // well short of the 5 seconds the reader waits for an image at most
+        await vi.advanceTimersByTimeAsync(1_000)
+
+        expect(renderer.value.loadStatus).toBe(`loading`)
+
+        image?.load()
+
+        await waitForLoaded()
+      })
+
+      it(`marks it eager when lazy`, async () => {
+        const { load, waitForLoaded, getDocument } = setup({
+          documentHref,
+          resources,
+          servesAtUrls: true,
+        })
+
+        load(
+          documentWith(``, `<img loading="lazy" srcset="images/a.png 1x" />`),
+        )
+
+        await waitForLoaded()
+
+        expect(
+          getDocument()?.querySelector(`img`)?.getAttribute(`loading`),
+        ).toBe(`eager`)
+      })
+    })
+  })
+
+  describe(`given a document loaded by its url, with a stylesheet`, () => {
+    // On the page's origin, so the frame loads the document from its url.
+    const documentHref = `${window.location.origin}/EPUB/chapter.xhtml`
+    const resources = {
+      [`${window.location.origin}/EPUB/css/a.css`]: {
+        mediaType: `text/css`,
+        body: `.a {}`,
+      },
+    }
+
+    /**
+     * happy-dom fires the frame's `load` before its stylesheets are in, as
+     * WebKit does when another frame is already fetching one.
+     */
+    it(`is not loaded until its stylesheet is in, though its frame has loaded`, async () => {
+      useRxjsFakeTimers()
+
+      const {
+        load,
+        waitForFrameLoaded,
+        releaseStylesheets,
+        waitForLoaded,
+        renderer,
+        getDocument,
+      } = setup({ documentHref, resources, servesAtUrls: true })
+
+      load(documentWith(`<link rel="stylesheet" href="css/a.css" />`))
+
+      await waitForFrameLoaded()
+      // well short of the 5 seconds the reader waits for a stylesheet at most
+      await vi.advanceTimersByTimeAsync(1_000)
+
+      expect(getDocument()?.styleSheets).toHaveLength(0)
+      expect(renderer.value.loadStatus).toBe(`loading`)
+
+      releaseStylesheets()
+
+      await waitForLoaded()
+
+      expect(getDocument()?.styleSheets).toHaveLength(1)
+    })
+
+    it(`loads without one the server does not have, once the server says so`, async () => {
+      useRxjsFakeTimers()
+
+      const { load, waitForFrameLoaded, renderer } = setup({
+        documentHref,
+        resources,
+        servesAtUrls: true,
+      })
+
+      load(documentWith(`<link rel="stylesheet" href="css/missing.css" />`))
+
+      await waitForFrameLoaded()
+      // well short of the 5 seconds the reader waits for a stylesheet at most
+      await vi.advanceTimersByTimeAsync(1_000)
+
+      expect(renderer.value.loadStatus).toBe(`loaded`)
+    })
+  })
+
+  describe(`given a document whose text uses web fonts`, () => {
+    const documentHref = `file://EPUB/chapter.xhtml`
+
+    // Lets the renderer act on what the test just did.
+    const settle = () => new Promise((resolve) => setTimeout(resolve))
+
+    it(`is not loaded until they are in, though document.fonts.ready has settled`, async () => {
+      const { load, waitForFontRequests, waitForLoaded, renderer } = setup({
+        documentHref,
+        resources: {},
+        fontFamilies: [`Free Serif`, `Free Sans Bold`],
+      })
+
+      load(documentWith(``))
+
+      const [serif, sans] = await waitForFontRequests(2)
+
+      serif?.load()
+      await settle()
+
+      expect(renderer.value.loadStatus).toBe(`loading`)
+
+      sans?.load()
+
+      await waitForLoaded()
+    })
+
+    it(`loads without one that fails`, async () => {
+      const { load, waitForFontRequests, waitForLoaded } = setup({
+        documentHref,
+        resources: {},
+        fontFamilies: [`Free Serif`],
+      })
+
+      load(documentWith(``))
+
+      const [serif] = await waitForFontRequests(1)
+
+      serif?.fail()
+
+      await waitForLoaded()
+    })
+
+    it(`loads without one that never comes in, once it stops waiting for it`, async () => {
+      useRxjsFakeTimers()
+
+      const { load, waitForFontRequests, waitForLoaded, renderer } = setup({
+        documentHref,
+        resources: {},
+        fontFamilies: [`Free Serif`],
+      })
+
+      load(documentWith(``))
+
+      await waitForFontRequests(1)
+      await vi.advanceTimersByTimeAsync(4_000)
+
+      expect(renderer.value.loadStatus).toBe(`loading`)
+
+      await vi.advanceTimersByTimeAsync(1_000)
+
+      await waitForLoaded()
+    })
+
+    it(`waits for one its text requests once another is in`, async () => {
+      const {
+        load,
+        waitForFontRequests,
+        waitForLoaded,
+        listFontFace,
+        renderer,
+      } = setup({
+        documentHref,
+        resources: {},
+        fontFamilies: [`Free Serif`],
+      })
+
+      load(documentWith(``))
+
+      const [serif] = await waitForFontRequests(1)
+
+      // eg: for a glyph the first one turns out to lack
+      listFontFace(`Free Sans Bold`)
+      serif?.load()
+
+      const [, sans] = await waitForFontRequests(2)
+
+      expect(renderer.value.loadStatus).toBe(`loading`)
+
+      sans?.load()
+
+      await waitForLoaded()
     })
   })
 

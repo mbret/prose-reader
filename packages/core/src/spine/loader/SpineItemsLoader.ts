@@ -5,7 +5,6 @@ import {
   debounceTime,
   distinctUntilChanged,
   filter,
-  first,
   map,
   merge,
   type Observable,
@@ -20,6 +19,7 @@ import type { ReaderSettingsManager } from "../../settings/ReaderSettingsManager
 import type { SpineItemReference } from "../../spineItem/SpineItem"
 import { DestroyableClass } from "../../utils/DestroyableClass"
 import { isDefined } from "../../utils/isDefined"
+import { runWhileSized } from "../../viewport/runWhileSized"
 import type { Viewport } from "../../viewport/Viewport"
 import { Spine } from "../Spine"
 import type { SpineItemsManager } from "../SpineItemsManager"
@@ -72,13 +72,13 @@ export class SpineItemsLoader extends DestroyableClass {
     )
 
     /**
-     * The items in view around which the window is measured, as the viewport
-     * shows them, zoom included. Zoomed out it shows more items than the
-     * navigation holds over, which is what pagination shows: a layout of one
-     * of those leaves the navigation holding, yet the places of that item and
-     * the ones after it are unknown until the layout is done. So the window
-     * also waits for the layout of every item in view, and is measured once
-     * its pages are published.
+     * The items in view around which the window is measured, as the screen
+     * shows them at the navigation's position, zoom included. Zoomed out it
+     * shows more items than the navigation holds over, which is what
+     * pagination shows: a layout of one of those leaves the navigation
+     * holding, yet the places of that item and the ones after it are unknown
+     * until the layout is done. So the window also waits for the layout of
+     * every item in view, and is measured once its pages are published.
      */
     const visibleSpineItemsToMeasureFrom$ = combineLatest([
       navigationToMeasureFrom$,
@@ -86,10 +86,9 @@ export class SpineItemsLoader extends DestroyableClass {
     ]).pipe(
       map(([{ position }, spineState]) => {
         const { beginIndex = 0, endIndex = 0 } =
-          spine.locator.getVisibleSpineItemsFromPosition({
-            position,
+          spine.locator.getVisibleSpineItemsFromSlice({
+            slice: viewport.getVisibleSlice(position),
             threshold: { type: "percentage", value: 0 },
-            useAbsoluteViewport: false,
           }) || {}
 
         return Spine.isLayoutCurrentFor(spineState, endIndex)
@@ -136,7 +135,13 @@ export class SpineItemsLoader extends DestroyableClass {
       // Dropping pre-mount events is safe: mounting lays the reader out, and
       // the navigation restored onto that layout fires this stream again.
       filter(() => isDefined(this.context.value.rootElement)),
-      switchMap(() => visibleSpineItemsToMeasureFrom$.pipe(first())),
+      /**
+       * A document loaded while the viewport has no size has no layout
+       * either. The items load and unload once the viewport has a size.
+       */
+      switchMap(() =>
+        runWhileSized(this.viewport, visibleSpineItemsToMeasureFrom$),
+      ),
       withLatestFrom(heldSpineItemIndexes$),
       map(([{ beginIndex, endIndex }, heldSpineItemIndexes]) => {
         const { numberOfAdjacentSpineItemToPreLoad } = settings.values

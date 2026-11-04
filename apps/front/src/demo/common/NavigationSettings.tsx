@@ -1,4 +1,5 @@
 import { Fieldset, HStack, Stack } from "@chakra-ui/react"
+import { useReader } from "@prose-reader/react-reader"
 import type React from "react"
 import { useObserve } from "reactjrx"
 import { Checkbox } from "../components/ui/checkbox"
@@ -7,7 +8,6 @@ import { Radio, RadioGroup } from "../components/ui/radio"
 import { Slider } from "../components/ui/slider"
 import { useReaderSettings } from "../reader/settings/useReaderSettings"
 import type { LocalSettings } from "../reader/settings/useSettings"
-import { useReader } from "../reader/useReader"
 
 export const NavigationSettings = ({
   localSettings,
@@ -17,7 +17,7 @@ export const NavigationSettings = ({
   setLocalSettings: React.Dispatch<React.SetStateAction<LocalSettings>>
 }) => {
   const settings = useReaderSettings()
-  const { reader } = useReader()
+  const reader = useReader()
   const { data: readerState } = useObserve(() => reader?.features, [reader])
   const onlySupportScrollableMode =
     readerState?.supportedPageTurnMode.length === 1 &&

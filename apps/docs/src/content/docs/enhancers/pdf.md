@@ -13,7 +13,7 @@ PDFs are incompatible with service workers due to the limitation from the librar
 
 ## Important
 
-The enhancer will hook into the resource loading and rendering process to handle the pdf for you. No resources will need to be fetched through HTTP requests.
+The enhancer hooks into the resource loading and rendering process to handle the pdf for you. It serves the pages of the archive `getArchiveForItem` gives, so none of them is fetched through an HTTP request. An item it gives no pdf archive for still goes through the `getResource` you pass to the reader.
 
 ## Getting started
 

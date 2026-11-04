@@ -13,19 +13,28 @@ const FRAME_TOP = 50
 /**
  * A frame placed at (100, 50) in the viewport, unscaled. jsdom lays nothing
  * out, so the frame reports its box. `isSpineItem` says whether the reader
- * knows it as a spine item's frame.
+ * knows it as a spine item's frame. Hidden, as under `display: none`, it
+ * measures 0 by 0 at the corner of the page, the way a browser reports it.
  */
-const mountFrame = ({ isSpineItem }: { isSpineItem: boolean }) => {
+const mountFrame = ({
+  isSpineItem,
+  isHidden = false,
+}: {
+  isSpineItem: boolean
+  isHidden?: boolean
+}) => {
   const frame = document.createElement("iframe")
+  const box = isHidden
+    ? { x: 0, y: 0, width: 0, height: 0 }
+    : { x: FRAME_LEFT, y: FRAME_TOP, width: 200, height: 100 }
 
   document.body.appendChild(frame)
 
   Object.defineProperties(frame, {
-    offsetWidth: { value: 200 },
-    offsetHeight: { value: 100 },
+    offsetWidth: { value: box.width },
+    offsetHeight: { value: box.height },
   })
-  frame.getBoundingClientRect = () =>
-    DOMRect.fromRect({ x: FRAME_LEFT, y: FRAME_TOP, width: 200, height: 100 })
+  frame.getBoundingClientRect = () => DOMRect.fromRect(box)
 
   const frameWindow = frame.contentWindow
   const paragraph = frame.contentDocument?.createElement("p")
@@ -122,6 +131,20 @@ describe("Given a pointer event in a spine item's frame", () => {
         ]),
       ),
     ).toEqual(input)
+  })
+})
+
+describe("Given a pointer event in a spine item's frame that is hidden", () => {
+  it("forwards it at its position in the frame, since the frame has no size to scale it by", () => {
+    const { locator, press } = mountFrame({ isSpineItem: true, isHidden: true })
+    const event = press()
+
+    const forwarded = normalizeEventForViewport(event, locator)
+
+    expect({ clientX: forwarded.clientX, clientY: forwarded.clientY }).toEqual({
+      clientX: 20,
+      clientY: 30,
+    })
   })
 })
 

@@ -4,29 +4,28 @@ import { ChakraProvider, defaultSystem } from "@chakra-ui/react"
 import { act, type ComponentProps } from "react"
 import { createRoot } from "react-dom/client"
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
-import { ReactReaderProvider } from "../context/ReactReaderProvider"
+import { ReaderContextProvider } from "../context/ReaderContextProvider"
 import { asProvidedReader, createTestReader } from "../tests/createTestReader"
+import { ReaderInContext } from "../tests/ReaderInContext"
 import { FontSizeSection } from "./FontSizeSection"
 
-type ReactReaderProviderProps = Omit<
-  ComponentProps<typeof ReactReaderProvider>,
-  "children" | "reader"
+type ReaderContextProviderProps = Omit<
+  ComponentProps<typeof ReaderContextProvider>,
+  "children"
 >
 
 describe(`FontSizeSection`, () => {
   let container: HTMLDivElement
   let root: ReturnType<typeof createRoot>
 
-  const render = async (props: ReactReaderProviderProps) => {
+  const render = async (props: ReaderContextProviderProps) => {
     await act(async () => {
       root.render(
         <ChakraProvider value={defaultSystem}>
-          <ReactReaderProvider
-            reader={asProvidedReader(createTestReader())}
-            {...props}
-          >
+          <ReaderContextProvider {...props}>
+            <ReaderInContext reader={asProvidedReader(createTestReader())} />
             <FontSizeSection />
-          </ReactReaderProvider>
+          </ReaderContextProvider>
         </ChakraProvider>,
       )
     })

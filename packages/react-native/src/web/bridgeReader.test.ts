@@ -139,6 +139,12 @@ const createTestReader = (options: ReaderLoadOptions) => {
     ...options,
     getResource: () => of(new Response("", { status: 200 })),
   })
+  const { element } = reader.viewport.value
+
+  // jsdom lays nothing out: the size the webview gives the viewport. Without
+  // one, the reader waits for a size before it lays out and navigates.
+  vi.spyOn(element, "clientWidth", "get").mockReturnValue(100)
+  vi.spyOn(element, "clientHeight", "get").mockReturnValue(100)
 
   onTestFinished(() => reader.destroy())
 

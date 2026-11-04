@@ -14,24 +14,26 @@ import {
   onTestFinished,
   vi,
 } from "vitest"
-import { ReactReaderProvider } from "../context/ReactReaderProvider"
+import type { ReactReaderReader } from "../context/context"
+import { ReaderContextProvider } from "../context/ReaderContextProvider"
 import {
   asProvidedReader,
   createTestReader,
   type TestReader,
 } from "../tests/createTestReader"
+import { ReaderInContext } from "../tests/ReaderInContext"
+import { setWindowWidth } from "../tests/setWindowWidth"
 import type { ManagedSettingName } from "./managedSettings"
 import { SyncReaderWithManagedSettings } from "./SyncReaderWithManagedSettings"
 import { useManagedSetting } from "./useManagedSetting"
 
-type ReactReaderProviderProps = Omit<
-  ComponentProps<typeof ReactReaderProvider>,
+/** The context's props, and the reader the provider would have created. */
+type RenderProps = Omit<
+  ComponentProps<typeof ReaderContextProvider>,
   "children"
->
+> & { reader?: ReactReaderReader }
 
-type SettingsChange = Parameters<
-  NonNullable<ReactReaderProviderProps["onSettingsChange"]>
->
+type SettingsChange = Parameters<NonNullable<RenderProps["onSettingsChange"]>>
 
 /** What a menu of a setting sees of it, as of the last render. */
 const createSettingMenu = <Name extends ManagedSettingName>(name: Name) => {
@@ -57,22 +59,21 @@ const AppSavingEveryChange = ({
   children,
 }: {
   reader: TestReader | undefined
-  defaultSettings?: ReactReaderProviderProps["defaultSettings"]
-  initialSettings?: ReactReaderProviderProps["settings"]
+  defaultSettings?: RenderProps["defaultSettings"]
+  initialSettings?: RenderProps["settings"]
   savedChanges?: SettingsChange[]
   children?: ReactNode
 }) => {
   const [settings, setSettings] = useState(initialSettings)
   const [settingsByScope, setSettingsByScope] = useState<
-    NonNullable<ReactReaderProviderProps["settingsByScope"]>
+    NonNullable<RenderProps["settingsByScope"]>
   >({})
   const [settingsScopes, setSettingsScopes] = useState<
-    NonNullable<ReactReaderProviderProps["settingsScopes"]>
+    NonNullable<RenderProps["settingsScopes"]>
   >({})
 
   return (
-    <ReactReaderProvider
-      reader={asProvidedReader(reader)}
+    <ReaderContextProvider
       defaultSettings={defaultSettings}
       settings={settings}
       settingsByScope={settingsByScope}
@@ -93,33 +94,11 @@ const AppSavingEveryChange = ({
         setSettingsScopes((old) => ({ ...old, ...changes }))
       }}
     >
+      <ReaderInContext reader={asProvidedReader(reader)} />
       <SyncReaderWithManagedSettings />
       {children}
-    </ReactReaderProvider>
+    </ReaderContextProvider>
   )
-}
-
-const hasViewportControl = (
-  happyDOM: unknown,
-): happyDOM is {
-  setViewport: (viewport: { width: number; height: number }) => void
-} =>
-  typeof happyDOM === `object` &&
-  happyDOM !== null &&
-  `setViewport` in happyDOM &&
-  typeof happyDOM.setViewport === `function`
-
-/** Sets the width of the window happy-dom emulates, which media queries follow. */
-const setWindowWidth = (width: number) => {
-  const happyDOM: unknown = Reflect.get(window, `happyDOM`)
-
-  if (!hasViewportControl(happyDOM)) {
-    throw new Error(
-      `These tests run in happy-dom, to control the window's width`,
-    )
-  }
-
-  happyDOM.setViewport({ width, height: window.innerHeight })
 }
 
 const DEFAULT_WINDOW_WIDTH = window.innerWidth
@@ -135,12 +114,16 @@ describe(`SyncReaderWithManagedSettings`, () => {
     })
   }
 
-  const render = async (props: ReactReaderProviderProps, menu?: ReactNode) => {
+  const render = async (
+    { reader, ...props }: RenderProps,
+    menu?: ReactNode,
+  ) => {
     await renderInChakra(
-      <ReactReaderProvider {...props}>
+      <ReaderContextProvider {...props}>
+        <ReaderInContext reader={reader} />
         <SyncReaderWithManagedSettings />
         {menu}
-      </ReactReaderProvider>,
+      </ReaderContextProvider>,
     )
   }
 
@@ -148,7 +131,7 @@ describe(`SyncReaderWithManagedSettings`, () => {
    * Mounts the sync with what a spread mode menu sees of the setting, which
    * the returned object holds as of the last render.
    */
-  const renderWithSpreadModeMenu = async (props: ReactReaderProviderProps) => {
+  const renderWithSpreadModeMenu = async (props: RenderProps) => {
     const spreadModeMenu = createSettingMenu(`spreadMode`)
 
     await render(props, <spreadModeMenu.SettingMenu />)
@@ -732,43 +715,6 @@ describe(`SyncReaderWithManagedSettings`, () => {
       })
 
       expect(reader.settings.values.spreadMode).toBe(`never`)
-    })
-
-    it(`drops react-reader's own book value when the reader is replaced, so the new reader never takes it, and keeps its global one`, async () => {
-      const firstReader = createTestReader()
-      const secondReader = createTestReader()
-      const spreadModeMenu = createSettingMenu(`spreadMode`)
-      const themeMenu = createSettingMenu(`theme`)
-      const renderWithReader = (reader: TestReader) =>
-        render(
-          {
-            reader: asProvidedReader(reader),
-            settingsScopes: { spreadMode: `book` },
-          },
-          <>
-            <spreadModeMenu.SettingMenu />
-            <themeMenu.SettingMenu />
-          </>,
-        )
-
-      await renderWithReader(firstReader)
-      await act(async () => {
-        spreadModeMenu.seen.current?.changeValueForScope(`book`, `never`)
-        themeMenu.seen.current?.changeValueForScope(`global`, `sepia`)
-      })
-      await renderWithReader(secondReader)
-
-      expect({
-        firstReaderValues: firstReader.settings.values,
-        secondReaderUpdates: secondReader.settings.update.mock.calls,
-      }).toEqual({
-        firstReaderValues: {
-          fontScale: 1,
-          spreadMode: `never`,
-          theme: `sepia`,
-        },
-        secondReaderUpdates: [[{ theme: `sepia` }]],
-      })
     })
 
     it(`stops listening to a reader once it is replaced, and to any reader once unmounted`, async () => {

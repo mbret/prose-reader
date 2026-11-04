@@ -1,6 +1,6 @@
 import { BehaviorSubject } from "rxjs"
 import { vi } from "vitest"
-import type { PublicContextType } from "../context/context"
+import type { ReactReaderReader } from "../context/context"
 import type { ManagedSettingValues } from "../settings/managedSettings"
 
 const READER_DEFAULT_SETTINGS: ManagedSettingValues = {
@@ -47,5 +47,5 @@ export type TestReader = ReturnType<typeof createTestReader>
 
 export const asProvidedReader = (reader: TestReader | undefined) =>
   // Cast: the fake holds only what react-reader's settings read of a reader,
-  // and the provider takes a whole reader.
-  reader as unknown as PublicContextType["reader"]
+  // and the context holds a whole reader.
+  reader as unknown as ReactReaderReader | undefined

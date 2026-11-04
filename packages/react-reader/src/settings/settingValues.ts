@@ -1,9 +1,10 @@
 import type { Signal } from "reactjrx"
 import type { ReaderContextType } from "../context/context"
-import type {
-  ManagedSettingName,
-  ManagedSettingValues,
-  ReactReaderSettings,
+import {
+  MANAGED_SETTING_NAMES,
+  type ManagedSettingName,
+  type ManagedSettingValues,
+  type ReactReaderSettings,
 } from "./managedSettings"
 import type {
   ReactReaderSettingsScopeReference,
@@ -117,14 +118,22 @@ export const changeManagedSettingValue = <Name extends ManagedSettingName>(
   context.value.onSettingsChange?.(changes, from)
 }
 
-/**
- * The uncontrolled values that still hold with `reader`: the book scope's go
- * with the reader that showed the book.
- */
-export const getUncontrolledSettingsByScopeForReader = (
-  context: ReaderContextType,
-  reader: ReaderContextType["reader"],
-): ReaderContextType["uncontrolledSettingsByScope"] =>
-  context.reader === reader
-    ? context.uncontrolledSettingsByScope
-    : { ...context.uncontrolledSettingsByScope, book: undefined }
+/** The value each setting takes for this book, which a new reader starts on. */
+export const getManagedSettingValuesInEffect = (
+  sources: ManagedSettingSources,
+  screen: ScreenSettingsScopeReference,
+): ReactReaderSettings => {
+  const valuesInEffect: ReactReaderSettings = {}
+
+  const addValueInEffect = <Name extends ManagedSettingName>(name: Name) => {
+    valuesInEffect[name] = getManagedSettingValuesForScope(
+      sources,
+      name,
+      getSettingScopeReferenceInEffect(sources, name, screen),
+    ).appliedValue
+  }
+
+  MANAGED_SETTING_NAMES.forEach(addValueInEffect)
+
+  return valuesInEffect
+}
