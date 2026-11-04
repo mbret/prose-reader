@@ -1,4 +1,3 @@
-import { isParsedCfiRange, parse } from "@prose-reader/cfi"
 import { first, map, type Observable, of } from "rxjs"
 import type { CfiManager } from "../../cfi"
 import type { SpineLocator } from "../../spine/locator/SpineLocator"
@@ -9,19 +8,6 @@ import { SpineItemPosition } from "../../spineItem/types"
 import { getSnappedPosition } from "../consolidation/withSnappedPosition"
 import type { NavigationResolver } from "../resolvers/NavigationResolver"
 import type { InternalNavigationEntry } from "../types"
-
-/**
- * Whether a cfi points at a character of a text node, as `/4/2/1:12` does: its
- * last step has a character offset. One without points at an element.
- */
-const isCharacterCfi = (cfi: string) => {
-  const parsedCfi = parse(cfi)
-  const lastStep = isParsedCfiRange(parsedCfi)
-    ? parsedCfi.start.at(-1)?.at(-1)
-    : parsedCfi.at(-1)?.at(-1)
-
-  return lastStep?.offset !== undefined
-}
 
 export const restoreNavigationForControlledPageTurnMode = ({
   spineLocator,
@@ -63,41 +49,44 @@ export const restoreNavigationForControlledPageTurnMode = ({
       const hasSpineItemGrewOrShrink =
         spineItemWidthDifference !== 0 || spineItemHeighDifference !== 0
 
-      const cfi = navigation.anchor?.cfi
+      /**
+       * Whether the item's pages can have moved since the navigation: its size
+       * changed, or its document became ready, which can move its elements
+       * without changing its size.
+       */
+      const hasSpineItemChanged =
+        hasSpineItemGrewOrShrink || (isReady && !navigation.spineItemIsReady)
+
+      const { anchor } = navigation
 
       /**
-       * Restoration from the anchor: the place the navigation's target named
-       * or found, or the text at the page it went to.
+       * Restoration from the anchor: the place the navigation's target named,
+       * or the start of the page it went to.
        *
-       * A cfi that points at a character is restored after every layout. A
-       * reflowable item is cut into pages by the reader, and a layout can move
-       * its text from one page to another without changing its size, as a
-       * smaller font that keeps its page count does.
+       * While the item's document is ready, the anchor is resolved after every
+       * layout. A layout can move a reflowable item's text to another page and
+       * keep the item's size, as a smaller font that keeps the page count does.
        *
-       * A cfi that points at an element is restored only once the item
-       * changed: an element that starts on the page before, the page's first
-       * visible node when no text starts on it, would take the reader back a
-       * page after each layout.
+       * An anchor that is an element of the page is resolved only when the item
+       * changed. The element can start on an earlier page, and resolving it
+       * after every layout would take the reader back to that page.
        *
        * A cfi naming only its item names no place to return to: a stand-in's,
-       * or a page's without text. It resolves to the item's start, which would
-       * take a turn back into a chapter that just loaded to its first page
-       * rather than its last.
+       * or a page's that shows no node. It resolves to the item's start, which
+       * would take a turn back into a chapter that just loaded to its first
+       * page rather than its last.
        */
-      if (cfi !== undefined && !cfiManager.isRootCfi(cfi)) {
-        if (
-          isCharacterCfi(cfi) ||
-          spineItemWidthDifference ||
-          spineItemHeighDifference ||
-          // when spine item is ready dimensions may have not changed but the position
-          // of dom elements may have!
-          (isReady && !navigation.spineItemIsReady)
-        ) {
-          const cfiResultPosition = navigationResolver.getNavigationForCfi(cfi)
+      if (
+        anchor &&
+        !cfiManager.isRootCfi(anchor.cfi) &&
+        ((isReady && !anchor.isPageElement) || hasSpineItemChanged)
+      ) {
+        const cfiResultPosition = navigationResolver.getNavigationForCfi(
+          anchor.cfi,
+        )
 
-          if (cfiResultPosition) {
-            return cfiResultPosition
-          }
+        if (cfiResultPosition) {
+          return cfiResultPosition
         }
       }
 

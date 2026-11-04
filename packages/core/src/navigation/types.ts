@@ -177,6 +177,13 @@ export type InternalNavigationAnchor = Pick<
   "cfi" | "percentageEstimateOfBook"
 > & {
   state: "standIn" | "targetPlace" | "final" | "error"
+  /**
+   * Whether `cfi` is an element of the page the navigation lands on, rather
+   * than a character: the node the page starts with when no text shows first
+   * there. Such an element can start on an earlier page. The place a target
+   * names is never one: the navigation went to where it starts.
+   */
+  isPageElement: boolean
 }
 
 /**

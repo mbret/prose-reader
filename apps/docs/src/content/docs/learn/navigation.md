@@ -43,7 +43,9 @@ The [pagination page](/learn/pagination#pagination-or-reading-position) explains
 that makes it the value to save rather than pagination's `begin.cfi`. It is
 also what the reader returns to itself after such a relayout, so a book
 reopened at a saved reading position shows the same text as one that was
-resized.
+resized. A page that starts with an element rather than text, such as an
+image, is the one exception: the element can start on an earlier page, so the
+reader keeps that page until a relayout changes its chapter's size.
 
 It is the reader's own answer, the same whatever the navigation's target: a
 cfi, a url, a spine item, a page turn, or a target an enhancer adds. It is set
@@ -58,7 +60,8 @@ the moment a navigation happens, and refined as the reader finds out:
   holds it, a cfi or the element a url's fragment names, still `pending`, kept
   as it is even once the page holding it shows. Otherwise it stands in until the
   page the navigation lands on is laid out, and is then that page's first
-  character: after turning pages, scrolling, `goToSpineItem` or a url without
+  character, or the element the page starts with when no text does: after
+  turning pages, scrolling, `goToSpineItem` or a url without
   a fragment, and for a cfi whose path leads to nothing in its chapter, such as
   a saved position from before the book changed, which takes the reader to the
   chapter's start. A place that isn't rendered, such as a page-break marker the

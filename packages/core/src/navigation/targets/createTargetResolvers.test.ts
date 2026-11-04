@@ -22,6 +22,7 @@ const notePlace = {
   cfi: text,
   percentageEstimateOfBook: 0,
   state: "targetPlace",
+  isPageElement: false,
 }
 
 /** The item's document, holding the element a selector finds. */
