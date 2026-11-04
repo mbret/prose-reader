@@ -94,6 +94,26 @@ const nameReaders = (
     return name
   })
 
+function QuickMenuToggle({
+  onQuickMenuRendered,
+}: {
+  onQuickMenuRendered?: (quickMenuOpen: boolean) => void
+}) {
+  const { quickMenuOpen, onQuickMenuOpenChange } = useReaderViewContext()
+
+  onQuickMenuRendered?.(quickMenuOpen)
+
+  return (
+    <button
+      type="button"
+      data-toggle-quick-menu
+      onClick={function toggleQuickMenu() {
+        onQuickMenuOpenChange((open) => !open)
+      }}
+    />
+  )
+}
+
 const DEFAULT_WINDOW_WIDTH = window.innerWidth
 
 describe(`ReactReaderProvider and ReactReader`, () => {
@@ -105,6 +125,13 @@ describe(`ReactReaderProvider and ReactReader`, () => {
       root.render(rootElement)
     })
   }
+
+  const clickQuickMenuToggle = () =>
+    act(async () => {
+      container
+        .querySelector<HTMLButtonElement>(`[data-toggle-quick-menu]`)
+        ?.click()
+    })
 
   const render = (element: ReactNode) =>
     renderRoot(<ChakraProvider value={defaultSystem}>{element}</ChakraProvider>)
@@ -808,50 +835,27 @@ describe(`ReactReaderProvider and ReactReader`, () => {
     const onQuickMenuRendered = vi.fn<(quickMenuOpen: boolean) => void>()
     const onAppQuickMenuOpenChange = vi.fn()
 
-    function QuickMenuUser() {
-      const { quickMenuOpen, onQuickMenuOpenChange } = useReaderViewContext()
-
-      onQuickMenuRendered(quickMenuOpen)
-
-      return (
-        <button
-          type="button"
-          data-open-quick-menu
-          onClick={function openQuickMenu() {
-            onQuickMenuOpenChange(true)
-          }}
-        />
-      )
-    }
-
-    const clickToOpenQuickMenu = () =>
-      act(async () => {
-        container
-          .querySelector<HTMLButtonElement>(`[data-open-quick-menu]`)
-          ?.click()
-      })
-
     await render(
       <ReactReaderProvider createReader={createOnePageReader}>
         <ReactReader key="own">
-          <QuickMenuUser />
+          <QuickMenuToggle onQuickMenuRendered={onQuickMenuRendered} />
         </ReactReader>
       </ReactReaderProvider>,
     )
-    await clickToOpenQuickMenu()
+    await clickQuickMenuToggle()
     const ownQuickMenuOpen = onQuickMenuRendered.mock.lastCall?.[0]
     await render(
       <ReactReaderProvider createReader={createOnePageReader}>
         <ReactReader
           key="app"
-          quickMenuOpen={false}
+          quickMenuOpen
           onQuickMenuOpenChange={onAppQuickMenuOpenChange}
         >
-          <QuickMenuUser />
+          <QuickMenuToggle onQuickMenuRendered={onQuickMenuRendered} />
         </ReactReader>
       </ReactReaderProvider>,
     )
-    await clickToOpenQuickMenu()
+    await clickQuickMenuToggle()
 
     expect({
       ownQuickMenuOpen,
@@ -859,28 +863,36 @@ describe(`ReactReaderProvider and ReactReader`, () => {
       appQuickMenuOpenChanges: onAppQuickMenuOpenChange.mock.calls,
     }).toEqual({
       ownQuickMenuOpen: true,
-      appQuickMenuOpen: false,
+      appQuickMenuOpen: true,
+      appQuickMenuOpenChanges: [[false]],
+    })
+  })
+
+  it(`keeps its own quick menu, and reports each change, when the app only listens to it`, async () => {
+    const { createOnePageReader } = createReaderFactory()
+    const onQuickMenuRendered = vi.fn<(quickMenuOpen: boolean) => void>()
+    const onAppQuickMenuOpenChange = vi.fn()
+
+    await render(
+      <ReactReaderProvider createReader={createOnePageReader}>
+        <ReactReader onQuickMenuOpenChange={onAppQuickMenuOpenChange}>
+          <QuickMenuToggle onQuickMenuRendered={onQuickMenuRendered} />
+        </ReactReader>
+      </ReactReaderProvider>,
+    )
+    await clickQuickMenuToggle()
+
+    expect({
+      quickMenuOpen: onQuickMenuRendered.mock.lastCall?.[0],
+      appQuickMenuOpenChanges: onAppQuickMenuOpenChange.mock.calls,
+    }).toEqual({
+      quickMenuOpen: true,
       appQuickMenuOpenChanges: [[true]],
     })
   })
 
   it(`hides the floating progress while a quick menu the app does not control is open`, async () => {
     const { createOnePageReader } = createReaderFactory()
-
-    function QuickMenuOpener() {
-      const { onQuickMenuOpenChange } = useReaderViewContext()
-
-      return (
-        <button
-          type="button"
-          data-open-quick-menu
-          onClick={function openQuickMenu() {
-            onQuickMenuOpenChange(true)
-          }}
-        />
-      )
-    }
-
     const getFloatingProgressState = () =>
       [...container.querySelectorAll(`[data-scope="presence"]`)]
         .find((presence) => presence.textContent?.endsWith(` %`))
@@ -889,16 +901,12 @@ describe(`ReactReaderProvider and ReactReader`, () => {
     await render(
       <ReactReaderProvider createReader={createOnePageReader}>
         <ReactReader>
-          <QuickMenuOpener />
+          <QuickMenuToggle />
         </ReactReader>
       </ReactReaderProvider>,
     )
     const stateWithQuickMenuClosed = getFloatingProgressState()
-    await act(async () => {
-      container
-        .querySelector<HTMLButtonElement>(`[data-open-quick-menu]`)
-        ?.click()
-    })
+    await clickQuickMenuToggle()
 
     expect({
       stateWithQuickMenuClosed,

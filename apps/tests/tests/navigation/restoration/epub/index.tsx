@@ -1,5 +1,6 @@
 import { createReader, type ReadingPosition } from "@prose-reader/core"
 import { openFixtureBook } from "../../../fixtureBook"
+import { recordChapterDocumentsWhenLoaded } from "./chapterDocumentsWhenLoaded"
 
 async function run() {
   const query = new URLSearchParams(window.location.search)
@@ -35,6 +36,8 @@ async function run() {
     readingPositions.push(readingPosition)
   })
 
+  const chapterDocumentsWhenLoaded = recordChapterDocumentsWhenLoaded(reader)
+
   // biome-ignore lint/style/noNonNullAssertion: TODO
   reader.mount(document.getElementById(`app`)!)
 
@@ -42,6 +45,8 @@ async function run() {
   window.reader = reader
   // @ts-expect-error export for the specs
   window.readingPositions = readingPositions
+  // @ts-expect-error export for the specs
+  window.chapterDocumentsWhenLoaded = chapterDocumentsWhenLoaded
 }
 
 run()

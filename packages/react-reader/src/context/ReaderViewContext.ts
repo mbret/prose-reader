@@ -21,8 +21,13 @@ export type ReaderViewProps = {
       | "layout"
       | "theme",
   ) => void
+  /**
+   * The quick menu's open state. While it is `undefined`, react-reader keeps
+   * its own.
+   */
   quickMenuOpen?: boolean
-  onQuickMenuOpenChange?: Dispatch<SetStateAction<boolean>>
+  /** Called with the quick menu's open state each time it changes. */
+  onQuickMenuOpenChange?: (open: boolean) => void
 }
 
 export type ReaderViewContextType = {

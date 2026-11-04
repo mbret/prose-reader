@@ -59,7 +59,7 @@ const MyAppReader = ({ manifest }: { manifest: Manifest | undefined }) => {
 
 Children of `ReactReader` render after the element the book shows in. To show one over the book, such as a loading screen, position it absolutely.
 
-### Lifecycle
+## Lifecycle
 
 - Render `ReactReaderProvider` above anything that hides the view, such as an `<Activity>` or a tab, and `ReactReader` inside it. Hiding `ReactReader` keeps the reader, since its element stays in the document, and the settings your app changes meanwhile reach the reader. Hiding the provider destroys the reader, and showing it again creates a new one.
 - When `ReactReader` unmounts, the provider destroys the reader, also when an `<Activity>` hides it first. The next `ReactReader` gets a new reader in its own element, since a reader cannot move to another element.
@@ -69,9 +69,9 @@ Children of `ReactReader` render after the element the book shows in. To show on
 With the default `layoutAutoResize`, the reader lays the book out again when its element changes size, and a hidden element has a size of zero. While the element is hidden, `reader.pagination` reports the first page, and the pointer events the browser sends as the element hides make core throw a `TypeError`. [#684](https://github.com/mbret/prose-reader/issues/684) tracks the fix.
 :::
 
-### Using the reader
+## Using the reader
 
-`useReader()` gives the reader to any component under `ReactReaderProvider`, such as the children of `ReactReader`, after the provider mounts it. It is `undefined` before that, and after the provider destroys it:
+`useReader()` gives the reader to any component under `ReactReaderProvider`, such as the children of `ReactReader`, after the provider mounts it. It is `undefined` before that, and after the provider destroys it. Outside a provider, it throws:
 
 ```tsx
 import { useReader } from "@prose-reader/react-reader"
@@ -82,9 +82,11 @@ const PageNumber = () => {
 }
 ```
 
-`useReader()` returns a reader with the gestures enhancer. Declare the type of the reader `createReader` returns, once in your app, and it returns that type, with the APIs of your enhancers:
+By default, `useReader()` types the reader with the gestures enhancer only. Declare the type of the reader `createReader` returns, once in your app. `useReader()` then returns that type, with the APIs of your enhancers, and `createReader` must return it:
 
 ```typescript
+import type { createAppReader } from "./createAppReader"
+
 declare module "@prose-reader/react-reader" {
   interface Register {
     reader: ReturnType<typeof createAppReader>
@@ -92,7 +94,7 @@ declare module "@prose-reader/react-reader" {
 }
 ```
 
-The declared reader needs the gestures enhancer: without it, `useReader()` ignores the declaration. The package exports the resolved type as `ReactReaderReader`.
+The declared reader needs the gestures enhancer. Without it, react-reader ignores the declaration: `useReader()` and `createReader` keep the default type. The package exports the type in use, declared or default, as `ReactReaderReader`.
 
 ## Settings
 

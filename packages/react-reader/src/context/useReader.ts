@@ -10,8 +10,8 @@ import { useReaderContextValue } from "./useReaderContext"
 
 /**
  * The reader of the `ReactReaderProvider` above. It is `undefined` before the
- * provider mounts it and after the provider destroys it. `Register` declares
- * its type.
+ * provider mounts it and after the provider destroys it. It throws outside a
+ * provider. `Register` declares its type.
  */
 export const useReader = (): ReactReaderReader | undefined => {
   const { reader } = useReaderContextValue(["reader"])

@@ -1,4 +1,9 @@
-import { Box, type BoxProps, Presence } from "@chakra-ui/react"
+import {
+  Box,
+  type BoxProps,
+  Presence,
+  useControllableState,
+} from "@chakra-ui/react"
 import {
   type ComponentProps,
   memo,
@@ -31,7 +36,6 @@ import { SpreadRotationHint } from "./navigation/SpreadRotationHint"
 import { useInterceptExternalLinks } from "./navigation/useInterceptExternalLinks"
 import { useNotifications } from "./notifications/useNotifications"
 import { QuickMenu } from "./quickmenu/QuickMenu"
-import { useQuickMenu } from "./quickmenu/useQuickMenu"
 import { useQuickMenuToggleGesture } from "./quickmenu/useQuickMenuToggleGesture"
 import { ReaderElement } from "./ReaderElement"
 import { RefitDialog } from "./refit/RefitDialog"
@@ -65,7 +69,12 @@ const InnerReactReader = memo(
   }: {
     children: React.ReactNode
   } & BoxProps) => {
-    const { enableFloatingTime, onItemClick } = useReaderViewContext()
+    const {
+      enableFloatingTime,
+      onItemClick,
+      quickMenuOpen,
+      onQuickMenuOpenChange,
+    } = useReaderViewContext()
     const [isTableOfContentsOpen, setIsTableOfContentsOpen] = useState(false)
     const [isHelpOpen, setIsHelpOpen] = useState(false)
     const [isSearchOpen, setIsSearchOpen] = useState(false)
@@ -75,16 +84,15 @@ const InnerReactReader = memo(
     const [isGalleryOpen, setIsGalleryOpen] = useState(false)
     const [isLayoutOpen, setIsLayoutOpen] = useState(false)
     const [isThemeOpen, setIsThemeOpen] = useState(false)
-    const [quickMenuOpen, setQuickMenuOpen] = useQuickMenu()
 
     const onNavigate = useCallback(() => {
       setIsTableOfContentsOpen(false)
       setIsHelpOpen(false)
       setIsSearchOpen(false)
       setIsAnnotationsOpenWith(undefined)
-      setQuickMenuOpen(false)
+      onQuickMenuOpenChange(false)
       setIsGalleryOpen(false)
-    }, [setQuickMenuOpen])
+    }, [onQuickMenuOpenChange])
 
     const _onItemClick: NonNullable<typeof onItemClick> = useCallback(
       (item) => {
@@ -196,8 +204,11 @@ export const ReactReader = memo(function ReactReader({
   quickMenuOpen,
   onQuickMenuOpenChange,
 }: ReactReaderProps) {
-  const [isUncontrolledQuickMenuOpen, setIsUncontrolledQuickMenuOpen] =
-    useState(false)
+  const [isQuickMenuOpen, setIsQuickMenuOpen] = useControllableState({
+    value: quickMenuOpen,
+    defaultValue: false,
+    onChange: onQuickMenuOpenChange,
+  })
   const [isFontSizeMenuOpen, setIsFontSizeMenuOpen] = useState(false)
   const [isRefitMenuOpen, setIsRefitMenuOpen] = useState(false)
   const readerView = useMemo(
@@ -205,9 +216,8 @@ export const ReactReader = memo(function ReactReader({
       enableFloatingTime,
       enableFloatingProgress,
       onItemClick,
-      quickMenuOpen: quickMenuOpen ?? isUncontrolledQuickMenuOpen,
-      onQuickMenuOpenChange:
-        onQuickMenuOpenChange ?? setIsUncontrolledQuickMenuOpen,
+      quickMenuOpen: isQuickMenuOpen,
+      onQuickMenuOpenChange: setIsQuickMenuOpen,
       fontSizeMenuOpen: isFontSizeMenuOpen,
       onFontSizeMenuOpenChange: setIsFontSizeMenuOpen,
       refitMenuOpen: isRefitMenuOpen,
@@ -217,9 +227,8 @@ export const ReactReader = memo(function ReactReader({
       enableFloatingTime,
       enableFloatingProgress,
       onItemClick,
-      quickMenuOpen,
-      isUncontrolledQuickMenuOpen,
-      onQuickMenuOpenChange,
+      isQuickMenuOpen,
+      setIsQuickMenuOpen,
       isFontSizeMenuOpen,
       isRefitMenuOpen,
     ],

@@ -2,7 +2,6 @@ import { isShallowEqual } from "@prose-reader/shared"
 import { type ReactNode, useLayoutEffect } from "react"
 import { signal, useConstant, useMemoCompare } from "reactjrx"
 import {
-  type EveryKeyOf,
   getDefaultValue,
   type ProviderContextType,
   ReaderContext,
@@ -10,41 +9,36 @@ import {
 
 export function ReaderContextProvider({
   children,
-  zoomMaxScale,
-  settings,
-  onSettingsChange,
-  settingsByScope,
-  settingsScopes,
-  onSettingsScopesChange,
-  annotations,
-  onAnnotationCreate,
-  onAnnotationUpdate,
-  onAnnotationDelete,
+  ...props
 }: ProviderContextType & { children?: ReactNode }) {
   const context = useConstant(() => signal({ default: getDefaultValue() }))
-  const providerProps = useMemoCompare<EveryKeyOf<ProviderContextType>>(
-    {
-      zoomMaxScale,
-      settings,
-      onSettingsChange,
-      settingsByScope,
-      settingsScopes,
-      onSettingsScopesChange,
-      annotations,
-      onAnnotationCreate,
-      onAnnotationUpdate,
-      onAnnotationDelete,
-    },
-    isShallowEqual,
-  )
+  const memoizedProps = useMemoCompare(props, isShallowEqual)
 
   // A layout effect runs before the passive effects of its commit, so the
   // reader's creation reads the props it copies.
   useLayoutEffect(
-    function copyPropsIntoContext() {
-      context.update((old) => ({ ...old, ...providerProps }))
+    function replacePropsInContext() {
+      // A prop the app stops passing must not keep its last value.
+      context.update(
+        ({
+          reader,
+          readerElement,
+          uncontrolledSettings,
+          notificationsSubject,
+          quickMenuBottomBarBoundingBoxSignal,
+          selectedHighlight,
+        }) => ({
+          reader,
+          readerElement,
+          uncontrolledSettings,
+          notificationsSubject,
+          quickMenuBottomBarBoundingBoxSignal,
+          selectedHighlight,
+          ...memoizedProps,
+        }),
+      )
     },
-    [context, providerProps],
+    [context, memoizedProps],
   )
 
   return (
