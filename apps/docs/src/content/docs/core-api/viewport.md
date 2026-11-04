@@ -187,7 +187,8 @@ The reader works only while the element has a size:
   loses its size stops, and starts again once it has one;
 - the reader starts no load or unload of the documents of spine items. A
   document loaded with no size has no layout either, and the browser does not
-  request its fonts.
+  request its fonts: an HTML document already loading waits for a size before
+  it counts as loaded.
 
 ```typescript
 reader.viewport.isSized$.subscribe((isSized) => {
