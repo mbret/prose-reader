@@ -54,7 +54,8 @@ You can hide the container the reader is mounted into with `display: none`, as a
 
 * The pages and the reading position keep the values they had. A layout that was running when the container was hidden runs again once it is shown.
 * A layout asked for while the container is hidden, by a setting such as the font scale or by a chapter that finishes loading, runs once the container is shown again. Until then the pagination is not settled: it describes the layout before the request.
-* A navigation made while the container is hidden takes effect, and the chapters around it load once the container is shown. An HTML chapter, as in an EPUB, still loading when the container is hidden counts as loaded once the container is shown, when its fonts can load.
+* A navigation made while the container is hidden waits, and runs once the container is shown. If several are made, only the last one runs.
+* An HTML chapter, as in an EPUB, still loading when the container is hidden counts as loaded once the container is shown, when its fonts can load.
 * Shown again at the size it had, the container needs no new layout. With `layoutAutoResize: "container"`, the default, a container shown at another size is laid out for it, as for any resize.
 * A reader mounted into a hidden container opens its book once the container is shown. Until then, it has no reading position.
 
