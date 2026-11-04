@@ -89,7 +89,7 @@ export const Scrubber = (props: ComponentProps<typeof ThemedSlider>) => {
   const throttleLock = useCallback(() => {
     return reader?.navigation.throttleLock({
       duration: 100,
-      trigger: valueSignal.subject,
+      trigger: valueSignal,
     })
   }, [reader, valueSignal])
 
