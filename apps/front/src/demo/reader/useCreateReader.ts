@@ -24,6 +24,12 @@ declare module "@prose-reader/react-reader" {
   }
 }
 
+declare global {
+  interface Window {
+    reader?: ReaderInstance
+  }
+}
+
 export const createAppReader = refitEnhancer(
   galleryEnhancer(
     pdfEnhancer(
