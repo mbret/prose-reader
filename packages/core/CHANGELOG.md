@@ -3,6 +3,16 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## [39.0.0](https://github.com/mbret/prose-reader/compare/v38.0.1...v39.0.0) (2026-11-04)
+
+### Bug Fixes
+
+* **core:** load a chapter once its stylesheets and the fonts its text uses are in ([502fae4](https://github.com/mbret/prose-reader/commit/502fae4c05d604537212a53babdb24c0e8f67121)), closes [#593](https://github.com/mbret/prose-reader/issues/593)
+* **core:** make a lazy image with only a srcset eager, and wait for it ([972c1de](https://github.com/mbret/prose-reader/commit/972c1de61e2923398fbbf3da91b029eb1cb13f54))
+* **core:** stop waiting for a font that is not in after 5 seconds ([a71156b](https://github.com/mbret/prose-reader/commit/a71156b587d314093a8f0a41d63ceb73204d0770))
+* **core:** wait for a chapter's lazy images when it loads by url ([2ae83e0](https://github.com/mbret/prose-reader/commit/2ae83e0c7922b3f8f24b7652796100b2f066dd90))
+
+
 ## [38.0.1](https://github.com/mbret/prose-reader/compare/v38.0.0...v38.0.1) (2026-11-03)
 
 ### Bug Fixes

@@ -3,6 +3,28 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## [39.0.0](https://github.com/mbret/prose-reader/compare/v38.0.1...v39.0.0) (2026-11-04)
+
+### ⚠ BREAKING CHANGES
+
+* **react-reader:** react-reader needs reactjrx 4. An app on reactjrx 2
+  or 3 upgrades it to 4.x. reactjrx 3 removed `useConcatMutation$`, and
+  reactjrx 4 removed `Signal.setValue` and `Signal.subject`.
+
+### Features
+
+* **react-reader:** accept reactjrx 3 and 4, and move the apps to 4.0.4 ([744de54](https://github.com/mbret/prose-reader/commit/744de54f1e896ed7cd53ca1d5ec9c462c3e27dfc))
+* **react-reader:** export useReader, typed by a Register declaration ([fe6a3b2](https://github.com/mbret/prose-reader/commit/fe6a3b298815955be66f1fee85feb67da30e4fd7))
+* **react-reader:** require reactjrx 4 ([584330b](https://github.com/mbret/prose-reader/commit/584330b279276f5268400772058ca1119c974f00))
+
+### Bug Fixes
+
+* **react-reader:** hide the floating progress while react-reader's own quick menu is open ([13ed78c](https://github.com/mbret/prose-reader/commit/13ed78c3a0b5c8f3cb05e59123d8c6d10d9b3e25))
+* **react-reader:** keep the quick menu uncontrolled when the app only listens to it ([a272851](https://github.com/mbret/prose-reader/commit/a272851cfcade94baf124af13bb9f52013a0a9bd))
+* **react-reader:** throw when useReader runs outside ReactReader, and accept a declared reader that can be undefined ([4e37c68](https://github.com/mbret/prose-reader/commit/4e37c68185e95fc200c147f888ecebd1c980f3bb))
+* **react-reader:** write every provider prop into the context, so a dropped prop goes back to undefined ([a1e0804](https://github.com/mbret/prose-reader/commit/a1e08040002afe338cd7f4df4a2896d076d22506))
+
+
 ## [38.0.1](https://github.com/mbret/prose-reader/compare/v38.0.0...v38.0.1) (2026-11-03)
 
 **Note:** Version bump only for package @prose-reader/react-reader

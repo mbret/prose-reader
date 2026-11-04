@@ -3,6 +3,13 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## [39.0.0](https://github.com/mbret/prose-reader/compare/v38.0.1...v39.0.0) (2026-11-04)
+
+### Bug Fixes
+
+* **enhancer-pdf:** hand the frame to waitForFrameReady once the text layer is rendered ([330ea19](https://github.com/mbret/prose-reader/commit/330ea19922046a207e88d3aec802df0bd74f7810))
+
+
 ## [38.0.1](https://github.com/mbret/prose-reader/compare/v38.0.0...v38.0.1) (2026-11-03)
 
 ### Bug Fixes
