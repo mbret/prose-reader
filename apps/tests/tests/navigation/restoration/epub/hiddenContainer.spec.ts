@@ -25,7 +25,6 @@ type RecordedSinceHiding = {
 type ScenarioWindow = {
   readingPositions: ReadingPosition[]
   recordedSinceHiding: RecordedSinceHiding
-  isPointerOverFrame: boolean
 }
 
 const collectPageErrors = (page: Page) => {
@@ -170,112 +169,95 @@ test.describe("Given a reader on a page after the first of its chapter", () => {
   })
 })
 
-test.describe("Given the pointer over a chapter's frame", () => {
-  test.describe("when the reader's container is hidden", () => {
-    test("should forward the pointer leaving the frame to the reader, at its position in the frame", async ({
+/**
+ * A cfi names a place in a chapter's text, which a hidden frame cannot
+ * measure: every node in it measures 0 by 0.
+ */
+test.describe("Given a reader on the first page of a chapter it has loaded", () => {
+  test.describe("when it navigates to a cfi of that chapter while hidden, then is shown", () => {
+    test("should land on the cfi's page, and report it as the reading position", async ({
       page,
-      browserName,
     }) => {
-      test.skip(
-        browserName !== "chromium",
-        "Firefox and WebKit send a frame they hide no pointer event, so there is nothing to forward",
-      )
-
       const pageErrors = collectPageErrors(page)
       const reader = await openChapter(page)
 
+      // The cfi of a page after the first, found while the reader is shown.
+      for (const _ of [1, 2, 3, 4]) {
+        await reader.evaluate((reader) => {
+          reader.navigation.turnRight()
+        })
+        await waitForSettled(page)
+      }
+
+      const target = await reader.evaluate(({ pagination }) => ({
+        cfi: pagination.state.begin.cfi,
+        page: `${pagination.state.begin.spineItemIndex}:${pagination.state.begin.pageIndexInSpineItem}`,
+      }))
+
+      expect(target.page).toBe(`${chapterSpineItemIndex}:4`)
+
+      const targetCfi = target.cfi
+
+      if (!targetCfi) throw new Error("the page has no cfi once settled")
+
       await reader.evaluate((reader, spineItemIndex) => {
-        const frameDocument = reader.spineItemsManager
-          .get(spineItemIndex)
-          ?.renderer.getDocumentFrame()?.contentDocument
-
-        if (!frameDocument) throw new Error("the chapter has no document")
-
-        Object.assign(window, { isPointerOverFrame: false })
-        frameDocument.addEventListener(
-          "pointerover",
-          () => {
-            Object.assign(window, { isPointerOverFrame: true })
-          },
-          { once: true },
-        )
+        reader.navigation.goToSpineItem({
+          indexOrId: spineItemIndex,
+          animation: false,
+        })
       }, chapterSpineItemIndex)
+      await waitForSettled(page)
 
-      const viewportSize = page.viewportSize()
-
-      if (!viewportSize) throw new Error("the page has no viewport size")
-
-      // Chromium can deliver a first move to the page rather than to the
-      // frame under it, so the pointer moves until the frame reports it.
-      let pointerMoves = 0
-
-      await expect
-        .poll(async () => {
-          pointerMoves += 1
-          await page.mouse.move(
-            viewportSize.width / 2,
-            viewportSize.height / 2 + pointerMoves,
-          )
-
-          return page.evaluate(
-            () => (window as unknown as ScenarioWindow).isPointerOverFrame,
-          )
-        })
-        .toBe(true)
-
-      const leaves = await reader.evaluate(async (reader, spineItemIndex) => {
+      await reader.evaluate(async (reader, cfi) => {
         const container = document.getElementById("app")
-        const { rootElement } = reader.context.value
-        const frameDocument = reader.spineItemsManager
-          .get(spineItemIndex)
-          ?.renderer.getDocumentFrame()?.contentDocument
 
-        if (!container || !rootElement || !frameDocument) {
-          throw new Error("the reader is not mounted on the chapter")
-        }
-
-        const forwardedLeaves: { clientX: number; clientY: number }[] = []
-
-        rootElement.addEventListener("pointerleave", ({ clientX, clientY }) => {
-          forwardedLeaves.push({ clientX, clientY })
-        })
-
-        /**
-         * The reader listens to the frame's document from the moment it
-         * loads, so this listener runs after the reader has forwarded the
-         * event, or thrown. Chromium sends `pointerleave` in a rendering
-         * update after the hide, so the page asks for animation frames until
-         * it arrives.
-         */
-        const frameLeave = new Promise<{ clientX: number; clientY: number }>(
-          (resolve) => {
-            let hasPointerLeftFrame = false
-
-            frameDocument.addEventListener(
-              "pointerleave",
-              ({ clientX, clientY }) => {
-                hasPointerLeftFrame = true
-                resolve({ clientX, clientY })
-              },
-              { once: true },
-            )
-
-            const renderNextFrame = () => {
-              if (!hasPointerLeftFrame) requestAnimationFrame(renderNextFrame)
-            }
-
-            requestAnimationFrame(renderNextFrame)
-          },
-        )
+        if (!container) throw new Error("the page has no #app container")
 
         container.style.display = "none"
 
-        return { frameLeave: await frameLeave, forwardedLeaves }
-      }, chapterSpineItemIndex)
+        // The browser lays the hidden page out, and reports the container's
+        // new size to its observers, the reader's among them.
+        await new Promise<void>((resolve) => {
+          const observer = new ResizeObserver(([entry]) => {
+            if (entry?.contentRect.width !== 0) return
 
+            observer.disconnect()
+            resolve()
+          })
+
+          observer.observe(container)
+        })
+
+        reader.navigation.goToCfi(cfi)
+      }, targetCfi)
+
+      await reader.evaluate(() => {
+        document.getElementById("app")?.style.removeProperty("display")
+      })
+
+      // The navigation runs once the reader is shown, and lands there.
+      await expect
+        .poll(() =>
+          reader.evaluate(
+            ({ pagination }) =>
+              `${pagination.state.begin.spineItemIndex}:${pagination.state.begin.pageIndexInSpineItem}`,
+          ),
+        )
+        .toBe(target.page)
+      await waitForSettledOnCurrentLayout(page)
+
+      const shown = await reader.evaluate(({ pagination }) => {
+        const { readingPositions } = window as unknown as ScenarioWindow
+
+        return {
+          page: `${pagination.state.begin.spineItemIndex}:${pagination.state.begin.pageIndexInSpineItem}`,
+          readingPosition: readingPositions[readingPositions.length - 1],
+        }
+      })
+
+      expect(shown.page).toBe(target.page)
+      expect(shown.readingPosition?.cfi).toBe(targetCfi)
       expect(pageErrors).toEqual([])
-      // The hidden frame has no size to scale the position by.
-      expect(leaves.forwardedLeaves).toEqual([leaves.frameLeave])
     })
   })
 })
