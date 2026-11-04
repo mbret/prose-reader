@@ -193,7 +193,7 @@ export type ReactReaderProps = ReaderViewProps & {
 
 /**
  * Shows the reader of the `ReactReaderProvider` above, with react-reader's
- * menus.
+ * menus. Hiding it, in an `<Activity>` for example, keeps the reader.
  */
 export const ReactReader = memo(function ReactReader({
   children,
