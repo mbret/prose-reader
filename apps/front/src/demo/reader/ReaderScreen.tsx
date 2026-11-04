@@ -7,9 +7,10 @@ import {
   useCallback,
   useEffect,
   useRef,
+  useState,
 } from "react"
 import { useLocation, useNavigate, useParams } from "react-router"
-import { signal, useObserve, useSignalState, useSignalValue } from "reactjrx"
+import { signal, useSignalState, useSignalValue } from "reactjrx"
 import { useDocumentTitle } from "../useDocumentTitle"
 import { useServiceWorkerReady } from "../useServiceWorkerReady"
 import { restoreAnnotations, usePersistAnnotations } from "./annotations"
@@ -23,7 +24,7 @@ import { useSettings } from "./settings/useSettings"
 import { useUpdateReaderSettings } from "./settings/useUpdateReaderSettings"
 import { isQuickMenuOpenSignal, useResetStateOnUnMount } from "./states"
 import { isClientStreamedBook } from "./streaming"
-import { useCreateReader } from "./useCreateReader"
+import { type ReaderInstance, useCreateReader } from "./useCreateReader"
 import { useManifest } from "./useManifest"
 import { usePersistReadingPosition } from "./usePersistReadingPosition"
 
@@ -39,7 +40,6 @@ const ReaderScreenView = memo(function ReaderScreenView({
   const waitingForServiceWorker =
     !isClientStreamedBook(epubKey) && !serviceWorkerReady
   const [localSettings, setLocalSettings] = useSettings()
-  const { data: isReaderMounted } = useObserve(() => reader?.mounted$, [reader])
 
   useUpdateReaderSettings({ localSettings })
   usePersistReadingPosition(epubKey)
@@ -56,7 +56,7 @@ const ReaderScreenView = memo(function ReaderScreenView({
   return (
     <>
       {hasManifestError && <BookError url={epubKey} />}
-      {!isReaderMounted && !hasManifestError && (
+      {!reader && !hasManifestError && (
         <BookLoading waitingForServiceWorker={waitingForServiceWorker} />
       )}
       <MenuDialog
@@ -78,12 +78,33 @@ export const ReaderScreen = memo(() => {
     }),
   )
   const [_, __, bookSettingsSignal] = useBookSettings(epubKey)
-  const reader = useCreateReader(manifest, readerContainerRef, epubKey)
+  const createReader = useCreateReader(manifest, epubKey)
+  const [reader, setReader] = useState<ReaderInstance | undefined>(undefined)
   const isQuickMenuOpen = useSignalValue(isQuickMenuOpenSignal)
   const navigate = useNavigate()
   const { key: locationKey } = useLocation()
 
   useDocumentTitle(manifest?.title ?? `Reader - prose reader demo`)
+
+  useEffect(
+    function createAndMountReader() {
+      const containerElement = readerContainerRef.current
+
+      if (!createReader || !containerElement) return
+
+      const instance = createReader()
+
+      instance.mount(containerElement)
+      setReader(instance)
+
+      return function destroyReader() {
+        instance.destroy()
+        setReader(undefined)
+      }
+    },
+    [createReader],
+  )
+
   useResetStateOnUnMount()
   usePersistAnnotations(annotationsSignal, epubKey)
 

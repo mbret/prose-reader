@@ -10,7 +10,7 @@ import { searchEnhancer } from "@prose-reader/enhancer-search"
 import { BOOKMARK_AREA_DATA_ATTRIBUTE } from "@prose-reader/react-reader"
 import type { Manifest } from "@prose-reader/shared"
 import pdfjsViewerInlineCss from "pdfjs-dist/web/pdf_viewer.css?inline"
-import { type RefObject, useEffect, useState } from "react"
+import { useMemo } from "react"
 import { of } from "rxjs"
 import { getFileKeyFromUrl } from "../streamer/utils.shared"
 import { webStreamer } from "../streamer/webStreamer"
@@ -41,69 +41,53 @@ export const createAppReader = refitEnhancer(
   ),
 )
 
-/**
- * A reader lives for a single book: we create it once we have both the
- * manifest and the container, mount it right away and destroy it on
- * cleanup. Because destroy() is the true inverse of create+mount, this
- * effect is naturally safe with react strict mode re-running effects.
- */
 export const useCreateReader = (
   manifest: Manifest | undefined,
-  containerRef: RefObject<HTMLElement | null>,
   bookKey: string,
-) => {
-  const [reader, setReader] = useState<ReaderInstance | undefined>(undefined)
+) =>
+  useMemo(() => {
+    if (!manifest) return undefined
 
-  useEffect(() => {
-    const containerElement = containerRef.current
+    return function createReaderForBook() {
+      const query = new URLSearchParams(window.location.search)
+      const readingPosition = localStorage.getItem(
+        getReadingPositionKey(bookKey),
+      )
 
-    if (!manifest || !containerElement) return
-
-    const query = new URLSearchParams(window.location.search)
-    const readingPosition = localStorage.getItem(getReadingPositionKey(bookKey))
-
-    const readerOptions: Parameters<typeof createAppReader>[0] = {
-      manifest,
-      target: readingPosition
-        ? { type: "cfi", value: readingPosition }
-        : undefined,
-      pageTurnAnimation: `slide`,
-      pageTurnDirection: query.has("vertical") ? `vertical` : `horizontal`,
-      pageTurnMode: query.has("free") ? `scrollable` : `controlled`,
-      gestures: {
-        ignore: [
-          // ignore gestures within the bookmark area
-          `[${BOOKMARK_AREA_DATA_ATTRIBUTE}]`,
-        ],
-      },
-      pdf: {
-        pdfjsViewerInlineCss,
-        getArchiveForItem: (item) => {
-          if (!item.href.endsWith(`pdf`)) {
-            return of(undefined)
-          }
-
-          const key = getFileKeyFromUrl(item.href)
-
-          return webStreamer.accessArchiveWithoutLock(key)
+      const readerOptions: Parameters<typeof createAppReader>[0] = {
+        manifest,
+        target: readingPosition
+          ? { type: "cfi", value: readingPosition }
+          : undefined,
+        pageTurnAnimation: `slide`,
+        pageTurnDirection: query.has("vertical") ? `vertical` : `horizontal`,
+        pageTurnMode: query.has("free") ? `scrollable` : `controlled`,
+        gestures: {
+          ignore: [
+            // ignore gestures within the bookmark area
+            `[${BOOKMARK_AREA_DATA_ATTRIBUTE}]`,
+          ],
         },
-      },
+        pdf: {
+          pdfjsViewerInlineCss,
+          getArchiveForItem: (item) => {
+            if (!item.href.endsWith(`pdf`)) {
+              return of(undefined)
+            }
+
+            const key = getFileKeyFromUrl(item.href)
+
+            return webStreamer.accessArchiveWithoutLock(key)
+          },
+        },
+      }
+
+      const reader = createAppReader(readerOptions)
+
+      reader.$.destroy$.subscribe(function pruneStreamerOnceDestroyed() {
+        webStreamer.prune()
+      })
+
+      return reader
     }
-
-    const instance = createAppReader(readerOptions)
-
-    instance.mount(containerElement)
-
-    setReader(instance)
-
-    return () => {
-      instance.destroy()
-
-      setReader(undefined)
-
-      webStreamer.prune()
-    }
-  }, [manifest, containerRef, bookKey])
-
-  return reader
-}
+  }, [manifest, bookKey])
