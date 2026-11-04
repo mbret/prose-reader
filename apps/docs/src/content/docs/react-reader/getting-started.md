@@ -61,13 +61,9 @@ Children of `ReactReader` render after the element the book shows in. To show on
 
 ## Lifecycle
 
-- Render `ReactReaderProvider` above anything that hides the view, such as an `<Activity>` or a tab, and `ReactReader` inside it. Hiding `ReactReader` keeps the reader, since its element stays in the document, and the settings your app changes meanwhile reach the reader. Hiding the provider destroys the reader, and showing it again creates a new one.
+- Render `ReactReaderProvider` above anything that hides the view, such as an `<Activity>` or a tab, and `ReactReader` inside it. Hiding `ReactReader` keeps the reader, since its element stays in the document, and the settings your app changes meanwhile reach the reader. While hidden, the reader keeps its page, and holds its layouts and navigations until it is shown again: [My reader is hidden in a tab or an Activity](/get-started/troubleshooting-faq#my-reader-is-hidden-in-a-tab-or-an-activity). Hiding the provider destroys the reader, and showing it again creates a new one.
 - When `ReactReader` unmounts, the provider destroys the reader, also when an `<Activity>` hides it first. The next `ReactReader` gets a new reader in its own element, since a reader cannot move to another element.
 - Render one `ReactReader` under a provider. A second one throws.
-
-:::caution
-With the default `layoutAutoResize`, the reader lays the book out again when its element changes size, and a hidden element has a size of zero. While the element is hidden, `reader.pagination` reports the first page, and the pointer events the browser sends as the element hides make core throw a `TypeError`. [#684](https://github.com/mbret/prose-reader/issues/684) tracks the fix.
-:::
 
 ## Using the reader
 
