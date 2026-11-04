@@ -1,4 +1,4 @@
-import { describe, expect, it, vi } from "vitest"
+import { afterEach, describe, expect, it, vi } from "vitest"
 import { Context } from "../context/Context"
 import { ReaderSettingsManager } from "../settings/ReaderSettingsManager"
 import { SpinePosition } from "../spine/types"
@@ -210,5 +210,108 @@ describe("Given a viewport laid out in a box, asked what it shows of the spine",
       width: 100,
       height: 100,
     })
+  })
+})
+
+describe("Given a viewport whose element is hidden, then shown", () => {
+  /**
+   * A resize observer that reports only when the test says, as a browser does
+   * once it has laid the page out, and how many are observing.
+   */
+  const stubResizeObserver = () => {
+    const callbacks = new Set<() => void>()
+
+    vi.stubGlobal(
+      "ResizeObserver",
+      class {
+        private readonly report: () => void
+
+        constructor(callback: ResizeObserverCallback) {
+          // Cast: the viewport reads no entry, nor the observer it is given.
+          this.report = () => callback([], this as unknown as ResizeObserver)
+        }
+
+        observe() {
+          callbacks.add(this.report)
+        }
+
+        unobserve() {
+          callbacks.delete(this.report)
+        }
+
+        disconnect() {
+          callbacks.delete(this.report)
+        }
+      },
+    )
+
+    return {
+      reportResize: () => {
+        for (const report of [...callbacks]) report()
+      },
+      observing: () => callbacks.size,
+    }
+  }
+
+  afterEach(() => {
+    vi.unstubAllGlobals()
+  })
+
+  it("reports whether it has a size at once, then each change a resize brings", () => {
+    const { reportResize } = stubResizeObserver()
+    const context = new Context(createTestManifest())
+    const viewport = new Viewport(
+      context,
+      new ReaderSettingsManager({}, context),
+    )
+    const { element } = viewport.value
+    let size = { width: 100, height: 100 }
+
+    vi.spyOn(element, "clientWidth", "get").mockImplementation(() => size.width)
+    vi.spyOn(element, "clientHeight", "get").mockImplementation(
+      () => size.height,
+    )
+
+    const isSized: boolean[] = []
+
+    viewport.isSized$.subscribe((value) => isSized.push(value))
+
+    expect(isSized).toEqual([true])
+
+    // a resize that keeps a size is not a change
+    size = { width: 120, height: 100 }
+    reportResize()
+    // a container with a width but no height has no size either
+    size = { width: 120, height: 0 }
+    reportResize()
+    size = { width: 0, height: 0 }
+    reportResize()
+    size = { width: 120, height: 100 }
+    reportResize()
+
+    expect(isSized).toEqual([true, false, true])
+  })
+
+  it("stops observing the element when the reader is destroyed", () => {
+    const { observing } = stubResizeObserver()
+    const context = new Context(createTestManifest())
+    const viewport = new Viewport(
+      context,
+      new ReaderSettingsManager({}, context),
+    )
+    let isComplete = false
+
+    viewport.isSized$.subscribe({
+      complete: () => {
+        isComplete = true
+      },
+    })
+
+    expect(observing()).toBe(1)
+
+    viewport.destroy()
+
+    expect(isComplete).toBe(true)
+    expect(observing()).toBe(0)
   })
 })

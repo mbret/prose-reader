@@ -1,10 +1,13 @@
 // @vitest-environment jsdom
 import { filter, firstValueFrom, skip, timeout } from "rxjs"
-import { describe, expect, it, vi } from "vitest"
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
 import {
   createPrePaginatedManifest,
   createTestReader,
   createZoomableTestReader,
+  defaultTestViewport,
+  getTestContainer,
+  holdItem,
   installReaderTestEnvironment,
   mountTestReader,
   notifyResize,
@@ -107,24 +110,26 @@ describe("Given a mounted reader", () => {
 
   it("keeps watching the container with the same observer when a setting changes", async () => {
     const reader = await mountedAndSettled()
+    const container = getTestContainer()
 
-    expect(resizeObservers()).toEqual({ created: 1, watching: 1 })
+    expect(resizeObservers(container)).toEqual({ created: 1, watching: 1 })
 
     reader.settings.update({ pageTurnAnimation: "none" })
 
-    expect(resizeObservers()).toEqual({ created: 1, watching: 1 })
+    expect(resizeObservers(container)).toEqual({ created: 1, watching: 1 })
   })
 
   it("stops watching the container when layoutAutoResize is off, and watches again when it is back on", async () => {
     const reader = await mountedAndSettled()
+    const container = getTestContainer()
 
     reader.settings.update({ layoutAutoResize: false })
 
-    expect(resizeObservers().watching).toBe(0)
+    expect(resizeObservers(container).watching).toBe(0)
 
     reader.settings.update({ layoutAutoResize: "container" })
 
-    expect(resizeObservers().watching).toBe(1)
+    expect(resizeObservers(container).watching).toBe(1)
   })
 
   it("does not lay out again when the container reports the size it was laid out at", async () => {
@@ -164,6 +169,230 @@ describe("Given a mounted reader", () => {
     vi.advanceTimersByTime(RESIZE_DEBOUNCE * 2)
 
     expect(layouts()).toBe(0)
+  })
+})
+
+/**
+ * A container hidden under `display: none`, by an `<Activity>`, a tab or a CSS
+ * toggle, measures 0 by 0. So does every element in it, the viewport and the
+ * items' documents included.
+ */
+describe("Given a mounted reader whose container is hidden", () => {
+  const hidden = { width: 0, height: 0 }
+  /** The loader waits this long for the navigation to settle. */
+  const LOADER_DEBOUNCE = 100
+
+  /** The size the viewport's element had at each item layout of the test. */
+  let viewportSizesAtItemLayouts: { width: number; height: number }[] = []
+
+  const recordViewportSizeAtItemLayouts = (
+    reader: ReturnType<typeof createTestReader>,
+  ) => {
+    reader.hookManager.register("item.onBeforeLayout", () => {
+      const { clientWidth, clientHeight } = reader.viewport.value.element
+
+      viewportSizesAtItemLayouts.push({
+        width: clientWidth,
+        height: clientHeight,
+      })
+    })
+  }
+
+  const mountedAndSettledRecordingItemLayouts = async (
+    options: Parameters<typeof createTestReader>[0] = {},
+  ) => {
+    const reader = createTestReader(options)
+
+    recordViewportSizeAtItemLayouts(reader)
+    mountTestReader(reader)
+    await settledOn(reader)
+
+    return reader
+  }
+
+  beforeEach(() => {
+    viewportSizesAtItemLayouts = []
+  })
+
+  // whatever a test does, no item is laid out while the viewport has no size
+  afterEach(() => {
+    expect(viewportSizesAtItemLayouts).not.toContainEqual(hidden)
+  })
+
+  it("does not lay out, and keeps its page and its layout, while the container has no size", async () => {
+    const reader = await mountedAndSettledRecordingItemLayouts()
+    const layouts = countLayouts(reader)
+    const settledBeforeHiding = reader.pagination.state
+
+    vi.useFakeTimers()
+    setTestViewport(hidden)
+    notifyResize()
+    vi.advanceTimersByTime(RESIZE_DEBOUNCE * 2)
+
+    expect(layouts()).toBe(0)
+    expect(reader.spine.isLayoutCurrent()).toBe(true)
+    expect(reader.pagination.state).toBe(settledBeforeHiding)
+  })
+
+  it("does not lay out when the container is shown again at the size it was laid out at", async () => {
+    const reader = await mountedAndSettledRecordingItemLayouts()
+    const layouts = countLayouts(reader)
+
+    vi.useFakeTimers()
+    setTestViewport(hidden)
+    notifyResize()
+    vi.advanceTimersByTime(RESIZE_DEBOUNCE * 2)
+    setTestViewport(defaultTestViewport)
+    notifyResize()
+    vi.advanceTimersByTime(RESIZE_DEBOUNCE * 2)
+
+    expect(layouts()).toBe(0)
+  })
+
+  it("lays out once when the container is shown again at another size", async () => {
+    const reader = await mountedAndSettledRecordingItemLayouts()
+    const layouts = countLayouts(reader)
+
+    vi.useFakeTimers()
+    setTestViewport(hidden)
+    notifyResize()
+    vi.advanceTimersByTime(RESIZE_DEBOUNCE * 2)
+    setTestViewport({ width: 120, height: 200 })
+    notifyResize()
+    vi.advanceTimersByTime(RESIZE_DEBOUNCE * 2)
+
+    expect(layouts()).toBe(1)
+    expect(reader.viewport.value.width).toBe(120)
+  })
+
+  it("holds a layout requested while hidden until the container has a size, then lays out once at it", async () => {
+    const reader = await mountedAndSettledRecordingItemLayouts()
+    const layouts = countLayouts(reader)
+
+    viewportSizesAtItemLayouts = []
+    vi.useFakeTimers()
+    setTestViewport(hidden)
+    reader.settings.update({ pageHorizontalMargin: 10 })
+    await vi.advanceTimersByTimeAsync(RESIZE_DEBOUNCE * 2)
+
+    expect(layouts()).toBe(0)
+    expect(viewportSizesAtItemLayouts).toEqual([])
+    expect(reader.spine.isLayoutCurrent()).toBe(false)
+
+    setTestViewport({ width: 120, height: 200 })
+    notifyResize()
+    await vi.advanceTimersByTimeAsync(RESIZE_DEBOUNCE * 2)
+
+    expect(layouts()).toBe(1)
+    expect(reader.viewport.value.width).toBe(120)
+    expect(reader.spine.isLayoutCurrent()).toBe(true)
+    expect(viewportSizesAtItemLayouts).not.toEqual([])
+  })
+
+  it("stops a layout the container is hidden during, and runs it again once the container is shown at the size it had", async () => {
+    const reader = await mountedAndSettledRecordingItemLayouts()
+    const layouts = countLayouts(reader)
+
+    viewportSizesAtItemLayouts = []
+    vi.useFakeTimers()
+    // measures the viewport at once, and lays the items out 50 ms later
+    reader.settings.update({ pageHorizontalMargin: 10 })
+    await vi.advanceTimersByTimeAsync(10)
+    setTestViewport(hidden)
+    notifyResize()
+    await vi.advanceTimersByTimeAsync(RESIZE_DEBOUNCE * 2)
+
+    expect(viewportSizesAtItemLayouts).toEqual([])
+    expect(reader.spine.isLayoutCurrent()).toBe(false)
+
+    setTestViewport(defaultTestViewport)
+    notifyResize()
+    await vi.advanceTimersByTimeAsync(RESIZE_DEBOUNCE * 2)
+
+    // the layout starts again from the measurement, and only it runs
+    expect(layouts()).toBe(2)
+    expect(reader.spine.isLayoutCurrent()).toBe(true)
+    expect(viewportSizesAtItemLayouts).not.toEqual([])
+  })
+
+  it("lays nothing out when the container is hidden before the browser reports it, and lays out once it is shown", async () => {
+    const reader = await mountedAndSettledRecordingItemLayouts()
+    const layouts = countLayouts(reader)
+
+    viewportSizesAtItemLayouts = []
+    vi.useFakeTimers()
+    // measures the viewport at once, and lays the items out 50 ms later
+    reader.settings.update({ pageHorizontalMargin: 10 })
+    // hidden, with no report yet: the browser has not rendered since
+    setTestViewport(hidden)
+    await vi.advanceTimersByTimeAsync(RESIZE_DEBOUNCE * 2)
+
+    expect(viewportSizesAtItemLayouts).toEqual([])
+    expect(reader.spine.isLayoutCurrent()).toBe(false)
+
+    setTestViewport(defaultTestViewport)
+    notifyResize()
+    await vi.advanceTimersByTimeAsync(RESIZE_DEBOUNCE * 2)
+
+    expect(layouts()).toBe(2)
+    expect(reader.spine.isLayoutCurrent()).toBe(true)
+    expect(viewportSizesAtItemLayouts).not.toEqual([])
+  })
+
+  it("holds the layout an item's load ends with while hidden, until the container has a size", async () => {
+    const secondItem = holdItem("/page_1.jpg")
+    const reader = await mountedAndSettledRecordingItemLayouts({
+      getRenderer: secondItem.getRenderer,
+    })
+
+    viewportSizesAtItemLayouts = []
+    vi.useFakeTimers()
+    setTestViewport(hidden)
+    secondItem.release()
+    await vi.advanceTimersByTimeAsync(RESIZE_DEBOUNCE * 2)
+
+    expect(reader.spineItemsManager.get(1)?.value.loadStatus).toBe("loaded")
+    expect(viewportSizesAtItemLayouts).toEqual([])
+    expect(reader.spine.isLayoutCurrent()).toBe(false)
+
+    setTestViewport(defaultTestViewport)
+    notifyResize()
+    await vi.advanceTimersByTimeAsync(RESIZE_DEBOUNCE * 2)
+
+    expect(reader.spine.isLayoutCurrent()).toBe(true)
+    expect(viewportSizesAtItemLayouts).not.toEqual([])
+  })
+
+  it("neither loads nor unloads a spine item while hidden, and loads the one in view once shown", async () => {
+    // from the start, so the loader's wait runs on the fake clock
+    vi.useFakeTimers()
+
+    // with no animation, the turn lands at once, and the viewport is free
+    const reader = createTestReader({
+      numberOfAdjacentSpineItemToPreLoad: 0,
+      pageTurnAnimation: "none",
+    })
+    const loadStatusOf = (spineItemIndex: number) =>
+      reader.spineItemsManager.get(spineItemIndex)?.value.loadStatus
+
+    recordViewportSizeAtItemLayouts(reader)
+    mountTestReader(reader)
+    await vi.runAllTimersAsync()
+
+    expect([loadStatusOf(0), loadStatusOf(1)]).toEqual(["loaded", "idle"])
+
+    setTestViewport(hidden)
+    notifyResize()
+    reader.navigation.turnRight()
+    await vi.advanceTimersByTimeAsync(LOADER_DEBOUNCE * 3)
+
+    expect([loadStatusOf(0), loadStatusOf(1)]).toEqual(["loaded", "idle"])
+
+    setTestViewport(defaultTestViewport)
+    notifyResize()
+    await vi.advanceTimersByTimeAsync(LOADER_DEBOUNCE * 3)
+
+    expect([loadStatusOf(0), loadStatusOf(1)]).toEqual(["idle", "loaded"])
   })
 })
 
