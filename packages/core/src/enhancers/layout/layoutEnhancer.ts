@@ -221,10 +221,7 @@ export const layoutEnhancer =
             )
           : EMPTY,
       ),
-      filter(
-        () =>
-          reader.viewport.hasSize() && reader.viewport.hasResizedSinceLayout(),
-      ),
+      filter(() => reader.viewport.hasNewSizeSinceLayout()),
       tap(() => {
         reader.layout()
       }),

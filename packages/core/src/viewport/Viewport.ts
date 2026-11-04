@@ -57,6 +57,15 @@ type State = {
   height: number
 }
 
+/** Whether a measured size has a width and a height to lay the book out at. */
+const isSizeToLayOutAt = ({
+  width,
+  height,
+}: {
+  width: number
+  height: number
+}) => width > 0 && height > 0
+
 export class Viewport extends ReactiveEntity<State> {
   private layoutSubject = new Subject<void>()
   /** Emits after the viewport is measured for a layout. */
@@ -90,26 +99,28 @@ export class Viewport extends ReactiveEntity<State> {
   }
 
   /**
-   * Whether the element no longer has the size of the last layout. It
-   * measures the element, which costs a style and layout pass when the DOM is
-   * dirty.
-   */
-  public hasResizedSinceLayout() {
-    const { width, height } = this.measure()
-
-    return width !== this.value.width || height !== this.value.height
-  }
-
-  /**
    * Whether the element has a width and a height to lay the book out at.
    * Hidden, as under `display: none`, or out of the document, it measures 0
    * by 0. It measures the element, which costs a style and layout pass when
    * the DOM is dirty.
    */
   public hasSize() {
-    const { width, height } = this.measure()
+    return isSizeToLayOutAt(this.measure())
+  }
 
-    return width > 0 && height > 0
+  /**
+   * Whether the element has a size, and not the one of the last layout, so
+   * that laying out again would change anything. A resize to no size changes
+   * nothing: no layout runs until the element has a size again. It measures
+   * the element, which costs a style and layout pass when the DOM is dirty.
+   */
+  public hasNewSizeSinceLayout() {
+    const size = this.measure()
+
+    return (
+      isSizeToLayOutAt(size) &&
+      (size.width !== this.value.width || size.height !== this.value.height)
+    )
   }
 
   /**

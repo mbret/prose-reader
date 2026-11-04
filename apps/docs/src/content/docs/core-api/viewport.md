@@ -203,6 +203,17 @@ reader.viewport.isSized$.subscribe((isSized) => {
 
 Whether the element has a size now.
 
+### `.hasNewSizeSinceLayout()` { #hasnewsizesincelayout }
+
+```typescript
+() => boolean
+```
+
+Whether the element has a size, and not the one of the last layout, so that
+laying out again would change anything. With `layoutAutoResize: "container"`,
+the reader lays out for a resize of its container only when this is `true`: a
+container hidden, then shown again at the size it had, needs no layout.
+
 ## What it shows
 
 ### `.getVisibleSlice()` { #getvisibleslice }
