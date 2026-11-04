@@ -1,29 +1,60 @@
 import { expect, test } from "@playwright/test"
 import { resizeAndSettle } from "../../../utils/pagination"
+import { getReader } from "../../../utils/reader"
+import { isCfiPositionVisible } from "../../../utils/visibility"
 
 test.describe("Given a CFI", () => {
-  test("should navigate correct second page", async ({ page }) => {
+  test("should open on the page holding it, the second of its item", async ({
+    page,
+  }) => {
     await page.setViewportSize({
       width: 536,
       height: 842,
     })
 
-    const cfi = `epubcfi(/6/${(3 + 1) * 2}!/2/4/4[toc]/4/8/4/2/4/2/2/1)`
+    const tableOfContentsSpineItemIndex = 3
+    /**
+     * "Timed Tracks", in the table of contents. In the book's own font it is
+     * the first entry of the second page, and in the fallback font of the
+     * Linux builds the last of the first: the page it opens on is only right
+     * once the table of contents is laid out in its own font.
+     */
+    const cfi = `epubcfi(/6/${(tableOfContentsSpineItemIndex + 1) * 2}!/2/4/4[toc]/4/8/4/2/4/2/2/1)`
 
     await page.goto(
       `http://localhost:3333/tests/navigation/restoration/epub/index.html?cfi=${encodeURIComponent(cfi)}`,
     )
 
-    // TOC
-    const frameHandle = page.locator(".spineItem:nth-child(4) iframe")
-    const frame = frameHandle.contentFrame()
+    const reader = await getReader(page)
 
-    const textElement = frame?.getByText("About the Book")
-    await textElement?.waitFor({ state: "visible" })
+    // A cfi naming only its item would open on the item's first page.
+    expect(
+      await reader.evaluate(
+        (reader, cfi) => ({
+          isRootCfi: reader.cfi.isRootCfi(cfi),
+          itemIndex: reader.cfi.parseCfi(cfi).itemIndex,
+        }),
+        cfi,
+      ),
+    ).toEqual({ isRootCfi: false, itemIndex: tableOfContentsSpineItemIndex })
 
-    await expect(textElement).toBeInViewport({
-      ratio: 1,
-    })
+    // Its character in view alone could be the first page's, before the font
+    // that moves it to the second is in.
+    await expect
+      .poll(async () => ({
+        ...(await reader.evaluate((reader) => ({
+          isSettled: reader.pagination.state.isSettled,
+          spineItemIndex: reader.pagination.state.begin.spineItemIndex,
+          pageIndex: reader.pagination.state.begin.pageIndexInSpineItem,
+        }))),
+        isCfiVisible: await isCfiPositionVisible(page, cfi),
+      }))
+      .toEqual({
+        isSettled: true,
+        spineItemIndex: tableOfContentsSpineItemIndex,
+        pageIndex: 1,
+        isCfiVisible: true,
+      })
   })
 })
 

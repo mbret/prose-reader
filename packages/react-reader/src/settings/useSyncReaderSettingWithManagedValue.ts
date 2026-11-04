@@ -6,7 +6,7 @@ import {
   useReaderContext,
   useReaderContextValue,
 } from "../context/useReaderContext"
-import { getAppSettingValueInEffect } from "./appSettingValues"
+import { getManagedSettingValueInEffect } from "./appSettingValues"
 import type { ManagedSettingName, ReactReaderSettings } from "./managedSettings"
 import { useScreenSettingsScopeReference } from "./useScreenSettingsScopeReference"
 
@@ -37,13 +37,11 @@ export const useSyncReaderSettingWithManagedValue = <
     "uncontrolledSettings",
   ])
   const screen = useScreenSettingsScopeReference()
-  const appValueInEffect = getAppSettingValueInEffect(
+  const valueInEffect = getManagedSettingValueInEffect(
     appSettingValues,
     name,
     screen,
   )
-  const valueInEffect =
-    appValueInEffect ?? appSettingValues.uncontrolledSettings[name]
   const valueInEffectRef = useLiveRef(valueInEffect)
 
   useEffect(

@@ -1,23 +1,21 @@
 import { memo } from "react"
-import type { PublicContextType } from "../context/context"
+import {
+  type ReaderViewProps,
+  useReaderViewContext,
+} from "../context/ReaderViewContext"
 import { useReaderContextValue } from "../context/useReaderContext"
 import { BottomBar } from "./BottomBar"
 import { TopBar } from "./TopBar"
-import { useQuickMenu } from "./useQuickMenu"
 
 export const QuickMenu = memo(
   ({
     onItemClick,
   }: {
-    onItemClick: NonNullable<PublicContextType["onItemClick"]>
+    onItemClick: NonNullable<ReaderViewProps["onItemClick"]>
   }) => {
-    const [quickMenuOpen] = useQuickMenu()
-    const { refitMenuOpen, fontSizeMenuOpen, selectedHighlight } =
-      useReaderContextValue([
-        "refitMenuOpen",
-        "fontSizeMenuOpen",
-        "selectedHighlight",
-      ])
+    const { quickMenuOpen, refitMenuOpen, fontSizeMenuOpen } =
+      useReaderViewContext()
+    const { selectedHighlight } = useReaderContextValue(["selectedHighlight"])
 
     return (
       <>

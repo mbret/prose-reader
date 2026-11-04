@@ -10,16 +10,13 @@ import {
   DialogRoot,
   DialogTitle,
 } from "../components/ui/dialog"
-import { useReaderContextValue } from "../context/useReaderContext"
+import { useReaderViewContext } from "../context/ReaderViewContext"
 import { SettingScopes } from "../settings/SettingScopes"
 import { useManagedSetting } from "../settings/useManagedSetting"
 import { FontScaleSlider } from "./FontScaleSlider"
 
 export const FontSizeControlsDialog = memo(() => {
-  const { fontSizeMenuOpen, onFontSizeMenuOpenChange } = useReaderContextValue([
-    "fontSizeMenuOpen",
-    "onFontSizeMenuOpenChange",
-  ])
+  const { fontSizeMenuOpen, onFontSizeMenuOpenChange } = useReaderViewContext()
   const fontScale = useManagedSetting("fontScale")
 
   return (

@@ -1,35 +1,14 @@
-import { readdir, readFile } from "node:fs/promises"
+import { glob, readFile } from "node:fs/promises"
 import path from "node:path"
 import { fileURLToPath } from "node:url"
 import ts from "typescript"
+import { TEST_FILES } from "../../../config/testFiles.mts"
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url))
 const packageDir = path.resolve(__dirname, "..")
-const targetDir = path.join(packageDir, "src")
 // @prose-reader/cbz ships an enhancer without the `enhancer-` prefix but must
 // stay optional at runtime just like the other enhancer packages.
 const enhancerPackagePattern = /^@prose-reader\/(enhancer-|cbz(\/|$))/
-
-const collectSourceFiles = async (directory) => {
-  const entries = await readdir(directory, {
-    withFileTypes: true,
-  })
-  const nestedPaths = await Promise.all(
-    entries.map(async (entry) => {
-      const entryPath = path.join(directory, entry.name)
-
-      if (entry.isDirectory()) {
-        return collectSourceFiles(entryPath)
-      }
-
-      if (!entry.isFile()) return []
-
-      return /\.(ts|tsx)$/.test(entry.name) ? [entryPath] : []
-    }),
-  )
-
-  return nestedPaths.flat()
-}
 
 const formatLocation = (sourceFile, start) => {
   const { line, character } = sourceFile.getLineAndCharacterOfPosition(start)
@@ -38,7 +17,12 @@ const formatLocation = (sourceFile, start) => {
 }
 
 const main = async () => {
-  const files = await collectSourceFiles(targetDir)
+  const shippedSourceFiles = await Array.fromAsync(
+    glob("src/**/*.{ts,tsx}", { cwd: packageDir, exclude: TEST_FILES }),
+  )
+  const files = shippedSourceFiles.map((sourceFile) =>
+    path.join(packageDir, sourceFile),
+  )
   const violations = []
 
   for (const filePath of files) {

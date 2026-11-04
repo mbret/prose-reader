@@ -1,63 +1,22 @@
-import { createArchiveFromJszip } from "@prose-reader/archive-reader/archives/createArchiveFromJszip"
 import { createReader, type ReadingPosition } from "@prose-reader/core"
-import { Streamer } from "@prose-reader/streamer"
-import { loadAsync } from "jszip"
-import { from } from "rxjs"
-
-/**
- * Gives every image of the book's pages `loading="lazy"`, and a top margin that
- * keeps it far beyond any engine's lazy loading distance while its page loads.
- */
-const makeImagesLazy = async (
-  epubJszip: Awaited<ReturnType<typeof loadAsync>>,
-) => {
-  for (const page of epubJszip.file(/\.xhtml$/)) {
-    const content = await page.async("string")
-
-    epubJszip.file(
-      page.name,
-      content.replace(
-        /<img /g,
-        '<img loading="lazy" style="margin-top: 10000px" ',
-      ),
-    )
-  }
-}
-
-async function createStreamer({ lazyImages }: { lazyImages: boolean }) {
-  const streamer = new Streamer({
-    getArchive: async () => {
-      const epubResponse = await fetch(
-        "http://localhost:3333/epubs/accessible_epub_3.epub",
-      )
-      const epubBlob = await epubResponse.blob()
-      const epubJszip = await loadAsync(epubBlob)
-
-      if (lazyImages) await makeImagesLazy(epubJszip)
-
-      const archive = await createArchiveFromJszip(epubJszip)
-
-      return archive
-    },
-  })
-
-  return streamer
-}
+import { openFixtureBook } from "../../../fixtureBook"
+import { recordChapterDocumentsWhenLoaded } from "./chapterDocumentsWhenLoaded"
 
 async function run() {
   const query = new URLSearchParams(window.location.search)
-  const streamer = await createStreamer({
-    lazyImages: query.has("lazyImages"),
-  })
-  const manifestResponse = await streamer.fetchManifest()
-  const manifest = await manifestResponse.json()
+  // `server/serveBooks.ts` makes the book with lazy images.
+  const book = await openFixtureBook(
+    query.has("lazyImages")
+      ? "accessible_epub_3-lazy-images.epub"
+      : "accessible_epub_3.epub",
+  )
 
   const cfi = query.get("cfi")
   const preload = query.get("preload")
   const pageHorizontalMargin = query.get("pageHorizontalMargin")
 
   const reader = createReader({
-    manifest,
+    ...book,
     target: cfi ? { type: "cfi", value: cfi } : undefined,
     ...(preload !== null && {
       numberOfAdjacentSpineItemToPreLoad: Number(preload),
@@ -67,9 +26,6 @@ async function run() {
     }),
     pageTurnAnimation: "none",
     layoutLayerTransition: false,
-    getResource: (item) => {
-      return from(streamer.fetchResource({ resourcePath: item.href }))
-    },
   })
 
   // Every reading position from the reader's creation on, earlier than a spec
@@ -80,6 +36,8 @@ async function run() {
     readingPositions.push(readingPosition)
   })
 
+  const chapterDocumentsWhenLoaded = recordChapterDocumentsWhenLoaded(reader)
+
   // biome-ignore lint/style/noNonNullAssertion: TODO
   reader.mount(document.getElementById(`app`)!)
 
@@ -87,6 +45,8 @@ async function run() {
   window.reader = reader
   // @ts-expect-error export for the specs
   window.readingPositions = readingPositions
+  // @ts-expect-error export for the specs
+  window.chapterDocumentsWhenLoaded = chapterDocumentsWhenLoaded
 }
 
 run()
