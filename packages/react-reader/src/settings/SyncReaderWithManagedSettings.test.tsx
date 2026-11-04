@@ -4,8 +4,16 @@ import { ChakraProvider, defaultSystem } from "@chakra-ui/react"
 import type { CoreInputSettings, Theme } from "@prose-reader/core"
 import { act, type ComponentProps, type ReactNode, useState } from "react"
 import { createRoot } from "react-dom/client"
-import { BehaviorSubject } from "rxjs"
-import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
+import { BehaviorSubject, config } from "rxjs"
+import {
+  afterEach,
+  beforeEach,
+  describe,
+  expect,
+  it,
+  onTestFinished,
+  vi,
+} from "vitest"
 
 type ManagedReaderSettings = Pick<CoreInputSettings, "spreadMode"> & {
   fontScale: number
@@ -257,6 +265,71 @@ describe(`SyncReaderWithManagedSettings`, () => {
       { spreadMode: `always` },
       `internal`,
     )
+  })
+
+  it(`keeps reporting values set on the reader directly after the app fails to handle one`, async () => {
+    const reader = createReaderWithSettings()
+    const onSettingsChange = vi
+      .fn()
+      .mockImplementationOnce(function failToSaveTheFirstChange() {
+        throw new Error(`The settings could not be saved`)
+      })
+    const onUnhandledError = vi.fn()
+    testReader.set(reader)
+
+    config.onUnhandledError = onUnhandledError
+    onTestFinished(function restoreUnhandledErrorReporting() {
+      config.onUnhandledError = null
+    })
+
+    await render({ onSettingsChange })
+    await act(async () => {
+      reader.settings.update({ spreadMode: `never` })
+    })
+    await act(async () => {
+      reader.settings.update({ spreadMode: `always` })
+    })
+    await act(async () => {
+      await new Promise((resolve) => setTimeout(resolve))
+    })
+
+    expect({
+      reported: onSettingsChange.mock.calls,
+      unhandledErrors: onUnhandledError.mock.calls.length,
+    }).toEqual({
+      reported: [
+        [{ spreadMode: `never` }, `internal`],
+        [{ spreadMode: `always` }, `internal`],
+      ],
+      unhandledErrors: 1,
+    })
+  })
+
+  it(`stops listening to a reader once it is replaced, and to any reader once unmounted`, async () => {
+    const firstReader = createReaderWithSettings()
+    const secondReader = createReaderWithSettings()
+    const onSettingsChange = vi.fn()
+    testReader.set(firstReader)
+
+    await render({ onSettingsChange })
+    await act(async () => {
+      testReader.set(secondReader)
+    })
+    await act(async () => {
+      firstReader.settings.update({ spreadMode: `never` })
+    })
+    const secondReaderUpdatesBeforeUnmount = [
+      ...secondReader.settings.update.mock.calls,
+    ]
+    await act(async () => {
+      root.unmount()
+    })
+    secondReader.settings.update({ spreadMode: `always` })
+
+    expect({
+      reported: onSettingsChange.mock.calls,
+      secondReaderUpdatesBeforeUnmount,
+    }).toEqual({ reported: [], secondReaderUpdatesBeforeUnmount: [] })
   })
 
   it(`keeps the spread mode the reader was created with when the app passes none`, async () => {
