@@ -1,7 +1,13 @@
 import { Box } from "@chakra-ui/react"
-import { ReactReader } from "@prose-reader/react-reader"
+import { ReactReader, useReader } from "@prose-reader/react-reader"
 import "@prose-reader/react-reader/index.css"
-import { type ComponentProps, memo, useCallback, useRef } from "react"
+import {
+  type ComponentProps,
+  memo,
+  useCallback,
+  useEffect,
+  useRef,
+} from "react"
 import { useLocation, useNavigate, useParams } from "react-router"
 import { signal, useObserve, useSignalState, useSignalValue } from "reactjrx"
 import { useDocumentTitle } from "../useDocumentTitle"
@@ -20,37 +26,66 @@ import { isClientStreamedBook } from "./streaming"
 import { useCreateReader } from "./useCreateReader"
 import { useManifest } from "./useManifest"
 import { usePersistReadingPosition } from "./usePersistReadingPosition"
-import { useReader } from "./useReader"
 
-export const ReaderScreen = memo(() => {
-  const { url = `` } = useParams<`url`>()
-  const { reader } = useReader()
-  const epubKey = url
+const ReaderScreenView = memo(function ReaderScreenView({
+  epubKey,
+  hasManifestError,
+}: {
+  epubKey: string
+  hasManifestError: boolean
+}) {
+  const reader = useReader()
   const serviceWorkerReady = useServiceWorkerReady()
   const waitingForServiceWorker =
     !isClientStreamedBook(epubKey) && !serviceWorkerReady
+  const [localSettings, setLocalSettings] = useSettings()
+  const { data: isReaderMounted } = useObserve(() => reader?.mounted$, [reader])
+
+  useUpdateReaderSettings({ localSettings })
+  usePersistReadingPosition(epubKey)
+  useBookBoundariesReachedToast()
+
+  useEffect(
+    function exposeReaderForDebugging() {
+      // @ts-expect-error expose the reader in the console for debugging
+      window.reader = reader
+    },
+    [reader],
+  )
+
+  return (
+    <>
+      {hasManifestError && <BookError url={epubKey} />}
+      {!isReaderMounted && !hasManifestError && (
+        <BookLoading waitingForServiceWorker={waitingForServiceWorker} />
+      )}
+      <MenuDialog
+        localSettings={localSettings}
+        setLocalSettings={setLocalSettings}
+      />
+    </>
+  )
+})
+
+export const ReaderScreen = memo(() => {
+  const { url = `` } = useParams<`url`>()
+  const epubKey = url
   const { data: manifest, error: manifestError } = useManifest(epubKey)
   const readerContainerRef = useRef<HTMLDivElement | null>(null)
-  const [localSettings, setLocalSettings] = useSettings()
   const [annotations, annotationsSignal] = useSignalState(() =>
     signal({
       default: restoreAnnotations(epubKey),
     }),
   )
   const [_, __, bookSettingsSignal] = useBookSettings(epubKey)
-  const { data: isReaderMounted } = useObserve(() => reader?.mounted$, [reader])
+  const reader = useCreateReader(manifest, readerContainerRef, epubKey)
   const isQuickMenuOpen = useSignalValue(isQuickMenuOpenSignal)
   const navigate = useNavigate()
   const { key: locationKey } = useLocation()
 
   useDocumentTitle(manifest?.title ?? `Reader - prose reader demo`)
-
-  useCreateReader(manifest, readerContainerRef, epubKey)
-  useUpdateReaderSettings({ localSettings })
-  usePersistReadingPosition(epubKey)
   useResetStateOnUnMount()
   usePersistAnnotations(annotationsSignal, epubKey)
-  useBookBoundariesReachedToast()
 
   const reactReaderSettingsProps =
     useReactReaderSettingsProps(bookSettingsSignal)
@@ -116,13 +151,9 @@ export const ReaderScreen = memo(() => {
         }}
       >
         <Box width="100%" height="100%" ref={readerContainerRef} />
-        {!!manifestError && <BookError url={url} />}
-        {!isReaderMounted && !manifestError && (
-          <BookLoading waitingForServiceWorker={waitingForServiceWorker} />
-        )}
-        <MenuDialog
-          localSettings={localSettings}
-          setLocalSettings={setLocalSettings}
+        <ReaderScreenView
+          epubKey={epubKey}
+          hasManifestError={!!manifestError}
         />
       </ReactReader>
     </>

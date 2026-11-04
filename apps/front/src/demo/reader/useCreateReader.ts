@@ -10,15 +10,19 @@ import { searchEnhancer } from "@prose-reader/enhancer-search"
 import { BOOKMARK_AREA_DATA_ATTRIBUTE } from "@prose-reader/react-reader"
 import type { Manifest } from "@prose-reader/shared"
 import pdfjsViewerInlineCss from "pdfjs-dist/web/pdf_viewer.css?inline"
-import { type RefObject, useEffect } from "react"
-import { SIGNAL_RESET } from "reactjrx"
+import { type RefObject, useEffect, useState } from "react"
 import { of } from "rxjs"
 import { getFileKeyFromUrl } from "../streamer/utils.shared"
 import { webStreamer } from "../streamer/webStreamer"
 import { getReadingPositionKey } from "./usePersistReadingPosition"
-import { readerSignal } from "./useReader"
 
 export type ReaderInstance = ReturnType<typeof createAppReader>
+
+declare module "@prose-reader/react-reader" {
+  interface Register {
+    reader: ReaderInstance
+  }
+}
 
 export const createAppReader = refitEnhancer(
   galleryEnhancer(
@@ -48,6 +52,8 @@ export const useCreateReader = (
   containerRef: RefObject<HTMLElement | null>,
   bookKey: string,
 ) => {
+  const [reader, setReader] = useState<ReaderInstance | undefined>(undefined)
+
   useEffect(() => {
     const containerElement = containerRef.current
 
@@ -88,14 +94,16 @@ export const useCreateReader = (
 
     instance.mount(containerElement)
 
-    readerSignal.update(instance)
+    setReader(instance)
 
     return () => {
       instance.destroy()
 
-      readerSignal.update(SIGNAL_RESET)
+      setReader(undefined)
 
       webStreamer.prune()
     }
   }, [manifest, containerRef, bookKey])
+
+  return reader
 }
