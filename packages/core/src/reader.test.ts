@@ -58,10 +58,16 @@ beforeAll(() => {
       disconnect() {}
     },
   )
+  // jsdom lays nothing out, and the reader lays out and loads spine items
+  // only while its viewport has a size: every element gets the one a shown
+  // container gives it.
+  vi.spyOn(HTMLElement.prototype, "clientWidth", "get").mockReturnValue(100)
+  vi.spyOn(HTMLElement.prototype, "clientHeight", "get").mockReturnValue(100)
 })
 
 afterAll(() => {
   vi.unstubAllGlobals()
+  vi.restoreAllMocks()
 })
 
 let container: HTMLElement

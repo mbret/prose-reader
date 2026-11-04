@@ -1,5 +1,5 @@
 import { detectMimeTypeFromName } from "@prose-reader/shared"
-import { from, map, of, switchMap, tap } from "rxjs"
+import { filter, from, map, of, switchMap, tap } from "rxjs"
 import { DocumentRenderer } from "../../../spineItem/renderer/DocumentRenderer"
 import { isHtmlTagElement, setAttributeIfChanged } from "../../../utils/dom"
 import {
@@ -66,6 +66,12 @@ export class HtmlRenderer extends DocumentRenderer {
         item: this.item,
         settings: this.settings,
       }),
+      /**
+       * A frame with no layout requests none of its fonts, so its fonts read
+       * as ready before they arrive. A document loading while the viewport
+       * has no size, its container hidden, waits for one first.
+       */
+      waitForSwitch(this.viewport.isSized$.pipe(filter((isSized) => isSized))),
       waitForFrameReady,
       tap((frameElement) => {
         this.revealFrameAfterReady(frameElement)
