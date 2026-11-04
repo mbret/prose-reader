@@ -99,7 +99,6 @@ const AppSavingEveryChange = ({
 
   return (
     <ReaderContextProvider
-      reader={undefined}
       settings={settings}
       onSettingsChange={function saveSettings(changes, from) {
         savedChanges.push([changes, from])
@@ -202,7 +201,7 @@ describe(`SyncReaderWithManagedSettings`, () => {
     const reader = createReaderWithSettings()
     testReader.set(reader)
 
-    await render({ reader: undefined, settings: { fontScale: 1.5 } })
+    await render({ settings: { fontScale: 1.5 } })
 
     expect(reader.settings.values.fontScale).toBe(1.5)
   })
@@ -211,7 +210,7 @@ describe(`SyncReaderWithManagedSettings`, () => {
     const reader = createReaderWithSettings()
     testReader.set(reader)
 
-    await render({ reader: undefined, settings: { spreadMode: `never` } })
+    await render({ settings: { spreadMode: `never` } })
 
     expect(reader.settings.values.spreadMode).toBe(`never`)
   })
@@ -220,7 +219,7 @@ describe(`SyncReaderWithManagedSettings`, () => {
     const reader = createReaderWithSettings({ theme: `bright` })
     testReader.set(reader)
 
-    await render({ reader: undefined, settings: { theme: `night` } })
+    await render({ settings: { theme: `night` } })
 
     expect(reader.settings.values.theme).toBe(`night`)
   })
@@ -230,7 +229,6 @@ describe(`SyncReaderWithManagedSettings`, () => {
     testReader.set(reader)
 
     await render({
-      reader: undefined,
       settings: { fontScale: 1.2, spreadMode: `never` },
       settingsByScope: { book: { spreadMode: `always` } },
       settingsScopes: { fontScale: `book`, spreadMode: `book` },
@@ -248,7 +246,6 @@ describe(`SyncReaderWithManagedSettings`, () => {
     testReader.set(reader)
 
     await render({
-      reader: undefined,
       settings: { spreadMode: `never` },
       onSettingsChange,
     })
@@ -266,7 +263,7 @@ describe(`SyncReaderWithManagedSettings`, () => {
     const reader = createReaderWithSettings({ spreadMode: `always` })
     testReader.set(reader)
 
-    await render({ reader: undefined })
+    await render({})
 
     expect(reader.settings.values.spreadMode).toBe(`always`)
     expect(reader.settings.update).not.toHaveBeenCalledWith({
@@ -278,7 +275,7 @@ describe(`SyncReaderWithManagedSettings`, () => {
     const reader = createReaderWithSettings({ spreadMode: `always` })
     testReader.set(reader)
 
-    const spreadModeMenu = await renderWithSpreadModeMenu({ reader: undefined })
+    const spreadModeMenu = await renderWithSpreadModeMenu({})
 
     expect(spreadModeMenu.current?.getValueForScope(`global`)).toBe(`always`)
   })
@@ -288,7 +285,6 @@ describe(`SyncReaderWithManagedSettings`, () => {
     const onSettingsChange = vi.fn()
 
     const spreadModeMenu = await renderWithSpreadModeMenu({
-      reader: undefined,
       onSettingsChange,
     })
     await act(async () => {
@@ -310,7 +306,7 @@ describe(`SyncReaderWithManagedSettings`, () => {
     const reader = createReaderWithSettings({ spreadMode: `auto` })
     testReader.set(reader)
 
-    const spreadModeMenu = await renderWithSpreadModeMenu({ reader: undefined })
+    const spreadModeMenu = await renderWithSpreadModeMenu({})
     await act(async () => {
       spreadModeMenu.current?.changeValueForScope(`global`, `never`)
     })
@@ -325,7 +321,6 @@ describe(`SyncReaderWithManagedSettings`, () => {
     testReader.set(reader)
 
     const spreadModeMenu = await renderWithSpreadModeMenu({
-      reader: undefined,
       onSettingsChange,
     })
     await act(async () => {
@@ -344,7 +339,6 @@ describe(`SyncReaderWithManagedSettings`, () => {
     testReader.set(reader)
 
     const spreadModeMenu = await renderWithSpreadModeMenu({
-      reader: undefined,
       settings: { spreadMode: `never` },
       settingsScopes: { spreadMode: `book` },
       onSettingsChange,
@@ -364,7 +358,6 @@ describe(`SyncReaderWithManagedSettings`, () => {
     testReader.set(createReaderWithSettings())
 
     const spreadModeMenu = await renderWithSpreadModeMenu({
-      reader: undefined,
       settings: { spreadMode: `never` },
       settingsByScope: { book: { spreadMode: `always` } },
       settingsScopes: { spreadMode: `book` },
@@ -380,7 +373,6 @@ describe(`SyncReaderWithManagedSettings`, () => {
     testReader.set(reader)
 
     await render({
-      reader: undefined,
       settings: { spreadMode: `never` },
       settingsByScope: {
         tablet: { spreadMode: `always` },
@@ -405,10 +397,7 @@ describe(`SyncReaderWithManagedSettings`, () => {
     }
     const renderReaderWithMenu = (menu: ReactNode) =>
       renderInChakra(
-        <ReaderContextProvider
-          reader={undefined}
-          settingsScopes={{ spreadMode: `screen` }}
-        >
+        <ReaderContextProvider settingsScopes={{ spreadMode: `screen` }}>
           <SyncReaderWithManagedSettings />
           {menu}
         </ReaderContextProvider>,
@@ -423,16 +412,13 @@ describe(`SyncReaderWithManagedSettings`, () => {
   it(`offers the scopes once the app passes settingsScopes`, async () => {
     testReader.set(createReaderWithSettings())
 
-    const menuWithoutScopes = await renderWithSpreadModeMenu({
-      reader: undefined,
-    })
+    const menuWithoutScopes = await renderWithSpreadModeMenu({})
 
     expect(menuWithoutScopes.current?.activeScope).toBeUndefined()
     expect(menuWithoutScopes.current?.onActiveScopeChange).toBeUndefined()
 
     const onSettingsScopesChange = vi.fn()
     const menuWithScopes = await renderWithSpreadModeMenu({
-      reader: undefined,
       settingsScopes: {},
       onSettingsScopesChange,
     })

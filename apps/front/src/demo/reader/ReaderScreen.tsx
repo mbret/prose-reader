@@ -1,16 +1,12 @@
-import { Box } from "@chakra-ui/react"
-import { ReactReader, useReader } from "@prose-reader/react-reader"
-import "@prose-reader/react-reader/index.css"
 import {
-  type ComponentProps,
-  memo,
-  useCallback,
-  useEffect,
-  useRef,
-  useState,
-} from "react"
+  ReactReader,
+  ReactReaderProvider,
+  useReader,
+} from "@prose-reader/react-reader"
+import "@prose-reader/react-reader/index.css"
+import { type ComponentProps, memo, useCallback, useEffect } from "react"
 import { useLocation, useNavigate, useParams } from "react-router"
-import { signal, useObserve, useSignalState, useSignalValue } from "reactjrx"
+import { signal, useSignalState, useSignalValue } from "reactjrx"
 import { useDocumentTitle } from "../useDocumentTitle"
 import { useServiceWorkerReady } from "../useServiceWorkerReady"
 import { restoreAnnotations, usePersistAnnotations } from "./annotations"
@@ -24,7 +20,7 @@ import { useSettings } from "./settings/useSettings"
 import { useUpdateReaderSettings } from "./settings/useUpdateReaderSettings"
 import { isQuickMenuOpenSignal, useResetStateOnUnMount } from "./states"
 import { isClientStreamedBook } from "./streaming"
-import { type ReaderInstance, useCreateReader } from "./useCreateReader"
+import { useCreateReader } from "./useCreateReader"
 import { useManifest } from "./useManifest"
 import { usePersistReadingPosition } from "./usePersistReadingPosition"
 
@@ -40,7 +36,9 @@ const ReaderScreenView = memo(function ReaderScreenView({
   const waitingForServiceWorker =
     !isClientStreamedBook(epubKey) && !serviceWorkerReady
   const [localSettings, setLocalSettings] = useSettings()
-  const { data: isReaderMounted } = useObserve(() => reader?.mounted$, [reader])
+  const isQuickMenuOpen = useSignalValue(isQuickMenuOpenSignal)
+  const navigate = useNavigate()
+  const { key: locationKey } = useLocation()
 
   useUpdateReaderSettings({ localSettings })
   usePersistReadingPosition(epubKey)
@@ -56,64 +54,6 @@ const ReaderScreenView = memo(function ReaderScreenView({
     },
     [reader],
   )
-
-  return (
-    <>
-      {hasManifestError && <BookError url={epubKey} />}
-      {!isReaderMounted && !hasManifestError && (
-        <BookLoading waitingForServiceWorker={waitingForServiceWorker} />
-      )}
-      <MenuDialog
-        localSettings={localSettings}
-        setLocalSettings={setLocalSettings}
-      />
-    </>
-  )
-})
-
-export const ReaderScreen = memo(() => {
-  const { url = `` } = useParams<`url`>()
-  const epubKey = url
-  const { data: manifest, error: manifestError } = useManifest(epubKey)
-  const readerContainerRef = useRef<HTMLDivElement | null>(null)
-  const [annotations, annotationsSignal] = useSignalState(() =>
-    signal({
-      default: restoreAnnotations(epubKey),
-    }),
-  )
-  const [_, __, bookSettingsSignal] = useBookSettings(epubKey)
-  const createReader = useCreateReader(manifest, epubKey)
-  const [reader, setReader] = useState<ReaderInstance | undefined>(undefined)
-  const isQuickMenuOpen = useSignalValue(isQuickMenuOpenSignal)
-  const navigate = useNavigate()
-  const { key: locationKey } = useLocation()
-
-  useDocumentTitle(manifest?.title ?? `Reader - prose reader demo`)
-
-  useEffect(
-    function createAndMountReader() {
-      const containerElement = readerContainerRef.current
-
-      if (!createReader || !containerElement) return
-
-      const instance = createReader()
-
-      instance.mount(containerElement)
-      setReader(instance)
-
-      return function destroyReader() {
-        instance.destroy()
-        setReader(undefined)
-      }
-    },
-    [createReader],
-  )
-
-  useResetStateOnUnMount()
-  usePersistAnnotations(annotationsSignal, epubKey)
-
-  const reactReaderSettingsProps =
-    useReactReaderSettingsProps(bookSettingsSignal)
 
   const onItemClick = useCallback(
     (
@@ -141,24 +81,57 @@ export const ReaderScreen = memo(() => {
   )
 
   return (
+    <ReactReader
+      onItemClick={onItemClick}
+      quickMenuOpen={isQuickMenuOpen}
+      onQuickMenuOpenChange={isQuickMenuOpenSignal.update}
+      slots={{
+        container: {
+          props: {
+            height: "100%",
+            width: "100%",
+            position: "relative",
+          },
+        },
+      }}
+    >
+      {hasManifestError && <BookError url={epubKey} />}
+      {!reader && !hasManifestError && (
+        <BookLoading waitingForServiceWorker={waitingForServiceWorker} />
+      )}
+      <MenuDialog
+        localSettings={localSettings}
+        setLocalSettings={setLocalSettings}
+      />
+    </ReactReader>
+  )
+})
+
+export const ReaderScreen = memo(() => {
+  const { url = `` } = useParams<`url`>()
+  const epubKey = url
+  const { data: manifest, error: manifestError } = useManifest(epubKey)
+  const [annotations, annotationsSignal] = useSignalState(() =>
+    signal({
+      default: restoreAnnotations(epubKey),
+    }),
+  )
+  const [_, __, bookSettingsSignal] = useBookSettings(epubKey)
+  const createReader = useCreateReader(manifest, epubKey)
+  const reactReaderSettingsProps =
+    useReactReaderSettingsProps(bookSettingsSignal)
+
+  useDocumentTitle(manifest?.title ?? `Reader - prose reader demo`)
+  useResetStateOnUnMount()
+  usePersistAnnotations(annotationsSignal, epubKey)
+
+  return (
     <>
       {/* React hoists it into the head: the books the demo opens stay out of search results */}
       <meta name="robots" content="noindex" />
-      <ReactReader
-        onItemClick={onItemClick}
-        reader={reader}
-        quickMenuOpen={isQuickMenuOpen}
-        onQuickMenuOpenChange={isQuickMenuOpenSignal.update}
+      <ReactReaderProvider
+        createReader={createReader}
         {...reactReaderSettingsProps}
-        slots={{
-          container: {
-            props: {
-              height: "100%",
-              width: "100%",
-              position: "relative",
-            },
-          },
-        }}
         annotations={annotations}
         onAnnotationCreate={(annotation) => {
           annotationsSignal.update([...annotations, annotation])
@@ -174,12 +147,11 @@ export const ReaderScreen = memo(() => {
           annotationsSignal.update((state) => state.filter((a) => a.id !== id))
         }}
       >
-        <Box width="100%" height="100%" ref={readerContainerRef} />
         <ReaderScreenView
           epubKey={epubKey}
           hasManifestError={!!manifestError}
         />
-      </ReactReader>
+      </ReactReaderProvider>
     </>
   )
 })

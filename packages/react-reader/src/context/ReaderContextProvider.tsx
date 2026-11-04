@@ -1,31 +1,35 @@
 import { isShallowEqual } from "@prose-reader/shared"
-import { memo, type ReactNode, useEffect } from "react"
+import { type ReactNode, useLayoutEffect } from "react"
 import { signal, useConstant, useMemoCompare } from "reactjrx"
 import {
   getDefaultValue,
-  type PublicContextType,
+  type ProviderContextType,
   ReaderContext,
 } from "./context"
 
-export const ReaderContextProvider = memo(function ReaderContextProvider({
+export function ReaderContextProvider({
   children,
   ...props
-}: {
-  children: ReactNode
-} & PublicContextType) {
-  const valueSignal = useConstant(() => signal({ default: getDefaultValue() }))
+}: ProviderContextType & { children?: ReactNode }) {
+  const context = useConstant(() => signal({ default: getDefaultValue() }))
   const memoizedProps = useMemoCompare(props, isShallowEqual)
 
-  useEffect(
+  // A layout effect runs before the passive effects of its commit, so the
+  // reader's creation reads the props it copies.
+  useLayoutEffect(
     function replacePropsInContext() {
       // A prop the app stops passing must not keep its last value.
-      valueSignal.update(
+      context.update(
         ({
+          reader,
+          readerElement,
           uncontrolledSettings,
           notificationsSubject,
           quickMenuBottomBarBoundingBoxSignal,
           selectedHighlight,
         }) => ({
+          reader,
+          readerElement,
           uncontrolledSettings,
           notificationsSubject,
           quickMenuBottomBarBoundingBoxSignal,
@@ -34,12 +38,10 @@ export const ReaderContextProvider = memo(function ReaderContextProvider({
         }),
       )
     },
-    [memoizedProps, valueSignal],
+    [context, memoizedProps],
   )
 
   return (
-    <ReaderContext.Provider value={valueSignal}>
-      {children}
-    </ReaderContext.Provider>
+    <ReaderContext.Provider value={context}>{children}</ReaderContext.Provider>
   )
-})
+}

@@ -18,9 +18,9 @@ import type {
 } from "../settings/types"
 
 /**
- * Add `reader` to this interface to declare the type of the reader you pass
- * to `ReactReader`. `useReader()` then returns a reader of that type, with the
- * APIs of its enhancers:
+ * Add `reader` to this interface to declare the type of the reader your
+ * `createReader` returns. `useReader()` then returns a reader of that type,
+ * with the APIs of its enhancers:
  *
  * ```ts
  * declare module "@prose-reader/react-reader" {
@@ -50,11 +50,13 @@ export type ReactReaderReader = Register extends {
   : ReaderWithGestures
 
 export type PrivateContextType = {
+  reader: ReactReaderReader | undefined
+  /** The element the view renders for the reader to mount in. */
+  readerElement: HTMLElement | undefined
   /**
-   * react-reader's own values for the settings the app gives no value, starting
-   * from the reader's. This way the Reader works as intended but:
-   * - there are no persistent settings
-   * - the settings are valid only for the current mount runtime
+   * react-reader's own values for the settings the app gives no value. They
+   * start from the first reader's values and go to every reader created after
+   * it. They last while the provider is mounted, and nothing persists them.
    */
   uncontrolledSettings: ReactReaderSettings
   notificationsSubject: Subject<ReaderNotification>
@@ -70,8 +72,8 @@ export type PrivateContextType = {
     | undefined
 }
 
-export type PublicContextType = {
-  reader: ReactReaderReader | undefined
+/** The props of `ReactReaderProvider` it copies into the context. */
+export type ProviderContextType = {
   zoomMaxScale?: number
   /**
    * The global values of the reader settings react-reader manages. They apply
@@ -114,10 +116,11 @@ export type PublicContextType = {
   onAnnotationDelete?: (id: string) => void
 }
 
-export type ReaderContextType = PrivateContextType & PublicContextType
+export type ReaderContextType = PrivateContextType & ProviderContextType
 
 export const getDefaultValue = (): ReaderContextType => ({
   reader: undefined,
+  readerElement: undefined,
   quickMenuBottomBarBoundingBoxSignal: signal<ResizeObserverEntry | undefined>({
     default: undefined,
   }),

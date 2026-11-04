@@ -7,7 +7,9 @@ export const useReaderContext = () => {
   const context = useContext(ReaderContext)
 
   if (!context) {
-    throw new Error(`useReader needs a ReactReader above it`)
+    throw new Error(
+      `ReactReader and useReader need a ReactReaderProvider above them`,
+    )
   }
 
   return context

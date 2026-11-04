@@ -86,8 +86,8 @@ type Options = {
 ```
 
 With [react-reader](/react-reader/getting-started), set `zoomMaxScale` with the
-`zoomMaxScale` prop of `ReactReader` instead, `5` by default: react-reader
-writes it over this setting.
+`zoomMaxScale` prop of `ReactReaderProvider` instead, `5` by default:
+react-reader writes it over this setting.
 
 ### `.settings`
 

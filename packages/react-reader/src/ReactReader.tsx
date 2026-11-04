@@ -7,6 +7,7 @@ import {
 import {
   type ComponentProps,
   memo,
+  type ReactNode,
   useCallback,
   useMemo,
   useState,
@@ -17,10 +18,8 @@ import { AnnotationsDialog } from "./annotations/AnnotationsDialog"
 import { BookmarkPageMarkers } from "./annotations/bookmarks/BookmarkPageMarkers"
 import { useBookmarkOnCornerTap } from "./annotations/bookmarks/useBookmarkOnCornerTap"
 import { usePreventInteractionOnSelection } from "./annotations/usePreventInteractionOnSelection"
-import { useSyncAnnotationsWithReader } from "./annotations/useSyncAnnotationsWithReader"
 import { Spine } from "./common/Spine"
 import { Toaster } from "./components/ui/toaster"
-import { ReaderContextProvider } from "./context/ReaderContextProvider"
 import {
   ReaderViewContext,
   type ReaderViewContextType,
@@ -38,12 +37,11 @@ import { useInterceptExternalLinks } from "./navigation/useInterceptExternalLink
 import { useNotifications } from "./notifications/useNotifications"
 import { QuickMenu } from "./quickmenu/QuickMenu"
 import { useQuickMenuToggleGesture } from "./quickmenu/useQuickMenuToggleGesture"
+import { ReaderElement } from "./ReaderElement"
 import { RefitDialog } from "./refit/RefitDialog"
 import { SearchDialog } from "./search/SearchDialog"
-import { SyncReaderWithManagedSettings } from "./settings/SyncReaderWithManagedSettings"
 import { ThemeDialog } from "./theme/ThemeDialog"
 import { TableOfContentsDialog } from "./toc/TableOfContentsDialog"
-import { useZoomSettings } from "./zoom/useZoomSettings"
 import { ZoomControls } from "./zoom/ZoomControls"
 
 const ANIMATION_NAME_IN_OUT = { _open: "fade-in", _closed: "fade-out" }
@@ -56,19 +54,12 @@ const BookmarksEffects = memo(() => {
 })
 
 const Effects = memo(() => {
-  useZoomSettings()
   useInterceptExternalLinks()
   useNotifications()
   useQuickMenuToggleGesture()
   usePreventInteractionOnSelection()
-  useSyncAnnotationsWithReader()
 
-  return (
-    <>
-      <SyncReaderWithManagedSettings />
-      <BookmarksEffects />
-    </>
-  )
+  return <BookmarksEffects />
 })
 
 const InnerReactReader = memo(
@@ -187,15 +178,23 @@ const InnerReactReader = memo(
   },
 )
 
-export type ReactReaderProps = ComponentProps<typeof ReaderContextProvider> &
-  ReaderViewProps & {
-    slots?: {
-      container?: {
-        props?: Omit<ComponentProps<typeof InnerReactReader>, "children">
-      }
+export type ReactReaderProps = ReaderViewProps & {
+  /**
+   * Renders after the element of the reader. Position it absolutely to show
+   * it over the book.
+   */
+  children?: ReactNode
+  slots?: {
+    container?: {
+      props?: Omit<ComponentProps<typeof InnerReactReader>, "children">
     }
   }
+}
 
+/**
+ * Shows the reader of the `ReactReaderProvider` above, with react-reader's
+ * menus.
+ */
 export const ReactReader = memo(function ReactReader({
   children,
   slots,
@@ -204,7 +203,6 @@ export const ReactReader = memo(function ReactReader({
   onItemClick,
   quickMenuOpen,
   onQuickMenuOpenChange,
-  ...props
 }: ReactReaderProps) {
   const [isQuickMenuOpen, setIsQuickMenuOpen] = useControllableState({
     value: quickMenuOpen,
@@ -238,10 +236,11 @@ export const ReactReader = memo(function ReactReader({
   const { container: { props: containerProps = {} } = {} } = slots ?? {}
 
   return (
-    <ReaderContextProvider {...props}>
-      <ReaderViewContext.Provider value={readerView}>
-        <InnerReactReader {...containerProps}>{children}</InnerReactReader>
-      </ReaderViewContext.Provider>
-    </ReaderContextProvider>
+    <ReaderViewContext.Provider value={readerView}>
+      <InnerReactReader {...containerProps}>
+        <ReaderElement />
+        {children}
+      </InnerReactReader>
+    </ReaderViewContext.Provider>
   )
 })

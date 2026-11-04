@@ -17,7 +17,7 @@ import { ThemeSection } from "./ThemeSection"
 
 type ReaderContextProviderProps = Omit<
   ComponentProps<typeof ReaderContextProvider>,
-  "children" | "reader"
+  "children"
 >
 
 const createReaderOfBook = ({
@@ -34,7 +34,7 @@ describe(`ThemeSection`, () => {
     await act(async () => {
       root.render(
         <ChakraProvider value={defaultSystem}>
-          <ReaderContextProvider reader={undefined} {...props}>
+          <ReaderContextProvider {...props}>
             <ThemeSection />
           </ReaderContextProvider>
         </ChakraProvider>,
