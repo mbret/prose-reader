@@ -59,8 +59,8 @@ export const restoreNavigationForControlledPageTurnMode = ({
       /**
        * Whether the reader can tell which page of this item a node is on. In
        * vertical writing it knows no page but the first. Right to left, it
-       * measures the leftmost box of the node's text, on the last page that
-       * text reaches.
+       * measures the node's text as one box, whose left edge is on the last
+       * page that text reaches.
        */
       const canFindPageOfNode =
         !spineItem.isUsingVerticalWriting() &&

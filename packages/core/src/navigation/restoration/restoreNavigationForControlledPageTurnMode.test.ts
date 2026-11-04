@@ -239,7 +239,7 @@ describe(`Given a navigation on the second page of an item whose size did not ch
   /**
    * The reader cannot tell which page of such an item a node is on: in
    * vertical writing it knows only the first, and right to left it finds the
-   * last page the node's text reaches. The items here are laid out side by
+   * last page that the node's text reaches. The items here are laid out side by
    * side, as a vertical item is not, so the test checks that the anchor is
    * not resolved rather than where the reader lands.
    */
