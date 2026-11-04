@@ -521,37 +521,43 @@ describe(`ReactReaderProvider and ReactReader`, () => {
     }).toEqual({ creationsWithoutReactReader: 0, creations: 1 })
   })
 
-  it(`destroys the reader while an Activity hides ReactReader, and creates a new one when it shows again`, async () => {
+  it(`keeps the reader while an Activity hides ReactReader, on the settings the app changes meanwhile`, async () => {
     const { createOnePageReader, onDestroyed, getCreatedReaders } =
       createReaderFactory()
-    const renderInActivity = (mode: `visible` | `hidden`) =>
+    const renderInActivity = (
+      mode: `visible` | `hidden`,
+      settings: ReactReaderSettings,
+    ) =>
       render(
-        <ReactReaderProvider createReader={createOnePageReader}>
+        <ReactReaderProvider
+          createReader={createOnePageReader}
+          settings={settings}
+        >
           <Activity mode={mode}>
             <ReactReader />
           </Activity>
         </ReactReaderProvider>,
       )
 
-    await renderInActivity(`visible`)
-    await renderInActivity(`hidden`)
-    const [hiddenReader] = getCreatedReaders()
-    const destroyedWhileHidden = nameReaders(onDestroyed.mock.calls, {
-      hiddenReader,
-    })
-    await renderInActivity(`visible`)
-    const [, shownReader] = getCreatedReaders()
+    await renderInActivity(`visible`, { fontScale: 1.5 })
+    await renderInActivity(`hidden`, { fontScale: 1.5 })
+    await renderInActivity(`hidden`, { fontScale: 2 })
+    const [reader] = getCreatedReaders()
+    const fontScaleWhileHidden = reader?.settings.values.fontScale
+    await renderInActivity(`visible`, { fontScale: 2 })
 
     expect({
-      destroyedWhileHidden,
       creations: createOnePageReader.mock.calls.length,
-      isShownReaderElementInReactReader: isElementInReactReader(
-        shownReader?.context.value.rootElement,
+      destroyed: nameReaders(onDestroyed.mock.calls, { reader }),
+      fontScaleWhileHidden,
+      isReaderElementInReactReader: isElementInReactReader(
+        reader?.context.value.rootElement,
       ),
     }).toEqual({
-      destroyedWhileHidden: [`hiddenReader`],
-      creations: 2,
-      isShownReaderElementInReactReader: true,
+      creations: 1,
+      destroyed: [],
+      fontScaleWhileHidden: 2,
+      isReaderElementInReactReader: true,
     })
   })
 
@@ -593,18 +599,24 @@ describe(`ReactReaderProvider and ReactReader`, () => {
     })
   })
 
-  it(`keeps one reader when strict mode runs the effects twice`, async () => {
+  it(`keeps one reader when strict mode runs the effects twice, also as an Activity shows ReactReader again`, async () => {
     const { createOnePageReader, onDestroyed } = createReaderFactory()
+    const renderInActivity = (mode: `visible` | `hidden`) =>
+      renderRoot(
+        <StrictMode>
+          <ChakraProvider value={defaultSystem}>
+            <ReactReaderProvider createReader={createOnePageReader}>
+              <Activity mode={mode}>
+                <ReactReader />
+              </Activity>
+            </ReactReaderProvider>
+          </ChakraProvider>
+        </StrictMode>,
+      )
 
-    await renderRoot(
-      <StrictMode>
-        <ChakraProvider value={defaultSystem}>
-          <ReactReaderProvider createReader={createOnePageReader}>
-            <ReactReader />
-          </ReactReaderProvider>
-        </ChakraProvider>
-      </StrictMode>,
-    )
+    await renderInActivity(`visible`)
+    await renderInActivity(`hidden`)
+    await renderInActivity(`visible`)
 
     expect({
       creations: createOnePageReader.mock.calls.length,
@@ -642,6 +654,94 @@ describe(`ReactReaderProvider and ReactReader`, () => {
       creations: 2,
       isNextReaderElementInReactReader: true,
     })
+  })
+
+  it(`creates a reader in a ReactReader that replaces a hidden one in the same render`, async () => {
+    const { createOnePageReader, onDestroyed, getCreatedReaders } =
+      createReaderFactory()
+    const renderInActivity = (mode: `visible` | `hidden`, key: string) =>
+      render(
+        <ReactReaderProvider createReader={createOnePageReader}>
+          <Activity mode={mode}>
+            <ReactReader key={key} />
+          </Activity>
+        </ReactReaderProvider>,
+      )
+
+    await renderInActivity(`visible`, `first`)
+    await renderInActivity(`hidden`, `first`)
+    await renderInActivity(`visible`, `next`)
+    const [firstReader, nextReader] = getCreatedReaders()
+
+    expect({
+      destroyed: nameReaders(onDestroyed.mock.calls, {
+        firstReader,
+        nextReader,
+      }),
+      isNextReaderElementInReactReader: isElementInReactReader(
+        nextReader?.context.value.rootElement,
+      ),
+    }).toEqual({
+      destroyed: [`firstReader`],
+      isNextReaderElementInReactReader: true,
+    })
+  })
+
+  it(`stops watching the element of a ReactReader that an Activity shows again`, async () => {
+    const { createOnePageReader, onDestroyed, getCreatedReaders } =
+      createReaderFactory()
+    const renderInActivity = (mode: `visible` | `hidden`) =>
+      render(
+        <ReactReaderProvider createReader={createOnePageReader}>
+          <Activity mode={mode}>
+            <ReactReader />
+          </Activity>
+        </ReactReaderProvider>,
+      )
+
+    await renderInActivity(`visible`)
+    await renderInActivity(`hidden`)
+    await renderInActivity(`visible`)
+    await act(async () => {
+      container.remove()
+      await Promise.resolve()
+      document.body.appendChild(container)
+    })
+    const [reader] = getCreatedReaders()
+
+    expect(nameReaders(onDestroyed.mock.calls, { reader })).toEqual([])
+  })
+
+  it(`destroys the reader once React removes a ReactReader that an Activity hides`, async () => {
+    const { createOnePageReader, onDestroyed, getCreatedReaders } =
+      createReaderFactory()
+    const renderWithReactReader = (reactReader: ReactNode) =>
+      render(
+        <ReactReaderProvider createReader={createOnePageReader}>
+          {reactReader}
+        </ReactReaderProvider>,
+      )
+
+    await renderWithReactReader(
+      <Activity mode="visible">
+        <ReactReader />
+      </Activity>,
+    )
+    await renderWithReactReader(
+      <Activity mode="hidden">
+        <ReactReader />
+      </Activity>,
+    )
+    const [reader] = getCreatedReaders()
+    const destroyedWhileHidden = nameReaders(onDestroyed.mock.calls, {
+      reader,
+    })
+    await renderWithReactReader(null)
+
+    expect({
+      destroyedWhileHidden,
+      destroyedOnceRemoved: nameReaders(onDestroyed.mock.calls, { reader }),
+    }).toEqual({ destroyedWhileHidden: [], destroyedOnceRemoved: [`reader`] })
   })
 
   it(`opens a ReactReader that mounts again with its menus closed, and keeps open menus open while an Activity hides it`, async () => {
