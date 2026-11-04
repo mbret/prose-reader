@@ -124,7 +124,7 @@ const [settings, setSettings] = useState<ReactReaderSettings>(savedSettings)
 | `spreadMode` | Layout |
 | `theme` | Theme |
 
-Each menu starts with a choice that leaves the setting without a value of its own: Default on the global tab, and Same as global on the tabs of the [scopes](#scopes). It names the value it stands for, such as Default (Bright). In the Font size dialog it is a checkbox: unchecking it keeps the font size shown as the tab's own, and reports it. A setting takes, in this order:
+The Theme and Layout dialogs start each tab with a choice that leaves the setting without a value of its own: Default on the global tab, and Same as global on the tabs of the [scopes](#scopes). It names the value it stands for, such as Default (Bright). A setting takes, in this order:
 
 1. the value of the scope it takes its value from, when that is not the global scope: yours, or else react-reader's;
 2. the global value: yours in `settings`, or else react-reader's;
