@@ -1,4 +1,5 @@
 import type { Page } from "@playwright/test"
+import type { Reader } from "@prose-reader/core"
 import { getReader } from "./reader"
 
 /**
@@ -121,62 +122,72 @@ export const resizeAndSettle = async (
 }
 
 /**
- * Runs `layOut`, an action that lays the reader out, and resolves once a
- * layout has voided the current navigation, the reader has restored the
- * navigation onto the new layout, and that result has settled.
+ * Lays the reader out, with `reader.layout()` or, given `settings`, by
+ * updating them, and resolves once that layout has voided the current
+ * navigation, the reader has restored the navigation onto the new layout, and
+ * that result has settled. The wait starts in the same task as the layout, so
+ * a layout before it, such as for a chapter loading nearby, cannot meet it.
  *
  * Restoration can land where the navigation already was, so nothing on screen
  * tells when it happened. A layout that changes nothing is one such case.
  */
 export const layOutAndRestore = async (
   page: Page,
-  layOut: () => Promise<unknown>,
+  {
+    settings,
+  }: {
+    // functions cannot be sent into the page
+    settings?: Omit<
+      Parameters<Reader["settings"]["update"]>[0],
+      "getResource" | "getRenderer"
+    >
+  } = {},
 ) => {
   const reader = await getReader(page)
 
-  // Wrapped in an object, so that the handle comes back with the wait still
-  // pending: a promise returned as is would be awaited before the action.
-  const pendingRestoration = await reader.evaluateHandle((reader) => {
-    const restored = new Promise<void>((resolve, reject) => {
-      let isReplayingCurrentValue = true
-      let isVoided = false
-      const timer = setTimeout(
-        () =>
-          reject(
-            new Error(
-              isVoided
-                ? "the navigation was not restored onto the new layout within 10s"
-                : "no layout voided the navigation within 10s",
+  await reader.evaluate(
+    (reader, settings) =>
+      new Promise<void>((resolve, reject) => {
+        let isReplayingCurrentValue = true
+        let isVoided = false
+        const timer = setTimeout(
+          () =>
+            reject(
+              new Error(
+                isVoided
+                  ? "the navigation was not restored onto the new layout within 10s"
+                  : "no layout voided the navigation within 10s",
+              ),
             ),
-          ),
-        10_000,
-      )
-      const subscription =
-        reader.navigation.navigationAgainstCurrentLayout$.subscribe(
-          ({ navigation, holdsOnCurrentLayout }) => {
-            if (isReplayingCurrentValue) return
-
-            if (!holdsOnCurrentLayout) {
-              isVoided = true
-
-              return
-            }
-
-            if (!isVoided || navigation.triggeredBy !== "restoration") return
-
-            subscription.unsubscribe()
-            clearTimeout(timer)
-            resolve()
-          },
+          10_000,
         )
-      isReplayingCurrentValue = false
-    })
+        const subscription =
+          reader.navigation.navigationAgainstCurrentLayout$.subscribe(
+            ({ navigation, holdsOnCurrentLayout }) => {
+              if (isReplayingCurrentValue) return
 
-    return { restored }
-  })
+              if (!holdsOnCurrentLayout) {
+                isVoided = true
 
-  await layOut()
+                return
+              }
 
-  await pendingRestoration.evaluate(({ restored }) => restored)
+              if (!isVoided || navigation.triggeredBy !== "restoration") return
+
+              subscription.unsubscribe()
+              clearTimeout(timer)
+              resolve()
+            },
+          )
+        isReplayingCurrentValue = false
+
+        if (settings) {
+          reader.settings.update(settings)
+        } else {
+          reader.layout()
+        }
+      }),
+    settings,
+  )
   await waitForSettled(page)
 }

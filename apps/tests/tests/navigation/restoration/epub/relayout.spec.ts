@@ -1,5 +1,5 @@
 import { expect, type Page, test } from "@playwright/test"
-import { navigateToSpineItem, updateSettings } from "../../../utils"
+import { navigateToSpineItem } from "../../../utils"
 import { layOutAndRestore, waitForSettled } from "../../../utils/pagination"
 import { getReader } from "../../../utils/reader"
 import { isCfiPositionVisible } from "../../../utils/visibility"
@@ -138,11 +138,11 @@ test.describe("Given a page after a chapter's first", () => {
         expect(position.pageIndex).toBeGreaterThan(0)
         expect(await isCfiPositionVisible(page, readingPosition)).toBe(true)
 
-        let { numberOfPages } = position
-        let stepsThatKeptTheNumberOfPages = 0
+        let { numberOfPages, pageIndex } = position
+        let stepsThatMovedTheAnchorOnly = 0
 
         for (const settings of steps) {
-          await layOutAndRestore(page, () => updateSettings({ page, settings }))
+          await layOutAndRestore(page, { settings })
 
           expect(
             await isCfiPositionVisible(page, readingPosition),
@@ -153,19 +153,24 @@ test.describe("Given a page after a chapter's first", () => {
 
           expect(afterStep.readingPosition).toBe(readingPosition)
 
-          if (afterStep.numberOfPages === numberOfPages) {
-            stepsThatKeptTheNumberOfPages++
+          if (
+            afterStep.numberOfPages === numberOfPages &&
+            afterStep.pageIndex !== pageIndex
+          ) {
+            stepsThatMovedTheAnchorOnly++
           }
 
           numberOfPages = afterStep.numberOfPages
+          pageIndex = afterStep.pageIndex
         }
 
-        // A step that changes the number of pages changes the chapter's size,
-        // and the reader resolves any anchor after a size change. Only a step
-        // that keeps the number of pages tests this case.
+        // Only a step that moves the anchor to another page and keeps the
+        // chapter's number of pages tests this case. One that changes the
+        // number of pages changes the chapter's size, and the reader resolves
+        // any anchor after a size change.
         expect(
-          stepsThatKeptTheNumberOfPages,
-          "the steps that kept the chapter's number of pages",
+          stepsThatMovedTheAnchorOnly,
+          "the steps that moved the anchor to another page and kept the chapter's number of pages",
         ).toBeGreaterThan(0)
       })
     }
@@ -207,11 +212,7 @@ test.describe("Given a layout that changes nothing", () => {
       expect(turned).toMatchObject({ spineItemIndex: chapterIndex, pageIndex })
       expect(turned.isRootCfi).toBe(false)
 
-      await layOutAndRestore(page, () =>
-        reader.evaluate((reader) => {
-          reader.layout()
-        }),
-      )
+      await layOutAndRestore(page)
 
       expect(
         await readPosition(page),
@@ -234,12 +235,6 @@ test.describe("Given a layout that changes nothing", () => {
   }) => {
     const chapterIndex = await getLongChapterIndex(page)
     const reader = await getReader(page)
-    const layOut = () =>
-      layOutAndRestore(page, () =>
-        reader.evaluate((reader) => {
-          reader.layout()
-        }),
-      )
 
     await navigateToSpineItem({ page, index: chapterIndex })
     await waitForSettled(page)
@@ -257,7 +252,7 @@ test.describe("Given a layout that changes nothing", () => {
       block.style.height = "150vh"
       document.body.append(block)
     }, chapterIndex)
-    await layOut()
+    await layOutAndRestore(page)
 
     const lastPageIndex = (await readPosition(page)).numberOfPages - 1
 
@@ -305,7 +300,7 @@ test.describe("Given a layout that changes nothing", () => {
     expect(anchor.isElement, "the last page's anchor is an element").toBe(true)
     expect(anchor.startPageIndex).toBeLessThan(lastPageIndex)
 
-    await layOut()
+    await layOutAndRestore(page)
 
     expect(await readPosition(page)).toMatchObject({
       spineItemIndex: chapterIndex,
