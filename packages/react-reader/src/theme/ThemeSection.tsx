@@ -35,7 +35,8 @@ export const ThemeSection = memo(function ThemeSection() {
             renderScopeValue={(scope) => (
               <SettingRadioGroup
                 labels={THEME_LABELS}
-                value={theme.getValueForScope(scope)}
+                scope={scope}
+                values={theme.getValuesForScope(scope)}
                 onValueChange={function changeTheme(selectedTheme) {
                   theme.changeValueForScope(scope, selectedTheme)
                 }}

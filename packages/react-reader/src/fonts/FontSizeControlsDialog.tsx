@@ -40,7 +40,9 @@ export const FontSizeControlsDialog = memo(() => {
               onActiveScopeChange={fontScale.onActiveScopeChange}
               renderScopeValue={(scope) => (
                 <FontScaleSlider
-                  fontScale={fontScale.getValueForScope(scope) ?? 1}
+                  fontScale={
+                    fontScale.getValuesForScope(scope).appliedValue ?? 1
+                  }
                   onFontScaleChange={(changedFontScale) => {
                     fontScale.changeValueForScope(scope, changedFontScale)
                   }}

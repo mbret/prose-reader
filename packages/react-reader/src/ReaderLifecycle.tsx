@@ -5,7 +5,7 @@ import {
   useReaderContext,
   useReaderContextValue,
 } from "./context/useReaderContext"
-import { getManagedSettingValuesInEffect } from "./settings/appSettingValues"
+import { getManagedSettingValuesInEffect } from "./settings/settingValues"
 import { useScreenSettingsScopeReference } from "./settings/useScreenSettingsScopeReference"
 
 export function ReaderLifecycle({
@@ -32,7 +32,10 @@ export function ReaderLifecycle({
       const reader = createReader()
 
       reader.settings.update(
-        getManagedSettingValuesInEffect(context.value, screenRef.current),
+        getManagedSettingValuesInEffect(
+          { ...context.value, reader },
+          screenRef.current,
+        ),
       )
       reader.mount(readerElementStillLent)
       context.update((old) => ({ ...old, reader }))
@@ -43,6 +46,10 @@ export function ReaderLifecycle({
           ...old,
           reader: undefined,
           selectedHighlight: undefined,
+          uncontrolledSettingsByScope: {
+            ...old.uncontrolledSettingsByScope,
+            book: undefined,
+          },
         }))
       }
     },

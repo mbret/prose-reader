@@ -54,11 +54,15 @@ export type PrivateContextType = {
   /** The element the view renders for the reader to mount in. */
   readerElement: HTMLElement | undefined
   /**
-   * react-reader's own values for the settings the app gives no value. They
-   * start from the first reader's values and go to every reader created after
-   * it. They last while the provider is mounted, and nothing persists them.
+   * The value react-reader keeps for each scope: the last one picked in a menu
+   * or set on the reader directly while the app gave none with that scope in
+   * effect. The app's value for a scope hides it, and picking Default or Same
+   * as global clears it. They last while the provider is mounted, and the book
+   * scope's go when the provider destroys its reader.
    */
-  uncontrolledSettings: ReactReaderSettings
+  uncontrolledSettingsByScope: Partial<
+    Record<ReactReaderSettingsScopeReference, ReactReaderSettings>
+  >
   notificationsSubject: Subject<ReaderNotification>
   quickMenuBottomBarBoundingBoxSignal: Signal<ResizeObserverEntry | undefined>
   selectedHighlight:
@@ -81,8 +85,17 @@ export type ProviderContextType = {
    */
   settings?: ReactReaderSettings
   /**
+   * The app's defaults for the settings react-reader manages: what a setting
+   * takes when neither its scope in effect nor the global scope gives it a
+   * value. They take precedence over `reader.settings.defaults`, and
+   * react-reader never reports them.
+   */
+  defaultSettings?: ReactReaderSettings
+  /**
    * The settings whose value the user chose in a menu, with the scope it was
-   * chosen for, or `"internal"` for a value set on the reader directly.
+   * chosen for, or `"internal"` for a value set on the reader directly. A
+   * setting reported as `undefined` was set back to Default or Same as global:
+   * that scope no longer has a value of its own.
    */
   onSettingsChange?: (
     changes: ReactReaderSettings,
@@ -125,7 +138,7 @@ export const getDefaultValue = (): ReaderContextType => ({
     default: undefined,
   }),
   notificationsSubject: new Subject<ReaderNotification>(),
-  uncontrolledSettings: {},
+  uncontrolledSettingsByScope: {},
   selectedHighlight: undefined,
 })
 

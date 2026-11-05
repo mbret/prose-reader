@@ -22,6 +22,7 @@ import { useReaderContext } from "./context/useReaderContext"
 import { ReactReader } from "./ReactReader"
 import { ReactReaderProvider } from "./ReactReaderProvider"
 import type { ReactReaderSettings } from "./settings/managedSettings"
+import { useManagedSetting } from "./settings/useManagedSetting"
 import { setWindowWidth } from "./tests/setWindowWidth"
 
 const ONE_PAGE_MANIFEST: Manifest = {
@@ -217,8 +218,9 @@ describe(`ReactReaderProvider and ReactReader`, () => {
     })
   })
 
-  it(`leaves a setting the app gives no value on the value the reader was created with, and reports no change`, async () => {
+  it(`mounts the reader on defaultSettings, else the reader's default, for a setting the app gives no value, over the value it was created with, and reports no change`, async () => {
     const { createOnePageReader, onMounted } = createReaderFactory({
+      spreadMode: `always`,
       theme: `sepia`,
     })
     const onSettingsChange = vi.fn()
@@ -227,6 +229,7 @@ describe(`ReactReaderProvider and ReactReader`, () => {
       <ReactReaderProvider
         createReader={createOnePageReader}
         settings={{ fontScale: 1.5 }}
+        defaultSettings={{ spreadMode: `never` }}
         onSettingsChange={onSettingsChange}
       >
         <ReactReader />
@@ -238,7 +241,7 @@ describe(`ReactReaderProvider and ReactReader`, () => {
       settingsChangesReported: onSettingsChange.mock.calls,
     }).toEqual({
       settingsWhenMounted: [
-        [{ fontScale: 1.5, spreadMode: `auto`, theme: `sepia` }],
+        [{ fontScale: 1.5, spreadMode: `never`, theme: `bright` }],
       ],
       settingsChangesReported: [],
     })
@@ -375,6 +378,53 @@ describe(`ReactReaderProvider and ReactReader`, () => {
     expect(secondBook.onMounted.mock.calls).toEqual([
       [expect.objectContaining({ theme: `night` })],
     ])
+  })
+
+  it(`drops react-reader's own book value once it destroys the reader, so the next reader never takes it, and keeps its global one`, async () => {
+    const firstBook = createReaderFactory()
+    const secondBook = createReaderFactory()
+    const menus: {
+      spreadMode?: ReturnType<typeof useManagedSetting<"spreadMode">>
+      theme?: ReturnType<typeof useManagedSetting<"theme">>
+    } = {}
+    const SettingMenus = () => {
+      menus.spreadMode = useManagedSetting(`spreadMode`)
+      menus.theme = useManagedSetting(`theme`)
+
+      return null
+    }
+    const renderBook = (book: ReturnType<typeof createReaderFactory>) =>
+      render(
+        <ReactReaderProvider
+          createReader={book.createOnePageReader}
+          settingsScopes={{ spreadMode: `book` }}
+        >
+          <ReactReader />
+          <SettingMenus />
+        </ReactReaderProvider>,
+      )
+
+    await renderBook(firstBook)
+    await act(async () => {
+      menus.spreadMode?.changeValueForScope(`book`, `never`)
+      menus.theme?.changeValueForScope(`global`, `sepia`)
+    })
+    const [firstReader] = firstBook.getCreatedReaders()
+    const firstReaderValues = {
+      spreadMode: firstReader?.settings.values.spreadMode,
+      theme: firstReader?.settings.values.theme,
+    }
+    await renderBook(secondBook)
+
+    expect({
+      firstReaderValues,
+      secondReaderWhenMounted: secondBook.onMounted.mock.calls,
+    }).toEqual({
+      firstReaderValues: { spreadMode: `never`, theme: `sepia` },
+      secondReaderWhenMounted: [
+        [{ fontScale: 1, spreadMode: `auto`, theme: `sepia` }],
+      ],
+    })
   })
 
   it(`keeps the reader when the window crosses a breakpoint`, async () => {

@@ -124,26 +124,39 @@ const [settings, setSettings] = useState<ReactReaderSettings>(savedSettings)
 | `spreadMode` | Layout |
 | `theme` | Theme |
 
-`onSettingsChange(changes, from)` receives only the settings that changed. `from` is the scope the user chose the value for, or `"internal"` for a value set on the reader directly, with `reader.settings.update()`.
+The Theme and Layout dialogs start each tab with a choice that leaves the setting without a value of its own: Default on the global tab, and Same as global on the tabs of the [scopes](#scopes). It names the value it stands for, such as Default (Bright). A setting takes, in this order:
 
-A setting you give no value keeps react-reader's own value while the provider is mounted. That value starts as the one the first reader was created with, which is not a change and is not reported. Every reader created after the first gets it. To give each book its own value, pass it in `settings`. A change in the menus, or one made on the reader directly, still reaches `onSettingsChange`.
+1. the value of the scope it takes its value from, when that is not the global scope: yours, or else react-reader's;
+2. the global value: yours in `settings`, or else react-reader's;
+3. your app's defaults, `defaultSettings`;
+4. the reader's default, [`reader.settings.defaults`](/learn/settings#settingsdefaults).
+
+`onSettingsChange(changes, from)` receives only the settings that changed. `from` is the scope the user chose the value for, or `"internal"` for a value set on the reader directly, with `reader.settings.update()`. A setting the user sets back to Default or Same as global is reported as `undefined`, so merging the changes leaves that scope without a value. Picking the value Default stands for is reported like any other pick: the user keeps it when the default changes.
+
+A setting you give no value takes the one react-reader keeps while the provider is mounted: the one picked in a menu, or set on the reader directly. Every reader the provider creates afterwards gets it, except a value kept for the book scope. react-reader never reports `defaultSettings`, nor the value the reader was created with, which it writes over. A value set on the reader directly while you give one is reported, and the reader keeps it until the value the setting takes changes.
 
 The provider writes these settings into the reader before it mounts the reader, so the first layout uses them. It then keeps the reader on them without creating a new reader.
 
-The theme can follow your app's light or dark mode until the user picks one. Give the theme for that mode while `settings.theme` is undefined:
+The theme can follow your app's light or dark mode until the user picks one. Pass the theme for that mode in `defaultSettings`:
 
 ```tsx
-const readerSettings = {
-  ...settings,
-  theme: settings.theme ?? (colorMode === "dark" ? "night" : "bright"),
-}
+const defaultSettings = useMemo(
+  (): ReactReaderSettings => ({
+    theme: colorMode === "dark" ? "night" : "bright",
+  }),
+  [colorMode],
+)
 
-<ReactReaderProvider createReader={createReader} settings={readerSettings}>
+<ReactReaderProvider
+  createReader={createReader}
+  settings={settings}
+  defaultSettings={defaultSettings}
+>
   <ReactReader />
 </ReactReaderProvider>
 ```
 
-The Theme dialog shows the theme for your app's mode as checked, and picking it again reports nothing. To keep that theme after your app's mode changes, the user picks another theme, then this one. To follow your app's mode again once the user has picked a theme, remove `theme` from the saved settings.
+In dark mode the Theme dialog shows Default (Night), checked until the user picks a theme. A picked theme stays when your app's mode changes, and picking Default again follows the mode.
 
 The package exports the types of these props: `ReactReaderSettings` for the values, `ReactReaderSettingsScope` and `ReactReaderSettingsScopeReference` for the scopes below, and `ReactReaderProviderProps` and `ReactReaderProps` for every prop of `ReactReaderProvider` and `ReactReader`.
 
@@ -158,7 +171,7 @@ The menus can keep a value per scope: global, the book, or the screen (`mobile`,
 | `settingsScopes` | For this book, the scope each setting takes its value from, such as `{ fontScale: "screen" }`. A setting it leaves out takes the global value. |
 | `onSettingsScopesChange(changes)` | The scope the user picked for a setting, such as `{ fontScale: "screen" }`. Keep it and pass it back in `settingsScopes`. |
 
-react-reader resolves the screen scope to `mobile`, `tablet` or `desktop` from the width of the window, at the `md` and `lg` breakpoints of your Chakra theme. A setting takes the value of its scope when that scope has one, and the global value otherwise. `from` is the scope of the tab the value was chosen in, as its screen for the screen scope: merge `changes` into `settings` for `"global"`, and into `settingsByScope[from]` for the other scopes.
+react-reader resolves the screen scope to `mobile`, `tablet` or `desktop` from the width of the window, at the `md` and `lg` breakpoints of your Chakra theme. A setting takes the value of its scope when that scope has one, and otherwise the one the global tab stands for. react-reader keeps a value picked for a scope while you give no value for that scope nor a global one: while the provider is mounted, and the book's until the provider destroys the reader. `from` is the scope of the tab the value was chosen in, as its screen for the screen scope: merge `changes` into `settings` for `"global"`, and into `settingsByScope[from]` for the other scopes.
 
 ## Toggling features
 

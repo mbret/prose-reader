@@ -1,49 +1,53 @@
 import { useEffect } from "react"
 import { useLiveRef } from "reactjrx"
 import { distinctUntilChanged, filter, map } from "rxjs"
-import { useReader } from "../context/useReader"
 import {
   useReaderContext,
   useReaderContextValue,
 } from "../context/useReaderContext"
-import { getManagedSettingValueInEffect } from "./appSettingValues"
 import type { ManagedSettingName, ReactReaderSettings } from "./managedSettings"
+import {
+  changeManagedSettingValue,
+  getManagedSettingValuesForScope,
+  getSettingScopeReferenceInEffect,
+  MANAGED_SETTING_SOURCE_KEYS,
+} from "./settingValues"
 import { useScreenSettingsScopeReference } from "./useScreenSettingsScopeReference"
 
 /**
- * Keeps one of the reader's settings on the value in effect for this book: the
- * app's, from the setting's scope or the global values, or react-reader's own
- * when the app gives none.
+ * Keeps one of the reader's settings on the value in effect for this book.
  *
- * The value the reader holds when react-reader meets it is not a change, and is
- * not reported: the value in effect replaces it, or, without one, react-reader
- * adopts it as its own, which is how it starts from the value the reader was
- * created with. A value the reader takes after that and that is not the value
- * in effect, such as one set outside react-reader with
- * `reader.settings.update()`, is reported to the app as `"internal"` and
- * adopted as react-reader's own.
+ * The value the reader holds when react-reader meets it, such as the one it
+ * was created with, is replaced, not reported. A value the reader takes after
+ * that and that is not the value in effect, such as one set with
+ * `reader.settings.update()`, is reported to the app as `"internal"`. While the
+ * app gives a value with the scope in effect, the reader keeps it until the
+ * value in effect changes.
  */
 export const useSyncReaderSettingWithManagedValue = <
   Name extends ManagedSettingName,
 >(
   name: Name,
 ) => {
-  const reader = useReader()
   const context = useReaderContext()
-  const appSettingValues = useReaderContextValue([
-    "settings",
-    "settingsByScope",
-    "settingsScopes",
-    "uncontrolledSettings",
-  ])
+  const settingSources = useReaderContextValue([...MANAGED_SETTING_SOURCE_KEYS])
+  const { reader } = settingSources
   const screen = useScreenSettingsScopeReference()
-  const valueInEffect = getManagedSettingValueInEffect(
-    appSettingValues,
+  const scopeInEffect = getSettingScopeReferenceInEffect(
+    settingSources,
     name,
     screen,
   )
+  const { appliedValue: valueInEffect } = getManagedSettingValuesForScope(
+    settingSources,
+    name,
+    scopeInEffect,
+  )
+  const scopeInEffectRef = useLiveRef(scopeInEffect)
   const valueInEffectRef = useLiveRef(valueInEffect)
 
+  // Declared before the subscription below: the reader holds the value in
+  // effect by the time it subscribes, so the value it meets is not reported.
   useEffect(
     function writeValueInEffectIntoReader() {
       if (
@@ -63,48 +67,29 @@ export const useSyncReaderSettingWithManagedValue = <
   )
 
   useEffect(
-    function adoptValuesTheReaderTakes() {
+    function reportReaderValuesOtherThanValueInEffect() {
       const subscription = reader?.settings.values$
         .pipe(
           map((settings) => settings[name]),
           distinctUntilChanged(),
-          map(function toReaderValueTaken(readerValue, index) {
-            return { readerValue, isValueReaderHeldWhenMet: index === 0 }
-          }),
-          filter(function isReaderValueToAdopt({
-            readerValue,
-            isValueReaderHeldWhenMet,
-          }) {
-            const isValueInEffect = readerValue === valueInEffectRef.current
-            const hasValueInEffect = valueInEffectRef.current !== undefined
-            const isReplacedByValueInEffect =
-              isValueReaderHeldWhenMet && hasValueInEffect
-
-            return !isValueInEffect && !isReplacedByValueInEffect
+          filter(function isOtherThanValueInEffect(readerValue) {
+            return readerValue !== valueInEffectRef.current
           }),
         )
-        .subscribe(function adoptReaderValue({
-          readerValue,
-          isValueReaderHeldWhenMet,
-        }) {
-          const changes: ReactReaderSettings = {}
-
-          changes[name] = readerValue
-
-          if (!isValueReaderHeldWhenMet) {
-            context.value.onSettingsChange?.(changes, "internal")
-          }
-
-          context.update((old) => ({
-            ...old,
-            uncontrolledSettings: { ...old.uncontrolledSettings, ...changes },
-          }))
+        .subscribe(function reportInternalChange(readerValue) {
+          changeManagedSettingValue(
+            context,
+            name,
+            scopeInEffectRef.current,
+            readerValue,
+            "internal",
+          )
         })
 
-      return function stopAdoptingValuesTheReaderTakes() {
+      return function stopReportingReaderValues() {
         subscription?.unsubscribe()
       }
     },
-    [reader, name, context, valueInEffectRef],
+    [reader, name, context, scopeInEffectRef, valueInEffectRef],
   )
 }

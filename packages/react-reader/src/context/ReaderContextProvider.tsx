@@ -23,14 +23,14 @@ export function ReaderContextProvider({
         ({
           reader,
           readerElement,
-          uncontrolledSettings,
+          uncontrolledSettingsByScope,
           notificationsSubject,
           quickMenuBottomBarBoundingBoxSignal,
           selectedHighlight,
         }) => ({
           reader,
           readerElement,
-          uncontrolledSettings,
+          uncontrolledSettingsByScope,
           notificationsSubject,
           quickMenuBottomBarBoundingBoxSignal,
           selectedHighlight,
