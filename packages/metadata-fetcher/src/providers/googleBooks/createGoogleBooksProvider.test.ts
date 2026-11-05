@@ -1,7 +1,9 @@
 import { mainTitle } from "@prose-reader/archive-reader"
 import { afterEach, describe, expect, it, vi } from "vitest"
+import { fetchMetadata } from "../../fetchMetadata.ts"
 import { scoreMetadataCandidate } from "../../match/scoreMetadataCandidate.ts"
 import type { FetchMetadataInput } from "../../types/fetchMetadataInput.ts"
+import { GOOGLE_BOOKS_PROVIDER_ID } from "../providerIds.ts"
 import { createGoogleBooksProvider } from "./createGoogleBooksProvider.ts"
 
 const DUNE_VOLUME = {
@@ -517,5 +519,238 @@ describe("createGoogleBooksProvider", () => {
     expect(requestedUrl(fetchMock, 0).toString()).toContain(
       "https://catalog.example.com/google/v1/volumes",
     )
+  })
+})
+
+/**
+ * Google's own link shapes: a search result links the two small sizes, from
+ * `books/content`; a volume's record links every size Google holds, the
+ * publisher's from `books/publisher/content`, signed with `imgtk`. Both draw
+ * the page curl.
+ */
+const searchResultImageLinks = (id: string) => ({
+  smallThumbnail: `http://books.google.com/books/content?id=${id}&printsec=frontcover&img=1&zoom=5&edge=curl&source=gbs_api`,
+  thumbnail: `http://books.google.com/books/content?id=${id}&printsec=frontcover&img=1&zoom=1&edge=curl&source=gbs_api`,
+})
+
+const publisherCoverLink = (id: string, zoom: number) =>
+  `http://books.google.com/books/publisher/content?id=${id}&printsec=frontcover&img=1&zoom=${zoom}&edge=curl&imgtk=AFLRE7${zoom}signed&source=gbs_api`
+
+const DUNE_SEARCH_RESULT = {
+  ...DUNE_VOLUME,
+  volumeInfo: {
+    ...DUNE_VOLUME.volumeInfo,
+    description: "A desert epic.",
+    categories: ["Fiction"],
+    imageLinks: searchResultImageLinks("zyTCAlFPjgYC"),
+  },
+}
+
+const DUNE_VOLUME_RECORD = {
+  ...DUNE_VOLUME,
+  volumeInfo: {
+    ...DUNE_VOLUME.volumeInfo,
+    description: "<p>A desert <b>epic</b>.</p>",
+    categories: ["Fiction / Science Fiction / Space Opera"],
+    imageLinks: {
+      ...searchResultImageLinks("zyTCAlFPjgYC"),
+      small: publisherCoverLink("zyTCAlFPjgYC", 2),
+      medium: publisherCoverLink("zyTCAlFPjgYC", 3),
+      large: publisherCoverLink("zyTCAlFPjgYC", 4),
+      extraLarge: publisherCoverLink("zyTCAlFPjgYC", 6),
+    },
+  },
+}
+
+const DUNE_EXTRA_LARGE_COVER =
+  "https://books.google.com/books/publisher/content?id=zyTCAlFPjgYC&printsec=frontcover&img=1&zoom=6&imgtk=AFLRE76signed&source=gbs_api"
+
+const NEUROMANCER_SEARCH_RESULT = {
+  id: "neuromancer-id",
+  volumeInfo: {
+    title: "Neuromancer",
+    authors: ["William Gibson"],
+    imageLinks: searchResultImageLinks("neuromancer-id"),
+  },
+}
+
+const duneLookup: FetchMetadataInput = {
+  title: "Dune",
+  authors: ["Frank Herbert"],
+}
+
+describe("createGoogleBooksProvider covers", () => {
+  it("gives an accepted search match the largest cover of its volume record, without the curl", async () => {
+    const fetchMock = fetchReturning(
+      jsonResponse({
+        items: [DUNE_SEARCH_RESULT, NEUROMANCER_SEARCH_RESULT],
+      }),
+      jsonResponse(DUNE_VOLUME_RECORD),
+    )
+    const controller = new AbortController()
+    const fetched = await fetchMetadata(duneLookup, {
+      providers: [
+        createGoogleBooksProvider({ apiKey: "secret", fetch: fetchMock }),
+      ],
+      signal: controller.signal,
+    })
+    const volumeRecordUrl = requestedUrl(fetchMock, 1)
+
+    // one request for the accepted match, none for the rejected one
+    expect(fetchMock).toHaveBeenCalledTimes(2)
+    expect(volumeRecordUrl.pathname).toBe("/books/v1/volumes/zyTCAlFPjgYC")
+    expect(volumeRecordUrl.searchParams.get("key")).toBe("secret")
+    expect(fetchMock.mock.calls[1]?.[1]).toMatchObject({
+      signal: controller.signal,
+    })
+    expect(
+      fetched.matches.map(({ accepted, metadata }) => ({
+        accepted,
+        cover: metadata.cover,
+      })),
+    ).toEqual([
+      {
+        accepted: true,
+        cover: { uri: DUNE_EXTRA_LARGE_COVER, confidence: "derived" },
+      },
+      {
+        accepted: false,
+        cover: {
+          uri: "https://books.google.com/books/content?id=neuromancer-id&printsec=frontcover&img=1&zoom=1&source=gbs_api",
+          confidence: "derived",
+        },
+      },
+    ])
+    expect(fetched.failedProviders).toEqual([])
+  })
+
+  it("takes only the cover from the volume record", async () => {
+    const provider = createGoogleBooksProvider({
+      apiKey: "secret",
+      fetch: fetchReturning(
+        jsonResponse({ items: [DUNE_SEARCH_RESULT] }),
+        jsonResponse(DUNE_VOLUME_RECORD),
+      ),
+    })
+    const [candidate] = await provider.search(duneLookup, context)
+
+    expect(await candidate?.fetchDetails?.({})).toEqual({
+      ...candidate?.metadata,
+      cover: { uri: DUNE_EXTRA_LARGE_COVER, confidence: "derived" },
+    })
+    expect(candidate?.metadata).toMatchObject({
+      description: "A desert epic.",
+      subjects: ["Fiction"],
+    })
+  })
+
+  it("completes an ISBN match the same way", async () => {
+    const provider = createGoogleBooksProvider({
+      apiKey: "secret",
+      fetch: fetchReturning(jsonResponse({ items: [DUNE_SEARCH_RESULT] })),
+    })
+    const [candidate] = await provider.search(
+      { identifiers: [{ value: "9780441013593", scheme: "ISBN" }] },
+      context,
+    )
+
+    expect(candidate?.fetchDetails).toBeInstanceOf(Function)
+  })
+
+  it("asks for no volume record when search links no image, or a large one", async () => {
+    const provider = createGoogleBooksProvider({
+      apiKey: "secret",
+      fetch: fetchReturning(
+        jsonResponse({
+          items: [
+            { id: "no-cover", volumeInfo: { title: "Dune" } },
+            {
+              id: "large-cover",
+              volumeInfo: {
+                title: "Dune",
+                imageLinks: { large: publisherCoverLink("large-cover", 4) },
+              },
+            },
+          ],
+        }),
+      ),
+    })
+    const candidates = await provider.search({ title: "Dune" }, context)
+
+    expect(candidates.map(({ fetchDetails }) => fetchDetails)).toEqual([
+      undefined,
+      undefined,
+    ])
+  })
+
+  it("asks for no volume record when the volume was read by its id", async () => {
+    const provider = createGoogleBooksProvider({
+      apiKey: "secret",
+      fetch: fetchReturning(jsonResponse(DUNE_SEARCH_RESULT)),
+    })
+    const [candidate] = await provider.search(
+      { identifiers: [{ value: "zyTCAlFPjgYC", scheme: "GoogleBooks" }] },
+      context,
+    )
+
+    expect(candidate).toBeDefined()
+    expect(candidate?.fetchDetails).toBeUndefined()
+  })
+
+  it("keeps the searched cover when the volume record is gone", async () => {
+    const provider = createGoogleBooksProvider({
+      apiKey: "secret",
+      fetch: fetchReturning(
+        jsonResponse({ items: [DUNE_SEARCH_RESULT] }),
+        jsonResponse({}, 404),
+      ),
+    })
+    const [candidate] = await provider.search(duneLookup, context)
+
+    expect(await candidate?.fetchDetails?.({})).toEqual(candidate?.metadata)
+  })
+
+  it("retries a rate-limited volume record request", async () => {
+    vi.useFakeTimers()
+    const fetchMock = fetchReturning(
+      jsonResponse({ items: [DUNE_SEARCH_RESULT] }),
+      new Response("{}", { status: 429, headers: { "Retry-After": "1" } }),
+      jsonResponse(DUNE_VOLUME_RECORD),
+    )
+    const provider = createGoogleBooksProvider({
+      apiKey: "secret",
+      fetch: fetchMock,
+    })
+    const [candidate] = await provider.search(duneLookup, context)
+    const pending = candidate?.fetchDetails?.({})
+
+    await vi.advanceTimersByTimeAsync(1_000)
+
+    await expect(pending).resolves.toMatchObject({
+      cover: { uri: DUNE_EXTRA_LARGE_COVER },
+    })
+    expect(fetchMock).toHaveBeenCalledTimes(3)
+  })
+
+  it("keeps the searched cover, and reports the status, when the volume record fails", async () => {
+    const fetched = await fetchMetadata(duneLookup, {
+      providers: [
+        createGoogleBooksProvider({
+          apiKey: "secret",
+          fetch: fetchReturning(
+            jsonResponse({ items: [DUNE_SEARCH_RESULT] }),
+            jsonResponse({}, 403),
+          ),
+        }),
+      ],
+    })
+
+    expect(fetched.matches[0]?.metadata.cover?.uri).toBe(
+      "https://books.google.com/books/content?id=zyTCAlFPjgYC&printsec=frontcover&img=1&zoom=1&source=gbs_api",
+    )
+    expect(fetched.sources[GOOGLE_BOOKS_PROVIDER_ID]?.matches).toHaveLength(1)
+    expect(fetched.failedProviders).toEqual([
+      { id: GOOGLE_BOOKS_PROVIDER_ID, status: 403 },
+    ])
   })
 })

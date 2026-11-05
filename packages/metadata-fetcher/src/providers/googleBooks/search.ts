@@ -16,6 +16,7 @@ import { type GoogleBooksVolume, parseGoogleBooksVolume } from "./parse.ts"
 import {
   googleBooksVolumeUrl,
   type ResolveGoogleBooksVolumeOptions,
+  resolveGoogleBooksCover,
   resolveGoogleBooksVolume,
 } from "./resolve.ts"
 
@@ -99,16 +100,32 @@ const parseVolumeRecords = (
   })
 }
 
-const toCandidates = (
-  records: ReadonlyArray<GoogleBooksVolumeRecord>,
+const toCandidate = (
+  { volume, raw }: GoogleBooksVolumeRecord,
   resolveOptions: ResolveGoogleBooksVolumeOptions = {},
-): ReadonlyArray<MetadataCandidate> =>
-  records.map(({ volume, raw }) => ({
-    metadata: resolveGoogleBooksVolume(volume, resolveOptions),
-    id: volume.id,
-    url: googleBooksVolumeUrl(volume),
-    raw,
-  }))
+): MetadataCandidate => ({
+  metadata: resolveGoogleBooksVolume(volume, resolveOptions),
+  id: volume.id,
+  url: googleBooksVolumeUrl(volume),
+  raw,
+})
+
+/**
+ * Whether the volume's own record may link a larger cover than its search
+ * result. Search links the small sizes, about 128 px wide; the larger ones
+ * come from the volume's record, when Google holds a large cover. A result
+ * that links no image has no cover to upgrade, and one that links a large
+ * image has the largest already.
+ */
+const searchResultLacksLargeCover = (volume: GoogleBooksVolume): boolean => {
+  const imageLinks = volume.volumeInfo?.imageLinks
+
+  return (
+    imageLinks !== undefined &&
+    imageLinks.large === undefined &&
+    imageLinks.extraLarge === undefined
+  )
+}
 
 /**
  * Creates the Google Books lookup pipeline. Lookup order is an exact volume
@@ -116,6 +133,8 @@ const toCandidates = (
  * A title search asks for several pages worth of `limit` because Google ranks
  * it, not the matcher: the edition the caller described can sit below the ones
  * Google finds most popular, and `fetchMetadata` trims to `limit` after scoring.
+ * A search result that links no large cover can fetch its volume's record for
+ * one, which `fetchMetadata` does once it accepts the match.
  */
 export const createGoogleBooksSearch = (
   options: GoogleBooksSearchOptions,
@@ -124,14 +143,14 @@ export const createGoogleBooksSearch = (
 
   const request = async (
     url: URL,
-    context: MetadataProviderContext,
+    signal: AbortSignal | undefined,
     notFoundIsEmpty = false,
   ): Promise<Response | undefined> => {
     url.searchParams.set("key", options.apiKey)
 
     return retryCatalogRequest(async () => {
       const response = await options.fetch(url.toString(), {
-        signal: context.signal,
+        signal,
         headers: { Accept: "application/json" },
       })
 
@@ -149,16 +168,16 @@ export const createGoogleBooksSearch = (
       }
 
       return response
-    }, context.signal)
+    }, signal)
   }
 
   const findByVolumeId = async (
     id: string,
-    context: MetadataProviderContext,
+    signal: AbortSignal | undefined,
   ): Promise<GoogleBooksVolumeRecord | undefined> => {
     const response = await request(
       new URL(`${volumesUrl}/${encodeURIComponent(id)}`),
-      context,
+      signal,
       true,
     )
 
@@ -173,6 +192,37 @@ export const createGoogleBooksSearch = (
     }
 
     return record
+  }
+
+  /**
+   * A search result, which fetches its volume's own record for a larger cover
+   * once `fetchMetadata` accepts it. Only the cover changes: the rest of the
+   * match stays what was searched and scored.
+   */
+  const toSearchResultCandidate = (
+    record: GoogleBooksVolumeRecord,
+    resolveOptions: ResolveGoogleBooksVolumeOptions = {},
+  ): MetadataCandidate => {
+    const candidate = toCandidate(record, resolveOptions)
+    const volumeId = record.volume.id
+
+    if (volumeId === undefined || !searchResultLacksLargeCover(record.volume)) {
+      return candidate
+    }
+
+    return {
+      ...candidate,
+      fetchDetails: async ({ signal }) => {
+        const volumeRecord = await findByVolumeId(volumeId, signal)
+        const cover = resolveGoogleBooksCover(
+          volumeRecord?.volume.volumeInfo?.imageLinks,
+        )
+
+        return cover !== undefined
+          ? { ...candidate.metadata, cover }
+          : candidate.metadata
+      },
+    }
   }
 
   const searchVolumes = async (
@@ -194,7 +244,7 @@ export const createGoogleBooksSearch = (
     url.searchParams.set("orderBy", "relevance")
     url.searchParams.set("printType", "books")
 
-    const response = await request(url, context)
+    const response = await request(url, context.signal)
 
     return response !== undefined
       ? parseVolumeRecords(await response.json())
@@ -208,9 +258,10 @@ export const createGoogleBooksSearch = (
     )
 
     if (volumeId !== undefined) {
-      const record = await findByVolumeId(volumeId, context)
+      const record = await findByVolumeId(volumeId, context.signal)
 
-      if (record !== undefined) return toCandidates([record])
+      // the volume's own record links every cover size Google has
+      if (record !== undefined) return [toCandidate(record)]
     }
 
     const isbn = identifierValue(input.identifiers, "ISBN")
@@ -223,7 +274,9 @@ export const createGoogleBooksSearch = (
       )
 
       if (volumes.length > 0) {
-        return toCandidates(volumes, { matchedIsbn: isbn })
+        return volumes.map((record) =>
+          toSearchResultCandidate(record, { matchedIsbn: isbn }),
+        )
       }
     }
 
@@ -242,12 +295,15 @@ export const createGoogleBooksSearch = (
       GOOGLE_BOOKS_TITLE_OVERSAMPLE,
     )
 
-    if (volumes.length > 0 || terms.author === undefined) {
-      return toCandidates(volumes)
-    }
+    const titleSearchVolumes =
+      volumes.length > 0 || terms.author === undefined
+        ? volumes
+        : await searchVolumes(
+            titleQuery,
+            context,
+            GOOGLE_BOOKS_TITLE_OVERSAMPLE,
+          )
 
-    return toCandidates(
-      await searchVolumes(titleQuery, context, GOOGLE_BOOKS_TITLE_OVERSAMPLE),
-    )
+    return titleSearchVolumes.map((record) => toSearchResultCandidate(record))
   }
 }

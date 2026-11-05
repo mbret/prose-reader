@@ -97,7 +97,7 @@ describe("resolveGoogleBooksVolume", () => {
           language: "en",
           imageLinks: {
             thumbnail:
-              "http://books.google.com/books/content?id=zyTCAlFPjgYC&zoom=1&edge=curl",
+              "http://books.google.com/books/content?id=zyTCAlFPjgYC&printsec=frontcover&img=1&zoom=1&edge=curl&source=gbs_api",
           },
         },
       }),
@@ -121,7 +121,7 @@ describe("resolveGoogleBooksVolume", () => {
         { value: "9780441013593", scheme: "ISBN" },
       ],
       cover: {
-        uri: "https://books.google.com/books/content?id=zyTCAlFPjgYC&zoom=1&edge=curl",
+        uri: "https://books.google.com/books/content?id=zyTCAlFPjgYC&printsec=frontcover&img=1&zoom=1&source=gbs_api",
         confidence: "derived",
       },
     })
@@ -179,13 +179,13 @@ describe("resolveGoogleBooksVolume", () => {
     ).toBeUndefined()
   })
 
-  it("prefers the largest cover, preserves its query and rejects non-HTTP URLs", () => {
+  it("prefers the largest cover and rejects non-HTTP URLs", () => {
     expect(
       googleBooksCoverUrl({
         thumbnail: "https://books.google.com/small?zoom=1",
-        large: "http://books.google.com/large?zoom=2&edge=curl",
+        large: "http://books.google.com/large?zoom=4",
       }),
-    ).toBe("https://books.google.com/large?zoom=2&edge=curl")
+    ).toBe("https://books.google.com/large?zoom=4")
     expect(
       googleBooksCoverUrl({ large: "data:image/jpeg;base64,x" }),
     ).toBeUndefined()
@@ -195,6 +195,34 @@ describe("resolveGoogleBooksVolume", () => {
         thumbnail: "http://books.google.com/small?zoom=1",
       }),
     ).toBe("https://books.google.com/small?zoom=1")
+  })
+
+  it("drops the page curl and keeps every other parameter as Google wrote it", () => {
+    // a volume record's own extraLarge link, signed with imgtk
+    const extraLarge =
+      "http://books.google.com/books/publisher/content?id=0efCDwAAQBAJ&printsec=frontcover&img=1&zoom=6&edge=curl&imgtk=AFLRE73vqRZG_RcTeA7ka3WthIRzpYDjhKBZp1fm4h_97kYFPt70ayYBx2NEDqO7W97a3eALZt6nts2EMwD5Ak8_30MNfaMNo0gmbgANvsa35OiD3XdyVdRmxjN2rJtbciBf46PTKbM3&source=gbs_api"
+
+    expect(
+      googleBooksCoverUrl({
+        thumbnail:
+          "http://books.google.com/books/publisher/content?id=0efCDwAAQBAJ&printsec=frontcover&img=1&zoom=1&edge=curl&source=gbs_api",
+        extraLarge,
+      }),
+    ).toBe(
+      "https://books.google.com/books/publisher/content?id=0efCDwAAQBAJ&printsec=frontcover&img=1&zoom=6&imgtk=AFLRE73vqRZG_RcTeA7ka3WthIRzpYDjhKBZp1fm4h_97kYFPt70ayYBx2NEDqO7W97a3eALZt6nts2EMwD5Ak8_30MNfaMNo0gmbgANvsa35OiD3XdyVdRmxjN2rJtbciBf46PTKbM3&source=gbs_api",
+    )
+    // serializing the query again would turn `~` into `%7E` and `%2b` into `%2B`
+    expect(
+      googleBooksCoverUrl({
+        thumbnail:
+          "https://books.google.com/books/content?edge=curl&imgtk=a~b%2bc&zoom=1",
+      }),
+    ).toBe("https://books.google.com/books/content?imgtk=a~b%2bc&zoom=1")
+    expect(
+      googleBooksCoverUrl({
+        thumbnail: "https://books.google.com/books/content?zoom=1&edge=flat",
+      }),
+    ).toBe("https://books.google.com/books/content?zoom=1&edge=flat")
   })
 
   it("keeps the Google-provided zoom that serves the BLAME! cover", () => {

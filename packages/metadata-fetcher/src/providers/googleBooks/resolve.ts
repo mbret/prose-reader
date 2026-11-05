@@ -109,10 +109,30 @@ const absoluteHttpUrl = (value: string | undefined): string | undefined => {
   }
 }
 
+const PAGE_CURL_QUERY_PARAMETER = "edge=curl"
+
 /**
- * Prefer the largest cover Google announced and force HTTPS. Preserve the
- * query exactly: changing Google's `zoom`, `edge` or signed `imgtk` parameters
- * can turn a valid cover into its "image not available" placeholder.
+ * Removes the `edge=curl` pair by hand rather than through `searchParams`,
+ * which would serialize every other pair again, signed `imgtk` included.
+ */
+const withoutPageCurl = (coverUrl: string): string => {
+  const url = new URL(coverUrl)
+  const pairs = url.search.slice(1).split("&")
+  const keptPairs = pairs.filter((pair) => pair !== PAGE_CURL_QUERY_PARAMETER)
+
+  if (keptPairs.length === pairs.length) return coverUrl
+
+  url.search = keptPairs.join("&")
+
+  return url.toString()
+}
+
+/**
+ * The largest cover Google links, over HTTPS and without the page curl that
+ * `edge=curl` draws on it. Every other parameter is kept as Google wrote it:
+ * a different `zoom` can serve the "image not available" picture, or another
+ * page of a scanned book, and `imgtk` is signed. Dropping `edge=curl` serves
+ * the same image at the same size.
  */
 export const googleBooksCoverUrl = (
   imageLinks: GoogleBooksImageLinks | undefined,
@@ -131,10 +151,18 @@ export const googleBooksCoverUrl = (
   for (const candidate of candidates) {
     const absolute = absoluteHttpUrl(candidate)
 
-    if (absolute !== undefined) return absolute
+    if (absolute !== undefined) return withoutPageCurl(absolute)
   }
 
   return undefined
+}
+
+export const resolveGoogleBooksCover = (
+  imageLinks: GoogleBooksImageLinks | undefined,
+): ResolvedCover | undefined => {
+  const uri = googleBooksCoverUrl(imageLinks)
+
+  return uri !== undefined ? { uri, confidence: "derived" } : undefined
 }
 
 const resolvedContributors = (
@@ -200,14 +228,7 @@ export const resolveGoogleBooksVolume = (
     date: parseW3cDtfDate(publishedDate),
     publisher,
   })
-  const coverUri = googleBooksCoverUrl(imageLinks)
-  const cover: ResolvedCover | undefined =
-    coverUri !== undefined
-      ? {
-          uri: coverUri,
-          confidence: "derived",
-        }
-      : undefined
+  const cover = resolveGoogleBooksCover(imageLinks)
   const subjects = [...new Set(categories ?? [])].slice(
     0,
     GOOGLE_BOOKS_MAX_SUBJECTS,
