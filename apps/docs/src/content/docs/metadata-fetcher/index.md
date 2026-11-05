@@ -116,8 +116,7 @@ type FetchedMetadata = {
   matches: MetadataMatch[]
   /** per-provider detail, keyed by provider id */
   sources: Record<string, { provider: { id, name }; matches: MetadataMatch[] }>
-  /** providers whose search threw */
-  /** providers that dropped out, with the HTTP status when there was one */
+  /** providers that failed a request, with the HTTP status when there was one */
   failedProviders: { id: string; status?: number }[]
 }
 ```
@@ -252,7 +251,7 @@ const fetched = await fetchMetadata(input, {
 
 ### Error policy
 
-Mirrors `resolveArchive`: a provider that throws — a rate limit, an outage, a network error, a malformed response — never fails the fetch. Providers are asked concurrently and each is isolated, so one failing costs you that catalog and nothing else. It is logged through the debug `Report` and listed in `failedProviders`, the only trace left:
+Mirrors `resolveArchive`: a provider that throws — a rate limit, an outage, a network error, a malformed response — never fails the fetch. Providers are asked concurrently and each is isolated, so one failing costs you that catalog and nothing else. The same holds when a provider fails to [fetch the details](#writing-a-provider) of an accepted match: the match stays, with what the search found. Either failure is logged through the debug `Report` and listed in `failedProviders`, the only trace left:
 
 ```typescript
 // don't persist "we found nothing" when we simply couldn't ask
@@ -262,7 +261,14 @@ if (fetched.failedProviders.length === 0) cache.set(bookId, fetched)
 const throttled = fetched.failedProviders.filter(({ status }) => status === 429)
 ```
 
-Each entry carries the catalog's HTTP `status` when the failure was a response — `429` (ask again later), `5xx` (the catalog is down), `4xx` (we asked wrong) — and no status when it wasn't one, which is itself the answer: a network error, an unparseable payload, a bug. Three states are distinguishable: a provider in `sources` answered, one in `failedProviders` threw, one in neither was never asked (narrowed out by the `providers` option).
+Each entry carries the catalog's HTTP `status` when the failure was a response — `429` (ask again later), `5xx` (the catalog is down), `4xx` (we asked wrong) — and no status when it wasn't one, which is itself the answer: a network error, an unparseable payload, a bug. Four states are distinguishable:
+
+| `sources` | `failedProviders` | The provider |
+| --- | --- | --- |
+| yes | no | answered in full |
+| yes | yes | answered, but the details of an accepted match failed: that match keeps what the search found, such as Google Books' small cover |
+| no | yes | failed its search |
+| no | no | was never asked (narrowed out by the `providers` option) |
 
 `fetchMetadata` itself does not retry or interpret `Retry-After`; providers own that policy because only they know which operations are idempotent and which failures their catalog treats as transient. The built-in providers share one:
 
@@ -394,10 +400,25 @@ Each request follows the built-in providers' [retry policy](#error-policy): rate
 | `averageRating`, `ratingsCount` | `aggregateRating` | Google's mean is already on the shared 0–5 scale (it rounds to a half star); a count alone states no rating, and a mean over zero ratings is dropped |
 | `categories` | `subjects` | deduped and capped at 25 |
 | `language` | `languages` | Google's best ISO 639-1 language |
-| `imageLinks` | `cover` | largest announced size preferred; upgraded to HTTPS while Google's query parameters are preserved because changing them can yield a placeholder |
+| `imageLinks` | `cover` | the largest linked size, from the volume's own record for an accepted search match; upgraded to HTTPS, without `edge=curl`, every other parameter kept — see [Covers](#covers) |
 | `canonicalVolumeLink`, then `infoLink` | match `url` | upgraded to HTTPS; a stable Google Books URL is synthesized from `id` when absent |
 
 Google-specific values without a cross-format home (access and sale data, reading-mode flags, and so on) remain available on `match.raw` when `includeRaw` is enabled.
+
+#### Covers
+
+An accepted match carries the largest cover Google has for the volume, without the page curl Google draws on it.
+
+Google's search links two small cover sizes, about 128 px wide. Only the volume's own record (`/volumes/{id}`) links the larger ones, and only when Google holds the publisher's cover: `large` is 800 px wide, and `extraLarge` is the full image Google holds, often more than 1,500 px wide. So a match from an ISBN or title search fetches that record once `fetchMetadata` accepts it, through [`fetchDetails`](#writing-a-provider). That is one more request for each accepted match, so at most `limit`, under the same retry policy. Only the cover is taken from the record: the rest of the match stays what the search found and the matcher scored. No request is made for:
+
+- a rejected match, or one that `limit` drops;
+- a search result that links no image: Google has no cover for it;
+- a search result that already links `large` or `extraLarge`;
+- a volume read by its `GoogleBooks` id, since that is its own record already.
+
+If the record request fails, the match keeps its search cover and the provider is listed in `failedProviders`. If the volume is gone (`404`), the match keeps its search cover with no failure.
+
+The cover is Google's own link, upgraded to HTTPS, with `edge=curl` removed: Google then serves the same image at the same size, without the curl. Every other parameter stays as Google wrote it. A different `zoom` serves Google's "image not available" picture, or another page of a scanned book, for the many volumes Google knows only from a library catalog, and `imgtk` is signed. A volume without a publisher cover keeps its thumbnail. A rejected match keeps the cover its search linked, also without the curl.
 
 ### Open Library
 
@@ -574,5 +595,24 @@ Rules of thumb:
 - **Treat `limit` as a page-size hint**; the fetch caps the ranked result anyway.
 - **Normalize honestly.** Populate a field only when the record actually states it — a fabricated value is a signal the matcher will score, and a wrong `ISBN` identifier is the single most damaging thing you can emit.
 - **`raw` is yours**: put your parsed record there for provenance and provider-specific fields with no home in the vocabulary. It is kept only when the consumer asks for it.
+- **Put a costly request in `fetchDetails`** when only a match the caller uses needs it, such as a record that links a larger cover than search does. `fetchMetadata` calls it after scoring, for each accepted match that `limit` keeps, and scores the metadata it resolves to. Set it only on the candidates that lack something. If it throws, the match keeps the metadata search found and the provider is listed in `failedProviders`:
+
+  ```typescript
+  return results.map((result) => {
+    const metadata = toMetadata(result)
+
+    return {
+      id: result.id,
+      metadata,
+      fetchDetails: result.hasFullRecord
+        ? undefined
+        : async ({ signal }) => {
+            const record = await fetchRecord(result.id, { signal })
+
+            return { ...metadata, cover: { uri: record.coverUrl } }
+          },
+    }
+  })
+  ```
 
 The matching primitives are exported too (`scoreMetadataCandidate`, `titleSimilarity`, `personNameSimilarity`, `textSimilarity`, `normalizeForComparison`) if you want to rank something of your own by the same rules — `scoreMetadataCandidate(input, candidate)` takes a `FetchMetadataInput` and a rich `ResolvedMetadata` candidate. Accept by `DEFAULT_METADATA_MATCH_MIN_SCORE` to draw the line where `fetchMetadata` draws it by default.
