@@ -3,6 +3,19 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## [40.0.0](https://github.com/mbret/prose-reader/compare/v39.0.0...v40.0.0) (2026-11-05)
+
+### ⚠ BREAKING CHANGES
+
+* **core:** SettingsManager.getDefaultSettings() is protected. Read
+  the defaults from settings.defaults instead, such as
+  reader.gestures.settings.defaults.
+
+### Features
+
+* **core:** expose each setting's declared default as settings.defaults ([77fa1fc](https://github.com/mbret/prose-reader/commit/77fa1fc3dd77c583a61af211f97811052ff201a5))
+
+
 ## [39.0.0](https://github.com/mbret/prose-reader/compare/v38.0.1...v39.0.0) (2026-11-04)
 
 **Note:** Version bump only for package @prose-reader/enhancer-gestures

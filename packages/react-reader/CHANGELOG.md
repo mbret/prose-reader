@@ -3,6 +3,47 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## [40.0.0](https://github.com/mbret/prose-reader/compare/v39.0.0...v40.0.0) (2026-11-05)
+
+### ⚠ BREAKING CHANGES
+
+* **react-reader:** for a managed setting the app gives no value,
+  react-reader writes defaultSettings, else the reader's default, over the
+  value the reader was created with. Pass the values the reader should
+  take as settings or defaultSettings. onSettingsChange reports a setting
+  as undefined when the user sets it back to Default or Same as global:
+  merging the changes leaves that scope without a value.
+* **react-reader:** ReactReader no longer takes a reader. Render
+  ReactReaderProvider with createReader, a memoized function that returns
+  a new reader, and render ReactReader inside it. Move settings,
+  settingsByScope, settingsScopes, onSettingsChange,
+  onSettingsScopesChange, annotations, onAnnotationCreate,
+  onAnnotationUpdate, onAnnotationDelete and zoomMaxScale to
+  ReactReaderProvider. Stop mounting and destroying the reader in the
+  app, stop giving the managed settings to createReader, remove the
+  reader's container element from ReactReader's children, and get the
+  reader from useReader().
+
+### Features
+
+* **react-reader:** add Default and Same as global, and defaultSettings ([d0477dd](https://github.com/mbret/prose-reader/commit/d0477dd433d3cbefacf72c6e63ae01e986891cec)), closes [#677](https://github.com/mbret/prose-reader/issues/677)
+* **react-reader:** create the reader in ReactReaderProvider, and show it in ReactReader ([75fdb03](https://github.com/mbret/prose-reader/commit/75fdb03e507db5d3956264a1203c0b6d68efa7d2))
+* **react-reader:** keep the reader while an Activity hides ReactReader ([17c2276](https://github.com/mbret/prose-reader/commit/17c227664f615a767b76399158dd09bbefd00bfe)), references [#684](https://github.com/mbret/prose-reader/issues/684)
+* **react-reader:** offer Default or Same as global in the font size dialog ([87b5c5e](https://github.com/mbret/prose-reader/commit/87b5c5ecaa23cabdd01d9a0d8843e8f7a510ddd1))
+
+### Bug Fixes
+
+* **react-reader:** create the reader in a view rendered into a detached container ([93e222f](https://github.com/mbret/prose-reader/commit/93e222feea7b040ed2d30269f0d088ca04749465))
+* **react-reader:** destroy the reader once React removes a ReactReader that an Activity hides ([9425639](https://github.com/mbret/prose-reader/commit/94256399a454e10f84ed4560a272e52bfc3004d1))
+* **react-reader:** keep reporting reader changes after onSettingsChange throws ([f2f6f83](https://github.com/mbret/prose-reader/commit/f2f6f83b53c93692170db199cce99a6cbea10ed6))
+* **react-reader:** keep the font size controls while the font size has no value ([be87579](https://github.com/mbret/prose-reader/commit/be87579b7a1253c4fa9733f9bf501ec7890572c2))
+* **react-reader:** keep the view's menus and props in a context ReactReader owns ([af68159](https://github.com/mbret/prose-reader/commit/af681595d0697e79cb90fd1ac64a3022bb66ab1e))
+* **react-reader:** let ReactReaderSettings hold the undefined it reports ([90b6ac4](https://github.com/mbret/prose-reader/commit/90b6ac4466d3bf38917270c3387ef0cf4d3b18df))
+* **react-reader:** stop listening to a reader once it is replaced or unmounted ([86a43c0](https://github.com/mbret/prose-reader/commit/86a43c02eaa849577f5e87482986f08a53b65110))
+* **react-reader:** stop listening to a reader once it is replaced or unmounted ([494fff6](https://github.com/mbret/prose-reader/commit/494fff6603d87cc182d3bd5f012998677b3eb5b2))
+* **react-reader:** watch the root node of a hidden ReactReader's element ([1861601](https://github.com/mbret/prose-reader/commit/1861601eea0ea485165e4f594f6cd6dfe698ef84))
+
+
 ## [39.0.0](https://github.com/mbret/prose-reader/compare/v38.0.1...v39.0.0) (2026-11-04)
 
 ### ⚠ BREAKING CHANGES

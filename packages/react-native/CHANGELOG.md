@@ -3,6 +3,20 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## [40.0.0](https://github.com/mbret/prose-reader/compare/v39.0.0...v40.0.0) (2026-11-05)
+
+### ⚠ BREAKING CHANGES
+
+* **core:** `reader.viewport.hasResizedSinceLayout()` is renamed
+  `hasNewSizeSinceLayout()`, and is false while the viewport has no size.
+  A reader whose viewport has no size neither lays out, navigates, nor
+  loads until it has one: a test in jsdom or happy-dom stubs its size.
+
+### Bug Fixes
+
+* **core:** keep the last layout while the viewport has no size ([87266bf](https://github.com/mbret/prose-reader/commit/87266bf82446468fbaec55f7e477f71e0f887682)), closes [#684](https://github.com/mbret/prose-reader/issues/684)
+
+
 ## [39.0.0](https://github.com/mbret/prose-reader/compare/v38.0.1...v39.0.0) (2026-11-04)
 
 **Note:** Version bump only for package @prose-reader/react-native

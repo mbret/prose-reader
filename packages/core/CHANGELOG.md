@@ -3,6 +3,29 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## [40.0.0](https://github.com/mbret/prose-reader/compare/v39.0.0...v40.0.0) (2026-11-05)
+
+### ⚠ BREAKING CHANGES
+
+* **core:** `reader.viewport.hasResizedSinceLayout()` is renamed
+  `hasNewSizeSinceLayout()`, and is false while the viewport has no size.
+  A reader whose viewport has no size neither lays out, navigates, nor
+  loads until it has one: a test in jsdom or happy-dom stubs its size.
+* **core:** SettingsManager.getDefaultSettings() is protected. Read
+  the defaults from settings.defaults instead, such as
+  reader.gestures.settings.defaults.
+
+### Features
+
+* **core:** expose each setting's declared default as settings.defaults ([77fa1fc](https://github.com/mbret/prose-reader/commit/77fa1fc3dd77c583a61af211f97811052ff201a5))
+
+### Bug Fixes
+
+* **core:** forward a hidden frame's pointer events at finite coordinates ([f88b7db](https://github.com/mbret/prose-reader/commit/f88b7dbc7abb86cd803a4034e49eebac9ceb081d))
+* **core:** hold a navigation while the viewport has no size ([fb947c7](https://github.com/mbret/prose-reader/commit/fb947c7c5ab7b284a6c4bdf65ba05e90f0711927))
+* **core:** keep the last layout while the viewport has no size ([87266bf](https://github.com/mbret/prose-reader/commit/87266bf82446468fbaec55f7e477f71e0f887682)), closes [#684](https://github.com/mbret/prose-reader/issues/684)
+
+
 ## [39.0.0](https://github.com/mbret/prose-reader/compare/v38.0.1...v39.0.0) (2026-11-04)
 
 ### Bug Fixes

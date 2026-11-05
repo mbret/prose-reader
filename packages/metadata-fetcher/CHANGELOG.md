@@ -3,6 +3,19 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## [40.0.0](https://github.com/mbret/prose-reader/compare/v39.0.0...v40.0.0) (2026-11-05)
+
+### Features
+
+* **metadata-fetcher:** fetch the details of accepted matches ([72b835a](https://github.com/mbret/prose-reader/commit/72b835a3e8fd2055fba8728123146a25b6a7e38b))
+* **metadata-fetcher:** give Google Books matches the largest cover ([adbb121](https://github.com/mbret/prose-reader/commit/adbb121c925f4f62cb8c8c98ab742262e567504c))
+
+### Bug Fixes
+
+* **metadata-fetcher:** complete only the best accepted match, and mark its failure ([30894a6](https://github.com/mbret/prose-reader/commit/30894a6c1450c8e123f0845c4e064eab8291ca45))
+* **metadata-fetcher:** test the acceptance gate on details, and correct the docs ([9ae6f1f](https://github.com/mbret/prose-reader/commit/9ae6f1fa3d3be44a4b72a4d574273c9b7a19cb99))
+
+
 ## [39.0.0](https://github.com/mbret/prose-reader/compare/v38.0.1...v39.0.0) (2026-11-04)
 
 **Note:** Version bump only for package @prose-reader/metadata-fetcher

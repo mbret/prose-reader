@@ -3,6 +3,68 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## [40.0.0](https://github.com/mbret/prose-reader/compare/v39.0.0...v40.0.0) (2026-11-05)
+
+### ⚠ BREAKING CHANGES
+
+* **core:** `reader.viewport.hasResizedSinceLayout()` is renamed
+  `hasNewSizeSinceLayout()`, and is false while the viewport has no size.
+  A reader whose viewport has no size neither lays out, navigates, nor
+  loads until it has one: a test in jsdom or happy-dom stubs its size.
+* **react-reader:** for a managed setting the app gives no value,
+  react-reader writes defaultSettings, else the reader's default, over the
+  value the reader was created with. Pass the values the reader should
+  take as settings or defaultSettings. onSettingsChange reports a setting
+  as undefined when the user sets it back to Default or Same as global:
+  merging the changes leaves that scope without a value.
+* **react-reader:** ReactReader no longer takes a reader. Render
+  ReactReaderProvider with createReader, a memoized function that returns
+  a new reader, and render ReactReader inside it. Move settings,
+  settingsByScope, settingsScopes, onSettingsChange,
+  onSettingsScopesChange, annotations, onAnnotationCreate,
+  onAnnotationUpdate, onAnnotationDelete and zoomMaxScale to
+  ReactReaderProvider. Stop mounting and destroying the reader in the
+  app, stop giving the managed settings to createReader, remove the
+  reader's container element from ReactReader's children, and get the
+  reader from useReader().
+* **core:** SettingsManager.getDefaultSettings() is protected. Read
+  the defaults from settings.defaults instead, such as
+  reader.gestures.settings.defaults.
+* **core:** SettingsManager.getDefaultSettings() is protected. Read
+  the defaults from settings.defaults instead, such as
+  reader.gestures.settings.defaults.
+
+### Features
+
+* **core:** expose each setting's declared default as settings.defaults ([77fa1fc](https://github.com/mbret/prose-reader/commit/77fa1fc3dd77c583a61af211f97811052ff201a5))
+* **core:** expose each setting's declared default as settings.defaults ([3a56303](https://github.com/mbret/prose-reader/commit/3a563030f6c849b3d61bb3ec8876cbdef5d57253))
+* **front:** follow the color mode with defaultSettings in the demo ([0126c88](https://github.com/mbret/prose-reader/commit/0126c88f5a83335a8a38ace7fa6e6a79035d32ea))
+* **front:** leave the demo's theme to the reader's default ([3d2a1ec](https://github.com/mbret/prose-reader/commit/3d2a1ec282f1fd9c3ed36431623a12f9d33cc31b))
+* **metadata-fetcher:** fetch the details of accepted matches ([72b835a](https://github.com/mbret/prose-reader/commit/72b835a3e8fd2055fba8728123146a25b6a7e38b))
+* **metadata-fetcher:** give Google Books matches the largest cover ([adbb121](https://github.com/mbret/prose-reader/commit/adbb121c925f4f62cb8c8c98ab742262e567504c))
+* **react-reader:** add Default and Same as global, and defaultSettings ([d0477dd](https://github.com/mbret/prose-reader/commit/d0477dd433d3cbefacf72c6e63ae01e986891cec)), closes [#677](https://github.com/mbret/prose-reader/issues/677)
+* **react-reader:** create the reader in ReactReaderProvider, and show it in ReactReader ([75fdb03](https://github.com/mbret/prose-reader/commit/75fdb03e507db5d3956264a1203c0b6d68efa7d2))
+* **react-reader:** keep the reader while an Activity hides ReactReader ([17c2276](https://github.com/mbret/prose-reader/commit/17c227664f615a767b76399158dd09bbefd00bfe)), references [#684](https://github.com/mbret/prose-reader/issues/684)
+* **react-reader:** offer Default or Same as global in the font size dialog ([87b5c5e](https://github.com/mbret/prose-reader/commit/87b5c5ecaa23cabdd01d9a0d8843e8f7a510ddd1))
+
+### Bug Fixes
+
+* **core:** forward a hidden frame's pointer events at finite coordinates ([f88b7db](https://github.com/mbret/prose-reader/commit/f88b7dbc7abb86cd803a4034e49eebac9ceb081d))
+* **core:** hold a navigation while the viewport has no size ([fb947c7](https://github.com/mbret/prose-reader/commit/fb947c7c5ab7b284a6c4bdf65ba05e90f0711927))
+* **core:** keep the last layout while the viewport has no size ([87266bf](https://github.com/mbret/prose-reader/commit/87266bf82446468fbaec55f7e477f71e0f887682)), closes [#684](https://github.com/mbret/prose-reader/issues/684)
+* **metadata-fetcher:** complete only the best accepted match, and mark its failure ([30894a6](https://github.com/mbret/prose-reader/commit/30894a6c1450c8e123f0845c4e064eab8291ca45))
+* **metadata-fetcher:** test the acceptance gate on details, and correct the docs ([9ae6f1f](https://github.com/mbret/prose-reader/commit/9ae6f1fa3d3be44a4b72a4d574273c9b7a19cb99))
+* **react-reader:** create the reader in a view rendered into a detached container ([93e222f](https://github.com/mbret/prose-reader/commit/93e222feea7b040ed2d30269f0d088ca04749465))
+* **react-reader:** destroy the reader once React removes a ReactReader that an Activity hides ([9425639](https://github.com/mbret/prose-reader/commit/94256399a454e10f84ed4560a272e52bfc3004d1))
+* **react-reader:** keep reporting reader changes after onSettingsChange throws ([f2f6f83](https://github.com/mbret/prose-reader/commit/f2f6f83b53c93692170db199cce99a6cbea10ed6))
+* **react-reader:** keep the font size controls while the font size has no value ([be87579](https://github.com/mbret/prose-reader/commit/be87579b7a1253c4fa9733f9bf501ec7890572c2))
+* **react-reader:** keep the view's menus and props in a context ReactReader owns ([af68159](https://github.com/mbret/prose-reader/commit/af681595d0697e79cb90fd1ac64a3022bb66ab1e))
+* **react-reader:** let ReactReaderSettings hold the undefined it reports ([90b6ac4](https://github.com/mbret/prose-reader/commit/90b6ac4466d3bf38917270c3387ef0cf4d3b18df))
+* **react-reader:** stop listening to a reader once it is replaced or unmounted ([86a43c0](https://github.com/mbret/prose-reader/commit/86a43c02eaa849577f5e87482986f08a53b65110))
+* **react-reader:** stop listening to a reader once it is replaced or unmounted ([494fff6](https://github.com/mbret/prose-reader/commit/494fff6603d87cc182d3bd5f012998677b3eb5b2))
+* **react-reader:** watch the root node of a hidden ReactReader's element ([1861601](https://github.com/mbret/prose-reader/commit/1861601eea0ea485165e4f594f6cd6dfe698ef84))
+
+
 ## [39.0.0](https://github.com/mbret/prose-reader/compare/v38.0.1...v39.0.0) (2026-11-04)
 
 ### ⚠ BREAKING CHANGES
