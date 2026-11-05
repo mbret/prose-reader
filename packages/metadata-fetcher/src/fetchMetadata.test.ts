@@ -283,33 +283,27 @@ describe("fetchMetadata", () => {
     ).toEqual({ id: 1 })
   })
 
-  it("fetches details only for accepted matches", async () => {
-    const accepted = vi.fn().mockResolvedValue({
-      titles: [{ value: "Dune" }],
-      cover: { uri: "https://example.com/dune.jpg" },
-    })
-    const rejected = vi.fn().mockResolvedValue({
+  it("fetches no details when the best match is rejected", async () => {
+    const fetchDetails = vi.fn().mockResolvedValue({
       titles: [{ value: "Neuromancer" }],
       cover: { uri: "https://example.com/neuromancer.jpg" },
     })
     const fetched = await fetchMetadata(book, {
       providers: [
         providerReturning("a", [
-          { metadata: { titles: [{ value: "Dune" }] }, fetchDetails: accepted },
-          {
-            metadata: { titles: [{ value: "Neuromancer" }] },
-            fetchDetails: rejected,
-          },
+          { metadata: { titles: [{ value: "Neuromancer" }] }, fetchDetails },
         ]),
       ],
     })
 
-    expect(accepted).toHaveBeenCalledTimes(1)
-    expect(rejected).not.toHaveBeenCalled()
-    expect(fetched.matches.map(({ metadata }) => metadata.cover)).toEqual([
-      { uri: "https://example.com/dune.jpg" },
-      undefined,
+    expect(fetchDetails).not.toHaveBeenCalled()
+    expect(fetched.matches).toEqual([
+      expect.objectContaining({
+        accepted: false,
+        metadata: { titles: [{ value: "Neuromancer" }] },
+      }),
     ])
+    expect(fetched.matches[0]).not.toHaveProperty("detailsFailure")
   })
 
   it("fetches details for the best accepted match only", async () => {

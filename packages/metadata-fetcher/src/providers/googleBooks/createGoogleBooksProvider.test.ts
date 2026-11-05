@@ -757,16 +757,10 @@ describe("createGoogleBooksProvider covers", () => {
   })
 
   it("keeps the thumbnail of a volume Google knows only from a catalog", async () => {
-    const catalogOnlyRecord = {
-      ...DUNE_SEARCH_RESULT,
-      volumeInfo: {
-        ...DUNE_SEARCH_RESULT.volumeInfo,
-        imageLinks: searchResultImageLinks("zyTCAlFPjgYC"),
-      },
-    }
     const fetchMock = fetchReturning(
       jsonResponse({ items: [DUNE_SEARCH_RESULT] }),
-      jsonResponse(catalogOnlyRecord),
+      // the record links the same two small sizes as the search result
+      jsonResponse(DUNE_SEARCH_RESULT),
     )
     const fetched = await fetchMetadata(duneLookup, {
       providers: [

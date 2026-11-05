@@ -386,7 +386,7 @@ const input = {
 
 An official Google Books website/API URL with scheme `URL` is recognized too. Every candidate carries its volume id as `{ value: id, scheme: "GoogleBooks" }`, which the matcher compares with either spelling of the book's id, so an exact lookup is decisive, and `metadataInputFromResolvedArchive` can forward the id unchanged for a later refresh. A missing volume id falls through to ISBN/title when available. ISBN searches likewise retain the queried ISBN identifier even when a sparse Google record omits `industryIdentifiers`.
 
-Each request follows the built-in providers' [retry policy](#error-policy): rate limits and outages are retried, honouring `Retry-After`, and client errors such as an invalid key are not. When the last attempt fails, or when a successful exact response is malformed, the provider is reported through `failedProviders` normally.
+Each request follows the built-in providers' [retry policy](#error-policy): rate limits and outages are retried, honouring `Retry-After`, and client errors such as an invalid key are not. When the last attempt fails, or when a successful exact response is malformed, the provider is reported through `failedProviders` normally. The request for a volume's record is the exception: its failure marks the match with `detailsFailure`, as [Covers](#covers) says.
 
 **Mapping** (Google Books Volume → `ResolvedMetadata`; the resolver names every parsed field and asserts the rest is empty, so a field added to the parser fails the build until someone decides what becomes of it):
 
@@ -404,7 +404,7 @@ Each request follows the built-in providers' [retry policy](#error-policy): rate
 | `averageRating`, `ratingsCount` | `aggregateRating` | Google's mean is already on the shared 0–5 scale (it rounds to a half star); a count alone states no rating, and a mean over zero ratings is dropped |
 | `categories` | `subjects` | deduped and capped at 25 |
 | `language` | `languages` | Google's best ISO 639-1 language |
-| `imageLinks` | `cover` | the largest linked size, from the volume's own record for the best accepted search match; upgraded to HTTPS, without `edge=curl`, every other parameter kept — see [Covers](#covers) |
+| `imageLinks` | `cover` | the largest linked size, from the volume's own record for the best accepted search match; upgraded to HTTPS, without `edge=curl`, every other parameter kept. See [Covers](#covers) |
 | `canonicalVolumeLink`, then `infoLink` | match `url` | upgraded to HTTPS; a stable Google Books URL is synthesized from `id` when absent |
 
 Google-specific values without a cross-format home (access and sale data, reading-mode flags, and so on) remain available on `match.raw` when `includeRaw` is enabled.
@@ -413,7 +413,7 @@ Google-specific values without a cross-format home (access and sale data, readin
 
 The best accepted Google Books match carries the largest cover Google links for the volume, without the page curl Google draws on it, unless the request for that cover fails.
 
-Google's search links two small cover sizes, at most about 128 px wide. Only the volume's own record (`/volumes/{id}`) links the larger ones, and only when Google holds the publisher's cover: `large` is 800 px wide, and `extraLarge` is the full image Google holds, often more than 1,500 px wide. So when the best match from an ISBN or title search is accepted, it fetches that record through [`fetchDetails`](#writing-a-provider). That is one more request per lookup, after the search, under the same retry policy and the same `signal`. Only the cover is taken from the record: the rest stays as the search resolved it. No request is made for:
+Google's search links two small cover sizes, at most about 128 px wide. Only the volume's own record (`/volumes/{id}`) links the larger ones, and only when Google holds the publisher's cover: `large` is 800 px wide, and `extraLarge` is the full image Google holds, often more than 1,500 px wide. So when the best match from an ISBN or title search is accepted, it fetches that record through [`fetchDetails`](#writing-a-provider). That is one more call per lookup, after the search, under the same retry policy. It also counts against your Google Books quota. It runs under the same `signal`, so a timeout during it rejects the whole lookup, as it does during the search. Only the cover is taken from the record: the rest stays as the search resolved it. No request is made for:
 
 - a rejected match, or an accepted one that is not the best;
 - a search result that links no image, which is taken to have no cover at all;
@@ -488,7 +488,7 @@ The image is published with every release, tagged with the version and `latest`,
 
 Both metadata routes answer with the `FetchedMetadata` entity verbatim. The options above (`limit`, `minScore`, `includeRaw`, plus a `providers` filter) are query parameters, and the deployment defaults are environment variables.
 
-The service does no per-client rate limiting: who a client is, which address is real and how often each may call depend on your infrastructure and your own provider quotas, so that limit belongs to the proxy or gateway in front of it. It does bound its own capacity — `MAX_CONCURRENT_LOOKUPS` (default `32`) caps the lookups one process runs at once, and a lookup beyond it answers `503` with `Retry-After`. This package has no limit of its own either. A built-in provider retries a catalog's `429` briefly, as its [retry policy](#error-policy) describes; one that persists is reported in `failedProviders`, and backing off further is the caller's decision.
+The service does no per-client rate limiting: who a client is, which address is real and how often each may call depend on your infrastructure and your own provider quotas, so that limit belongs to the proxy or gateway in front of it. It does bound its own capacity — `MAX_CONCURRENT_LOOKUPS` (default `32`) caps the lookups one process runs at once, and a lookup beyond it answers `503` with `Retry-After`. This package has no limit of its own either. A built-in provider retries a catalog's `429` briefly, as its [retry policy](#error-policy) describes; one that persists is reported in `failedProviders`, or as the match's `detailsFailure` for a request that [fetches details](#writing-a-provider), and backing off further is the caller's decision.
 
 For development, `pnpm run start:metadata-fetcher` starts the same image with the source bind-mounted: editing the express app or this package restarts it — node runs both as TypeScript, so nothing is rebuilt. It also serves a playground at `/` — enter metadata manually or choose an EPUB/CBZ/ZIP file, then inspect each candidate, its score and the signals behind it. In both cases the playground posts the canonical `FetchMetadataInput` JSON to `/metadata`, so the browser's network inspector shows the exact input an SDK consumer would provide. Uploaded files have no application-level size limit: archive-reader resolves them in memory and discards them before that compact input is posted, with no disk or browser storage. The playground is development-only: the production image sets `NODE_ENV=production`, and the route is then never registered.
 

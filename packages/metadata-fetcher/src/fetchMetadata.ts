@@ -46,8 +46,8 @@ const DEFAULT_LIMIT = 5
 
 type RankedCandidate = ScoredMetadataCandidate & {
   readonly candidate: MetadataCandidate
-  /** Its index in the provider's own order, which breaks ties of score. */
-  readonly providerRank: number
+  /** Its place in the provider's results, which breaks ties of score. */
+  readonly searchResultIndex: number
   readonly detailsFailure?: MetadataMatch["detailsFailure"]
 }
 
@@ -56,13 +56,10 @@ type ProviderOutcome =
       readonly provider: MetadataProvider
       readonly matches: ReadonlyArray<MetadataMatch>
     }
-  | {
-      readonly provider: MetadataProvider
-      readonly searchFailure: FailedMetadataProvider
-    }
+  | { readonly searchFailure: FailedMetadataProvider }
 
-const byScoreThenProviderRank = (a: RankedCandidate, b: RankedCandidate) =>
-  b.score - a.score || a.providerRank - b.providerRank
+const byScoreThenSearchResultIndex = (a: RankedCandidate, b: RankedCandidate) =>
+  b.score - a.score || a.searchResultIndex - b.searchResultIndex
 
 /**
  * Asks every provider what it knows about a book, scores the answers against
@@ -98,8 +95,9 @@ const byScoreThenProviderRank = (a: RankedCandidate, b: RankedCandidate) =>
  *
  * Error policy mirrors `resolveArchive`: a provider that throws never fails
  * the fetch — it is logged through the debug `Report` and listed in
- * `failedProviders`. An abort is the exception: cancelling through `signal`
- * rejects, since the caller asked for it.
+ * `failedProviders`. A failed `fetchDetails` marks its match with
+ * `detailsFailure` instead. An abort is the exception: cancelling through
+ * `signal` rejects, since the caller asked for it.
  */
 export const fetchMetadata = async (
   input: FetchMetadataInput,
@@ -114,10 +112,10 @@ export const fetchMetadata = async (
 
   const rankCandidate = (
     candidate: MetadataCandidate,
-    providerRank: number,
+    searchResultIndex: number,
   ): RankedCandidate => ({
     candidate,
-    providerRank,
+    searchResultIndex,
     ...scoreMetadataCandidate(input, candidate.metadata),
   })
 
@@ -139,9 +137,9 @@ export const fetchMetadata = async (
 
   /**
    * Completes the provider's best match when it is accepted: that is the one a
-   * consumer applies, and one request is all a lookup spends on details.
+   * consumer applies, and it bounds details to one call per provider.
    */
-  const withDetails = async (
+  const completeBestAcceptedCandidate = async (
     provider: MetadataProvider,
     best: RankedCandidate,
   ): Promise<RankedCandidate> => {
@@ -153,7 +151,10 @@ export const fetchMetadata = async (
       const metadata = await fetchDetails({ signal })
 
       // scored again, so the signals describe the metadata the match carries
-      return rankCandidate({ ...best.candidate, metadata }, best.providerRank)
+      return rankCandidate(
+        { ...best.candidate, metadata },
+        best.searchResultIndex,
+      )
     } catch (error) {
       if (signal?.aborted === true) throw error
 
@@ -186,7 +187,6 @@ export const fetchMetadata = async (
       Report.error(`fetchMetadata: provider "${provider.id}" failed`, error)
 
       return {
-        provider,
         searchFailure: omitUndefined({
           id: provider.id,
           status: responseErrorStatus(error),
@@ -195,13 +195,15 @@ export const fetchMetadata = async (
     }
 
     const [best, ...others] = candidates
-      .map(rankCandidate)
-      .sort(byScoreThenProviderRank)
+      .map((candidate, searchResultIndex) =>
+        rankCandidate(candidate, searchResultIndex),
+      )
+      .sort(byScoreThenSearchResultIndex)
       .slice(0, limit)
     const ranked =
       best !== undefined
-        ? [await withDetails(provider, best), ...others].sort(
-            byScoreThenProviderRank,
+        ? [await completeBestAcceptedCandidate(provider, best), ...others].sort(
+            byScoreThenSearchResultIndex,
           )
         : []
 
@@ -213,15 +215,16 @@ export const fetchMetadata = async (
 
   const outcomes = await Promise.all(options.providers.map(askProvider))
 
-  const failedProviders: FailedMetadataProvider[] = outcomes.flatMap(
-    (outcome) => ("searchFailure" in outcome ? [outcome.searchFailure] : []),
-  )
-
+  const failedProviders: FailedMetadataProvider[] = []
   const sources: Record<string, FetchedMetadataSource> = {}
   const matches: MetadataMatch[] = []
 
   for (const outcome of outcomes) {
-    if (!("matches" in outcome)) continue
+    if ("searchFailure" in outcome) {
+      failedProviders.push(outcome.searchFailure)
+
+      continue
+    }
 
     const { provider, matches: providerMatches } = outcome
 
