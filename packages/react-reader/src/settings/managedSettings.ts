@@ -21,7 +21,10 @@ export type ManagedSettingValues = Pick<
 
 /**
  * Values of the settings react-reader manages, in the shape `reader.settings`
- * has: what `settings` and `settingsByScope` hold, and what `onSettingsChange`
- * reports.
+ * has: what `settings`, `settingsByScope` and `defaultSettings` hold, and what
+ * `onSettingsChange` reports. `undefined` leaves a setting without a value for
+ * that scope.
  */
-export type ReactReaderSettings = Partial<ManagedSettingValues>
+export type ReactReaderSettings = {
+  [Name in ManagedSettingName]?: ManagedSettingValues[Name] | undefined
+}

@@ -4,39 +4,31 @@ import { ChakraProvider, defaultSystem } from "@chakra-ui/react"
 import { act, type ComponentProps } from "react"
 import { createRoot } from "react-dom/client"
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
-
-const { useReaderMock } = vi.hoisted(() => ({ useReaderMock: vi.fn() }))
-
-vi.mock("../context/useReader", async (importOriginal) => ({
-  ...(await importOriginal<typeof import("../context/useReader")>()),
-  useReader: useReaderMock,
-}))
-
-import { ReactReaderProvider } from "../context/ReactReaderProvider"
+import { ReaderContextProvider } from "../context/ReaderContextProvider"
+import { asProvidedReader, createTestReader } from "../tests/createTestReader"
+import { ReaderInContext } from "../tests/ReaderInContext"
 import { ThemeSection } from "./ThemeSection"
 
-type ReactReaderProviderProps = Omit<
-  ComponentProps<typeof ReactReaderProvider>,
-  "children" | "reader"
+type ReaderContextProviderProps = Omit<
+  ComponentProps<typeof ReaderContextProvider>,
+  "children"
 >
-
-const createReaderOfBook = ({
-  isFullyPrePaginated,
-}: {
-  isFullyPrePaginated: boolean
-}) => ({ context: { value: { isFullyPrePaginated } } })
 
 describe(`ThemeSection`, () => {
   let container: HTMLDivElement
   let root: ReturnType<typeof createRoot>
 
-  const render = async (props: ReactReaderProviderProps) => {
+  const render = async (
+    props: ReaderContextProviderProps,
+    reader = createTestReader(),
+  ) => {
     await act(async () => {
       root.render(
         <ChakraProvider value={defaultSystem}>
-          <ReactReaderProvider reader={undefined} {...props}>
+          <ReaderContextProvider {...props}>
+            <ReaderInContext reader={asProvidedReader(reader)} />
             <ThemeSection />
-          </ReactReaderProvider>
+          </ReaderContextProvider>
         </ChakraProvider>,
       )
     })
@@ -52,7 +44,24 @@ describe(`ThemeSection`, () => {
       ...(shownPanel?.querySelectorAll<HTMLInputElement>(
         `input[type="radio"]`,
       ) ?? []),
-    ]
+    ].map((radio) => ({
+      radio,
+      label: radio.closest(`label`)?.textContent,
+    }))
+  }
+
+  const getShownThemeChoices = () =>
+    getShownThemeRadios().map(({ radio, label }) => ({
+      label,
+      checked: radio.checked,
+    }))
+
+  const pickShownThemeChoice = async (pickedLabel: string) => {
+    await act(async () => {
+      getShownThemeRadios()
+        .find(({ label }) => label === pickedLabel)
+        ?.radio.click()
+    })
   }
 
   beforeEach(() => {
@@ -60,9 +69,6 @@ describe(`ThemeSection`, () => {
     container = document.createElement(`div`)
     document.body.appendChild(container)
     root = createRoot(container)
-    useReaderMock.mockReturnValue(
-      createReaderOfBook({ isFullyPrePaginated: false }),
-    )
   })
 
   afterEach(async () => {
@@ -72,35 +78,61 @@ describe(`ThemeSection`, () => {
     container.remove()
   })
 
-  it(`shows the themes with its scope's value checked, and reports a pick with that scope`, async () => {
+  it(`offers the theme the global tab inherits first, checked while the tab has no theme of its own, and reports a pick of the theme it names`, async () => {
+    const onSettingsChange = vi.fn()
+
+    await render({ defaultSettings: { theme: `night` }, onSettingsChange })
+    const shownThemeChoices = getShownThemeChoices()
+    await pickShownThemeChoice(`Night`)
+
+    expect({
+      shownThemeChoices,
+      reported: onSettingsChange.mock.calls,
+    }).toEqual({
+      shownThemeChoices: [
+        { label: `Default (Night)`, checked: true },
+        { label: `Bright`, checked: false },
+        { label: `Sepia`, checked: false },
+        { label: `Night`, checked: false },
+        { label: `The book's own colors`, checked: false },
+      ],
+      reported: [[{ theme: `night` }, `global`]],
+    })
+  })
+
+  it(`checks the global tab's own theme, and names the reader's default as the one it inherits without defaultSettings`, async () => {
+    await render({ settings: { theme: `sepia` } })
+
+    expect(getShownThemeChoices().filter(({ checked }) => checked)).toEqual([
+      { label: `Sepia`, checked: true },
+    ])
+    expect(getShownThemeChoices()[0]?.label).toBe(`Default (Bright)`)
+  })
+
+  it(`checks a scope tab's own theme, and reports picking Same as global as undefined with that scope`, async () => {
     const onSettingsChange = vi.fn()
 
     await render({
-      settings: { theme: `bright` },
+      settings: { theme: `night` },
       settingsByScope: { book: { theme: `sepia` } },
       settingsScopes: { theme: `book` },
       onSettingsChange,
     })
+    const shownThemeChoices = getShownThemeChoices()
+    await pickShownThemeChoice(`Same as global (Night)`)
 
-    const shownThemes = getShownThemeRadios().map(({ value, checked }) => ({
-      value,
-      checked,
-    }))
-
-    await act(async () => {
-      getShownThemeRadios()
-        .find(({ value }) => value === `night`)
-        ?.click()
-    })
-
-    expect({ shownThemes, reported: onSettingsChange.mock.calls }).toEqual({
-      shownThemes: [
-        { value: `bright`, checked: false },
-        { value: `sepia`, checked: true },
-        { value: `night`, checked: false },
-        { value: `publisher`, checked: false },
+    expect({
+      shownThemeChoices,
+      reported: onSettingsChange.mock.calls,
+    }).toEqual({
+      shownThemeChoices: [
+        { label: `Same as global (Night)`, checked: false },
+        { label: `Bright`, checked: false },
+        { label: `Sepia`, checked: true },
+        { label: `Night`, checked: false },
+        { label: `The book's own colors`, checked: false },
       ],
-      reported: [[{ theme: `night` }, `book`]],
+      reported: [[{ theme: undefined }, `book`]],
     })
   })
 
@@ -110,9 +142,7 @@ describe(`ThemeSection`, () => {
   ])(
     `says a book keeps its own colors only when it is fully pre-paginated ($isFullyPrePaginated)`,
     async ({ isFullyPrePaginated, isHelperShown }) => {
-      useReaderMock.mockReturnValue(createReaderOfBook({ isFullyPrePaginated }))
-
-      await render({})
+      await render({}, createTestReader({ isFullyPrePaginated }))
 
       expect(
         container.textContent?.includes(`This book keeps its own colors`),

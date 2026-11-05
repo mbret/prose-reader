@@ -1,3 +1,5 @@
+import { getRenderedScale } from "../../utils/coordinates"
+
 /**
  * Take the relative position of the event in the iframe and translate
  * it to the page coordinates.
@@ -18,8 +20,14 @@ export const translateFramePositionIntoPage = ({
 }) => {
   // Get the frame's current transform scale
   const frameRect = frameElement.getBoundingClientRect()
-  const scaleX = frameRect.width / frameElement.offsetWidth
-  const scaleY = frameRect.height / frameElement.offsetHeight
+  const scaleX = getRenderedScale({
+    renderedSize: frameRect.width,
+    layoutSize: frameElement.offsetWidth,
+  })
+  const scaleY = getRenderedScale({
+    renderedSize: frameRect.height,
+    layoutSize: frameElement.offsetHeight,
+  })
 
   // Get the frame's position relative to the viewport
   const { left = 0, top = 0 } = frameRect

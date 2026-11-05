@@ -18,9 +18,8 @@ const SyncReaderSettingWithManagedValue = memo(
 )
 
 /**
- * Keeps the reader on the settings react-reader manages. A value the reader
- * takes otherwise is reported to the app as `"internal"`, and adopted as
- * react-reader's own copy.
+ * Keeps the reader on the settings react-reader manages, and reports a value it
+ * takes otherwise as `"internal"`.
  */
 export const SyncReaderWithManagedSettings = memo(
   function SyncReaderWithManagedSettings() {

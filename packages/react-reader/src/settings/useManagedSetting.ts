@@ -3,16 +3,16 @@ import {
   useReaderContext,
   useReaderContextValue,
 } from "../context/useReaderContext"
-import {
-  getAppSettingValueInEffect,
-  getManagedSettingValueWhenScopeInEffect,
-  getSettingScopeReferenceInEffect,
-} from "./appSettingValues"
 import type {
   ManagedSettingName,
   ManagedSettingValues,
-  ReactReaderSettings,
 } from "./managedSettings"
+import {
+  changeManagedSettingValue,
+  getManagedSettingValuesForScope,
+  getSettingScopeReferenceInEffect,
+  MANAGED_SETTING_SOURCE_KEYS,
+} from "./settingValues"
 import type {
   ReactReaderSettingsScope,
   ReactReaderSettingsScopeReference,
@@ -20,49 +20,31 @@ import type {
 import { useScreenSettingsScopeReference } from "./useScreenSettingsScopeReference"
 
 /**
- * What a menu needs to edit a setting react-reader manages: its scopes, the
- * value of each, and a change, which is reported to the app and, when the app
- * gives the setting no value, applied to react-reader's own.
+ * What a menu needs to edit a setting react-reader manages: its scopes, each
+ * scope's values, and a change for a scope, `undefined` setting it back to the
+ * value it inherits.
  */
 export const useManagedSetting = <Name extends ManagedSettingName>(
   name: Name,
 ) => {
   const context = useReaderContext()
   const screen = useScreenSettingsScopeReference()
-  const appSettingValues = useReaderContextValue([
-    "settings",
-    "settingsByScope",
-    "settingsScopes",
+  const settingSources = useReaderContextValue([
+    ...MANAGED_SETTING_SOURCE_KEYS,
     "onSettingsScopesChange",
-    "uncontrolledSettings",
   ])
 
-  /** What a scope's tab shows: the value the setting takes with that scope. */
-  const getValueForScope = (scope: ReactReaderSettingsScopeReference) =>
-    getManagedSettingValueWhenScopeInEffect(appSettingValues, name, scope)
+  const getValuesForScope = (scope: ReactReaderSettingsScopeReference) =>
+    getManagedSettingValuesForScope(settingSources, name, scope)
 
   const changeValueForScope = useCallback(
     function changeValueForScope(
       scope: ReactReaderSettingsScopeReference,
-      value: ManagedSettingValues[Name],
+      value: ManagedSettingValues[Name] | undefined,
     ) {
-      const changes: ReactReaderSettings = {}
-      const isValueInEffectReactReaderOwn =
-        getAppSettingValueInEffect(context.value, name, screen) === undefined &&
-        scope === getSettingScopeReferenceInEffect(context.value, name, screen)
-
-      changes[name] = value
-
-      if (isValueInEffectReactReaderOwn) {
-        context.update((old) => ({
-          ...old,
-          uncontrolledSettings: { ...old.uncontrolledSettings, ...changes },
-        }))
-      }
-
-      context.value.onSettingsChange?.(changes, scope)
+      changeManagedSettingValue(context, name, scope, value, scope)
     },
-    [name, context, screen],
+    [name, context],
   )
 
   const changeScope = useCallback(
@@ -78,13 +60,13 @@ export const useManagedSetting = <Name extends ManagedSettingName>(
   )
 
   return {
-    activeScope: appSettingValues.settingsScopes
-      ? getSettingScopeReferenceInEffect(appSettingValues, name, screen)
+    activeScope: settingSources.settingsScopes
+      ? getSettingScopeReferenceInEffect(settingSources, name, screen)
       : undefined,
-    onActiveScopeChange: appSettingValues.onSettingsScopesChange
+    onActiveScopeChange: settingSources.onSettingsScopesChange
       ? changeScope
       : undefined,
-    getValueForScope,
+    getValuesForScope,
     changeValueForScope,
   }
 }

@@ -492,6 +492,41 @@ describe("createGoogleBooksProvider", () => {
     )
   })
 
+  it("gives a search match the large cover with no request beyond the search", async () => {
+    const fetchMock = fetchReturning(
+      jsonResponse({
+        items: [
+          {
+            ...DUNE_VOLUME,
+            volumeInfo: {
+              ...DUNE_VOLUME.volumeInfo,
+              imageLinks: {
+                smallThumbnail:
+                  "http://books.google.com/books/content?id=zyTCAlFPjgYC&printsec=frontcover&img=1&zoom=5&edge=curl&source=gbs_api",
+                thumbnail:
+                  "http://books.google.com/books/content?id=zyTCAlFPjgYC&printsec=frontcover&img=1&zoom=1&edge=curl&source=gbs_api",
+              },
+            },
+          },
+        ],
+      }),
+    )
+    const provider = createGoogleBooksProvider({
+      apiKey: "secret",
+      fetch: fetchMock,
+    })
+    const [candidate] = await provider.search(
+      { title: "Dune", authors: ["Frank Herbert"] },
+      context,
+    )
+
+    expect(fetchMock).toHaveBeenCalledTimes(1)
+    expect(candidate?.metadata.cover).toEqual({
+      uri: "https://books.google.com/books/content?id=zyTCAlFPjgYC&printsec=frontcover&img=1&zoom=1&source=gbs_api&fife=w1280",
+      confidence: "derived",
+    })
+  })
+
   it("caps Google's page size at its API maximum", async () => {
     const fetchMock = fetchReturning(jsonResponse({ totalItems: 0 }))
     const provider = createGoogleBooksProvider({

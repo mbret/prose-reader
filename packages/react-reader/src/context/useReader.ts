@@ -9,10 +9,9 @@ import type { ReactReaderReader } from "./context"
 import { useReaderContextValue } from "./useReaderContext"
 
 /**
- * The reader passed to the nearest `ReactReader`. It updates one render after
- * the `reader` prop changes, so it is `undefined` on the first render of
- * `ReactReader`. It throws outside `ReactReader`. `Register` declares its
- * type.
+ * The reader of the `ReactReaderProvider` above. It is `undefined` before the
+ * provider mounts it and after the provider destroys it. It throws outside a
+ * provider. `Register` declares its type.
  */
 export const useReader = (): ReactReaderReader | undefined => {
   const { reader } = useReaderContextValue(["reader"])

@@ -23,6 +23,13 @@ Its size, its page size and whether it shows a spread change only then. A
 spine item that finishes loading lays the items out again, but does not
 measure the viewport.
 
+A layout runs only while the viewport has a size, see
+[`.isSized$`](#issizedusd). While the container is hidden, under
+`display: none` for example, it measures 0 by 0: the book keeps its last
+layout, and a layout asked for meanwhile runs once the container is shown
+again, see
+[My reader is hidden in a tab or an Activity](/get-started/troubleshooting-faq#my-reader-is-hidden-in-a-tab-or-an-activity).
+
 :::note
 When you change the size of the viewport, call `reader.layout()` so that the
 reader measures it again, see
@@ -150,6 +157,65 @@ Reading `.scaleFactor` or `.relativeViewport` measures the element with
 `getBoundingClientRect()`, which can make the browser compute styles and
 layout. Read them when you need the value, not on every frame.
 :::
+
+## Measuring the element
+
+These measure the viewport's element as it is now, not as it was at the last
+layout. Each reads its `clientWidth` and `clientHeight`, which can make the
+browser compute styles and layout. The element has a size when both are above
+`0`. Hidden, as under `display: none`, or out of the document, it measures 0 by
+0, and has none. So has an element with a width but no height, such as in a
+container that is not given one.
+
+### `.isSized$` { #issizedusd }
+
+```typescript
+Observable<boolean>
+```
+
+Whether the element has a size: measured as soon as you subscribe, then each
+time a resize changes it, as when its container is hidden or shown. It
+completes when the reader is destroyed.
+
+Each subscription observes the element with its own resize observer. A
+browser reports a resize at its next rendering update, so a hide just made
+reads `false` from [`.hasSize()`](#hassize) before it does here.
+
+The reader works only while the element has a size:
+
+- every layout of the spine waits for one. A layout running when the element
+  loses its size stops, and starts again once it has one;
+- the reader starts no load or unload of the documents of spine items. A
+  document loaded with no size has no layout either, and the browser does not
+  request its fonts: an HTML document already loading waits for a size before
+  it counts as loaded;
+- a navigation waits for one, since a target such as a cfi names a place in a
+  document that has no layout. If several wait, only the last one runs.
+
+```typescript
+reader.viewport.isSized$.subscribe((isSized) => {
+  // false while the container is hidden
+})
+```
+
+### `.hasSize()` { #hassize }
+
+```typescript
+() => boolean
+```
+
+Whether the element has a size now.
+
+### `.hasNewSizeSinceLayout()` { #hasnewsizesincelayout }
+
+```typescript
+() => boolean
+```
+
+Whether the element has a size, and not the one of the last layout, so that
+laying out again would change anything. With `layoutAutoResize: "container"`,
+the reader lays out for a resize of its container only when this is `true`: a
+container hidden, then shown again at the size it had, needs no layout.
 
 ## What it shows
 
