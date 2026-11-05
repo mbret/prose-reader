@@ -394,10 +394,29 @@ Each request follows the built-in providers' [retry policy](#error-policy): rate
 | `averageRating`, `ratingsCount` | `aggregateRating` | Google's mean is already on the shared 0–5 scale (it rounds to a half star); a count alone states no rating, and a mean over zero ratings is dropped |
 | `categories` | `subjects` | deduped and capped at 25 |
 | `language` | `languages` | Google's best ISO 639-1 language |
-| `imageLinks` | `cover` | largest announced size preferred; upgraded to HTTPS while Google's query parameters are preserved because changing them can yield a placeholder |
+| `imageLinks` | `cover` | the largest linked size, or the thumbnail asked at 1,280 px wide; HTTPS, without the page curl. See [Covers](#covers) |
 | `canonicalVolumeLink`, then `infoLink` | match `url` | upgraded to HTTPS; a stable Google Books URL is synthesized from `id` when absent |
 
 Google-specific values without a cross-format home (access and sale data, reading-mode flags, and so on) remain available on `match.raw` when `includeRaw` is enabled.
+
+#### Covers
+
+A Google Books match carries the largest cover the provider can link without another request, and without the page curl Google draws on its covers.
+
+Google's search links only two small sizes, at most about 128 px wide. A volume's own record also links `large` (800 px wide) and `extraLarge` when Google holds the publisher's cover, but only a lookup by `GoogleBooks` id reads that record. So the provider picks:
+
+1. `extraLarge` or `large`, when the record links them.
+2. Else `thumbnail`, with `fife=w1280` added. Google's image server then serves the same cover at most 1,280 px wide.
+3. Else the largest other link.
+
+Each link goes over HTTPS and loses `edge=curl`, which serves the same image at the same size without the curl. The provider keeps every other parameter as Google wrote it. In particular, it never changes `zoom`: for a volume Google knows only from a library catalog, another `zoom` serves Google's "image not available" picture, or another page of a scanned book.
+
+The `fife` size has these side effects, which no API reports:
+
+- A publisher cover found by search stops at 1,280 px wide. A smaller source is enlarged to that width.
+- A catalog-only volume has no larger image, so its thumbnail comes back enlarged to about 300 px, with no new detail.
+- A scanned library book can show its title page instead of the cover its thumbnail shows.
+- Google documents none of `fife`, `zoom` or `edge`. If Google changes how it serves them, covers can come back small or wrong.
 
 ### Open Library
 

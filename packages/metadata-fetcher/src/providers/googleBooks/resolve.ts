@@ -93,7 +93,7 @@ const resolvedSeries = (
     }),
   )
 
-const absoluteHttpUrl = (value: string | undefined): string | undefined => {
+const absoluteHttpUrl = (value: string | undefined): URL | undefined => {
   if (value === undefined) return undefined
 
   try {
@@ -103,38 +103,89 @@ const absoluteHttpUrl = (value: string | undefined): string | undefined => {
 
     if (url.protocol === "http:") url.protocol = "https:"
 
-    return url.toString()
+    return url
   } catch {
     return undefined
   }
 }
 
+const PAGE_CURL_QUERY_PAIR = "edge=curl"
+const COVER_WIDTH = 1280
+const COVER_WIDTH_QUERY_PAIR = `fife=w${COVER_WIDTH}`
+
 /**
- * Prefer the largest cover Google announced and force HTTPS. Preserve the
- * query exactly: changing Google's `zoom`, `edge` or signed `imgtk` parameters
- * can turn a valid cover into its "image not available" placeholder.
+ * Edits the query pair by pair rather than through `searchParams`, which
+ * would serialize every other pair again, signed `imgtk` included.
+ */
+const coverUrlWithoutPageCurl = (
+  url: URL,
+  addedPairs: ReadonlyArray<string> = [],
+): string => {
+  const keptPairs = url.search
+    .slice(1)
+    .split("&")
+    .filter((pair) => pair !== "" && pair !== PAGE_CURL_QUERY_PAIR)
+
+  url.search = [...keptPairs, ...addedPairs].join("&")
+
+  return url.toString()
+}
+
+/**
+ * The cover link a match carries, chosen from the links Google gives:
+ *
+ * - `extraLarge` or `large`, which only a volume's own record links, so only
+ *   a lookup by volume id has them.
+ * - Else `thumbnail`, about 128 px wide and the largest a search result
+ *   links, with `fife=w1280` added: Google's image server then serves the
+ *   same cover at most 1,280 px wide. The link costs no API request.
+ * - Else the largest other link.
+ *
+ * Every link goes over HTTPS and loses `edge=curl`, the page curl Google
+ * draws on the cover: the image stays the same, at the same size. Every
+ * other parameter stays as Google wrote it, since `imgtk` is signed.
+ *
+ * `zoom` is never changed. A `zoom` other than Google's serves the "image not
+ * available" picture, or another page of a scanned book, for a volume Google
+ * knows only from a library catalog: `zoom=0` did so for 39 of 125 of them.
+ *
+ * What `fife=w1280` costs, measured on 149 volumes in November 2026, with no
+ * placeholder returned:
+ *
+ * - A publisher cover found by search stops at 1,280 px wide, where the
+ *   volume's record can link up to 3,352 px. A smaller source is enlarged
+ *   to 1,280 px.
+ * - A catalog-only volume has no larger image: its thumbnail comes back
+ *   enlarged to 300 px, with no new detail.
+ * - A scanned library book can show its title page instead of the cover its
+ *   thumbnail shows: 2 of 125.
+ * - `fife`, `zoom` and `edge` are undocumented. If covers come back small or
+ *   wrong, check how Google serves `fife` first.
  */
 export const googleBooksCoverUrl = (
   imageLinks: GoogleBooksImageLinks | undefined,
 ): string | undefined => {
   if (imageLinks === undefined) return undefined
 
-  const candidates = [
-    imageLinks.extraLarge,
-    imageLinks.large,
-    imageLinks.medium,
-    imageLinks.small,
-    imageLinks.thumbnail,
-    imageLinks.smallThumbnail,
-  ]
+  const largeLink =
+    absoluteHttpUrl(imageLinks.extraLarge) ?? absoluteHttpUrl(imageLinks.large)
 
-  for (const candidate of candidates) {
-    const absolute = absoluteHttpUrl(candidate)
+  if (largeLink !== undefined) return coverUrlWithoutPageCurl(largeLink)
 
-    if (absolute !== undefined) return absolute
+  const thumbnailLink = absoluteHttpUrl(imageLinks.thumbnail)
+
+  if (thumbnailLink !== undefined) {
+    return coverUrlWithoutPageCurl(thumbnailLink, [COVER_WIDTH_QUERY_PAIR])
   }
 
-  return undefined
+  const otherLink =
+    absoluteHttpUrl(imageLinks.medium) ??
+    absoluteHttpUrl(imageLinks.small) ??
+    absoluteHttpUrl(imageLinks.smallThumbnail)
+
+  return otherLink !== undefined
+    ? coverUrlWithoutPageCurl(otherLink)
+    : undefined
 }
 
 const resolvedContributors = (
@@ -237,8 +288,10 @@ export const resolveGoogleBooksVolume = (
 export const googleBooksVolumeUrl = (
   volume: GoogleBooksVolume,
 ): string | undefined =>
-  absoluteHttpUrl(volume.volumeInfo?.canonicalVolumeLink) ??
-  absoluteHttpUrl(volume.volumeInfo?.infoLink) ??
+  (
+    absoluteHttpUrl(volume.volumeInfo?.canonicalVolumeLink) ??
+    absoluteHttpUrl(volume.volumeInfo?.infoLink)
+  )?.toString() ??
   (volume.id !== undefined
     ? `https://books.google.com/books?id=${encodeURIComponent(volume.id)}`
     : undefined)
