@@ -71,11 +71,10 @@ export type FetchedMetadata = {
   readonly matches: ReadonlyArray<MetadataMatch>
   readonly sources: FetchedMetadataSources
   /**
-   * Providers whose search threw, or whose `fetchDetails` threw for an
-   * accepted match, each with its HTTP `status` when the catalog answered with
-   * one. A provider whose search answered is in `sources` as well, its match
-   * keeping what search found. Always present, and the only trace a swallowed
+   * Providers whose search threw, each with its HTTP `status` when the catalog
+   * answered with one. Always present, and the only trace a swallowed search
    * failure leaves — a consumer refusing to cache a partial answer needs it.
+   * A match whose details failed carries `detailsFailure` instead.
    *
    * ```ts
    * const input = metadataInputFromResolvedArchive(resolved)

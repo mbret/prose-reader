@@ -27,17 +27,18 @@ export type MetadataCandidate = {
    */
   readonly raw?: unknown
   /**
-   * Fetches what the catalog's search left out of this candidate, such as the
-   * large covers Google Books links only from a volume's own record.
-   * `fetchMetadata` calls it once the candidate is scored, kept and accepted,
-   * so the extra request goes only to a match the caller can use, and scores
-   * the metadata it resolves to. Leave it unset when search already returned
-   * everything. Throwing is allowed: the match keeps the metadata search found,
-   * and the provider is listed in `failedProviders`.
+   * Resolves this candidate's complete metadata: what search found, plus what
+   * only the catalog's full record holds, such as the large covers Google
+   * Books links only from a volume's own record. The result replaces
+   * `metadata`, so include the search metadata in it. `fetchMetadata` calls it
+   * for the provider's best match only, when that match is accepted, so it
+   * costs a lookup one request more at most, and scores the result again.
+   * Leave it unset when search found everything. If it throws, the match keeps
+   * `metadata` and carries `detailsFailure`.
    */
-  readonly fetchDetails?: (context: {
-    readonly signal?: AbortSignal
-  }) => Promise<ResolvedMetadata>
+  readonly fetchDetails?: (
+    context: Pick<MetadataProviderContext, "signal">,
+  ) => Promise<ResolvedMetadata>
 }
 
 /**

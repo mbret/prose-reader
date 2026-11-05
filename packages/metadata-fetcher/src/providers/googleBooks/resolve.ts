@@ -93,7 +93,7 @@ const resolvedSeries = (
     }),
   )
 
-const absoluteHttpUrl = (value: string | undefined): string | undefined => {
+const absoluteHttpUrl = (value: string | undefined): URL | undefined => {
   if (value === undefined) return undefined
 
   try {
@@ -103,26 +103,23 @@ const absoluteHttpUrl = (value: string | undefined): string | undefined => {
 
     if (url.protocol === "http:") url.protocol = "https:"
 
-    return url.toString()
+    return url
   } catch {
     return undefined
   }
 }
 
-const PAGE_CURL_QUERY_PARAMETER = "edge=curl"
+const PAGE_CURL_QUERY_PAIR = "edge=curl"
 
 /**
  * Removes the `edge=curl` pair by hand rather than through `searchParams`,
  * which would serialize every other pair again, signed `imgtk` included.
  */
-const withoutPageCurl = (coverUrl: string): string => {
-  const url = new URL(coverUrl)
+const withoutPageCurl = (url: URL): string => {
   const pairs = url.search.slice(1).split("&")
-  const keptPairs = pairs.filter((pair) => pair !== PAGE_CURL_QUERY_PARAMETER)
+  const keptPairs = pairs.filter((pair) => pair !== PAGE_CURL_QUERY_PAIR)
 
-  if (keptPairs.length === pairs.length) return coverUrl
-
-  url.search = keptPairs.join("&")
+  if (keptPairs.length < pairs.length) url.search = keptPairs.join("&")
 
   return url.toString()
 }
@@ -258,8 +255,10 @@ export const resolveGoogleBooksVolume = (
 export const googleBooksVolumeUrl = (
   volume: GoogleBooksVolume,
 ): string | undefined =>
-  absoluteHttpUrl(volume.volumeInfo?.canonicalVolumeLink) ??
-  absoluteHttpUrl(volume.volumeInfo?.infoLink) ??
+  (
+    absoluteHttpUrl(volume.volumeInfo?.canonicalVolumeLink) ??
+    absoluteHttpUrl(volume.volumeInfo?.infoLink)
+  )?.toString() ??
   (volume.id !== undefined
     ? `https://books.google.com/books?id=${encodeURIComponent(volume.id)}`
     : undefined)

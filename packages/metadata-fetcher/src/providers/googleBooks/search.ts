@@ -111,20 +111,14 @@ const toCandidate = (
 })
 
 /**
- * Whether the volume's own record may link a larger cover than its search
- * result. Search links the small sizes, about 128 px wide; the larger ones
- * come from the volume's record, when Google holds a large cover. A result
- * that links no image has no cover to upgrade, and one that links a large
- * image has the largest already.
+ * Search links only the small sizes, at most about 128 px wide; a volume's own
+ * record links the larger ones when Google holds a publisher cover. A result
+ * that links no image is taken to have no cover at all.
  */
-const searchResultLacksLargeCover = (volume: GoogleBooksVolume): boolean => {
+const volumeRecordMayLinkLargerCover = (volume: GoogleBooksVolume): boolean => {
   const imageLinks = volume.volumeInfo?.imageLinks
 
-  return (
-    imageLinks !== undefined &&
-    imageLinks.large === undefined &&
-    imageLinks.extraLarge === undefined
-  )
+  return imageLinks !== undefined && imageLinks.extraLarge === undefined
 }
 
 /**
@@ -133,8 +127,6 @@ const searchResultLacksLargeCover = (volume: GoogleBooksVolume): boolean => {
  * A title search asks for several pages worth of `limit` because Google ranks
  * it, not the matcher: the edition the caller described can sit below the ones
  * Google finds most popular, and `fetchMetadata` trims to `limit` after scoring.
- * A search result that links no large cover can fetch its volume's record for
- * one, which `fetchMetadata` does once it accepts the match.
  */
 export const createGoogleBooksSearch = (
   options: GoogleBooksSearchOptions,
@@ -195,9 +187,8 @@ export const createGoogleBooksSearch = (
   }
 
   /**
-   * A search result, which fetches its volume's own record for a larger cover
-   * once `fetchMetadata` accepts it. Only the cover changes: the rest of the
-   * match stays what was searched and scored.
+   * Takes only the cover from the volume's record: the rest stays as search
+   * resolved it, like every match that is not completed.
    */
   const toSearchResultCandidate = (
     record: GoogleBooksVolumeRecord,
@@ -206,7 +197,10 @@ export const createGoogleBooksSearch = (
     const candidate = toCandidate(record, resolveOptions)
     const volumeId = record.volume.id
 
-    if (volumeId === undefined || !searchResultLacksLargeCover(record.volume)) {
+    if (
+      volumeId === undefined ||
+      !volumeRecordMayLinkLargerCover(record.volume)
+    ) {
       return candidate
     }
 

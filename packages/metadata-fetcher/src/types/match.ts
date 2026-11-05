@@ -57,4 +57,12 @@ export type MetadataMatch = {
   readonly id?: string
   readonly url?: string
   readonly raw?: unknown
+  /**
+   * Set when the provider's `fetchDetails` failed for this match, which then
+   * carries what search found: a Google Books match keeps its small cover, for
+   * instance. Holds the HTTP `status` when the catalog answered with one, as
+   * `failedProviders` does. A consumer can store the match and complete it on
+   * a later lookup.
+   */
+  readonly detailsFailure?: { readonly status?: number }
 }

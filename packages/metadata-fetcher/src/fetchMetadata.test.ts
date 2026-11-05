@@ -312,22 +312,65 @@ describe("fetchMetadata", () => {
     ])
   })
 
-  it("fetches no details for an accepted match the limit drops", async () => {
-    const kept = vi.fn().mockResolvedValue({ titles: [{ value: "Dune" }] })
-    const dropped = vi.fn().mockResolvedValue({ titles: [{ value: "Dune" }] })
+  it("fetches details for the best accepted match only", async () => {
+    const best = vi.fn().mockResolvedValue({ titles: [{ value: "Dune" }] })
+    const other = vi.fn().mockResolvedValue({ titles: [{ value: "Dune" }] })
 
     await fetchMetadata(book, {
       providers: [
         providerReturning("a", [
-          { metadata: { titles: [{ value: "Dune" }] }, fetchDetails: kept },
-          { metadata: { titles: [{ value: "Dune" }] }, fetchDetails: dropped },
+          { metadata: { titles: [{ value: "Dune" }] }, fetchDetails: best },
+          { metadata: { titles: [{ value: "Dune" }] }, fetchDetails: other },
         ]),
       ],
-      limit: 1,
     })
 
-    expect(kept).toHaveBeenCalledTimes(1)
-    expect(dropped).not.toHaveBeenCalled()
+    expect(best).toHaveBeenCalledTimes(1)
+    expect(other).not.toHaveBeenCalled()
+  })
+
+  it("ranks a completed match by its new score, and accepts it by that score", async () => {
+    const fetched = await fetchMetadata(book, {
+      providers: [
+        providerReturning("a", [
+          {
+            id: "completed",
+            metadata: { titles: [{ value: "Dune" }] },
+            fetchDetails: () =>
+              Promise.resolve({ titles: [{ value: "Neuromancer" }] }),
+          },
+          { id: "searched", metadata: { titles: [{ value: "Dune" }] } },
+        ]),
+      ],
+    })
+
+    expect(
+      fetched.sources.a?.matches.map(({ id, accepted }) => ({ id, accepted })),
+    ).toEqual([
+      { id: "searched", accepted: true },
+      { id: "completed", accepted: false },
+    ])
+  })
+
+  it("breaks a tie of score by the provider's own order after details too", async () => {
+    const fetched = await fetchMetadata(book, {
+      providers: [
+        providerReturning("a", [
+          { id: "first", metadata: { titles: [{ value: "Dune Messiah" }] } },
+          {
+            id: "second",
+            metadata: { titles: [{ value: "Dune" }] },
+            fetchDetails: () =>
+              Promise.resolve({ titles: [{ value: "Dune Messiah" }] }),
+          },
+        ]),
+      ],
+    })
+
+    expect(fetched.sources.a?.matches.map(({ id }) => id)).toEqual([
+      "first",
+      "second",
+    ])
   })
 
   it("scores the metadata the details resolve to", async () => {
@@ -372,7 +415,7 @@ describe("fetchMetadata", () => {
     expect(fetchDetails).toHaveBeenCalledWith({ signal: controller.signal })
   })
 
-  it("keeps what search found, and lists the provider, when the details fail", async () => {
+  it("keeps what search found, and marks the match, when the details fail", async () => {
     const fetched = await fetchMetadata(book, {
       providers: [
         providerReturning("a", [
@@ -385,15 +428,15 @@ describe("fetchMetadata", () => {
       ],
     })
 
-    expect(fetched.matches).toMatchObject([
-      {
+    expect(fetched.matches).toEqual([
+      expect.objectContaining({
         providerId: "a",
         accepted: true,
         metadata: { titles: [{ value: "Dune" }] },
-      },
+        detailsFailure: { status: 429 },
+      }),
     ])
-    expect(fetched.sources.a?.matches).toHaveLength(1)
-    expect(fetched.failedProviders).toEqual([{ id: "a", status: 429 }])
+    expect(fetched.failedProviders).toEqual([])
   })
 
   it("rejects when the caller aborts while details are fetched", async () => {

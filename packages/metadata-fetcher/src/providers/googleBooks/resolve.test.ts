@@ -198,7 +198,6 @@ describe("resolveGoogleBooksVolume", () => {
   })
 
   it("drops the page curl and keeps every other parameter as Google wrote it", () => {
-    // a volume record's own extraLarge link, signed with imgtk
     const extraLarge =
       "http://books.google.com/books/publisher/content?id=0efCDwAAQBAJ&printsec=frontcover&img=1&zoom=6&edge=curl&imgtk=AFLRE73vqRZG_RcTeA7ka3WthIRzpYDjhKBZp1fm4h_97kYFPt70ayYBx2NEDqO7W97a3eALZt6nts2EMwD5Ak8_30MNfaMNo0gmbgANvsa35OiD3XdyVdRmxjN2rJtbciBf46PTKbM3&source=gbs_api"
 

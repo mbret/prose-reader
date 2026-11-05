@@ -18,8 +18,8 @@ export type GoogleBooksProviderOptions = {
  * an exact `GoogleBooks` id/official URL, ISBN, then title plus first author
  * with a title-only fallback. Google relevance order is preserved here; the
  * shared fetcher scores every returned edition against the caller's input.
- * Search links small covers only, so an accepted search match fetches its
- * volume's own record for the largest one.
+ * Search links small covers only, so the best accepted search match fetches
+ * its volume's own record for the largest one.
  */
 export const createGoogleBooksProvider = (
   options: GoogleBooksProviderOptions,

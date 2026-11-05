@@ -657,7 +657,7 @@ describe("createGoogleBooksProvider covers", () => {
     expect(candidate?.fetchDetails).toBeInstanceOf(Function)
   })
 
-  it("asks for no volume record when search links no image, or a large one", async () => {
+  it("asks for no volume record when search links no image, or an extra large one", async () => {
     const provider = createGoogleBooksProvider({
       apiKey: "secret",
       fetch: fetchReturning(
@@ -665,10 +665,12 @@ describe("createGoogleBooksProvider covers", () => {
           items: [
             { id: "no-cover", volumeInfo: { title: "Dune" } },
             {
-              id: "large-cover",
+              id: "extra-large-cover",
               volumeInfo: {
                 title: "Dune",
-                imageLinks: { large: publisherCoverLink("large-cover", 4) },
+                imageLinks: {
+                  extraLarge: publisherCoverLink("extra-large-cover", 6),
+                },
               },
             },
           ],
@@ -681,6 +683,28 @@ describe("createGoogleBooksProvider covers", () => {
       undefined,
       undefined,
     ])
+  })
+
+  it("asks for the volume record when search links a large cover but no extra large one", async () => {
+    const provider = createGoogleBooksProvider({
+      apiKey: "secret",
+      fetch: fetchReturning(
+        jsonResponse({
+          items: [
+            {
+              id: "large-cover",
+              volumeInfo: {
+                title: "Dune",
+                imageLinks: { large: publisherCoverLink("large-cover", 4) },
+              },
+            },
+          ],
+        }),
+      ),
+    })
+    const [candidate] = await provider.search({ title: "Dune" }, context)
+
+    expect(candidate?.fetchDetails).toBeInstanceOf(Function)
   })
 
   it("asks for no volume record when the volume was read by its id", async () => {
@@ -732,7 +756,35 @@ describe("createGoogleBooksProvider covers", () => {
     expect(fetchMock).toHaveBeenCalledTimes(3)
   })
 
-  it("keeps the searched cover, and reports the status, when the volume record fails", async () => {
+  it("keeps the thumbnail of a volume Google knows only from a catalog", async () => {
+    const catalogOnlyRecord = {
+      ...DUNE_SEARCH_RESULT,
+      volumeInfo: {
+        ...DUNE_SEARCH_RESULT.volumeInfo,
+        imageLinks: searchResultImageLinks("zyTCAlFPjgYC"),
+      },
+    }
+    const fetchMock = fetchReturning(
+      jsonResponse({ items: [DUNE_SEARCH_RESULT] }),
+      jsonResponse(catalogOnlyRecord),
+    )
+    const fetched = await fetchMetadata(duneLookup, {
+      providers: [
+        createGoogleBooksProvider({ apiKey: "secret", fetch: fetchMock }),
+      ],
+    })
+
+    expect(fetchMock).toHaveBeenCalledTimes(2)
+    expect(fetched.matches).toEqual([
+      expect.not.objectContaining({ detailsFailure: expect.anything() }),
+    ])
+    expect(fetched.matches[0]?.metadata.cover).toEqual({
+      uri: "https://books.google.com/books/content?id=zyTCAlFPjgYC&printsec=frontcover&img=1&zoom=1&source=gbs_api",
+      confidence: "derived",
+    })
+  })
+
+  it("keeps the searched cover, and marks the match, when the volume record fails", async () => {
     const fetched = await fetchMetadata(duneLookup, {
       providers: [
         createGoogleBooksProvider({
@@ -745,12 +797,18 @@ describe("createGoogleBooksProvider covers", () => {
       ],
     })
 
-    expect(fetched.matches[0]?.metadata.cover?.uri).toBe(
-      "https://books.google.com/books/content?id=zyTCAlFPjgYC&printsec=frontcover&img=1&zoom=1&source=gbs_api",
-    )
-    expect(fetched.sources[GOOGLE_BOOKS_PROVIDER_ID]?.matches).toHaveLength(1)
-    expect(fetched.failedProviders).toEqual([
-      { id: GOOGLE_BOOKS_PROVIDER_ID, status: 403 },
+    expect(fetched.matches).toEqual([
+      expect.objectContaining({
+        providerId: GOOGLE_BOOKS_PROVIDER_ID,
+        detailsFailure: { status: 403 },
+        metadata: expect.objectContaining({
+          cover: {
+            uri: "https://books.google.com/books/content?id=zyTCAlFPjgYC&printsec=frontcover&img=1&zoom=1&source=gbs_api",
+            confidence: "derived",
+          },
+        }),
+      }),
     ])
+    expect(fetched.failedProviders).toEqual([])
   })
 })
