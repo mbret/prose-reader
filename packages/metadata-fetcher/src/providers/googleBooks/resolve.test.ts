@@ -121,7 +121,7 @@ describe("resolveGoogleBooksVolume", () => {
         { value: "9780441013593", scheme: "ISBN" },
       ],
       cover: {
-        uri: "https://books.google.com/books/content?id=zyTCAlFPjgYC&printsec=frontcover&img=1&zoom=1&source=gbs_api",
+        uri: "https://books.google.com/books/content?id=zyTCAlFPjgYC&printsec=frontcover&img=1&zoom=1&source=gbs_api&fife=w1280",
         confidence: "derived",
       },
     })
@@ -194,7 +194,7 @@ describe("resolveGoogleBooksVolume", () => {
         large: "data:image/jpeg;base64,x",
         thumbnail: "http://books.google.com/small?zoom=1",
       }),
-    ).toBe("https://books.google.com/small?zoom=1")
+    ).toBe("https://books.google.com/small?zoom=1&fife=w1280")
   })
 
   it("drops the page curl and keeps every other parameter as Google wrote it", () => {
@@ -216,25 +216,49 @@ describe("resolveGoogleBooksVolume", () => {
         thumbnail:
           "https://books.google.com/books/content?edge=curl&imgtk=a~b%2bc&zoom=1",
       }),
-    ).toBe("https://books.google.com/books/content?imgtk=a~b%2bc&zoom=1")
+    ).toBe(
+      "https://books.google.com/books/content?imgtk=a~b%2bc&zoom=1&fife=w1280",
+    )
     expect(
       googleBooksCoverUrl({
         thumbnail: "https://books.google.com/books/content?zoom=1&edge=flat",
       }),
-    ).toBe("https://books.google.com/books/content?zoom=1&edge=flat")
+    ).toBe("https://books.google.com/books/content?zoom=1&edge=flat&fife=w1280")
   })
 
-  it("keeps the Google-provided zoom that serves the BLAME! cover", () => {
+  it("asks for the thumbnail at 1,280 px wide and keeps its zoom", () => {
+    // any other zoom serves "image not available" for this catalog-only volume
     expect(
       googleBooksCoverUrl({
         smallThumbnail:
-          "http://books.google.com/books/content?id=k028AAAACAAJ&printsec=frontcover&img=1&zoom=5&source=gbs_api",
+          "http://books.google.com/books/content?id=k028AAAACAAJ&printsec=frontcover&img=1&zoom=5&edge=curl&source=gbs_api",
         thumbnail:
-          "http://books.google.com/books/content?id=k028AAAACAAJ&printsec=frontcover&img=1&zoom=1&source=gbs_api",
+          "http://books.google.com/books/content?id=k028AAAACAAJ&printsec=frontcover&img=1&zoom=1&edge=curl&source=gbs_api",
       }),
     ).toBe(
-      "https://books.google.com/books/content?id=k028AAAACAAJ&printsec=frontcover&img=1&zoom=1&source=gbs_api",
+      "https://books.google.com/books/content?id=k028AAAACAAJ&printsec=frontcover&img=1&zoom=1&source=gbs_api&fife=w1280",
     )
+  })
+
+  it("takes another link as Google wrote it when there is no thumbnail", () => {
+    // 1,280 px from the thumbnail beats the 575 px of `medium`
+    expect(
+      googleBooksCoverUrl({
+        thumbnail: "http://books.google.com/content?zoom=1",
+        medium: "http://books.google.com/content?zoom=3",
+      }),
+    ).toBe("https://books.google.com/content?zoom=1&fife=w1280")
+    expect(
+      googleBooksCoverUrl({
+        smallThumbnail: "http://books.google.com/content?zoom=5&edge=curl",
+        medium: "http://books.google.com/content?zoom=3&edge=curl",
+      }),
+    ).toBe("https://books.google.com/content?zoom=3")
+    expect(
+      googleBooksCoverUrl({
+        smallThumbnail: "http://books.google.com/content?zoom=5&edge=curl",
+      }),
+    ).toBe("https://books.google.com/content?zoom=5")
   })
 
   it("falls back through the candidate page links", () => {

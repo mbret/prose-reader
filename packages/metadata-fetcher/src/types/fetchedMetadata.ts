@@ -72,9 +72,8 @@ export type FetchedMetadata = {
   readonly sources: FetchedMetadataSources
   /**
    * Providers whose search threw, each with its HTTP `status` when the catalog
-   * answered with one. Always present, and the only trace a swallowed search
-   * failure leaves — a consumer refusing to cache a partial answer needs it.
-   * A match whose details failed carries `detailsFailure` instead.
+   * answered with one. Always present, and the only trace a swallowed failure
+   * leaves — a consumer refusing to cache a partial answer needs it.
    *
    * ```ts
    * const input = metadataInputFromResolvedArchive(resolved)

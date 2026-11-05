@@ -1,6 +1,5 @@
 import {
   DEFAULT_METADATA_MATCH_MIN_SCORE,
-  type ScoredMetadataCandidate,
   scoreMetadataCandidate,
 } from "./match/scoreMetadataCandidate.ts"
 import { responseErrorStatus } from "./providers/responseError.ts"
@@ -44,22 +43,31 @@ export type FetchMetadataOptions = {
 
 const DEFAULT_LIMIT = 5
 
-type RankedCandidate = ScoredMetadataCandidate & {
-  readonly candidate: MetadataCandidate
-  /** Its place in the provider's results, which breaks ties of score. */
-  readonly searchResultIndex: number
-  readonly detailsFailure?: MetadataMatch["detailsFailure"]
-}
-
-type ProviderOutcome =
-  | {
-      readonly provider: MetadataProvider
-      readonly matches: ReadonlyArray<MetadataMatch>
-    }
-  | { readonly searchFailure: FailedMetadataProvider }
-
-const byScoreThenSearchResultIndex = (a: RankedCandidate, b: RankedCandidate) =>
-  b.score - a.score || a.searchResultIndex - b.searchResultIndex
+const toMatch = ({
+  candidate,
+  providerId,
+  score,
+  signals,
+  accepted,
+  includeRaw,
+}: {
+  candidate: MetadataCandidate
+  providerId: string
+  score: number
+  signals: MetadataMatch["signals"]
+  accepted: boolean
+  includeRaw: boolean
+}): MetadataMatch =>
+  omitUndefined({
+    providerId,
+    score,
+    signals,
+    accepted,
+    metadata: candidate.metadata,
+    id: candidate.id,
+    url: candidate.url,
+    raw: includeRaw ? candidate.raw : undefined,
+  })
 
 /**
  * Asks every provider what it knows about a book, scores the answers against
@@ -95,9 +103,8 @@ const byScoreThenSearchResultIndex = (a: RankedCandidate, b: RankedCandidate) =>
  *
  * Error policy mirrors `resolveArchive`: a provider that throws never fails
  * the fetch — it is logged through the debug `Report` and listed in
- * `failedProviders`. A failed `fetchDetails` marks its match with
- * `detailsFailure` instead. An abort is the exception: cancelling through
- * `signal` rejects, since the caller asked for it.
+ * `failedProviders`. An abort is the exception: cancelling through `signal`
+ * rejects, since the caller asked for it.
  */
 export const fetchMetadata = async (
   input: FetchMetadataInput,
@@ -106,127 +113,67 @@ export const fetchMetadata = async (
   const limit = options.limit ?? DEFAULT_LIMIT
   const minScore = options.minScore ?? DEFAULT_METADATA_MATCH_MIN_SCORE
   const includeRaw = options.includeRaw === true
-  const signal = options.signal
 
-  const isAccepted = (score: number) => score >= minScore
+  const results = await Promise.all(
+    options.providers.map(async (provider) => {
+      try {
+        const candidates = await provider.search(input, {
+          limit,
+          signal: options.signal,
+        })
 
-  const rankCandidate = (
-    candidate: MetadataCandidate,
-    searchResultIndex: number,
-  ): RankedCandidate => ({
-    candidate,
-    searchResultIndex,
-    ...scoreMetadataCandidate(input, candidate.metadata),
-  })
+        return { provider, candidates, failure: undefined }
+      } catch (error) {
+        // the caller pulled the plug: their cancellation, their rejection
+        if (options.signal?.aborted === true) throw error
 
-  const toMatch = (
-    providerId: string,
-    { candidate, score, signals, detailsFailure }: RankedCandidate,
-  ): MetadataMatch =>
-    omitUndefined({
-      providerId,
-      score,
-      signals,
-      accepted: isAccepted(score),
-      metadata: candidate.metadata,
-      id: candidate.id,
-      url: candidate.url,
-      raw: includeRaw ? candidate.raw : undefined,
-      detailsFailure,
-    })
+        // catalogs in the wild are flaky: a failing provider never fails the
+        // fetch, it just doesn't contribute. The status, when the catalog
+        // answered with one, is what tells a rate limit from an outage.
+        Report.error(`fetchMetadata: provider "${provider.id}" failed`, error)
 
-  /**
-   * Completes the provider's best match when it is accepted: that is the one a
-   * consumer applies, and it bounds details to one call per provider.
-   */
-  const completeBestAcceptedCandidate = async (
-    provider: MetadataProvider,
-    best: RankedCandidate,
-  ): Promise<RankedCandidate> => {
-    const { fetchDetails } = best.candidate
-
-    if (fetchDetails === undefined || !isAccepted(best.score)) return best
-
-    try {
-      const metadata = await fetchDetails({ signal })
-
-      // scored again, so the signals describe the metadata the match carries
-      return rankCandidate(
-        { ...best.candidate, metadata },
-        best.searchResultIndex,
-      )
-    } catch (error) {
-      if (signal?.aborted === true) throw error
-
-      Report.error(
-        `fetchMetadata: provider "${provider.id}" failed to fetch a match's details`,
-        error,
-      )
-
-      return {
-        ...best,
-        detailsFailure: omitUndefined({ status: responseErrorStatus(error) }),
+        return {
+          provider,
+          candidates: undefined,
+          failure: omitUndefined({
+            id: provider.id,
+            status: responseErrorStatus(error),
+          }),
+        }
       }
-    }
-  }
+    }),
+  )
 
-  const askProvider = async (
-    provider: MetadataProvider,
-  ): Promise<ProviderOutcome> => {
-    let candidates: ReadonlyArray<MetadataCandidate>
+  const failedProviders: FailedMetadataProvider[] = results.flatMap((result) =>
+    result.failure !== undefined ? [result.failure] : [],
+  )
 
-    try {
-      candidates = await provider.search(input, { limit, signal })
-    } catch (error) {
-      // the caller pulled the plug: their cancellation, their rejection
-      if (signal?.aborted === true) throw error
-
-      // catalogs in the wild are flaky: a failing provider never fails the
-      // fetch, it just doesn't contribute. The status, when the catalog
-      // answered with one, is what tells a rate limit from an outage.
-      Report.error(`fetchMetadata: provider "${provider.id}" failed`, error)
-
-      return {
-        searchFailure: omitUndefined({
-          id: provider.id,
-          status: responseErrorStatus(error),
-        }),
-      }
-    }
-
-    const [best, ...others] = candidates
-      .map((candidate, searchResultIndex) =>
-        rankCandidate(candidate, searchResultIndex),
-      )
-      .sort(byScoreThenSearchResultIndex)
-      .slice(0, limit)
-    const ranked =
-      best !== undefined
-        ? [await completeBestAcceptedCandidate(provider, best), ...others].sort(
-            byScoreThenSearchResultIndex,
-          )
-        : []
-
-    return {
-      provider,
-      matches: ranked.map((candidate) => toMatch(provider.id, candidate)),
-    }
-  }
-
-  const outcomes = await Promise.all(options.providers.map(askProvider))
-
-  const failedProviders: FailedMetadataProvider[] = []
   const sources: Record<string, FetchedMetadataSource> = {}
   const matches: MetadataMatch[] = []
 
-  for (const outcome of outcomes) {
-    if ("searchFailure" in outcome) {
-      failedProviders.push(outcome.searchFailure)
+  for (const { provider, candidates } of results) {
+    if (candidates === undefined) continue
 
-      continue
-    }
+    const providerMatches = candidates
+      .map((candidate) => {
+        const { score, signals } = scoreMetadataCandidate(
+          input,
+          candidate.metadata,
+        )
 
-    const { provider, matches: providerMatches } = outcome
+        return toMatch({
+          candidate,
+          providerId: provider.id,
+          score,
+          signals,
+          accepted: score >= minScore,
+          includeRaw,
+        })
+      })
+      // `sort` is stable, so equally-scored candidates keep the order the
+      // provider ranked them in
+      .sort((a, b) => b.score - a.score)
+      .slice(0, limit)
 
     // ids key `sources`, so a duplicate would silently drop a provider's
     // detail — the kind of thing that costs an hour to notice
@@ -244,8 +191,8 @@ export const fetchMetadata = async (
     matches.push(...providerMatches)
   }
 
-  // `sort` is stable and providers were walked in declaration order, so that
-  // order breaks ties between equally convincing catalogs
+  // again stable: providers were walked in declaration order, so that order
+  // breaks ties between equally convincing catalogs
   const rankedMatches = [...matches].sort((a, b) => b.score - a.score)
 
   return {

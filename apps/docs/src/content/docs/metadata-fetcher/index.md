@@ -116,7 +116,8 @@ type FetchedMetadata = {
   matches: MetadataMatch[]
   /** per-provider detail, keyed by provider id */
   sources: Record<string, { provider: { id, name }; matches: MetadataMatch[] }>
-  /** providers whose search threw, with the HTTP status when there was one */
+  /** providers whose search threw */
+  /** providers that dropped out, with the HTTP status when there was one */
   failedProviders: { id: string; status?: number }[]
 }
 ```
@@ -182,8 +183,6 @@ type MetadataMatch = {
   id?: string
   url?: string
   raw?: unknown
-  /** set when the provider failed to fetch this match's details */
-  detailsFailure?: { status?: number }
 }
 ```
 
@@ -264,15 +263,6 @@ const throttled = fetched.failedProviders.filter(({ status }) => status === 429)
 ```
 
 Each entry carries the catalog's HTTP `status` when the failure was a response — `429` (ask again later), `5xx` (the catalog is down), `4xx` (we asked wrong) — and no status when it wasn't one, which is itself the answer: a network error, an unparseable payload, a bug. Three states are distinguishable: a provider in `sources` answered, one in `failedProviders` threw, one in neither was never asked (narrowed out by the `providers` option).
-
-A provider can also fail the second request it makes for its best accepted match, the one that [fetches its details](#writing-a-provider). That match then keeps what the search found, such as Google Books' small cover, and carries `detailsFailure`, with the same `status`. The provider still answered, so it is not in `failedProviders`. Check the match too before you store it as final:
-
-```typescript
-const match = fetched.matches.find(({ accepted }) => accepted)
-
-// complete it on a later lookup
-if (match?.detailsFailure !== undefined) scheduleRefresh(bookId)
-```
 
 `fetchMetadata` itself does not retry or interpret `Retry-After`; providers own that policy because only they know which operations are idempotent and which failures their catalog treats as transient. The built-in providers share one:
 
@@ -386,7 +376,7 @@ const input = {
 
 An official Google Books website/API URL with scheme `URL` is recognized too. Every candidate carries its volume id as `{ value: id, scheme: "GoogleBooks" }`, which the matcher compares with either spelling of the book's id, so an exact lookup is decisive, and `metadataInputFromResolvedArchive` can forward the id unchanged for a later refresh. A missing volume id falls through to ISBN/title when available. ISBN searches likewise retain the queried ISBN identifier even when a sparse Google record omits `industryIdentifiers`.
 
-Each request follows the built-in providers' [retry policy](#error-policy): rate limits and outages are retried, honouring `Retry-After`, and client errors such as an invalid key are not. When the last attempt fails, or when a successful exact response is malformed, the provider is reported through `failedProviders` normally. The request for a volume's record is the exception: its failure marks the match with `detailsFailure`, as [Covers](#covers) says.
+Each request follows the built-in providers' [retry policy](#error-policy): rate limits and outages are retried, honouring `Retry-After`, and client errors such as an invalid key are not. When the last attempt fails, or when a successful exact response is malformed, the provider is reported through `failedProviders` normally.
 
 **Mapping** (Google Books Volume → `ResolvedMetadata`; the resolver names every parsed field and asserts the rest is empty, so a field added to the parser fails the build until someone decides what becomes of it):
 
@@ -404,25 +394,29 @@ Each request follows the built-in providers' [retry policy](#error-policy): rate
 | `averageRating`, `ratingsCount` | `aggregateRating` | Google's mean is already on the shared 0–5 scale (it rounds to a half star); a count alone states no rating, and a mean over zero ratings is dropped |
 | `categories` | `subjects` | deduped and capped at 25 |
 | `language` | `languages` | Google's best ISO 639-1 language |
-| `imageLinks` | `cover` | the largest linked size, from the volume's own record for the best accepted search match; upgraded to HTTPS, without `edge=curl`, every other parameter kept. See [Covers](#covers) |
+| `imageLinks` | `cover` | the largest linked size, or the thumbnail asked at 1,280 px wide; HTTPS, without the page curl. See [Covers](#covers) |
 | `canonicalVolumeLink`, then `infoLink` | match `url` | upgraded to HTTPS; a stable Google Books URL is synthesized from `id` when absent |
 
 Google-specific values without a cross-format home (access and sale data, reading-mode flags, and so on) remain available on `match.raw` when `includeRaw` is enabled.
 
 #### Covers
 
-The best accepted Google Books match carries the largest cover Google links for the volume, without the page curl Google draws on it, unless the request for that cover fails.
+A Google Books match carries the largest cover the provider can link without another request, and without the page curl Google draws on its covers.
 
-Google's search links two small cover sizes, at most about 128 px wide. Only the volume's own record (`/volumes/{id}`) links the larger ones, and only when Google holds the publisher's cover: `large` is 800 px wide, and `extraLarge` is the full image Google holds, often more than 1,500 px wide. So when the best match from an ISBN or title search is accepted, it fetches that record through [`fetchDetails`](#writing-a-provider). That is one more call per lookup, after the search, under the same retry policy. It also counts against your Google Books quota. It runs under the same `signal`, so a timeout during it rejects the whole lookup, as it does during the search. Only the cover is taken from the record: the rest stays as the search resolved it. No request is made for:
+Google's search links only two small sizes, at most about 128 px wide. A volume's own record also links `large` (800 px wide) and `extraLarge` when Google holds the publisher's cover, but only a lookup by `GoogleBooks` id reads that record. So the provider picks:
 
-- a rejected match, or an accepted one that is not the best;
-- a search result that links no image, which is taken to have no cover at all;
-- a search result that already links `extraLarge`;
-- a volume read by its `GoogleBooks` id, since that is its own record already.
+1. `extraLarge` or `large`, when the record links them.
+2. Else `thumbnail`, with `fife=w1280` added. Google's image server then serves the same cover at most 1,280 px wide.
+3. Else the largest other link.
 
-If the record request fails, the match keeps its search cover and carries `detailsFailure` with the status. If the volume is gone (`404`), the match keeps its search cover with no failure.
+Each link goes over HTTPS and loses `edge=curl`, which serves the same image at the same size without the curl. The provider keeps every other parameter as Google wrote it. In particular, it never changes `zoom`: for a volume Google knows only from a library catalog, another `zoom` serves Google's "image not available" picture, or another page of a scanned book.
 
-The cover is Google's own link, upgraded to HTTPS, with `edge=curl` removed: Google then serves the same image at the same size, without the curl. Every other parameter stays as Google wrote it. A different `zoom` serves Google's "image not available" picture, or another page of a scanned book, for the many volumes Google knows only from a library catalog, and `imgtk` is signed. A volume without a publisher cover keeps its thumbnail. The other matches keep the cover their search linked, also without the curl.
+The `fife` size has these side effects, which no API reports:
+
+- A publisher cover found by search stops at 1,280 px wide. A smaller source is enlarged to that width.
+- A catalog-only volume has no larger image, so its thumbnail comes back enlarged to about 300 px, with no new detail.
+- A scanned library book can show its title page instead of the cover its thumbnail shows.
+- Google documents none of `fife`, `zoom` or `edge`. If Google changes how it serves them, covers can come back small or wrong.
 
 ### Open Library
 
@@ -488,7 +482,7 @@ The image is published with every release, tagged with the version and `latest`,
 
 Both metadata routes answer with the `FetchedMetadata` entity verbatim. The options above (`limit`, `minScore`, `includeRaw`, plus a `providers` filter) are query parameters, and the deployment defaults are environment variables.
 
-The service does no per-client rate limiting: who a client is, which address is real and how often each may call depend on your infrastructure and your own provider quotas, so that limit belongs to the proxy or gateway in front of it. It does bound its own capacity — `MAX_CONCURRENT_LOOKUPS` (default `32`) caps the lookups one process runs at once, and a lookup beyond it answers `503` with `Retry-After`. This package has no limit of its own either. A built-in provider retries a catalog's `429` briefly, as its [retry policy](#error-policy) describes; one that persists is reported in `failedProviders`, or as the match's `detailsFailure` for a request that [fetches details](#writing-a-provider), and backing off further is the caller's decision.
+The service does no per-client rate limiting: who a client is, which address is real and how often each may call depend on your infrastructure and your own provider quotas, so that limit belongs to the proxy or gateway in front of it. It does bound its own capacity — `MAX_CONCURRENT_LOOKUPS` (default `32`) caps the lookups one process runs at once, and a lookup beyond it answers `503` with `Retry-After`. This package has no limit of its own either. A built-in provider retries a catalog's `429` briefly, as its [retry policy](#error-policy) describes; one that persists is reported in `failedProviders`, and backing off further is the caller's decision.
 
 For development, `pnpm run start:metadata-fetcher` starts the same image with the source bind-mounted: editing the express app or this package restarts it — node runs both as TypeScript, so nothing is rebuilt. It also serves a playground at `/` — enter metadata manually or choose an EPUB/CBZ/ZIP file, then inspect each candidate, its score and the signals behind it. In both cases the playground posts the canonical `FetchMetadataInput` JSON to `/metadata`, so the browser's network inspector shows the exact input an SDK consumer would provide. Uploaded files have no application-level size limit: archive-reader resolves them in memory and discards them before that compact input is posted, with no disk or browser storage. The playground is development-only: the production image sets `NODE_ENV=production`, and the route is then never registered.
 
@@ -599,27 +593,5 @@ Rules of thumb:
 - **Treat `limit` as a page-size hint**; the fetch caps the ranked result anyway.
 - **Normalize honestly.** Populate a field only when the record actually states it — a fabricated value is a signal the matcher will score, and a wrong `ISBN` identifier is the single most damaging thing you can emit.
 - **`raw` is yours**: put your parsed record there for provenance and provider-specific fields with no home in the vocabulary. It is kept only when the consumer asks for it.
-- **Put a costly request in `fetchDetails`** when only the match the caller uses needs it, such as a record that links a larger cover than search does. `fetchMetadata` calls it after scoring, for your best accepted match only, and scores the metadata it resolves to. That metadata replaces the candidate's, so spread the search metadata into it. Set it only on the candidates that lack something. If it throws, the match keeps the metadata search found and carries `detailsFailure`:
-
-  ```typescript
-  return results.map((result) => {
-    const metadata = toMetadata(result)
-
-    return {
-      id: result.id,
-      metadata,
-      fetchDetails: result.hasFullRecord
-        ? undefined
-        : async ({ signal }) => {
-            const record = await fetchRecord(result.id, { signal })
-
-            return {
-              ...metadata,
-              cover: { uri: record.coverUrl, confidence: "derived" },
-            }
-          },
-    }
-  })
-  ```
 
 The matching primitives are exported too (`scoreMetadataCandidate`, `titleSimilarity`, `personNameSimilarity`, `textSimilarity`, `normalizeForComparison`) if you want to rank something of your own by the same rules — `scoreMetadataCandidate(input, candidate)` takes a `FetchMetadataInput` and a rich `ResolvedMetadata` candidate. Accept by `DEFAULT_METADATA_MATCH_MIN_SCORE` to draw the line where `fetchMetadata` draws it by default.

@@ -26,19 +26,6 @@ export type MetadataCandidate = {
    * with no home in the vocabulary. Kept only when `includeRaw` is on.
    */
   readonly raw?: unknown
-  /**
-   * Resolves this candidate's complete metadata: what search found, plus what
-   * only the catalog's full record holds, such as the large covers Google
-   * Books links only from a volume's own record. The result replaces
-   * `metadata`, so include the search metadata in it. `fetchMetadata` calls it
-   * for the provider's best match only, when that match is accepted, so a
-   * lookup makes one call per provider at most, and scores the result again.
-   * Leave it unset when search found everything. If it throws, the match keeps
-   * `metadata` and carries `detailsFailure`.
-   */
-  readonly fetchDetails?: (
-    context: Pick<MetadataProviderContext, "signal">,
-  ) => Promise<ResolvedMetadata>
 }
 
 /**
