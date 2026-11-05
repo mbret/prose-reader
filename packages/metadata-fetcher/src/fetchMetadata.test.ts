@@ -283,6 +283,141 @@ describe("fetchMetadata", () => {
     ).toEqual({ id: 1 })
   })
 
+  it("fetches details only for accepted matches", async () => {
+    const accepted = vi.fn().mockResolvedValue({
+      titles: [{ value: "Dune" }],
+      cover: { uri: "https://example.com/dune.jpg" },
+    })
+    const rejected = vi.fn().mockResolvedValue({
+      titles: [{ value: "Neuromancer" }],
+      cover: { uri: "https://example.com/neuromancer.jpg" },
+    })
+    const fetched = await fetchMetadata(book, {
+      providers: [
+        providerReturning("a", [
+          { metadata: { titles: [{ value: "Dune" }] }, fetchDetails: accepted },
+          {
+            metadata: { titles: [{ value: "Neuromancer" }] },
+            fetchDetails: rejected,
+          },
+        ]),
+      ],
+    })
+
+    expect(accepted).toHaveBeenCalledTimes(1)
+    expect(rejected).not.toHaveBeenCalled()
+    expect(fetched.matches.map(({ metadata }) => metadata.cover)).toEqual([
+      { uri: "https://example.com/dune.jpg" },
+      undefined,
+    ])
+  })
+
+  it("fetches no details for an accepted match the limit drops", async () => {
+    const kept = vi.fn().mockResolvedValue({ titles: [{ value: "Dune" }] })
+    const dropped = vi.fn().mockResolvedValue({ titles: [{ value: "Dune" }] })
+
+    await fetchMetadata(book, {
+      providers: [
+        providerReturning("a", [
+          { metadata: { titles: [{ value: "Dune" }] }, fetchDetails: kept },
+          { metadata: { titles: [{ value: "Dune" }] }, fetchDetails: dropped },
+        ]),
+      ],
+      limit: 1,
+    })
+
+    expect(kept).toHaveBeenCalledTimes(1)
+    expect(dropped).not.toHaveBeenCalled()
+  })
+
+  it("scores the metadata the details resolve to", async () => {
+    const fetched = await fetchMetadata(
+      { ...book, identifiers: [{ value: "9780441013593", scheme: "ISBN" }] },
+      {
+        providers: [
+          providerReturning("a", [
+            {
+              metadata: { titles: [{ value: "Dune" }] },
+              fetchDetails: () =>
+                Promise.resolve({
+                  titles: [{ value: "Dune" }],
+                  identifiers: [{ value: "9780441013593", scheme: "ISBN" }],
+                }),
+            },
+          ]),
+        ],
+      },
+    )
+
+    expect(fetched.matches[0]?.signals).toContainEqual(
+      expect.objectContaining({ field: "isbn", score: 1 }),
+    )
+  })
+
+  it("forwards the signal to the details", async () => {
+    const controller = new AbortController()
+    const fetchDetails = vi.fn().mockResolvedValue({
+      titles: [{ value: "Dune" }],
+    })
+
+    await fetchMetadata(book, {
+      providers: [
+        providerReturning("a", [
+          { metadata: { titles: [{ value: "Dune" }] }, fetchDetails },
+        ]),
+      ],
+      signal: controller.signal,
+    })
+
+    expect(fetchDetails).toHaveBeenCalledWith({ signal: controller.signal })
+  })
+
+  it("keeps what search found, and lists the provider, when the details fail", async () => {
+    const fetched = await fetchMetadata(book, {
+      providers: [
+        providerReturning("a", [
+          {
+            metadata: { titles: [{ value: "Dune" }] },
+            fetchDetails: () =>
+              Promise.reject(new MetadataProviderResponseError(429, "slow")),
+          },
+        ]),
+      ],
+    })
+
+    expect(fetched.matches).toMatchObject([
+      {
+        providerId: "a",
+        accepted: true,
+        metadata: { titles: [{ value: "Dune" }] },
+      },
+    ])
+    expect(fetched.sources.a?.matches).toHaveLength(1)
+    expect(fetched.failedProviders).toEqual([{ id: "a", status: 429 }])
+  })
+
+  it("rejects when the caller aborts while details are fetched", async () => {
+    const controller = new AbortController()
+
+    await expect(
+      fetchMetadata(book, {
+        providers: [
+          providerReturning("a", [
+            {
+              metadata: { titles: [{ value: "Dune" }] },
+              fetchDetails: () => {
+                controller.abort()
+
+                return Promise.reject(new Error("aborted"))
+              },
+            },
+          ]),
+        ],
+        signal: controller.signal,
+      }),
+    ).rejects.toThrow("aborted")
+  })
+
   it("returns an empty, versioned entity when no provider is passed", async () => {
     expect(await fetchMetadata(book, { providers: [] })).toEqual({
       version: FETCHED_METADATA_VERSION,

@@ -108,10 +108,10 @@ Both answer with the `FetchedMetadata` entity verbatim — ranked `matches` with
 
 | | |
 | --- | --- |
-| `200` | a lookup happened — including "found nothing", and including a partial one where some catalogs failed (they are named in `failedProviders`, with the HTTP status they answered with) |
+| `200` | a lookup happened — including "found nothing", and including a partial one where some catalogs failed, or answered but failed to complete an accepted match (they are named in `failedProviders`, with the HTTP status they answered with) |
 | `400` | no search term, an invalid option, an unknown provider id, or a body that is not a JSON object |
 | `404` | unknown route |
-| `502` | every provider that could be asked failed — the body still names them and the status each answered with, so a `429` reads as "come back later" rather than "broken" |
+| `502` | no provider that could be asked answered — the body still names them and the status each answered with, so a `429` reads as "come back later" rather than "broken" |
 | `503` | `MAX_CONCURRENT_LOOKUPS` lookups are already running; `Retry-After` gives the lookup budget in seconds, by which every one of them has answered or been aborted |
 | `504` | the lookup outlived `REQUEST_TIMEOUT_MS` |
 

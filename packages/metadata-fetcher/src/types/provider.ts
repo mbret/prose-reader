@@ -26,6 +26,18 @@ export type MetadataCandidate = {
    * with no home in the vocabulary. Kept only when `includeRaw` is on.
    */
   readonly raw?: unknown
+  /**
+   * Fetches what the catalog's search left out of this candidate, such as the
+   * large covers Google Books links only from a volume's own record.
+   * `fetchMetadata` calls it once the candidate is scored, kept and accepted,
+   * so the extra request goes only to a match the caller can use, and scores
+   * the metadata it resolves to. Leave it unset when search already returned
+   * everything. Throwing is allowed: the match keeps the metadata search found,
+   * and the provider is listed in `failedProviders`.
+   */
+  readonly fetchDetails?: (context: {
+    readonly signal?: AbortSignal
+  }) => Promise<ResolvedMetadata>
 }
 
 /**

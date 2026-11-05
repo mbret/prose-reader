@@ -268,11 +268,12 @@ export const createApp = (options: CreateAppOptions): Express => {
         signal: AbortSignal.timeout(options.requestTimeoutMs),
       })
 
-      // nothing could be asked, which is a gateway failure rather than a
-      // "found nothing" — the body still says who failed, and with what
+      // no catalog answered, which is a gateway failure rather than a "found
+      // nothing" — the body still says who failed, and with what. A provider
+      // that answered but failed to complete a match is listed as failed too,
+      // so the failures alone cannot tell.
       const allFailed =
-        providers.length > 0 &&
-        fetched.failedProviders.length === providers.length
+        providers.length > 0 && Object.keys(fetched.sources).length === 0
 
       response.status(allFailed ? 502 : 200).json(fetched)
     } catch (error) {

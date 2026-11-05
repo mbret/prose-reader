@@ -70,6 +70,20 @@ const rateLimitedProvider: MetadataProvider = {
     Promise.reject(new MetadataProviderResponseError(429, "slow down")),
 }
 
+/** Answers, but fails to fetch the details of the match it accepts. */
+const incompleteProvider: MetadataProvider = {
+  id: "incomplete",
+  name: "Incomplete Catalog",
+  search: () =>
+    Promise.resolve([
+      {
+        metadata: { titles: [{ value: "Dune" }] },
+        fetchDetails: () =>
+          Promise.reject(new MetadataProviderResponseError(429, "slow down")),
+      },
+    ]),
+}
+
 const hangingProvider: MetadataProvider = {
   id: "slow",
   name: "Slow Catalog",
@@ -599,6 +613,25 @@ describe("metadata-fetcher-api failures", () => {
 
       expect(response.status).toBe(200)
       expect(mainTitle(fetched.matches[0]?.metadata)).toBe("Dune")
+    } finally {
+      await api.close()
+    }
+  })
+
+  it("still answers 200 when the only catalog answered but failed a match's details", async () => {
+    const api = serve(
+      createApp({ ...defaults, providers: [incompleteProvider] }),
+    )
+
+    try {
+      const response = await api.get("/metadata?title=Dune")
+      const fetched = await readFetched(response)
+
+      expect(response.status).toBe(200)
+      expect(mainTitle(fetched.matches[0]?.metadata)).toBe("Dune")
+      expect(fetched.failedProviders).toEqual([
+        { id: "incomplete", status: 429 },
+      ])
     } finally {
       await api.close()
     }
