@@ -49,36 +49,58 @@ export const restoreNavigationForControlledPageTurnMode = ({
       const hasSpineItemGrewOrShrink =
         spineItemWidthDifference !== 0 || spineItemHeighDifference !== 0
 
-      const cfi = navigation.anchor?.cfi
+      /**
+       * The item's size changed, or its document became ready, which can move
+       * its elements without changing its size, since the navigation.
+       */
+      const hasSpineItemResizedOrBecameReady =
+        hasSpineItemGrewOrShrink || (isReady && !navigation.spineItemIsReady)
 
       /**
-       * Restoration from the anchor: the place the navigation's target named
-       * or found, or the text at the page it went to.
-       * If the layout did not change, we should not restore from cfi since
-       * we will have better accuracy from all other consolidation.
+       * Whether the reader can tell which page of this item a node is on. In
+       * vertical writing it knows no page but the first. Right to left, it
+       * measures the node's text as one box, whose left edge is on the last
+       * page that text reaches.
+       */
+      const canFindPageOfNode =
+        !spineItem.isUsingVerticalWriting() &&
+        spineItem.readingDirection === "ltr"
+
+      const { anchor } = navigation
+
+      /**
+       * Restoration from the anchor: the place the navigation's target named,
+       * or the start of the page it went to.
        *
-       * Basically as long as the item itself did not change, we can recover from
-       * consolidation. In case the item changed, we should be careful and try to
-       * anchor back to cfi.
+       * While the item's document is ready, the anchor is resolved after every
+       * layout. A layout can move a reflowable item's text to another page and
+       * keep the item's size, as a smaller font that keeps the page count does.
+       *
+       * In two cases the anchor is resolved only once the item resized or
+       * became ready:
+       * - An anchor that is an element of the page can start on an earlier
+       *   page. Resolving it after every layout would take the reader back to
+       *   that page.
+       * - In an item where the reader cannot tell a node's page, resolving the
+       *   anchor would take the reader to another page.
        *
        * A cfi naming only its item names no place to return to: a stand-in's,
-       * or a page's without text. It resolves to the item's start, which would
-       * take a turn back into a chapter that just loaded to its first page
-       * rather than its last.
+       * or a page's that shows no node. It resolves to the item's start, which
+       * would take a turn back into a chapter that just loaded to its first
+       * page rather than its last.
        */
-      if (cfi !== undefined && !cfiManager.isRootCfi(cfi)) {
-        if (
-          spineItemWidthDifference ||
-          spineItemHeighDifference ||
-          // when spine item is ready dimensions may have not changed but the position
-          // of dom elements may have!
-          (isReady && !navigation.spineItemIsReady)
-        ) {
-          const cfiResultPosition = navigationResolver.getNavigationForCfi(cfi)
+      if (
+        anchor &&
+        !cfiManager.isRootCfi(anchor.cfi) &&
+        ((isReady && canFindPageOfNode && !anchor.isPageElement) ||
+          hasSpineItemResizedOrBecameReady)
+      ) {
+        const cfiResultPosition = navigationResolver.getNavigationForCfi(
+          anchor.cfi,
+        )
 
-          if (cfiResultPosition) {
-            return cfiResultPosition
-          }
+        if (cfiResultPosition) {
+          return cfiResultPosition
         }
       }
 
