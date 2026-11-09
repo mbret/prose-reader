@@ -1,15 +1,15 @@
 import {
   asapScheduler,
   BehaviorSubject,
-  concatMap,
   defer,
   filter,
   map,
   merge,
-  type Observable,
+  Observable,
   observeOn,
   of,
   Subject,
+  type Subscription,
   skip,
   startWith,
   switchMap,
@@ -347,31 +347,75 @@ export class SpineLayout extends DestroyableClass {
   private layOutItems(
     keptItems: readonly LaidOutSpineItem[],
   ): Observable<readonly LaidOutSpineItem[]> {
-    return this.spineItemsManager.items.slice(keptItems.length).reduce(
-      (laidOutItems$, item) =>
-        laidOutItems$.pipe(
-          concatMap((laidOutItems) =>
-            this.layOutItem(
-              item,
-              laidOutItems[laidOutItems.length - 1]?.endOffset ??
-                spineStartOffset,
-            ).pipe(
-              map((laidOutItem) => {
-                laidOutItems.push(laidOutItem)
-
-                return laidOutItems
-              }),
-            ),
-          ),
-        ),
+    return new Observable<readonly LaidOutSpineItem[]>((subscriber) => {
+      const items = this.spineItemsManager.items
       /**
        * A list of the pass's own, so pushing to it is safe: nothing else sees
        * it before the pass completes, and a cancelled pass drops it. Copying
        * it for each item instead would cost the square of their number, which
        * a spine of a few thousand items feels.
        */
-      defer(() => of([...keptItems])),
-    )
+      const laidOutItems = [...keptItems]
+      let nextItemIndex = keptItems.length
+      let itemLayout: Subscription | undefined
+
+      /**
+       * A loop, rather than an operator for each item: a renderer can lay its
+       * item out at once, as the HTML renderer does, and each item would then
+       * lay the next one out from inside its own call. A spine of a few
+       * hundred items, such as a comic of one item per page, overflowed the
+       * call stack. An item laid out later resumes the loop from its own
+       * callback.
+       */
+      const layOutNextItems = () => {
+        while (!subscriber.closed) {
+          const item = items[nextItemIndex]
+
+          if (!item) {
+            subscriber.next(laidOutItems)
+            subscriber.complete()
+
+            return
+          }
+
+          nextItemIndex += 1
+
+          let isLaidOut = false
+          let isLoopWaiting = false
+
+          itemLayout = this.layOutItem(
+            item,
+            laidOutItems.at(-1)?.endOffset ?? spineStartOffset,
+          ).subscribe({
+            next: (laidOutItem) => {
+              laidOutItems.push(laidOutItem)
+            },
+            error: (error) => {
+              subscriber.error(error)
+            },
+            complete: () => {
+              if (isLoopWaiting) {
+                layOutNextItems()
+              } else {
+                isLaidOut = true
+              }
+            },
+          })
+
+          if (!isLaidOut) {
+            isLoopWaiting = true
+
+            return
+          }
+        }
+      }
+
+      layOutNextItems()
+
+      return () => {
+        itemLayout?.unsubscribe()
+      }
+    })
   }
 
   /** Lays out one item from where the one before it ends. */

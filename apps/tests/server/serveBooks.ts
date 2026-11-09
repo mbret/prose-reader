@@ -25,6 +25,9 @@ const rewriteEachPage =
     }
   }
 
+/** The number of pages of `long-comic.cbz`. */
+export const LONG_COMIC_NUMBER_OF_PAGES = 1000
+
 /**
  * Books made from a fixture by rewriting it, for the scenarios that need a
  * fixture to differ in one way. Each is served beside the files of
@@ -32,6 +35,29 @@ const rewriteEachPage =
  * whichever way it loads its book.
  */
 const REWRITTEN_BOOKS = new Map<string, RewrittenBook>([
+  [
+    "long-comic.cbz",
+    {
+      fixture: "koreader-pages.cbz",
+      /**
+       * Its first page, repeated: a comic has one spine item per page, and a
+       * long one has hundreds of them.
+       */
+      rewrite: async (bookZip) => {
+        const firstPage = await bookZip.file("p01.jpg")?.async("uint8array")
+
+        if (!firstPage) throw new Error("the fixture has no p01.jpg")
+
+        for (const name of Object.keys(bookZip.files)) {
+          bookZip.remove(name)
+        }
+
+        for (let page = 1; page <= LONG_COMIC_NUMBER_OF_PAGES; page++) {
+          bookZip.file(`p${String(page).padStart(4, "0")}.jpg`, firstPage)
+        }
+      },
+    },
+  ],
   [
     "accessible_epub_3-lazy-images.epub",
     {
