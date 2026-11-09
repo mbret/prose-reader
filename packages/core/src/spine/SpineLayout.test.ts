@@ -13,34 +13,28 @@ import { SpineItemsManager } from "./SpineItemsManager"
 import { SpineItemsObserver } from "./SpineItemsObserver"
 import { SpineLayout } from "./SpineLayout"
 
-const createPrePaginatedManifest = (
-  readingDirection: Manifest["readingDirection"],
-  items: Array<Partial<Manifest["spineItems"][number]> | undefined>,
-): Manifest =>
-  createTestManifest({
-    filename: "",
-    title: "",
-    readingDirection,
-    renditionLayout: "pre-paginated",
-    renditionSpread: "auto",
-    spineItems: createTestManifestSpineItems(items),
-  })
-
-const createSpreadModeTestEnvironment = ({
-  pageHeight,
-  pageWidth,
-  readingDirection,
-  items,
+/**
+ * A spine layout of `items`, and what it is built on, in a viewport of
+ * `viewportSize`.
+ */
+const createTestSpineLayout = ({
+  items = 1,
+  manifest,
+  initialSettings = {},
+  viewportSize = { height: 100, width: 100 },
 }: {
-  pageHeight: number
-  pageWidth: number
-  readingDirection: Manifest["readingDirection"]
-  items: Array<Partial<Manifest["spineItems"][number]> | undefined>
-}) => {
+  items?: Parameters<typeof createTestManifestSpineItems>[0]
+  manifest?: Partial<Manifest>
+  initialSettings?: ConstructorParameters<typeof ReaderSettingsManager>[0]
+  viewportSize?: { height: number; width: number }
+} = {}) => {
   const context = new Context(
-    createPrePaginatedManifest(readingDirection, items),
+    createTestManifest({
+      ...manifest,
+      spineItems: createTestManifestSpineItems(items),
+    }),
   )
-  const settings = new ReaderSettingsManager({ spreadMode: "always" }, context)
+  const settings = new ReaderSettingsManager(initialSettings, context)
   const hookManager = new HookManager()
   const viewport = new Viewport(context, settings)
   const spineItemsManager = new SpineItemsManager(
@@ -57,6 +51,55 @@ const createSpreadModeTestEnvironment = ({
     settings,
     viewport,
   )
+
+  vi.spyOn(viewport.value.element, "clientWidth", "get").mockReturnValue(
+    viewportSize.width,
+  )
+  vi.spyOn(viewport.value.element, "clientHeight", "get").mockReturnValue(
+    viewportSize.height,
+  )
+  viewport.layout()
+
+  const destroy = () => {
+    spineLayout.destroy()
+    spineItemsObserver.destroy()
+    spineItemsManager.destroy()
+    viewport.destroy()
+    settings.destroy()
+    context.destroy()
+  }
+
+  return {
+    destroy,
+    hookManager,
+    spineItemsManager,
+    spineLayout,
+  }
+}
+
+const createSpreadModeTestEnvironment = ({
+  pageHeight,
+  pageWidth,
+  readingDirection,
+  items,
+}: {
+  pageHeight: number
+  pageWidth: number
+  readingDirection: Manifest["readingDirection"]
+  items: Array<Partial<Manifest["spineItems"][number]> | undefined>
+}) => {
+  const { destroy, hookManager, spineLayout } = createTestSpineLayout({
+    items,
+    manifest: {
+      filename: "",
+      title: "",
+      readingDirection,
+      renditionLayout: "pre-paginated",
+      renditionSpread: "auto",
+    },
+    initialSettings: { spreadMode: "always" },
+    viewportSize: { height: pageHeight, width: pageWidth * 2 },
+  })
   const layoutRequests: Array<{
     blankPagePosition: "before" | "after" | "none"
     id: string
@@ -73,67 +116,10 @@ const createSpreadModeTestEnvironment = ({
       })
     },
   )
-  vi.spyOn(viewport.value.element, "clientWidth", "get").mockReturnValue(
-    pageWidth * 2,
-  )
-  vi.spyOn(viewport.value.element, "clientHeight", "get").mockReturnValue(
-    pageHeight,
-  )
-  viewport.layout()
-
-  const destroy = () => {
-    spineLayout.destroy()
-    spineItemsObserver.destroy()
-    spineItemsManager.destroy()
-    viewport.destroy()
-    settings.destroy()
-    context.destroy()
-  }
 
   return {
     destroy,
     layoutRequests,
-    spineLayout,
-  }
-}
-
-const createTestSpineLayout = () => {
-  const context = new Context(
-    createTestManifest({ spineItems: createTestManifestSpineItems(1) }),
-  )
-  const settings = new ReaderSettingsManager({}, context)
-  const hookManager = new HookManager()
-  const viewport = new Viewport(context, settings)
-  const spineItemsManager = new SpineItemsManager(
-    context,
-    settings,
-    hookManager,
-    viewport,
-  )
-  const spineItemsObserver = new SpineItemsObserver(spineItemsManager)
-  const spineLayout = new SpineLayout(
-    spineItemsManager,
-    spineItemsObserver,
-    context,
-    settings,
-    viewport,
-  )
-
-  vi.spyOn(viewport.value.element, "clientWidth", "get").mockReturnValue(100)
-  vi.spyOn(viewport.value.element, "clientHeight", "get").mockReturnValue(100)
-  viewport.layout()
-
-  const destroy = () => {
-    spineLayout.destroy()
-    spineItemsObserver.destroy()
-    spineItemsManager.destroy()
-    viewport.destroy()
-    settings.destroy()
-    context.destroy()
-  }
-
-  return {
-    destroy,
     spineLayout,
   }
 }
@@ -147,32 +133,9 @@ type ItemSize = { height: number; width: number }
  * to whole pages of 100 by 100, and updates the item's state.
  */
 const createDeferredSpineLayout = (numberOfItems: number) => {
-  const context = new Context(
-    createTestManifest({
-      spineItems: createTestManifestSpineItems(numberOfItems),
-    }),
-  )
-  const settings = new ReaderSettingsManager({}, context)
-  const hookManager = new HookManager()
-  const viewport = new Viewport(context, settings)
-  const spineItemsManager = new SpineItemsManager(
-    context,
-    settings,
-    hookManager,
-    viewport,
-  )
-  const spineItemsObserver = new SpineItemsObserver(spineItemsManager)
-  const spineLayout = new SpineLayout(
-    spineItemsManager,
-    spineItemsObserver,
-    context,
-    settings,
-    viewport,
-  )
-
-  vi.spyOn(viewport.value.element, "clientWidth", "get").mockReturnValue(100)
-  vi.spyOn(viewport.value.element, "clientHeight", "get").mockReturnValue(100)
-  viewport.layout()
+  const { destroy, spineItemsManager, spineLayout } = createTestSpineLayout({
+    items: numberOfItems,
+  })
 
   // An item asked to lay out again drops the layout it had pending, so only
   // the newest one per item can complete.
@@ -229,15 +192,6 @@ const createDeferredSpineLayout = (numberOfItems: number) => {
     })
 
     await passDone
-  }
-
-  const destroy = () => {
-    spineLayout.destroy()
-    spineItemsObserver.destroy()
-    spineItemsManager.destroy()
-    viewport.destroy()
-    settings.destroy()
-    context.destroy()
   }
 
   return {
