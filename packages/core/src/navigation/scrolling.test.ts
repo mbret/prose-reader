@@ -44,7 +44,6 @@ const getScrollElement = (reader: TestReader) => {
   return element
 }
 
-/** Every navigation made from now on, and every state of the lock. */
 const recordNavigationsAndLock = (reader: TestReader) => {
   const navigations: Navigation[] = []
   const lockStates: boolean[] = []
@@ -263,8 +262,9 @@ describe("Given a book whose pages turn", () => {
       reader.settings.update({ pageTurnMode: "scrollable" })
 
       /**
-       * Before the items are laid out again, so that the page stays on screen
-       * meanwhile. An element without a box cannot be scrolled.
+       * Checked before the items are laid out again, so that the page stays
+       * on screen meanwhile: the navigation must reach the scroll element once
+       * it has its box, because an element without one cannot be scrolled.
        */
       expect(scrollToCalls).toEqual([
         { element: scrollElement, display: "block" },

@@ -38,9 +38,8 @@ export class UnboundScrollPosition extends AbstractPosition {
 export type ScrollNavigationEntry = NavigationModeControllerNavigationEntry
 
 /**
- * Whether two readings of the element's scroll offsets show the same place.
- * Less than a pixel apart they do: a browser can report an offset a fraction
- * of a pixel away from the one it was given.
+ * Offsets less than a pixel apart are the same place: a browser can report an
+ * offset a fraction of a pixel away from the one it was given.
  */
 const showSamePlace = (a: ScrollPosition, b: ScrollPosition) =>
   Math.abs(a.x - b.x) < 1 && Math.abs(a.y - b.y) < 1
@@ -54,8 +53,8 @@ export class ScrollNavigationController
   protected navigateSubject = new Subject<ScrollNavigationEntry>()
 
   /**
-   * A scroll is instant, so a navigation is over by the time `navigate`
-   * returns: the controller is never in the middle of one.
+   * A navigation scrolls with `behavior: "instant"`, so it is over when
+   * `navigate` returns.
    */
   public isNavigating$: Observable<boolean> = of(false)
 
@@ -104,7 +103,6 @@ export class ScrollNavigationController
       }),
     )
 
-    /** The scroll offsets each navigation leaves the element at. */
     const scrollPositionLeftByNavigation$ = this.navigateSubject.pipe(
       map((navigation) => this.applyNavigationPosition(navigation)),
       filter(isDefined),
@@ -155,7 +153,8 @@ export class ScrollNavigationController
                       ? scrollEvent
                       : undefined,
                 }),
-                // Wherever the element is by now, the reader knows of it.
+                // An event at the offsets the element has as this starts
+                // shows no move.
                 {
                   knownScrollPosition: this.scrollPosition,
                   scrollEventOfMove: undefined,
@@ -176,7 +175,7 @@ export class ScrollNavigationController
   }
 
   /**
-   * Scrolls the element to a navigation's position, and gives the offsets it
+   * Scrolls the element to a navigation's position and returns the offsets it
    * is left at, which the browser clamps to what the content allows.
    *
    * Authoritative DOM-scroll dedup: this controller owns the surface and

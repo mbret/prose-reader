@@ -259,8 +259,8 @@ export type NavigationSurface = {
 /**
  * A navigation mode controller applies resolved navigation to its own rendering
  * layer. It also exposes the surface geometry used to interpret navigation
- * requests, while owning mode-specific concerns like activity, layout, busy
- * state, and DOM movement.
+ * requests, while owning mode-specific concerns like activity, the display of
+ * its rendering layer, busy state, and DOM movement.
  */
 export type NavigationModeController = NavigationSurface & {
   isActive: () => boolean

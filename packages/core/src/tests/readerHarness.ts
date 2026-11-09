@@ -443,9 +443,9 @@ export const setTestViewport = (size: { width: number; height: number }) => {
 }
 
 /**
- * jsdom has no element scrolling: `scrollTo` does nothing there. This one
+ * jsdom has no element scrolling: `scrollTo` is not defined there. This one
  * keeps the offsets it is given, which is all the scroll navigation controller
- * needs, and tells how the element was displayed at each call. It reports no
+ * needs, and records the element's `display` at each call. It reports no
  * scroll event: a test delivers one where a browser would, with
  * `deliverScrollEvent`.
  */
@@ -467,7 +467,6 @@ export const stubElementScrolling = () => {
   return { scrollToCalls }
 }
 
-/** Delivers the scroll event a browser reports once an element scrolled. */
 export const deliverScrollEvent = (element: HTMLElement) => {
   element.dispatchEvent(new Event("scroll"))
 }

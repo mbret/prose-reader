@@ -87,12 +87,10 @@ export const createNavigator = ({
     controlledNavigationController
 
   /**
-   * The rendering layer of the active controller has its box and the other
-   * one has none. Both switch in the same task, when the page turn mode
-   * changes, and again when an element is created or set up at mount.
-   *
-   * It emits once they have switched: the layer that now shows the book has
-   * yet to be given the navigation, so the navigator restores it there.
+   * Emits once the rendering layer of the active controller has its box and
+   * the other one has none. Both switch in the same task, ahead of the
+   * emission: when the page turn mode changes, and when an element is created
+   * or set up at mount.
    */
   const navigationModeSurfaceSwitch$ = combineLatest([
     settings.watch([`computedPageTurnMode`]),

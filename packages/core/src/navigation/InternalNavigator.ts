@@ -179,8 +179,8 @@ export class InternalNavigator extends DestroyableClass {
     protected userNavigation$: Observable<UserNavigationEntry>,
     protected getActiveNavigationModeController: () => NavigationModeController,
     /**
-     * Emits once the rendering layer of another navigation mode shows the
-     * book: it has yet to be given the navigation.
+     * Emits once the rendering layer of the active navigation mode has its
+     * box.
      */
     protected navigationModeSurfaceSwitch$: Observable<unknown>,
     protected navigationResolver: ReturnType<typeof createNavigationResolver>,
@@ -464,9 +464,9 @@ export class InternalNavigator extends DestroyableClass {
     /**
      * Once a layout change happens we want
      * to validate the navigation. Basically we make sure the current navigation
-     * is correct for the current layout. The same goes once the rendering
-     * layer of another navigation mode shows the book: it shows the current
-     * navigation only once it is given it.
+     * is correct for the current layout. The navigation is also restored once
+     * the rendering layer of the active navigation mode has its box: it shows
+     * the current navigation only once it is given it.
      *
      * @important
      * We want the restoration to happens as fast as possible so it is invisible for the user.

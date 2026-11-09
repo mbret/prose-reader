@@ -29,7 +29,11 @@ const turnThreePages = async (page: Page, chapterIndex: number) => {
   }
 }
 
-/** Every reading position since the reader's creation, see `index.tsx`. */
+/**
+ * Every reading position since the reader's creation: `window.readingPositions`,
+ * which this scenario's `index.tsx` fills and `window` does not declare, hence
+ * the cast.
+ */
 const countReadingPositions = (page: Page) =>
   page.evaluate(() => {
     const { readingPositions } = window as unknown as {

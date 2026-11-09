@@ -30,9 +30,9 @@ export const getSpineItemsOnScreen = async (
     /**
      * Settings to update first, in the same task as the read: what is on
      * screen is then what the update leaves there, before the reader has laid
-     * out for it.
+     * out for it. Not `getResource` or `getRenderer`: functions cannot be sent
+     * into the page.
      */
-    // functions cannot be sent into the page
     rightAfterUpdatingSettings?: Omit<
       Parameters<Reader["settings"]["update"]>[0],
       "getResource" | "getRenderer"
