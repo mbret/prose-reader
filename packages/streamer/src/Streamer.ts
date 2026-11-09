@@ -5,12 +5,12 @@ import {
   defer,
   first,
   from,
+  last,
   lastValueFrom,
   map,
   type Observable,
   of,
   switchMap,
-  throwIfEmpty,
 } from "rxjs"
 import { createArchiveLoader } from "./archiveLoader"
 import { generateManifestFromArchive } from "./generators/manifest"
@@ -123,7 +123,7 @@ export class Streamer {
     getResponse: WithArchiveResponse
   }) {
     const response$ = this.accessArchive(key).pipe(
-      switchMap((archive) => from(getResponse(archive)).pipe(throwIfEmpty())),
+      switchMap((archive) => from(getResponse(archive)).pipe(last())),
       first(),
       catchError((error) => {
         return of(this.onError(error))
