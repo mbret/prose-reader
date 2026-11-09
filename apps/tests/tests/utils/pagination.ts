@@ -123,15 +123,17 @@ export const resizeAndSettle = async (
 
 /**
  * Lays the reader out, with `reader.layout()` or, given `settings`, by
- * updating them, and resolves once that layout has voided the current
- * navigation, the reader has restored the navigation onto the new layout, and
- * that result has settled. The wait starts in the same task as the layout, so
- * a layout before it, such as for a chapter loading nearby, cannot meet it.
+ * updating them, and resolves once the result after that layout has settled:
+ * the navigation, restored onto the new layout. Fails at once if the call
+ * lays nothing out, as a settings update that requests no layout does.
  *
- * Restoration can land where the navigation already was, so nothing on screen
- * tells when it happened. A layout that changes nothing is one such case.
+ * A layout requests a measure of the viewport before the call returns, and
+ * ends the settled result at once, so the next settled result is the one
+ * after it. Restoration can land where the navigation already was, so
+ * nothing on screen tells when it happened: a layout that changes nothing is
+ * one such case.
  */
-export const layOutAndRestore = async (
+export const layOutAndSettle = async (
   page: Page,
   {
     settings,
@@ -144,50 +146,30 @@ export const layOutAndRestore = async (
   } = {},
 ) => {
   const reader = await getReader(page)
+  const hasLaidOutViewport = await reader.evaluate((reader, settings) => {
+    let hasLaidOutViewport = false
+    const subscription = reader.viewport.layout$.subscribe(() => {
+      hasLaidOutViewport = true
+    })
 
-  await reader.evaluate(
-    (reader, settings) =>
-      new Promise<void>((resolve, reject) => {
-        let isReplayingCurrentValue = true
-        let isVoided = false
-        const timer = setTimeout(
-          () =>
-            reject(
-              new Error(
-                isVoided
-                  ? "the navigation was not restored onto the new layout within 10s"
-                  : "no layout voided the navigation within 10s",
-              ),
-            ),
-          10_000,
-        )
-        const subscription =
-          reader.navigation.navigationAgainstCurrentLayout$.subscribe(
-            ({ navigation, holdsOnCurrentLayout }) => {
-              if (isReplayingCurrentValue) return
+    if (settings) {
+      reader.settings.update(settings)
+    } else {
+      reader.layout()
+    }
 
-              if (!holdsOnCurrentLayout) {
-                isVoided = true
+    subscription.unsubscribe()
 
-                return
-              }
+    return hasLaidOutViewport
+  }, settings)
 
-              if (!isVoided || navigation.triggeredBy !== "restoration") return
+  if (!hasLaidOutViewport) {
+    throw new Error(
+      settings
+        ? `the update of ${JSON.stringify(settings)} requested no layout`
+        : "reader.layout() requested no layout",
+    )
+  }
 
-              subscription.unsubscribe()
-              clearTimeout(timer)
-              resolve()
-            },
-          )
-        isReplayingCurrentValue = false
-
-        if (settings) {
-          reader.settings.update(settings)
-        } else {
-          reader.layout()
-        }
-      }),
-    settings,
-  )
   await waitForSettled(page)
 }

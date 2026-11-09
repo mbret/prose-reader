@@ -1,4 +1,4 @@
-import { expect, type Page } from "@playwright/test"
+import type { Page } from "@playwright/test"
 import type { ReadingPosition } from "@prose-reader/core"
 import { getReader } from "../../../utils/reader"
 
@@ -73,20 +73,3 @@ export const readPosition = async (page: Page) => {
 
   return position
 }
-
-export const getChapterIndex = async (page: Page, href: string) => {
-  const reader = await getReader(page)
-  const chapterIndex = await reader.evaluate((reader, href) => {
-    return reader.context.manifest.spineItems.findIndex((item) =>
-      item.href.endsWith(href),
-    )
-  }, href)
-
-  expect(chapterIndex).toBeGreaterThan(0)
-
-  return chapterIndex
-}
-
-/** A chapter of many pages, `ch02.xhtml`. */
-export const getLongChapterIndex = (page: Page) =>
-  getChapterIndex(page, "ch02.xhtml")
