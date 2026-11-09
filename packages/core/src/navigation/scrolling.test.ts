@@ -1,7 +1,6 @@
 // @vitest-environment jsdom
 import { first, firstValueFrom, skip } from "rxjs"
 import { describe, expect, it } from "vitest"
-import { SCROLL_FINISHED_DEBOUNCE_TIMEOUT } from "../enhancers/navigation/navigators/UserScrollNavigation"
 import {
   createPrePaginatedManifest,
   createTestReader,
@@ -17,8 +16,11 @@ import type { Navigation } from "./types"
 
 installReaderTestEnvironment()
 
-/** Long enough for a scroll of the user's to be over, and navigated to. */
-const PAST_THE_END_OF_A_USER_SCROLL = SCROLL_FINISHED_DEBOUNCE_TIMEOUT + 200
+/**
+ * Long enough for a scroll of the user's to be over, and navigated to: it is
+ * over 500 ms after its last event (`SCROLL_FINISHED_DEBOUNCE_TIMEOUT`).
+ */
+const PAST_THE_END_OF_A_USER_SCROLL = 700
 
 type TestReader = ReturnType<typeof createTestReader>
 

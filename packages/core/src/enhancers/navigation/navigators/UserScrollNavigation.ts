@@ -16,7 +16,7 @@ import type { UserNavigationEntry } from "../../../navigation/types"
 import { DestroyableClass } from "../../../utils/DestroyableClass"
 
 /** How long after its last scroll event a scroll of the user's is over. */
-export const SCROLL_FINISHED_DEBOUNCE_TIMEOUT = 500
+const SCROLL_FINISHED_DEBOUNCE_TIMEOUT = 500
 
 export class UserScrollNavigation extends DestroyableClass {
   /**
