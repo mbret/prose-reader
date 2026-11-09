@@ -3,6 +3,7 @@ import {
   blobFileAccessors,
   createArchive,
 } from "@prose-reader/archive-reader"
+import { of } from "rxjs"
 import { describe, expect, it, vi } from "vitest"
 import { Streamer } from "."
 
@@ -88,6 +89,21 @@ describe("Given an archive held through accessArchive", () => {
     hold.unsubscribe()
 
     expect(closeBook).toHaveBeenCalledOnce()
+  })
+})
+
+describe("Given an onManifestSuccess that emits more than one manifest", () => {
+  it("should serve the last manifest it emits", async () => {
+    const streamer = new Streamer({
+      cleanArchiveAfter: Infinity,
+      getArchive: async () => createArchiveWithOnePage({ body: "page" }),
+      onManifestSuccess: ({ manifest }) =>
+        of({ ...manifest, title: "first" }, { ...manifest, title: "last" }),
+    })
+
+    const manifest = await (await streamer.fetchManifest()).json()
+
+    expect(manifest.title).toBe("last")
   })
 })
 
