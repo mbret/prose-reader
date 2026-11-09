@@ -220,7 +220,7 @@ export class ControlledNavigationController
    * controlled, and takes its box away otherwise, leaving the spine where the
    * scroll navigator scrolls it.
    */
-  public displaySurfaceWhileActive() {
+  public syncRenderingLayerDisplay() {
     setStylePropertyIfChanged(
       this.element$.getValue().style,
       `display`,

@@ -5,7 +5,6 @@ import {
   merge,
   NEVER,
   type Observable,
-  of,
   Subject,
   scan,
   share,
@@ -38,10 +37,11 @@ export class UnboundScrollPosition extends AbstractPosition {
 export type ScrollNavigationEntry = NavigationModeControllerNavigationEntry
 
 /**
- * Offsets less than a pixel apart are the same place: a browser can report an
- * offset a fraction of a pixel away from the one it was given.
+ * Offsets less than a pixel apart are taken for the same place, so that a
+ * browser reporting one place with offsets a fraction of a pixel apart shows
+ * no move.
  */
-const showSamePlace = (a: ScrollPosition, b: ScrollPosition) =>
+const isSameScrollPlace = (a: ScrollPosition, b: ScrollPosition) =>
   Math.abs(a.x - b.x) < 1 && Math.abs(a.y - b.y) < 1
 
 export class ScrollNavigationController
@@ -50,13 +50,11 @@ export class ScrollNavigationController
   }>
   implements NavigationModeController
 {
-  protected navigateSubject = new Subject<ScrollNavigationEntry>()
+  /** Emits once a navigation has left the element where it goes. */
+  private readonly navigationAppliedSubject = new Subject<void>()
 
-  /**
-   * A navigation scrolls with `behavior: "instant"`, so it is over when
-   * `navigate` returns.
-   */
-  public isNavigating$: Observable<boolean> = of(false)
+  /** Whether the controller is the active one, see {@link isActive}. */
+  public readonly isActive$: Observable<boolean>
 
   /**
    * Each scroll event that shows a move the reader did not make: the user's
@@ -65,8 +63,8 @@ export class ScrollNavigationController
    * A scroll event does not say who scrolled, and the one the reader causes
    * comes a frame or more after what caused it. So a move is told from the
    * offsets themselves: an event at the offsets the reader last left the
-   * element at, or the last event showed, shows no move. The reader leaves
-   * the element at new offsets in two ways:
+   * element at, or the last move took it to, shows no move. The reader leaves
+   * the element at offsets of its own in two ways:
    *
    * - A navigation scrolls it.
    * - A layout moves or resizes the items in it, and the browser clamps the
@@ -76,7 +74,7 @@ export class ScrollNavigationController
    * A layout whose items are laid out over several tasks can be clamped
    * before it is done, and that scroll is still taken for a move.
    */
-  public scrollNotMadeByReader$: Observable<Event>
+  public readonly scrollNotMadeByReader$: Observable<Event>
 
   constructor(
     protected viewport: Viewport,
@@ -103,80 +101,83 @@ export class ScrollNavigationController
       }),
     )
 
-    const scrollPositionLeftByNavigation$ = this.navigateSubject.pipe(
-      map((navigation) => this.applyNavigationPosition(navigation)),
-      filter(isDefined),
-      share(),
-    )
+    this.isActive$ = settings
+      .watch(["computedPageTurnMode"])
+      .pipe(map(() => this.isActive()))
 
     this.scrollNotMadeByReader$ = this.watch("element").pipe(
       filter(isDefined),
       switchMap((element) =>
-        settings.watch(["computedPageTurnMode"]).pipe(
-          switchMap(({ computedPageTurnMode }) => {
-            if (computedPageTurnMode === "controlled") return NEVER
-
-            return merge(
-              merge(
-                scrollPositionLeftByNavigation$,
-                // Read in the task that laid the items out, before the
-                // browser reports what that did to the offsets.
-                spine.itemsLayout$.pipe(map(() => this.scrollPosition)),
-              ).pipe(
-                map((scrollPosition) => ({
-                  scrollPosition,
-                  scrollEvent: undefined,
-                })),
-              ),
-              fromEvent(element, `scroll`).pipe(
-                map((scrollEvent) => ({
-                  scrollPosition: this.scrollPosition,
-                  scrollEvent,
-                })),
-              ),
-            ).pipe(
-              scan<
-                {
-                  scrollPosition: ScrollPosition
-                  scrollEvent: Event | undefined
-                },
-                {
-                  knownScrollPosition: ScrollPosition
-                  scrollEventOfMove: Event | undefined
-                }
-              >(
-                ({ knownScrollPosition }, { scrollPosition, scrollEvent }) => ({
-                  knownScrollPosition: scrollPosition,
-                  scrollEventOfMove:
-                    scrollEvent &&
-                    !showSamePlace(knownScrollPosition, scrollPosition)
-                      ? scrollEvent
-                      : undefined,
-                }),
-                // An event at the offsets the element has as this starts
-                // shows no move.
-                {
-                  knownScrollPosition: this.scrollPosition,
-                  scrollEventOfMove: undefined,
-                },
-              ),
-              map(({ scrollEventOfMove }) => scrollEventOfMove),
-              filter(isDefined),
-            )
-          }),
+        this.isActive$.pipe(
+          switchMap((isActive) =>
+            isActive ? this.observeScrollsNotMadeByReader(element) : NEVER,
+          ),
         ),
       ),
       share(),
     )
 
-    merge(elementCreation$, scrollPositionLeftByNavigation$)
-      .pipe(takeUntil(this.destroy$))
-      .subscribe()
+    elementCreation$.pipe(takeUntil(this.destroy$)).subscribe()
+  }
+
+  private observeScrollsNotMadeByReader(element: HTMLElement) {
+    return merge(
+      merge(
+        this.navigationAppliedSubject,
+        // Read in the task that laid the items out, before the browser
+        // reports what that did to the offsets.
+        this.spine.itemsLayout$,
+      ).pipe(
+        map(() => ({
+          scrollPosition: this.scrollPosition,
+          scrollEvent: undefined,
+        })),
+      ),
+      fromEvent(element, `scroll`).pipe(
+        map((scrollEvent) => ({
+          scrollPosition: this.scrollPosition,
+          scrollEvent,
+        })),
+      ),
+    ).pipe(
+      scan<
+        { scrollPosition: ScrollPosition; scrollEvent: Event | undefined },
+        {
+          scrollPositionKnownToReader: ScrollPosition
+          scrollEventOfMove: Event | undefined
+        }
+      >(
+        ({ scrollPositionKnownToReader }, { scrollPosition, scrollEvent }) => {
+          /**
+           * An event that shows no move leaves the known offsets as they are,
+           * so that a scroll of less than a pixel at a time adds up to a
+           * move.
+           */
+          if (
+            scrollEvent &&
+            isSameScrollPlace(scrollPositionKnownToReader, scrollPosition)
+          )
+            return { scrollPositionKnownToReader, scrollEventOfMove: undefined }
+
+          return {
+            scrollPositionKnownToReader: scrollPosition,
+            scrollEventOfMove: scrollEvent,
+          }
+        },
+        // An event at the offsets the element has as this starts shows no
+        // move.
+        {
+          scrollPositionKnownToReader: this.scrollPosition,
+          scrollEventOfMove: undefined,
+        },
+      ),
+      map(({ scrollEventOfMove }) => scrollEventOfMove),
+      filter(isDefined),
+    )
   }
 
   /**
-   * Scrolls the element to a navigation's position and returns the offsets it
-   * is left at, which the browser clamps to what the content allows.
+   * Scrolls the element to a navigation's position.
    *
    * Authoritative DOM-scroll dedup: this controller owns the surface and
    * is the only place that can compare against the actual scaled scroll
@@ -187,18 +188,17 @@ export class ScrollNavigationController
    * @see https://stackoverflow.com/questions/22111256/translate3d-vs-translate-performance
    * for remark about flicker / fonts smoothing
    */
-  protected applyNavigationPosition({ position }: ScrollNavigationEntry) {
-    const element = this.value.element
-
-    if (!element) return undefined
-
+  protected applyNavigationPosition(
+    element: HTMLElement,
+    { position }: ScrollNavigationEntry,
+  ) {
     const scaledPosition = this.fromSpinePosition(position)
 
     if (
       Math.round(scaledPosition.x) === element.scrollLeft &&
       Math.round(scaledPosition.y) === element.scrollTop
     ) {
-      return this.scrollPosition
+      return
     }
 
     element.scrollTo({
@@ -208,8 +208,6 @@ export class ScrollNavigationController
     })
 
     this.hookManager.execute("onViewportOffsetAdjust", undefined)
-
-    return this.scrollPosition
   }
 
   /**
@@ -217,7 +215,7 @@ export class ScrollNavigationController
    * scrollable, and takes its box away otherwise, leaving its contents where
    * they are.
    */
-  public displaySurfaceWhileActive() {
+  public syncRenderingLayerDisplay() {
     const { element } = this.value
 
     if (!element) return
@@ -239,11 +237,21 @@ export class ScrollNavigationController
 
   public destroy() {
     super.destroy()
+    this.navigationAppliedSubject.complete()
     this.value.element?.remove()
   }
 
+  /**
+   * Scrolls with `behavior: "instant"`, so the navigation is over when this
+   * returns.
+   */
   navigate(navigation: NavigationModeControllerNavigationEntry) {
-    this.navigateSubject.next(navigation)
+    const { element } = this.value
+
+    if (!element) return
+
+    this.applyNavigationPosition(element, navigation)
+    this.navigationAppliedSubject.next()
   }
 
   public isActive = () => {

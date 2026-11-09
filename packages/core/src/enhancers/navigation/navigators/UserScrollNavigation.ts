@@ -15,7 +15,8 @@ import type { ScrollNavigationController } from "../../../navigation/controllers
 import type { UserNavigationEntry } from "../../../navigation/types"
 import { DestroyableClass } from "../../../utils/DestroyableClass"
 
-const SCROLL_FINISHED_DEBOUNCE_TIMEOUT = 500
+/** How long after its last scroll event a scroll of the user's is over. */
+export const SCROLL_FINISHED_DEBOUNCE_TIMEOUT = 500
 
 export class UserScrollNavigation extends DestroyableClass {
   /**
@@ -54,12 +55,6 @@ export class UserScrollNavigation extends DestroyableClass {
               animationFrameScheduler,
             ),
             first(),
-            /**
-             * The book may no longer scroll by then, as after a change of
-             * page turn mode: the element has lost its box, and its offsets
-             * no longer say where the user is.
-             */
-            filter(() => this.scrollNavigationController.isActive()),
             tap(() => {
               const spinePosition =
                 this.scrollNavigationController.fromScrollPosition(
@@ -72,6 +67,16 @@ export class UserScrollNavigation extends DestroyableClass {
                 target: { type: "position", value: spinePosition },
               })
             }),
+            /**
+             * The scroll ends at once when the book no longer scrolls, as
+             * after a change of page turn mode: the element has lost its
+             * box, and its offsets no longer say where the user is.
+             */
+            takeUntil(
+              this.scrollNavigationController.isActive$.pipe(
+                filter((isActive) => !isActive),
+              ),
+            ),
             finalize(() => {
               unlock()
             }),

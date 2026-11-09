@@ -1,7 +1,7 @@
 // @vitest-environment jsdom
 import { first, firstValueFrom, skip } from "rxjs"
 import { describe, expect, it } from "vitest"
-import { SpinePosition } from "../spine/types"
+import { SCROLL_FINISHED_DEBOUNCE_TIMEOUT } from "../enhancers/navigation/navigators/UserScrollNavigation"
 import {
   createPrePaginatedManifest,
   createTestReader,
@@ -17,31 +17,49 @@ import type { Navigation } from "./types"
 
 installReaderTestEnvironment()
 
-/**
- * Longer than the wait after which a scroll the reader did not make becomes a
- * navigation (`SCROLL_FINISHED_DEBOUNCE_TIMEOUT`).
- */
-const PAST_THE_END_OF_A_USER_SCROLL = 700
+/** Long enough for a scroll of the user's to be over, and navigated to. */
+const PAST_THE_END_OF_A_USER_SCROLL = SCROLL_FINISHED_DEBOUNCE_TIMEOUT + 200
 
-/** Four pages, one item each, stacked a viewport apart once they scroll. */
-const createFourPagesTestReader = (
+type TestReader = ReturnType<typeof createTestReader>
+
+const topOfPage = (pageIndex: number) => pageIndex * defaultTestViewport.height
+
+/**
+ * Mounts a book of four pages, one item each, on one of them, with element
+ * scrolling stubbed. The pages are stacked a viewport apart once they scroll.
+ */
+const openOnPage = async (
+  pageIndex: number,
   options: Parameters<typeof createTestReader>[0] = {},
-) =>
-  createTestReader({
+) => {
+  const { scrollToCalls } = stubElementScrolling()
+  const reader = createTestReader({
     manifest: createPrePaginatedManifest({
       pageSpreads: [undefined, undefined, undefined, undefined],
     }),
     ...options,
   })
 
-type TestReader = ReturnType<typeof createTestReader>
+  mountTestReader(reader)
+  await settledOn(reader, 0)
 
-const getScrollElement = (reader: TestReader) => {
-  const { element } = reader.navigation.scrollNavigationController.value
+  if (pageIndex > 0) {
+    reader.navigation.goToSpineItem({ indexOrId: pageIndex, animation: false })
+    await settledOn(reader, pageIndex)
+  }
 
-  if (!element) throw new Error("the reader is not mounted")
+  const { element: scrollElement } =
+    reader.navigation.scrollNavigationController.value
 
-  return element
+  if (!scrollElement) throw new Error("the reader has no scroll element")
+
+  return { reader, scrollElement, scrollToCalls }
+}
+
+/** Scrolls the element as a user does: the reader only hears of the event. */
+const scrollAsUser = (scrollElement: HTMLElement, scrollTop: number) => {
+  scrollElement.scrollTop = scrollTop
+  deliverScrollEvent(scrollElement)
 }
 
 const recordNavigationsAndLock = (reader: TestReader) => {
@@ -64,28 +82,24 @@ const recordNavigationsAndLock = (reader: TestReader) => {
   }
 }
 
-const topOfPage = (pageIndex: number) => pageIndex * defaultTestViewport.height
+const recordScrollsNotMadeByReader = (reader: TestReader) => {
+  const scrollsNotMadeByReader: Event[] = []
+
+  reader.navigation.scrollNavigationController.scrollNotMadeByReader$.subscribe(
+    (event) => {
+      scrollsNotMadeByReader.push(event)
+    },
+  )
+
+  return scrollsNotMadeByReader
+}
 
 describe("Given a book that scrolls", () => {
   describe("When the reader scrolls to a navigation", () => {
     it("does not take the scroll event that follows for the user's, however late it comes", async () => {
-      stubElementScrolling()
-
-      const reader = createFourPagesTestReader({ pageTurnMode: "scrollable" })
-
-      mountTestReader(reader)
-      await settledOn(reader, 0)
-
-      const scrollElement = getScrollElement(reader)
-
-      reader.navigation.navigate({
-        target: {
-          type: "position",
-          value: new SpinePosition({ x: 0, y: topOfPage(2) }),
-        },
-        animation: false,
+      const { reader, scrollElement } = await openOnPage(2, {
+        pageTurnMode: "scrollable",
       })
-      await settledOn(reader, 2)
 
       expect(scrollElement.scrollTop).toBe(topOfPage(2))
 
@@ -105,19 +119,13 @@ describe("Given a book that scrolls", () => {
 
   describe("When the element scrolls to where the reader did not put it", () => {
     it("takes the scroll for the user's, and navigates to where it stops", async () => {
-      stubElementScrolling()
-
-      const reader = createFourPagesTestReader({ pageTurnMode: "scrollable" })
-
-      mountTestReader(reader)
-      await settledOn(reader, 0)
-
-      const scrollElement = getScrollElement(reader)
+      const { reader, scrollElement } = await openOnPage(0, {
+        pageTurnMode: "scrollable",
+      })
       const { userNavigations, hasLockBeenHeld } =
         recordNavigationsAndLock(reader)
 
-      scrollElement.scrollTop = topOfPage(1)
-      deliverScrollEvent(scrollElement)
+      scrollAsUser(scrollElement, topOfPage(1))
 
       expect(hasLockBeenHeld()).toBe(true)
 
@@ -130,68 +138,70 @@ describe("Given a book that scrolls", () => {
     })
 
     it("does not take a second event at the same offsets for another scroll", async () => {
-      stubElementScrolling()
+      const { reader, scrollElement } = await openOnPage(0, {
+        pageTurnMode: "scrollable",
+      })
+      const scrollsNotMadeByReader = recordScrollsNotMadeByReader(reader)
 
-      const reader = createFourPagesTestReader({ pageTurnMode: "scrollable" })
-
-      mountTestReader(reader)
-      await settledOn(reader, 0)
-
-      const scrollElement = getScrollElement(reader)
-      const scrollsNotMadeByReader: Event[] = []
-
-      reader.navigation.scrollNavigationController.scrollNotMadeByReader$.subscribe(
-        (event) => {
-          scrollsNotMadeByReader.push(event)
-        },
-      )
-
-      scrollElement.scrollTop = topOfPage(1)
-      deliverScrollEvent(scrollElement)
+      scrollAsUser(scrollElement, topOfPage(1))
       deliverScrollEvent(scrollElement)
 
+      expect(scrollsNotMadeByReader).toHaveLength(1)
+    })
+
+    it("does not take offsets a fraction of a pixel from where the reader left the element for a scroll", async () => {
+      const { reader, scrollElement } = await openOnPage(0, {
+        pageTurnMode: "scrollable",
+      })
+      const scrollsNotMadeByReader = recordScrollsNotMadeByReader(reader)
+
+      scrollAsUser(scrollElement, 0.4)
+
+      expect(scrollsNotMadeByReader).toHaveLength(0)
+
+      scrollAsUser(scrollElement, 1)
+
+      expect(scrollsNotMadeByReader).toHaveLength(1)
+    })
+
+    it("takes a scroll of less than a pixel at a time for the user's once it adds up to a pixel", async () => {
+      const { reader, scrollElement } = await openOnPage(0, {
+        pageTurnMode: "scrollable",
+      })
+      const scrollsNotMadeByReader = recordScrollsNotMadeByReader(reader)
+
+      for (const scrollTop of [0.4, 0.8, 1.2, 1.6]) {
+        scrollAsUser(scrollElement, scrollTop)
+      }
+
+      // at 1.2, a pixel or more from where the reader left the element
       expect(scrollsNotMadeByReader).toHaveLength(1)
     })
   })
 
   describe("When the page turn mode becomes controlled while the user scrolls", () => {
-    it("does not navigate to where the scroll element is left once the scroll ends", async () => {
-      stubElementScrolling()
-
-      const reader = createFourPagesTestReader({ pageTurnMode: "scrollable" })
-
-      mountTestReader(reader)
-      await settledOn(reader, 0)
-
-      const scrollElement = getScrollElement(reader)
-
-      reader.navigation.navigate({
-        target: {
-          type: "position",
-          value: new SpinePosition({ x: 0, y: topOfPage(2) }),
-        },
-        animation: false,
+    it("ends the scroll at once, and does not navigate to where the scroll element is left", async () => {
+      const { reader, scrollElement } = await openOnPage(2, {
+        pageTurnMode: "scrollable",
       })
-      await settledOn(reader, 2)
-
-      const { userNavigations, hasLockBeenHeld, isLockHeld } =
-        recordNavigationsAndLock(reader)
+      const { userNavigations, isLockHeld } = recordNavigationsAndLock(reader)
 
       // a little further into the same page
-      scrollElement.scrollTop = topOfPage(2) + 10
-      deliverScrollEvent(scrollElement)
+      scrollAsUser(scrollElement, topOfPage(2) + 10)
 
-      expect(hasLockBeenHeld()).toBe(true)
+      expect(isLockHeld()).toBe(true)
 
       /**
        * The element loses its box with the mode, and its offsets with it:
        * they no longer say where the user is.
        */
       reader.settings.update({ pageTurnMode: "controlled" })
+
+      expect(isLockHeld()).toBe(false)
+
       await waitFor(PAST_THE_END_OF_A_USER_SCROLL)
 
       expect(userNavigations()).toHaveLength(0)
-      expect(isLockHeld()).toBe(false)
 
       await settledOn(reader, 2)
     })
@@ -199,24 +209,9 @@ describe("Given a book that scrolls", () => {
 
   describe("When a layout leaves less to scroll than the element had scrolled", () => {
     it("does not take the scroll the browser clamps the element to for the user's", async () => {
-      stubElementScrolling()
-
-      const reader = createFourPagesTestReader({ pageTurnMode: "scrollable" })
-
-      mountTestReader(reader)
-      await settledOn(reader, 0)
-
-      const scrollElement = getScrollElement(reader)
-
-      reader.navigation.navigate({
-        target: {
-          type: "position",
-          value: new SpinePosition({ x: 0, y: topOfPage(2) }),
-        },
-        animation: false,
+      const { reader, scrollElement } = await openOnPage(2, {
+        pageTurnMode: "scrollable",
       })
-      await settledOn(reader, 2)
-
       const { userNavigations, hasLockBeenHeld } =
         recordNavigationsAndLock(reader)
 
@@ -247,17 +242,31 @@ describe("Given a book that scrolls", () => {
 })
 
 describe("Given a book whose pages turn", () => {
+  describe("When the page turn mode changes", () => {
+    it("gives its box to the rendering layer of the mode in use, and takes the other's away", async () => {
+      const { reader, scrollElement } = await openOnPage(0)
+      const controlledElement =
+        reader.navigation.controlledNavigationController.element$.getValue()
+      const displays = () => ({
+        scroll: scrollElement.style.display,
+        controlled: controlledElement.style.display,
+      })
+
+      expect(displays()).toEqual({ scroll: "contents", controlled: "block" })
+
+      reader.settings.update({ pageTurnMode: "scrollable" })
+
+      expect(displays()).toEqual({ scroll: "block", controlled: "contents" })
+
+      reader.settings.update({ pageTurnMode: "controlled" })
+
+      expect(displays()).toEqual({ scroll: "contents", controlled: "block" })
+    })
+  })
+
   describe("When the page turn mode becomes scrollable", () => {
     it("gives the navigation to the scroll element once it is the box the book scrolls in", async () => {
-      const { scrollToCalls } = stubElementScrolling()
-
-      const reader = createFourPagesTestReader()
-
-      mountTestReader(reader)
-      reader.navigation.goToSpineItem({ indexOrId: 2, animation: false })
-      await settledOn(reader, 2)
-
-      const scrollElement = getScrollElement(reader)
+      const { reader, scrollElement, scrollToCalls } = await openOnPage(2)
 
       reader.settings.update({ pageTurnMode: "scrollable" })
 
@@ -273,16 +282,8 @@ describe("Given a book whose pages turn", () => {
   })
 
   describe("When the page turn mode becomes scrollable a second time", () => {
-    it("keeps the page when the scroll element reports a scroll of the browser's own", async () => {
-      stubElementScrolling()
-
-      const reader = createFourPagesTestReader()
-
-      mountTestReader(reader)
-      reader.navigation.goToSpineItem({ indexOrId: 2, animation: false })
-      await settledOn(reader, 2)
-
-      const scrollElement = getScrollElement(reader)
+    it("keeps the page when the scroll element reports a scroll as it gets its box back", async () => {
+      const { reader, scrollElement } = await openOnPage(2)
 
       reader.settings.update({ pageTurnMode: "scrollable" })
       await waitFor(PAST_THE_END_OF_A_USER_SCROLL)
@@ -300,7 +301,9 @@ describe("Given a book whose pages turn", () => {
       /**
        * Chromium gives the element the offsets it had when it last scrolled,
        * clamps them to the pages, still side by side, and reports that scroll
-       * a few milliseconds later: before the pages are stacked again.
+       * a few milliseconds later. By then the reader has scrolled the element
+       * to the navigation, so the event shows the element where the reader
+       * left it.
        */
       await waitFor(5)
       deliverScrollEvent(scrollElement)

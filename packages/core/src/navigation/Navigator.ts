@@ -92,29 +92,29 @@ export const createNavigator = ({
    * emission: when the page turn mode changes, and when an element is created
    * or set up at mount.
    */
-  const navigationModeSurfaceSwitch$ = combineLatest([
+  const navigationModeRenderingLayerSwitch$ = combineLatest([
     settings.watch([`computedPageTurnMode`]),
     scrollNavigationController.watch(`element`),
     controlledNavigationController.element$,
   ]).pipe(
     tap(() => {
       navigationModeControllers.forEach((controller) => {
-        controller.displaySurfaceWhileActive()
+        controller.syncRenderingLayerDisplay()
       })
     }),
     share(),
   )
 
   // The layers switch whether or not anything listens.
-  const navigationModeSurfaceSwitchSubscription =
-    navigationModeSurfaceSwitch$.subscribe()
+  const navigationModeRenderingLayerSwitchSubscription =
+    navigationModeRenderingLayerSwitch$.subscribe()
 
   const internalNavigator = new InternalNavigator(
     settings,
     context,
     userNavigation$,
     getActiveNavigationModeController,
-    navigationModeSurfaceSwitch$,
+    navigationModeRenderingLayerSwitch$,
     navigationResolver,
     spine,
     viewport,
@@ -124,7 +124,8 @@ export const createNavigator = ({
   )
 
   const navigationState$ = combineLatest([
-    ...navigationModeControllers.map((controller) => controller.isNavigating$),
+    // The only controller that takes time to navigate: a scroll is instant.
+    controlledNavigationController.isNavigating$,
     navigationLock.isLocked$,
     internalNavigator.locker.isLocked$,
   ]).pipe(
@@ -151,7 +152,7 @@ export const createNavigator = ({
   }
 
   const destroy = () => {
-    navigationModeSurfaceSwitchSubscription.unsubscribe()
+    navigationModeRenderingLayerSwitchSubscription.unsubscribe()
     navigationModeControllers.forEach((controller) => {
       controller.destroy()
     })

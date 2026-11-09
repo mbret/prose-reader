@@ -182,7 +182,7 @@ export class InternalNavigator extends DestroyableClass {
      * Emits once the rendering layer of the active navigation mode has its
      * box.
      */
-    protected navigationModeSurfaceSwitch$: Observable<unknown>,
+    protected navigationModeRenderingLayerSwitch$: Observable<unknown>,
     protected navigationResolver: ReturnType<typeof createNavigationResolver>,
     protected spine: Spine,
     protected viewport: Viewport,
@@ -478,7 +478,7 @@ export class InternalNavigator extends DestroyableClass {
      * This is responsibility of other components.
      */
     const navigationUpdateFromLayout$ = merge(
-      navigationModeSurfaceSwitch$,
+      navigationModeRenderingLayerSwitch$,
       spine.layout$,
     ).pipe(
       // Nothing to restore before the first navigation.

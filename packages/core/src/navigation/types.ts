@@ -1,4 +1,3 @@
-import type { Observable } from "rxjs"
 import type { SpinePosition, UnboundSpinePosition } from "../spine/types"
 import type {
   SpineItemPosition,
@@ -260,16 +259,15 @@ export type NavigationSurface = {
  * A navigation mode controller applies resolved navigation to its own rendering
  * layer. It also exposes the surface geometry used to interpret navigation
  * requests, while owning mode-specific concerns like activity, the display of
- * its rendering layer, busy state, and DOM movement.
+ * its rendering layer, and DOM movement.
  */
 export type NavigationModeController = NavigationSurface & {
   isActive: () => boolean
-  isNavigating$: Observable<boolean>
   /**
    * Gives the controller's rendering layer its box while the controller is
    * the active one, and takes it away otherwise.
    */
-  displaySurfaceWhileActive: () => void
+  syncRenderingLayerDisplay: () => void
   navigate: (navigation: NavigationModeControllerNavigationEntry) => void
   destroy: () => void
 }
