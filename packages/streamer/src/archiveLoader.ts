@@ -2,17 +2,18 @@ import type { Archive } from "@prose-reader/archive-reader"
 import {
   BehaviorSubject,
   catchError,
+  defer,
   distinctUntilChanged,
   EMPTY,
   filter,
+  finalize,
   first,
   from,
-  ignoreElements,
   map,
   merge,
   mergeMap,
+  mergeWith,
   NEVER,
-  Observable,
   type ObservedValueOf,
   pairwise,
   Subject,
@@ -156,12 +157,12 @@ export const createArchiveLoader = ({
 
   /**
    * Emits the archive of `key`, loading it on the first access, and holds it
-   * until the subscription ends. An archive closes only once nothing holds
-   * it: `cleanArchiveAfter` later, or at once on a `purge`. Errors when the
-   * archive fails to load.
+   * until the subscription ends. An archive closes once nothing holds it:
+   * `cleanArchiveAfter` later, or at once when `purge` was called since it
+   * loaded and was last accessed. Errors when the archive fails to load.
    */
   const access = (key: string) =>
-    new Observable<Archive>((subscriber) => {
+    defer(() => {
       const archiveEntry = archives[key] ?? new ArchiveEntry(cleanArchiveAfter)
 
       archives[key] = archiveEntry
@@ -172,34 +173,21 @@ export const createArchiveLoader = ({
 
       loadSubject.next(key)
 
-      const loadedArchive$ = archiveEntry.state$.pipe(
-        map(({ archive }) => archive),
-        filter((archive): archive is Archive => archive !== undefined),
-      )
+      return archiveEntry.state$.pipe(
+        map(({ status, error, archive }) => {
+          if (status === "error") throw error
 
-      const loadError$ = archiveEntry.state$.pipe(
-        tap(({ error }) => {
-          if (error) {
-            throw error
-          }
+          return archive
         }),
-        ignoreElements(),
+        filter((archive): archive is Archive => archive !== undefined),
+        first(),
+        mergeWith(NEVER),
+        finalize(function releaseArchive() {
+          archiveEntry.update({
+            locks: archiveEntry.state.locks - 1,
+          })
+        }),
       )
-
-      const loadSubscription = merge(loadedArchive$, loadError$)
-        .pipe(first())
-        .subscribe({
-          next: (archive) => subscriber.next(archive),
-          error: (error) => subscriber.error(error),
-        })
-
-      return function releaseArchive() {
-        loadSubscription.unsubscribe()
-
-        archiveEntry.update({
-          locks: archiveEntry.state.locks - 1,
-        })
-      }
     })
 
   /**

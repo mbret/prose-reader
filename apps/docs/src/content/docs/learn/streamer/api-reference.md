@@ -105,7 +105,7 @@ streamer.accessArchive(key?: string): Observable<Archive>
 streamer.prune(): void
 ```
 
-Core archive-serving engine: it loads archives by `key` through `getArchive`, keeps them loaded while they are in use, and generates the matching `Response`s. `fetchManifest` / `fetchResource` produce the manifest and resource responses (resource responses support HTTP range requests); `accessArchive` emits the archive and holds it open until you unsubscribe; `prune` closes every archive once nothing holds it.
+Core archive-serving engine: it loads archives by `key` through `getArchive`, keeps them loaded while they are in use, and generates the matching `Response`s. `fetchManifest` / `fetchResource` produce the manifest and resource responses (resource responses support HTTP range requests); `accessArchive` emits the archive and holds it open until you unsubscribe; `prune` closes every loaded archive once nothing holds it, unless it is accessed again first.
 
 The streamer keeps the archive of the last key it was asked for: asking for another key closes the previous archive once nothing uses it. A call without a `key` uses a default one, so a streamer serving a single book can leave keys out:
 

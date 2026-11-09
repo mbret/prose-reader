@@ -1,4 +1,4 @@
-import type { Archive } from "@prose-reader/archive-reader"
+import { type Archive, createArchive } from "@prose-reader/archive-reader"
 import { afterEach, beforeEach, describe, expect, it, vitest } from "vitest"
 import { createArchiveLoader } from "./archiveLoader"
 
@@ -15,10 +15,9 @@ afterEach(() => {
   vitest.useRealTimers()
 })
 
-/**
- * Holds the archive of `key` from now until `release`, the way a reader holds
- * the archive it renders from.
- */
+const createArchiveClosedBy = (close: () => Promise<void>) =>
+  createArchive({ filename: ``, records: [], close })
+
 const holdArchive = (
   archiveLoader: ReturnType<typeof createArchiveLoader>,
   key: string,
@@ -38,10 +37,10 @@ const holdArchive = (
 describe(`Given a TTL`, () => {
   describe(`and the archive is released right away`, () => {
     it(`should close archive only after timeout`, async () => {
-      const closeFnMock = vitest.fn()
+      const closeFnMock = vitest.fn(() => Promise.resolve())
 
       const archiveLoader = createArchiveLoader({
-        getArchive: async () => ({ close: closeFnMock }) as unknown as Archive,
+        getArchive: async () => createArchiveClosedBy(closeFnMock),
         cleanArchiveAfter: 100,
       })
 
@@ -63,10 +62,10 @@ describe(`Given a TTL`, () => {
 
   describe(`and the archive is release after TTL`, () => {
     it(`should close archive once released on TTL`, async () => {
-      const closeFnMock = vitest.fn()
+      const closeFnMock = vitest.fn(() => Promise.resolve())
 
       const archiveLoader = createArchiveLoader({
-        getArchive: async () => ({ close: closeFnMock }) as unknown as Archive,
+        getArchive: async () => createArchiveClosedBy(closeFnMock),
         cleanArchiveAfter: 10,
       })
 
@@ -92,9 +91,9 @@ describe(`Given a TTL`, () => {
 
   describe(`and a second hold taken before the first is released`, () => {
     it(`should keep the archive open until both are released`, async () => {
-      const closeFnMock = vitest.fn()
-      const getArchive = vitest.fn(
-        async () => ({ close: closeFnMock }) as unknown as Archive,
+      const closeFnMock = vitest.fn(() => Promise.resolve())
+      const getArchive = vitest.fn(async () =>
+        createArchiveClosedBy(closeFnMock),
       )
 
       const archiveLoader = createArchiveLoader({
@@ -127,10 +126,10 @@ describe(`Given a TTL`, () => {
 
   describe(`and a purge after accessing an archive`, () => {
     it(`should close archive as soon as released`, async () => {
-      const closeFnMock = vitest.fn()
+      const closeFnMock = vitest.fn(() => Promise.resolve())
 
       const archiveLoader = createArchiveLoader({
-        getArchive: async () => ({ close: closeFnMock }) as unknown as Archive,
+        getArchive: async () => createArchiveClosedBy(closeFnMock),
         cleanArchiveAfter: 10,
       })
 
@@ -155,10 +154,10 @@ describe(`Given a TTL`, () => {
 describe(`Given an Infinity TTL`, () => {
   describe(`and a purge after releasing an archive`, () => {
     it(`should close archive as soon as purged`, async () => {
-      const closeFnMock = vitest.fn()
+      const closeFnMock = vitest.fn(() => Promise.resolve())
 
       const archiveLoader = createArchiveLoader({
-        getArchive: async () => ({ close: closeFnMock }) as unknown as Archive,
+        getArchive: async () => createArchiveClosedBy(closeFnMock),
         cleanArchiveAfter: Infinity,
       })
 
@@ -178,10 +177,10 @@ describe(`Given an Infinity TTL`, () => {
 
   describe(`and a purge before releasing an archive`, () => {
     it(`should close archive as soon as released`, async () => {
-      const closeFnMock = vitest.fn()
+      const closeFnMock = vitest.fn(() => Promise.resolve())
 
       const archiveLoader = createArchiveLoader({
-        getArchive: async () => ({ close: closeFnMock }) as unknown as Archive,
+        getArchive: async () => createArchiveClosedBy(closeFnMock),
         cleanArchiveAfter: Infinity,
       })
 
@@ -219,13 +218,13 @@ describe(`Given an archive that rejects`, () => {
 describe(`Given a long coming archive`, () => {
   describe(`when a purge is triggered before the archive is ready`, async () => {
     it(`should not release the archive as soon as it's released`, async () => {
-      const closeFnMock = vitest.fn()
+      const closeFnMock = vitest.fn(() => Promise.resolve())
 
       const archiveLoader = createArchiveLoader({
         getArchive: async () => {
           await new Promise((resolve) => setTimeout(resolve, 100))
 
-          return { close: closeFnMock } as unknown as Archive
+          return createArchiveClosedBy(closeFnMock)
         },
         cleanArchiveAfter: 10,
       })
@@ -257,13 +256,13 @@ describe(`Given a long coming archive`, () => {
 
   describe(`when the hold ends before the archive is ready`, () => {
     it(`should close the archive once its TTL runs out after the load`, async () => {
-      const closeFnMock = vitest.fn()
+      const closeFnMock = vitest.fn(() => Promise.resolve())
 
       const archiveLoader = createArchiveLoader({
         getArchive: async () => {
           await new Promise((resolve) => setTimeout(resolve, 100))
 
-          return { close: closeFnMock } as unknown as Archive
+          return createArchiveClosedBy(closeFnMock)
         },
         cleanArchiveAfter: 10,
       })

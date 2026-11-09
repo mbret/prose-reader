@@ -89,8 +89,9 @@ export class Streamer {
   }
 
   /**
-   * Closes every loaded archive once nothing holds it: at once for an archive
-   * nothing holds, on its release for one an `accessArchive` holds.
+   * Closes every loaded archive once nothing holds it: at once for one
+   * nothing holds, on its release for one an `accessArchive` holds, unless it
+   * is accessed again before.
    */
   public prune() {
     this.archiveLoader.purge()
