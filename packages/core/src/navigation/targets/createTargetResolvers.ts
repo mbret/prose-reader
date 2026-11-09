@@ -110,6 +110,7 @@ export const createTargetResolvers = ({
                 spineItem.index,
               ).start,
               state: "targetPlace",
+              isPageElement: false,
             }
           : undefined,
         directionFromLastNavigation: "forward",
