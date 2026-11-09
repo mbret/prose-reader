@@ -1,7 +1,6 @@
 import { expect, test } from "@playwright/test"
-import { LONG_COMIC_NUMBER_OF_PAGES } from "../../../server/serveBooks"
-import { navigateToSpineItem } from "../../utils"
-import { waitForSettled } from "../../utils/pagination"
+import { LONG_COMIC_NUMBER_OF_PAGES } from "../../../server/longComic"
+import { expectSpineItemsInViewport, navigateToSpineItem } from "../../utils"
 import { getReader } from "../../utils/reader"
 
 const url = "http://localhost:3333/tests/layout/long-spine/index.html"
@@ -30,14 +29,6 @@ test.describe(`Given a comic of ${LONG_COMIC_NUMBER_OF_PAGES} pages, one spine i
       .toBeGreaterThan(0)
 
     await navigateToSpineItem({ page, index: lastIndex })
-    await waitForSettled(page)
-
-    // A spread's last page, when the screen shows two
-    expect(
-      await reader.evaluate(
-        (reader) => reader.pagination.state.end.spineItemIndex,
-      ),
-      "the last spine item on screen",
-    ).toBe(lastIndex)
+    await expectSpineItemsInViewport({ page, indexes: [lastIndex] })
   })
 })

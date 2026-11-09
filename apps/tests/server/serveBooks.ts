@@ -1,10 +1,11 @@
 import { readFile } from "node:fs/promises"
-import { basename, resolve } from "node:path"
+import { basename, extname, resolve } from "node:path"
 import { createArchiveFromJszip } from "@prose-reader/archive-reader/archives/createArchiveFromJszip"
 import { ServiceWorkerStreamer } from "@prose-reader/streamer"
 // CommonJS in Node, where a named import of it fails
 import JSZip from "jszip"
 import type { Plugin } from "vite"
+import { LONG_COMIC_NUMBER_OF_PAGES } from "./longComic"
 
 const BOOKS_DIRECTORY = resolve(import.meta.dirname, "../public/epubs")
 const BOOKS_PATH = "/epubs"
@@ -13,20 +14,15 @@ const STREAMER_PATH = "/streamer"
 type RewrittenBook = {
   /** The file of `public/epubs` it is made from. */
   fixture: string
-  /** Rewrites the fixture's archive, in place. */
   rewrite: (bookZip: JSZip) => Promise<void>
 }
 
-/** Rewrites the content of each xhtml page of a book. */
-const rewriteEachPage =
+const rewriteEachXhtmlPage =
   (rewritePage: (fixturePage: string) => string) => async (bookZip: JSZip) => {
     for (const page of bookZip.file(/\.xhtml$/)) {
       bookZip.file(page.name, rewritePage(await page.async("string")))
     }
   }
-
-/** The number of pages of `long-comic.cbz`. */
-export const LONG_COMIC_NUMBER_OF_PAGES = 1000
 
 /**
  * Books made from a fixture by rewriting it, for the scenarios that need a
@@ -39,10 +35,6 @@ const REWRITTEN_BOOKS = new Map<string, RewrittenBook>([
     "long-comic.cbz",
     {
       fixture: "koreader-pages.cbz",
-      /**
-       * Its first page, repeated: a comic has one spine item per page, and a
-       * long one has hundreds of them.
-       */
       rewrite: async (bookZip) => {
         const firstPage = await bookZip.file("p01.jpg")?.async("uint8array")
 
@@ -66,7 +58,7 @@ const REWRITTEN_BOOKS = new Map<string, RewrittenBook>([
        * Gives every image `loading="lazy"`, and a top margin that keeps it far
        * beyond any engine's lazy loading distance while its page loads.
        */
-      rewrite: rewriteEachPage((fixturePage) =>
+      rewrite: rewriteEachXhtmlPage((fixturePage) =>
         fixturePage.replace(
           /<img /g,
           '<img loading="lazy" style="margin-top: 10000px" ',
@@ -82,7 +74,7 @@ const REWRITTEN_BOOKS = new Map<string, RewrittenBook>([
        * Sets the text in the system sans-serif font. Unlike the book's own
        * font, it has a bold face, whose glyphs are wider.
        */
-      rewrite: rewriteEachPage((fixturePage) =>
+      rewrite: rewriteEachXhtmlPage((fixturePage) =>
         fixturePage.replace(
           "</head>",
           "<style>body, body * { font-family: sans-serif !important; }</style></head>",
@@ -94,7 +86,7 @@ const REWRITTEN_BOOKS = new Map<string, RewrittenBook>([
     "sous-le-vent-without-stylesheets.epub",
     {
       fixture: "sous-le-vent.epub",
-      rewrite: rewriteEachPage((fixturePage) =>
+      rewrite: rewriteEachXhtmlPage((fixturePage) =>
         fixturePage.replace(/<link [^>]*rel="stylesheet"[^>]*\/>/g, ""),
       ),
     },
@@ -172,7 +164,10 @@ export const serveBooks = (): Plugin => ({
       loadBook(requestedBook)
         .then((bookZip) => bookZip.generateAsync({ type: "nodebuffer" }))
         .then((bookFile) => {
-          res.setHeader("Content-Type", "application/epub+zip")
+          // The type Vite gives a file of `public/epubs`: none for a comic
+          if (extname(requestedBook) === ".epub") {
+            res.setHeader("Content-Type", "application/epub+zip")
+          }
           res.end(bookFile)
         }, next)
     })

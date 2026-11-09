@@ -1,8 +1,8 @@
 import { createReader } from "@prose-reader/core"
 import { openFixtureBook } from "../../fixtureBook"
 
-/** A comic of a thousand pages, one spine item each (see `server/serveBooks.ts`). */
 async function run() {
+  // `server/serveBooks.ts` makes the book.
   const book = await openFixtureBook("long-comic.cbz")
 
   const reader = createReader({
