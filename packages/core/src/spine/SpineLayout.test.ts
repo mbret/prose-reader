@@ -207,6 +207,19 @@ const createDeferredSpineLayout = (numberOfItems: number) => {
   }
 }
 
+/** The number of frames on the call stack where it is called. */
+const getCallStackDepth = () => {
+  const { stackTraceLimit } = Error
+
+  Error.stackTraceLimit = Number.POSITIVE_INFINITY
+
+  const depth = new Error().stack?.split("\n").length ?? 0
+
+  Error.stackTraceLimit = stackTraceLimit
+
+  return depth
+}
+
 describe("SpineLayout", () => {
   it("debounces regular external layout requests", async () => {
     vi.useFakeTimers()
@@ -478,6 +491,55 @@ describe("SpineLayout", () => {
       destroy()
     }
   })
+
+  it.each([
+    {
+      renderers: "every item laid out at once",
+      isFirstItemLaidOutLater: false,
+    },
+    {
+      renderers: "the first item laid out later, and the others at once",
+      isFirstItemLaidOutLater: true,
+    },
+  ])(
+    "lays each item of a long spine out from the same depth of the call stack, with $renderers",
+    async ({ isFirstItemLaidOutLater }) => {
+      const { destroy, hookManager, spineItemsManager, spineLayout } =
+        createTestSpineLayout({ items: 100 })
+      const callStackDepthByItem: number[] = []
+      const firstItemLayout = new Subject<ItemSize>()
+
+      hookManager.register("item.onBeforeLayout", ({ item }) => {
+        callStackDepthByItem[item.index] = getCallStackDepth()
+      })
+
+      if (isFirstItemLaidOutLater) {
+        const [firstItem] = spineItemsManager.items
+
+        if (!firstItem) throw new Error("the spine has no item")
+
+        vi.spyOn(firstItem.renderer, "layout").mockReturnValue(firstItemLayout)
+      }
+
+      try {
+        const passDone = firstValueFrom(spineLayout.layout$)
+
+        spineLayout.layout({ immediate: true })
+        firstItemLayout.next({ height: 100, width: 100 })
+        firstItemLayout.complete()
+        await passDone
+
+        const [, secondItemDepth = 0] = callStackDepthByItem
+
+        expect(
+          (callStackDepthByItem.at(-1) ?? 0) - secondItemDepth,
+          "frames the call stack grew by from the second item to the last",
+        ).toBe(0)
+      } finally {
+        destroy()
+      }
+    },
+  )
 
   it("keeps RTL right-left spread pairs together after an odd number of pages", async () => {
     const { destroy, layoutRequests, spineLayout } =
