@@ -1,10 +1,15 @@
 import { expect, type Page, test } from "@playwright/test"
 import type { ReadingPosition } from "@prose-reader/core"
-import { navigateToSpineItem } from "../../../utils"
+import {
+  getChapterIndex,
+  getLongChapterIndex,
+  getNumberOfPagesOfSpineItem,
+  navigateToSpineItem,
+} from "../../../utils"
 import { resizeAndSettle, waitForSettled } from "../../../utils/pagination"
 import { getReader } from "../../../utils/reader"
 import { isCfiPositionVisible } from "../../../utils/visibility"
-import { getChapterIndex, getLongChapterIndex, readPosition } from "./position"
+import { readPosition } from "./position"
 
 /**
  * Restoring a page after a resize needs a cfi. A navigation that asked for one
@@ -1282,13 +1287,7 @@ const appendVideoAndGallery = async (page: Page, chapterIndex: number) => {
   }, chapterIndex)
 
   await expect
-    .poll(() =>
-      reader.evaluate(
-        (reader, chapterIndex) =>
-          reader.spineItemsManager.get(chapterIndex)?.numberOfPages,
-        chapterIndex,
-      ),
-    )
+    .poll(() => getNumberOfPagesOfSpineItem(page, chapterIndex))
     .toBeGreaterThan(numberOfPagesBefore)
   await waitForSettled(page)
 }
