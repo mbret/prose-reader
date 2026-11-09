@@ -56,35 +56,36 @@ const createReaderRecordingArchiveHolds = (
   answerHold: (subscriber: Subscriber<Archive>) => void,
 ) => {
   const archiveHolds: string[] = []
+  const getArchiveForItem = vi.fn(
+    () =>
+      new Observable<Archive>((subscriber) => {
+        archiveHolds.push(`hold`)
+        answerHold(subscriber)
+
+        return function recordRelease() {
+          archiveHolds.push(`release`)
+        }
+      }),
+  )
   const reader = pdfEnhancer(createReader)({
     manifest: pdfManifest,
-    pdf: {
-      pdfjsViewerInlineCss: ``,
-      getArchiveForItem: () =>
-        new Observable<Archive>((subscriber) => {
-          archiveHolds.push(`hold`)
-          answerHold(subscriber)
-
-          return function recordRelease() {
-            archiveHolds.push(`release`)
-          }
-        }),
-    },
+    pdf: { pdfjsViewerInlineCss: ``, getArchiveForItem },
   })
 
-  return { reader, archiveHolds }
+  return { reader, archiveHolds, getArchiveForItem }
 }
 
 describe(`pdfEnhancer`, () => {
   it(`holds the archive of a page from its first read until the reader is destroyed`, async () => {
     const archive = await createPdfArchive()
     const firstHold = Promise.withResolvers<void>()
-    const { reader, archiveHolds } = createReaderRecordingArchiveHolds(
-      function answerWithTheArchive(subscriber) {
-        firstHold.resolve()
-        subscriber.next(archive)
-      },
-    )
+    const { reader, archiveHolds, getArchiveForItem } =
+      createReaderRecordingArchiveHolds(
+        function answerWithTheArchive(subscriber) {
+          firstHold.resolve()
+          subscriber.next(archive)
+        },
+      )
     const container = document.createElement(`div`)
 
     vi.spyOn(HTMLElement.prototype, `clientWidth`, `get`).mockReturnValue(100)
@@ -95,7 +96,7 @@ describe(`pdfEnhancer`, () => {
       vi.restoreAllMocks()
     })
 
-    expect(archiveHolds).toEqual([])
+    expect(getArchiveForItem).not.toHaveBeenCalled()
 
     reader.mount(container)
 
@@ -108,9 +109,9 @@ describe(`pdfEnhancer`, () => {
     expect(archiveHolds).toEqual([`hold`, `release`])
   })
 
-  it(`takes no hold for a page read after the reader is destroyed`, async () => {
+  it(`asks for no archive for a page read after the reader is destroyed`, async () => {
     const archive = await createPdfArchive()
-    const { reader, archiveHolds } = createReaderRecordingArchiveHolds(
+    const { reader, getArchiveForItem } = createReaderRecordingArchiveHolds(
       function answerWithTheArchive(subscriber) {
         subscriber.next(archive)
       },
@@ -119,7 +120,7 @@ describe(`pdfEnhancer`, () => {
     reader.destroy()
     reader.renderHeadless(0).subscribe()
 
-    expect(archiveHolds).toEqual([])
+    expect(getArchiveForItem).not.toHaveBeenCalled()
   })
 
   it(`releases a hold whose archive fails, and holds again on the next read`, async () => {

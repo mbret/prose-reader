@@ -15,7 +15,7 @@ PDFs are incompatible with service workers due to the limitation from the librar
 
 The enhancer renders each spine item whose container path ends in `.pdf`, unless a `getRenderer` you pass gives a renderer for it. It reads the pages from the archive `getArchiveForItem` gives, so none of them is fetched through an HTTP request. The `getResource` you pass to the reader serves every other item.
 
-The archive must stay open until the reader is destroyed. The enhancer subscribes to what `getArchiveForItem` returns when it first reads a page of an item, and unsubscribes when the reader is destroyed, so an archive from `Streamer.accessArchive` stays open exactly that long. Closing an archive made by `createArchiveFromPdf` destroys its pdf.js document and the worker pdf.js started for it.
+The archive must stay open until the reader is destroyed. The enhancer calls `getArchiveForItem` and subscribes when it first reads a page of an item, and again on the next read after it errors. It unsubscribes when the reader is destroyed, so `Streamer.accessArchive` holds the archive exactly that long. Closing an archive made by `createArchiveFromPdf` destroys its pdf.js document and the worker pdf.js started for it.
 
 ## Getting started
 

@@ -213,6 +213,16 @@ describe(`Given an archive that rejects`, () => {
     await expect(holdArchive(archiveLoader, ``).archive).rejects.toBe(error)
     expect(archiveLoader._archives).toEqual({})
   })
+
+  it(`should emit an error when it rejects without a reason`, async () => {
+    const archiveLoader = createArchiveLoader({
+      getArchive: () => Promise.reject(undefined),
+      cleanArchiveAfter: Infinity,
+    })
+
+    await expect(holdArchive(archiveLoader, ``).archive).rejects.toBe(undefined)
+    expect(archiveLoader._archives).toEqual({})
+  })
 })
 
 describe(`Given a long coming archive`, () => {

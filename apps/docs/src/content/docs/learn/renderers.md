@@ -81,11 +81,7 @@ class ImageRenderer extends DocumentRenderer {
     if (!isHtmlTagElement(image, "img")) return EMPTY
 
     return from(this.resourcesHandler.fetchResource()).pipe(
-      switchMap((resource) => {
-        if (!(resource instanceof Response)) throw new Error("no image")
-
-        return from(resource.blob())
-      }),
+      switchMap((response) => from(response.blob())),
       switchMap((blob) => {
         image.src = URL.createObjectURL(blob)
         this.attach()
