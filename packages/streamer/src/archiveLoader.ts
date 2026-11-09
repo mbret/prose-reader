@@ -12,13 +12,13 @@ import {
   merge,
   mergeMap,
   NEVER,
+  Observable,
   type ObservedValueOf,
   pairwise,
   Subject,
   shareReplay,
   startWith,
   switchMap,
-  takeUntil,
   tap,
   timer,
 } from "rxjs"
@@ -78,7 +78,6 @@ export const createArchiveLoader = ({
   cleanArchiveAfter?: number
 }) => {
   const loadSubject = new Subject<string>()
-  const destroySubject = new Subject<void>()
   const purgeSubject = new Subject<void>()
   const archives: Record<string, ArchiveEntry> = {}
 
@@ -153,56 +152,55 @@ export const createArchiveLoader = ({
         }),
       )
     }),
-    takeUntil(destroySubject),
   )
 
-  const access = (key: string) => {
-    let releaseCalled = false
+  /**
+   * Emits the archive of `key`, loading it on the first access, and holds it
+   * until the subscription ends. An archive closes only once nothing holds
+   * it: `cleanArchiveAfter` later, or at once on a `purge`. Errors when the
+   * archive fails to load.
+   */
+  const access = (key: string) =>
+    new Observable<Archive>((subscriber) => {
+      const archiveEntry = archives[key] ?? new ArchiveEntry(cleanArchiveAfter)
 
-    const archiveEntry = archives[key] ?? new ArchiveEntry(cleanArchiveAfter)
-
-    archives[key] = archiveEntry
-
-    archiveEntry.update({
-      locks: archiveEntry.state.locks + 1,
-    })
-
-    const release = () => {
-      if (releaseCalled) return
-
-      releaseCalled = true
+      archives[key] = archiveEntry
 
       archiveEntry.update({
-        locks: archiveEntry.state.locks - 1,
+        locks: archiveEntry.state.locks + 1,
       })
-    }
 
-    loadSubject.next(key)
+      loadSubject.next(key)
 
-    const archive$ = archiveEntry.state$.pipe(
-      map(({ archive }) => archive),
-      filter((archive) => !!archive),
-    )
+      const loadedArchive$ = archiveEntry.state$.pipe(
+        map(({ archive }) => archive),
+        filter((archive): archive is Archive => archive !== undefined),
+      )
 
-    const error$ = archiveEntry.state$.pipe(
-      tap(({ error }) => {
-        if (error) {
-          throw error
-        }
-      }),
-      ignoreElements(),
-    )
+      const loadError$ = archiveEntry.state$.pipe(
+        tap(({ error }) => {
+          if (error) {
+            throw error
+          }
+        }),
+        ignoreElements(),
+      )
 
-    return merge(archive$, error$).pipe(
-      first(),
-      map((archive) => ({ archive, release })),
-      catchError((error) => {
-        release()
+      const loadSubscription = merge(loadedArchive$, loadError$)
+        .pipe(first())
+        .subscribe({
+          next: (archive) => subscriber.next(archive),
+          error: (error) => subscriber.error(error),
+        })
 
-        throw error
-      }),
-    )
-  }
+      return function releaseArchive() {
+        loadSubscription.unsubscribe()
+
+        archiveEntry.update({
+          locks: archiveEntry.state.locks - 1,
+        })
+      }
+    })
 
   /**
    * Will purge immediatly archives as soon as they are released
