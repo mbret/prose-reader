@@ -1,6 +1,6 @@
 import { expect, type Page, test } from "@playwright/test"
 import { navigateToSpineItem } from "../../utils"
-import { layOutAndRestore, waitForSettled } from "../../utils/pagination"
+import { layOutAndSettle, waitForSettled } from "../../utils/pagination"
 import {
   getSpineItemIndexesOnScreen,
   getSpineItemsOnScreen,
@@ -26,7 +26,7 @@ const openOnSixthPage = async (page: Page, pageTurnMode: PageTurnMode) => {
 
   // The scenario creates its reader with pages that turn.
   if (pageTurnMode === "scrollable") {
-    await layOutAndRestore(page, { settings: { pageTurnMode } })
+    await layOutAndSettle(page, { settings: { pageTurnMode } })
   }
 
   await navigateToSpineItem({ page, index: SIXTH_PAGE })
@@ -70,7 +70,7 @@ test.describe("Given a book open on its sixth page", () => {
       }) => {
         await openOnSixthPage(page, from)
 
-        await layOutAndRestore(page, { settings: { pageTurnMode: to } })
+        await layOutAndSettle(page, { settings: { pageTurnMode: to } })
 
         await expect
           .poll(() => getSpineItemIndexesOnScreen(page))
@@ -93,7 +93,7 @@ test.describe("Given a book open on its sixth page", () => {
       ]
 
       for (const [change, pageTurnMode] of pageTurnModes.entries()) {
-        await layOutAndRestore(page, { settings: { pageTurnMode } })
+        await layOutAndSettle(page, { settings: { pageTurnMode } })
 
         await expect
           .poll(

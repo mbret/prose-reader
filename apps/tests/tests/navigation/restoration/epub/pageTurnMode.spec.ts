@@ -1,9 +1,9 @@
 import { expect, type Page, test } from "@playwright/test"
 import type { ReadingPosition } from "@prose-reader/core"
-import { navigateToSpineItem } from "../../../utils"
-import { layOutAndRestore, waitForSettled } from "../../../utils/pagination"
+import { getLongChapterIndex, navigateToSpineItem } from "../../../utils"
+import { layOutAndSettle, waitForSettled } from "../../../utils/pagination"
 import { getReader } from "../../../utils/reader"
-import { getLongChapterIndex, readPosition } from "./position"
+import { readPosition } from "./position"
 
 /**
  * The reading position is the place in the text the reader navigated to. A
@@ -62,10 +62,10 @@ test.describe("Given a page after a chapter's first", () => {
 
       const numberOfReadingPositionsBefore = await countReadingPositions(page)
 
-      await layOutAndRestore(page, {
+      await layOutAndSettle(page, {
         settings: { pageTurnMode: "scrollable" },
       })
-      await layOutAndRestore(page, {
+      await layOutAndSettle(page, {
         settings: { pageTurnMode: "controlled" },
       })
 
