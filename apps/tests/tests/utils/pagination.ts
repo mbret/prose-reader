@@ -125,8 +125,13 @@ export const resizeAndSettle = async (
  * Lays the reader out, with `reader.layout()` or, given `settings`, by
  * updating them, and resolves once that layout has voided the current
  * navigation, the reader has restored the navigation onto the new layout, and
- * that result has settled. The wait starts in the same task as the layout, so
- * a layout before it, such as for a chapter loading nearby, cannot meet it.
+ * that result has settled.
+ *
+ * The wait runs in the page, from before the layout, so a layout before it,
+ * such as for a chapter loading nearby, cannot meet it. A layout still in
+ * progress is waited for first: laid out during it, this one would not void
+ * the navigation again, and the wait could not tell the two restorations
+ * apart.
  *
  * Restoration can land where the navigation already was, so nothing on screen
  * tells when it happened. A layout that changes nothing is one such case.
@@ -148,44 +153,60 @@ export const layOutAndRestore = async (
   await reader.evaluate(
     (reader, settings) =>
       new Promise<void>((resolve, reject) => {
-        let isReplayingCurrentValue = true
-        let isVoided = false
+        let stage: "awaitingHold" | "awaitingVoid" | "awaitingRestoration" =
+          "awaitingHold"
         const timer = setTimeout(
           () =>
             reject(
               new Error(
-                isVoided
-                  ? "the navigation was not restored onto the new layout within 10s"
-                  : "no layout voided the navigation within 10s",
+                {
+                  awaitingHold:
+                    "the navigation did not hold on the current layout within 10s",
+                  awaitingVoid: "no layout voided the navigation within 10s",
+                  awaitingRestoration:
+                    "the navigation was not restored onto the new layout within 10s",
+                }[stage],
               ),
             ),
           10_000,
         )
+        const layOut = () => {
+          if (settings) {
+            reader.settings.update(settings)
+          } else {
+            reader.layout()
+          }
+        }
         const subscription =
           reader.navigation.navigationAgainstCurrentLayout$.subscribe(
             ({ navigation, holdsOnCurrentLayout }) => {
-              if (isReplayingCurrentValue) return
+              if (stage === "awaitingHold") {
+                if (!holdsOnCurrentLayout) return
 
-              if (!holdsOnCurrentLayout) {
-                isVoided = true
+                stage = "awaitingVoid"
+                // After this emission has reached the reader's own subscribers
+                queueMicrotask(layOut)
 
                 return
               }
 
-              if (!isVoided || navigation.triggeredBy !== "restoration") return
+              if (stage === "awaitingVoid") {
+                if (!holdsOnCurrentLayout) stage = "awaitingRestoration"
+
+                return
+              }
+
+              if (
+                !holdsOnCurrentLayout ||
+                navigation.triggeredBy !== "restoration"
+              )
+                return
 
               subscription.unsubscribe()
               clearTimeout(timer)
               resolve()
             },
           )
-        isReplayingCurrentValue = false
-
-        if (settings) {
-          reader.settings.update(settings)
-        } else {
-          reader.layout()
-        }
       }),
     settings,
   )
