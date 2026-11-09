@@ -53,7 +53,10 @@ export class ScrollNavigationController
   /** Emits once a navigation has left the element where it goes. */
   private readonly navigationAppliedSubject = new Subject<void>()
 
-  /** Whether the controller is the active one, see {@link isActive}. */
+  /**
+   * Whether the book scrolls: the computed page turn mode is `scrollable`.
+   * Replays the current value, then emits at each change of mode.
+   */
   public readonly isActive$: Observable<boolean>
 
   /**
@@ -251,9 +254,12 @@ export class ScrollNavigationController
     if (!element) return
 
     this.applyNavigationPosition(element, navigation)
+    // Also for a navigation that found the element where it goes: the
+    // browser may have moved it there, and not have reported it yet.
     this.navigationAppliedSubject.next()
   }
 
+  /** Whether the book scrolls: the computed page turn mode is `scrollable`. */
   public isActive = () => {
     return this.settings.values.computedPageTurnMode === "scrollable"
   }

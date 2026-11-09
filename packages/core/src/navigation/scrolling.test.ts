@@ -1,6 +1,7 @@
 // @vitest-environment jsdom
 import { first, firstValueFrom, skip } from "rxjs"
 import { describe, expect, it } from "vitest"
+import { SpinePosition } from "../spine/types"
 import {
   createPrePaginatedManifest,
   createTestReader,
@@ -116,6 +117,30 @@ describe("Given a book that scrolls", () => {
       expect(hasLockBeenHeld()).toBe(false)
       expect(userNavigations()).toHaveLength(0)
       expect(reader.navigation.getNavigation().spineItem).toBe(2)
+    })
+  })
+
+  describe("When the reader navigates to where the browser already moved the element", () => {
+    it("does not take the scroll event the browser reports afterwards for the user's", async () => {
+      const { reader, scrollElement } = await openOnPage(2, {
+        pageTurnMode: "scrollable",
+      })
+      const { hasLockBeenHeld } = recordNavigationsAndLock(reader)
+
+      // The browser moves the element, and reports it a frame later.
+      scrollElement.scrollTop = topOfPage(1)
+
+      // The reader finds the element where it goes, and does not scroll it.
+      reader.navigation.navigate({
+        target: {
+          type: "position",
+          value: new SpinePosition({ x: 0, y: topOfPage(1) }),
+        },
+        animation: false,
+      })
+      deliverScrollEvent(scrollElement)
+
+      expect(hasLockBeenHeld()).toBe(false)
     })
   })
 
