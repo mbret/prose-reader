@@ -1,5 +1,6 @@
-import { map, pairwise, takeUntil, tap } from "rxjs"
+import { skip, takeUntil, tap } from "rxjs"
 import type { ExtendedSettings } from "../../settings/SettingsInterface"
+import type { SpineItem } from "../../spineItem/SpineItem"
 import { upsertCSSToFrame } from "../../utils/frames"
 import type { EnhancerOutput, RootEnhancer } from "../types/enhancer"
 import type { EnhancerFontsInputSettings } from "./types"
@@ -57,56 +58,36 @@ export const fontsEnhancer =
     }
   `
 
-    /**
-     * Programmatically update every loaded items
-     */
-    const applyChangeToSpineItems = (requireLayout: boolean) => {
-      reader.spineItemsManager.items.forEach((item) => {
-        if (item.renditionLayout !== `pre-paginated`) {
-          const frame = item.renderer.getDocumentFrame()
+    const applyStyleToSpineItem = (item: SpineItem | undefined) => {
+      if (!item || item.renditionLayout === `pre-paginated`) return
 
-          if (frame) {
-            upsertCSSToFrame(frame, `prose-reader-fonts`, getStyle())
-          }
-        }
-      })
+      const frame = item.renderer.getDocumentFrame()
 
-      if (requireLayout) {
-        reader.layout()
+      if (frame) {
+        upsertCSSToFrame(frame, `prose-reader-fonts`, getStyle())
       }
     }
 
-    /**
-     * Make sure we apply the style to any new item loaded.
-     */
     reader.hookManager.register(`item.onDocumentLoad`, async ({ itemId }) => {
-      const item = reader.spineItemsManager.get(itemId)
-
-      if (item?.renditionLayout !== `pre-paginated`) {
-        const frame = item?.renderer.getDocumentFrame()
-
-        if (frame) {
-          upsertCSSToFrame(frame, `prose-reader-fonts`, getStyle())
-        }
-      }
+      applyStyleToSpineItem(reader.spineItemsManager.get(itemId))
     })
 
-    const fontsSettings$ = settings.watch([
-      `fontScale`,
-      `lineHeight`,
-      `fontWeight`,
-      `fontJustification`,
-    ])
-
-    fontsSettings$
+    /**
+     * A change restyles the loaded items, then lays the book out again: the
+     * text can take more or fewer lines, and so a reflowable item more or
+     * fewer pages. A bolder weight does too, as a font's bold face has wider
+     * glyphs. A justification change keeps every line, and is laid out all the
+     * same, rather than have a list of the settings that can move the text.
+     */
+    settings
+      .watch([`fontScale`, `lineHeight`, `fontWeight`, `fontJustification`])
       .pipe(
-        pairwise(),
-        map(
-          ([previousFontsSettings, fontsSettings]) =>
-            fontsSettings.fontScale !== previousFontsSettings.fontScale ||
-            fontsSettings.lineHeight !== previousFontsSettings.lineHeight,
-        ),
-        tap(applyChangeToSpineItems),
+        // the settings the reader starts with, which loaded items get on load
+        skip(1),
+        tap(() => {
+          reader.spineItemsManager.items.forEach(applyStyleToSpineItem)
+          reader.layout()
+        }),
         takeUntil(reader.$.destroy$),
       )
       .subscribe()
