@@ -1,7 +1,6 @@
 import {
   animationFrameScheduler,
   BehaviorSubject,
-  combineLatest,
   delay,
   distinctUntilChanged,
   filter,
@@ -12,7 +11,6 @@ import {
   type Observable,
   of,
   Subject,
-  share,
   shareReplay,
   startWith,
   switchMap,
@@ -55,7 +53,6 @@ export class ControlledNavigationController
 
   public readonly element$: BehaviorSubject<HTMLElement>
   public isNavigating$: Observable<boolean>
-  public layout$: Observable<unknown>
 
   constructor(
     protected settings: ReaderSettingsManager,
@@ -85,40 +82,6 @@ export class ControlledNavigationController
         this.viewport.value.element.appendChild(element)
         this.element$.next(element)
       }),
-    )
-
-    const settingsThatRequireLayout$ = settings.watch([
-      `computedPageTurnDirection`,
-      `computedPageTurnMode`,
-      `numberOfAdjacentSpineItemToPreLoad`,
-    ])
-
-    /**
-     * Watch for settings update that require changes
-     * on this layer.
-     *
-     * @important
-     * Try not to have duplicate with other lower components that also listen to settings change and re-layout
-     * on the same settings.
-     */
-    const updateElementOnSettingsChange$ = combineLatest([
-      settingsThatRequireLayout$,
-      this.element$,
-    ]).pipe(
-      tap(([, element]) => {
-        if (settings.values.computedPageTurnMode === `scrollable`) {
-          setStylePropertyIfChanged(element.style, `display`, `contents`)
-        } else {
-          setStylePropertyIfChanged(element.style, `display`, `block`)
-        }
-      }),
-    )
-
-    this.layout$ = updateElementOnSettingsChange$.pipe(
-      tap(() => {
-        report.info(`layout`, settings.values)
-      }),
-      share(),
     )
 
     this.isNavigating$ = this.navigateSubject.pipe(
@@ -247,9 +210,22 @@ export class ControlledNavigationController
       shareReplay(1),
     )
 
-    merge(elementInit$, this.isNavigating$, this.layout$)
+    merge(elementInit$, this.isNavigating$)
       .pipe(takeUntil(this.destroy$))
       .subscribe()
+  }
+
+  /**
+   * Makes the element the box the spine moves in while the page turn mode is
+   * controlled, and takes its box away otherwise, leaving the spine where the
+   * scroll navigator scrolls it.
+   */
+  public displaySurfaceWhileActive() {
+    setStylePropertyIfChanged(
+      this.element$.getValue().style,
+      `display`,
+      this.isActive() ? `block` : `contents`,
+    )
   }
 
   /**

@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
 import { EMPTY, filter, firstValueFrom, of, skip } from "rxjs"
-import { describe, expect, it, onTestFinished, vi } from "vitest"
+import { describe, expect, it, vi } from "vitest"
 import { getPageStartProgression } from "../pagination/progression"
 import { SpinePosition } from "../spine/types"
 import { DefaultRenderer } from "../spineItem/renderer/DefaultRenderer"
@@ -18,6 +18,7 @@ import {
   requestLayoutByUnloadingItem,
   setTestViewport,
   settledOn,
+  stubElementScrolling,
   TextDocumentRenderer,
 } from "../tests/readerHarness"
 import { createTestManifest, waitFor } from "../tests/utils"
@@ -120,18 +121,7 @@ describe("reading position", () => {
   })
 
   it("is the page that shows first, not the item a scroll barely left", async () => {
-    // jsdom has no element scrolling; the scroll navigation controller only
-    // needs the offsets it writes to be kept.
-    Object.defineProperty(HTMLElement.prototype, "scrollTo", {
-      configurable: true,
-      value(this: HTMLElement, options?: ScrollToOptions) {
-        this.scrollLeft = options?.left ?? 0
-        this.scrollTop = options?.top ?? 0
-      },
-    })
-    onTestFinished(() => {
-      Reflect.deleteProperty(HTMLElement.prototype, "scrollTo")
-    })
+    stubElementScrolling()
 
     const reader = createTestReader({ pageTurnMode: "scrollable" })
 

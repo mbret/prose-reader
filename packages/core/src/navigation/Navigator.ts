@@ -3,9 +3,10 @@ import {
   combineLatest,
   distinctUntilChanged,
   map,
-  merge,
   Subject,
+  share,
   shareReplay,
+  tap,
 } from "rxjs"
 import type { CfiManager } from "../cfi"
 import type { Context } from "../context/Context"
@@ -85,18 +86,37 @@ export const createNavigator = ({
     navigationModeControllers.find((controller) => controller.isActive()) ??
     controlledNavigationController
 
-  const navigationModeLayout$ = merge(
-    ...navigationModeControllers.flatMap((controller) =>
-      controller.layout$ ? [controller.layout$] : [],
-    ),
+  /**
+   * The rendering layer of the active controller has its box and the other
+   * one has none. Both switch in the same task, when the page turn mode
+   * changes, and again when an element is created or set up at mount.
+   *
+   * It emits once they have switched: the layer that now shows the book has
+   * yet to be given the navigation, so the navigator restores it there.
+   */
+  const navigationModeSurfaceSwitch$ = combineLatest([
+    settings.watch([`computedPageTurnMode`]),
+    scrollNavigationController.watch(`element`),
+    controlledNavigationController.element$,
+  ]).pipe(
+    tap(() => {
+      navigationModeControllers.forEach((controller) => {
+        controller.displaySurfaceWhileActive()
+      })
+    }),
+    share(),
   )
+
+  // The layers switch whether or not anything listens.
+  const navigationModeSurfaceSwitchSubscription =
+    navigationModeSurfaceSwitch$.subscribe()
 
   const internalNavigator = new InternalNavigator(
     settings,
     context,
     userNavigation$,
     getActiveNavigationModeController,
-    navigationModeLayout$,
+    navigationModeSurfaceSwitch$,
     navigationResolver,
     spine,
     viewport,
@@ -133,6 +153,7 @@ export const createNavigator = ({
   }
 
   const destroy = () => {
+    navigationModeSurfaceSwitchSubscription.unsubscribe()
     navigationModeControllers.forEach((controller) => {
       controller.destroy()
     })

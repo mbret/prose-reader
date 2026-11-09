@@ -2,6 +2,7 @@ import {
   animationFrameScheduler,
   debounceTime,
   exhaustMap,
+  filter,
   finalize,
   first,
   merge,
@@ -39,37 +40,44 @@ export class UserScrollNavigation extends DestroyableClass {
      * Keep it synchronized with scrolling. This should
      * not trigger viewport navigation, only update internal navigation.
      */
-    const navigateOnScroll$ = this.scrollNavigationController.userScroll$.pipe(
-      exhaustMap((event) => {
-        const unlock = this.lock()
+    const navigateOnScroll$ =
+      this.scrollNavigationController.scrollNotMadeByReader$.pipe(
+        exhaustMap((event) => {
+          const unlock = this.lock()
 
-        return merge(
-          this.scrollNavigationController.userScroll$,
-          of(event),
-        ).pipe(
-          debounceTime(
-            SCROLL_FINISHED_DEBOUNCE_TIMEOUT,
-            animationFrameScheduler,
-          ),
-          first(),
-          tap(() => {
-            const spinePosition =
-              this.scrollNavigationController.fromScrollPosition(
-                this.scrollNavigationController.scrollPosition,
-              )
+          return merge(
+            this.scrollNavigationController.scrollNotMadeByReader$,
+            of(event),
+          ).pipe(
+            debounceTime(
+              SCROLL_FINISHED_DEBOUNCE_TIMEOUT,
+              animationFrameScheduler,
+            ),
+            first(),
+            /**
+             * The book may no longer scroll by then, as after a change of
+             * page turn mode: the element has lost its box, and its offsets
+             * no longer say where the user is.
+             */
+            filter(() => this.scrollNavigationController.isActive()),
+            tap(() => {
+              const spinePosition =
+                this.scrollNavigationController.fromScrollPosition(
+                  this.scrollNavigationController.scrollPosition,
+                )
 
-            this.navigationSubject.next({
-              animation: false,
-              type: "scroll",
-              target: { type: "position", value: spinePosition },
-            })
-          }),
-          finalize(() => {
-            unlock()
-          }),
-        )
-      }),
-    )
+              this.navigationSubject.next({
+                animation: false,
+                type: "scroll",
+                target: { type: "position", value: spinePosition },
+              })
+            }),
+            finalize(() => {
+              unlock()
+            }),
+          )
+        }),
+      )
 
     merge(navigateOnScroll$).pipe(takeUntil(this.destroy$)).subscribe()
   }

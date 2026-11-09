@@ -265,7 +265,11 @@ export type NavigationSurface = {
 export type NavigationModeController = NavigationSurface & {
   isActive: () => boolean
   isNavigating$: Observable<boolean>
-  layout$?: Observable<unknown>
+  /**
+   * Gives the controller's rendering layer its box while the controller is
+   * the active one, and takes it away otherwise.
+   */
+  displaySurfaceWhileActive: () => void
   navigate: (navigation: NavigationModeControllerNavigationEntry) => void
   destroy: () => void
 }

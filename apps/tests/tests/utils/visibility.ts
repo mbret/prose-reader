@@ -1,4 +1,5 @@
 import { expect, type Page } from "@playwright/test"
+import type { Reader } from "@prose-reader/core"
 import { getReader } from "./reader"
 
 /** An element's box as the page renders it, and the window it is drawn in. */
@@ -21,23 +22,43 @@ const isBoxOnScreen = ({ box, window }: BoxInWindow) =>
  * layout can still move the containers. All are read in one go, so they
  * describe the same moment.
  */
-export const getSpineItemsOnScreen = async (page: Page) => {
+export const getSpineItemsOnScreen = async (
+  page: Page,
+  {
+    rightAfterUpdatingSettings,
+  }: {
+    /**
+     * Settings to update first, in the same task as the read: what is on
+     * screen is then what the update leaves there, before the reader has laid
+     * out for it.
+     */
+    // functions cannot be sent into the page
+    rightAfterUpdatingSettings?: Omit<
+      Parameters<Reader["settings"]["update"]>[0],
+      "getResource" | "getRenderer"
+    >
+  } = {},
+) => {
   const { isLayoutCurrent, spineItems } = await (
     await getReader(page)
-  ).evaluate((reader) => ({
-    isLayoutCurrent: reader.spine.isLayoutCurrent(),
-    spineItems: reader.spineItemsManager.items.map((spineItem) => {
-      const { top, right, bottom, left } =
-        spineItem.containerElement.getBoundingClientRect()
+  ).evaluate((reader, settings) => {
+    if (settings) reader.settings.update(settings)
 
-      return {
-        index: spineItem.index,
-        loadStatus: spineItem.value.loadStatus,
-        box: { top, right, bottom, left },
-        window: { width: window.innerWidth, height: window.innerHeight },
-      }
-    }),
-  }))
+    return {
+      isLayoutCurrent: reader.spine.isLayoutCurrent(),
+      spineItems: reader.spineItemsManager.items.map((spineItem) => {
+        const { top, right, bottom, left } =
+          spineItem.containerElement.getBoundingClientRect()
+
+        return {
+          index: spineItem.index,
+          loadStatus: spineItem.value.loadStatus,
+          box: { top, right, bottom, left },
+          window: { width: window.innerWidth, height: window.innerHeight },
+        }
+      }),
+    }
+  }, rightAfterUpdatingSettings)
 
   return {
     isLayoutCurrent,

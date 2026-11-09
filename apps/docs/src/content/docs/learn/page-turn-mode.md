@@ -10,7 +10,7 @@ description: "Choose between paginated reading with page turns and continuous ve
 - `controlled`, the default: the reader shows one page, or one spread, at a time, and moves to another when the user turns the page.
 - `scrollable`: the reader stacks the book from top to bottom in an area that scrolls, and the user scrolls through it.
 
-Set it when you create the reader, or change it at any time. A change lays the book out again.
+Set it when you create the reader, or change it at any time. A change lays the book out again and keeps the page the reader is on: the [reading position](/learn/navigation#reading-position) does not move.
 
 ```typescript
 import { createReader } from "@prose-reader/core"
@@ -67,6 +67,7 @@ The reader stacks the spine items from top to bottom in an element that scrolls 
 - Navigations jump to their target, without animation, and do not snap to a page. `turnRight()` and `turnBottom()` scroll down by the height of the viewport, `turnLeft()` and `turnTop()` scroll up.
 - The reader leaves the arrow keys alone. The [Gestures](/enhancers/gestures) enhancer turns its pan and swipe navigation off, and a tap in the margins does not turn the page.
 - The [reading position](/learn/navigation#reading-position) follows the scroll. The reader holds a [lock](/learn/navigation#pans-and-locks) while the user scrolls, and records where the user is half a second after the scrolling stops.
+- Only the user's scrolling does that. A scroll the reader makes itself is not a navigation: going to a navigation's target, or the browser adjusting the scroll as a layout moves the spine items.
 
 Scrollable mode suits content laid out to scroll: webtoons and other long strips, and the pages of comics, manga and PDF. The [Refit](/enhancers/refit) enhancer narrows the viewport in this mode only, and [Zoom](/learn/zoom) behaves differently in it.
 
