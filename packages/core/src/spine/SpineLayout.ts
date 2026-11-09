@@ -9,7 +9,6 @@ import {
   observeOn,
   of,
   Subject,
-  type Subscription,
   skip,
   startWith,
   switchMap,
@@ -357,17 +356,18 @@ export class SpineLayout extends DestroyableClass {
        */
       const laidOutItems = [...keptItems]
       let nextItemIndex = keptItems.length
-      let itemLayout: Subscription | undefined
 
       /**
-       * A loop, rather than an operator for each item: a renderer can lay its
-       * item out at once, as the HTML renderer does, and each item would then
-       * lay the next one out from inside its own call. A spine of a few
-       * hundred items, such as a comic of one item per page, overflowed the
-       * call stack. An item laid out later resumes the loop from its own
-       * callback.
+       * A loop rather than `concatMap`. Once an item is laid out later,
+       * `concatMap` starts each following item from inside the call that
+       * completes the one before it. For items a renderer lays out at once,
+       * as the HTML renderer does, those calls nest, and a long spine
+       * overflows the call stack. An item laid out later resumes the loop
+       * from its own callback.
        */
       const layOutNextItems = () => {
+        // An item's layout can cancel the pass, as a hook that requests a
+        // layout does.
         while (!subscriber.closed) {
           const item = items[nextItemIndex]
 
@@ -380,29 +380,31 @@ export class SpineLayout extends DestroyableClass {
 
           nextItemIndex += 1
 
-          let isLaidOut = false
+          let isLaidOutAtOnce = false
           let isLoopWaiting = false
 
-          itemLayout = this.layOutItem(
-            item,
-            laidOutItems.at(-1)?.endOffset ?? spineStartOffset,
-          ).subscribe({
-            next: (laidOutItem) => {
-              laidOutItems.push(laidOutItem)
-            },
-            error: (error) => {
-              subscriber.error(error)
-            },
-            complete: () => {
-              if (isLoopWaiting) {
-                layOutNextItems()
-              } else {
-                isLaidOut = true
-              }
-            },
-          })
+          subscriber.add(
+            this.layOutItem(
+              item,
+              laidOutItems.at(-1)?.endOffset ?? spineStartOffset,
+            ).subscribe({
+              next: (laidOutItem) => {
+                laidOutItems.push(laidOutItem)
+              },
+              error: (error) => {
+                subscriber.error(error)
+              },
+              complete: () => {
+                if (isLoopWaiting) {
+                  layOutNextItems()
+                } else {
+                  isLaidOutAtOnce = true
+                }
+              },
+            }),
+          )
 
-          if (!isLaidOut) {
+          if (!isLaidOutAtOnce) {
             isLoopWaiting = true
 
             return
@@ -411,10 +413,6 @@ export class SpineLayout extends DestroyableClass {
       }
 
       layOutNextItems()
-
-      return () => {
-        itemLayout?.unsubscribe()
-      }
     })
   }
 

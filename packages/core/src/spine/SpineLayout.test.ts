@@ -452,6 +452,33 @@ describe("SpineLayout", () => {
     }
   })
 
+  it("lays out no other item once an item's hook cancels the pass", () => {
+    const { destroy, hookManager, spineLayout } = createTestSpineLayout({
+      items: 4,
+    })
+    const itemsLaidOut: number[] = []
+    let itemsLaidOutWhenCancelled: number[] | undefined
+
+    hookManager.register("item.onBeforeLayout", ({ item }) => {
+      itemsLaidOut.push(item.index)
+    })
+    hookManager.register("item.onAfterLayout", ({ item }) => {
+      if (item.index !== 1 || itemsLaidOutWhenCancelled) return
+
+      spineLayout.layout()
+      itemsLaidOutWhenCancelled = [...itemsLaidOut]
+    })
+
+    try {
+      spineLayout.layout({ immediate: true })
+
+      expect(itemsLaidOutWhenCancelled).toEqual([0, 1])
+      expect(itemsLaidOut).toEqual(itemsLaidOutWhenCancelled)
+    } finally {
+      destroy()
+    }
+  })
+
   it("keeps RTL right-left spread pairs together after an odd number of pages", async () => {
     const { destroy, layoutRequests, spineLayout } =
       createSpreadModeTestEnvironment({
