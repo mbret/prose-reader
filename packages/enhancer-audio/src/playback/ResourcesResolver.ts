@@ -36,28 +36,20 @@ export class ResourcesResolver {
           return of(resource.href)
         }
 
-        if (resource instanceof Response) {
-          return from(resource.blob()).pipe(
-            map((blob) => {
-              const objectUrl = URL.createObjectURL(blob)
+        return from(resource.blob()).pipe(
+          map((blob) => {
+            const objectUrl = URL.createObjectURL(blob)
 
-              this.cachedSourceByTrackId.set(track.id, {
-                url: objectUrl,
-                release: () => {
-                  URL.revokeObjectURL(objectUrl)
-                },
-              })
+            this.cachedSourceByTrackId.set(track.id, {
+              url: objectUrl,
+              release: () => {
+                URL.revokeObjectURL(objectUrl)
+              },
+            })
 
-              return objectUrl
-            }),
-          )
-        }
-
-        this.cachedSourceByTrackId.set(track.id, {
-          url: track.href,
-        })
-
-        return of(track.href)
+            return objectUrl
+          }),
+        )
       }),
     )
   }

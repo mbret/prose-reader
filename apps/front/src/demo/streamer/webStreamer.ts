@@ -15,15 +15,6 @@ export const webStreamer = new Streamer({
     manifest: streamerHooks.manifest,
     resource: streamerHooks.resource,
   },
-  /**
-   * Local streamer is usually used for non serializable resources
-   * and therefore requires the archive to be long lived. It usually should
-   * not be cleaned while the book is loaded.
-   * eg: PDF.
-   *
-   * The streamer is pruned on book unload.
-   */
-  cleanArchiveAfter: Infinity,
   getArchive: async (key: string) => {
     const { blob, url, filename } = await getBlobFromKey(key)
 

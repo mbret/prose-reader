@@ -11,8 +11,6 @@ import { BOOKMARK_AREA_DATA_ATTRIBUTE } from "@prose-reader/react-reader"
 import type { Manifest } from "@prose-reader/shared"
 import pdfjsViewerInlineCss from "pdfjs-dist/web/pdf_viewer.css?inline"
 import { useMemo } from "react"
-import { of } from "rxjs"
-import { getFileKeyFromUrl } from "../streamer/utils.shared"
 import { webStreamer } from "../streamer/webStreamer"
 import { getReadingPositionKey } from "./usePersistReadingPosition"
 
@@ -76,24 +74,10 @@ export const useCreateReader = (
         },
         pdf: {
           pdfjsViewerInlineCss,
-          getArchiveForItem: (item) => {
-            if (!item.href.endsWith(`pdf`)) {
-              return of(undefined)
-            }
-
-            const key = getFileKeyFromUrl(item.href)
-
-            return webStreamer.accessArchiveWithoutLock(key)
-          },
+          getArchiveForItem: () => webStreamer.accessArchive(bookKey),
         },
       }
 
-      const reader = createAppReader(readerOptions)
-
-      reader.$.destroy$.subscribe(function pruneStreamerOnceDestroyed() {
-        webStreamer.prune()
-      })
-
-      return reader
+      return createAppReader(readerOptions)
     }
   }, [manifest, bookKey])

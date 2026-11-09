@@ -1,4 +1,8 @@
-import { blobFileAccessors, createArchive } from "@prose-reader/archive-reader"
+import {
+  type Archive,
+  blobFileAccessors,
+  createArchive,
+} from "@prose-reader/archive-reader"
 import { describe, expect, it, vi } from "vitest"
 import { Streamer } from "."
 
@@ -61,6 +65,29 @@ describe("Given a streamer serving a single book", () => {
     await streamer.fetchManifest({ key: "book-with-key" })
 
     expect(closeBookWithoutKey).toHaveBeenCalledTimes(1)
+  })
+})
+
+describe("Given an archive held through accessArchive", () => {
+  it("should keep it open through a prune until the subscription ends", async () => {
+    const closeBook = vi.fn(() => Promise.resolve())
+    const streamer = new Streamer({
+      cleanArchiveAfter: Infinity,
+      getArchive: async () =>
+        createArchiveWithOnePage({ body: "page", close: closeBook }),
+    })
+    const archive = Promise.withResolvers<Archive>()
+
+    const hold = streamer.accessArchive("book").subscribe(archive.resolve)
+
+    await archive.promise
+    streamer.prune()
+
+    expect(closeBook).not.toHaveBeenCalled()
+
+    hold.unsubscribe()
+
+    expect(closeBook).toHaveBeenCalledOnce()
   })
 })
 

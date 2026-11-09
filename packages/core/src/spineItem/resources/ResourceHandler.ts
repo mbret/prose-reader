@@ -23,8 +23,6 @@ export class ResourceHandler {
 
     if (resource instanceof Response) return resource
 
-    if (resource instanceof URL) return fetch(resource)
-
-    return resource
+    return fetch(resource)
   }
 }
