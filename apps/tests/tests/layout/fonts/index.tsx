@@ -2,16 +2,20 @@ import { createReader } from "@prose-reader/core"
 import { openFixtureBook } from "../../fixtureBook"
 
 /**
- * A reflowable book opened at the `cfi` of the URL, so a spec can change the
- * settings that decide how many pages a chapter takes.
+ * A reflowable book, so a spec can change the settings that decide how many
+ * pages a chapter takes. With `sansSerif` in the URL, its text is set in the
+ * system sans-serif font (see `server/serveBooks.ts`).
  */
 async function run() {
-  const book = await openFixtureBook("accessible_epub_3.epub")
-  const cfi = new URLSearchParams(window.location.search).get("cfi")
+  const query = new URLSearchParams(window.location.search)
+  const book = await openFixtureBook(
+    query.has("sansSerif")
+      ? "accessible_epub_3-sans-serif.epub"
+      : "accessible_epub_3.epub",
+  )
 
   const reader = createReader({
     ...book,
-    target: cfi ? { type: "cfi", value: cfi } : undefined,
     pageTurnAnimation: "none",
     layoutLayerTransition: false,
   })
