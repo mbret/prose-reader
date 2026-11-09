@@ -1,8 +1,11 @@
 import { skip, takeUntil, tap } from "rxjs"
 import type { ExtendedSettings } from "../../settings/SettingsInterface"
+import type { SpineItem } from "../../spineItem/SpineItem"
 import { upsertCSSToFrame } from "../../utils/frames"
 import type { EnhancerOutput, RootEnhancer } from "../types/enhancer"
 import type { EnhancerFontsInputSettings } from "./types"
+
+const FONTS_STYLESHEET_ID = `prose-reader-fonts`
 
 const defaultFontsSettings: EnhancerFontsInputSettings = {
   fontScale: 1,
@@ -11,17 +14,23 @@ const defaultFontsSettings: EnhancerFontsInputSettings = {
   fontJustification: `publisher`,
 }
 
-/**
- * @important
- * We don't apply font scaling on pre-paginated because it could potentially
- * break publisher scaling. Since it's specifically made for the given fixed layout
- * we should trust the publisher and not break its rendering.
- * @see 9781250213662
- *
- * Setting the font scale on body still has a chance to break publisher potential
- * font size on body if they already use something.
- * @see 9782714493743
- */
+const getFontsStylesheet = ({
+  fontScale,
+  lineHeight,
+  fontWeight,
+  fontJustification,
+}: EnhancerFontsInputSettings) => `
+  body {
+    ${fontScale !== 1 ? `font-size: ${fontScale}em !important;` : ``}
+    ${lineHeight !== `publisher` ? `line-height: ${lineHeight} !important;` : ``}
+    ${fontWeight !== `publisher` ? `font-weight: ${fontWeight} !important;` : ``}
+    ${fontJustification !== `publisher` ? `text-align: ${fontJustification} !important;` : ``}
+  }
+`
+
+const keepsPublisherFonts = (spineItem: SpineItem) =>
+  spineItem.renditionLayout === `pre-paginated`
+
 export const fontsEnhancer =
   <InheritOptions, InheritOutput extends EnhancerOutput<RootEnhancer>>(
     next: (options: InheritOptions) => InheritOutput,
@@ -38,51 +47,28 @@ export const fontsEnhancer =
     const inheritedSettings: InheritOutput["settings"] = reader.settings
     const settings = inheritedSettings.extend(defaultFontsSettings, options)
 
-    const getFontsStylesheet = () => `
-    ${
-      /*
-      Ideally, we would like to use !important but it could break publisher specific
-      cases.
-      Also right now we do not apply it to * since it would also break publisher
-      more specific scaling down the tree.
-
-      body *:not([class^="mjx-"]) {
-    */ ``
+    const applyFontsStylesheet = (spineItem: SpineItem) => {
+      upsertCSSToFrame(
+        spineItem.renderer.getDocumentFrame(),
+        FONTS_STYLESHEET_ID,
+        getFontsStylesheet(settings.values),
+      )
     }
-    body {
-      ${settings.values.fontScale !== 1 ? `font-size: ${settings.values.fontScale}em !important;` : ``}
-      ${settings.values.lineHeight !== `publisher` ? `line-height: ${settings.values.lineHeight} !important;` : ``}
-      ${settings.values.fontWeight !== `publisher` ? `font-weight: ${settings.values.fontWeight} !important;` : ``}
-      ${settings.values.fontJustification !== `publisher` ? `text-align: ${settings.values.fontJustification} !important;` : ``}
-    }
-  `
 
-    /**
-     * Each layout of an item measures its document, the first one after the
-     * document loads included, so the document gets the settings as they are
-     * just before it.
-     */
     reader.hookManager.register(`item.onBeforeLayout`, ({ item }) => {
       const spineItem = reader.spineItemsManager.get(item.id)
 
-      if (!spineItem || spineItem.renditionLayout === `pre-paginated`) return
-
-      upsertCSSToFrame(
-        spineItem.renderer.getDocumentFrame(),
-        `prose-reader-fonts`,
-        getFontsStylesheet(),
-      )
+      if (spineItem && !keepsPublisherFonts(spineItem)) {
+        applyFontsStylesheet(spineItem)
+      }
     })
 
-    /**
-     * A change can make the text take more or fewer lines, and so change the
-     * number of pages of a reflowable item. A change of weight can do this too,
-     * because the bold face of a font usually has wider glyphs.
-     */
-    settings
+    const fontsSettingsChange$ = settings
       .watch([`fontScale`, `lineHeight`, `fontWeight`, `fontJustification`])
+      .pipe(skip(1))
+
+    fontsSettingsChange$
       .pipe(
-        skip(1),
         tap(() => reader.layout()),
         takeUntil(reader.$.destroy$),
       )
