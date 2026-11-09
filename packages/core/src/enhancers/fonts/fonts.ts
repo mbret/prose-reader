@@ -1,6 +1,5 @@
 import { skip, takeUntil, tap } from "rxjs"
 import type { ExtendedSettings } from "../../settings/SettingsInterface"
-import type { SpineItem } from "../../spineItem/SpineItem"
 import { upsertCSSToFrame } from "../../utils/frames"
 import type { EnhancerOutput, RootEnhancer } from "../types/enhancer"
 import type { EnhancerFontsInputSettings } from "./types"
@@ -39,7 +38,7 @@ export const fontsEnhancer =
     const inheritedSettings: InheritOutput["settings"] = reader.settings
     const settings = inheritedSettings.extend(defaultFontsSettings, options)
 
-    const getStyle = () => `
+    const getFontsStylesheet = () => `
     ${
       /*
       Ideally, we would like to use !important but it could break publisher specific
@@ -58,36 +57,33 @@ export const fontsEnhancer =
     }
   `
 
-    const applyStyleToSpineItem = (item: SpineItem | undefined) => {
-      if (!item || item.renditionLayout === `pre-paginated`) return
+    /**
+     * Each layout of an item measures its document, the first one after the
+     * document loads included, so the document gets the settings as they are
+     * just before it.
+     */
+    reader.hookManager.register(`item.onBeforeLayout`, ({ item }) => {
+      const spineItem = reader.spineItemsManager.get(item.id)
 
-      const frame = item.renderer.getDocumentFrame()
+      if (!spineItem || spineItem.renditionLayout === `pre-paginated`) return
 
-      if (frame) {
-        upsertCSSToFrame(frame, `prose-reader-fonts`, getStyle())
-      }
-    }
-
-    reader.hookManager.register(`item.onDocumentLoad`, async ({ itemId }) => {
-      applyStyleToSpineItem(reader.spineItemsManager.get(itemId))
+      upsertCSSToFrame(
+        spineItem.renderer.getDocumentFrame(),
+        `prose-reader-fonts`,
+        getFontsStylesheet(),
+      )
     })
 
     /**
-     * A change restyles the loaded items, then lays the book out again: the
-     * text can take more or fewer lines, and so a reflowable item more or
-     * fewer pages. A bolder weight does too, as a font's bold face has wider
-     * glyphs. A justification change keeps every line, and is laid out all the
-     * same, rather than have a list of the settings that can move the text.
+     * A change can make the text take more or fewer lines, and so change the
+     * number of pages of a reflowable item. A change of weight can do this too,
+     * because the bold face of a font usually has wider glyphs.
      */
     settings
       .watch([`fontScale`, `lineHeight`, `fontWeight`, `fontJustification`])
       .pipe(
-        // the settings the reader starts with, which loaded items get on load
         skip(1),
-        tap(() => {
-          reader.spineItemsManager.items.forEach(applyStyleToSpineItem)
-          reader.layout()
-        }),
+        tap(() => reader.layout()),
         takeUntil(reader.$.destroy$),
       )
       .subscribe()
