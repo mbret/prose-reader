@@ -14,6 +14,19 @@ const defaultFontsSettings: EnhancerFontsInputSettings = {
   fontJustification: `publisher`,
 }
 
+/**
+ * @important
+ * Setting the font scale on body still has a chance to break publisher potential
+ * font size on body if they already use something.
+ * @see 9782714493743
+ *
+ * Ideally, we would like to use !important but it could break publisher specific
+ * cases.
+ * Also right now we do not apply it to * since it would also break publisher
+ * more specific scaling down the tree.
+ *
+ * body *:not([class^="mjx-"]) {
+ */
 const getFontsStylesheet = ({
   fontScale,
   lineHeight,
@@ -28,6 +41,13 @@ const getFontsStylesheet = ({
   }
 `
 
+/**
+ * @important
+ * We don't apply font scaling on pre-paginated because it could potentially
+ * break publisher scaling. Since it's specifically made for the given fixed layout
+ * we should trust the publisher and not break its rendering.
+ * @see 9781250213662
+ */
 const keepsPublisherFonts = (spineItem: SpineItem) =>
   spineItem.renditionLayout === `pre-paginated`
 
