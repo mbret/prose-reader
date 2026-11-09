@@ -1,9 +1,9 @@
 import { expect, type Page, test } from "@playwright/test"
-import { navigateToSpineItem } from "../../../utils"
+import { getLongChapterIndex, navigateToSpineItem } from "../../../utils"
 import { layOutAndRestore, waitForSettled } from "../../../utils/pagination"
 import { getReader } from "../../../utils/reader"
 import { isCfiPositionVisible } from "../../../utils/visibility"
-import { getLongChapterIndex, readPosition } from "./position"
+import { readPosition } from "./position"
 
 /**
  * After a layout, the reader restores the current navigation to the page that
