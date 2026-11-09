@@ -1,4 +1,5 @@
 import type { CreateReaderOptions, Reader } from "@prose-reader/core"
+import { defer } from "rxjs"
 import { PdfRenderer } from "./renderer/PdfRenderer"
 import type { EnhancerOptions } from "./types"
 
@@ -28,7 +29,7 @@ export const pdfEnhancer =
           return (params) =>
             new PdfRenderer(
               options.pdf.pdfjsViewerInlineCss,
-              options.pdf.getArchiveForItem(item),
+              defer(() => options.pdf.getArchiveForItem(item)),
               params,
             )
         }
