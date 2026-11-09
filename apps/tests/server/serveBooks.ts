@@ -13,13 +13,21 @@ const STREAMER_PATH = "/streamer"
 type RewrittenBook = {
   /** The file of `public/epubs` it is made from. */
   fixture: string
-  /** Rewrites the content of each of the fixture's xhtml pages. */
-  rewritePage: (fixturePage: string) => string
+  /** Rewrites the fixture's archive, in place. */
+  rewrite: (bookZip: JSZip) => Promise<void>
 }
 
+/** Rewrites the content of each xhtml page of a book. */
+const rewriteEachPage =
+  (rewritePage: (fixturePage: string) => string) => async (bookZip: JSZip) => {
+    for (const page of bookZip.file(/\.xhtml$/)) {
+      bookZip.file(page.name, rewritePage(await page.async("string")))
+    }
+  }
+
 /**
- * Books made from a fixture by rewriting each of its pages, for the scenarios
- * that need a fixture to differ in one way. Each is served beside the files of
+ * Books made from a fixture by rewriting it, for the scenarios that need a
+ * fixture to differ in one way. Each is served beside the files of
  * `public/epubs`, as one of them, so that a scenario opens it the same way
  * whichever way it loads its book.
  */
@@ -32,11 +40,12 @@ const REWRITTEN_BOOKS = new Map<string, RewrittenBook>([
        * Gives every image `loading="lazy"`, and a top margin that keeps it far
        * beyond any engine's lazy loading distance while its page loads.
        */
-      rewritePage: (fixturePage) =>
+      rewrite: rewriteEachPage((fixturePage) =>
         fixturePage.replace(
           /<img /g,
           '<img loading="lazy" style="margin-top: 10000px" ',
         ),
+      ),
     },
   ],
   [
@@ -47,19 +56,21 @@ const REWRITTEN_BOOKS = new Map<string, RewrittenBook>([
        * Sets the text in the system sans-serif font. Unlike the book's own
        * font, it has a bold face, whose glyphs are wider.
        */
-      rewritePage: (fixturePage) =>
+      rewrite: rewriteEachPage((fixturePage) =>
         fixturePage.replace(
           "</head>",
           "<style>body, body * { font-family: sans-serif !important; }</style></head>",
         ),
+      ),
     },
   ],
   [
     "sous-le-vent-without-stylesheets.epub",
     {
       fixture: "sous-le-vent.epub",
-      rewritePage: (fixturePage) =>
+      rewrite: rewriteEachPage((fixturePage) =>
         fixturePage.replace(/<link [^>]*rel="stylesheet"[^>]*\/>/g, ""),
+      ),
     },
   ],
 ])
@@ -71,14 +82,7 @@ const loadBook = async (book: string) => {
     await readFile(resolve(BOOKS_DIRECTORY, rewrittenBook?.fixture ?? book)),
   )
 
-  if (rewrittenBook) {
-    for (const page of bookZip.file(/\.xhtml$/)) {
-      bookZip.file(
-        page.name,
-        rewrittenBook.rewritePage(await page.async("string")),
-      )
-    }
-  }
+  await rewrittenBook?.rewrite(bookZip)
 
   return bookZip
 }
