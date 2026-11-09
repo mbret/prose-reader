@@ -1,7 +1,7 @@
 import { expect, test } from "@playwright/test"
 import { updateSettings } from "../../utils"
 import {
-  layOutAndRestore,
+  layOutAndSettle,
   waitForSettledOnCurrentLayout,
 } from "../../utils/pagination"
 import { getReader } from "../../utils/reader"
@@ -72,7 +72,7 @@ test.describe("Given a reflowable chapter set in a font with a bold face", () =>
       widths.regular,
     )
 
-    await layOutAndRestore(page)
+    await layOutAndSettle(page)
 
     const numberOfPagesAtRegularWeight = await getNumberOfPagesOfChapter()
 
@@ -91,7 +91,7 @@ test.describe("Given a reflowable chapter set in a font with a bold face", () =>
     const numberOfPagesAtBoldWeight = await getNumberOfPagesOfChapter()
 
     // The layout the weight change ran found every page: one more finds none.
-    await layOutAndRestore(page)
+    await layOutAndSettle(page)
 
     expect(await getNumberOfPagesOfChapter()).toBe(numberOfPagesAtBoldWeight)
   })

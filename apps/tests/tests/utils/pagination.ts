@@ -123,20 +123,17 @@ export const resizeAndSettle = async (
 
 /**
  * Lays the reader out, with `reader.layout()` or, given `settings`, by
- * updating them, and resolves once that layout has voided the current
- * navigation, the reader has restored the navigation onto the new layout, and
- * that result has settled.
+ * updating them, and resolves once the result after that layout has settled:
+ * the navigation, restored onto the new layout. Fails at once if the call
+ * lays nothing out, as a settings update that requests no layout does.
  *
- * The wait runs in the page, from before the layout, so a layout before it,
- * such as for a chapter loading nearby, cannot meet it. A layout still in
- * progress is waited for first: laid out during it, this one would not void
- * the navigation again, and the wait could not tell the two restorations
- * apart.
- *
- * Restoration can land where the navigation already was, so nothing on screen
- * tells when it happened. A layout that changes nothing is one such case.
+ * A layout requests a measure of the viewport before the call returns, and
+ * ends the settled result at once, so the next settled result is the one
+ * after it. Restoration can land where the navigation already was, so
+ * nothing on screen tells when it happened: a layout that changes nothing is
+ * one such case.
  */
-export const layOutAndRestore = async (
+export const layOutAndSettle = async (
   page: Page,
   {
     settings,
@@ -149,66 +146,30 @@ export const layOutAndRestore = async (
   } = {},
 ) => {
   const reader = await getReader(page)
+  const hasLaidOutViewport = await reader.evaluate((reader, settings) => {
+    let hasLaidOutViewport = false
+    const subscription = reader.viewport.layout$.subscribe(() => {
+      hasLaidOutViewport = true
+    })
 
-  await reader.evaluate(
-    (reader, settings) =>
-      new Promise<void>((resolve, reject) => {
-        let stage: "awaitingHold" | "awaitingVoid" | "awaitingRestoration" =
-          "awaitingHold"
-        const timer = setTimeout(
-          () =>
-            reject(
-              new Error(
-                {
-                  awaitingHold:
-                    "the navigation did not hold on the current layout within 10s",
-                  awaitingVoid: "no layout voided the navigation within 10s",
-                  awaitingRestoration:
-                    "the navigation was not restored onto the new layout within 10s",
-                }[stage],
-              ),
-            ),
-          10_000,
-        )
-        const layOut = () => {
-          if (settings) {
-            reader.settings.update(settings)
-          } else {
-            reader.layout()
-          }
-        }
-        const subscription =
-          reader.navigation.navigationAgainstCurrentLayout$.subscribe(
-            ({ navigation, holdsOnCurrentLayout }) => {
-              if (stage === "awaitingHold") {
-                if (!holdsOnCurrentLayout) return
+    if (settings) {
+      reader.settings.update(settings)
+    } else {
+      reader.layout()
+    }
 
-                stage = "awaitingVoid"
-                // After this emission has reached the reader's own subscribers
-                queueMicrotask(layOut)
+    subscription.unsubscribe()
 
-                return
-              }
+    return hasLaidOutViewport
+  }, settings)
 
-              if (stage === "awaitingVoid") {
-                if (!holdsOnCurrentLayout) stage = "awaitingRestoration"
+  if (!hasLaidOutViewport) {
+    throw new Error(
+      settings
+        ? `the update of ${JSON.stringify(settings)} requested no layout`
+        : "reader.layout() requested no layout",
+    )
+  }
 
-                return
-              }
-
-              if (
-                !holdsOnCurrentLayout ||
-                navigation.triggeredBy !== "restoration"
-              )
-                return
-
-              subscription.unsubscribe()
-              clearTimeout(timer)
-              resolve()
-            },
-          )
-      }),
-    settings,
-  )
   await waitForSettled(page)
 }
