@@ -3,7 +3,7 @@ import { navigateToSpineItem } from "../../utils"
 import { layOutAndSettle, waitForSettled } from "../../utils/pagination"
 import {
   getSpineItemIndexesOnScreen,
-  getSpineItemsOnScreen,
+  updateSettingsAndGetSpineItemsOnScreen,
 } from "../../utils/visibility"
 
 /**
@@ -49,10 +49,10 @@ test.describe("Given a book open on its sixth page", () => {
       }) => {
         await openOnSixthPage(page, from)
 
-        const { isLayoutCurrent, spineItems } = await getSpineItemsOnScreen(
-          page,
-          { rightAfterUpdatingSettings: { pageTurnMode: to } },
-        )
+        const { isLayoutCurrent, spineItems } =
+          await updateSettingsAndGetSpineItemsOnScreen(page, {
+            pageTurnMode: to,
+          })
 
         expect(
           isLayoutCurrent,

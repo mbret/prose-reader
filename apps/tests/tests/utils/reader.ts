@@ -17,6 +17,15 @@ import type { Reader } from "@prose-reader/core"
  * }, 2)
  * ```
  */
+/**
+ * The settings a spec can update from outside the page: all but the ones that
+ * hold a function, which cannot be sent into the page.
+ */
+export type SettingsSentIntoPage = Omit<
+  Parameters<Reader["settings"]["update"]>[0],
+  "getResource" | "getRenderer"
+>
+
 export const getReader = <ScenarioReader extends Reader = Reader>(
   page: Page,
 ): Promise<JSHandle<ScenarioReader>> =>

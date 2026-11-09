@@ -1,10 +1,6 @@
 import { expect, type Page } from "@playwright/test"
-import type {
-  NavigationTarget,
-  Reader,
-  UserNavigationEntry,
-} from "@prose-reader/core"
-import { getReader } from "./reader"
+import type { NavigationTarget, UserNavigationEntry } from "@prose-reader/core"
+import { getReader, type SettingsSentIntoPage } from "./reader"
 
 export async function waitForSpineItemReady(page: Page, indexes: number[]) {
   for (const index of indexes) {
@@ -164,11 +160,7 @@ export const updateSettings = async ({
   settings,
 }: {
   page: Page
-  // functions cannot be sent into the page
-  settings: Omit<
-    Parameters<Reader["settings"]["update"]>[0],
-    "getResource" | "getRenderer"
-  >
+  settings: SettingsSentIntoPage
 }) => {
   const reader = await getReader(page)
 

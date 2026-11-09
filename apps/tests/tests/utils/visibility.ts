@@ -1,6 +1,5 @@
 import { expect, type Page } from "@playwright/test"
-import type { Reader } from "@prose-reader/core"
-import { getReader } from "./reader"
+import { getReader, type SettingsSentIntoPage } from "./reader"
 
 /** An element's box as the page renders it, and the window it is drawn in. */
 type BoxInWindow = {
@@ -16,28 +15,13 @@ const isBoxOnScreen = ({ box, window }: BoxInWindow) =>
   box.left < window.width
 
 /**
- * Each spine item's load status, and whether any of its container is on
- * screen as the page renders it: what a zoom, a scroll or any other transform
- * shows. With them, whether the layout is current: until it is, a pending
- * layout can still move the containers. All are read in one go, so they
- * describe the same moment.
+ * Each spine item's load status and container box, with whether the layout is
+ * current, all read in one go. Given settings, it updates them first, in the
+ * same task as the read.
  */
-export const getSpineItemsOnScreen = async (
+const readSpineItemBoxes = async (
   page: Page,
-  {
-    rightAfterUpdatingSettings,
-  }: {
-    /**
-     * Settings to update first, in the same task as the read: what is on
-     * screen is then what the update leaves there, before the reader has laid
-     * out for it. Not `getResource` or `getRenderer`: functions cannot be sent
-     * into the page.
-     */
-    rightAfterUpdatingSettings?: Omit<
-      Parameters<Reader["settings"]["update"]>[0],
-      "getResource" | "getRenderer"
-    >
-  } = {},
+  settingsToUpdateFirst?: SettingsSentIntoPage,
 ) => {
   const { isLayoutCurrent, spineItems } = await (
     await getReader(page)
@@ -58,7 +42,7 @@ export const getSpineItemsOnScreen = async (
         }
       }),
     }
-  }, rightAfterUpdatingSettings)
+  }, settingsToUpdateFirst)
 
   return {
     isLayoutCurrent,
@@ -69,6 +53,25 @@ export const getSpineItemsOnScreen = async (
     })),
   }
 }
+
+/**
+ * Each spine item's load status, and whether any of its container is on
+ * screen as the page renders it: what a zoom, a scroll or any other transform
+ * shows. With them, whether the layout is current: until it is, a pending
+ * layout can still move the containers. All are read in one go, so they
+ * describe the same moment.
+ */
+export const getSpineItemsOnScreen = (page: Page) => readSpineItemBoxes(page)
+
+/**
+ * Updates settings, and reads what `getSpineItemsOnScreen` does in the same
+ * task: what the update leaves on screen, before the reader has laid out for
+ * it.
+ */
+export const updateSettingsAndGetSpineItemsOnScreen = (
+  page: Page,
+  settings: SettingsSentIntoPage,
+) => readSpineItemBoxes(page, settings)
 
 /** The indexes of the spine items any of whose container is on screen. */
 export const getSpineItemIndexesOnScreen = async (page: Page) =>
