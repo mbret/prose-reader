@@ -1,117 +1,104 @@
 /* @vitest-environment happy-dom */
 
-import { type Archive, createArchive } from "@prose-reader/archive-reader"
+import type { Archive } from "@prose-reader/archive-reader"
 import { createReader, type Manifest } from "@prose-reader/core"
-import { lastValueFrom, type Observable, of, Subject } from "rxjs"
-import { afterEach, describe, expect, it, onTestFinished, vi } from "vitest"
+import { Observable } from "rxjs"
+import { describe, expect, it, onTestFinished, vi } from "vitest"
+import { createArchiveFromPdf } from "./createArchiveFromPdf"
 import { pdfEnhancer } from "./pdfEnhancer"
 
-const chapterItem: Manifest["items"][number] = {
-  id: `chapter`,
-  href: `http://localhost/chapter.xhtml`,
-  mediaType: `application/xhtml+xml`,
+/**
+ * pdf.js stands for a one-page document whose page never arrives, so a page
+ * load stays in progress until the reader is destroyed.
+ */
+const pdfjs = vi.hoisted(() => ({
+  document: {
+    numPages: 1,
+    getPage: () => new Promise<never>(() => undefined),
+  },
+  destroyLoadingTask: vi.fn(() => Promise.resolve()),
+}))
+
+vi.mock("pdfjs-dist", () => ({
+  getDocument: () => ({
+    promise: Promise.resolve(pdfjs.document),
+    destroy: pdfjs.destroyLoadingTask,
+  }),
+  RenderingCancelledException: class RenderingCancelledException extends Error {},
+  TextLayer: class TextLayer {},
+}))
+
+const pageItem: Manifest["items"][number] = {
+  id: `page-0`,
+  href: `http://localhost/0.pdf`,
+  mediaType: `application/pdf`,
 }
 
-const manifest: Manifest = {
-  filename: `book.epub`,
-  mediaType: `application/epub+zip`,
+const pdfManifest: Manifest = {
+  filename: `book.pdf`,
+  mediaType: `application/pdf`,
   title: `book`,
-  renditionLayout: `reflowable`,
+  renditionLayout: `pre-paginated`,
   renditionSpread: undefined,
   readingDirection: `ltr`,
-  spineItems: [{ ...chapterItem, index: 0, containerUri: `chapter.xhtml` }],
-  items: [chapterItem],
+  spineItems: [{ ...pageItem, index: 0, containerUri: `0.pdf` }],
+  items: [pageItem],
 }
 
-const createReaderGivenGetResource = (
-  archiveForItem: Parameters<typeof createArchive>[0] | undefined,
-) => {
-  const chapterResponse = new Response(`<html></html>`)
-  const getResourceGiven = vi.fn(() => of(chapterResponse))
-  const reader = pdfEnhancer(createReader)({
-    manifest,
-    getResource: getResourceGiven,
-    pdf: {
-      pdfjsViewerInlineCss: ``,
-      getArchiveForItem: () =>
-        of(archiveForItem ? createArchive(archiveForItem) : undefined),
-    },
-  })
-
-  onTestFinished(() => {
-    reader.destroy()
-  })
-
-  return { reader, chapterResponse, getResourceGiven }
-}
-
-const resourceFrom = (
-  resource$: Observable<unknown> | undefined,
-): Promise<unknown> => lastValueFrom(resource$ ?? of(undefined))
+const createPdfArchive = () =>
+  createArchiveFromPdf(new Blob([`%PDF-1.7`]), `book.pdf`)
 
 describe(`pdfEnhancer`, () => {
-  afterEach(() => {
-    vi.restoreAllMocks()
-  })
-
-  it(`leaves an item it has no pdf archive for to the getResource the reader was given`, async () => {
-    const { reader, chapterResponse, getResourceGiven } =
-      createReaderGivenGetResource(undefined)
-
-    const resource = await resourceFrom(
-      reader.settings.values.getResource?.(chapterItem),
-    )
-
-    expect(resource).toBe(chapterResponse)
-    expect(getResourceGiven).toHaveBeenCalledWith(chapterItem)
-  })
-
-  it(`leaves an item whose archive is not a pdf to the getResource the reader was given, with a warning`, async () => {
-    const warn = vi.spyOn(console, `warn`).mockImplementation(() => undefined)
-    const { reader, chapterResponse } = createReaderGivenGetResource({
-      filename: `book.epub`,
-      records: [],
-      close: () => Promise.resolve(),
-    })
-
-    const resource = await resourceFrom(
-      reader.settings.values.getResource?.(chapterItem),
-    )
-
-    expect(resource).toBe(chapterResponse)
-    expect(warn).toHaveBeenCalledWith(`You provided an invalid pdf archive`)
-  })
-
-  it(`serves an item by the last answer of getArchiveForItem, dropping the resource an earlier answer asked for`, async () => {
-    const archiveForItem$ = new Subject<Archive | undefined>()
-    const resourceForEarlierAnswer$ = new Subject<Response>()
-    const resourceForLastAnswer = new Response(`<html>last</html>`)
+  it(`holds the archive of a page from its first read until the reader is destroyed`, async () => {
+    const archive = await createPdfArchive()
+    const archiveHolds: string[] = []
+    const firstHold = Promise.withResolvers<void>()
     const reader = pdfEnhancer(createReader)({
-      manifest,
-      getResource: vi
-        .fn<() => Observable<Response>>()
-        .mockReturnValueOnce(resourceForEarlierAnswer$)
-        .mockReturnValueOnce(of(resourceForLastAnswer)),
+      manifest: pdfManifest,
       pdf: {
         pdfjsViewerInlineCss: ``,
-        getArchiveForItem: () => archiveForItem$,
+        getArchiveForItem: () =>
+          new Observable<Archive>((subscriber) => {
+            archiveHolds.push(`hold`)
+            firstHold.resolve()
+            subscriber.next(archive)
+
+            return function recordRelease() {
+              archiveHolds.push(`release`)
+            }
+          }),
       },
     })
+    const container = document.createElement(`div`)
 
+    vi.spyOn(HTMLElement.prototype, `clientWidth`, `get`).mockReturnValue(100)
+    vi.spyOn(HTMLElement.prototype, `clientHeight`, `get`).mockReturnValue(200)
+    document.body.appendChild(container)
     onTestFinished(() => {
-      reader.destroy()
+      container.remove()
+      vi.restoreAllMocks()
     })
 
-    const resource = resourceFrom(
-      reader.settings.values.getResource?.(chapterItem),
-    )
+    expect(archiveHolds).toEqual([])
 
-    archiveForItem$.next(undefined)
-    archiveForItem$.next(undefined)
-    archiveForItem$.complete()
-    resourceForEarlierAnswer$.next(new Response(`<html>earlier</html>`))
-    resourceForEarlierAnswer$.complete()
+    reader.mount(container)
 
-    expect(await resource).toBe(resourceForLastAnswer)
+    await firstHold.promise
+
+    expect(archiveHolds).toEqual([`hold`])
+
+    reader.destroy()
+
+    expect(archiveHolds).toEqual([`hold`, `release`])
+  })
+})
+
+describe(`createArchiveFromPdf`, () => {
+  it(`destroys the pdf.js loading task, and its worker, when the archive closes`, async () => {
+    const archive = await createPdfArchive()
+
+    await archive.close()
+
+    expect(pdfjs.destroyLoadingTask).toHaveBeenCalledOnce()
   })
 })

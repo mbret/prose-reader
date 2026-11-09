@@ -1,3 +1,4 @@
+import type { Archive } from "@prose-reader/archive-reader"
 import {
   DocumentRenderer,
   injectCSSToFrame,
@@ -17,13 +18,17 @@ import {
 import {
   catchError,
   EMPTY,
+  first,
   from,
   map,
   type Observable,
   of,
+  shareReplay,
   switchMap,
+  takeUntil,
   tap,
 } from "rxjs"
+import { isPdfJsArchive } from "../createArchiveFromPdf"
 import pdfFrameStyle from "./frame.css?inline"
 import { layoutCanvas, layoutContainer } from "./layout"
 
@@ -39,12 +44,23 @@ export class PdfRenderer extends DocumentRenderer {
   private pageProxy: PDFPageProxy | undefined
   private renderTask: RenderTask | undefined
   private textLayer: TextLayer | undefined
+  /**
+   * The archive of the item, held from the first page read until the
+   * renderer is destroyed, after its document is released.
+   */
+  private readonly heldPdfArchive$: Observable<Archive>
 
   constructor(
     private pdfViewerStyle: string,
+    pdfArchive$: Observable<Archive>,
     params: ConstructorParameters<typeof DocumentRenderer>[0],
   ) {
     super(params)
+
+    this.heldPdfArchive$ = pdfArchive$.pipe(
+      takeUntil(this.destroy$),
+      shareReplay({ bufferSize: 1, refCount: false }),
+    )
   }
 
   private getCanvas() {
@@ -66,13 +82,26 @@ export class PdfRenderer extends DocumentRenderer {
   private getPageProxy() {
     if (this.pageProxy) return of(this.pageProxy)
 
-    return from(this.resourcesHandler.fetchResource()).pipe(
-      switchMap((resource) => {
-        if (!("custom" in resource)) return EMPTY
+    return this.heldPdfArchive$.pipe(
+      first(),
+      switchMap((archive) => {
+        if (!isPdfJsArchive(archive)) {
+          throw new Error(
+            `getArchiveForItem gave no pdf archive for item ${this.item.id}`,
+          )
+        }
 
-        this.pageProxy = resource.data as PDFPageProxy
+        // `createArchiveFromPdf` holds its package document, then one record
+        // per page in page order, so the record a page's spine item shows is
+        // at its page number.
+        const pageNumber = archive.records.findIndex(
+          (record) => record.uri === this.item.containerUri,
+        )
 
-        return of(this.pageProxy)
+        return from(archive.proxyDocument.getPage(pageNumber))
+      }),
+      tap((pageProxy) => {
+        this.pageProxy = pageProxy
       }),
     )
   }

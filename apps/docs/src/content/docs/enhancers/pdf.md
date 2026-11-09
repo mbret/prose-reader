@@ -13,7 +13,9 @@ PDFs are incompatible with service workers due to the limitation from the librar
 
 ## Important
 
-The enhancer hooks into the resource loading and rendering process to handle the pdf for you. It serves the pages of the archive `getArchiveForItem` gives, so none of them is fetched through an HTTP request. An item it gives no pdf archive for still goes through the `getResource` you pass to the reader.
+The enhancer renders the spine items whose container path ends in `.pdf`, with the pages of the archive `getArchiveForItem` gives for each, so none of them is fetched through an HTTP request. The `getResource` you pass to the reader serves every other item.
+
+The enhancer subscribes to `getArchiveForItem` when it first renders a page of an item, and stays subscribed until the reader is destroyed. The archive must stay open while that subscription lives. Closing an archive made by `createArchiveFromPdf` destroys its pdf.js document and stops its worker.
 
 ## Getting started
 
@@ -73,17 +75,7 @@ const run = async () => {
     manifest: await generateManifestFromArchive(archive),
     pdf: {
       pdfjsViewerInlineCss,
-      // Assuming we load different books, we want
-      // to have whatever check is necessary to tell
-      // the enhancer to use the archive on specific
-      // items only
-      getArchiveForItem: (item) => {
-        if (item.href.endsWith(`.pdf`)) {
-          return of(archive)
-        }
-
-        return of(undefined)
-      },
+      getArchiveForItem: () => of(archive),
     },
   })
 
@@ -92,9 +84,8 @@ const run = async () => {
   if (containerElement) reader.mount(containerElement)
 
   reader.$.destroy$.subscribe(() => {
-    // don't forget to close your archive once you
-    // are done with it. It will free up the resources
-    // used by pdfjs automatically
+    // Close the archive once the reader is done with it: it destroys
+    // the pdf.js document and stops its worker.
     archive.close()
   })
 }
@@ -102,3 +93,18 @@ const run = async () => {
 run()
 ```
 
+## With a streamer
+
+`Streamer.accessArchive` holds an archive open until you unsubscribe, which is what `getArchiveForItem` asks for. The streamer then closes the archive `cleanArchiveAfter` milliseconds after the reader is destroyed, or once you call `prune()`. A reader you create again for the same book within that time uses the open archive.
+
+```typescript
+const reader = createAppReader({
+  manifest,
+  pdf: {
+    pdfjsViewerInlineCss,
+    getArchiveForItem: () => streamer.accessArchive(bookKey),
+  },
+})
+```
+
+A `Streamer` in the page serves the PDFs, since a service worker cannot (see the caution above).
