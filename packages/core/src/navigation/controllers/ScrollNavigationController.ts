@@ -75,8 +75,13 @@ export class ScrollNavigationController
    *   offsets to what is left to scroll, as when the pages of a book go from
    *   side by side to stacked.
    *
-   * A layout whose items are laid out over several tasks can be clamped
-   * before it is done, and that scroll is still taken for a move.
+   * The offsets a layout leaves are read once its last item is laid out.
+   * Stacked items end where the last one does, so the browser clamps the
+   * offsets as that item moves, in the task of the read. That holds when a
+   * renderer lays the items before it out over several tasks, as the pdf one
+   * does. A sideways scroll that a wider item before the last one allowed is
+   * the exception: its clamp can come before the read, and is then taken for
+   * a move.
    */
   public readonly scrollNotMadeByReader$: Observable<ScrollPosition>
 
