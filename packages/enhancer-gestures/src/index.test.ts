@@ -73,19 +73,22 @@ class InertObserver {
 /**
  * jsdom has no DOMMatrix either, and a pan reads the viewport's translation
  * with one. The reader only ever writes `translate(<x>px, <y>px)`, which jsdom
- * hands back as is, so this reads that and refuses anything else.
+ * hands back as `translate(<x>px)` when `y` is 0, as browsers do, so this
+ * reads both and refuses anything else.
  */
 class TranslationMatrix {
   readonly e: number
   readonly f: number
 
   constructor(transform: string) {
-    const match = /^translate\((-?[\d.]+)px, (-?[\d.]+)px\)$/.exec(transform)
+    const match = /^translate\((-?[\d.]+)px(?:, (-?[\d.]+)px)?\)$/.exec(
+      transform,
+    )
 
     if (!match) throw new Error(`Unexpected transform: ${transform}`)
 
     this.e = Number(match[1])
-    this.f = Number(match[2])
+    this.f = Number(match[2] ?? 0)
   }
 }
 
