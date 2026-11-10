@@ -1,5 +1,9 @@
 import { expect, type Page, test } from "@playwright/test"
 import { navigateToSpineItem } from "../../utils"
+import {
+  expectSpineItemKeptThroughPageTurnModes,
+  type PageTurnMode,
+} from "../../utils/pageTurnMode"
 import { layOutAndSettle, waitForSettled } from "../../utils/pagination"
 import { getReader } from "../../utils/reader"
 import {
@@ -18,8 +22,6 @@ const url = "http://localhost:3333/tests/layout/settings/index.html"
 
 const SIXTH_PAGE = 5
 const NINTH_PAGE = 8
-
-type PageTurnMode = "controlled" | "scrollable"
 
 const openOnSixthPage = async (page: Page, pageTurnMode: PageTurnMode) => {
   await page.setViewportSize({ width: 400, height: 700 })
@@ -132,23 +134,12 @@ test.describe("Given a book open on its sixth page", () => {
     }) => {
       await openOnSixthPage(page, "controlled")
 
-      const pageTurnModes: PageTurnMode[] = [
+      await expectSpineItemKeptThroughPageTurnModes(page, SIXTH_PAGE, [
         "scrollable",
         "controlled",
         "scrollable",
         "controlled",
-      ]
-
-      for (const [change, pageTurnMode] of pageTurnModes.entries()) {
-        await layOutAndSettle(page, { settings: { pageTurnMode } })
-
-        await expect
-          .poll(
-            () => getSpineItemIndexesOnScreen(page),
-            `the pages on screen after change ${change + 1}, to ${pageTurnMode}`,
-          )
-          .toEqual([SIXTH_PAGE])
-      }
+      ])
     })
   })
 })
