@@ -3,9 +3,10 @@ import {
   combineLatest,
   distinctUntilChanged,
   map,
-  merge,
   Subject,
+  share,
   shareReplay,
+  tap,
 } from "rxjs"
 import type { CfiManager } from "../cfi"
 import type { Context } from "../context/Context"
@@ -85,18 +86,35 @@ export const createNavigator = ({
     navigationModeControllers.find((controller) => controller.isActive()) ??
     controlledNavigationController
 
-  const navigationModeLayout$ = merge(
-    ...navigationModeControllers.flatMap((controller) =>
-      controller.layout$ ? [controller.layout$] : [],
-    ),
+  /**
+   * Emits once the rendering layer of the active controller has its box and
+   * the other one has none. Both switch in the same task, ahead of the
+   * emission: when the page turn mode changes, and when an element is created
+   * or set up at mount.
+   */
+  const navigationModeRenderingLayerSwitch$ = combineLatest([
+    settings.watch([`computedPageTurnMode`]),
+    scrollNavigationController.watch(`element`),
+    controlledNavigationController.element$,
+  ]).pipe(
+    tap(() => {
+      navigationModeControllers.forEach((controller) => {
+        controller.syncRenderingLayerDisplay()
+      })
+    }),
+    share(),
   )
+
+  // The layers switch whether or not anything listens.
+  const navigationModeRenderingLayerSwitchSubscription =
+    navigationModeRenderingLayerSwitch$.subscribe()
 
   const internalNavigator = new InternalNavigator(
     settings,
     context,
     userNavigation$,
     getActiveNavigationModeController,
-    navigationModeLayout$,
+    navigationModeRenderingLayerSwitch$,
     navigationResolver,
     spine,
     viewport,
@@ -106,7 +124,8 @@ export const createNavigator = ({
   )
 
   const navigationState$ = combineLatest([
-    ...navigationModeControllers.map((controller) => controller.isNavigating$),
+    // The only controller that takes time to navigate: a scroll is instant.
+    controlledNavigationController.isNavigating$,
     navigationLock.isLocked$,
     internalNavigator.locker.isLocked$,
   ]).pipe(
@@ -133,6 +152,7 @@ export const createNavigator = ({
   }
 
   const destroy = () => {
+    navigationModeRenderingLayerSwitchSubscription.unsubscribe()
     navigationModeControllers.forEach((controller) => {
       controller.destroy()
     })

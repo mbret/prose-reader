@@ -1,5 +1,7 @@
 import type { Page } from "@playwright/test"
 import type { ReadingPosition } from "@prose-reader/core"
+import { navigateToSpineItem } from "../../../utils"
+import { waitForSettled } from "../../../utils/pagination"
 import { getReader } from "../../../utils/reader"
 
 /**
@@ -73,3 +75,37 @@ export const readPosition = async (page: Page) => {
 
   return position
 }
+
+/**
+ * Goes to a chapter's first page, then turns pages, one settled result at a
+ * time: `numberOfTurns` of 3 ends on the chapter's fourth page.
+ */
+export const turnPagesOfChapter = async (
+  page: Page,
+  chapterIndex: number,
+  numberOfTurns: number,
+) => {
+  const reader = await getReader(page)
+
+  await navigateToSpineItem({ page, index: chapterIndex })
+  await waitForSettled(page)
+
+  for (let turn = 0; turn < numberOfTurns; turn++) {
+    await reader.evaluate((reader) => {
+      reader.navigation.turnRight()
+    })
+    await waitForSettled(page)
+  }
+}
+
+/**
+ * Every reading position since the reader's creation: `window.readingPositions`,
+ * which this scenario's `index.tsx` fills and `window` does not declare, hence
+ * the cast.
+ */
+export const readingPositionsSinceCreation = (page: Page) =>
+  page.evaluate(
+    () =>
+      (window as unknown as { readingPositions: ReadingPosition[] })
+        .readingPositions,
+  )

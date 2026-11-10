@@ -1,7 +1,4 @@
 import {
-  BehaviorSubject,
-  combineLatest,
-  distinctUntilChanged,
   filter,
   fromEvent,
   map,
@@ -9,15 +6,11 @@ import {
   NEVER,
   type Observable,
   Subject,
+  scan,
   share,
-  shareReplay,
-  skip,
-  startWith,
   switchMap,
   takeUntil,
   tap,
-  timer,
-  withLatestFrom,
 } from "rxjs"
 import { HTML_PREFIX_SCROLL_NAVIGATOR } from "../../constants"
 import type { Context } from "../../context/Context"
@@ -29,7 +22,7 @@ import { AbstractPosition } from "../../types"
 import { setStylePropertyIfChanged } from "../../utils/dom"
 import { isDefined } from "../../utils/isDefined"
 import { ReactiveEntity } from "../../utils/ReactiveEntity"
-import { observeResize, watchKeys } from "../../utils/rxjs"
+import { watchKeys } from "../../utils/rxjs"
 import type { Viewport } from "../../viewport/Viewport"
 import type {
   NavigationModeController,
@@ -43,17 +36,54 @@ export class UnboundScrollPosition extends AbstractPosition {
 
 export type ScrollNavigationEntry = NavigationModeControllerNavigationEntry
 
+/**
+ * Offsets less than a pixel apart are taken for the same place, so that a
+ * browser reporting one place with offsets a fraction of a pixel apart shows
+ * no move.
+ */
+const isSameScrollPlace = (a: ScrollPosition, b: ScrollPosition) =>
+  Math.abs(a.x - b.x) < 1 && Math.abs(a.y - b.y) < 1
+
 export class ScrollNavigationController
   extends ReactiveEntity<{
     element: HTMLElement | undefined
   }>
   implements NavigationModeController
 {
-  protected navigateSubject = new Subject<ScrollNavigationEntry>()
-  protected scrollingSubject = new BehaviorSubject(false)
+  /** Emits once a navigation has left the element where it goes. */
+  private readonly navigationAppliedSubject = new Subject<void>()
 
-  public isNavigating$: Observable<boolean>
-  public userScroll$: Observable<Event>
+  /**
+   * Whether the book scrolls: the computed page turn mode is `scrollable`.
+   * Replays the current value, then emits at each change of mode.
+   */
+  public readonly isActive$: Observable<boolean>
+
+  /**
+   * The offsets of the element at each scroll event that shows a move the
+   * reader did not make: the user's scrolling. Never emits in controlled
+   * mode.
+   *
+   * A scroll event does not say who scrolled, and the one the reader causes
+   * comes a frame or more after what caused it. So a move is told from the
+   * offsets themselves: an event at the offsets the reader last left the
+   * element at, or the last move took it to, shows no move. The reader leaves
+   * the element at offsets of its own in two ways:
+   *
+   * - A navigation scrolls it.
+   * - A layout moves or resizes the items in it, and the browser clamps the
+   *   offsets to what is left to scroll, as when the pages of a book go from
+   *   side by side to stacked.
+   *
+   * The offsets a layout leaves are read once its last item is laid out.
+   * Stacked items end where the last one does, so the browser clamps the
+   * offsets as that item moves, in the task of the read. That holds when a
+   * renderer lays the items before it out over several tasks, as the pdf one
+   * does. A sideways scroll that a wider item before the last one allowed is
+   * the exception: its clamp can come before the read, and is then taken for
+   * a move.
+   */
+  public readonly scrollNotMadeByReader$: Observable<ScrollPosition>
 
   constructor(
     protected viewport: Viewport,
@@ -80,90 +110,81 @@ export class ScrollNavigationController
       }),
     )
 
-    const toggleElementDisplay$ = combineLatest([
-      settings.watch([`computedPageTurnMode`]),
-      this.watch("element"),
-    ]).pipe(
-      tap(([{ computedPageTurnMode }, element]) => {
-        if (!element) return
+    this.isActive$ = settings
+      .watch(["computedPageTurnMode"])
+      .pipe(map(() => this.isActive()))
 
-        if (computedPageTurnMode === `scrollable`) {
-          setStylePropertyIfChanged(element.style, `display`, `block`)
-        } else {
-          setStylePropertyIfChanged(element.style, `display`, `contents`)
-        }
-      }),
-    )
-
-    const updateScrollPositionOnNavigation$ = this.navigateSubject.pipe(
-      tap(this.applyNavigationPosition),
-    )
-
-    this.isNavigating$ = this.scrollingSubject.asObservable()
-
-    // might be a bit overkill but we want to be sure of sure
-    const isSpineScrolling$ = merge(
-      spine.watch("element").pipe(
-        filter(isDefined),
-        switchMap((element) => observeResize(element)),
-      ),
-      spine.watch("element").pipe(
-        filter(isDefined),
-        switchMap((element) => fromEvent(element, "scroll")),
-      ),
-      spine.spineItemsObserver.itemResize$,
-    ).pipe(
-      switchMap(() =>
-        timer(10).pipe(
-          map(() => false),
-          startWith(true),
-        ),
-      ),
-      distinctUntilChanged(),
-      startWith(false),
-    )
-
-    const scrollHappeningFromBrowser$ = combineLatest([
-      isSpineScrolling$,
-      this.isNavigating$,
-    ]).pipe(
-      map(
-        ([spineScrolling, viewportScrolling]) =>
-          spineScrolling || viewportScrolling,
-      ),
-      shareReplay(1),
-    )
-
-    this.userScroll$ = this.watch("element").pipe(
+    this.scrollNotMadeByReader$ = this.watch("element").pipe(
       filter(isDefined),
       switchMap((element) =>
-        settings.watch(["computedPageTurnMode"]).pipe(
-          switchMap(({ computedPageTurnMode }) =>
-            computedPageTurnMode === "controlled"
-              ? NEVER
-              : fromEvent(element, `scroll`).pipe(
-                  withLatestFrom(scrollHappeningFromBrowser$),
-                  filter(
-                    ([, shouldAvoidScrollEvent]) => !shouldAvoidScrollEvent,
-                  ),
-                  map(([event]) => event),
-                ),
+        this.isActive$.pipe(
+          switchMap((isActive) =>
+            isActive ? this.observeScrollsNotMadeByReader(element) : NEVER,
           ),
         ),
       ),
       share(),
     )
 
-    merge(
-      elementCreation$,
-      toggleElementDisplay$,
-      updateScrollPositionOnNavigation$,
+    elementCreation$.pipe(takeUntil(this.destroy$)).subscribe()
+  }
+
+  private observeScrollsNotMadeByReader(element: HTMLElement) {
+    return merge(
+      merge(
+        this.navigationAppliedSubject,
+        // Read in the task that laid the items out, before the browser
+        // reports what that did to the offsets.
+        this.spine.itemsLayout$,
+      ).pipe(
+        map(() => ({
+          scrollPosition: this.scrollPosition,
+          isScrollEvent: false,
+        })),
+      ),
+      fromEvent(element, `scroll`).pipe(
+        map(() => ({
+          scrollPosition: this.scrollPosition,
+          isScrollEvent: true,
+        })),
+      ),
+    ).pipe(
+      scan(
+        (
+          { scrollPositionKnownToReader },
+          { scrollPosition, isScrollEvent },
+        ) => {
+          /**
+           * An event that shows no move leaves the known offsets as they are,
+           * so that a scroll of less than a pixel at a time adds up to a
+           * move.
+           */
+          if (
+            isScrollEvent &&
+            isSameScrollPlace(scrollPositionKnownToReader, scrollPosition)
+          )
+            return { scrollPositionKnownToReader, isMoveNotMadeByReader: false }
+
+          return {
+            scrollPositionKnownToReader: scrollPosition,
+            isMoveNotMadeByReader: isScrollEvent,
+          }
+        },
+        // An event at the offsets the element has as this starts shows no
+        // move.
+        {
+          scrollPositionKnownToReader: this.scrollPosition,
+          isMoveNotMadeByReader: false,
+        },
+      ),
+      filter(({ isMoveNotMadeByReader }) => isMoveNotMadeByReader),
+      map(({ scrollPositionKnownToReader }) => scrollPositionKnownToReader),
     )
-      .pipe(takeUntil(this.destroy$))
-      .subscribe()
   }
 
   /**
+   * Scrolls the element to a navigation's position.
+   *
    * Authoritative DOM-scroll dedup: this controller owns the surface and
    * is the only place that can compare against the actual scaled scroll
    * target. Upstream same-`SpinePosition` dedup is unsafe because the same
@@ -173,11 +194,10 @@ export class ScrollNavigationController
    * @see https://stackoverflow.com/questions/22111256/translate3d-vs-translate-performance
    * for remark about flicker / fonts smoothing
    */
-  protected applyNavigationPosition = ({ position }: ScrollNavigationEntry) => {
-    const element = this.value.element
-
-    if (!element) return
-
+  protected applyNavigationPosition(
+    element: HTMLElement,
+    { position }: ScrollNavigationEntry,
+  ) {
     const scaledPosition = this.fromSpinePosition(position)
 
     if (
@@ -187,24 +207,30 @@ export class ScrollNavigationController
       return
     }
 
-    this.scrollingSubject.next(true)
-
     element.scrollTo({
       left: scaledPosition.x,
       top: scaledPosition.y,
       behavior: "instant",
     })
 
-    timer(1)
-      .pipe(
-        tap(() => {
-          this.scrollingSubject.next(false)
-        }),
-        takeUntil(merge(this.scrollingSubject.pipe(skip(1)), this.destroy$)),
-      )
-      .subscribe()
-
     this.hookManager.execute("onViewportOffsetAdjust", undefined)
+  }
+
+  /**
+   * Makes the element the box the book scrolls in while the page turn mode is
+   * scrollable, and takes its box away otherwise, leaving its contents where
+   * they are.
+   */
+  public syncRenderingLayerDisplay() {
+    const { element } = this.value
+
+    if (!element) return
+
+    setStylePropertyIfChanged(
+      element.style,
+      `display`,
+      this.isActive() ? `block` : `contents`,
+    )
   }
 
   public update(
@@ -217,13 +243,26 @@ export class ScrollNavigationController
 
   public destroy() {
     super.destroy()
+    this.navigationAppliedSubject.complete()
     this.value.element?.remove()
   }
 
+  /**
+   * Scrolls with `behavior: "instant"`, so the navigation is over when this
+   * returns.
+   */
   navigate(navigation: NavigationModeControllerNavigationEntry) {
-    this.navigateSubject.next(navigation)
+    const { element } = this.value
+
+    if (!element) return
+
+    this.applyNavigationPosition(element, navigation)
+    // Also for a navigation that found the element where it goes: the
+    // browser may have moved it there, and not have reported it yet.
+    this.navigationAppliedSubject.next()
   }
 
+  /** Whether the book scrolls: the computed page turn mode is `scrollable`. */
   public isActive = () => {
     return this.settings.values.computedPageTurnMode === "scrollable"
   }
