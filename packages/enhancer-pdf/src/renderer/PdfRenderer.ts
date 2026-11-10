@@ -273,8 +273,9 @@ export class PdfRenderer extends DocumentRenderer {
         const frameDoc = frameElement?.contentDocument
         const pdfPage = this.pageProxy
 
+        // The page is still loading: the layout once it is loaded sizes it.
         if (!frameDoc || !frameElement || !pdfPage || !this.textLayer) {
-          throw new Error("Unable to update text layer due to missing elements")
+          return of(undefined)
         }
 
         const textLayerElement = frameDoc.body
