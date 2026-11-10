@@ -9,6 +9,7 @@ import {
   type OperatorFunction,
   of,
   switchMap,
+  throwError,
 } from "rxjs"
 import { pick } from "./objects"
 
@@ -56,21 +57,35 @@ export const waitForSwitch =
       ),
     )
 
+/**
+ * Subscribes to `stream` at once, and gives a function that returns what it
+ * gave since: its value, or its error, or else `stream` itself, to wait for
+ * its next value.
+ */
 export const deferNextResult = <T>(stream: Observable<T>) => {
-  let value: { result: T } | undefined
+  let result: { value: T } | { error: unknown } | undefined
 
-  const sub = stream.subscribe((result) => {
-    value = { result: result }
+  const subscription = stream.subscribe({
+    next: (value) => {
+      result = { value }
+    },
+    error: (error) => {
+      result = { error }
+    },
   })
 
   return () => {
-    sub.unsubscribe()
+    subscription.unsubscribe()
 
-    if (value) {
-      return of(value.result)
+    if (!result) return stream
+
+    if ("error" in result) {
+      const { error } = result
+
+      return throwError(() => error)
     }
 
-    return stream
+    return of(result.value)
   }
 }
 

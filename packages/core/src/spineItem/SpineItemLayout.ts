@@ -5,6 +5,8 @@ import {
   type SpreadPosition,
 } from "@prose-reader/shared"
 import {
+  catchError,
+  defer,
   filter,
   first,
   map,
@@ -25,7 +27,7 @@ import {
   removeStylePropertyIfPresent,
   setStylePropertyIfChanged,
 } from "../utils/dom"
-import { deferNextResult } from "../utils/rxjs"
+import { deferNextResult, reportUnhandledError } from "../utils/rxjs"
 import type { Viewport } from "../viewport/Viewport"
 import type { DocumentRenderer } from "./renderer/DocumentRenderer"
 
@@ -73,12 +75,25 @@ export class SpineItemLayout extends DestroyableClass {
             minimumWidth,
           })
 
-          const rendererLayout$ = this.renderer.layout({
-            blankPagePosition,
-            minPageSpread: minimumWidth / this.viewport.pageSize.width,
-            minimumWidth,
-            spreadPosition,
-          })
+          /**
+           * A renderer that fails to lay its item out gives no size, so the
+           * item keeps its last size, or else takes its minimum width, and
+           * the items after it still get a place.
+           */
+          const rendererLayout$ = defer(() =>
+            this.renderer.layout({
+              blankPagePosition,
+              minPageSpread: minimumWidth / this.viewport.pageSize.width,
+              minimumWidth,
+              spreadPosition,
+            }),
+          ).pipe(
+            catchError((error) => {
+              reportUnhandledError(error)
+
+              return of(undefined)
+            }),
+          )
 
           return merge(
             of({ type: "start" } as const),

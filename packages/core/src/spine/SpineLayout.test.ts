@@ -1,5 +1,5 @@
 import type { Manifest } from "@prose-reader/shared"
-import { firstValueFrom, Subject } from "rxjs"
+import { firstValueFrom, mergeMap, of, Subject, throwError, timer } from "rxjs"
 import { describe, expect, it, vi } from "vitest"
 import { Context } from "../context/Context"
 import { HookManager } from "../hooks/HookManager"
@@ -7,6 +7,7 @@ import { ReaderSettingsManager } from "../settings/ReaderSettingsManager"
 import {
   createTestManifest,
   createTestManifestSpineItems,
+  recordUnhandledErrors,
 } from "../tests/utils"
 import { Viewport } from "../viewport/Viewport"
 import { SpineItemsManager } from "./SpineItemsManager"
@@ -74,6 +75,7 @@ const createTestSpineLayout = ({
     hookManager,
     spineItemsManager,
     spineLayout,
+    viewport,
   }
 }
 
@@ -612,6 +614,172 @@ describe("SpineLayout", () => {
       })
       expect(spineLayout.getSpineItemSpineLayoutInfo(3).width).toBe(200)
       expect(spineLayout.getSpineItemSpineLayoutInfo(4).width).toBe(100)
+    } finally {
+      destroy()
+    }
+  })
+})
+
+describe("Given an item whose layout fails", () => {
+  const failure = new Error("the layout failed")
+
+  /** Each stage the layout goes through, and `error` if its state errors. */
+  const recordLayoutStages = (spineLayout: SpineLayout) => {
+    const stages: string[] = []
+
+    spineLayout.lifecycle$.subscribe({
+      next: ({ stage }) => {
+        stages.push(stage)
+      },
+      error: () => {
+        stages.push("error")
+      },
+    })
+
+    return stages
+  }
+
+  /** Three items, whose renderers lay each out at 3 pages of 100 by 100. */
+  const createSpineLayoutOfThreePagesItems = () => {
+    const environment = createTestSpineLayout({ items: 3 })
+
+    for (const item of environment.spineItemsManager.items) {
+      vi.spyOn(item.renderer, "layout").mockReturnValue(
+        of({ height: 100, width: 300 }),
+      )
+    }
+
+    const getItemPlaces = () =>
+      environment.spineItemsManager.items.map((_, itemIndex) => {
+        const { left, width } =
+          environment.spineLayout.getSpineItemSpineLayoutInfo(itemIndex)
+
+        return { left, width }
+      })
+
+    return { ...environment, getItemPlaces }
+  }
+
+  it.each([
+    {
+      failure: "throws as it starts",
+      layOutFailingItem: () => {
+        throw failure
+      },
+    },
+    {
+      failure: "fails later",
+      layOutFailingItem: () =>
+        timer(0).pipe(mergeMap(() => throwError(() => failure))),
+    },
+  ])(
+    "completes each pass with the item at one page, and reports the error, when its renderer $failure",
+    async ({ layOutFailingItem }) => {
+      const unhandledErrors = recordUnhandledErrors()
+      const { destroy, getItemPlaces, spineItemsManager, spineLayout } =
+        createSpineLayoutOfThreePagesItems()
+      const stages = recordLayoutStages(spineLayout)
+      const failingItem = spineItemsManager.items[1]
+
+      if (!failingItem) throw new Error("the spine has no second item")
+
+      vi.spyOn(failingItem.renderer, "layout").mockImplementation(
+        layOutFailingItem,
+      )
+
+      try {
+        spineLayout.layout({ immediate: true })
+
+        await vi.waitFor(() => {
+          expect(stages, "the stages of the layout").toEqual([
+            "requested",
+            "laidOut",
+          ])
+        })
+        expect(getItemPlaces()).toEqual([
+          { left: 0, width: 300 },
+          { left: 300, width: 100 },
+          { left: 400, width: 300 },
+        ])
+
+        spineLayout.layout({ immediate: true })
+
+        await vi.waitFor(() => {
+          expect(stages, "the stages of the layout").toEqual([
+            "requested",
+            "laidOut",
+            "requested",
+            "laidOut",
+          ])
+        })
+        await vi.waitFor(() => {
+          expect(unhandledErrors).toEqual([failure, failure])
+        })
+      } finally {
+        destroy()
+      }
+    },
+  )
+
+  it.each(["item.onBeforeLayout", "item.onAfterLayout"] as const)(
+    "completes the pass with the item at its size, and reports the error, when an %s hook throws for it",
+    async (hookName) => {
+      const unhandledErrors = recordUnhandledErrors()
+      const { destroy, getItemPlaces, hookManager, spineLayout } =
+        createSpineLayoutOfThreePagesItems()
+      const stages = recordLayoutStages(spineLayout)
+
+      hookManager.register(hookName, ({ item }) => {
+        if (item.index === 1) throw failure
+      })
+
+      try {
+        spineLayout.layout({ immediate: true })
+
+        await vi.waitFor(() => {
+          expect(stages, "the stages of the layout").toEqual([
+            "requested",
+            "laidOut",
+          ])
+        })
+        expect(getItemPlaces()).toEqual([
+          { left: 0, width: 300 },
+          { left: 300, width: 300 },
+          { left: 600, width: 300 },
+        ])
+        await vi.waitFor(() => {
+          expect(unhandledErrors).toEqual([failure])
+        })
+      } finally {
+        destroy()
+      }
+    },
+  )
+
+  it("leaves the layout requested when a pass fails, reports the error, and lays the spine out on the next request", async () => {
+    const unhandledErrors = recordUnhandledErrors()
+    const { destroy, spineLayout, viewport } =
+      createSpineLayoutOfThreePagesItems()
+    const stages = recordLayoutStages(spineLayout)
+
+    vi.spyOn(viewport, "layout").mockImplementationOnce(() => {
+      throw failure
+    })
+
+    try {
+      spineLayout.layout({ immediate: true })
+      spineLayout.layout({ immediate: true })
+
+      await vi.waitFor(() => {
+        expect(stages, "the stages of the layout").toEqual([
+          "requested",
+          "requested",
+          "laidOut",
+        ])
+      })
+      await vi.waitFor(() => {
+        expect(unhandledErrors).toEqual([failure])
+      })
     } finally {
       destroy()
     }

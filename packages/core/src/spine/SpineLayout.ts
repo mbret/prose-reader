@@ -1,7 +1,9 @@
 import {
   asapScheduler,
   BehaviorSubject,
+  catchError,
   defer,
+  EMPTY,
   filter,
   map,
   merge,
@@ -22,6 +24,7 @@ import type { ReaderSettingsManager } from "../settings/ReaderSettingsManager"
 import type { DocumentLoadStatus } from "../spineItem/renderer/DocumentRenderer"
 import type { SpineItem } from "../spineItem/SpineItem"
 import { DestroyableClass } from "../utils/DestroyableClass"
+import { reportUnhandledError } from "../utils/rxjs"
 import { runWhileSized } from "../viewport/runWhileSized"
 import type { Viewport } from "../viewport/Viewport"
 import type { SpineItemsManager } from "./SpineItemsManager"
@@ -319,6 +322,16 @@ export class SpineLayout extends DestroyableClass {
         stage: "requested",
         laidOutItems: previousState.laidOutItems,
         firstItemIndexAwaitingLayout,
+      }),
+      /**
+       * A pass that fails leaves the layout requested, and the next request
+       * lays out from where this one would have. Its error must not end the
+       * stream of requests.
+       */
+      catchError((error) => {
+        reportUnhandledError(error)
+
+        return EMPTY
       }),
     )
   }

@@ -38,7 +38,7 @@ A renderer extends `DocumentRenderer`, which runs the lifecycle of its document:
 | --- | --- |
 | `onCreateDocument()` | Creates the element that holds the document, and emits it. Do not attach it to the dom yet. |
 | `onLoadDocument()` | Loads the document, and attaches it with `attach()` once it is ready to be in the dom. The document is loaded once the observable emits or completes, and the `item.onDocumentLoad` hooks have run. An error fails the load. |
-| `onLayout(params)` | Lays the document out for the viewport's page size, and emits its size. The item's width is rounded up to whole pages. `undefined` keeps the size of the last layout at the same page size, or one page. |
+| `onLayout(params)` | Lays the document out for the viewport's page size, and emits its size. The item's width is rounded up to whole pages. `undefined` keeps the size of the last layout at the same page size, or else gives the item its minimum width: one page, or a whole spread. An error, thrown or emitted, counts as `undefined`, and the reader reports it as rxjs reports an error that no subscriber handles. |
 | `onUnload()` | Releases what the document holds, such as object urls or render tasks. Synchronous. |
 | `onRenderHeadless()` | Emits the item's document, built without displaying it, for [renderHeadless()](/core-api/reader/renderheadless), or `undefined` when the item has none. |
 | `getDocumentFrame()` | The frame the document is in, when there is one. The `item.onDocumentLoad` hooks set the document up through it. Once the spine item is loaded, the document is its `loadedDocument`, which is where to read the book's content. |
