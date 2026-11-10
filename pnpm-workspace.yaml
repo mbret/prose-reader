@@ -8,7 +8,7 @@ packages:
 # use, and @parcel/watcher's compiles from source only when no prebuilt binary
 # matches the platform.
 allowBuilds:
-  '@parcel/watcher': false
+  "@parcel/watcher": false
   nx: false
 
 # gesturx and reactjrx share prose-reader's maintainer, so their releases are
