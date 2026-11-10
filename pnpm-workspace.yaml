@@ -11,9 +11,10 @@ allowBuilds:
   '@parcel/watcher': false
   nx: false
 
-# reactjrx shares prose-reader's maintainer, so its releases are installed as
-# soon as they are out.
+# gesturx and reactjrx share prose-reader's maintainer, so their releases are
+# installed as soon as they are out.
 minimumReleaseAgeExclude:
+  - gesturx
   - reactjrx
 
 # lerna and nx pin their dependencies to exact versions, so an in-range update

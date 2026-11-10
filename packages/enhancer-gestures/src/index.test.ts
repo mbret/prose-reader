@@ -187,6 +187,12 @@ const onFirstPage = async (container = document.createElement("div")) => {
           pointerId: 1,
           isPrimary: true,
           pointerType: "mouse",
+          /**
+           * The left button, held until the release: gesturx reads a mouse
+           * move with no button held as a release the page missed.
+           */
+          button: 0,
+          buttons: type === "pointerup" ? 0 : 1,
           clientX,
           clientY: y,
           bubbles: true,

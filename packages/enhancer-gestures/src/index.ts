@@ -1,5 +1,6 @@
 import { HookManager, isDefined, type Reader } from "@prose-reader/core"
 import {
+  type FailWith,
   PanRecognizer,
   PinchRecognizer,
   Recognizable,
@@ -7,8 +8,9 @@ import {
   TapRecognizer,
 } from "gesturx"
 import {
-  combineLatest,
+  distinctUntilChanged,
   filter,
+  map,
   merge,
   Observable,
   share,
@@ -64,13 +66,14 @@ export const gesturesEnhancer =
       },
     })
 
-    const failWithSelection = {
-      start$: reader.selection.selectionStart$,
-      end$: reader.selection.selectionEnd$,
+    const failWithTextSelection: FailWith = {
+      running$: reader.selection.selection$.pipe(
+        map((selection) => selection !== undefined),
+        distinctUntilChanged(),
+      ),
     }
 
     const panRecognizer = new PanRecognizer({
-      failWith: [pinchRecognizer, failWithSelection],
       options: {
         // we want to have some margin to trigger zoom
         posThreshold: 20,
@@ -82,7 +85,7 @@ export const gesturesEnhancer =
     })
 
     const swipeRecognizer = new SwipeRecognizer({
-      failWith: [failWithSelection],
+      failWith: [failWithTextSelection],
     })
 
     const recognizable = new Recognizable({
@@ -149,30 +152,15 @@ export const gesturesEnhancer =
       ),
     )
 
-    const watchSettings$ = combineLatest([
-      settingsManager.values$,
-      panRecognizer.config$,
-    ]).pipe(
-      tap(([{ pinchCancelPan }, panRecognizerConfig]) => {
-        const pinchAlreadyInFailWith =
-          panRecognizerConfig.failWith?.includes(pinchRecognizer)
-
-        if (pinchCancelPan && !pinchAlreadyInFailWith) {
-          panRecognizer.update({
-            failWith: [
-              ...(panRecognizerConfig.failWith ?? []),
-              pinchRecognizer,
-            ],
-          })
-        }
-
-        if (!pinchCancelPan && pinchAlreadyInFailWith) {
-          panRecognizer.update({
-            failWith: panRecognizerConfig.failWith?.filter(
-              (recognizer) => recognizer !== pinchRecognizer,
-            ),
-          })
-        }
+    const panFailWithFromSettings$ = settingsManager.values$.pipe(
+      map(({ pinchCancelPan }) => pinchCancelPan),
+      distinctUntilChanged(),
+      tap((pinchCancelPan) => {
+        panRecognizer.update({
+          failWith: pinchCancelPan
+            ? [pinchRecognizer, failWithTextSelection]
+            : [failWithTextSelection],
+        })
       }),
     )
 
@@ -183,7 +171,7 @@ export const gesturesEnhancer =
       panGestures$,
     ).pipe(takeUntil(reader.$.destroy$), share({ resetOnComplete: false }))
 
-    merge(containerUpdate$, watchSettings$)
+    merge(containerUpdate$, panFailWithFromSettings$)
       .pipe(takeUntil(reader.$.destroy$))
       .subscribe()
 
