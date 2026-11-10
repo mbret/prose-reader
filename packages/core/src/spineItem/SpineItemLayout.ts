@@ -7,16 +7,15 @@ import {
 import {
   catchError,
   defer,
-  filter,
   first,
   map,
-  merge,
   type Observable,
   type ObservedValueOf,
   of,
   Subject,
   share,
   switchMap,
+  tap,
 } from "rxjs"
 import type { Context } from "../context/Context"
 import type { HookManager } from "../hooks/HookManager"
@@ -59,7 +58,7 @@ export class SpineItemLayout extends DestroyableClass {
   ) {
     super()
 
-    const layoutProcess$ = this.layoutTriggerSubject.pipe(
+    this.didLayout$ = this.layoutTriggerSubject.pipe(
       switchMap(
         ({ spreadPosition, horizontalOffset, isLastItem, edgeX, edgeY }) => {
           const { blankPagePosition, minimumWidth } =
@@ -95,40 +94,26 @@ export class SpineItemLayout extends DestroyableClass {
             }),
           )
 
-          return merge(
-            of({ type: "start" } as const),
-            rendererLayout$.pipe(
-              /**
-               * Now that inner layout is done from the renderer, we adjust the dimensions
-               * of the outer container element
-               */
-              this.updateContainerLayout({
+          return rendererLayout$.pipe(
+            /**
+             * Now that inner layout is done from the renderer, we adjust the dimensions
+             * of the outer container element
+             */
+            this.updateContainerLayout({
+              minimumWidth,
+              edgeX,
+              edgeY,
+            }),
+            tap(() => {
+              this.hookManager.execute(`item.onAfterLayout`, {
+                blankPagePosition,
+                item: this.item,
                 minimumWidth,
-                edgeX,
-                edgeY,
-              }),
-              map((data) => {
-                this.hookManager.execute(`item.onAfterLayout`, {
-                  blankPagePosition,
-                  item: this.item,
-                  minimumWidth,
-                })
-
-                return {
-                  type: "end",
-                  data,
-                } as const
-              }),
-            ),
+              })
+            }),
           )
         },
       ),
-      share(),
-    )
-
-    this.didLayout$ = layoutProcess$.pipe(
-      filter((event) => event.type === `end`),
-      map((event) => event.data),
       share(),
     )
   }
