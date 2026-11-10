@@ -29,6 +29,7 @@ import {
   switchMap,
   takeUntil,
   tap,
+  throwError,
 } from "rxjs"
 import { isPdfJsArchive } from "../createArchiveFromPdf"
 import pdfFrameStyle from "./frame.css?inline"
@@ -317,11 +318,15 @@ export class PdfRenderer extends DocumentRenderer {
 
         return of(undefined)
       }),
-      catchError((e) => {
-        if (!(e instanceof RenderingCancelledException)) console.error(e)
-
-        return of(undefined)
-      }),
+      /**
+       * A newer render of the page cancels this one, which is no failure. The
+       * reader reports any other error, and gives the page no size.
+       */
+      catchError((error) =>
+        error instanceof RenderingCancelledException
+          ? of(undefined)
+          : throwError(() => error),
+      ),
     )
   }
 

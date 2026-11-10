@@ -1,7 +1,9 @@
 import {
   asapScheduler,
   BehaviorSubject,
+  catchError,
   defer,
+  EMPTY,
   filter,
   map,
   merge,
@@ -18,6 +20,7 @@ import {
   timer,
 } from "rxjs"
 import type { Context } from "../context/Context"
+import { reportRecoveredError } from "../report"
 import type { ReaderSettingsManager } from "../settings/ReaderSettingsManager"
 import type { DocumentLoadStatus } from "../spineItem/renderer/DocumentRenderer"
 import type { SpineItem } from "../spineItem/SpineItem"
@@ -125,7 +128,8 @@ export class SpineLayout extends DestroyableClass {
    * or unloading, then its completion. A request is announced before anything
    * is done for it, measuring the viewport included, and a newer request
    * cancels whatever is still running for an older one, so a completion always
-   * belongs to the latest request.
+   * belongs to the latest request. A request whose pass fails has no
+   * completion: the layout stays requested until a later request completes.
    */
   public readonly lifecycle$: Observable<SpineLayoutLifecycleEvent> =
     this.stateSubject.pipe(
@@ -319,6 +323,17 @@ export class SpineLayout extends DestroyableClass {
         stage: "requested",
         laidOutItems: previousState.laidOutItems,
         firstItemIndexAwaitingLayout,
+      }),
+      /**
+       * A pass that fails leaves the layout requested, as a cancelled pass
+       * does, so the next request also lays out the items this one had to.
+       * Its error must not reach `switchScan`: it would end the subscription
+       * to the requests, and no layout would run again.
+       */
+      catchError((error) => {
+        reportRecoveredError(error)
+
+        return EMPTY
       }),
     )
   }

@@ -8,6 +8,7 @@ import { defer, map, type Observable, Subject, tap } from "rxjs"
 import type { Context } from "../context/Context"
 import type { HookManager } from "../hooks/HookManager"
 import { isFullyPrePaginated } from "../manifest/isFullyPrePaginated"
+import { reportRecoveredError } from "../report"
 import type { ReaderSettingsManager } from "../settings/ReaderSettingsManager"
 import { DestroyableClass } from "../utils/DestroyableClass"
 import {
@@ -23,6 +24,18 @@ type SpineItemLayoutParams = {
   isLastItem: boolean
   edgeX: number
   edgeY: number
+}
+
+/**
+ * Runs the hooks of a layout. A hook that throws does not stop the layout:
+ * its error is reported, and the item is laid out without it.
+ */
+const runLayoutHooks = (executeHooks: () => void) => {
+  try {
+    executeHooks()
+  } catch (error) {
+    reportRecoveredError(error)
+  }
 }
 
 export class SpineItemLayout extends DestroyableClass {
@@ -282,7 +295,9 @@ export class SpineItemLayout extends DestroyableClass {
       )
       const hookParams = { blankPagePosition, item: this.item, minimumWidth }
 
-      this.hookManager.execute(`item.onBeforeLayout`, hookParams)
+      runLayoutHooks(() => {
+        this.hookManager.execute(`item.onBeforeLayout`, hookParams)
+      })
 
       return this.renderer
         .layout({
@@ -294,7 +309,9 @@ export class SpineItemLayout extends DestroyableClass {
         .pipe(
           this.updateContainerLayout({ minimumWidth, edgeX, edgeY }),
           tap((size) => {
-            this.hookManager.execute(`item.onAfterLayout`, hookParams)
+            runLayoutHooks(() => {
+              this.hookManager.execute(`item.onAfterLayout`, hookParams)
+            })
 
             this.didLayoutSubject.next(size)
           }),

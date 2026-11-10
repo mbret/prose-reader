@@ -1,4 +1,6 @@
 import type { Manifest } from "@prose-reader/shared"
+import { config } from "rxjs"
+import { onTestFinished } from "vitest"
 
 export const waitFor = async (timeout: number) =>
   await new Promise((resolve) => setTimeout(resolve, timeout))
@@ -38,3 +40,26 @@ export const createTestManifest = (
   items: [],
   ...manifest,
 })
+
+/**
+ * Records the errors that reach rxjs's `config.onUnhandledError` until the
+ * test ends: those that no subscriber handles, and those that the reader
+ * recovers from.
+ */
+export const recordUnhandledErrors = () => {
+  const unhandledErrors: unknown[] = []
+  const previousHandler = config.onUnhandledError
+
+  config.onUnhandledError = (error) => {
+    unhandledErrors.push(error)
+  }
+  onTestFinished(async () => {
+    // Errors are reported in a timer. Waiting lets those reported during the
+    // test reach the list, rather than throw once the handler is gone.
+    await waitFor(0)
+
+    config.onUnhandledError = previousHandler
+  })
+
+  return unhandledErrors
+}
