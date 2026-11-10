@@ -1,15 +1,17 @@
 import {
   animationFrameScheduler,
-  debounceTime,
   exhaustMap,
   filter,
   finalize,
   first,
+  map,
   merge,
   of,
   Subject,
+  switchMap,
   takeUntil,
   tap,
+  timer,
 } from "rxjs"
 import type { ScrollNavigationController } from "../../../navigation/controllers/ScrollNavigationController"
 import type { UserNavigationEntry } from "../../../navigation/types"
@@ -43,40 +45,51 @@ export class UserScrollNavigation extends DestroyableClass {
      */
     const navigateOnScroll$ =
       this.scrollNavigationController.scrollNotMadeByReader$.pipe(
-        exhaustMap((event) => {
+        exhaustMap((scrollPositionOfFirstMove) => {
           const unlock = this.lock()
 
           return merge(
+            of(scrollPositionOfFirstMove),
             this.scrollNavigationController.scrollNotMadeByReader$,
-            of(event),
           ).pipe(
-            debounceTime(
-              SCROLL_FINISHED_DEBOUNCE_TIMEOUT,
-              animationFrameScheduler,
+            switchMap((scrollPositionOfLastMove) =>
+              merge(
+                /**
+                 * The scroll is over once nothing has moved for a while: the
+                 * user is where the element is by then.
+                 */
+                timer(
+                  SCROLL_FINISHED_DEBOUNCE_TIMEOUT,
+                  animationFrameScheduler,
+                ).pipe(
+                  map(() => this.scrollNavigationController.scrollPosition),
+                ),
+                /**
+                 * It is over at once when the book no longer scrolls, as
+                 * after a change of page turn mode. The element has lost its
+                 * box, and its offsets with it: the user is where the last
+                 * move took the element.
+                 */
+                this.scrollNavigationController.isActive$.pipe(
+                  filter((isActive) => !isActive),
+                  map(() => scrollPositionOfLastMove),
+                ),
+              ),
             ),
             first(),
-            tap(() => {
-              const spinePosition =
-                this.scrollNavigationController.fromScrollPosition(
-                  this.scrollNavigationController.scrollPosition,
-                )
-
+            tap((scrollPosition) => {
               this.navigationSubject.next({
                 animation: false,
                 type: "scroll",
-                target: { type: "position", value: spinePosition },
+                target: {
+                  type: "position",
+                  value:
+                    this.scrollNavigationController.fromScrollPosition(
+                      scrollPosition,
+                    ),
+                },
               })
             }),
-            /**
-             * The scroll ends at once when the book no longer scrolls, as
-             * after a change of page turn mode: the element has lost its
-             * box, and its offsets no longer say where the user is.
-             */
-            takeUntil(
-              this.scrollNavigationController.isActive$.pipe(
-                filter((isActive) => !isActive),
-              ),
-            ),
             finalize(() => {
               unlock()
             }),
