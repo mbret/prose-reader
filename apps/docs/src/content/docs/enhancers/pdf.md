@@ -104,3 +104,5 @@ const reader = createAppReader({
   },
 })
 ```
+
+Return the Observable from `accessArchive` as it is. An operator that ends it early, such as `take(1)` or `first()`, or a promise made from it, ends the hold while the reader still reads the archive, and the streamer can then close it.

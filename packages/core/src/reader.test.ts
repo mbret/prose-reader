@@ -215,3 +215,15 @@ describe("Given a reader mounted into a foreign document", () => {
     reader.destroy()
   })
 })
+
+describe("Given a destroyed reader", () => {
+  it("replays the destroy to a subscriber that comes after it", () => {
+    const reader = createTestReader()
+    const onDestroy = vi.fn()
+
+    reader.destroy()
+    reader.$.destroy$.subscribe({ next: onDestroy })
+
+    expect(onDestroy).toHaveBeenCalledOnce()
+  })
+})
