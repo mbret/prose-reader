@@ -83,7 +83,6 @@ const createSpreadModeTestEnvironment = ({
 
   const destroy = () => {
     spineLayout.destroy()
-    spineItemsObserver.destroy()
     spineItemsManager.destroy()
     viewport.destroy()
     settings.destroy()
@@ -125,7 +124,6 @@ const createTestSpineLayout = () => {
 
   const destroy = () => {
     spineLayout.destroy()
-    spineItemsObserver.destroy()
     spineItemsManager.destroy()
     viewport.destroy()
     settings.destroy()
@@ -233,7 +231,6 @@ const createDeferredSpineLayout = (numberOfItems: number) => {
 
   const destroy = () => {
     spineLayout.destroy()
-    spineItemsObserver.destroy()
     spineItemsManager.destroy()
     viewport.destroy()
     settings.destroy()
