@@ -3,6 +3,43 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## [42.0.0](https://github.com/mbret/prose-reader/compare/v41.0.0...v42.0.0) (2026-11-10)
+
+### ⚠ BREAKING CHANGES
+
+* **core:** `isNavigating$` leaves `NavigationModeController` and
+  `ScrollNavigationController`: only the controlled navigator takes time to
+  navigate. `NavigationModeController` requires `syncRenderingLayerDisplay()`,
+  and `ScrollNavigationController` gains `isActive$`.
+* **core:** `reader.spineItemsObserver.itemResize$` is removed. Observe
+  `item.element` with a `ResizeObserver` to follow the size of a spine item.
+* **core:** `ScrollNavigationController.scrollNotMadeByReader$` emits
+  the scroll offsets of each move, a `ScrollPosition`, not the scroll event.
+* **core:** `ScrollNavigationController.userScroll$` is now
+  `scrollNotMadeByReader$`. `ControlledNavigationController.layout$` and the
+  optional `layout$` of `NavigationModeController` are removed, and
+  `NavigationModeController` requires `displaySurfaceWhileActive()`.
+  `ScrollNavigationController.isNavigating$` is always `false`: the scroll of a
+  navigation is over when `navigate` returns.
+* **core:** `SpineItemsObserver` no longer extends `DestroyableClass`:
+  its `destroy()` and `destroy$` are removed.
+
+### Features
+
+* **react-reader:** accept reactjrx 5 as a peer ([8e910e7](https://github.com/mbret/prose-reader/commit/8e910e77d3d77c5691a8b9caae1fa7a73e132ff5))
+
+### Bug Fixes
+
+* **core:** count a slow scroll as the user's, and end a scroll when the mode changes ([d80c9bf](https://github.com/mbret/prose-reader/commit/d80c9bfc053f950c47968ad4866dfa05fe16d329))
+* **core:** keep the page a scroll reached when the page turn mode changes during it ([bcde6f8](https://github.com/mbret/prose-reader/commit/bcde6f898d36807d97f87fb28e6f64156c8566fb))
+* **core:** tell the user's scrolls from the reader's own by where the scroll element is ([4ab6dec](https://github.com/mbret/prose-reader/commit/4ab6decf25b13f26f79e00f21cdc28120a77063f)), references [#571](https://github.com/mbret/prose-reader/issues/571)
+
+### Code Refactoring
+
+* **core:** drop the destroy lifecycle of the spine items observer ([347450d](https://github.com/mbret/prose-reader/commit/347450da77083275e25e5ff8491ab672193f8d34))
+* **core:** remove the item resize stream of the spine items observer ([94df441](https://github.com/mbret/prose-reader/commit/94df44143d10538afe26c90215f34c0199fd546a))
+
+
 ## [41.0.0](https://github.com/mbret/prose-reader/compare/v40.0.0...v41.0.0) (2026-11-10)
 
 ### ⚠ BREAKING CHANGES

@@ -3,6 +3,13 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## [42.0.0](https://github.com/mbret/prose-reader/compare/v41.0.0...v42.0.0) (2026-11-10)
+
+### Features
+
+* **react-reader:** accept reactjrx 5 as a peer ([8e910e7](https://github.com/mbret/prose-reader/commit/8e910e77d3d77c5691a8b9caae1fa7a73e132ff5))
+
+
 ## [41.0.0](https://github.com/mbret/prose-reader/compare/v40.0.0...v41.0.0) (2026-11-10)
 
 **Note:** Version bump only for package @prose-reader/react-reader
