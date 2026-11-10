@@ -53,15 +53,14 @@ describe("a destroyed reader", () => {
     expect(onLayoutComplete).toHaveBeenCalled()
   })
 
-  it("completes the streams of its items observer, and observes the size of nothing", async () => {
+  it("completes the streams of its items observer", async () => {
     vi.useFakeTimers()
 
     const reader = createTestReader()
-    const { itemStateChange$, itemResize$, itemLoadStatusChange$ } =
+    const { itemStateChange$, itemLoadStatusChange$ } =
       reader.spineItemsObserver
     const itemStreams: Record<string, Observable<unknown>> = {
       itemStateChange$,
-      itemResize$,
       itemLoadStatusChange$,
     }
     const completedItemStreams: string[] = []
@@ -76,9 +75,23 @@ describe("a destroyed reader", () => {
 
     expect([...completedItemStreams].sort()).toEqual([
       "itemLoadStatusChange$",
-      "itemResize$",
       "itemStateChange$",
     ])
+  })
+
+  it("observes the size of nothing", async () => {
+    vi.useFakeTimers()
+
+    const reader = createTestReader()
+
+    mountTestReader(reader)
+    await vi.runAllTimersAsync()
+
+    // the container, which the reader lays out again when it resizes
+    expect(resizeObservers().watching).toBeGreaterThan(0)
+
+    reader.destroy()
+
     expect(resizeObservers().watching).toBe(0)
   })
 })

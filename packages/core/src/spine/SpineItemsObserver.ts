@@ -6,35 +6,25 @@ import {
   type Observable,
   pairwise,
   share,
-  takeUntil,
 } from "rxjs"
 import type { DocumentLoadStatus } from "../spineItem/renderer/DocumentRenderer"
 import type { SpineItem, SpineItemState } from "../spineItem/SpineItem"
-import { DestroyableClass } from "../utils/DestroyableClass"
-import { observeResize } from "../utils/rxjs"
 import type { SpineItemsManager } from "./SpineItemsManager"
 
-export class SpineItemsObserver extends DestroyableClass {
+/**
+ * The states of every spine item, as streams shared by their subscribers.
+ * Each one completes once the items are destroyed, as the reader destroys
+ * them: the observer holds nothing of its own to release.
+ */
+export class SpineItemsObserver {
   /**
    * Shared observable which emits every time a spine item state changes.
    * As there can be lot of spine items and subscriptions can become costly it is
    * encouraged to use this shared observable. Read `item.value` for a current
    * snapshot rather than relying on this stream to replay on subscribe.
-   * Completes when the reader is destroyed.
+   * Completes when the reader is destroyed, with its items.
    */
   public itemStateChange$: Observable<{ item: SpineItem } & SpineItemState>
-
-  /**
-   * Observable directly plugged to ResizeObserver for each item.
-   *
-   * Items are only attached to the DOM at mount, and ResizeObserver does not
-   * report detached elements, so this starts emitting once items are attached.
-   * Completes when the reader is destroyed, which stops the observation.
-   */
-  public itemResize$: Observable<{
-    item: SpineItem
-    entries: ResizeObserverEntry[]
-  }>
 
   /**
    * Emits each time an item's `loadStatus` changes, with the status it
@@ -55,7 +45,7 @@ export class SpineItemsObserver extends DestroyableClass {
    * spine's layout does: done during the delivery, it would reach the
    * item's later subscribers before the status it responds to.
    *
-   * Completes when the reader is destroyed.
+   * Completes when the reader is destroyed, with its items.
    */
   public itemLoadStatusChange$: Observable<{
     item: SpineItem
@@ -63,9 +53,7 @@ export class SpineItemsObserver extends DestroyableClass {
     loadStatus: DocumentLoadStatus
   }>
 
-  constructor(protected spineItemsManager: SpineItemsManager) {
-    super()
-
+  constructor(spineItemsManager: SpineItemsManager) {
     const items = spineItemsManager.items
 
     this.itemStateChange$ = merge(
@@ -75,13 +63,7 @@ export class SpineItemsObserver extends DestroyableClass {
           distinctUntilChanged(isShallowEqual),
         ),
       ),
-    ).pipe(takeUntil(this.destroy$), share())
-
-    this.itemResize$ = merge(
-      ...items.map((item) =>
-        observeResize(item.element).pipe(map((entries) => ({ entries, item }))),
-      ),
-    ).pipe(takeUntil(this.destroy$), share())
+    ).pipe(share())
 
     this.itemLoadStatusChange$ = merge(
       ...items.map((item) =>
@@ -94,6 +76,6 @@ export class SpineItemsObserver extends DestroyableClass {
           })),
         ),
       ),
-    ).pipe(takeUntil(this.destroy$), share())
+    ).pipe(share())
   }
 }
