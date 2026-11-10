@@ -1,6 +1,7 @@
 import { expect, type Page, test } from "@playwright/test"
 import { navigateToSpineItem } from "../../utils"
 import { layOutAndSettle, waitForSettled } from "../../utils/pagination"
+import { getReader } from "../../utils/reader"
 import {
   getSpineItemIndexesOnScreen,
   updateSettingsAndGetSpineItemsOnScreen,
@@ -16,6 +17,7 @@ import {
 const url = "http://localhost:3333/tests/layout/settings/index.html"
 
 const SIXTH_PAGE = 5
+const NINTH_PAGE = 8
 
 type PageTurnMode = "controlled" | "scrollable"
 
@@ -78,6 +80,51 @@ test.describe("Given a book open on its sixth page", () => {
       })
     })
   }
+
+  test.describe("When the user scrolls to another page, and the page turn mode becomes controlled before that scroll is over", () => {
+    test("Then the page the user scrolled to is the one on screen", async ({
+      page,
+    }) => {
+      await openOnSixthPage(page, "scrollable")
+
+      const reader = await getReader(page)
+
+      await reader.evaluate(async (reader, pageIndex) => {
+        const scrollElement =
+          reader.navigation.scrollNavigationController.value.element
+
+        if (!scrollElement) throw new Error("the reader has no scroll element")
+
+        const { top } = reader.spine.getSpineItemSpineLayoutInfo(pageIndex)
+        let stopWatchingTheLock = () => {}
+
+        /**
+         * The reader holds the navigation from the first event of a scroll
+         * it did not make until that scroll is over. The mode changes in the
+         * task the lock is taken in, so the scroll is still in progress.
+         */
+        await new Promise<void>((resolve) => {
+          const subscription = reader.navigation.isLocked$.subscribe(
+            (isLocked) => {
+              if (isLocked) resolve()
+            },
+          )
+
+          stopWatchingTheLock = () => subscription.unsubscribe()
+          scrollElement.scrollTo({ top })
+        })
+        stopWatchingTheLock()
+
+        reader.settings.update({ pageTurnMode: "controlled" })
+      }, NINTH_PAGE)
+
+      await expect
+        .poll(() => getSpineItemIndexesOnScreen(page))
+        .toEqual([NINTH_PAGE])
+      await waitForSettled(page)
+      expect(await getSpineItemIndexesOnScreen(page)).toEqual([NINTH_PAGE])
+    })
+  })
 
   test.describe("When the page turn mode goes to scrollable and back, twice", () => {
     test("Then the page is the one on screen after each change", async ({

@@ -60,8 +60,9 @@ export class ScrollNavigationController
   public readonly isActive$: Observable<boolean>
 
   /**
-   * Each scroll event that shows a move the reader did not make: the user's
-   * scrolling. Never emits in controlled mode.
+   * The offsets of the element at each scroll event that shows a move the
+   * reader did not make: the user's scrolling. Never emits in controlled
+   * mode.
    *
    * A scroll event does not say who scrolled, and the one the reader causes
    * comes a frame or more after what caused it. So a move is told from the
@@ -77,7 +78,7 @@ export class ScrollNavigationController
    * A layout whose items are laid out over several tasks can be clamped
    * before it is done, and that scroll is still taken for a move.
    */
-  public readonly scrollNotMadeByReader$: Observable<Event>
+  public readonly scrollNotMadeByReader$: Observable<ScrollPosition>
 
   constructor(
     protected viewport: Viewport,
@@ -133,49 +134,46 @@ export class ScrollNavigationController
       ).pipe(
         map(() => ({
           scrollPosition: this.scrollPosition,
-          scrollEvent: undefined,
+          isScrollEvent: false,
         })),
       ),
       fromEvent(element, `scroll`).pipe(
-        map((scrollEvent) => ({
+        map(() => ({
           scrollPosition: this.scrollPosition,
-          scrollEvent,
+          isScrollEvent: true,
         })),
       ),
     ).pipe(
-      scan<
-        { scrollPosition: ScrollPosition; scrollEvent: Event | undefined },
-        {
-          scrollPositionKnownToReader: ScrollPosition
-          scrollEventOfMove: Event | undefined
-        }
-      >(
-        ({ scrollPositionKnownToReader }, { scrollPosition, scrollEvent }) => {
+      scan(
+        (
+          { scrollPositionKnownToReader },
+          { scrollPosition, isScrollEvent },
+        ) => {
           /**
            * An event that shows no move leaves the known offsets as they are,
            * so that a scroll of less than a pixel at a time adds up to a
            * move.
            */
           if (
-            scrollEvent &&
+            isScrollEvent &&
             isSameScrollPlace(scrollPositionKnownToReader, scrollPosition)
           )
-            return { scrollPositionKnownToReader, scrollEventOfMove: undefined }
+            return { scrollPositionKnownToReader, isMoveNotMadeByReader: false }
 
           return {
             scrollPositionKnownToReader: scrollPosition,
-            scrollEventOfMove: scrollEvent,
+            isMoveNotMadeByReader: isScrollEvent,
           }
         },
         // An event at the offsets the element has as this starts shows no
         // move.
         {
           scrollPositionKnownToReader: this.scrollPosition,
-          scrollEventOfMove: undefined,
+          isMoveNotMadeByReader: false,
         },
       ),
-      map(({ scrollEventOfMove }) => scrollEventOfMove),
-      filter(isDefined),
+      filter(({ isMoveNotMadeByReader }) => isMoveNotMadeByReader),
+      map(({ scrollPositionKnownToReader }) => scrollPositionKnownToReader),
     )
   }
 

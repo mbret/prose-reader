@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
 import { first, firstValueFrom, skip } from "rxjs"
-import { describe, expect, it } from "vitest"
+import { describe, expect, it, vi } from "vitest"
 import { SpinePosition } from "../spine/types"
 import {
   createPrePaginatedManifest,
@@ -86,11 +86,11 @@ const recordNavigationsAndLock = (reader: TestReader) => {
 }
 
 const recordScrollsNotMadeByReader = (reader: TestReader) => {
-  const scrollsNotMadeByReader: Event[] = []
+  const scrollsNotMadeByReader: { x: number; y: number }[] = []
 
   reader.navigation.scrollNavigationController.scrollNotMadeByReader$.subscribe(
-    (event) => {
-      scrollsNotMadeByReader.push(event)
+    ({ x, y }) => {
+      scrollsNotMadeByReader.push({ x, y })
     },
   )
 
@@ -173,7 +173,7 @@ describe("Given a book that scrolls", () => {
       scrollAsUser(scrollElement, topOfPage(1))
       deliverScrollEvent(scrollElement)
 
-      expect(scrollsNotMadeByReader).toHaveLength(1)
+      expect(scrollsNotMadeByReader).toEqual([{ x: 0, y: topOfPage(1) }])
     })
 
     it("does not take offsets a fraction of a pixel from where the reader left the element for a scroll", async () => {
@@ -207,30 +207,36 @@ describe("Given a book that scrolls", () => {
   })
 
   describe("When the page turn mode becomes controlled while the user scrolls", () => {
-    it("ends the scroll at once, and does not navigate to where the scroll element is left", async () => {
-      const { reader, scrollElement } = await openOnPage(2, {
+    it("ends the scroll at once, on the page the user scrolled to", async () => {
+      const { reader, scrollElement } = await openOnPage(0, {
         pageTurnMode: "scrollable",
       })
-      const { userNavigations, isLockHeld } = recordNavigationsAndLock(reader)
+      const { isLockHeld } = recordNavigationsAndLock(reader)
 
-      // a little further into the same page
-      scrollAsUser(scrollElement, topOfPage(2) + 10)
+      scrollAsUser(scrollElement, topOfPage(2))
 
       expect(isLockHeld()).toBe(true)
 
       /**
-       * The element loses its box with the mode, and its offsets with it:
-       * they no longer say where the user is.
+       * A browser takes the element's box away with the mode, and its
+       * offsets with it: they no longer say where the user is. jsdom keeps
+       * them, so the test resets them.
        */
+      scrollElement.scrollTop = 0
       reader.settings.update({ pageTurnMode: "controlled" })
 
       expect(isLockHeld()).toBe(false)
 
-      await waitFor(PAST_THE_END_OF_A_USER_SCROLL)
-
-      expect(userNavigations()).toHaveLength(0)
-
-      await settledOn(reader, 2)
+      // Polled rather than awaited, so that a failure names the page.
+      await vi.waitFor(
+        () =>
+          expect(reader.pagination.state).toMatchObject({
+            isSettled: true,
+            begin: { spineItemIndex: 2 },
+          }),
+        { timeout: 2000 },
+      )
+      expect(reader.navigation.getNavigation().spineItem).toBe(2)
     })
   })
 
