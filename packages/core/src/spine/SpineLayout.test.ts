@@ -74,6 +74,7 @@ const createTestSpineLayout = ({
     hookManager,
     spineItemsManager,
     spineLayout,
+    viewport,
   }
 }
 
@@ -133,9 +134,10 @@ type ItemSize = { height: number; width: number }
  * to whole pages of 100 by 100, and updates the item's state.
  */
 const createDeferredSpineLayout = (numberOfItems: number) => {
-  const { destroy, spineItemsManager, spineLayout } = createTestSpineLayout({
-    items: numberOfItems,
-  })
+  const { destroy, hookManager, spineItemsManager, spineLayout, viewport } =
+    createTestSpineLayout({
+      items: numberOfItems,
+    })
 
   // An item asked to lay out again drops the layout it had pending, so only
   // the newest one per item can complete.
@@ -144,7 +146,7 @@ const createDeferredSpineLayout = (numberOfItems: number) => {
   const layoutsStarted = spineItemsManager.items.map(() => 0)
 
   spineItemsManager.items.forEach((item, itemIndex) => {
-    vi.spyOn(item.renderer, "layout").mockImplementation(() => {
+    vi.spyOn(item.renderer, "onLayout").mockImplementation(() => {
       const result = new Subject<ItemSize>()
 
       pendingLayouts[itemIndex] = result
@@ -154,14 +156,22 @@ const createDeferredSpineLayout = (numberOfItems: number) => {
     })
   })
 
-  const completeItemLayout = (itemIndex: number, size: ItemSize) => {
+  const takePendingLayout = (itemIndex: number) => {
     const result = pendingLayouts[itemIndex]
 
     if (!result) throw new Error(`No pending layout for item ${itemIndex}`)
 
     pendingLayouts[itemIndex] = undefined
 
-    result.next(size)
+    return result
+  }
+
+  /** Completes the item's layout with `size`, or with no size at all. */
+  const completeItemLayout = (itemIndex: number, size?: ItemSize) => {
+    const result = takePendingLayout(itemIndex)
+
+    if (size) result.next(size)
+
     result.complete()
   }
 
@@ -198,11 +208,13 @@ const createDeferredSpineLayout = (numberOfItems: number) => {
     completeItemLayout,
     destroy,
     dirtyFlags,
+    hookManager,
     itemLayoutsStarted,
     items: spineItemsManager.items,
     layOutSpine,
     lefts,
     spineLayout,
+    viewport,
     widths,
   }
 }
@@ -518,7 +530,9 @@ describe("SpineLayout", () => {
 
         if (!firstItem) throw new Error("the spine has no item")
 
-        vi.spyOn(firstItem.renderer, "layout").mockReturnValue(firstItemLayout)
+        vi.spyOn(firstItem.renderer, "onLayout").mockReturnValue(
+          firstItemLayout,
+        )
       }
 
       try {
@@ -540,6 +554,33 @@ describe("SpineLayout", () => {
       }
     },
   )
+
+  it("stops the layout of an item when a newer request cancels its pass, and leaves the item dirty", () => {
+    const {
+      completeItemLayout,
+      destroy,
+      dirtyFlags,
+      hookManager,
+      spineLayout,
+    } = createDeferredSpineLayout(3)
+    const itemsLaidOut: number[] = []
+
+    hookManager.register("item.onAfterLayout", ({ item }) => {
+      itemsLaidOut.push(item.index)
+    })
+
+    try {
+      spineLayout.layout({ immediate: true })
+      // Waits before its pass, so the first item's layout ends in between.
+      spineLayout.layout()
+      completeItemLayout(0, { height: 100, width: 100 })
+
+      expect(itemsLaidOut, "the items laid out").toEqual([])
+      expect(dirtyFlags(), "the dirty items").toEqual([true, true, true])
+    } finally {
+      destroy()
+    }
+  })
 
   it("keeps RTL right-left spread pairs together after an odd number of pages", async () => {
     const { destroy, layoutRequests, spineLayout } =
