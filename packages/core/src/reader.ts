@@ -6,6 +6,7 @@ import {
   type Observable,
   type ObservedValueOf,
   of,
+  ReplaySubject,
   Subject,
   skip,
   takeUntil,
@@ -84,7 +85,7 @@ export const createReader = ({
   // than fighting over a single shared element.
   const stylesId = `${HTML_STYLE_PREFIX}-core-${id}`
   const layoutSubject = new Subject<ReaderLayoutOptions>()
-  const destroy$ = new Subject<void>()
+  const destroy$ = new ReplaySubject<void>(1)
   const hookManager = new HookManager()
   const context = new Context(manifest, ownerDocument)
   const settingsManager = new ReaderSettingsManager(inputSettings, context)
@@ -281,7 +282,11 @@ export const createReader = ({
       .pipe(map(isDefined), distinctUntilChanged()),
     features,
     $: {
-      destroy$,
+      /**
+       * Emits once the reader is destroyed, then completes. A subscriber that
+       * comes after the destroy receives that emission at once.
+       */
+      destroy$: destroy$.asObservable(),
     },
   }
 }
