@@ -3,6 +3,26 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## [41.0.0](https://github.com/mbret/prose-reader/compare/v40.0.0...v41.0.0) (2026-11-10)
+
+### ⚠ BREAKING CHANGES
+
+* **core:** getResource returns an Observable of URL, Response or
+  undefined. The { custom: true; data: unknown } resource is removed.
+
+### Bug Fixes
+
+* **core:** keep the page of an item whose node pages are unknown ([d6ac9d2](https://github.com/mbret/prose-reader/commit/d6ac9d23412fe0912cbb040253fda793d0c2afb2))
+* **core:** lay out a spine of any length without growing the call stack ([5eca85d](https://github.com/mbret/prose-reader/commit/5eca85d1f4d83ca92ae397b27e3a91e3ebfc0208)), references [#718](https://github.com/mbret/prose-reader/issues/718)
+* **core:** lay the book out again after a font weight change ([7e5d849](https://github.com/mbret/prose-reader/commit/7e5d849db12a7b5b835f427a8b78dba66990adf0))
+* **core:** restore to the reading position after a layout that keeps a chapter's size ([6ee33b3](https://github.com/mbret/prose-reader/commit/6ee33b32d1b728392bdb060601d322105bb0f772)), closes [#689](https://github.com/mbret/prose-reader/issues/689)
+* **core:** tell a page's element anchor apart where the anchor is made ([e022ba9](https://github.com/mbret/prose-reader/commit/e022ba9ae1eea77bbb6c89ccc07104072ec3665b))
+
+### Code Refactoring
+
+* **core:** drop the custom resource of getResource ([619767f](https://github.com/mbret/prose-reader/commit/619767f8f193aebfbcc246c4e8a958b66130f97f))
+
+
 ## [40.0.0](https://github.com/mbret/prose-reader/compare/v39.0.0...v40.0.0) (2026-11-05)
 
 ### ⚠ BREAKING CHANGES

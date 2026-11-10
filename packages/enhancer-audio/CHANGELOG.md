@@ -3,6 +3,18 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## [41.0.0](https://github.com/mbret/prose-reader/compare/v40.0.0...v41.0.0) (2026-11-10)
+
+### ⚠ BREAKING CHANGES
+
+* **core:** getResource returns an Observable of URL, Response or
+  undefined. The { custom: true; data: unknown } resource is removed.
+
+### Code Refactoring
+
+* **core:** drop the custom resource of getResource ([619767f](https://github.com/mbret/prose-reader/commit/619767f8f193aebfbcc246c4e8a958b66130f97f))
+
+
 ## [40.0.0](https://github.com/mbret/prose-reader/compare/v39.0.0...v40.0.0) (2026-11-05)
 
 **Note:** Version bump only for package @prose-reader/enhancer-audio

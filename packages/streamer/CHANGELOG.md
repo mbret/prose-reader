@@ -3,6 +3,22 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## [41.0.0](https://github.com/mbret/prose-reader/compare/v40.0.0...v41.0.0) (2026-11-10)
+
+### ⚠ BREAKING CHANGES
+
+* **streamer:** Streamer.accessArchive returns Observable<Archive>
+  instead of Observable<{ archive, release }>. accessArchiveWithoutLock is
+
+### Features
+
+* **streamer:** hold an archive while accessArchive is subscribed ([701ea98](https://github.com/mbret/prose-reader/commit/701ea98fe3d73b065890912c4d60819bda7eae37))
+
+### Bug Fixes
+
+* **streamer:** serve the last manifest onManifestSuccess emits ([01902b1](https://github.com/mbret/prose-reader/commit/01902b11963a9836f16716d880d6772239ee6477))
+
+
 ## [40.0.0](https://github.com/mbret/prose-reader/compare/v39.0.0...v40.0.0) (2026-11-05)
 
 **Note:** Version bump only for package @prose-reader/streamer

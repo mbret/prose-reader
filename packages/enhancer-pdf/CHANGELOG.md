@@ -3,6 +3,21 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## [41.0.0](https://github.com/mbret/prose-reader/compare/v40.0.0...v41.0.0) (2026-11-10)
+
+### ⚠ BREAKING CHANGES
+
+* **enhancer-pdf:** getArchiveForItem takes a spine item and returns
+  Observable<Archive>; the enhancer asks it only for spine items whose
+  container path ends in .pdf, and the archive must stay open while the
+  subscription lives. The enhancer no longer wraps getResource.
+
+### Bug Fixes
+
+* **enhancer-pdf:** hold the pdf archive while the reader renders it ([af16fc5](https://github.com/mbret/prose-reader/commit/af16fc5164de93a1e90e7bda40c3e0f8ab0f6a03))
+* **enhancer-pdf:** take no hold on a pdf archive once the reader is destroyed ([1678a6a](https://github.com/mbret/prose-reader/commit/1678a6ad5e773bc6f8f06fb13f2fb3456209593c))
+
+
 ## [40.0.0](https://github.com/mbret/prose-reader/compare/v39.0.0...v40.0.0) (2026-11-05)
 
 **Note:** Version bump only for package @prose-reader/enhancer-pdf
