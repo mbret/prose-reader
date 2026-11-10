@@ -18,10 +18,8 @@ import {
 import {
   catchError,
   EMPTY,
-  endWith,
   first,
   from,
-  ignoreElements,
   map,
   type Observable,
   of,
@@ -59,10 +57,8 @@ export class PdfRenderer extends DocumentRenderer {
   ) {
     super(params)
 
-    const rendererDestroyed$ = this.state$.pipe(ignoreElements(), endWith(null))
-
     this.heldPdfArchive$ = pdfArchive$.pipe(
-      takeUntil(rendererDestroyed$),
+      takeUntil(this.destroy$),
       shareReplay({ bufferSize: 1, refCount: false }),
     )
   }
