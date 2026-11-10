@@ -5,18 +5,6 @@ export const getStreamerBaseUrl = (url: URL) => {
   return `${url.origin}/${STREAMER_URL_PREFIX}`
 }
 
-export const getFileKeyFromUrl = (url: string) => {
-  const { pathname } = new URL(url)
-  const urlWithoutPrefix = pathname.substring(`/${STREAMER_URL_PREFIX}/`.length)
-  const nextSlashIndex = urlWithoutPrefix.indexOf("/")
-
-  if (nextSlashIndex !== -1) {
-    return urlWithoutPrefix.substring(0, urlWithoutPrefix.indexOf("/"))
-  }
-
-  return urlWithoutPrefix
-}
-
 export const getBlobFromKey = async (
   key: string,
 ): Promise<{ blob: Blob | File; url: string; filename: string }> => {

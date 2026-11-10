@@ -93,6 +93,29 @@ export const turnLeft = async ({ page }: { page: Page }) => {
   await page.keyboard.press("ArrowLeft")
 }
 
+/** The index of the spine item whose href ends with `href`. */
+export const getChapterIndex = async (page: Page, href: string) =>
+  (await getReader(page)).evaluate((reader, href) => {
+    const index = reader.context.manifest.spineItems.findIndex((item) =>
+      item.href.endsWith(href),
+    )
+
+    if (index < 0) throw new Error(`no ${href} in the book`)
+
+    return index
+  }, href)
+
+/** `ch02.xhtml` of `accessible_epub_3.epub`, a chapter of many pages. */
+export const getLongChapterIndex = (page: Page) =>
+  getChapterIndex(page, "ch02.xhtml")
+
+/** The number of pages of a spine item, as the reader counts them now. */
+export const getNumberOfPagesOfSpineItem = async (page: Page, index: number) =>
+  (await getReader(page)).evaluate(
+    (reader, index) => reader.spineItemsManager.get(index)?.numberOfPages,
+    index,
+  )
+
 export const navigateToSpineItem = async ({
   page,
   index,

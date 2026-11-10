@@ -40,7 +40,8 @@ type Navigation = {
  * - Otherwise it is the first character of the page that shows first at the
  *   navigation's position, the begin edge of what is visible, final as soon
  *   as that page is laid out. That includes a target whose document shows it
- *   names nothing.
+ *   names nothing. Where no text shows first on that page, it is the element
+ *   that does, which can start on an earlier page: `isPageElement` says so.
  * - Until then it stands in: the start of the item the navigation goes to.
  *   Restoration works from the navigation's position, and the first
  *   restoration that lands on a layout with the page finds it.
@@ -181,6 +182,7 @@ export const withAnchor =
           spineItem.index,
         ).start,
         state: "standIn",
+        isPageElement: false,
       }
     }
 
@@ -215,6 +217,7 @@ export const withAnchor =
               percentageEstimateOfBook:
                 getAnchorPageStartProgression(targetPlacePage),
               state: "final",
+              isPageElement: false,
             }
           : endInErrorOnLoadFailure(anchor, navigation)
       }
@@ -233,6 +236,8 @@ export const withAnchor =
           pageIndex: page.page.pageIndex,
         }),
         state: "final",
+        isPageElement:
+          page.page.firstVisibleNode?.node.nodeType === Node.ELEMENT_NODE,
       }
     }
 

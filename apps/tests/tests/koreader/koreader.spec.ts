@@ -1,6 +1,7 @@
 import { expect, type Page, test } from "@playwright/test"
 import type { ReadingPosition } from "@prose-reader/core"
 import type { generateXPointer, xPointerToCfi } from "@prose-reader/koreader"
+import { getChapterIndex } from "../utils"
 import { goToKoreaderProgress } from "../utils/koreader"
 import { waitForSettled } from "../utils/pagination"
 import { getReader } from "../utils/reader"
@@ -35,17 +36,6 @@ type ScenarioHelpers = {
     xPointerToCfi: typeof xPointerToCfi
   }
 }
-
-const getChapterIndex = async (page: Page) =>
-  (await getReader(page)).evaluate((reader, href) => {
-    const index = reader.context.manifest.spineItems.findIndex((item) =>
-      item.href.endsWith(href),
-    )
-
-    if (index < 0) throw new Error(`no ${href} in the book`)
-
-    return index
-  }, chapter)
 
 /** The crengine pointer to the start of a spine item. */
 const chapterStart = (spineItemIndex: number) =>
@@ -121,7 +111,7 @@ const readFragmentXPointer = async (page: Page) => {
   await page.goto(url)
   await waitForSettled(page)
 
-  const chapterIndex = await getChapterIndex(page)
+  const chapterIndex = await getChapterIndex(page, chapter)
 
   await goToSpineItem(page, chapterIndex)
 
@@ -244,7 +234,7 @@ test.describe("Given pages turned in a chapter", () => {
     await page.goto(url)
     await waitForSettled(page)
 
-    const chapterIndex = await getChapterIndex(page)
+    const chapterIndex = await getChapterIndex(page, chapter)
 
     await goToSpineItem(page, chapterIndex)
 
@@ -274,7 +264,7 @@ test.describe("Given a book reopened at a cfi inside a chapter not loaded yet", 
     await page.goto(url)
     await waitForSettled(page)
 
-    const chapterIndex = await getChapterIndex(page)
+    const chapterIndex = await getChapterIndex(page, chapter)
 
     await goToSpineItem(page, chapterIndex)
     await (await getReader(page)).evaluate((reader) => {
@@ -337,7 +327,7 @@ test.describe("Given an xpointer into a chapter where its place cannot be found"
     await page.goto(`${url}?preload=0`)
     await waitForSettled(page)
 
-    const chapterIndex = await getChapterIndex(page)
+    const chapterIndex = await getChapterIndex(page, chapter)
     // A path no element of the chapter has, as a stale pointer can.
     const xpointer = `${chapterStart(chapterIndex)}/div[999]/p[3]/text().0`
 

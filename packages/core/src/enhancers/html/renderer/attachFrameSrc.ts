@@ -98,13 +98,9 @@ export const attachFrameSrc = ({
                 : of(resource)
 
             return resourceResponse$.pipe(
-              switchMap((response) => {
-                if (!(response instanceof Response)) {
-                  throw new Error(`Invalid resource`)
-                }
-
-                return createHtmlPageFromResource(response, item)
-              }),
+              switchMap((response) =>
+                createHtmlPageFromResource(response, item),
+              ),
               tap((blob) => {
                 attachSource(frameElement, blob)
               }),

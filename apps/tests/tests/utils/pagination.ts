@@ -1,4 +1,5 @@
 import type { Page } from "@playwright/test"
+import type { Reader } from "@prose-reader/core"
 import { getReader } from "./reader"
 
 /**
@@ -118,4 +119,57 @@ export const resizeAndSettle = async (
   await page.setViewportSize(size)
 
   await pendingSettlement.evaluate(({ settled }) => settled)
+}
+
+/**
+ * Lays the reader out, with `reader.layout()` or, given `settings`, by
+ * updating them, and resolves once the result after that layout has settled:
+ * the navigation, restored onto the new layout. Fails at once if the call
+ * lays nothing out, as a settings update that requests no layout does.
+ *
+ * A layout requests a measure of the viewport before the call returns, and
+ * ends the settled result at once, so the next settled result is the one
+ * after it. Restoration can land where the navigation already was, so
+ * nothing on screen tells when it happened: a layout that changes nothing is
+ * one such case.
+ */
+export const layOutAndSettle = async (
+  page: Page,
+  {
+    settings,
+  }: {
+    // functions cannot be sent into the page
+    settings?: Omit<
+      Parameters<Reader["settings"]["update"]>[0],
+      "getResource" | "getRenderer"
+    >
+  } = {},
+) => {
+  const reader = await getReader(page)
+  const hasLaidOutViewport = await reader.evaluate((reader, settings) => {
+    let hasLaidOutViewport = false
+    const subscription = reader.viewport.layout$.subscribe(() => {
+      hasLaidOutViewport = true
+    })
+
+    if (settings) {
+      reader.settings.update(settings)
+    } else {
+      reader.layout()
+    }
+
+    subscription.unsubscribe()
+
+    return hasLaidOutViewport
+  }, settings)
+
+  if (!hasLaidOutViewport) {
+    throw new Error(
+      settings
+        ? `the update of ${JSON.stringify(settings)} requested no layout`
+        : "reader.layout() requested no layout",
+    )
+  }
+
+  await waitForSettled(page)
 }

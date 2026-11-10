@@ -2,11 +2,12 @@ import type { Archive } from "@prose-reader/archive-reader"
 import type { Manifest } from "@prose-reader/shared"
 import {
   catchError,
-  finalize,
+  defer,
+  first,
   from,
+  last,
   lastValueFrom,
   map,
-  mergeMap,
   type Observable,
   of,
   switchMap,
@@ -87,28 +88,31 @@ export class Streamer {
     this.onError = onError ?? this.onError
   }
 
+  /**
+   * Closes every loaded archive once nothing holds it: at once for one
+   * nothing holds, on its release for one an `accessArchive` holds, unless it
+   * is accessed again before.
+   */
   public prune() {
     this.archiveLoader.purge()
   }
 
-  public accessArchive(key = defaultArchiveKey) {
-    if (this.lastAccessedKey !== undefined && this.lastAccessedKey !== key) {
-      this.archiveLoader.purge()
-    }
+  /**
+   * Emits the archive of `key`, loading it through `getArchive` on the first
+   * access, and holds it open until you unsubscribe. An access to another key
+   * than the last one prunes first.
+   */
+  public accessArchive(key = defaultArchiveKey): Observable<Archive> {
+    return defer(() => {
+      const isAnotherArchive =
+        this.lastAccessedKey !== undefined && this.lastAccessedKey !== key
 
-    this.lastAccessedKey = key
+      if (isAnotherArchive) this.archiveLoader.purge()
 
-    return this.archiveLoader.access(key)
-  }
+      this.lastAccessedKey = key
 
-  public accessArchiveWithoutLock(key = defaultArchiveKey) {
-    return this.accessArchive(key).pipe(
-      map(({ archive, release }) => {
-        release()
-
-        return archive
-      }),
-    )
+      return this.archiveLoader.access(key)
+    })
   }
 
   protected withArchiveResponse({
@@ -119,13 +123,8 @@ export class Streamer {
     getResponse: WithArchiveResponse
   }) {
     const response$ = this.accessArchive(key).pipe(
-      mergeMap(({ archive, release }) =>
-        from(getResponse(archive)).pipe(
-          finalize(() => {
-            release()
-          }),
-        ),
-      ),
+      switchMap((archive) => from(getResponse(archive)).pipe(last())),
+      first(),
       catchError((error) => {
         return of(this.onError(error))
       }),

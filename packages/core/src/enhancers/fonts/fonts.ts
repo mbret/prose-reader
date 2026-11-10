@@ -1,8 +1,11 @@
-import { map, pairwise, takeUntil, tap } from "rxjs"
+import { skip, takeUntil, tap } from "rxjs"
 import type { ExtendedSettings } from "../../settings/SettingsInterface"
+import type { SpineItem } from "../../spineItem/SpineItem"
 import { upsertCSSToFrame } from "../../utils/frames"
 import type { EnhancerOutput, RootEnhancer } from "../types/enhancer"
 import type { EnhancerFontsInputSettings } from "./types"
+
+const FONTS_STYLESHEET_ID = `prose-reader-fonts`
 
 const defaultFontsSettings: EnhancerFontsInputSettings = {
   fontScale: 1,
@@ -13,15 +16,41 @@ const defaultFontsSettings: EnhancerFontsInputSettings = {
 
 /**
  * @important
+ * Setting the font scale on body still has a chance to break publisher potential
+ * font size on body if they already use something.
+ * @see 9782714493743
+ *
+ * Ideally, we would like to use !important but it could break publisher specific
+ * cases.
+ * Also right now we do not apply it to * since it would also break publisher
+ * more specific scaling down the tree.
+ *
+ * body *:not([class^="mjx-"]) {
+ */
+const getFontsStylesheet = ({
+  fontScale,
+  lineHeight,
+  fontWeight,
+  fontJustification,
+}: EnhancerFontsInputSettings) => `
+  body {
+    ${fontScale !== 1 ? `font-size: ${fontScale}em !important;` : ``}
+    ${lineHeight !== `publisher` ? `line-height: ${lineHeight} !important;` : ``}
+    ${fontWeight !== `publisher` ? `font-weight: ${fontWeight} !important;` : ``}
+    ${fontJustification !== `publisher` ? `text-align: ${fontJustification} !important;` : ``}
+  }
+`
+
+/**
+ * @important
  * We don't apply font scaling on pre-paginated because it could potentially
  * break publisher scaling. Since it's specifically made for the given fixed layout
  * we should trust the publisher and not break its rendering.
  * @see 9781250213662
- *
- * Setting the font scale on body still has a chance to break publisher potential
- * font size on body if they already use something.
- * @see 9782714493743
  */
+const keepsPublisherFonts = (spineItem: SpineItem) =>
+  spineItem.renditionLayout === `pre-paginated`
+
 export const fontsEnhancer =
   <InheritOptions, InheritOutput extends EnhancerOutput<RootEnhancer>>(
     next: (options: InheritOptions) => InheritOutput,
@@ -38,75 +67,29 @@ export const fontsEnhancer =
     const inheritedSettings: InheritOutput["settings"] = reader.settings
     const settings = inheritedSettings.extend(defaultFontsSettings, options)
 
-    const getStyle = () => `
-    ${
-      /*
-      Ideally, we would like to use !important but it could break publisher specific
-      cases.
-      Also right now we do not apply it to * since it would also break publisher
-      more specific scaling down the tree.
-
-      body *:not([class^="mjx-"]) {
-    */ ``
-    }
-    body {
-      ${settings.values.fontScale !== 1 ? `font-size: ${settings.values.fontScale}em !important;` : ``}
-      ${settings.values.lineHeight !== `publisher` ? `line-height: ${settings.values.lineHeight} !important;` : ``}
-      ${settings.values.fontWeight !== `publisher` ? `font-weight: ${settings.values.fontWeight} !important;` : ``}
-      ${settings.values.fontJustification !== `publisher` ? `text-align: ${settings.values.fontJustification} !important;` : ``}
-    }
-  `
-
-    /**
-     * Programmatically update every loaded items
-     */
-    const applyChangeToSpineItems = (requireLayout: boolean) => {
-      reader.spineItemsManager.items.forEach((item) => {
-        if (item.renditionLayout !== `pre-paginated`) {
-          const frame = item.renderer.getDocumentFrame()
-
-          if (frame) {
-            upsertCSSToFrame(frame, `prose-reader-fonts`, getStyle())
-          }
-        }
-      })
-
-      if (requireLayout) {
-        reader.layout()
-      }
+    const applyFontsStylesheet = (spineItem: SpineItem) => {
+      upsertCSSToFrame(
+        spineItem.renderer.getDocumentFrame(),
+        FONTS_STYLESHEET_ID,
+        getFontsStylesheet(settings.values),
+      )
     }
 
-    /**
-     * Make sure we apply the style to any new item loaded.
-     */
-    reader.hookManager.register(`item.onDocumentLoad`, async ({ itemId }) => {
-      const item = reader.spineItemsManager.get(itemId)
+    reader.hookManager.register(`item.onBeforeLayout`, ({ item }) => {
+      const spineItem = reader.spineItemsManager.get(item.id)
 
-      if (item?.renditionLayout !== `pre-paginated`) {
-        const frame = item?.renderer.getDocumentFrame()
-
-        if (frame) {
-          upsertCSSToFrame(frame, `prose-reader-fonts`, getStyle())
-        }
+      if (spineItem && !keepsPublisherFonts(spineItem)) {
+        applyFontsStylesheet(spineItem)
       }
     })
 
-    const fontsSettings$ = settings.watch([
-      `fontScale`,
-      `lineHeight`,
-      `fontWeight`,
-      `fontJustification`,
-    ])
+    const fontsSettingsChange$ = settings
+      .watch([`fontScale`, `lineHeight`, `fontWeight`, `fontJustification`])
+      .pipe(skip(1))
 
-    fontsSettings$
+    fontsSettingsChange$
       .pipe(
-        pairwise(),
-        map(
-          ([previousFontsSettings, fontsSettings]) =>
-            fontsSettings.fontScale !== previousFontsSettings.fontScale ||
-            fontsSettings.lineHeight !== previousFontsSettings.lineHeight,
-        ),
-        tap(applyChangeToSpineItems),
+        tap(() => reader.layout()),
         takeUntil(reader.$.destroy$),
       )
       .subscribe()

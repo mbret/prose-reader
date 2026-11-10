@@ -33,7 +33,7 @@ is not a `success` is saved all the same.
 
 | Field | Meaning |
 | --- | --- |
-| `cfi` | The place in the text: the place the target names once its spine item's document shows it, or the first character of the page landed on. While no place is known, such as while the spine item the navigation goes to loads, it stands in: it is that item's start, a cfi naming only the item, which `reader.cfi.isRootCfi(cfi)` tells |
+| `cfi` | The place in the text: the place the target names once its spine item's document shows it, or the first character of the page landed on, or the element that page starts with when no text does. While no place is known, such as while the spine item the navigation goes to loads, it stands in: it is that item's start, a cfi naming only the item, which `reader.cfi.isRootCfi(cfi)` tells |
 | `percentageEstimateOfBook` | How far into the book `cfi` is, from `0` to `1`: where the page holding it starts, estimated from the `progressionWeight` of each spine item in the manifest and the pages of its own. A position on the last page is short of `1`. While the value is not a `success`, it is the start of its spine item. When a spine item has no `progressionWeight`, or the weights add up to nothing, every item counts as an even share |
 | `status` | Whether the reader has found the place the navigation goes to: `pending` while it is still finding it, `success` once the page holding the place the target names is laid out, or once the page landed on is when the target names no place, and `error` once the spine item the navigation goes to has failed to load, at its start or at the place the target names if the item showed it first. Every navigation ends in `success` or `error`, which stays until the next navigation |
 

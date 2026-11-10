@@ -40,6 +40,21 @@ const REWRITTEN_BOOKS = new Map<string, RewrittenBook>([
     },
   ],
   [
+    "accessible_epub_3-sans-serif.epub",
+    {
+      fixture: "accessible_epub_3.epub",
+      /**
+       * Sets the text in the system sans-serif font. Unlike the book's own
+       * font, it has a bold face, whose glyphs are wider.
+       */
+      rewritePage: (fixturePage) =>
+        fixturePage.replace(
+          "</head>",
+          "<style>body, body * { font-family: sans-serif !important; }</style></head>",
+        ),
+    },
+  ],
+  [
     "sous-le-vent-without-stylesheets.epub",
     {
       fixture: "sous-le-vent.epub",

@@ -1,24 +1,17 @@
-import type { CreateReaderOptions, Manifest, Reader } from "@prose-reader/core"
-import { from, map, of, switchMap } from "rxjs"
-import { isPdfJsArchive } from "./createArchiveFromPdf"
+import type { CreateReaderOptions, Reader } from "@prose-reader/core"
+import { defer } from "rxjs"
 import { PdfRenderer } from "./renderer/PdfRenderer"
 import type { EnhancerOptions } from "./types"
 
 export const pdfEnhancer =
   <
-    InheritOptions extends Pick<
-      CreateReaderOptions,
-      "getRenderer" | "getResource"
-    >,
+    InheritOptions extends Pick<CreateReaderOptions, "getRenderer">,
     InheritOutput extends Reader,
   >(
     next: (options: InheritOptions) => InheritOutput,
   ) =>
-  (options: InheritOptions & EnhancerOptions): InheritOutput => {
-    const getResourceFromReaderOptions = (item: Manifest["items"][number]) =>
-      options.getResource?.(item) ?? of(undefined)
-
-    const reader = next({
+  (options: InheritOptions & EnhancerOptions): InheritOutput =>
+    next({
       ...options,
       /**
        * We have a special renderer for pdf so we need to inject it
@@ -34,48 +27,13 @@ export const pdfEnhancer =
 
         if (!maybeFactory && item.containerUri.endsWith(`.pdf`)) {
           return (params) =>
-            new PdfRenderer(options.pdf.pdfjsViewerInlineCss, params)
+            new PdfRenderer(
+              options.pdf.pdfjsViewerInlineCss,
+              defer(() => options.pdf.getArchiveForItem(item)),
+              params,
+            )
         }
 
         return maybeFactory
       },
-      /**
-       * An item `getArchiveForItem` gives a pdf archive for is a page only this
-       * enhancer can serve, so the archive comes first. Any other item goes to
-       * the `getResource` the reader was given. When `getArchiveForItem` answers
-       * more than once, its last answer decides.
-       */
-      getResource: (item) =>
-        options.pdf.getArchiveForItem(item).pipe(
-          switchMap((archive) => {
-            if (!archive) return getResourceFromReaderOptions(item)
-
-            if (!isPdfJsArchive(archive)) {
-              console.warn(`You provided an invalid pdf archive`)
-
-              return getResourceFromReaderOptions(item)
-            }
-
-            // `createArchiveFromPdf` holds its package document, then one
-            // record per page in page order, so the record a page's spine
-            // item shows is at its page number. A resource is requested by
-            // its manifest entry, which does not name its record: the spine
-            // item of the same id does.
-            const containerUri = reader.spineItemsManager.get(item.id)?.item
-              .containerUri
-            const pageNumber = archive.records.findIndex(
-              (file) => file.uri === containerUri,
-            )
-
-            return from(archive.proxyDocument.getPage(pageNumber)).pipe(
-              map((pageProxy) => ({
-                custom: true as const,
-                data: pageProxy,
-              })),
-            )
-          }),
-        ),
     })
-
-    return reader
-  }

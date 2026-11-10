@@ -42,10 +42,12 @@ const createSpine = ({
   isLayoutCurrentForItem = true,
   isReady = true,
   loadStatus = "loaded",
+  firstVisibleNodeType = Node.TEXT_NODE,
 }: {
   isLayoutCurrentForItem?: boolean
   isReady?: boolean
   loadStatus?: DocumentLoadStatus
+  firstVisibleNodeType?: number
 } = {}) => {
   const item = { index: 0 }
   const spineItem = {
@@ -73,7 +75,10 @@ const createSpine = ({
     pages: {
       fromSpineItemPageIndex: () => ({
         pageIndex: 1,
-        firstVisibleNode: { node: {}, offset: 0 },
+        firstVisibleNode: {
+          node: { nodeType: firstVisibleNodeType },
+          offset: 0,
+        },
       }),
     },
   }
@@ -115,6 +120,7 @@ const standIn: InternalNavigationAnchor = {
   cfi: itemStart,
   percentageEstimateOfBook: 0,
   state: "standIn",
+  isPageElement: false,
 }
 
 describe("withAnchor", () => {
@@ -123,6 +129,21 @@ describe("withAnchor", () => {
       cfi: pageText,
       percentageEstimateOfBook: expectedPageStartProgression,
       state: "final",
+      isPageElement: false,
+    })
+  })
+
+  it("is the element the page at the navigation's position starts with, where no text shows first, and says so", async () => {
+    expect(
+      await consolidateAnchor(
+        {},
+        createSpine({ firstVisibleNodeType: Node.ELEMENT_NODE }),
+      ),
+    ).toEqual({
+      cfi: pageText,
+      percentageEstimateOfBook: expectedPageStartProgression,
+      state: "final",
+      isPageElement: true,
     })
   })
 
@@ -149,6 +170,7 @@ describe("withAnchor", () => {
       cfi: textElsewhere,
       percentageEstimateOfBook: 0,
       state: "targetPlace",
+      isPageElement: false,
     }
 
     expect(
@@ -186,6 +208,7 @@ describe("withAnchor", () => {
       cfi: textElsewhere,
       percentageEstimateOfBook: 0.25,
       state: "final",
+      isPageElement: false,
     }
 
     expect(await consolidateAnchor({ anchor }, createSpine())).toEqual(anchor)
@@ -201,6 +224,7 @@ describe("withAnchor", () => {
       cfi: itemStart,
       percentageEstimateOfBook: 0,
       state: "final",
+      isPageElement: false,
     }
 
     expect(await consolidateAnchor({ anchor }, createSpine())).toEqual(anchor)
@@ -218,6 +242,7 @@ describe("withAnchor", () => {
       cfi: textElsewhere,
       percentageEstimateOfBook: 0,
       state: "targetPlace",
+      isPageElement: false,
     }
 
     expect(
@@ -232,6 +257,7 @@ describe("withAnchor", () => {
       cfi: textElsewhere,
       percentageEstimateOfBook: expectedCfiPageStartProgression,
       state: "final",
+      isPageElement: false,
     })
   })
 
@@ -254,6 +280,7 @@ describe("withAnchor", () => {
         cfi: textElsewhere,
         percentageEstimateOfBook: 0,
         state: "targetPlace",
+        isPageElement: false,
       }
 
       expect(
