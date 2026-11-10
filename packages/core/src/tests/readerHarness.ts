@@ -12,7 +12,15 @@ import {
   switchMap,
   timeout,
 } from "rxjs"
-import { afterAll, afterEach, beforeAll, beforeEach, expect, vi } from "vitest"
+import {
+  afterAll,
+  afterEach,
+  beforeAll,
+  beforeEach,
+  expect,
+  onTestFinished,
+  vi,
+} from "vitest"
 import { createReaderWithEnhancers } from "../createReaderWithEnhancer"
 import { htmlEnhancer } from "../enhancers/html/enhancer"
 import { layoutEnhancer } from "../enhancers/layout/layoutEnhancer"
@@ -432,6 +440,35 @@ export const installReaderTestEnvironment = () => {
  */
 export const setTestViewport = (size: { width: number; height: number }) => {
   viewport = { ...size }
+}
+
+/**
+ * jsdom has no element scrolling: `scrollTo` is not defined there. This one
+ * keeps the offsets it is given, which is all the scroll navigation controller
+ * needs, and records the element's `display` at each call. It reports no
+ * scroll event: a test delivers one where a browser would, with
+ * `deliverScrollEvent`.
+ */
+export const stubElementScrolling = () => {
+  const scrollToCalls: { element: HTMLElement; display: string }[] = []
+
+  Object.defineProperty(HTMLElement.prototype, "scrollTo", {
+    configurable: true,
+    value(this: HTMLElement, options?: ScrollToOptions) {
+      scrollToCalls.push({ element: this, display: this.style.display })
+      this.scrollLeft = options?.left ?? 0
+      this.scrollTop = options?.top ?? 0
+    },
+  })
+  onTestFinished(() => {
+    Reflect.deleteProperty(HTMLElement.prototype, "scrollTo")
+  })
+
+  return { scrollToCalls }
+}
+
+export const deliverScrollEvent = (element: HTMLElement) => {
+  element.dispatchEvent(new Event("scroll"))
 }
 
 export const getTestContainer = () => {

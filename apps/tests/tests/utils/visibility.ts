@@ -1,5 +1,5 @@
 import { expect, type Page } from "@playwright/test"
-import { getReader } from "./reader"
+import { getReader, type SettingsSentIntoPage } from "./reader"
 
 /** An element's box as the page renders it, and the window it is drawn in. */
 type BoxInWindow = {
@@ -15,29 +15,34 @@ const isBoxOnScreen = ({ box, window }: BoxInWindow) =>
   box.left < window.width
 
 /**
- * Each spine item's load status, and whether any of its container is on
- * screen as the page renders it: what a zoom, a scroll or any other transform
- * shows. With them, whether the layout is current: until it is, a pending
- * layout can still move the containers. All are read in one go, so they
- * describe the same moment.
+ * Each spine item's load status and container box, with whether the layout is
+ * current, all read in one go. Given settings, it updates them first, in the
+ * same task as the read.
  */
-export const getSpineItemsOnScreen = async (page: Page) => {
+const readSpineItemBoxes = async (
+  page: Page,
+  settingsToUpdateFirst?: SettingsSentIntoPage,
+) => {
   const { isLayoutCurrent, spineItems } = await (
     await getReader(page)
-  ).evaluate((reader) => ({
-    isLayoutCurrent: reader.spine.isLayoutCurrent(),
-    spineItems: reader.spineItemsManager.items.map((spineItem) => {
-      const { top, right, bottom, left } =
-        spineItem.containerElement.getBoundingClientRect()
+  ).evaluate((reader, settings) => {
+    if (settings) reader.settings.update(settings)
 
-      return {
-        index: spineItem.index,
-        loadStatus: spineItem.value.loadStatus,
-        box: { top, right, bottom, left },
-        window: { width: window.innerWidth, height: window.innerHeight },
-      }
-    }),
-  }))
+    return {
+      isLayoutCurrent: reader.spine.isLayoutCurrent(),
+      spineItems: reader.spineItemsManager.items.map((spineItem) => {
+        const { top, right, bottom, left } =
+          spineItem.containerElement.getBoundingClientRect()
+
+        return {
+          index: spineItem.index,
+          loadStatus: spineItem.value.loadStatus,
+          box: { top, right, bottom, left },
+          window: { width: window.innerWidth, height: window.innerHeight },
+        }
+      }),
+    }
+  }, settingsToUpdateFirst)
 
   return {
     isLayoutCurrent,
@@ -48,6 +53,25 @@ export const getSpineItemsOnScreen = async (page: Page) => {
     })),
   }
 }
+
+/**
+ * Each spine item's load status, and whether any of its container is on
+ * screen as the page renders it: what a zoom, a scroll or any other transform
+ * shows. With them, whether the layout is current: until it is, a pending
+ * layout can still move the containers. All are read in one go, so they
+ * describe the same moment.
+ */
+export const getSpineItemsOnScreen = (page: Page) => readSpineItemBoxes(page)
+
+/**
+ * Updates settings, and reads what `getSpineItemsOnScreen` does in the same
+ * task: what the update leaves on screen, before the reader has laid out for
+ * it.
+ */
+export const updateSettingsAndGetSpineItemsOnScreen = (
+  page: Page,
+  settings: SettingsSentIntoPage,
+) => readSpineItemBoxes(page, settings)
 
 /** The indexes of the spine items any of whose container is on screen. */
 export const getSpineItemIndexesOnScreen = async (page: Page) =>

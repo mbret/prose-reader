@@ -3,7 +3,7 @@ import { getLongChapterIndex, navigateToSpineItem } from "../../../utils"
 import { layOutAndSettle, waitForSettled } from "../../../utils/pagination"
 import { getReader } from "../../../utils/reader"
 import { isCfiPositionVisible } from "../../../utils/visibility"
-import { readPosition } from "./position"
+import { readPosition, turnPagesOfChapter } from "./position"
 
 /**
  * After a layout, the reader restores the current navigation to the page that
@@ -35,19 +35,8 @@ const smallerSettings = [
 ]
 
 /** Turns to the eleventh page of a chapter. */
-const turnTenPages = async (page: Page, chapterIndex: number) => {
-  const reader = await getReader(page)
-
-  await navigateToSpineItem({ page, index: chapterIndex })
-  await waitForSettled(page)
-
-  for (let turn = 0; turn < 10; turn++) {
-    await reader.evaluate((reader) => {
-      reader.navigation.turnRight()
-    })
-    await waitForSettled(page)
-  }
-}
+const turnTenPages = (page: Page, chapterIndex: number) =>
+  turnPagesOfChapter(page, chapterIndex, 10)
 
 /** Ways to reach a page after a chapter's first, each with its own anchor. */
 const ways = [

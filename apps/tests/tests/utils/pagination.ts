@@ -1,6 +1,5 @@
 import type { Page } from "@playwright/test"
-import type { Reader } from "@prose-reader/core"
-import { getReader } from "./reader"
+import { getReader, type SettingsSentIntoPage } from "./reader"
 
 /**
  * The reader exists and its current result has settled. A navigation
@@ -138,11 +137,7 @@ export const layOutAndSettle = async (
   {
     settings,
   }: {
-    // functions cannot be sent into the page
-    settings?: Omit<
-      Parameters<Reader["settings"]["update"]>[0],
-      "getResource" | "getRenderer"
-    >
+    settings?: SettingsSentIntoPage
   } = {},
 ) => {
   const reader = await getReader(page)
