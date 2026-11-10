@@ -1,10 +1,11 @@
 import { readFile } from "node:fs/promises"
-import { basename, resolve } from "node:path"
+import { basename, extname, resolve } from "node:path"
 import { createArchiveFromJszip } from "@prose-reader/archive-reader/archives/createArchiveFromJszip"
 import { ServiceWorkerStreamer } from "@prose-reader/streamer"
 // CommonJS in Node, where a named import of it fails
 import JSZip from "jszip"
 import type { Plugin } from "vite"
+import { LONG_COMIC_NUMBER_OF_PAGES } from "./longComic"
 
 const BOOKS_DIRECTORY = resolve(import.meta.dirname, "../public/epubs")
 const BOOKS_PATH = "/epubs"
@@ -13,17 +14,42 @@ const STREAMER_PATH = "/streamer"
 type RewrittenBook = {
   /** The file of `public/epubs` it is made from. */
   fixture: string
-  /** Rewrites the content of each of the fixture's xhtml pages. */
-  rewritePage: (fixturePage: string) => string
+  rewrite: (bookZip: JSZip) => Promise<void>
 }
 
+const rewriteEachXhtmlPage =
+  (rewritePage: (fixturePage: string) => string) => async (bookZip: JSZip) => {
+    for (const page of bookZip.file(/\.xhtml$/)) {
+      bookZip.file(page.name, rewritePage(await page.async("string")))
+    }
+  }
+
 /**
- * Books made from a fixture by rewriting each of its pages, for the scenarios
- * that need a fixture to differ in one way. Each is served beside the files of
+ * Books made from a fixture by rewriting it, for the scenarios that need a
+ * fixture to differ in one way. Each is served beside the files of
  * `public/epubs`, as one of them, so that a scenario opens it the same way
  * whichever way it loads its book.
  */
 const REWRITTEN_BOOKS = new Map<string, RewrittenBook>([
+  [
+    "long-comic.cbz",
+    {
+      fixture: "koreader-pages.cbz",
+      rewrite: async (bookZip) => {
+        const firstPage = await bookZip.file("p01.jpg")?.async("uint8array")
+
+        if (!firstPage) throw new Error("the fixture has no p01.jpg")
+
+        for (const name of Object.keys(bookZip.files)) {
+          bookZip.remove(name)
+        }
+
+        for (let page = 1; page <= LONG_COMIC_NUMBER_OF_PAGES; page++) {
+          bookZip.file(`p${String(page).padStart(4, "0")}.jpg`, firstPage)
+        }
+      },
+    },
+  ],
   [
     "accessible_epub_3-lazy-images.epub",
     {
@@ -32,11 +58,12 @@ const REWRITTEN_BOOKS = new Map<string, RewrittenBook>([
        * Gives every image `loading="lazy"`, and a top margin that keeps it far
        * beyond any engine's lazy loading distance while its page loads.
        */
-      rewritePage: (fixturePage) =>
+      rewrite: rewriteEachXhtmlPage((fixturePage) =>
         fixturePage.replace(
           /<img /g,
           '<img loading="lazy" style="margin-top: 10000px" ',
         ),
+      ),
     },
   ],
   [
@@ -47,19 +74,21 @@ const REWRITTEN_BOOKS = new Map<string, RewrittenBook>([
        * Sets the text in the system sans-serif font. Unlike the book's own
        * font, it has a bold face, whose glyphs are wider.
        */
-      rewritePage: (fixturePage) =>
+      rewrite: rewriteEachXhtmlPage((fixturePage) =>
         fixturePage.replace(
           "</head>",
           "<style>body, body * { font-family: sans-serif !important; }</style></head>",
         ),
+      ),
     },
   ],
   [
     "sous-le-vent-without-stylesheets.epub",
     {
       fixture: "sous-le-vent.epub",
-      rewritePage: (fixturePage) =>
+      rewrite: rewriteEachXhtmlPage((fixturePage) =>
         fixturePage.replace(/<link [^>]*rel="stylesheet"[^>]*\/>/g, ""),
+      ),
     },
   ],
 ])
@@ -71,14 +100,7 @@ const loadBook = async (book: string) => {
     await readFile(resolve(BOOKS_DIRECTORY, rewrittenBook?.fixture ?? book)),
   )
 
-  if (rewrittenBook) {
-    for (const page of bookZip.file(/\.xhtml$/)) {
-      bookZip.file(
-        page.name,
-        rewrittenBook.rewritePage(await page.async("string")),
-      )
-    }
-  }
+  await rewrittenBook?.rewrite(bookZip)
 
   return bookZip
 }
@@ -142,7 +164,10 @@ export const serveBooks = (): Plugin => ({
       loadBook(requestedBook)
         .then((bookZip) => bookZip.generateAsync({ type: "nodebuffer" }))
         .then((bookFile) => {
-          res.setHeader("Content-Type", "application/epub+zip")
+          // The type Vite gives a file of `public/epubs`: none for a comic
+          if (extname(requestedBook) === ".epub") {
+            res.setHeader("Content-Type", "application/epub+zip")
+          }
           res.end(bookFile)
         }, next)
     })

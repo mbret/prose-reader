@@ -73,7 +73,7 @@ export const createArchiveFromPdf = async (
         }),
       })),
     ],
-    close: () => pdf.cleanup(),
+    close: () => loadingTask.destroy(),
   })
 
   const pdfArchive: PdfJsArchive = {

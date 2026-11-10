@@ -168,30 +168,28 @@ export class HtmlRenderer extends DocumentRenderer {
   onRenderHeadless() {
     return from(this.resourcesHandler.fetchResource()).pipe(
       switchMap((resource) => {
-        if (resource instanceof Response) {
-          const contentType = resource.headers.get("content-type") ?? ""
-          const parsableContentTypes: DOMParserSupportedType[] = [
-            `application/xhtml+xml`,
-            `application/xml`,
-            `text/html`,
-            `text/xml`,
-          ]
+        const contentType = resource.headers.get("content-type") ?? ""
+        const parsableContentTypes: DOMParserSupportedType[] = [
+          `application/xhtml+xml`,
+          `application/xml`,
+          `text/html`,
+          `text/xml`,
+        ]
 
-          if (
-            parsableContentTypes.includes(contentType as DOMParserSupportedType)
-          ) {
-            return from(resource.text()).pipe(
-              map((text) => {
-                const domParser = new DOMParser()
-                const doc = domParser.parseFromString(
-                  text,
-                  contentType as DOMParserSupportedType,
-                )
+        if (
+          parsableContentTypes.includes(contentType as DOMParserSupportedType)
+        ) {
+          return from(resource.text()).pipe(
+            map((text) => {
+              const domParser = new DOMParser()
+              const doc = domParser.parseFromString(
+                text,
+                contentType as DOMParserSupportedType,
+              )
 
-                return doc
-              }),
-            )
-          }
+              return doc
+            }),
+          )
         }
 
         return of(undefined)
