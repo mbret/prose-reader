@@ -1,4 +1,5 @@
 import { combineLatest, Observable, of } from "rxjs"
+import { reportRecoveredError } from "../report"
 import type {
   AsyncHookName,
   AsyncHookParams,
@@ -64,6 +65,25 @@ export class HookManager<H extends Hook<any, any, any> = CoreHook> {
     params: HookParams<H, Name>,
   ): HookResult<H, Name>[] {
     return this.getHooks(name).map((hook) => hook.runFn(params))
+  }
+
+  /**
+   * Runs every hook registered under `name`, each on its own: a hook that
+   * throws is reported, and the hooks after it still run. For hooks whose
+   * results nothing reads, so that one failing hook stops neither the others
+   * nor the work that runs them.
+   */
+  public executeIsolated<Name extends SyncHookName<H>>(
+    name: Name,
+    params: HookParams<H, Name>,
+  ) {
+    for (const hook of this.getHooks(name)) {
+      try {
+        hook.runFn(params)
+      } catch (error) {
+        reportRecoveredError(error)
+      }
+    }
   }
 
   /**

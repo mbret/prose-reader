@@ -75,7 +75,8 @@ A request never moves it past an earlier item still waiting. It turns
 updates its state before the pages reach anything else. A newer request
 cancels everything still running for older ones, so the pages published then
 are the ones it asked for. It is `0` until the first pages are published.
-A layout that fails publishes no pages, and the reader
+A layout that fails for another reason than a newer request publishes no
+pages, and the reader
 [reports its error](/learn/error-handling#errors-the-reader-recovers-from):
 `firstItemIndexAwaitingLayout` stays a number until a later request publishes
 its pages.

@@ -1,5 +1,5 @@
 import type { Manifest } from "@prose-reader/shared"
-import { firstValueFrom, Subject } from "rxjs"
+import { firstValueFrom, of, Subject } from "rxjs"
 import { describe, expect, it, vi } from "vitest"
 import { Context } from "../context/Context"
 import { HookManager } from "../hooks/HookManager"
@@ -630,6 +630,7 @@ describe("SpineLayout", () => {
         const {
           completeItemLayout,
           destroy,
+          itemLayoutsStarted,
           items,
           lefts,
           spineLayout,
@@ -647,6 +648,12 @@ describe("SpineLayout", () => {
           spineLayout.layout({ immediate: true })
           completeItemLayout(0, { height: 100, width: 300 })
           endFailingItemLayout(spineLayoutEnvironment)
+
+          expect(
+            itemLayoutsStarted()[2],
+            "the layouts of the item after the one that failed",
+          ).toBe(1)
+
           completeItemLayout(2, { height: 100, width: 300 })
           await passDone
 
@@ -663,19 +670,24 @@ describe("SpineLayout", () => {
     )
 
     it.each(["item.onBeforeLayout", "item.onAfterLayout"] as const)(
-      "lays it out at its size, and completes the pass, when its %s hook throws",
+      "lays it out at its size, and runs the hooks after it, when its %s hook throws",
       async (hookName) => {
         const unhandledErrors = recordUnhandledErrors()
         const {
           completeItemLayout,
           destroy,
           hookManager,
+          itemLayoutsStarted,
           spineLayout,
           widths,
         } = createDeferredSpineLayout(3)
+        const itemsOfTheNextHook: number[] = []
 
         hookManager.register(hookName, ({ item }) => {
           if (item.index === 1) throw failure
+        })
+        hookManager.register(hookName, ({ item }) => {
+          itemsOfTheNextHook.push(item.index)
         })
 
         try {
@@ -684,12 +696,20 @@ describe("SpineLayout", () => {
           spineLayout.layout({ immediate: true })
 
           for (const itemIndex of [0, 1, 2]) {
+            expect(
+              itemLayoutsStarted()[itemIndex],
+              `the layouts of item ${itemIndex}`,
+            ).toBe(1)
+
             completeItemLayout(itemIndex, { height: 100, width: 300 })
           }
 
           await passDone
 
           expect(widths()).toEqual([300, 300, 300])
+          expect(itemsOfTheNextHook, "the items of the next hook").toEqual([
+            0, 1, 2,
+          ])
 
           await waitFor(0)
 
@@ -699,6 +719,30 @@ describe("SpineLayout", () => {
         }
       },
     )
+
+    it("takes the first size its renderer gives, for its place and its container", async () => {
+      const { destroy, spineItemsManager, spineLayout } =
+        createTestSpineLayout()
+      const [item] = spineItemsManager.items
+
+      if (!item) throw new Error("the spine has no item")
+
+      vi.spyOn(item.renderer, "onLayout").mockReturnValue(
+        of({ height: 100, width: 300 }, { height: 100, width: 500 }),
+      )
+
+      try {
+        await layOutAndWait(spineLayout)
+
+        expect(
+          spineLayout.getSpineItemSpineLayoutInfo(0).width,
+          "the width of its place",
+        ).toBe(300)
+        expect(item.layoutInfo.width, "the width of its container").toBe(300)
+      } finally {
+        destroy()
+      }
+    })
 
     it("keeps following its renderer's load once its layout failed", async () => {
       const unhandledErrors = recordUnhandledErrors()

@@ -8,7 +8,6 @@ import { defer, map, type Observable, Subject, tap } from "rxjs"
 import type { Context } from "../context/Context"
 import type { HookManager } from "../hooks/HookManager"
 import { isFullyPrePaginated } from "../manifest/isFullyPrePaginated"
-import { reportRecoveredError } from "../report"
 import type { ReaderSettingsManager } from "../settings/ReaderSettingsManager"
 import { DestroyableClass } from "../utils/DestroyableClass"
 import {
@@ -24,18 +23,6 @@ type SpineItemLayoutParams = {
   isLastItem: boolean
   edgeX: number
   edgeY: number
-}
-
-/**
- * Runs the hooks of a layout. A hook that throws does not stop the layout:
- * its error is reported, and the item is laid out without it.
- */
-const runLayoutHooks = (executeHooks: () => void) => {
-  try {
-    executeHooks()
-  } catch (error) {
-    reportRecoveredError(error)
-  }
 }
 
 export class SpineItemLayout extends DestroyableClass {
@@ -275,8 +262,10 @@ export class SpineItemLayout extends DestroyableClass {
       )
 
   /**
-   * Lays the item out on each subscription, and on none: a pass that is
-   * cancelled stops the layout of its item, which stays dirty.
+   * Lays the item out once per subscription. Without a subscriber, nothing
+   * happens. If the pass is cancelled, the layout stops and the item stays
+   * dirty. A hook of the layout that throws is reported, and the layout goes
+   * on without it.
    */
   public layout = ({
     spreadPosition,
@@ -295,9 +284,7 @@ export class SpineItemLayout extends DestroyableClass {
       )
       const hookParams = { blankPagePosition, item: this.item, minimumWidth }
 
-      runLayoutHooks(() => {
-        this.hookManager.execute(`item.onBeforeLayout`, hookParams)
-      })
+      this.hookManager.executeIsolated(`item.onBeforeLayout`, hookParams)
 
       return this.renderer
         .layout({
@@ -309,14 +296,18 @@ export class SpineItemLayout extends DestroyableClass {
         .pipe(
           this.updateContainerLayout({ minimumWidth, edgeX, edgeY }),
           tap((size) => {
-            runLayoutHooks(() => {
-              this.hookManager.execute(`item.onAfterLayout`, hookParams)
-            })
+            this.hookManager.executeIsolated(`item.onAfterLayout`, hookParams)
 
             this.didLayoutSubject.next(size)
           }),
         )
     })
+
+  public destroy() {
+    this.didLayoutSubject.complete()
+
+    super.destroy()
+  }
 
   get layoutInfo() {
     const style = this.containerElement.style

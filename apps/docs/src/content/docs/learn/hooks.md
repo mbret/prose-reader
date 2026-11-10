@@ -43,4 +43,4 @@ Reacting to an item's `loadStatus` becoming `loaded`, from `reader.spineItemsObs
 
 ## A layout hook that throws
 
-An `item.onBeforeLayout` or `item.onAfterLayout` hook that throws does not stop the layout of its item: the reader lays the item out, and [reports the error](/learn/error-handling#errors-the-reader-recovers-from). The hooks registered after it do not run for that layout.
+An `item.onBeforeLayout` or `item.onAfterLayout` hook that throws does not stop the layout of its item: the reader lays the item out, and [reports the error](/learn/error-handling#errors-the-reader-recovers-from). The hooks registered after it still run.
