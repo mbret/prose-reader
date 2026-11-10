@@ -57,11 +57,10 @@ describe("a destroyed reader", () => {
     vi.useFakeTimers()
 
     const reader = createTestReader()
-    const { itemStateChange$, itemResize$, itemLoadStatusChange$ } =
+    const { itemStateChange$, itemLoadStatusChange$ } =
       reader.spineItemsObserver
     const itemStreams: Record<string, Observable<unknown>> = {
       itemStateChange$,
-      itemResize$,
       itemLoadStatusChange$,
     }
     const completedItemStreams: string[] = []
@@ -76,7 +75,6 @@ describe("a destroyed reader", () => {
 
     expect([...completedItemStreams].sort()).toEqual([
       "itemLoadStatusChange$",
-      "itemResize$",
       "itemStateChange$",
     ])
     expect(resizeObservers().watching).toBe(0)

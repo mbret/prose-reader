@@ -11,7 +11,6 @@ import {
 import type { DocumentLoadStatus } from "../spineItem/renderer/DocumentRenderer"
 import type { SpineItem, SpineItemState } from "../spineItem/SpineItem"
 import { DestroyableClass } from "../utils/DestroyableClass"
-import { observeResize } from "../utils/rxjs"
 import type { SpineItemsManager } from "./SpineItemsManager"
 
 export class SpineItemsObserver extends DestroyableClass {
@@ -23,18 +22,6 @@ export class SpineItemsObserver extends DestroyableClass {
    * Completes when the reader is destroyed.
    */
   public itemStateChange$: Observable<{ item: SpineItem } & SpineItemState>
-
-  /**
-   * Observable directly plugged to ResizeObserver for each item.
-   *
-   * Items are only attached to the DOM at mount, and ResizeObserver does not
-   * report detached elements, so this starts emitting once items are attached.
-   * Completes when the reader is destroyed, which stops the observation.
-   */
-  public itemResize$: Observable<{
-    item: SpineItem
-    entries: ResizeObserverEntry[]
-  }>
 
   /**
    * Emits each time an item's `loadStatus` changes, with the status it
@@ -74,12 +61,6 @@ export class SpineItemsObserver extends DestroyableClass {
           map((state) => ({ item, ...state })),
           distinctUntilChanged(isShallowEqual),
         ),
-      ),
-    ).pipe(takeUntil(this.destroy$), share())
-
-    this.itemResize$ = merge(
-      ...items.map((item) =>
-        observeResize(item.element).pipe(map((entries) => ({ entries, item }))),
       ),
     ).pipe(takeUntil(this.destroy$), share())
 
