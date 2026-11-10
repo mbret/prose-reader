@@ -3,7 +3,7 @@ import { navigateToSpineItem, waitForSpineItemReady } from "../../utils"
 import { waitForSettledOnCurrentLayout } from "../../utils/pagination"
 import { getReader } from "../../utils/reader"
 import {
-  getDistanceFromTopOfSpineItemToTopOfScreen,
+  getPlaceOfSpineItem,
   holdLoadOfSpineItems,
   recordDistanceFromTopOfSpineItemToTopOfScreenAtEachFrame,
   waitForSpineItemsLoadedAndReaderAtRest,
@@ -18,59 +18,51 @@ import {
 const SPINE_ITEM_ON_SCREEN = 6
 const SPINE_ITEMS_LOADING_ABOVE = [4, 5]
 
-const getLoadStatuses = async (page: Page, spineItemIndexes: number[]) =>
-  (await getReader(page)).evaluate(
-    (reader, spineItemIndexes) =>
-      spineItemIndexes.map(
-        (spineItemIndex) =>
-          reader.spineItemsManager.get(spineItemIndex)?.value.loadStatus,
-      ),
-    spineItemIndexes,
-  )
-
 /**
- * Opens the book at the top of a spine item, with the two above it still
- * loading. Resolves to a handle on the function that lets them finish.
+ * Opens the book at the top of a spine item, with the two above it waiting at
+ * the end of their load. Resolves to a handle on what holds them, and the top
+ * of the spine item in the spine by then.
  */
 const openBelowSpineItemsStillLoading = async (page: Page) => {
   await page.setViewportSize({ width: 300, height: 400 })
   await page.goto("http://localhost:3333/tests/layout/webtoon/index.html")
   await waitForSettledOnCurrentLayout(page)
 
-  const letLoadsFinish = await holdLoadOfSpineItems(
-    page,
-    SPINE_ITEMS_LOADING_ABOVE,
-  )
+  const loadsHeld = await holdLoadOfSpineItems(page, SPINE_ITEMS_LOADING_ABOVE)
 
   await navigateToSpineItem({ page, index: SPINE_ITEM_ON_SCREEN })
   await waitForSpineItemReady(page, [SPINE_ITEM_ON_SCREEN])
+  await page.waitForFunction(
+    (loadsHeld) => loadsHeld.areAllWaiting(),
+    loadsHeld,
+  )
   await waitForSettledOnCurrentLayout(page)
 
-  expect(await getLoadStatuses(page, SPINE_ITEMS_LOADING_ABOVE)).toEqual([
-    "loading",
-    "loading",
-  ])
-  expect(
-    await getDistanceFromTopOfSpineItemToTopOfScreen(
-      page,
-      SPINE_ITEM_ON_SCREEN,
-    ),
-  ).toBeCloseTo(0, 0)
+  const { topInSpine, distanceToTopOfScreen } = await getPlaceOfSpineItem(
+    page,
+    SPINE_ITEM_ON_SCREEN,
+  )
 
-  return letLoadsFinish
+  expect(
+    Math.abs(distanceToTopOfScreen),
+    "the distance from the top of the spine item to the top of the screen",
+  ).toBeLessThan(1)
+
+  return { loadsHeld, topInSpineBeforeLoads: topInSpine }
 }
 
 test.describe("Given a book that scrolls, at the top of a spine item with the two above it still loading", () => {
   test.describe("When the two above finish loading", () => {
     test("every frame shows the top of that spine item", async ({ page }) => {
-      const letLoadsFinish = await openBelowSpineItemsStillLoading(page)
-      const getDistancesAtEachFrame =
+      const { loadsHeld, topInSpineBeforeLoads } =
+        await openBelowSpineItemsStillLoading(page)
+      const stopAndGetDistancesAtEachFrame =
         await recordDistanceFromTopOfSpineItemToTopOfScreenAtEachFrame(
           page,
           SPINE_ITEM_ON_SCREEN,
         )
 
-      await letLoadsFinish.evaluate((letLoadsFinish) => {
+      await loadsHeld.evaluate(({ letLoadsFinish }) => {
         letLoadsFinish()
       })
       await waitForSpineItemsLoadedAndReaderAtRest(
@@ -78,8 +70,16 @@ test.describe("Given a book that scrolls, at the top of a spine item with the tw
         SPINE_ITEMS_LOADING_ABOVE,
       )
 
-      const distancesAtEachFrame = await getDistancesAtEachFrame()
+      const distancesAtEachFrame = await stopAndGetDistancesAtEachFrame()
+      const { topInSpine } = await getPlaceOfSpineItem(
+        page,
+        SPINE_ITEM_ON_SCREEN,
+      )
 
+      expect(
+        topInSpine,
+        "the top of the spine item in the spine, which the loads above move down",
+      ).toBeGreaterThan(topInSpineBeforeLoads)
       expect(distancesAtEachFrame.length).toBeGreaterThan(0)
       expect(
         distancesAtEachFrame.filter((distance) => Math.abs(distance) >= 1),
@@ -93,33 +93,58 @@ test.describe("Given a book that scrolls, at the top of a spine item with the tw
       page,
     }) => {
       const distanceScrolledByUser = 150
-      const letLoadsFinish = await openBelowSpineItemsStillLoading(page)
+      const { loadsHeld, topInSpineBeforeLoads } =
+        await openBelowSpineItemsStillLoading(page)
       const reader = await getReader(page)
 
       // In one task, so that the scroll is still in progress when they load.
-      await page.evaluate(
-        ({ reader, letLoadsFinish, distanceScrolledByUser }) => {
+      const stateWhenItemsLaidOut = await page.evaluateHandle(
+        ({ reader, loadsHeld, distanceScrolledByUser }) => {
           const scrollElement =
             reader.navigation.scrollNavigationController.value.element
+          const stateWhenItemsLaidOut: { wasNavigationLocked?: boolean } = {}
+          const itemsLaidOut = reader.spine.itemsLayout$.subscribe(() => {
+            itemsLaidOut.unsubscribe()
+            // Replays whether the lock is held now.
+            reader.navigation.isLocked$
+              .subscribe((isLocked) => {
+                stateWhenItemsLaidOut.wasNavigationLocked = isLocked
+              })
+              .unsubscribe()
+          })
 
           scrollElement?.scrollTo({
             top: scrollElement.scrollTop + distanceScrolledByUser,
           })
-          letLoadsFinish()
+          loadsHeld.letLoadsFinish()
+
+          return stateWhenItemsLaidOut
         },
-        { reader, letLoadsFinish, distanceScrolledByUser },
+        { reader, loadsHeld, distanceScrolledByUser },
       )
+
       await waitForSpineItemsLoadedAndReaderAtRest(
         page,
         SPINE_ITEMS_LOADING_ABOVE,
       )
 
+      const { topInSpine, distanceToTopOfScreen } = await getPlaceOfSpineItem(
+        page,
+        SPINE_ITEM_ON_SCREEN,
+      )
+
       expect(
-        await getDistanceFromTopOfSpineItemToTopOfScreen(
-          page,
-          SPINE_ITEM_ON_SCREEN,
-        ),
-      ).toBeCloseTo(distanceScrolledByUser, 0)
+        topInSpine,
+        "the top of the spine item in the spine, which the loads above move down",
+      ).toBeGreaterThan(topInSpineBeforeLoads)
+      expect(
+        (await stateWhenItemsLaidOut.jsonValue()).wasNavigationLocked,
+        "whether the scroll was still in progress when the spine items were laid out",
+      ).toBe(true)
+      expect(
+        Math.abs(distanceToTopOfScreen - distanceScrolledByUser),
+        `how far the screen is from ${distanceScrolledByUser} px below the top of the spine item`,
+      ).toBeLessThan(1)
       expect(
         await reader.evaluate(
           (reader) => reader.navigation.getNavigation().spineItem,

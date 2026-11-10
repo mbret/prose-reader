@@ -8,10 +8,12 @@ import {
   merge,
   of,
   Subject,
+  startWith,
   switchMap,
   takeUntil,
   tap,
   timer,
+  withLatestFrom,
 } from "rxjs"
 import type { ScrollNavigationController } from "../../../navigation/controllers/ScrollNavigationController"
 import type { UserNavigationEntry } from "../../../navigation/types"
@@ -67,12 +69,22 @@ export class UserScrollNavigation extends DestroyableClass {
                 /**
                  * It is over at once when the book no longer scrolls, as
                  * after a change of page turn mode. The element has lost its
-                 * box, and its offsets with it: the user is where the last
-                 * move took the element.
+                 * box, and its offsets with it: the user is where the reader
+                 * last knew the element. That is where the last move took it,
+                 * or where the reader scrolled it since, to keep the screen
+                 * on the same place through a layout.
                  */
                 this.scrollNavigationController.isActive$.pipe(
                   filter((isActive) => !isActive),
-                  map(() => scrollPositionOfLastMove),
+                  withLatestFrom(
+                    this.scrollNavigationController.scrollPositionKnownToReader$.pipe(
+                      startWith(scrollPositionOfLastMove),
+                    ),
+                  ),
+                  map(
+                    ([, scrollPositionKnownToReader]) =>
+                      scrollPositionKnownToReader,
+                  ),
                 ),
               ),
             ),

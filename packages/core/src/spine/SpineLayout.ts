@@ -242,8 +242,9 @@ export class SpineLayout extends DestroyableClass {
   }
 
   /**
-   * The states a request takes the layout through: requested at once, then
-   * laid out once its pass completes, unless a newer request cancels it first.
+   * The states a request takes the layout through: requested at once, laying
+   * out once its wait is over, then laid out once its pass completes, unless
+   * a newer request cancels it first.
    */
   private runLayoutPass(
     previousState: SpineLayoutState,

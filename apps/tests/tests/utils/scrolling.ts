@@ -2,11 +2,15 @@ import type { Page } from "@playwright/test"
 import { getReader } from "./reader"
 
 /**
- * Keeps the documents of some spine items loading from now on, as a slow
- * `item.onDocumentLoad` hook does, so that they keep the size they have
- * before they load. Resolves to a handle on the function that lets them
- * finish. A spec calls it in the page, where it can let them finish in the
- * same task as something else.
+ * Keeps the documents of some spine items from finishing their load, from now
+ * on: each one waits at its `item.onDocumentLoad` hooks, as behind a slow
+ * hook, so it keeps the size it has before it loads. Resolves to a handle on
+ * what holds them, which a spec uses in the page:
+ *
+ * - `areAllWaiting()` says whether each of them has reached its hooks. Until
+ *   then, one that still fetches would finish at a time of its own.
+ * - `letLoadsFinish()` lets them all finish. Called in the page, it can share
+ *   its task with something else.
  */
 export const holdLoadOfSpineItems = async (
   page: Page,
@@ -17,28 +21,40 @@ export const holdLoadOfSpineItems = async (
     const loadsMayFinish = new Promise<void>((resolve) => {
       letLoadsFinish = resolve
     })
-    const idsOfSpineItemsHeld = new Set(
-      spineItemIndexes.map(
-        (spineItemIndex) =>
-          reader.spineItemsManager.get(spineItemIndex)?.item.id,
-      ),
+    const idsOfSpineItemsHeld = spineItemIndexes.map(
+      (spineItemIndex) => reader.spineItemsManager.get(spineItemIndex)?.item.id,
     )
+    const idsOfSpineItemsWaiting = new Set<string>()
 
     reader.hookManager.register("item.onDocumentLoad", async ({ itemId }) => {
-      if (idsOfSpineItemsHeld.has(itemId)) await loadsMayFinish
+      if (!idsOfSpineItemsHeld.includes(itemId)) return
+
+      idsOfSpineItemsWaiting.add(itemId)
+      await loadsMayFinish
     })
 
-    return letLoadsFinish
+    return {
+      areAllWaiting: () =>
+        idsOfSpineItemsHeld.every(
+          (itemId) =>
+            itemId !== undefined && idsOfSpineItemsWaiting.has(itemId),
+        ),
+      letLoadsFinish,
+    }
   }, spineItemIndexes)
 
 /**
- * How far below the top of a spine item the top of the screen is, as the page
- * renders them: the place of that spine item a book that scrolls shows.
+ * Where a spine item is and what the screen shows of it, in a book that
+ * scrolls:
+ *
+ * - `topInSpine`: the top of the spine item in the spine, as the latest
+ *   completed layout has it. A layout that grows a spine item before it moves
+ *   it down.
+ * - `distanceToTopOfScreen`: how far below the top of the spine item the top
+ *   of the screen is, as the page renders them. It is the place of the spine
+ *   item that the screen shows.
  */
-export const getDistanceFromTopOfSpineItemToTopOfScreen = async (
-  page: Page,
-  spineItemIndex: number,
-) =>
+export const getPlaceOfSpineItem = async (page: Page, spineItemIndex: number) =>
   (await getReader(page)).evaluate((reader, spineItemIndex) => {
     const scrollElement =
       reader.navigation.scrollNavigationController.value.element
@@ -48,22 +64,28 @@ export const getDistanceFromTopOfSpineItemToTopOfScreen = async (
       throw new Error(`no scroll element or no spine item ${spineItemIndex}`)
     }
 
-    return (
-      scrollElement.getBoundingClientRect().top -
-      spineItem.containerElement.getBoundingClientRect().top
-    )
+    return {
+      topInSpine: reader.spine.getSpineItemSpineLayoutInfo(spineItem).top,
+      distanceToTopOfScreen:
+        scrollElement.getBoundingClientRect().top -
+        spineItem.containerElement.getBoundingClientRect().top,
+    }
   }, spineItemIndex)
 
 /**
- * Records `getDistanceFromTopOfSpineItemToTopOfScreen` at each frame from now
- * on: the place each frame shows. Resolves to a function that gives the
- * distances so far, one per frame.
+ * Records, once each frame is drawn from now on, how far below the top of a
+ * spine item the top of the screen is: the place each frame showed. Resolves
+ * to a function that stops the record and gives the distances, one per frame.
+ *
+ * A frame is drawn after its animation frame callbacks, and the reader works
+ * in some of them. So the read waits for the task that follows them, the way
+ * a message posted from one of them does.
  */
 export const recordDistanceFromTopOfSpineItemToTopOfScreenAtEachFrame = async (
   page: Page,
   spineItemIndex: number,
 ) => {
-  const distancesRecordedInPage = await (await getReader(page)).evaluateHandle(
+  const recordInPage = await (await getReader(page)).evaluateHandle(
     (reader, spineItemIndex) => {
       const scrollElement =
         reader.navigation.scrollNavigationController.value.element
@@ -74,22 +96,36 @@ export const recordDistanceFromTopOfSpineItemToTopOfScreenAtEachFrame = async (
       }
 
       const distances: number[] = []
-      const recordAtEachFrame = () => {
-        distances.push(
+      const record = { distances, isStopped: false }
+      const { port1: afterFrameIsDrawn, port2: frame } = new MessageChannel()
+
+      afterFrameIsDrawn.onmessage = () => {
+        record.distances.push(
           scrollElement.getBoundingClientRect().top -
             spineItem.containerElement.getBoundingClientRect().top,
         )
-        requestAnimationFrame(recordAtEachFrame)
       }
 
-      requestAnimationFrame(recordAtEachFrame)
+      const postAtEachFrame = () => {
+        if (record.isStopped) return
 
-      return distances
+        frame.postMessage(undefined)
+        requestAnimationFrame(postAtEachFrame)
+      }
+
+      requestAnimationFrame(postAtEachFrame)
+
+      return record
     },
     spineItemIndex,
   )
 
-  return () => distancesRecordedInPage.jsonValue()
+  return () =>
+    recordInPage.evaluate((record) => {
+      record.isStopped = true
+
+      return record.distances
+    })
 }
 
 /**

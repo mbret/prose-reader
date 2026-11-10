@@ -115,9 +115,10 @@ before the layout. Read here what you need from before a layout. The reader
 itself reads what a book that scrolls shows, to keep the screen on the same
 place, see [Scrollable mode](/learn/page-turn-mode#scrollable-mode).
 
-It emits again when a layout stops and starts again, as when the reader's
-container is hidden and shown during it. Some spine items are then already
-where the layout moved them.
+It can emit twice with no `.itemsLayout$` in between. A layout stops and starts
+again when the reader's container is hidden and shown during it. A newer
+request also replaces a layout that had started, and its own then starts. In
+both cases, some spine items are already where the first start moved them.
 
 ### `.itemsLayout$` { #itemslayoutusd }
 
