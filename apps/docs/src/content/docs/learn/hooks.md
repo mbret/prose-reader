@@ -41,3 +41,10 @@ The item is `loading` until its `item.onDocumentLoad` hooks are done, so the hoo
 Reacting to an item's `loadStatus` becoming `loaded`, from `reader.spineItemsObserver.itemLoadStatusChange$`, would work in this case too, because the reader lays the spine out after that change. Nothing guarantees that order, which is why a hook is preferable when you need to run code at a specific point of the lifecycle.
 :::
 
+## A hook that fails
+
+A hook that throws does not stop the reader. The other hooks still run, and the work that runs the hook goes on without its result: a layout still lays out an item whose `item.onBeforeLayout` hook threw.
+
+The reader reports the error as rxjs reports an error that no subscriber handles. It calls `config.onUnhandledError` from rxjs if you set it, or else throws the error on its own once the current task ends. Set `config.onUnhandledError` to send these errors to your error tracker.
+
+An asynchronous hook is different: if its promise rejects, the work it is part of fails. A rejected `item.onDocumentLoad` hook fails the load of its document, and the item is in `error`.

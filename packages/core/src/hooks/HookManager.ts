@@ -1,4 +1,5 @@
 import { combineLatest, Observable, of } from "rxjs"
+import { reportUnhandledError } from "../utils/rxjs"
 import type {
   AsyncHookName,
   AsyncHookParams,
@@ -59,11 +60,38 @@ export class HookManager<H extends Hook<any, any, any> = CoreHook> {
     }
   }
 
+  /**
+   * Runs one hook. A hook that throws gives no result, and what runs it goes
+   * on without it: a hook cannot stop the work of the reader it is part of.
+   * Its error is reported as rxjs reports an error that no subscriber handles.
+   */
+  private tryRunHook<Name extends SyncHookName<H>>(
+    hook: HookFrom<H, Name>,
+    params: HookParams<H, Name>,
+  ): { result: HookResult<H, Name> } | undefined {
+    try {
+      return { result: hook.runFn(params) }
+    } catch (error) {
+      reportUnhandledError(error)
+
+      return undefined
+    }
+  }
+
+  /**
+   * Runs every hook registered under `name`, in the order they were
+   * registered, and gives their results. A hook that throws gives no result,
+   * and the hooks after it still run.
+   */
   public execute<Name extends SyncHookName<H>>(
     name: Name,
     params: HookParams<H, Name>,
   ): HookResult<H, Name>[] {
-    return this.getHooks(name).map((hook) => hook.runFn(params))
+    return this.getHooks(name).flatMap((hook) => {
+      const hookRun = this.tryRunHook(hook, params)
+
+      return hookRun ? [hookRun.result] : []
+    })
   }
 
   /**
@@ -171,6 +199,12 @@ export class HookManager<H extends Hook<any, any, any> = CoreHook> {
     })
   }
 
+  /**
+   * Runs every hook registered under `name`, in the order they were
+   * registered, each with the parameters `getNextParams` makes from the result
+   * of the hook before it. A hook that throws gives no result, and the hook
+   * after it gets the parameters it got.
+   */
   public executeSequential<Name extends SyncHookName<H>>(
     name: Name,
     params: HookParams<H, Name>,
@@ -183,12 +217,14 @@ export class HookManager<H extends Hook<any, any, any> = CoreHook> {
     results: HookResult<H, Name>[]
   } {
     let currentParams = params
-    const results = this.getHooks(name).map((hook) => {
-      const result = hook.runFn(currentParams)
+    const results = this.getHooks(name).flatMap((hook) => {
+      const hookRun = this.tryRunHook(hook, currentParams)
 
-      currentParams = getNextParams(currentParams, result)
+      if (!hookRun) return []
 
-      return result
+      currentParams = getNextParams(currentParams, hookRun.result)
+
+      return [hookRun.result]
     })
 
     return {

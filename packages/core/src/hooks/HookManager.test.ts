@@ -1,5 +1,6 @@
 import { firstValueFrom, Subject, takeUntil } from "rxjs"
-import { describe, expect, it } from "vitest"
+import { describe, expect, it, vi } from "vitest"
+import { recordUnhandledErrors } from "../tests/utils"
 import { HookManager } from "./HookManager"
 import type { AsyncHookParams } from "./types"
 
@@ -83,6 +84,39 @@ describe("HookManager", () => {
     resolveHook?.("A")
 
     await expect(result).resolves.toEqual(["A"])
+  })
+
+  it("runs the other hooks when one throws, gives their results, and reports the error", async () => {
+    const unhandledErrors = recordUnhandledErrors()
+    const hookManager = new HookManager<TestHook>()
+    const failure = new Error("the hook failed")
+
+    hookManager.register("value.event", () => {
+      throw failure
+    })
+    hookManager.register("value.event", ({ value }) => value.toUpperCase())
+
+    expect(hookManager.execute("value.event", { value: "a" })).toEqual(["A"])
+    await vi.waitFor(() => {
+      expect(unhandledErrors).toEqual([failure])
+    })
+  })
+
+  it("runs the next sequential hooks when one throws, with the parameters it got, and reports the error", async () => {
+    const unhandledErrors = recordUnhandledErrors()
+    const hookManager = new HookManager<TestHook>()
+    const failure = new Error("the hook failed")
+
+    hookManager.register("value.pipeline", ({ value }) => `${value}b`)
+    hookManager.register("value.pipeline", () => {
+      throw failure
+    })
+    hookManager.register("value.pipeline", ({ value }) => `${value}c`)
+
+    expect(transformValue(hookManager, "a")).toBe("abc")
+    await vi.waitFor(() => {
+      expect(unhandledErrors).toEqual([failure])
+    })
   })
 
   it("executes sequential hooks in registration order without lifecycle executions", () => {

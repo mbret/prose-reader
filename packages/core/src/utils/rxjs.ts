@@ -1,5 +1,6 @@
 import { isShallowEqual } from "@prose-reader/shared"
 import {
+  config,
   defer,
   distinctUntilChanged,
   first,
@@ -71,6 +72,22 @@ export const deferNextResult = <T>(stream: Observable<T>) => {
 
     return stream
   }
+}
+
+/**
+ * Reports an error the reader goes on from, as rxjs reports an error that no
+ * subscriber handles: to `config.onUnhandledError` if one is set, or else
+ * thrown on its own once the current task ends. It reaches the console or an
+ * error tracker, and stops nothing.
+ */
+export const reportUnhandledError = (error: unknown) => {
+  setTimeout(() => {
+    if (config.onUnhandledError) {
+      config.onUnhandledError(error)
+    } else {
+      throw error
+    }
+  })
 }
 
 export function idle(): Observable<void> {
