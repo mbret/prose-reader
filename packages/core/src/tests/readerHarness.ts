@@ -284,6 +284,69 @@ export const holdItemLayout = (href: string) => {
 }
 
 /**
+ * Renders each item at the height a test sets for it, a viewport's until then.
+ * jsdom lays nothing out, and a book that scrolls stacks its items by their
+ * heights. A new height shows at the next layout, the way an item that loads
+ * takes its size.
+ *
+ * `holdLayoutOfItem` keeps the layout of one item from completing until the
+ * function it returns is called. A pass then lays out the items before it and
+ * waits, as it does with a renderer that lays out over several tasks.
+ */
+export const renderItemsOfSetHeights = () => {
+  const heightOfItemIndex = new Map<number, number>()
+  const isLayoutHeldOfItemIndex = new Map<number, BehaviorSubject<boolean>>()
+
+  class SetHeightRenderer extends DocumentRenderer {
+    onCreateDocument() {
+      return of(this.context.document.createElement("div"))
+    }
+
+    onLoadDocument() {
+      return EMPTY
+    }
+
+    onUnload() {}
+
+    onLayout() {
+      const isLayoutHeld$ =
+        isLayoutHeldOfItemIndex.get(this.item.index) ?? of(false)
+
+      return isLayoutHeld$.pipe(
+        first((isLayoutHeld) => !isLayoutHeld),
+        map(() => ({
+          width: viewport.width,
+          height: heightOfItemIndex.get(this.item.index) ?? viewport.height,
+        })),
+      )
+    }
+
+    onRenderHeadless() {
+      return EMPTY
+    }
+
+    getDocumentFrame() {
+      return undefined
+    }
+  }
+
+  return {
+    getRenderer: () => (props: DocumentRendererParams) =>
+      new SetHeightRenderer(props),
+    setItemHeight: (spineItemIndex: number, height: number) => {
+      heightOfItemIndex.set(spineItemIndex, height)
+    },
+    holdLayoutOfItem: (spineItemIndex: number) => {
+      const isLayoutHeld = new BehaviorSubject(true)
+
+      isLayoutHeldOfItemIndex.set(spineItemIndex, isLayoutHeld)
+
+      return () => isLayoutHeld.next(false)
+    },
+  }
+}
+
+/**
  * Unloads an item once the reader has loaded it and no layout is pending, and
  * resolves once the layout the unload ends with is requested, before that
  * layout is done. An item's load ending, whichever way, lays out that item and

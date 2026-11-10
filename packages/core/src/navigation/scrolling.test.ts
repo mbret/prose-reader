@@ -9,6 +9,7 @@ import {
   deliverScrollEvent,
   installReaderTestEnvironment,
   mountTestReader,
+  renderItemsOfSetHeights,
   settledOn,
   stubElementScrolling,
 } from "../tests/readerHarness"
@@ -26,6 +27,35 @@ const PAST_THE_END_OF_A_USER_SCROLL = 700
 type TestReader = ReturnType<typeof createTestReader>
 
 const topOfPage = (pageIndex: number) => pageIndex * defaultTestViewport.height
+
+/**
+ * What the first page gains when a test makes it grow, as a spine item that
+ * loads above the screen does: every page after it moves down by as much.
+ */
+const HEIGHT_GAINED_BY_FIRST_PAGE = 300
+
+/**
+ * A book that scrolls, opened on one of its four pages, whose first page a
+ * test can make grow. The page takes its new height at the next layout.
+ */
+const openOnPageBelowAPageThatCanGrow = async (pageIndex: number) => {
+  const { getRenderer, setItemHeight, holdLayoutOfItem } =
+    renderItemsOfSetHeights()
+  const { reader, scrollElement } = await openOnPage(pageIndex, {
+    pageTurnMode: "scrollable",
+    getRenderer,
+  })
+
+  return {
+    reader,
+    scrollElement,
+    growFirstPage: () => {
+      setItemHeight(0, defaultTestViewport.height + HEIGHT_GAINED_BY_FIRST_PAGE)
+    },
+    /** A pass then lays out the first three pages, and waits. */
+    holdLayoutOfLastPage: () => holdLayoutOfItem(3),
+  }
+}
 
 /**
  * Mounts a book of four pages, one item each, on one of them, with element
@@ -270,6 +300,179 @@ describe("Given a book that scrolls", () => {
       expect(userNavigations()).toHaveLength(0)
       // the restoration put the page back
       expect(scrollElement.scrollTop).toBe(topOfPage(2))
+    })
+  })
+
+  describe("When a layout moves the spine item at the top of the screen", () => {
+    it("scrolls by as much in the task that lays the items out, and does not take that scroll for the user's", async () => {
+      const { reader, scrollElement, growFirstPage } =
+        await openOnPageBelowAPageThatCanGrow(2)
+      const { userNavigations, hasLockBeenHeld } =
+        recordNavigationsAndLock(reader)
+
+      growFirstPage()
+      reader.layout()
+      await firstValueFrom(reader.spine.itemsLayout$)
+
+      /**
+       * The items are laid out, and their pages not published yet: the
+       * navigation is only restored onto them later, frames later in a
+       * browser.
+       */
+      expect(reader.spine.isLayoutCurrent()).toBe(false)
+      expect(scrollElement.scrollTop).toBe(
+        topOfPage(2) + HEIGHT_GAINED_BY_FIRST_PAGE,
+      )
+
+      // A browser reports the scroll at a later frame.
+      await waitFor(20)
+      deliverScrollEvent(scrollElement)
+      await waitFor(PAST_THE_END_OF_A_USER_SCROLL)
+
+      expect(hasLockBeenHeld()).toBe(false)
+      expect(userNavigations()).toHaveLength(0)
+      expect(reader.navigation.getNavigation().spineItem).toBe(2)
+      expect(scrollElement.scrollTop).toBe(
+        topOfPage(2) + HEIGHT_GAINED_BY_FIRST_PAGE,
+      )
+    })
+  })
+
+  describe("When a layout moves the spine item at the top of the screen while the user scrolls", () => {
+    it("keeps the place the user scrolled to on screen, and navigates to it once the scroll is over", async () => {
+      const { reader, scrollElement, growFirstPage } =
+        await openOnPageBelowAPageThatCanGrow(1)
+      const { userNavigations, isLockHeld } = recordNavigationsAndLock(reader)
+      const placeScrolledTo = topOfPage(2) + 50
+
+      scrollAsUser(scrollElement, placeScrolledTo)
+
+      expect(isLockHeld()).toBe(true)
+
+      growFirstPage()
+      reader.layout()
+      await firstValueFrom(reader.spine.itemsLayout$)
+
+      expect(scrollElement.scrollTop).toBe(
+        placeScrolledTo + HEIGHT_GAINED_BY_FIRST_PAGE,
+      )
+
+      // A browser reports the reader's scroll at a later frame.
+      deliverScrollEvent(scrollElement)
+      await settledOn(reader, 2)
+
+      expect(userNavigations().at(-1)?.position).toMatchObject({
+        x: 0,
+        y: placeScrolledTo + HEIGHT_GAINED_BY_FIRST_PAGE,
+      })
+      expect(scrollElement.scrollTop).toBe(
+        placeScrolledTo + HEIGHT_GAINED_BY_FIRST_PAGE,
+      )
+    })
+
+    it("takes a scroll the browser has not reported as the layout starts for the user's, and keeps its place on screen", async () => {
+      const { reader, scrollElement, growFirstPage } =
+        await openOnPageBelowAPageThatCanGrow(1)
+      const { userNavigations, isLockHeld } = recordNavigationsAndLock(reader)
+      const placeScrolledTo = topOfPage(2) + 50
+
+      growFirstPage()
+      reader.layout()
+
+      /**
+       * The user scrolls before the layout moves the pages, and the browser
+       * reports it at a later frame: after the layout.
+       */
+      scrollElement.scrollTop = placeScrolledTo
+
+      expect(isLockHeld()).toBe(false)
+
+      await firstValueFrom(reader.spine.itemsLayout$)
+
+      // The reader found the scroll as the layout started.
+      expect(isLockHeld()).toBe(true)
+      expect(scrollElement.scrollTop).toBe(
+        placeScrolledTo + HEIGHT_GAINED_BY_FIRST_PAGE,
+      )
+
+      deliverScrollEvent(scrollElement)
+      await settledOn(reader, 2)
+
+      expect(userNavigations().at(-1)?.position).toMatchObject({
+        x: 0,
+        y: placeScrolledTo + HEIGHT_GAINED_BY_FIRST_PAGE,
+      })
+      expect(scrollElement.scrollTop).toBe(
+        placeScrolledTo + HEIGHT_GAINED_BY_FIRST_PAGE,
+      )
+    })
+  })
+
+  describe("When a layout that moves the spine item at the top of the screen takes several tasks", () => {
+    it("scrolls by as much once the last spine item is laid out", async () => {
+      const { reader, scrollElement, growFirstPage, holdLayoutOfLastPage } =
+        await openOnPageBelowAPageThatCanGrow(2)
+      const releaseLayoutOfLastPage = holdLayoutOfLastPage()
+      const itemsLaidOut = firstValueFrom(reader.spine.itemsLayout$)
+
+      growFirstPage()
+      reader.layout()
+      await firstValueFrom(reader.spine.itemsLayoutStart$)
+
+      expect(scrollElement.scrollTop).toBe(topOfPage(2))
+
+      releaseLayoutOfLastPage()
+      await itemsLaidOut
+
+      expect(scrollElement.scrollTop).toBe(
+        topOfPage(2) + HEIGHT_GAINED_BY_FIRST_PAGE,
+      )
+    })
+
+    it("leaves the element where the user scrolled it meanwhile", async () => {
+      const { reader, scrollElement, growFirstPage, holdLayoutOfLastPage } =
+        await openOnPageBelowAPageThatCanGrow(2)
+      const releaseLayoutOfLastPage = holdLayoutOfLastPage()
+      const itemsLaidOut = firstValueFrom(reader.spine.itemsLayout$)
+      const placeScrolledToMeanwhile = topOfPage(1) + 50
+
+      growFirstPage()
+      reader.layout()
+      await firstValueFrom(reader.spine.itemsLayoutStart$)
+
+      // The user chose that place with the pages as the pass had them.
+      scrollAsUser(scrollElement, placeScrolledToMeanwhile)
+      releaseLayoutOfLastPage()
+      await itemsLaidOut
+
+      expect(scrollElement.scrollTop).toBe(placeScrolledToMeanwhile)
+    })
+
+    it("does not take another anchor when the layout starts again", async () => {
+      const { reader, scrollElement, growFirstPage, holdLayoutOfLastPage } =
+        await openOnPageBelowAPageThatCanGrow(2)
+      const releaseLayoutOfLastPage = holdLayoutOfLastPage()
+      const itemsLaidOut = firstValueFrom(reader.spine.itemsLayout$)
+      const placeScrolledToMeanwhile = topOfPage(1) + 50
+
+      growFirstPage()
+      reader.layout()
+      await firstValueFrom(reader.spine.itemsLayoutStart$)
+
+      scrollAsUser(scrollElement, placeScrolledToMeanwhile)
+
+      /**
+       * A second request cancels the pass, and its own starts with the first
+       * three pages where the cancelled one moved them. The layouts the
+       * reader knows are still the ones from before both: an anchor taken
+       * now would name the page that was at that place then.
+       */
+      reader.layout()
+      await firstValueFrom(reader.spine.itemsLayoutStart$)
+      releaseLayoutOfLastPage()
+      await itemsLaidOut
+
+      expect(scrollElement.scrollTop).toBe(placeScrolledToMeanwhile)
     })
   })
 })

@@ -177,8 +177,9 @@ export class Pages extends ReactiveEntity<PagesState> {
          * Resolving first visible nodes runs across animation frames. A layout
          * requested meanwhile makes the pages being computed describe a layout
          * already being replaced, so the request switches away from them.
+         * There are pages to compute once its pass has laid the items out.
          */
-        if (stage === "requested") return EMPTY
+        if (stage !== "laidOut") return EMPTY
 
         const pages = spineItemsManager.items.reduce<UnresolvedPageEntry[]>(
           (acc, spineItem, itemIndex) => {

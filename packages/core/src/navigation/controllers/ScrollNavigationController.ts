@@ -44,6 +44,27 @@ export type ScrollNavigationEntry = NavigationModeControllerNavigationEntry
 const isSameScrollPlace = (a: ScrollPosition, b: ScrollPosition) =>
   Math.abs(a.x - b.x) < 1 && Math.abs(a.y - b.y) < 1
 
+/**
+ * What the element shows at its top left corner as a layout starts: the spine
+ * item there, where the last completed layout put it, and the offsets of the
+ * element then.
+ */
+type LayoutScrollAnchor = {
+  spineItemIndex: number
+  spineItemPlaceBeforeLayout: { left: number; top: number }
+  scrollPositionBeforeLayout: ScrollPosition
+}
+
+/**
+ * The scroll anchor of the layout that runs, then of the one that ended. A
+ * layout has none to keep when the element showed no spine item at its corner
+ * as it started, or scrolled since.
+ */
+type LayoutScrollAnchoring =
+  | { stage: "noLayoutRunning" }
+  | { stage: "layingOut"; scrollAnchor: LayoutScrollAnchor | undefined }
+  | { stage: "laidOut"; scrollAnchor: LayoutScrollAnchor | undefined }
+
 export class ScrollNavigationController
   extends ReactiveEntity<{
     element: HTMLElement | undefined
@@ -60,20 +81,24 @@ export class ScrollNavigationController
   public readonly isActive$: Observable<boolean>
 
   /**
-   * The offsets of the element at each scroll event that shows a move the
-   * reader did not make: the user's scrolling. Never emits in controlled
-   * mode.
+   * The offsets of the element each time the reader finds it moved by
+   * something else than itself: the user's scrolling. Never emits in
+   * controlled mode.
    *
    * A scroll event does not say who scrolled, and the one the reader causes
    * comes a frame or more after what caused it. So a move is told from the
-   * offsets themselves: an event at the offsets the reader last left the
-   * element at, or the last move took it to, shows no move. The reader leaves
-   * the element at offsets of its own in two ways:
+   * offsets themselves: the element at the offsets the reader last left it
+   * at, or the last move took it to, has not moved. The reader looks at each
+   * scroll event, and as a layout starts, where it finds a move the browser
+   * has not reported yet. It leaves the element at offsets of its own in two
+   * ways:
    *
    * - A navigation scrolls it.
-   * - A layout moves or resizes the items in it, and the browser clamps the
-   *   offsets to what is left to scroll, as when the pages of a book go from
-   *   side by side to stacked.
+   * - A layout moves or resizes the items in it. The reader scrolls the
+   *   element by as much as the item at its top left corner moved, so that
+   *   it keeps showing the same place. The browser also clamps the offsets
+   *   to what is left to scroll, as when the pages of a book go from side by
+   *   side to stacked.
    *
    * The offsets a layout leaves are read once its last item is laid out.
    * Stacked items end where the last one does, so the browser clamps the
@@ -127,6 +152,13 @@ export class ScrollNavigationController
     )
 
     elementCreation$.pipe(takeUntil(this.destroy$)).subscribe()
+
+    /**
+     * Subscribed for the controller's own sake, whether or not anything
+     * listens for the user's scrolling: it is also what keeps the element on
+     * the same place through each layout.
+     */
+    this.scrollNotMadeByReader$.pipe(takeUntil(this.destroy$)).subscribe()
   }
 
   private observeScrollsNotMadeByReader(element: HTMLElement) {
@@ -135,43 +167,47 @@ export class ScrollNavigationController
         this.navigationAppliedSubject,
         // Read in the task that laid the items out, before the browser
         // reports what that did to the offsets.
-        this.spine.itemsLayout$,
+        this.keepScrollAnchorThroughLayouts(element),
       ).pipe(
         map(() => ({
           scrollPosition: this.scrollPosition,
-          isScrollEvent: false,
+          isLeftThereByReader: true,
         })),
       ),
-      fromEvent(element, `scroll`).pipe(
+      merge(
+        fromEvent(element, `scroll`),
+        // Before the layout moves anything: what the browser has not
+        // reported by then, the layout would hide.
+        this.spine.itemsLayoutStart$,
+      ).pipe(
         map(() => ({
           scrollPosition: this.scrollPosition,
-          isScrollEvent: true,
+          isLeftThereByReader: false,
         })),
       ),
     ).pipe(
       scan(
         (
           { scrollPositionKnownToReader },
-          { scrollPosition, isScrollEvent },
+          { scrollPosition, isLeftThereByReader },
         ) => {
           /**
-           * An event that shows no move leaves the known offsets as they are,
+           * A look that finds no move leaves the known offsets as they are,
            * so that a scroll of less than a pixel at a time adds up to a
            * move.
            */
           if (
-            isScrollEvent &&
+            !isLeftThereByReader &&
             isSameScrollPlace(scrollPositionKnownToReader, scrollPosition)
           )
             return { scrollPositionKnownToReader, isMoveNotMadeByReader: false }
 
           return {
             scrollPositionKnownToReader: scrollPosition,
-            isMoveNotMadeByReader: isScrollEvent,
+            isMoveNotMadeByReader: !isLeftThereByReader,
           }
         },
-        // An event at the offsets the element has as this starts shows no
-        // move.
+        // The element at the offsets it has as this starts has not moved.
         {
           scrollPositionKnownToReader: this.scrollPosition,
           isMoveNotMadeByReader: false,
@@ -180,6 +216,134 @@ export class ScrollNavigationController
       filter(({ isMoveNotMadeByReader }) => isMoveNotMadeByReader),
       map(({ scrollPositionKnownToReader }) => scrollPositionKnownToReader),
     )
+  }
+
+  /**
+   * Keeps the element on the same place through each layout: once a pass has
+   * laid the items out, scrolls the element by as much as the pass moved the
+   * spine item at its top left corner, in the task that moved it. Emits once
+   * that is done, for each pass.
+   *
+   * Without it, a spine item that changes size above the screen, as when it
+   * loads, moves everything after it under the user. The navigation is only
+   * restored once the pages of the layout are published, frames later, and
+   * not at all while the user scrolls.
+   *
+   * The anchor is read as the pass starts, before any item moves. A pass that
+   * stops and starts again keeps the one read first, since it finds items it
+   * moved already. Once the element scrolls during the pass, by the user or
+   * by a navigation, there is nothing left to keep: where it then is was
+   * chosen with the items as the pass had them. Only a pass that takes
+   * several tasks leaves time for that, as the pdf renderer's does.
+   */
+  private keepScrollAnchorThroughLayouts(
+    element: HTMLElement,
+  ): Observable<unknown> {
+    const noLayoutRunning: LayoutScrollAnchoring = { stage: "noLayoutRunning" }
+
+    return merge(
+      this.spine.itemsLayoutStart$.pipe(
+        map(() => ({
+          type: "itemsLayoutStart" as const,
+          scrollAnchor: this.readLayoutScrollAnchor(),
+        })),
+      ),
+      merge(this.navigationAppliedSubject, fromEvent(element, `scroll`)).pipe(
+        map(() => ({
+          type: "elementScroll" as const,
+          scrollPosition: this.scrollPosition,
+        })),
+      ),
+      this.spine.itemsLayout$.pipe(
+        map(() => ({ type: "itemsLaidOut" as const })),
+      ),
+    ).pipe(
+      scan((anchoring, event): LayoutScrollAnchoring => {
+        if (event.type === "itemsLaidOut")
+          return {
+            stage: "laidOut",
+            scrollAnchor:
+              anchoring.stage === "layingOut"
+                ? anchoring.scrollAnchor
+                : undefined,
+          }
+
+        if (event.type === "itemsLayoutStart")
+          return anchoring.stage === "layingOut"
+            ? anchoring
+            : { stage: "layingOut", scrollAnchor: event.scrollAnchor }
+
+        if (anchoring.stage !== "layingOut") return noLayoutRunning
+
+        const hasElementScrolledSinceLayoutStart =
+          anchoring.scrollAnchor !== undefined &&
+          !isSameScrollPlace(
+            anchoring.scrollAnchor.scrollPositionBeforeLayout,
+            event.scrollPosition,
+          )
+
+        return hasElementScrolledSinceLayoutStart
+          ? { stage: "layingOut", scrollAnchor: undefined }
+          : anchoring
+      }, noLayoutRunning),
+      filter((anchoring) => anchoring.stage === "laidOut"),
+      tap(({ scrollAnchor }) => {
+        if (scrollAnchor)
+          this.scrollToKeepLayoutScrollAnchor(element, scrollAnchor)
+      }),
+    )
+  }
+
+  private readLayoutScrollAnchor(): LayoutScrollAnchor | undefined {
+    const scrollPosition = this.scrollPosition
+    const spineItem = this.spine.locator.getSpineItemFromPosition(
+      this.fromScrollPosition(scrollPosition),
+    )
+
+    if (!spineItem) return undefined
+
+    const { left, top } = this.spine.getSpineItemSpineLayoutInfo(spineItem)
+
+    return {
+      spineItemIndex: spineItem.index,
+      spineItemPlaceBeforeLayout: { left, top },
+      scrollPositionBeforeLayout: scrollPosition,
+    }
+  }
+
+  /**
+   * Scrolls the element by as much as the layout that just ended moved the
+   * spine item of the anchor.
+   */
+  private scrollToKeepLayoutScrollAnchor(
+    element: HTMLElement,
+    {
+      spineItemIndex,
+      spineItemPlaceBeforeLayout,
+      scrollPositionBeforeLayout,
+    }: LayoutScrollAnchor,
+  ) {
+    const { left, top } = this.spine.getSpineItemSpineLayoutInfo(spineItemIndex)
+    const scaleFactor = this.viewport.scaleFactor
+    const scrollPosition = new ScrollPosition({
+      x:
+        scrollPositionBeforeLayout.x +
+        (left - spineItemPlaceBeforeLayout.left) * scaleFactor,
+      y:
+        scrollPositionBeforeLayout.y +
+        (top - spineItemPlaceBeforeLayout.top) * scaleFactor,
+    })
+
+    if (isSameScrollPlace(scrollPositionBeforeLayout, scrollPosition)) return
+
+    this.scrollElementTo(element, scrollPosition)
+  }
+
+  /** Scrolls the element at once, and tells the hooks its offsets moved. */
+  private scrollElementTo(element: HTMLElement, { x, y }: ScrollPosition) {
+    element.scrollTo({ left: x, top: y, behavior: "instant" })
+
+    this.hookManager.execute("onViewportOffsetAdjust", undefined)
   }
 
   /**
@@ -207,13 +371,7 @@ export class ScrollNavigationController
       return
     }
 
-    element.scrollTo({
-      left: scaledPosition.x,
-      top: scaledPosition.y,
-      behavior: "instant",
-    })
-
-    this.hookManager.execute("onViewportOffsetAdjust", undefined)
+    this.scrollElementTo(element, scaledPosition)
   }
 
   /**

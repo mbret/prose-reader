@@ -90,6 +90,55 @@ that item out, long before the pages are computed again. For the latest
 navigation with whether it holds on this layout, read
 [`reader.navigation.navigationAgainstCurrentLayout$`](/core-api/navigation#navigationagainstcurrentlayoutusd).
 
+Three streams follow a layout after its request:
+
+| Stream | Emits |
+| --- | --- |
+| `.itemsLayoutStart$` | as the layout starts to lay the spine items out |
+| `.itemsLayout$` | once the spine items are laid out |
+| `.layout$` | once the pages are published |
+
+### `.itemsLayoutStart$` { #itemslayoutstartusd }
+
+```typescript
+Observable<unknown>
+```
+
+Emits as a layout starts to lay the spine items out, before it moves the first
+one. A layout waits 50 ms after its request, unless it is asked for with
+`reader.layout({ immediate: true })`, so this comes after the request, and
+after any request that replaced it.
+
+From here until `.itemsLayout$`, the layout moves the spine items one after
+the other, and the place the spine gives for each one is still the place from
+before the layout. Read here what you need from before a layout. The reader
+itself reads what a book that scrolls shows, to keep the screen on the same
+place, see [Scrollable mode](/learn/page-turn-mode#scrollable-mode).
+
+It emits again when a layout stops and starts again, as when the reader's
+container is hidden and shown during it. Some spine items are then already
+where the layout moved them.
+
+### `.itemsLayout$` { #itemslayoutusd }
+
+```typescript
+Observable<unknown>
+```
+
+Emits once a layout has laid the spine items out. Their sizes and places in
+the spine are the new ones. Their pages are not published yet, so
+`firstItemIndexAwaitingLayout` is still a number.
+
+### `.layout$` { #layoutusd }
+
+```typescript
+Observable<{ pages: PageEntry[] }>
+```
+
+Emits the pages of a layout once they are published. The spine's state is
+already up to date: `firstItemIndexAwaitingLayout` is `undefined`, unless a
+newer layout is requested.
+
 ### `.isLayoutCurrent()` { #islayoutcurrent }
 
 ```typescript
