@@ -31,3 +31,26 @@ You can take advantage of the error state to display a placeholder page to let t
 Our default placeholder pages are using spine item various states to display different states. You can look at it for some examples.
 :::
 
+## Errors the reader recovers from
+
+The layout of the spine recovers from these errors, and goes on without the result of the code that failed:
+
+- A renderer whose `onLayout` throws or errors gives its item no size. The item keeps the size of its last layout at the same page size, or else takes its minimum width: one page, or a whole spread.
+- Any other error in the layout of an item, such as in a getter that its renderer overrides, gives the item the size of its last layout at the same page size, or else one page.
+
+In each case the items after it still get a place, and pagination settles.
+
+A layout of the spine can still fail outside the layout of its items, through a bug of the reader. It then publishes no pages, and the layout stays [requested](/core-api/spine#layout). The reader shows no new page and loads no item until a later request lays the spine out, such as a resize or a call to `reader.layout()`.
+
+The reader reports these errors as rxjs reports an error that no subscriber handles. It calls `config.onUnhandledError` from rxjs if you set it, or else throws the error in a `setTimeout`, so that the browser reports it as uncaught. rxjs is a peer dependency of prose-reader, so the `config` that your app imports is the one that the reader uses. Set it to send these errors to your error tracker:
+
+```typescript
+import { config } from "rxjs"
+
+config.onUnhandledError = (error) => {
+  errorTracker.captureException(error)
+}
+```
+
+The handler also receives the errors that no subscriber in your app handles.
+

@@ -75,6 +75,12 @@ A request never moves it past an earlier item still waiting. It turns
 updates its state before the pages reach anything else. A newer request
 cancels everything still running for older ones, so the pages published then
 are the ones it asked for. It is `0` until the first pages are published.
+A layout that fails outside the layout of its items, through a bug of the
+reader, publishes no pages, and the reader
+[reports its error](/learn/error-handling#errors-the-reader-recovers-from):
+`firstItemIndexAwaitingLayout` stays a number until a later request publishes
+its pages. The reader requests none on its own: until a resize, a setting or
+`reader.layout()` requests one, it loads no new item.
 
 A layout runs only while the viewport has a size, see
 [`reader.viewport.isSized$`](/core-api/viewport#issizedusd). A request made
