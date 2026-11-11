@@ -11,7 +11,7 @@
     "test:ui": "playwright test --ui"
   },
   "devDependencies": {
-    "@playwright/test": "^1.48.2",
+    "@playwright/test": "^1.65.0",
     "@prose-reader/archive-reader": "workspace:*",
     "@prose-reader/cbz": "workspace:*",
     "@prose-reader/core": "workspace:*",
@@ -25,12 +25,12 @@
     "@prose-reader/streamer": "workspace:*",
     "@types/react": "^19.0.2",
     "@types/react-dom": "^19.0.0",
-    "@vitejs/plugin-react": "^6.0.2",
+    "@vitejs/plugin-react": "^6.3.0",
     "jszip": "^3.10.1",
-    "pdfjs-dist": "^6.2.108",
+    "pdfjs-dist": "^6.5.438",
     "react": "^19.2.7",
     "react-dom": "^19.2.7",
-    "reactjrx": "^5.0.0",
+    "reactjrx": "^5.0.1",
     "rxjs": "^7.8.0"
   }
 }

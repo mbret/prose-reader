@@ -23,7 +23,7 @@ npm install @prose-reader/enhancer-gestures @prose-reader/core gesturx rxjs
 All three are peer dependencies. The enhancer runs against the reader your app
 creates, so it shares that reader's `@prose-reader/core` rather than bringing
 its own. It needs the core it was released with or a later one of the same
-major, gesturx 2 (`^2.0.0`), and rxjs 7.5.5 or any later 7.x (`^7.5.5`).
+major, gesturx 8 (`^8.0.0`), and rxjs 7.5.5 or any later 7.x (`^7.5.5`).
 
 Connect the enhancer to your reader:
 
@@ -48,6 +48,8 @@ For example, we detect taps on edge of screen to navigate pages. If we were usin
 <figure><img src="/images/gestures-container.webp" alt="A reader in the middle of a wider page: the edge of the book, where a tap turns the page, is far from the edge of the window" width="717" height="473"></figure>
 
 In this situation the user is using the reader in only a certain part of the web page and therefore the gestures should work relative to the reader container.
+
+While the reader is mounted, the enhancer's stylesheet gives its container `touch-action: none !important`, and every element in it inherits that value. So the browser neither scrolls nor zooms on a touch screen, and the gestures keep their pointer events. The stylesheet goes into the reader's document, wins over a `touch-action` that your app sets on the container without `!important`, and goes away when the reader is destroyed.
 
 ## Patterns recognized
 

@@ -120,11 +120,7 @@ const style = `
 // or even better
 // import style from "./style.css?inline"
 
-const removeStyle = reader.utils.injectScopedCSS(
-  document,
-  "my-super-enhancer",
-  style,
-)
+const removeStyle = reader.utils.injectScopedCSS("my-super-enhancer", style)
 
 // Later, when reader instance is destroyed
 removeStyle()
@@ -145,7 +141,7 @@ There are several things happening:
 * Your style has a unique name based on your scope and the reader instance. This avoid clashing between `<style>` elements
 * Your style is targeting a specific reader instance ID so your style will only apply to the reader it's being injected into
 
-`${id}` is a placeholder that `injectScopedCSS` replaces with the reader id. Only its first occurrence is replaced, so use it once per style. Keep the value quoted: the id is a UUID, and one that starts with a digit is not a valid unquoted attribute value.
+`${id}` is a placeholder that `injectScopedCSS` replaces with the reader id, everywhere it appears. The style goes into the reader's document: the one you passed as `ownerDocument` to `createReader`, or the global `document`. Keep the value quoted: the id is a UUID, and one that starts with a digit is not a valid unquoted attribute value.
 
 :::caution
 You may have noticed the drawback here, the style content is actually part of your javascript file. It adds up to the bundle size. This is not a problem if your style is not huge but you may consider other approaches if your enhancer adds a ton of style.
