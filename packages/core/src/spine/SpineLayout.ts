@@ -3,7 +3,6 @@ import {
   BehaviorSubject,
   catchError,
   defer,
-  EMPTY,
   filter,
   map,
   merge,
@@ -349,22 +348,25 @@ export class SpineLayout extends DestroyableClass {
      * synchronously, and whatever it notifies may navigate, so everything
      * tracking whether the layout is current must already know it is not.
      */
+    const requestedState: SpineLayoutState = {
+      stage: "requested",
+      laidOutItems: previousState.laidOutItems,
+      firstItemIndexAwaitingLayout,
+    }
+
     return layOutWhileSized().pipe(
-      startWith<SpineLayoutState>({
-        stage: "requested",
-        laidOutItems: previousState.laidOutItems,
-        firstItemIndexAwaitingLayout,
-      }),
+      startWith(requestedState),
       /**
-       * A pass that fails leaves the layout requested, as a cancelled pass
-       * does, so the next request also lays out the items this one had to.
-       * Its error must not reach `switchScan`: it would end the subscription
-       * to the requests, and no layout would run again.
+       * A pass that fails goes back to the requested state, as a newer
+       * request leaves a cancelled pass, so the next request also lays out the
+       * items this one had to. Left at `layingOut`, the state would say that a
+       * pass runs. The error must not reach `switchScan`: it would end the
+       * subscription to the requests, and no layout would run again.
        */
       catchError((error) => {
         reportRecoveredError(error)
 
-        return EMPTY
+        return of(requestedState)
       }),
     )
   }
