@@ -1,5 +1,5 @@
 import type { Manifest } from "@prose-reader/shared"
-import { firstValueFrom, Subject } from "rxjs"
+import { EMPTY, firstValueFrom, of, Subject } from "rxjs"
 import { describe, expect, it, vi } from "vitest"
 import { Context } from "../context/Context"
 import { HookManager } from "../hooks/HookManager"
@@ -208,6 +208,15 @@ const createDeferredSpineLayout = (numberOfItems: number) => {
     viewport,
     widths,
   }
+}
+
+/** Requests a layout of the spine, and waits for its pass to complete. */
+const layOutAndWait = async (spineLayout: SpineLayout) => {
+  const passDone = firstValueFrom(spineLayout.layout$)
+
+  spineLayout.layout({ immediate: true })
+
+  await passDone
 }
 
 /** The number of frames on the call stack where it is called. */
@@ -545,6 +554,58 @@ describe("SpineLayout", () => {
           (callStackDepthByItem.at(-1) ?? 0) - secondItemDepth,
           "frames the call stack grew by from the second item to the last",
         ).toBe(0)
+      } finally {
+        destroy()
+      }
+    },
+  )
+
+  it.each([
+    {
+      renderer: "gives two sizes",
+      firstItemSizes: of(
+        { height: 100, width: 300 },
+        { height: 100, width: 500 },
+      ),
+      firstItemWidth: 300,
+    },
+    {
+      renderer: "completes with no size",
+      firstItemSizes: EMPTY,
+      firstItemWidth: 100,
+    },
+  ])(
+    "takes one size for an item whose renderer $renderer, for its place and its container",
+    async ({ firstItemSizes, firstItemWidth }) => {
+      const { destroy, spineItemsManager, spineLayout } = createTestSpineLayout(
+        {
+          items: 2,
+        },
+      )
+      const [firstItem] = spineItemsManager.items
+
+      if (!firstItem) throw new Error("the spine has no item")
+
+      vi.spyOn(firstItem.renderer, "onLayout").mockReturnValue(firstItemSizes)
+
+      try {
+        await layOutAndWait(spineLayout)
+
+        expect(
+          spineItemsManager.items.map((_, itemIndex) => {
+            const { left, width } =
+              spineLayout.getSpineItemSpineLayoutInfo(itemIndex)
+
+            return { left, width }
+          }),
+          "the places of the items",
+        ).toEqual([
+          { left: 0, width: firstItemWidth },
+          { left: firstItemWidth, width: 100 },
+        ])
+        expect(firstItem.layoutInfo.width, "the width of its container").toBe(
+          firstItemWidth,
+        )
       } finally {
         destroy()
       }
