@@ -14,6 +14,7 @@ import {
   switchMap,
   switchScan,
   takeUntil,
+  takeWhile,
   tap,
   timer,
 } from "rxjs"
@@ -86,29 +87,32 @@ const spineStartOffset: SpineItemEndOffset = {
 }
 
 /**
- * The layout as each request and each completed pass leave it. The items keep
- * the layouts the last completed pass gave them until the next one completes,
- * which replaces them all at once, so readers always see one coherent layout.
+ * The layout as each request, each pass that starts and each completed pass
+ * leave it. The items keep the layouts the last completed pass gave them until
+ * the next one completes, which replaces them all at once, so readers always
+ * see one coherent layout.
  *
- * A pending request also records the first item the next pass lays out from:
- * the first one any request since the last completed pass affects, since a
- * request cancels a pass still running for an older one, whose items are then
- * not laid out.
+ * Until its pass completes, a request also records the first item that pass
+ * lays out from: the first one any request since the last completed pass
+ * affects, since a request cancels a pass still running for an older one,
+ * whose items are then not laid out.
  */
 type SpineLayoutState =
   | {
-      stage: "requested"
+      stage: "requested" | "layingOut"
       laidOutItems: readonly LaidOutSpineItem[]
       firstItemIndexAwaitingLayout: number
     }
   | { stage: "laidOut"; laidOutItems: readonly LaidOutSpineItem[] }
 
 /**
- * A layout requested, with the first item its pass lays out from, then the
- * same layout done. The items before that one keep their layouts.
+ * A layout requested, with the first item its pass lays out from, then its
+ * pass starting to lay the items out, then the same layout done. The items
+ * before that first one keep their layouts.
  */
 export type SpineLayoutLifecycleEvent =
   | { stage: "requested"; firstItemIndexAwaitingLayout: number }
+  | { stage: "layingOut" }
   | { stage: "laidOut" }
 
 export class SpineLayout extends DestroyableClass {
@@ -122,14 +126,15 @@ export class SpineLayout extends DestroyableClass {
 
   /**
    * Each layout request as it is made, from `layout()` or from an item loading
-   * or unloading, then its completion. A request is announced before anything
-   * is done for it, measuring the viewport included, and a newer request
-   * cancels whatever is still running for an older one, so a completion always
-   * belongs to the latest request.
+   * or unloading, then its pass starting to lay the items out, then its
+   * completion. A request is announced before anything is done for it,
+   * measuring the viewport included, and a newer request cancels whatever is
+   * still running for an older one, so a completion always belongs to the
+   * latest request.
    */
   public readonly lifecycle$: Observable<SpineLayoutLifecycleEvent> =
     this.stateSubject.pipe(
-      // the state as it is, before the next request or completion
+      // the state as it is, before the next request, start or completion
       skip(1),
       map(
         (state): SpineLayoutLifecycleEvent =>
@@ -139,9 +144,23 @@ export class SpineLayout extends DestroyableClass {
                 firstItemIndexAwaitingLayout:
                   state.firstItemIndexAwaitingLayout,
               }
-            : { stage: "laidOut" },
+            : { stage: state.stage },
       ),
     )
+
+  /**
+   * Emits as a pass starts to lay the items out, once the wait of its request
+   * is over and before it moves the first of them. From here until the pass
+   * completes, it moves the items one after the other, while
+   * `getSpineItemSpineLayoutInfo` still gives the layouts of the last
+   * completed pass.
+   *
+   * A pass that stops and starts again, as when the viewport loses its size,
+   * emits again: some items are then already where it moved them.
+   */
+  public readonly layoutStart$: Observable<unknown> = this.lifecycle$.pipe(
+    filter(({ stage }) => stage === "layingOut"),
+  )
 
   /** Emits once a pass completes. */
   public readonly layout$: Observable<unknown> = this.lifecycle$.pipe(
@@ -223,8 +242,9 @@ export class SpineLayout extends DestroyableClass {
   }
 
   /**
-   * The states a request takes the layout through: requested at once, then
-   * laid out once its pass completes, unless a newer request cancels it first.
+   * The states a request takes the layout through: requested at once, laying
+   * out once its wait is over, then laid out once its pass completes, unless
+   * a newer request cancels it first.
    */
   private runLayoutPass(
     previousState: SpineLayoutState,
@@ -235,12 +255,12 @@ export class SpineLayout extends DestroyableClass {
      * have laid out the items it affects.
      */
     const firstItemIndexAffectedSinceLastPass =
-      previousState.stage === "requested"
-        ? Math.min(
+      previousState.stage === "laidOut"
+        ? firstAffectedItemIndex
+        : Math.min(
             previousState.firstItemIndexAwaitingLayout,
             firstAffectedItemIndex,
           )
-        : firstAffectedItemIndex
 
     /**
      * The items before it keep their layouts, as far as a completed pass gave
@@ -270,12 +290,34 @@ export class SpineLayout extends DestroyableClass {
      * 0 by 0 and the items' documents have no layout, so a pass would put
      * every item at the start of the spine and the reader on its first page.
      * If the viewport loses its size during a pass, the pass stops, and starts
-     * again from the measurement once the viewport has a size again.
+     * again from the measurement once the viewport has a size again. It ends
+     * once the items are laid out.
      */
-    const layOutWhileSized = (): Observable<readonly LaidOutSpineItem[]> =>
-      runWhileSized(this.viewport, pass$)
+    const layOutWhileSized = (): Observable<SpineLayoutState> =>
+      runWhileSized(this.viewport, pass$).pipe(
+        takeWhile(({ stage }) => stage !== "laidOut", true),
+      )
 
-    const pass$: Observable<readonly LaidOutSpineItem[]> = defer(() => {
+    /**
+     * The start is announced before the first item moves, the way the request
+     * is before anything is done for it: whatever needs the items as they are
+     * before the pass, such as what the scroll shows, reads it then.
+     */
+    const layOutItems$ = this.layOutItems(keptItems).pipe(
+      map(
+        (laidOutItems): SpineLayoutState => ({
+          stage: "laidOut",
+          laidOutItems,
+        }),
+      ),
+      startWith<SpineLayoutState>({
+        stage: "layingOut",
+        laidOutItems: previousState.laidOutItems,
+        firstItemIndexAwaitingLayout,
+      }),
+    )
+
+    const pass$: Observable<SpineLayoutState> = defer(() => {
       if (measuresViewport) this.viewport.layout()
 
       this.spineItemsManager.items
@@ -292,29 +334,18 @@ export class SpineLayout extends DestroyableClass {
        * new subscription, which measures the viewport, and observes it afresh.
        */
       switchMap(() =>
-        this.viewport.hasSize()
-          ? this.layOutItems(keptItems)
-          : layOutWhileSized(),
-      ),
-    )
-
-    const laidOut$ = layOutWhileSized().pipe(
-      map(
-        (laidOutItems): SpineLayoutState => ({
-          stage: "laidOut",
-          laidOutItems,
-        }),
+        this.viewport.hasSize() ? layOutItems$ : layOutWhileSized(),
       ),
     )
 
     /**
      * The request is announced before anything is done for it: nothing above
-     * runs until `laidOut$` is subscribed, and `startWith` delivers the
+     * runs until the pass is subscribed, and `startWith` delivers the
      * announcement to every listener first. Measuring the viewport notifies
      * synchronously, and whatever it notifies may navigate, so everything
      * tracking whether the layout is current must already know it is not.
      */
-    return laidOut$.pipe(
+    return layOutWhileSized().pipe(
       startWith<SpineLayoutState>({
         stage: "requested",
         laidOutItems: previousState.laidOutItems,
