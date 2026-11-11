@@ -5,6 +5,7 @@
 }
 
 [data-prose-reader-container="${id}"] * {
-  /* Make sure that touche actions are correctly dispatched no matter where the user interact */
+  /* touch-action is not inherited, and the browser reads it only from the touched element up to its nearest scroll
+  container, such as the scroll navigator inside the container. So each element carries the container's value itself. */
   touch-action: inherit;
 }

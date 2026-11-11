@@ -167,7 +167,43 @@ const onFirstPage = async (container = document.createElement("div")) => {
   })
 
   /**
-   * Presses at `x`, halfway down, moves `distance` to the right in five steps
+   * Dispatches a pointer event on the reader's container, halfway down, as a
+   * browser does: `button` is -1 on a move, and `buttons` holds the primary
+   * button until the release. gesturx reads a mouse move with no button held
+   * as a release the page missed.
+   */
+  const dispatchPointer = ({
+    type,
+    pointerId,
+    pointerType,
+    clientX,
+  }: {
+    type: "pointerdown" | "pointermove" | "pointerup"
+    pointerId: number
+    pointerType: "mouse" | "touch"
+    clientX: number
+  }) => {
+    const target = reader.context.value.rootElement
+
+    if (!target) throw new Error("the reader is not mounted")
+
+    target.dispatchEvent(
+      new PointerEvent(type, {
+        pointerId,
+        isPrimary: pointerId === 1,
+        pointerType,
+        button: type === "pointermove" ? -1 : 0,
+        buttons: type === "pointerup" ? 0 : 1,
+        clientX,
+        clientY: viewport.height / 2,
+        bubbles: true,
+        cancelable: true,
+      }),
+    )
+  }
+
+  /**
+   * Presses at `x` with the mouse, moves `distance` to the right in five steps
    * a frame apart, and lets go unless told not to. It is over within the time
    * a tap allows.
    */
@@ -180,48 +216,31 @@ const onFirstPage = async (container = document.createElement("div")) => {
     distance: number
     letGo?: boolean
   }) => {
-    const target = reader.context.value.rootElement
+    const mouse = { pointerId: 1, pointerType: "mouse" as const }
 
-    if (!target) throw new Error("the reader is not mounted")
-
-    const y = viewport.height / 2
-    const dispatch = (type: string, clientX: number) =>
-      target.dispatchEvent(
-        new PointerEvent(type, {
-          pointerId: 1,
-          isPrimary: true,
-          pointerType: "mouse",
-          /**
-           * The left button, held until the release: gesturx reads a mouse
-           * move with no button held as a release the page missed.
-           */
-          button: 0,
-          buttons: type === "pointerup" ? 0 : 1,
-          clientX,
-          clientY: y,
-          bubbles: true,
-          cancelable: true,
-        }),
-      )
-
-    dispatch("pointerdown", x)
+    dispatchPointer({ ...mouse, type: "pointerdown", clientX: x })
 
     for (let step = 1; step <= 5; step++) {
       await vi.advanceTimersByTimeAsync(16)
-      dispatch("pointermove", x + (distance * step) / 5)
+      dispatchPointer({
+        ...mouse,
+        type: "pointermove",
+        clientX: x + (distance * step) / 5,
+      })
     }
 
     await vi.advanceTimersByTimeAsync(16)
 
-    if (letGo) dispatch("pointerup", x + distance)
+    if (letGo)
+      dispatchPointer({ ...mouse, type: "pointerup", clientX: x + distance })
 
     await vi.runAllTimersAsync()
   }
 
   /**
-   * Presses two fingers 40px apart at `x`, halfway down, then moves both
-   * `distance` to the right while they spread `spread` further apart, in five
-   * steps a frame apart, and lets go.
+   * Presses two fingers 40px apart at `x`, then moves both `distance` to the
+   * right while they spread `spread` further apart, in five steps a frame
+   * apart, and lets go.
    */
   const pinch = async ({
     x,
@@ -232,40 +251,37 @@ const onFirstPage = async (container = document.createElement("div")) => {
     distance: number
     spread: number
   }) => {
-    const target = reader.context.value.rootElement
+    const fingerAt = (pointerId: number, step: number) => {
+      const side = pointerId === 1 ? -1 : 1
+      const offset = (distance * step) / 5
+      const halfSpread = (spread * step) / 10
 
-    if (!target) throw new Error("the reader is not mounted")
-
-    const y = viewport.height / 2
-    const dispatch = (type: string, pointerId: number, clientX: number) =>
-      target.dispatchEvent(
-        new PointerEvent(type, {
+      return x + side * (20 + halfSpread) + offset
+    }
+    const fingers = [1, 2]
+    const dispatchFingers = (
+      type: "pointerdown" | "pointermove" | "pointerup",
+      step: number,
+    ) => {
+      for (const pointerId of fingers) {
+        dispatchPointer({
+          type,
           pointerId,
-          isPrimary: pointerId === 1,
           pointerType: "touch",
-          button: type === "pointermove" ? -1 : 0,
-          buttons: type === "pointerup" ? 0 : 1,
-          clientX,
-          clientY: y,
-          bubbles: true,
-          cancelable: true,
-        }),
-      )
+          clientX: fingerAt(pointerId, step),
+        })
+      }
+    }
 
-    dispatch("pointerdown", 1, x - 20)
-    dispatch("pointerdown", 2, x + 20)
+    dispatchFingers("pointerdown", 0)
 
     for (let step = 1; step <= 5; step++) {
       await vi.advanceTimersByTimeAsync(16)
-      const offset = (distance * step) / 5
-      const halfSpread = (spread * step) / 10
-      dispatch("pointermove", 1, x - 20 + offset - halfSpread)
-      dispatch("pointermove", 2, x + 20 + offset + halfSpread)
+      dispatchFingers("pointermove", step)
     }
 
     await vi.advanceTimersByTimeAsync(16)
-    dispatch("pointerup", 1, x - 20 + distance - spread / 2)
-    dispatch("pointerup", 2, x + 20 + distance + spread / 2)
+    dispatchFingers("pointerup", 5)
     await vi.runAllTimersAsync()
   }
 

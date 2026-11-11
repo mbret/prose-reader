@@ -70,13 +70,13 @@ export const gesturesEnhancer =
     }
 
     const failWithPinchWhenItCancelsPan: FailWith = {
-      running$: settingsManager.values$.pipe(
-        map(({ pinchCancelPan }) => pinchCancelPan),
-        distinctUntilChanged(),
-        switchMap((pinchCancelPan) =>
-          pinchCancelPan ? pinchRecognizer.running$ : of(false),
+      running$: settingsManager
+        .watch(["pinchCancelPan"])
+        .pipe(
+          switchMap(({ pinchCancelPan }) =>
+            pinchCancelPan ? pinchRecognizer.running$ : of(false),
+          ),
         ),
-      ),
     }
 
     const panRecognizer = new PanRecognizer({

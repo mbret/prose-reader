@@ -2,7 +2,8 @@ import { defineConfig } from "vitest/config"
 
 export default defineConfig(() => ({
   test: {
-    // happy-dom is pinned to 21.0.3, here and in the root package.json. From
+    // happy-dom is pinned to 21.0.3, in this package's package.json and in the
+    // root one. From
     // 21.0.4, a frame whose URL has a `null` origin is cross-origin, and Node
     // gives that origin to every `blob:` URL, which the renderer loads each
     // document from. Lift the pin once happy-dom's `blob:` URLs carry the
