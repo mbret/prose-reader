@@ -3,6 +3,33 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## [43.0.0](https://github.com/mbret/prose-reader/compare/v42.0.0...v43.0.0) (2026-11-11)
+
+### ⚠ BREAKING CHANGES
+
+* **core:** `reader.utils.injectScopedCSS` no longer takes a
+  document. It injects into the reader's document: replace
+  `injectScopedCSS(document, scope, style)` with
+  `injectScopedCSS(scope, style)`. It also replaces every `${id}` in the
+  style, not only the first one.
+* **core:** reader.$.destroy$ is an Observable, not a Subject: only
+  the reader emits it.
+* **core:** the spine layout lifecycle,
+  reader.spine.pages.spineLayout.lifecycle$, emits a third stage,
+  { stage: "layingOut" }, between "requested" and "laidOut", as a pass starts
+  to lay the spine items out. Code that takes every stage other than
+  "requested" for a completed pass must check for "laidOut".
+
+### Features
+
+* **core:** announce when a layout pass starts to lay the spine items out ([a6c0a57](https://github.com/mbret/prose-reader/commit/a6c0a5793af0f95c13ed2fcb35cfead0cf3f4f3a))
+
+### Bug Fixes
+
+* **core:** inject an enhancer's scoped CSS into the reader's document, with every id replaced ([e38fd2e](https://github.com/mbret/prose-reader/commit/e38fd2e980f77a375c38037590cf3fd5dfe2eebb))
+* **core:** replay destroy$ to a subscriber that comes after the destroy ([b22e0f8](https://github.com/mbret/prose-reader/commit/b22e0f873d46058fb9aa27168b81352a76953a12))
+
+
 ## [42.0.0](https://github.com/mbret/prose-reader/compare/v41.0.0...v42.0.0) (2026-11-10)
 
 ### ⚠ BREAKING CHANGES

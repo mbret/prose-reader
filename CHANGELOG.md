@@ -3,6 +3,42 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## [43.0.0](https://github.com/mbret/prose-reader/compare/v42.0.0...v43.0.0) (2026-11-11)
+
+### ⚠ BREAKING CHANGES
+
+* **core:** `reader.utils.injectScopedCSS` no longer takes a
+  document. It injects into the reader's document: replace
+  `injectScopedCSS(document, scope, style)` with
+  `injectScopedCSS(scope, style)`. It also replaces every `${id}` in the
+  style, not only the first one.
+* **core:** reader.$.destroy$ is an Observable, not a Subject: only
+  the reader emits it.
+* **enhancer-gestures:** the enhancer needs gesturx 8 (`^8.0.0`) as a peer.
+  Install it with `npm install gesturx@^8.0.0`. While the reader is
+  mounted, its container has `touch-action: none !important` from the
+  enhancer's stylesheet, and every element in it inherits that value: it
+  wins over a `touch-action` that your app sets on the container without
+  `!important`. A swipe turns the page from the speed of the finger when it
+  lifts, not from the average speed of the gesture, and a gesture that
+  starts on the reader goes on until the release, also outside the reader.
+* **core:** the spine layout lifecycle,
+  reader.spine.pages.spineLayout.lifecycle$, emits a third stage,
+  { stage: "layingOut" }, between "requested" and "laidOut", as a pass starts
+  to lay the spine items out. Code that takes every stage other than
+  "requested" for a completed pass must check for "laidOut".
+
+### Features
+
+* **core:** announce when a layout pass starts to lay the spine items out ([a6c0a57](https://github.com/mbret/prose-reader/commit/a6c0a5793af0f95c13ed2fcb35cfead0cf3f4f3a))
+* **enhancer-gestures:** move to gesturx 8, and set touch-action from the stylesheet ([e2d26f9](https://github.com/mbret/prose-reader/commit/e2d26f9113655cac2505dba6cf5d4ffc3593e24b))
+
+### Bug Fixes
+
+* **core:** inject an enhancer's scoped CSS into the reader's document, with every id replaced ([e38fd2e](https://github.com/mbret/prose-reader/commit/e38fd2e980f77a375c38037590cf3fd5dfe2eebb))
+* **core:** replay destroy$ to a subscriber that comes after the destroy ([b22e0f8](https://github.com/mbret/prose-reader/commit/b22e0f873d46058fb9aa27168b81352a76953a12))
+
+
 ## [42.0.0](https://github.com/mbret/prose-reader/compare/v41.0.0...v42.0.0) (2026-11-10)
 
 ### ⚠ BREAKING CHANGES
