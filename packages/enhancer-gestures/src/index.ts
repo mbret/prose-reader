@@ -95,7 +95,6 @@ export const gesturesEnhancer =
         swipeRecognizer,
         pinchRecognizer,
       ],
-      disableTextSelection: false,
     })
 
     const tapGestures$ = registerTaps({
@@ -124,29 +123,15 @@ export const gesturesEnhancer =
       settingsManager,
     })
 
-    /**
-     * gesturx sets `touch-action: none` on the container, listens to it until
-     * it is given another one, and has no teardown.
-     */
     const containerUpdate$ = reader.context.watch(`rootElement`).pipe(
       filter(isDefined),
       switchMap(
         (container) =>
           new Observable(() => {
-            const containerTouchAction = container.style.touchAction
-
-            recognizable.update({
-              container,
-            })
+            recognizable.update({ container })
 
             return () => {
-              recognizable.update({
-                container: container.ownerDocument.createElement(`div`),
-              })
-
-              if (container.style.touchAction === `none`) {
-                container.style.touchAction = containerTouchAction
-              }
+              recognizable.update({ container: null })
             }
           }),
       ),

@@ -23,8 +23,7 @@ npm install @prose-reader/enhancer-gestures @prose-reader/core gesturx rxjs
 All three are peer dependencies. The enhancer runs against the reader your app
 creates, so it shares that reader's `@prose-reader/core` rather than bringing
 its own. It needs the core it was released with or a later one of the same
-major, gesturx 7.0.1 or any later 7.x (`^7.0.1`), and rxjs 7.5.5 or any later
-7.x (`^7.5.5`).
+major, gesturx 8 (`^8.0.0`), and rxjs 7.5.5 or any later 7.x (`^7.5.5`).
 
 Connect the enhancer to your reader:
 
@@ -59,6 +58,8 @@ In this situation the user is using the reader in only a certain part of the web
 * **Tap** to turn pages
 
 Gestures start on a press of the primary button: a left click, a finger or a pen's tip. A right click, which opens the context menu, and a middle click start none: they tap, pan and swipe nothing, turn no page and are not reported on `gestures$`.
+
+While the reader runs, the enhancer's stylesheet gives the reader's container `touch-action: none !important`, so that the browser neither scrolls nor zooms on a touch screen. It overrides a `touch-action` that your app sets on the container, and goes away when the reader is destroyed.
 
 ### Zooming (in/out) { #zooming-in-out }
 

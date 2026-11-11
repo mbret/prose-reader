@@ -371,7 +371,7 @@ describe("Given a reader a gesture was made on", () => {
     const { reader, drag } = await onFirstPage(container)
 
     await drag({ x: viewport.width / 2, distance: 0 })
-    const touchActionWhileMounted = container.style.touchAction
+    const touchActionWhileMounted = getComputedStyle(container).touchAction
     excludeFromCleanup(reader)
     reader.destroy()
 

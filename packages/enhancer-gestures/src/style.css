@@ -1,3 +1,8 @@
+[data-prose-reader-container="${id}"] {
+  /* Without it, the browser scrolls or zooms on touch screens and cancels the pointer events */
+  touch-action: none !important;
+}
+
 [data-prose-reader-container="${id}"] * {
   /* Make sure that touche actions are correctly dispatched no matter where the user interact */
   touch-action: inherit;
