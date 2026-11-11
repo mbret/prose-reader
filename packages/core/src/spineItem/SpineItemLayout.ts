@@ -31,6 +31,11 @@ export class SpineItemLayout extends DestroyableClass {
     height: number
   }>()
 
+  /**
+   * The size that the last layout gave the item's container, with the page
+   * size it was laid out for. It is the item's size: only that layout writes
+   * the container's width and height.
+   */
   private lastLayout: {
     width: number
     height: number
@@ -312,14 +317,11 @@ export class SpineItemLayout extends DestroyableClass {
     super.destroy()
   }
 
+  /** The size of the item, or 0 by 0 before its first layout. */
   get layoutInfo() {
-    const style = this.containerElement.style
-    const width = style.width ? parseFloat(style.width) : 0
-    const height = style.height ? parseFloat(style.height) : 0
-
     return {
-      width,
-      height,
+      width: this.lastLayout?.width ?? 0,
+      height: this.lastLayout?.height ?? 0,
     }
   }
 }
