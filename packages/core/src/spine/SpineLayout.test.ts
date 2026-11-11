@@ -673,6 +673,57 @@ describe("SpineLayout", () => {
       },
     )
 
+    it.each(["item.onBeforeLayout", "item.onAfterLayout"] as const)(
+      "lays it out at its size, and runs the hooks after it, when its %s hook throws",
+      async (hookName) => {
+        const unhandledErrors = recordUnhandledErrors()
+        const {
+          completeItemLayout,
+          destroy,
+          hookManager,
+          itemLayoutsStarted,
+          spineLayout,
+          widths,
+        } = createDeferredSpineLayout(3)
+        const itemsOfTheNextHook: number[] = []
+
+        hookManager.register(hookName, ({ item }) => {
+          if (item.index === 1) throw failure
+        })
+        hookManager.register(hookName, ({ item }) => {
+          itemsOfTheNextHook.push(item.index)
+        })
+
+        try {
+          const passDone = firstValueFrom(spineLayout.layout$)
+
+          spineLayout.layout({ immediate: true })
+
+          for (const itemIndex of [0, 1, 2]) {
+            expect(
+              itemLayoutsStarted()[itemIndex],
+              `the layouts of item ${itemIndex}`,
+            ).toBe(1)
+
+            completeItemLayout(itemIndex, { height: 100, width: 300 })
+          }
+
+          await passDone
+
+          expect(widths()).toEqual([300, 300, 300])
+          expect(itemsOfTheNextHook, "the items of the next hook").toEqual([
+            0, 1, 2,
+          ])
+
+          await waitFor(0)
+
+          expect(unhandledErrors).toEqual([failure])
+        } finally {
+          destroy()
+        }
+      },
+    )
+
     it("gives it its minimum width, a whole spread, when its renderer fails in a spread", async () => {
       const unhandledErrors = recordUnhandledErrors()
       const { destroy, spineItemsManager, spineLayout } = createTestSpineLayout(

@@ -37,6 +37,7 @@ The layout of the spine recovers from these errors, and goes on without the resu
 
 - A renderer whose `onLayout` throws or errors gives its item no size. The item keeps the size of its last layout at the same page size, or else takes its minimum width: one page, or a whole spread.
 - Any other error in the layout of an item, such as in a getter that its renderer overrides, gives the item the size of its last layout at the same page size, or else one page.
+- An `item.onBeforeLayout` or `item.onAfterLayout` hook that throws does not stop the layout of its item, nor the hooks registered after it.
 
 In each case the items after it still get a place, and pagination settles.
 

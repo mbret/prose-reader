@@ -41,3 +41,6 @@ The item is `loading` until its `item.onDocumentLoad` hooks are done, so the hoo
 Reacting to an item's `loadStatus` becoming `loaded`, from `reader.spineItemsObserver.itemLoadStatusChange$`, would work in this case too, because the reader lays the spine out after that change. Nothing guarantees that order, which is why a hook is preferable when you need to run code at a specific point of the lifecycle.
 :::
 
+## A layout hook that throws
+
+An `item.onBeforeLayout` or `item.onAfterLayout` hook that throws does not stop the layout of its item: the reader lays the item out, and [reports the error](/learn/error-handling#errors-the-reader-recovers-from). The hooks registered after it still run.
