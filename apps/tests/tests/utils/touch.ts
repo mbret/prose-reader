@@ -14,7 +14,7 @@ export const touchPath = (from: TouchPoint, to: TouchPoint, count: number) =>
 
 /**
  * Plays a gesture on the touch screen. Each step holds one point per finger:
- * the first step presses them, and they lift after the last one.
+ * the first step presses them, and they lift with the last one.
  *
  * The touches go through the Chrome DevTools Protocol, so the browser handles
  * them as it does a real touch screen: it hit-tests them, applies
@@ -22,8 +22,10 @@ export const touchPath = (from: TouchPoint, to: TouchPoint, count: number) =>
  * other way to press several fingers, so this runs on Chromium only.
  *
  * gesturx reads a gesture's speed from the time between its events, so the
- * time waited after each step, in milliseconds, is part of the gesture:
- * `stepDelays` gives one per step, or one for every step.
+ * time waited between two steps, in milliseconds, is part of the gesture:
+ * `stepDelays` gives one after each step, or one for every step, and no time
+ * passes between the last step and the lift. The times are real: the page
+ * never sees the protocol's `timestamp`, so a busy runner makes them longer.
  */
 export const playTouchGesture = async (
   page: Page,
@@ -36,25 +38,37 @@ export const playTouchGesture = async (
   },
 ) => {
   const session = await page.context().newCDPSession(page)
+  const lastIndex = steps.length - 1
 
   for (const [index, points] of steps.entries()) {
-    await session.send("Input.dispatchTouchEvent", {
+    const touch = session.send("Input.dispatchTouchEvent", {
       type: index === 0 ? "touchStart" : "touchMove",
       touchPoints: points.map((point, id) => ({ ...point, id })),
     })
 
-    const delayAfterStep =
-      typeof stepDelays === "number" ? stepDelays : (stepDelays[index] ?? 0)
+    if (index === lastIndex) {
+      // Sent with the last move, the lift follows it at once, as in a flick.
+      // gesturx takes a finger that stays still for 40ms before it lifts as
+      // stopped, and a busy runner can take that long between two commands.
+      await Promise.all([
+        touch,
+        session.send("Input.dispatchTouchEvent", {
+          type: "touchEnd",
+          touchPoints: [],
+        }),
+      ])
+    } else {
+      await touch
 
-    if (delayAfterStep > 0) {
-      await new Promise((resolve) => setTimeout(resolve, delayAfterStep))
+      const delayAfterStep =
+        typeof stepDelays === "number" ? stepDelays : (stepDelays[index] ?? 0)
+
+      if (delayAfterStep > 0) {
+        await new Promise((resolve) => setTimeout(resolve, delayAfterStep))
+      }
     }
   }
 
-  await session.send("Input.dispatchTouchEvent", {
-    type: "touchEnd",
-    touchPoints: [],
-  })
   await session.detach()
 }
 
@@ -63,14 +77,16 @@ export const playTouchGesture = async (
  * The paths must have as many points as each other.
  */
 export const touchSteps = (...paths: TouchPoint[][]) =>
-  (paths[0] ?? []).map((_, step) =>
-    paths.map((path) => {
-      const point = path[step]
+  Array.from(
+    { length: Math.max(0, ...paths.map((path) => path.length)) },
+    (_, step) =>
+      paths.map((path) => {
+        const point = path[step]
 
-      if (!point) throw new Error("the fingers' paths differ in length")
+        if (!point) throw new Error("the fingers' paths differ in length")
 
-      return point
-    }),
+        return point
+      }),
   )
 
 /**

@@ -94,11 +94,11 @@ test.describe("Given a comic on a touch screen, on its first page", () => {
       skipWithoutTouchScreen({ browserName, hasTouch })
       await openFirstPage(page, "?panNavigation=swipe")
 
-      // 300px in five steps, a few milliseconds apart: still a swipe at 40ms
-      // a step, should a runner be slow
+      // 300px in three steps, a frame apart: still a swipe at 100ms a step,
+      // should a runner be slow
       await playTouchGesture(page, {
-        steps: touchSteps(touchPath({ x: 350, y: Y }, { x: 50, y: Y }, 5)),
-        stepDelays: 5,
+        steps: touchSteps(touchPath({ x: 350, y: Y }, { x: 50, y: Y }, 3)),
+        stepDelays: 16,
       })
 
       await expect.poll(() => readBeginSpineItemIndex(page)).toBe(1)
@@ -117,14 +117,16 @@ test.describe("Given a comic on a touch screen, on its first page", () => {
       skipWithoutTouchScreen({ browserName, hasTouch })
       await openFirstPage(page, "?panNavigation=swipe")
 
-      // 30px in at least 360ms, then 250px in five steps, a few milliseconds
-      // apart
+      // 30px in at least 360ms, then 250px in two steps, a frame apart
       const slowPart = touchPath({ x: 300, y: Y }, { x: 270, y: Y }, 6)
-      const flick = touchPath({ x: 270, y: Y }, { x: 20, y: Y }, 5).slice(1)
+      const flick = touchPath({ x: 270, y: Y }, { x: 20, y: Y }, 2).slice(1)
 
       await playTouchGesture(page, {
         steps: touchSteps([...slowPart, ...flick]),
-        stepDelays: [...Array(slowPart.length).fill(60), ...Array(5).fill(5)],
+        stepDelays: [
+          ...Array(slowPart.length).fill(60),
+          ...Array(flick.length).fill(16),
+        ],
       })
 
       await expect.poll(() => readBeginSpineItemIndex(page)).toBe(1)
