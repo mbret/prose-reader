@@ -1,5 +1,5 @@
 import type { Manifest } from "@prose-reader/shared"
-import { firstValueFrom, of, Subject } from "rxjs"
+import { EMPTY, firstValueFrom, of, Subject } from "rxjs"
 import { describe, expect, it, vi } from "vitest"
 import { Context } from "../context/Context"
 import { HookManager } from "../hooks/HookManager"
@@ -168,12 +168,10 @@ const createDeferredSpineLayout = (numberOfItems: number) => {
     return result
   }
 
-  /** Completes the item's layout with `size`, or with no size at all. */
-  const completeItemLayout = (itemIndex: number, size?: ItemSize) => {
+  const completeItemLayout = (itemIndex: number, size: ItemSize) => {
     const result = takePendingLayout(itemIndex)
 
-    if (size) result.next(size)
-
+    result.next(size)
     result.complete()
   }
 
@@ -616,16 +614,6 @@ describe("SpineLayout", () => {
         },
         reportedErrors: [failure],
       },
-      {
-        ending: "completes without a size",
-        arrangeFailure: () => {},
-        endFailingItemLayout: ({
-          completeItemLayout,
-        }: ReturnType<typeof createDeferredSpineLayout>) => {
-          completeItemLayout(1)
-        },
-        reportedErrors: [],
-      },
     ])(
       "lays it out at one page, and completes the pass, when its renderer $ending",
       async ({ arrangeFailure, endFailingItemLayout, reportedErrors }) => {
@@ -757,30 +745,6 @@ describe("SpineLayout", () => {
       }
     })
 
-    it("takes the first size its renderer gives, for its place and its container", async () => {
-      const { destroy, spineItemsManager, spineLayout } =
-        createTestSpineLayout()
-      const [item] = spineItemsManager.items
-
-      if (!item) throw new Error("the spine has no item")
-
-      vi.spyOn(item.renderer, "onLayout").mockReturnValue(
-        of({ height: 100, width: 300 }, { height: 100, width: 500 }),
-      )
-
-      try {
-        await layOutAndWait(spineLayout)
-
-        expect(
-          spineLayout.getSpineItemSpineLayoutInfo(0).width,
-          "the width of its place",
-        ).toBe(300)
-        expect(item.layoutInfo.width, "the width of its container").toBe(300)
-      } finally {
-        destroy()
-      }
-    })
-
     it("lays it out at one page, and keeps it following its load, when its layout fails outside its renderer", async () => {
       const unhandledErrors = recordUnhandledErrors()
       const { destroy, spineItemsManager, spineLayout } = createTestSpineLayout(
@@ -865,6 +829,58 @@ describe("SpineLayout", () => {
       destroy()
     }
   })
+
+  it.each([
+    {
+      renderer: "gives two sizes",
+      firstItemSizes: of(
+        { height: 100, width: 300 },
+        { height: 100, width: 500 },
+      ),
+      firstItemWidth: 300,
+    },
+    {
+      renderer: "completes with no size",
+      firstItemSizes: EMPTY,
+      firstItemWidth: 100,
+    },
+  ])(
+    "takes one size for an item whose renderer $renderer, for its place and its container",
+    async ({ firstItemSizes, firstItemWidth }) => {
+      const { destroy, spineItemsManager, spineLayout } = createTestSpineLayout(
+        {
+          items: 2,
+        },
+      )
+      const [firstItem] = spineItemsManager.items
+
+      if (!firstItem) throw new Error("the spine has no item")
+
+      vi.spyOn(firstItem.renderer, "onLayout").mockReturnValue(firstItemSizes)
+
+      try {
+        await layOutAndWait(spineLayout)
+
+        expect(
+          spineItemsManager.items.map((_, itemIndex) => {
+            const { left, width } =
+              spineLayout.getSpineItemSpineLayoutInfo(itemIndex)
+
+            return { left, width }
+          }),
+          "the places of the items",
+        ).toEqual([
+          { left: 0, width: firstItemWidth },
+          { left: firstItemWidth, width: 100 },
+        ])
+        expect(firstItem.layoutInfo.width, "the width of its container").toBe(
+          firstItemWidth,
+        )
+      } finally {
+        destroy()
+      }
+    },
+  )
 
   it("stops the layout of an item when a newer request cancels its pass, and leaves the item dirty until the newer pass lays it out", async () => {
     const {
