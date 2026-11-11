@@ -65,7 +65,6 @@ const createTestSpineLayout = ({
 
   const destroy = () => {
     spineLayout.destroy()
-    spineItemsObserver.destroy()
     spineItemsManager.destroy()
     viewport.destroy()
     settings.destroy()

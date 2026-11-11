@@ -4,7 +4,7 @@ import {
   distinctUntilChanged,
   map,
   Observable,
-  Subject,
+  ReplaySubject,
   takeUntil,
 } from "rxjs"
 import { watchKeys } from "./rxjs"
@@ -19,7 +19,7 @@ export class ReactiveEntity<
   T extends Record<string, unknown>,
 > extends Observable<T> {
   protected stateSubject: BehaviorSubject<T>
-  protected _destroy$ = new Subject<void>()
+  protected _destroy$ = new ReplaySubject<void>(1)
   protected isDestroyed = false
 
   public state$: Observable<T>
@@ -67,6 +67,10 @@ export class ReactiveEntity<
     return this.stateSubject.value
   }
 
+  /**
+   * Emits once the entity is destroyed, then completes. A subscriber that
+   * comes after the destroy receives that emission at once.
+   */
   public destroy$ = this._destroy$.asObservable()
 
   public destroy() {

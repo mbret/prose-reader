@@ -221,7 +221,6 @@ export class Spine extends ReactiveEntity<SpineState> {
 
     this.pages.destroy()
     this.spineLayout.destroy()
-    this.spineItemsObserver.destroy()
     element?.remove()
   }
 }
