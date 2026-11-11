@@ -387,6 +387,19 @@ export class SpineLayout extends DestroyableClass {
        */
       const laidOutItems = [...keptItems]
       let nextItemIndex = keptItems.length
+      /**
+       * Ends the layout of the item in progress with the pass, however the pass
+       * ends. A hook of that layout can cancel the pass before the subscription
+       * to the layout returns, too early for `subscriber.add` to end it, and the
+       * layout would then mark its item clean after a newer request marked it
+       * dirty.
+       */
+      const passEnd = new Subject<void>()
+
+      subscriber.add(() => {
+        passEnd.next()
+        passEnd.complete()
+      })
 
       /**
        * A loop rather than `concatMap`. Once an item is laid out later,
@@ -414,11 +427,12 @@ export class SpineLayout extends DestroyableClass {
           let isLaidOutAtOnce = false
           let isLoopWaiting = false
 
-          subscriber.add(
-            this.layOutItem(
-              item,
-              laidOutItems.at(-1)?.endOffset ?? spineStartOffset,
-            ).subscribe({
+          this.layOutItem(
+            item,
+            laidOutItems.at(-1)?.endOffset ?? spineStartOffset,
+          )
+            .pipe(takeUntil(passEnd))
+            .subscribe({
               next: (laidOutItem) => {
                 laidOutItems.push(laidOutItem)
               },
@@ -432,8 +446,7 @@ export class SpineLayout extends DestroyableClass {
                   isLaidOutAtOnce = true
                 }
               },
-            }),
-          )
+            })
 
           if (!isLaidOutAtOnce) {
             isLoopWaiting = true

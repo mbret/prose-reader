@@ -1,5 +1,5 @@
 import type { Manifest } from "@prose-reader/shared"
-import { firstValueFrom, Subject } from "rxjs"
+import { EMPTY, firstValueFrom, of, Subject } from "rxjs"
 import { describe, expect, it, vi } from "vitest"
 import { Context } from "../context/Context"
 import { HookManager } from "../hooks/HookManager"
@@ -73,6 +73,7 @@ const createTestSpineLayout = ({
     hookManager,
     spineItemsManager,
     spineLayout,
+    viewport,
   }
 }
 
@@ -132,9 +133,10 @@ type ItemSize = { height: number; width: number }
  * to whole pages of 100 by 100, and updates the item's state.
  */
 const createDeferredSpineLayout = (numberOfItems: number) => {
-  const { destroy, spineItemsManager, spineLayout } = createTestSpineLayout({
-    items: numberOfItems,
-  })
+  const { destroy, hookManager, spineItemsManager, spineLayout, viewport } =
+    createTestSpineLayout({
+      items: numberOfItems,
+    })
 
   // An item asked to lay out again drops the layout it had pending, so only
   // the newest one per item can complete.
@@ -143,7 +145,7 @@ const createDeferredSpineLayout = (numberOfItems: number) => {
   const layoutsStarted = spineItemsManager.items.map(() => 0)
 
   spineItemsManager.items.forEach((item, itemIndex) => {
-    vi.spyOn(item.renderer, "layout").mockImplementation(() => {
+    vi.spyOn(item.renderer, "onLayout").mockImplementation(() => {
       const result = new Subject<ItemSize>()
 
       pendingLayouts[itemIndex] = result
@@ -197,13 +199,24 @@ const createDeferredSpineLayout = (numberOfItems: number) => {
     completeItemLayout,
     destroy,
     dirtyFlags,
+    hookManager,
     itemLayoutsStarted,
     items: spineItemsManager.items,
     layOutSpine,
     lefts,
     spineLayout,
+    viewport,
     widths,
   }
+}
+
+/** Requests a layout of the spine, and waits for its pass to complete. */
+const layOutAndWait = async (spineLayout: SpineLayout) => {
+  const passDone = firstValueFrom(spineLayout.layout$)
+
+  spineLayout.layout({ immediate: true })
+
+  await passDone
 }
 
 /** The number of frames on the call stack where it is called. */
@@ -505,10 +518,11 @@ describe("SpineLayout", () => {
     }
   })
 
-  it("lays out no other item once an item's hook cancels the pass", () => {
-    const { destroy, hookManager, spineLayout } = createTestSpineLayout({
-      items: 4,
-    })
+  it("lays out no other item once an item's hook cancels the pass, and leaves that item dirty", () => {
+    const { destroy, hookManager, spineItemsManager, spineLayout } =
+      createTestSpineLayout({
+        items: 4,
+      })
     const itemsLaidOut: number[] = []
     let itemsLaidOutWhenCancelled: number[] | undefined
 
@@ -527,6 +541,10 @@ describe("SpineLayout", () => {
 
       expect(itemsLaidOutWhenCancelled).toEqual([0, 1])
       expect(itemsLaidOut).toEqual(itemsLaidOutWhenCancelled)
+      expect(
+        spineItemsManager.items.map((item) => item.value.isDirty),
+        "the dirty items",
+      ).toEqual([true, true, true, true])
     } finally {
       destroy()
     }
@@ -558,7 +576,9 @@ describe("SpineLayout", () => {
 
         if (!firstItem) throw new Error("the spine has no item")
 
-        vi.spyOn(firstItem.renderer, "layout").mockReturnValue(firstItemLayout)
+        vi.spyOn(firstItem.renderer, "onLayout").mockReturnValue(
+          firstItemLayout,
+        )
       }
 
       try {
@@ -580,6 +600,103 @@ describe("SpineLayout", () => {
       }
     },
   )
+
+  it.each([
+    {
+      renderer: "gives two sizes",
+      firstItemSizes: of(
+        { height: 100, width: 300 },
+        { height: 100, width: 500 },
+      ),
+      firstItemWidth: 300,
+    },
+    {
+      renderer: "completes with no size",
+      firstItemSizes: EMPTY,
+      firstItemWidth: 100,
+    },
+  ])(
+    "takes one size for an item whose renderer $renderer, for its place and its container",
+    async ({ firstItemSizes, firstItemWidth }) => {
+      const { destroy, spineItemsManager, spineLayout } = createTestSpineLayout(
+        {
+          items: 2,
+        },
+      )
+      const [firstItem] = spineItemsManager.items
+
+      if (!firstItem) throw new Error("the spine has no item")
+
+      vi.spyOn(firstItem.renderer, "onLayout").mockReturnValue(firstItemSizes)
+
+      try {
+        await layOutAndWait(spineLayout)
+
+        expect(
+          spineItemsManager.items.map((_, itemIndex) => {
+            const { left, width } =
+              spineLayout.getSpineItemSpineLayoutInfo(itemIndex)
+
+            return { left, width }
+          }),
+          "the places of the items",
+        ).toEqual([
+          { left: 0, width: firstItemWidth },
+          { left: firstItemWidth, width: 100 },
+        ])
+        expect(firstItem.layoutInfo.width, "the width of its container").toBe(
+          firstItemWidth,
+        )
+      } finally {
+        destroy()
+      }
+    },
+  )
+
+  it("stops the layout of an item when a newer request cancels its pass, and leaves the item dirty until the newer pass lays it out", async () => {
+    const {
+      completeItemLayout,
+      destroy,
+      dirtyFlags,
+      hookManager,
+      itemLayoutsStarted,
+      spineLayout,
+      widths,
+    } = createDeferredSpineLayout(3)
+    const itemsLaidOut: number[] = []
+
+    hookManager.register("item.onAfterLayout", ({ item }) => {
+      itemsLaidOut.push(item.index)
+    })
+
+    try {
+      spineLayout.layout({ immediate: true })
+      // Waits before its pass, so the first item's layout ends in between.
+      spineLayout.layout()
+      completeItemLayout(0, { height: 100, width: 100 })
+
+      expect(itemsLaidOut, "the items laid out").toEqual([])
+      expect(dirtyFlags(), "the dirty items").toEqual([true, true, true])
+
+      await vi.waitFor(() => {
+        expect(itemLayoutsStarted()[0], "the layouts of the first item").toBe(2)
+      })
+
+      const passDone = firstValueFrom(spineLayout.layout$)
+
+      for (const itemIndex of [0, 1, 2]) {
+        completeItemLayout(itemIndex, { height: 100, width: 200 })
+      }
+
+      await passDone
+
+      expect(itemsLaidOut, "the items laid out").toEqual([0, 1, 2])
+      expect(dirtyFlags(), "the dirty items").toEqual([false, false, false])
+      expect(widths()).toEqual([200, 200, 200])
+    } finally {
+      destroy()
+    }
+  })
 
   it("keeps RTL right-left spread pairs together after an odd number of pages", async () => {
     const { destroy, layoutRequests, spineLayout } =

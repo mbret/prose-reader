@@ -326,8 +326,12 @@ export abstract class DocumentRenderer extends ReactiveEntity<DocumentRendererSt
     )
   }
 
+  /**
+   * Gives one size, or `undefined` when the renderer gives none: the layout
+   * of the spine takes one result for each item.
+   */
   public layout(params: LayoutParams) {
-    return this.onLayout(params)
+    return defer(() => this.onLayout(params)).pipe(endWith(undefined), first())
   }
 
   public destroy() {
