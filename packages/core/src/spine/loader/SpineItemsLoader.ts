@@ -5,6 +5,7 @@ import {
   debounceTime,
   distinctUntilChanged,
   filter,
+  first,
   map,
   merge,
   type Observable,
@@ -140,7 +141,9 @@ export class SpineItemsLoader extends DestroyableClass {
        * either. The items load and unload once the viewport has a size.
        */
       switchMap(() =>
-        runWhileSized(this.viewport, visibleSpineItemsToMeasureFrom$),
+        runWhileSized(this.viewport, visibleSpineItemsToMeasureFrom$).pipe(
+          first(),
+        ),
       ),
       withLatestFrom(heldSpineItemIndexes$),
       map(([{ beginIndex, endIndex }, heldSpineItemIndexes]) => {

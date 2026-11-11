@@ -18,16 +18,79 @@ pdfjsLib.GlobalWorkerOptions.workerSrc = new URL(
   import.meta.url,
 ).toString()
 
+const createReaderWithEnhancers = gesturesEnhancer(
+  pdfEnhancer(annotationsEnhancer(createReader)),
+)
+
+function Bookmarks({
+  reader,
+  annotations$,
+}: {
+  reader: ReturnType<typeof createReaderWithEnhancers>
+  annotations$: BehaviorSubject<Annotation[]>
+}) {
+  const { data: pagination } = useObserve(
+    () => reader.pagination.state$,
+    [reader],
+  )
+  const { data: bookmarks } = useObserve(
+    () => reader.annotations.annotations$,
+    [reader],
+  )
+
+  const { data: consolidatedBookmarks } = useObserve(
+    () => reader.locateResource(bookmarks ?? []),
+    [reader, bookmarks],
+  )
+
+  const bookmarkForPage = consolidatedBookmarks?.find(
+    (bookmark) =>
+      bookmark.meta?.absolutePageIndex === pagination?.begin.absolutePageIndex,
+  )
+
+  return (
+    <button
+      type="button"
+      id="mark"
+      style={{
+        position: "absolute",
+        left: "50%",
+        top: "50%",
+        border: "1px solid red",
+        backgroundColor: bookmarkForPage ? "green" : "red",
+        width: 100,
+        height: 100,
+        color: "white",
+      }}
+      onClick={() => {
+        if (bookmarkForPage) {
+          annotations$.next(
+            annotations$.value.filter(
+              (annotation) => annotation.id !== bookmarkForPage.resource.id,
+            ),
+          )
+        } else {
+          const annotation = reader.annotations.createAnnotation({
+            absolutePageIndex: pagination?.begin.absolutePageIndex ?? 0,
+          })
+
+          if (annotation) {
+            annotations$.next([...annotations$.value, annotation])
+          }
+        }
+      }}
+    >
+      Page {pagination?.begin.absolutePageIndex}
+    </button>
+  )
+}
+
 async function run() {
   const response = await fetch("http://localhost:3333/epubs/sample-3.pdf")
   const pdfBlob = await response.blob()
   const archive = await createArchiveFromPdf(pdfBlob, "sample.pdf")
   const manifest = await generateManifestFromArchive(archive)
   const annotations$ = new BehaviorSubject<Annotation[]>([])
-
-  const createReaderWithEnhancers = gesturesEnhancer(
-    pdfEnhancer(annotationsEnhancer(createReader)),
-  )
 
   const reader = createReaderWithEnhancers({
     manifest,
@@ -44,66 +107,10 @@ async function run() {
     },
   })
 
-  const Bookmarks = () => {
-    const { data: pagination } = useObserve(
-      () => reader.pagination.state$,
-      [reader],
-    )
-    const { data: bookmarks } = useObserve(
-      () => reader.annotations.annotations$,
-      [reader],
-    )
-
-    const { data: consolidatedBookmarks } = useObserve(
-      () => reader.locateResource(bookmarks ?? []),
-      [reader, bookmarks],
-    )
-
-    const bookmarkForPage = consolidatedBookmarks?.find(
-      (bookmark) =>
-        bookmark.meta?.absolutePageIndex ===
-        pagination?.begin.absolutePageIndex,
-    )
-
-    return (
-      <button
-        type="button"
-        id="mark"
-        style={{
-          position: "absolute",
-          left: "50%",
-          top: "50%",
-          border: "1px solid red",
-          backgroundColor: bookmarkForPage ? "green" : "red",
-          width: 100,
-          height: 100,
-          color: "white",
-        }}
-        onClick={() => {
-          if (bookmarkForPage) {
-            annotations$.next(
-              annotations$.value.filter(
-                (annotation) => annotation.id !== bookmarkForPage.resource.id,
-              ),
-            )
-          } else {
-            const annotation = reader.annotations.createAnnotation({
-              absolutePageIndex: pagination?.begin.absolutePageIndex ?? 0,
-            })
-
-            if (annotation) {
-              annotations$.next([...annotations$.value, annotation])
-            }
-          }
-        }}
-      >
-        Page {pagination?.begin.absolutePageIndex}
-      </button>
-    )
-  }
-
   // biome-ignore lint/style/noNonNullAssertion: TODO
-  createRoot(document.getElementById("bookmarks")!).render(<Bookmarks />)
+  createRoot(document.getElementById("bookmarks")!).render(
+    <Bookmarks reader={reader} annotations$={annotations$} />,
+  )
 
   // biome-ignore lint/style/noNonNullAssertion: TODO
   reader.mount(document.getElementById(`app`)!)
