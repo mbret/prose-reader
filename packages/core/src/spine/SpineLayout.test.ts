@@ -303,6 +303,47 @@ describe("SpineLayout", () => {
     }
   })
 
+  it("announces that a pass starts once the wait of its request is over, before it asks an item to lay out", async () => {
+    vi.useFakeTimers()
+    const { completeItemLayout, destroy, itemLayoutsStarted, spineLayout } =
+      createDeferredSpineLayout(2)
+
+    try {
+      const stages: { stage: string; itemLayoutsStarted: number[] }[] = []
+
+      spineLayout.lifecycle$.subscribe(({ stage }) => {
+        stages.push({ stage, itemLayoutsStarted: itemLayoutsStarted() })
+      })
+
+      spineLayout.layout()
+
+      expect(stages).toEqual([
+        { stage: "requested", itemLayoutsStarted: [0, 0] },
+      ])
+
+      await vi.advanceTimersByTimeAsync(50)
+
+      // The first item is asked to lay out right after the announcement.
+      expect(stages).toEqual([
+        { stage: "requested", itemLayoutsStarted: [0, 0] },
+        { stage: "layingOut", itemLayoutsStarted: [0, 0] },
+      ])
+      expect(itemLayoutsStarted()).toEqual([1, 0])
+
+      completeItemLayout(0, { height: 100, width: 100 })
+      completeItemLayout(1, { height: 100, width: 100 })
+
+      expect(stages.map(({ stage }) => stage)).toEqual([
+        "requested",
+        "layingOut",
+        "laidOut",
+      ])
+    } finally {
+      destroy()
+      vi.useRealTimers()
+    }
+  })
+
   it("does not publish item layouts until the whole pass completes", async () => {
     const { completeItemLayout, destroy, spineLayout, widths } =
       createDeferredSpineLayout(3)
@@ -724,6 +765,7 @@ describe("SpineLayout", () => {
 
         expect(stages, "the stages of the layout").toEqual([
           "requested",
+          "layingOut",
           "laidOut",
         ])
 
@@ -747,7 +789,7 @@ describe("SpineLayout", () => {
     })
   })
 
-  it("leaves the layout requested when its pass fails, and lays the spine out on the next request", async () => {
+  it("goes back to the requested state when its pass fails before laying the items out, and lays the spine out on the next request", async () => {
     const unhandledErrors = recordUnhandledErrors()
     const failure = new Error("the pass failed")
     const { destroy, layOutSpine, spineLayout, viewport } =
@@ -761,13 +803,18 @@ describe("SpineLayout", () => {
     try {
       spineLayout.layout({ immediate: true })
 
-      expect(stages, "the stages of the layout").toEqual(["requested"])
+      expect(stages, "the stages of the layout").toEqual([
+        "requested",
+        "requested",
+      ])
 
       await layOutSpine({ height: 100, width: 100 })
 
       expect(stages, "the stages of the layout").toEqual([
         "requested",
         "requested",
+        "requested",
+        "layingOut",
         "laidOut",
       ])
 
@@ -830,6 +877,50 @@ describe("SpineLayout", () => {
       }
     },
   )
+
+  it("goes back to the requested state when its pass fails while laying the items out, and lays the spine out on the next request", async () => {
+    const unhandledErrors = recordUnhandledErrors()
+    const failure = new Error("the pass failed")
+    const { destroy, spineItemsManager, spineLayout } = createTestSpineLayout({
+      items: 3,
+    })
+    const [, secondItem] = spineItemsManager.items
+    const stages = recordLayoutStages(spineLayout)
+
+    if (!secondItem) throw new Error("the spine has no second item")
+
+    // Out of the guard of the item's own layout, as a bug of the pass would be.
+    vi.spyOn(secondItem, "layout").mockImplementationOnce(() => {
+      throw failure
+    })
+
+    try {
+      spineLayout.layout({ immediate: true })
+
+      expect(stages, "the stages of the layout").toEqual([
+        "requested",
+        "layingOut",
+        "requested",
+      ])
+
+      await layOutAndWait(spineLayout)
+
+      expect(stages, "the stages of the layout").toEqual([
+        "requested",
+        "layingOut",
+        "requested",
+        "requested",
+        "layingOut",
+        "laidOut",
+      ])
+
+      await waitFor(0)
+
+      expect(unhandledErrors).toEqual([failure])
+    } finally {
+      destroy()
+    }
+  })
 
   it("stops the layout of an item when a newer request cancels its pass, and leaves the item dirty until the newer pass lays it out", async () => {
     const {

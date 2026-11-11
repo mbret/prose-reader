@@ -1,4 +1,4 @@
-import { createReader, type Manifest } from "@prose-reader/core"
+import { createReader, type Manifest, type Reader } from "@prose-reader/core"
 import * as pdfjsLib from "pdfjs-dist"
 import pdfWorkerUrl from "pdfjs-dist/build/pdf.worker.min.mjs?url"
 import { createRoot } from "react-dom/client"
@@ -9,6 +9,22 @@ pdfjsLib.GlobalWorkerOptions.workerSrc = new URL(
   pdfWorkerUrl,
   import.meta.url,
 ).toString()
+
+function Progression({ reader }: { reader: Reader }) {
+  const { data: pagination } = useObserve(reader.pagination.state$)
+
+  return (
+    <div
+      style={{
+        position: "absolute",
+        left: "50%",
+        top: "50%",
+      }}
+    >
+      progression: {pagination?.percentageEstimateOfBook}
+    </div>
+  )
+}
 
 async function run() {
   const manifest: Manifest = {
@@ -52,24 +68,10 @@ async function run() {
   // @ts-expect-error export for debug
   window.reader = reader
 
-  const Progression = () => {
-    const { data: pagination } = useObserve(reader.pagination.state$)
-
-    return (
-      <div
-        style={{
-          position: "absolute",
-          left: "50%",
-          top: "50%",
-        }}
-      >
-        progression: {pagination?.percentageEstimateOfBook}
-      </div>
-    )
-  }
-
   // biome-ignore lint/style/noNonNullAssertion: TODO
-  createRoot(document.getElementById("reactRoot")!).render(<Progression />)
+  createRoot(document.getElementById("reactRoot")!).render(
+    <Progression reader={reader} />,
+  )
 }
 
 run()

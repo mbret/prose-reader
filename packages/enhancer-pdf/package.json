@@ -40,7 +40,7 @@
     "test": "vitest run --coverage"
   },
   "devDependencies": {
-    "pdfjs-dist": "^6.2.108"
+    "pdfjs-dist": "^6.5.438"
   },
   "peerDependencies": {
     "@prose-reader/archive-reader": "workspace:^",

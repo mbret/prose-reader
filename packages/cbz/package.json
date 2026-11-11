@@ -45,7 +45,7 @@
   },
   "devDependencies": {
     "typescript": "*",
-    "vite": "^8"
+    "vite": "^8.3.7"
   },
   "peerDependencies": {
     "@prose-reader/archive-reader": "workspace:^",
