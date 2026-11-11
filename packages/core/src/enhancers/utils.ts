@@ -10,11 +10,12 @@ export const utilsEnhancer =
   ): InheritOutput & {
     utils: {
       isOrIsWithinValidLink: (target: Event[`target`]) => boolean
-      injectScopedCSS: (
-        doc: Document,
-        scope: string,
-        styleTemplate: string,
-      ) => () => void
+      /**
+       * Injects `styleTemplate` into the reader's document, with every
+       * `${id}` replaced by the reader's id, and returns a function that
+       * removes it.
+       */
+      injectScopedCSS: (scope: string, styleTemplate: string) => () => void
     }
   } => {
     const reader = next(options)
@@ -30,15 +31,15 @@ export const utilsEnhancer =
       return false
     }
 
-    const injectScopedCSS = (
-      doc: Document,
-      scope: string,
-      styleTemplate: string,
-    ) => {
+    const injectScopedCSS = (scope: string, styleTemplate: string) => {
       // biome-ignore lint/suspicious/noTemplateCurlyInString: Expected
-      const styleWithIdReplaced = styleTemplate.replace("${id}", reader.id)
+      const styleWithIdReplaced = styleTemplate.replaceAll("${id}", reader.id)
 
-      return injectCSS(doc, `${scope}-${reader.id}`, styleWithIdReplaced)
+      return injectCSS(
+        reader.context.document,
+        `${scope}-${reader.id}`,
+        styleWithIdReplaced,
+      )
     }
 
     return {

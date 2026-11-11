@@ -8,10 +8,10 @@ inputs:
     description: >
       What to build once installed: `libs` for the @prose-reader/* packages,
       `all` for every project, empty for nothing.
-    default: ''
+    default: ""
   registry-url:
     description: Passed to setup-node, for the job that publishes.
-    default: ''
+    default: ""
 
 runs:
   using: composite

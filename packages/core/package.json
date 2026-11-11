@@ -54,8 +54,8 @@
     "rxjs": "^7.5.5"
   },
   "devDependencies": {
-    "happy-dom": "^21.0.3",
-    "sass-embedded": "^1.102.0"
+    "happy-dom": "21.0.3",
+    "sass-embedded": "^1.108.1"
   },
   "madge": {
     "detectiveOptions": {
