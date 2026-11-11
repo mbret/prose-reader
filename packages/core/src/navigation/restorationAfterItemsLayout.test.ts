@@ -8,9 +8,14 @@ import {
   installReaderTestEnvironment,
   mountTestReader,
   renderItemsOfSetSizes,
+  renderTextDocumentsWithParagraphOnSetPage,
   settledOn,
   stubElementScrolling,
 } from "../tests/readerHarness"
+import {
+  createTestManifest,
+  createTestManifestSpineItems,
+} from "../tests/utils"
 
 installReaderTestEnvironment()
 
@@ -98,5 +103,53 @@ describe("Given a layout that moves the spine item the navigation shows", () => 
 
       expect(scrollElement?.scrollTop).toBe(2 * pageHeight + 300)
     })
+  })
+})
+
+describe("Given a layout that keeps the place and size of the spine item the navigation shows, and moves its text to another page", () => {
+  it("restores the navigation in the task that lays the spine items out, before the pages are published", async () => {
+    const { getRenderer, setPageIndexOfParagraph } =
+      renderTextDocumentsWithParagraphOnSetPage()
+    const { width: pageWidth } = defaultTestViewport
+
+    /**
+     * A book of two chapters, three pages each, opened on the paragraph of
+     * the second one, which is on that chapter's second page.
+     */
+    setPageIndexOfParagraph(1)
+
+    const reader = createTestReader({
+      manifest: createTestManifest({
+        spineItems: createTestManifestSpineItems(2),
+      }),
+      getRenderer,
+      target: { type: "cfi", value: "epubcfi(/6/4[item-1]!/4/2/1:0)" },
+    })
+
+    mountTestReader(reader)
+    await settledOn(reader, 1)
+
+    const getPlaceAndSizeOfSecondChapter = () =>
+      reader.spine.getSpineItemSpineLayoutInfo(1)
+    const placeAndSizeOfSecondChapterBeforeLayout =
+      getPlaceAndSizeOfSecondChapter()
+
+    expect(reader.navigation.getNavigation().position.x).toBe(4 * pageWidth)
+
+    // The text moves by a page, as with a larger font that keeps the page count.
+    setPageIndexOfParagraph(2)
+    reader.layout()
+    await firstValueFrom(reader.spine.itemsLayout$)
+
+    expect(reader.spine.isLayoutCurrent()).toBe(false)
+    expect(getPlaceAndSizeOfSecondChapter()).toEqual(
+      placeAndSizeOfSecondChapterBeforeLayout,
+    )
+    expect(reader.navigation.getNavigation().position.x).toBe(5 * pageWidth)
+
+    // The restoration that follows the pages leaves it there.
+    await settledOn(reader, 1)
+
+    expect(reader.navigation.getNavigation().position.x).toBe(5 * pageWidth)
   })
 })
