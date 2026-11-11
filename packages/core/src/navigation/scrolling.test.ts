@@ -46,7 +46,7 @@ const HEIGHT_GAINED_BY_PAGE_THAT_GROWS = 300
 const openOnPageOfBookWhosePagesCanGrow = async (pageIndex: number) => {
   const { Renderer, setItemHeight } = renderItemsOfSetHeights()
   const layoutOfLastPage = holdItemLayout("/page_3.jpg", Renderer)
-  const { reader, scrollElement } = await openOnPage(pageIndex, {
+  const { reader, scrollElement, scrollToCalls } = await openOnPage(pageIndex, {
     pageTurnMode: "scrollable",
     getRenderer: layoutOfLastPage.getRenderer,
   })
@@ -54,6 +54,7 @@ const openOnPageOfBookWhosePagesCanGrow = async (pageIndex: number) => {
   return {
     reader,
     scrollElement,
+    scrollToCalls,
     growPage: (pageIndexToGrow: number) => {
       setItemHeight(
         pageIndexToGrow,
@@ -343,6 +344,38 @@ describe("Given a book that scrolls", () => {
       expect(scrollElement.scrollTop).toBe(
         topOfPage(2) + HEIGHT_GAINED_BY_PAGE_THAT_GROWS,
       )
+    })
+
+    it("does not scroll the element when the browser left it at that place itself", async () => {
+      const { reader, scrollElement, scrollToCalls, growPage } =
+        await openOnPageOfBookWhosePagesCanGrow(2)
+      const viewportOffsetAdjustments: undefined[] = []
+
+      reader.hookManager.register("onViewportOffsetAdjust", () => {
+        viewportOffsetAdjustments.push(undefined)
+      })
+
+      /**
+       * A browser moves the element as the pages move, as when it clamps the
+       * offsets by as much as the page on screen moved. It reports that
+       * scroll at a later frame.
+       */
+      reader.hookManager.register("item.onAfterLayout", () => {
+        scrollElement.scrollTop =
+          topOfPage(2) + HEIGHT_GAINED_BY_PAGE_THAT_GROWS
+      })
+
+      const numberOfScrollsBeforeLayout = scrollToCalls.length
+
+      growPage(0)
+      reader.layout()
+      await firstValueFrom(reader.spine.itemsLayout$)
+
+      expect(scrollElement.scrollTop).toBe(
+        topOfPage(2) + HEIGHT_GAINED_BY_PAGE_THAT_GROWS,
+      )
+      expect(scrollToCalls).toHaveLength(numberOfScrollsBeforeLayout)
+      expect(viewportOffsetAdjustments).toHaveLength(0)
     })
   })
 

@@ -324,14 +324,19 @@ export class ScrollNavigationController
     if (distanceMoved.x === 0 && distanceMoved.y === 0) return
 
     const scaleFactor = this.viewport.scaleFactor
+    const scrollPositionThatKeepsAnchor = new ScrollPosition({
+      x: scrollPositionBeforeLayout.x + distanceMoved.x * scaleFactor,
+      y: scrollPositionBeforeLayout.y + distanceMoved.y * scaleFactor,
+    })
 
-    this.scrollElementTo(
-      element,
-      new ScrollPosition({
-        x: scrollPositionBeforeLayout.x + distanceMoved.x * scaleFactor,
-        y: scrollPositionBeforeLayout.y + distanceMoved.y * scaleFactor,
-      }),
-    )
+    /**
+     * The browser can have left the element there itself, as when it clamps
+     * the offsets by as much as the item moved.
+     */
+    if (isSameScrollPlace(this.scrollPosition, scrollPositionThatKeepsAnchor))
+      return
+
+    this.scrollElementTo(element, scrollPositionThatKeepsAnchor)
   }
 
   /** Scrolls the element at once, and tells the hooks its offsets moved. */
