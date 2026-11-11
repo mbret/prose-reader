@@ -743,7 +743,7 @@ describe("SpineLayout", () => {
       }
     })
 
-    it("keeps following its renderer's load once its layout failed", async () => {
+    it("lays it out at one page, and keeps it following its load, when its layout fails outside its renderer", async () => {
       const unhandledErrors = recordUnhandledErrors()
       const { destroy, spineItemsManager, spineLayout } = createTestSpineLayout(
         {
@@ -757,19 +757,29 @@ describe("SpineLayout", () => {
       if (!failingItem) throw new Error("the spine has no second item")
 
       // A renderer's own getter, read for the spread, fails in the item's
-      // layout but outside its renderer's layout.
+      // layout but outside its renderer's layout, on every layout.
       vi.spyOn(
         failingItem.renderer,
         "renditionLayout",
         "get",
-      ).mockImplementationOnce(() => {
+      ).mockImplementation(() => {
         throw failure
       })
 
+      const stages = recordLayoutStages(spineLayout)
+
       try {
         spineLayout.layout({ immediate: true })
-        await layOutAndWait(spineLayout)
 
+        expect(stages, "the stages of the layout").toEqual([
+          "requested",
+          "laidOut",
+        ])
+
+        expect(
+          spineLayout.getSpineItemSpineLayoutInfo(1).width,
+          "the width of its place",
+        ).toBe(100)
         expect(failingItem.value.isDirty, "the item is dirty").toBe(false)
 
         failingItem.load()

@@ -35,9 +35,13 @@ Our default placeholder pages are using spine item various states to display dif
 
 The layout of the spine recovers from these errors, and goes on without the result of the code that failed:
 
-- A renderer whose `onLayout` throws or errors gives its item no size. The item keeps the size of its last layout at the same page size, or else takes its minimum width: one page, or a whole spread. The items after it still get a place, and pagination settles.
+- A renderer whose `onLayout` throws or errors gives its item no size. The item keeps the size of its last layout at the same page size, or else takes its minimum width: one page, or a whole spread.
+- Any other error in the layout of an item, such as in a getter that its renderer overrides, gives the item the size of its last layout at the same page size, or else one page.
 - An `item.onBeforeLayout` or `item.onAfterLayout` hook that throws does not stop the layout of its item, nor the hooks registered after it.
-- A layout of the spine that fails for another reason publishes no pages, and the layout stays [requested](/core-api/spine#layout). The next layout request lays the spine out again.
+
+In each case the items after it still get a place, and pagination settles.
+
+A layout of the spine can still fail outside the layout of its items, through a bug of the reader. It then publishes no pages, and the layout stays [requested](/core-api/spine#layout). The reader shows no new page and loads no item until a later request lays the spine out, such as a resize or a call to `reader.layout()`.
 
 The reader reports these errors as rxjs reports an error that no subscriber handles. It calls `config.onUnhandledError` from rxjs if you set it, or else throws the error in a `setTimeout`, so that the browser reports it as uncaught. rxjs is a peer dependency of prose-reader, so the `config` that your app imports is the one that the reader uses. Set it to send these errors to your error tracker:
 
