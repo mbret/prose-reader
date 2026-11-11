@@ -509,10 +509,11 @@ describe("SpineLayout", () => {
     }
   })
 
-  it("lays out no other item once an item's hook cancels the pass", () => {
-    const { destroy, hookManager, spineLayout } = createTestSpineLayout({
-      items: 4,
-    })
+  it("lays out no other item once an item's hook cancels the pass, and leaves that item dirty", () => {
+    const { destroy, hookManager, spineItemsManager, spineLayout } =
+      createTestSpineLayout({
+        items: 4,
+      })
     const itemsLaidOut: number[] = []
     let itemsLaidOutWhenCancelled: number[] | undefined
 
@@ -531,6 +532,10 @@ describe("SpineLayout", () => {
 
       expect(itemsLaidOutWhenCancelled).toEqual([0, 1])
       expect(itemsLaidOut).toEqual(itemsLaidOutWhenCancelled)
+      expect(
+        spineItemsManager.items.map((item) => item.value.isDirty),
+        "the dirty items",
+      ).toEqual([true, true, true, true])
     } finally {
       destroy()
     }
@@ -828,13 +833,15 @@ describe("SpineLayout", () => {
     }
   })
 
-  it("stops the layout of an item when a newer request cancels its pass, and leaves the item dirty", () => {
+  it("stops the layout of an item when a newer request cancels its pass, and leaves the item dirty until the newer pass lays it out", async () => {
     const {
       completeItemLayout,
       destroy,
       dirtyFlags,
       hookManager,
+      itemLayoutsStarted,
       spineLayout,
+      widths,
     } = createDeferredSpineLayout(3)
     const itemsLaidOut: number[] = []
 
@@ -850,6 +857,22 @@ describe("SpineLayout", () => {
 
       expect(itemsLaidOut, "the items laid out").toEqual([])
       expect(dirtyFlags(), "the dirty items").toEqual([true, true, true])
+
+      await vi.waitFor(() => {
+        expect(itemLayoutsStarted()[0], "the layouts of the first item").toBe(2)
+      })
+
+      const passDone = firstValueFrom(spineLayout.layout$)
+
+      for (const itemIndex of [0, 1, 2]) {
+        completeItemLayout(itemIndex, { height: 100, width: 200 })
+      }
+
+      await passDone
+
+      expect(itemsLaidOut, "the items laid out").toEqual([0, 1, 2])
+      expect(dirtyFlags(), "the dirty items").toEqual([false, false, false])
+      expect(widths()).toEqual([200, 200, 200])
     } finally {
       destroy()
     }
