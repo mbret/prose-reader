@@ -100,7 +100,7 @@
       }
     },
     {
-      "includes": ["**/*.test.tsx", "apps/tests/**"],
+      "includes": ["**/*.test.tsx"],
       "linter": {
         "rules": {
           "correctness": {
