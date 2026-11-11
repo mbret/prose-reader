@@ -13,10 +13,10 @@ import {
   map,
   merge,
   Observable,
+  of,
   share,
   switchMap,
   takeUntil,
-  tap,
 } from "rxjs"
 import { name as packageName } from "../package.json"
 import { registerPan } from "./gestures/pan"
@@ -43,11 +43,7 @@ export const gesturesEnhancer =
     const { gestures = {}, ...rest } = options
     const reader = next(rest as InheritOptions)
 
-    const removeStylesheet = reader.utils.injectScopedCSS(
-      document,
-      packageName,
-      styles,
-    )
+    const removeStylesheet = reader.utils.injectScopedCSS(packageName, styles)
 
     const settingsManager = new GesturesSettingsManager(gestures, reader)
 
@@ -73,7 +69,18 @@ export const gesturesEnhancer =
       ),
     }
 
+    const failWithPinchWhenItCancelsPan: FailWith = {
+      running$: settingsManager.values$.pipe(
+        map(({ pinchCancelPan }) => pinchCancelPan),
+        distinctUntilChanged(),
+        switchMap((pinchCancelPan) =>
+          pinchCancelPan ? pinchRecognizer.running$ : of(false),
+        ),
+      ),
+    }
+
     const panRecognizer = new PanRecognizer({
+      failWith: [failWithPinchWhenItCancelsPan, failWithTextSelection],
       options: {
         // we want to have some margin to trigger zoom
         posThreshold: 20,
@@ -137,18 +144,6 @@ export const gesturesEnhancer =
       ),
     )
 
-    const panFailWithFromSettings$ = settingsManager.values$.pipe(
-      map(({ pinchCancelPan }) => pinchCancelPan),
-      distinctUntilChanged(),
-      tap((pinchCancelPan) => {
-        panRecognizer.update({
-          failWith: pinchCancelPan
-            ? [pinchRecognizer, failWithTextSelection]
-            : [failWithTextSelection],
-        })
-      }),
-    )
-
     const gestures$ = merge(
       pinchGestures$,
       tapGestures$,
@@ -156,9 +151,7 @@ export const gesturesEnhancer =
       panGestures$,
     ).pipe(takeUntil(reader.$.destroy$), share({ resetOnComplete: false }))
 
-    merge(containerUpdate$, panFailWithFromSettings$)
-      .pipe(takeUntil(reader.$.destroy$))
-      .subscribe()
+    containerUpdate$.pipe(takeUntil(reader.$.destroy$)).subscribe()
 
     gestures$.subscribe()
 

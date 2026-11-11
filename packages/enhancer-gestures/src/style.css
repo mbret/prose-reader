@@ -1,5 +1,6 @@
 [data-prose-reader-container="${id}"] {
   /* Without it, the browser scrolls or zooms on touch screens and cancels the pointer events */
+  /* biome-ignore lint/complexity/noImportantStyles: it wins over a touch-action that the app sets on the container */
   touch-action: none !important;
 }
 

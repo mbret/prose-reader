@@ -49,6 +49,8 @@ For example, we detect taps on edge of screen to navigate pages. If we were usin
 
 In this situation the user is using the reader in only a certain part of the web page and therefore the gestures should work relative to the reader container.
 
+While the reader is mounted, the enhancer's stylesheet gives its container `touch-action: none !important`, and every element in it inherits that value. So the browser neither scrolls nor zooms on a touch screen, and the gestures keep their pointer events. The stylesheet goes into the reader's document, wins over a `touch-action` that your app sets on the container without `!important`, and goes away when the reader is destroyed.
+
 ## Patterns recognized
 
 ### Navigation
@@ -58,8 +60,6 @@ In this situation the user is using the reader in only a certain part of the web
 * **Tap** to turn pages
 
 Gestures start on a press of the primary button: a left click, a finger or a pen's tip. A right click, which opens the context menu, and a middle click start none: they tap, pan and swipe nothing, turn no page and are not reported on `gestures$`.
-
-While the reader runs, the enhancer's stylesheet gives the reader's container `touch-action: none !important`, so that the browser neither scrolls nor zooms on a touch screen. It overrides a `touch-action` that your app sets on the container, and goes away when the reader is destroyed.
 
 ### Zooming (in/out) { #zooming-in-out }
 
