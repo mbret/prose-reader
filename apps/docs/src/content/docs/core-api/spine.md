@@ -111,8 +111,9 @@ after any request that replaced it.
 
 From here until `.itemsLayout$`, the layout moves the spine items one after
 the other, and the place the spine gives for each one is still the place from
-before the layout. Read here what you need from before a layout, such as
-what a book that scrolls shows.
+before the layout. Read here what you need from before a layout. The reader
+itself reads what a book that scrolls shows, to keep the screen on the same
+place, see [Scrollable mode](/learn/page-turn-mode#scrollable-mode).
 
 It can emit twice with no `.itemsLayout$` in between. A layout stops and starts
 again when the reader's container is hidden and shown during it. A newer

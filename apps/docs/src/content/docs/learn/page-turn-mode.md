@@ -66,7 +66,10 @@ The reader stacks the spine items from top to bottom in an element that scrolls 
 
 - Navigations jump to their target, without animation, and do not snap to a page. `turnRight()` and `turnBottom()` scroll down by the height of the viewport, `turnLeft()` and `turnTop()` scroll up.
 - The reader leaves the arrow keys alone. The [Gestures](/enhancers/gestures) enhancer turns its pan and swipe navigation off, and a tap in the margins does not turn the page.
-- The [reading position](/learn/navigation#reading-position) follows the user's scrolling. The reader holds a [lock](/learn/navigation#pans-and-locks) while the user scrolls, and records where the user is half a second after the scrolling stops. The reader's own scrolls do not move it: going to a navigation's target, or the browser adjusting the scroll as a layout moves the spine items. A scroll still in progress when the page turn mode changes is recorded at once, where it has taken the user.
+- The [reading position](/learn/navigation#reading-position) follows the user's scrolling. The reader holds a [lock](/learn/navigation#pans-and-locks) while the user scrolls, and records where the user is half a second after the scrolling stops. The reader's own scrolls do not move it: going to a navigation's target, keeping the screen on the same place through a layout, or the browser adjusting the scroll when a layout leaves less to scroll. A scroll still in progress when the page turn mode changes is recorded at once, where it has taken the user.
+- A layout keeps the screen on the same place. When a spine item above the screen changes size, as when it loads, the spine items after it move, and the reader scrolls by as much. It does so while the user scrolls too.
+  - With a renderer that lays out at once, as the one for HTML documents and images does, no frame shows another place.
+  - With a renderer that lays out later, as the PDF one does, the reader scrolls once the last spine item is laid out, and only if the book did not scroll in the meantime.
 
 Scrollable mode suits content laid out to scroll: webtoons and other long strips, and the pages of comics, manga and PDF. The [Refit](/enhancers/refit) enhancer narrows the viewport in this mode only, and [Zoom](/learn/zoom) behaves differently in it.
 

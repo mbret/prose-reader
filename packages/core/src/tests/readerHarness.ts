@@ -5,7 +5,6 @@ import {
   filter,
   first,
   firstValueFrom,
-  map,
   type Observable,
   of,
   ReplaySubject,
@@ -252,22 +251,33 @@ export const holdItem = (
 /**
  * Lets a test stop the spine's layout pass at one item: while held, that item's
  * layout does not complete, so the pass has laid out the items before it and
- * waits. Layouts run normally until `hold` is called. `layoutsStarted` counts
- * the layouts of that item, which tells a test a pass has reached it.
+ * waits, as it does with a renderer that lays out over several tasks. Layouts
+ * run normally until `hold` is called. `layoutsStarted` counts the layouts of
+ * that item, which tells a test a pass has reached it. Every item is rendered
+ * by `Renderer`, the one held included, which lays it out once released.
  */
-export const holdItemLayout = (href: string) => {
+export const holdItemLayout = (
+  href: string,
+  Renderer: new (
+    props: DocumentRendererParams,
+  ) => DocumentRenderer = DefaultRenderer,
+) => {
   const isHeld = new BehaviorSubject(false)
   let layoutsStarted = 0
 
-  class HeldLayoutRenderer extends DefaultRenderer {
-    onLayout() {
+  const layOutOnceNotHeld = (renderer: DocumentRenderer) => {
+    const layOut = renderer.onLayout.bind(renderer)
+
+    renderer.onLayout = (params) => {
       layoutsStarted += 1
 
       return isHeld.pipe(
         first((held) => !held),
-        map(() => undefined),
+        switchMap(() => layOut(params)),
       )
     }
+
+    return renderer
   }
 
   return {
@@ -275,11 +285,55 @@ export const holdItemLayout = (href: string) => {
       (item: Manifest["spineItems"][number]) =>
       (props: DocumentRendererParams) =>
         item.href === href
-          ? new HeldLayoutRenderer(props)
-          : new DefaultRenderer(props),
+          ? layOutOnceNotHeld(new Renderer(props))
+          : new Renderer(props),
     hold: () => isHeld.next(true),
     release: () => isHeld.next(false),
     layoutsStarted: () => layoutsStarted,
+  }
+}
+
+/**
+ * A renderer that gives each item the height a test sets for it, a viewport's
+ * until then. jsdom lays nothing out, and a book that scrolls stacks its items
+ * by their heights. A new height shows at the next layout, the way an item
+ * that loads takes its size.
+ */
+export const renderItemsOfSetHeights = () => {
+  const heightOfItemIndex = new Map<number, number>()
+
+  class SetHeightRenderer extends DocumentRenderer {
+    onCreateDocument() {
+      return of(this.context.document.createElement("div"))
+    }
+
+    onLoadDocument() {
+      return EMPTY
+    }
+
+    onUnload() {}
+
+    onLayout() {
+      return of({
+        width: viewport.width,
+        height: heightOfItemIndex.get(this.item.index) ?? viewport.height,
+      })
+    }
+
+    onRenderHeadless() {
+      return EMPTY
+    }
+
+    getDocumentFrame() {
+      return undefined
+    }
+  }
+
+  return {
+    Renderer: SetHeightRenderer,
+    setItemHeight: (spineItemIndex: number, height: number) => {
+      heightOfItemIndex.set(spineItemIndex, height)
+    },
   }
 }
 
