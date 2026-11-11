@@ -284,6 +284,56 @@ export const holdItemLayout = (href: string) => {
 }
 
 /**
+ * A renderer that gives each item the size a test sets for it, a page's until
+ * then. jsdom lays nothing out, and the spine places its items by their
+ * sizes. A new size shows at the next layout, the way an item that loads
+ * takes its size.
+ */
+export const renderItemsOfSetSizes = () => {
+  const sizeOfItemIndex = new Map<number, { width?: number; height?: number }>()
+
+  class SetSizeRenderer extends DocumentRenderer {
+    onCreateDocument() {
+      return of(this.context.document.createElement("div"))
+    }
+
+    onLoadDocument() {
+      return EMPTY
+    }
+
+    onUnload() {}
+
+    onLayout() {
+      const { width, height } = sizeOfItemIndex.get(this.item.index) ?? {}
+
+      return of({
+        width: width ?? viewport.width,
+        height: height ?? viewport.height,
+      })
+    }
+
+    onRenderHeadless() {
+      return EMPTY
+    }
+
+    getDocumentFrame() {
+      return undefined
+    }
+  }
+
+  return {
+    getRenderer: () => (props: DocumentRendererParams) =>
+      new SetSizeRenderer(props),
+    setItemSize: (
+      spineItemIndex: number,
+      size: { width?: number; height?: number },
+    ) => {
+      sizeOfItemIndex.set(spineItemIndex, size)
+    },
+  }
+}
+
+/**
  * Unloads an item once the reader has loaded it and no layout is pending, and
  * resolves once the layout the unload ends with is requested, before that
  * layout is done. An item's load ending, whichever way, lays out that item and
