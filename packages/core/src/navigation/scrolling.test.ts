@@ -414,6 +414,42 @@ describe("Given a book that scrolls", () => {
         placeScrolledTo + HEIGHT_GAINED_BY_PAGE_THAT_GROWS,
       )
     })
+
+    it("ends that scroll on the page the screen shows when the page turn mode then becomes controlled", async () => {
+      const { reader, scrollElement, growPage } =
+        await openOnPageOfBookWhosePagesCanGrow(1)
+      // The top of a page: whichever way pages turn, it shows that page.
+      const placeScrolledTo = topOfPage(2)
+
+      scrollAsUser(scrollElement, placeScrolledTo)
+      growPage(0)
+      reader.layout()
+      await firstValueFrom(reader.spine.itemsLayout$)
+
+      expect(scrollElement.scrollTop).toBe(
+        placeScrolledTo + HEIGHT_GAINED_BY_PAGE_THAT_GROWS,
+      )
+
+      /**
+       * A browser takes the element's box away with the mode, and its
+       * offsets with it. jsdom keeps them, so the test resets them. The
+       * place the user's last move took the element to is on the first page
+       * since that page grew: the third page is where the reader scrolled
+       * the element since.
+       */
+      scrollElement.scrollTop = 0
+      reader.settings.update({ pageTurnMode: "controlled" })
+
+      // Polled rather than awaited, so that a failure names the page.
+      await vi.waitFor(
+        () =>
+          expect(reader.pagination.state).toMatchObject({
+            isSettled: true,
+            begin: { spineItemIndex: 2 },
+          }),
+        { timeout: 2000 },
+      )
+    })
   })
 
   describe("When a layout that moves the spine item at the top of the screen takes several tasks", () => {

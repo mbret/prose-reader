@@ -1,4 +1,5 @@
 import {
+  distinctUntilChanged,
   filter,
   fromEvent,
   map,
@@ -100,6 +101,17 @@ export class ScrollNavigationController
    */
   public readonly scrollNotMadeByReader$: Observable<ScrollPosition>
 
+  /**
+   * The offsets of the element as the reader last knew them, each time they
+   * change: where it found the element, or where it left it. Never emits in
+   * controlled mode, and does not replay.
+   *
+   * Unlike `scrollPosition`, it does not read the element. So its latest
+   * value still holds once the element has lost its box, and its offsets with
+   * it, as after a change to controlled mode.
+   */
+  public readonly scrollPositionKnownToReader$: Observable<ScrollPosition>
+
   constructor(
     protected viewport: Viewport,
     protected settings: ReaderSettingsManager,
@@ -144,6 +156,12 @@ export class ScrollNavigationController
     this.scrollNotMadeByReader$ = scrollOfElementWhileActive$.pipe(
       filter(({ isMoveNotMadeByReader }) => isMoveNotMadeByReader),
       map(({ scrollPositionKnownToReader }) => scrollPositionKnownToReader),
+    )
+
+    this.scrollPositionKnownToReader$ = scrollOfElementWhileActive$.pipe(
+      map(({ scrollPositionKnownToReader }) => scrollPositionKnownToReader),
+      // A look that finds no move keeps the offsets it had.
+      distinctUntilChanged(),
     )
 
     elementCreation$.pipe(takeUntil(this.destroy$)).subscribe()
