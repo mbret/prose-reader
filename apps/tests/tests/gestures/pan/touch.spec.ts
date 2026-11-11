@@ -1,5 +1,136 @@
-import { expect, test } from "@playwright/test"
+import { expect, type Page, test } from "@playwright/test"
 import { waitForSettled } from "../../utils/pagination"
+import { getReader } from "../../utils/reader"
+import {
+  countPointerCancels,
+  playTouchGesture,
+  touchPath,
+  touchSteps,
+} from "../../utils/touch"
+
+/**
+ * The gestures as a touch screen makes them: the fingers' touches go through
+ * the browser, which applies `touch-action` and fires their pointer events,
+ * on a page of a comic and on the reader around it. The touch screen is
+ * driven through Chromium's DevTools Protocol, so these run on its touch
+ * profile only.
+ */
+
+const url = "http://localhost:3333/tests/gestures/pan/index.html"
+// portrait, so a single page spans the window and every touch lands on it
+const portraitWindow = { width: 400, height: 600 }
+const Y = 300
+
+const skipWithoutTouchScreen = ({
+  browserName,
+  hasTouch,
+}: {
+  browserName: string
+  hasTouch: boolean
+}) =>
+  test.skip(
+    browserName !== "chromium" || !hasTouch,
+    "the touch screen is driven through the Chrome DevTools Protocol, on a touch profile",
+  )
+
+const openFirstPage = async (page: Page, query = "") => {
+  await page.setViewportSize(portraitWindow)
+  await page.goto(`${url}${query}`)
+  await waitForSettled(page)
+}
+
+const readBeginSpineItemIndex = async (page: Page) =>
+  (await getReader(page)).evaluate(
+    (reader) => reader.pagination.state.begin.spineItemIndex,
+  )
+
+test.describe("Given a comic on a touch screen, on its first page", () => {
+  test("a finger dragged to the left turns to the next page", async ({
+    page,
+    browserName,
+    hasTouch,
+  }) => {
+    skipWithoutTouchScreen({ browserName, hasTouch })
+    await openFirstPage(page)
+
+    await playTouchGesture(page, {
+      steps: touchSteps(touchPath({ x: 300, y: Y }, { x: 100, y: Y }, 10)),
+      stepDelays: 16,
+    })
+
+    await expect.poll(() => readBeginSpineItemIndex(page)).toBe(1)
+  })
+
+  test("two fingers spread apart zoom the book, and not the page", async ({
+    page,
+    browserName,
+    hasTouch,
+  }) => {
+    skipWithoutTouchScreen({ browserName, hasTouch })
+    await openFirstPage(page)
+
+    await playTouchGesture(page, {
+      steps: touchSteps(
+        touchPath({ x: 150, y: Y }, { x: 60, y: Y }, 10),
+        touchPath({ x: 250, y: Y }, { x: 340, y: Y }, 10),
+      ),
+      stepDelays: 16,
+    })
+
+    const reader = await getReader(page)
+
+    await expect
+      .poll(() => reader.evaluate((reader) => reader.zoom.state.currentScale))
+      .toBeGreaterThan(1)
+    expect(await page.evaluate(() => window.visualViewport?.scale)).toBe(1)
+  })
+
+  test.describe("with swipe navigation", () => {
+    test("a quick flick to the left turns to the next page", async ({
+      page,
+      browserName,
+      hasTouch,
+    }) => {
+      skipWithoutTouchScreen({ browserName, hasTouch })
+      await openFirstPage(page, "?panNavigation=swipe")
+
+      // 300px in five steps, a few milliseconds apart: still a swipe at 40ms
+      // a step, should a runner be slow
+      await playTouchGesture(page, {
+        steps: touchSteps(touchPath({ x: 350, y: Y }, { x: 50, y: Y }, 5)),
+        stepDelays: 5,
+      })
+
+      await expect.poll(() => readBeginSpineItemIndex(page)).toBe(1)
+    })
+
+    /**
+     * gesturx reads a swipe's speed when the finger lifts, over its last
+     * 100ms. Over the whole gesture, this one is too slow to swipe: 280px in
+     * more than 360ms, under gesturx's 0.9px/ms.
+     */
+    test("a slow drag that ends in a quick flick turns to the next page", async ({
+      page,
+      browserName,
+      hasTouch,
+    }) => {
+      skipWithoutTouchScreen({ browserName, hasTouch })
+      await openFirstPage(page, "?panNavigation=swipe")
+
+      // 30px in at least 360ms, then 250px in five steps, a few milliseconds
+      // apart
+      const slowPart = touchPath({ x: 300, y: Y }, { x: 270, y: Y }, 6)
+      const flick = touchPath({ x: 270, y: Y }, { x: 20, y: Y }, 5).slice(1)
+
+      await playTouchGesture(page, {
+        steps: touchSteps([...slowPart, ...flick]),
+        stepDelays: [...Array(slowPart.length).fill(60), ...Array(5).fill(5)],
+      })
+
+      await expect.poll(() => readBeginSpineItemIndex(page)).toBe(1)
+    })
+  })
+})
 
 /**
  * A touch pans only as far as `touch-action` allows, read from the touched
@@ -13,31 +144,17 @@ import { waitForSettled } from "../../utils/pagination"
  * the page: in a landscape window, a comic page leaves the reader's own
  * elements on both sides of it.
  */
+test.describe("Given a comic in a landscape window, on a touch screen", () => {
+  const X = 850
+  const START_Y = 150
 
-const url = "http://localhost:3333/tests/gestures/pan/index.html"
-const windowSize = { width: 900, height: 500 }
-// right of the page, on the reader's own elements
-const X = 850
-const START_Y = 150
-
-/**
- * The page's window, as the page functions below fill it. They cast to it,
- * since the window's own type knows none of it.
- */
-type ScenarioWindow = { pointerCancels: number }
-
-test.describe("Given a comic in a landscape window", () => {
-  test("a vertical touch drag that starts beside the page keeps its pointer", async ({
+  test("a vertical drag that starts beside the page keeps its pointer", async ({
     page,
     browserName,
     hasTouch,
   }) => {
-    test.skip(
-      browserName !== "chromium" || !hasTouch,
-      "the touch drag goes through the Chrome DevTools Protocol, on a touch profile",
-    )
-
-    await page.setViewportSize(windowSize)
+    skipWithoutTouchScreen({ browserName, hasTouch })
+    await page.setViewportSize({ width: 900, height: 500 })
     await page.goto(url)
     await waitForSettled(page)
 
@@ -58,42 +175,14 @@ test.describe("Given a comic in a landscape window", () => {
       isInReader: true,
     })
 
-    await page.evaluate(() => {
-      Object.assign(window, { pointerCancels: 0 })
-      document.addEventListener(
-        "pointercancel",
-        () => {
-          const scenarioWindow = window as unknown as ScenarioWindow
+    const readPointerCancels = await countPointerCancels(page)
 
-          scenarioWindow.pointerCancels++
-        },
-        true,
-      )
-    })
-
-    const session = await page.context().newCDPSession(page)
-
-    await session.send("Input.dispatchTouchEvent", {
-      type: "touchStart",
-      touchPoints: [{ x: X, y: START_Y }],
-    })
-
-    for (let step = 1; step <= 10; step++) {
-      await session.send("Input.dispatchTouchEvent", {
-        type: "touchMove",
-        touchPoints: [{ x: X, y: START_Y + step * 25 }],
-      })
-    }
-
-    await session.send("Input.dispatchTouchEvent", {
-      type: "touchEnd",
-      touchPoints: [],
-    })
-
-    expect(
-      await page.evaluate(
-        () => (window as unknown as ScenarioWindow).pointerCancels,
+    await playTouchGesture(page, {
+      steps: touchSteps(
+        touchPath({ x: X, y: START_Y }, { x: X, y: START_Y + 250 }, 10),
       ),
-    ).toBe(0)
+    })
+
+    expect(await readPointerCancels()).toBe(0)
   })
 })
