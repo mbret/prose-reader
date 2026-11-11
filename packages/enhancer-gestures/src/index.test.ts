@@ -73,19 +73,22 @@ class InertObserver {
 /**
  * jsdom has no DOMMatrix either, and a pan reads the viewport's translation
  * with one. The reader only ever writes `translate(<x>px, <y>px)`, which jsdom
- * hands back as is, so this reads that and refuses anything else.
+ * hands back as `translate(<x>px)` when `y` is 0, so this reads both forms
+ * and refuses anything else.
  */
 class TranslationMatrix {
   readonly e: number
   readonly f: number
 
   constructor(transform: string) {
-    const match = /^translate\((-?[\d.]+)px, (-?[\d.]+)px\)$/.exec(transform)
+    const match = /^translate\((-?[\d.]+)px(?:, (-?[\d.]+)px)?\)$/.exec(
+      transform,
+    )
 
     if (!match) throw new Error(`Unexpected transform: ${transform}`)
 
     this.e = Number(match[1])
-    this.f = Number(match[2])
+    this.f = Number(match[2] ?? 0)
   }
 }
 
@@ -106,9 +109,10 @@ beforeAll(() => {
   )
 })
 
-const createGesturesReader = () =>
+const createGesturesReader = (ownerDocument?: Document) =>
   gesturesEnhancer(createReader)({
     manifest,
+    ownerDocument,
     getRenderer: () => (props) => new EmptyRenderer(props),
     getResource: () => of(new Response("", { status: 200 })),
   })
@@ -163,7 +167,43 @@ const onFirstPage = async (container = document.createElement("div")) => {
   })
 
   /**
-   * Presses at `x`, halfway down, moves `distance` to the right in five steps
+   * Dispatches a pointer event on the reader's container, halfway down, as a
+   * browser does: `button` is -1 on a move, and `buttons` holds the primary
+   * button until the release. gesturx reads a mouse move with no button held
+   * as a release the page missed.
+   */
+  const dispatchPointer = ({
+    type,
+    pointerId,
+    pointerType,
+    clientX,
+  }: {
+    type: "pointerdown" | "pointermove" | "pointerup"
+    pointerId: number
+    pointerType: "mouse" | "touch"
+    clientX: number
+  }) => {
+    const target = reader.context.value.rootElement
+
+    if (!target) throw new Error("the reader is not mounted")
+
+    target.dispatchEvent(
+      new PointerEvent(type, {
+        pointerId,
+        isPrimary: pointerId === 1,
+        pointerType,
+        button: type === "pointermove" ? -1 : 0,
+        buttons: type === "pointerup" ? 0 : 1,
+        clientX,
+        clientY: viewport.height / 2,
+        bubbles: true,
+        cancelable: true,
+      }),
+    )
+  }
+
+  /**
+   * Presses at `x` with the mouse, moves `distance` to the right in five steps
    * a frame apart, and lets go unless told not to. It is over within the time
    * a tap allows.
    */
@@ -176,39 +216,76 @@ const onFirstPage = async (container = document.createElement("div")) => {
     distance: number
     letGo?: boolean
   }) => {
-    const target = reader.context.value.rootElement
+    const mouse = { pointerId: 1, pointerType: "mouse" as const }
 
-    if (!target) throw new Error("the reader is not mounted")
-
-    const y = viewport.height / 2
-    const dispatch = (type: string, clientX: number) =>
-      target.dispatchEvent(
-        new PointerEvent(type, {
-          pointerId: 1,
-          isPrimary: true,
-          pointerType: "mouse",
-          clientX,
-          clientY: y,
-          bubbles: true,
-          cancelable: true,
-        }),
-      )
-
-    dispatch("pointerdown", x)
+    dispatchPointer({ ...mouse, type: "pointerdown", clientX: x })
 
     for (let step = 1; step <= 5; step++) {
       await vi.advanceTimersByTimeAsync(16)
-      dispatch("pointermove", x + (distance * step) / 5)
+      dispatchPointer({
+        ...mouse,
+        type: "pointermove",
+        clientX: x + (distance * step) / 5,
+      })
     }
 
     await vi.advanceTimersByTimeAsync(16)
 
-    if (letGo) dispatch("pointerup", x + distance)
+    if (letGo)
+      dispatchPointer({ ...mouse, type: "pointerup", clientX: x + distance })
 
     await vi.runAllTimersAsync()
   }
 
-  return { reader, navigations, gestures, drag }
+  /**
+   * Presses two fingers 40px apart at `x`, then moves both `distance` to the
+   * right while they spread `spread` further apart, in five steps a frame
+   * apart, and lets go.
+   */
+  const pinch = async ({
+    x,
+    distance,
+    spread,
+  }: {
+    x: number
+    distance: number
+    spread: number
+  }) => {
+    const fingerAt = (pointerId: number, step: number) => {
+      const side = pointerId === 1 ? -1 : 1
+      const offset = (distance * step) / 5
+      const halfSpread = (spread * step) / 10
+
+      return x + side * (20 + halfSpread) + offset
+    }
+    const fingers = [1, 2]
+    const dispatchFingers = (
+      type: "pointerdown" | "pointermove" | "pointerup",
+      step: number,
+    ) => {
+      for (const pointerId of fingers) {
+        dispatchPointer({
+          type,
+          pointerId,
+          pointerType: "touch",
+          clientX: fingerAt(pointerId, step),
+        })
+      }
+    }
+
+    dispatchFingers("pointerdown", 0)
+
+    for (let step = 1; step <= 5; step++) {
+      await vi.advanceTimersByTimeAsync(16)
+      dispatchFingers("pointermove", step)
+    }
+
+    await vi.advanceTimersByTimeAsync(16)
+    dispatchFingers("pointerup", 5)
+    await vi.runAllTimersAsync()
+  }
+
+  return { reader, navigations, gestures, drag, pinch }
 }
 
 describe("Given a reader on its first page", () => {
@@ -337,17 +414,66 @@ describe("Given a subscriber to the gestures", () => {
   })
 })
 
-describe("Given a container whose touch action changes while the reader is mounted", () => {
-  it("keeps the new touch action once the reader is destroyed", () => {
-    const reader = createGesturesReader()
-    const container = document.createElement("div")
-    document.body.appendChild(container)
+describe("Given a mounted reader", () => {
+  it("gives the elements of its container no touch action either", async () => {
+    const { reader } = await onFirstPage()
+    const scrollNavigator = reader.context.value.rootElement?.querySelector(
+      "[data-prose-reader-scroll-navigator]",
+    )
 
+    if (!scrollNavigator) throw new Error("the reader has no scroll navigator")
+
+    expect(getComputedStyle(scrollNavigator).touchAction).toBe("none")
+  })
+
+  it("gives no touch action to a container in the document it was created for", () => {
+    const frame = document.createElement("iframe")
+    document.body.appendChild(frame)
+    const frameDocument = frame.contentDocument
+    const frameWindow = frameDocument?.defaultView
+
+    if (!frameDocument || !frameWindow)
+      throw new Error("the frame has no window")
+
+    const reader = createGesturesReader(frameDocument)
+    readers.push(reader)
+    const container = frameDocument.createElement("div")
+    frameDocument.body.appendChild(container)
     reader.mount(container)
-    container.style.touchAction = "pan-x"
-    reader.destroy()
 
-    expect(container.style.touchAction).toBe("pan-x")
+    expect(frameWindow.getComputedStyle(container).touchAction).toBe("none")
+  })
+})
+
+describe("Given two fingers that spread while they move, which both pinches and pans", () => {
+  const gestureTypes = (gestures: { type: string }[]) =>
+    new Set(gestures.map(({ type }) => type))
+
+  it("does not pan while the pinch runs", async () => {
+    const { gestures, pinch } = await onFirstPage()
+
+    await pinch({ x: viewport.width / 2, distance: -60, spread: 60 })
+
+    expect(gestureTypes(gestures)).toEqual(new Set(["pinch"]))
+  })
+
+  it("pans too when pinchCancelPan is off", async () => {
+    const { reader, gestures, pinch } = await onFirstPage()
+
+    reader.gestures.settings.update({ pinchCancelPan: false })
+    await pinch({ x: viewport.width / 2, distance: -60, spread: 60 })
+
+    expect(gestureTypes(gestures)).toEqual(new Set(["pinch", "pan"]))
+  })
+
+  it("stops panning once pinchCancelPan is on again", async () => {
+    const { reader, gestures, pinch } = await onFirstPage()
+
+    reader.gestures.settings.update({ pinchCancelPan: false })
+    reader.gestures.settings.update({ pinchCancelPan: true })
+    await pinch({ x: viewport.width / 2, distance: -60, spread: 60 })
+
+    expect(gestureTypes(gestures)).toEqual(new Set(["pinch"]))
   })
 })
 
@@ -362,7 +488,7 @@ describe("Given a reader a gesture was made on", () => {
     const { reader, drag } = await onFirstPage(container)
 
     await drag({ x: viewport.width / 2, distance: 0 })
-    const touchActionWhileMounted = container.style.touchAction
+    const touchActionWhileMounted = getComputedStyle(container).touchAction
     excludeFromCleanup(reader)
     reader.destroy()
 

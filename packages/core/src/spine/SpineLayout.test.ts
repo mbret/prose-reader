@@ -303,6 +303,47 @@ describe("SpineLayout", () => {
     }
   })
 
+  it("announces that a pass starts once the wait of its request is over, before it asks an item to lay out", async () => {
+    vi.useFakeTimers()
+    const { completeItemLayout, destroy, itemLayoutsStarted, spineLayout } =
+      createDeferredSpineLayout(2)
+
+    try {
+      const stages: { stage: string; itemLayoutsStarted: number[] }[] = []
+
+      spineLayout.lifecycle$.subscribe(({ stage }) => {
+        stages.push({ stage, itemLayoutsStarted: itemLayoutsStarted() })
+      })
+
+      spineLayout.layout()
+
+      expect(stages).toEqual([
+        { stage: "requested", itemLayoutsStarted: [0, 0] },
+      ])
+
+      await vi.advanceTimersByTimeAsync(50)
+
+      // The first item is asked to lay out right after the announcement.
+      expect(stages).toEqual([
+        { stage: "requested", itemLayoutsStarted: [0, 0] },
+        { stage: "layingOut", itemLayoutsStarted: [0, 0] },
+      ])
+      expect(itemLayoutsStarted()).toEqual([1, 0])
+
+      completeItemLayout(0, { height: 100, width: 100 })
+      completeItemLayout(1, { height: 100, width: 100 })
+
+      expect(stages.map(({ stage }) => stage)).toEqual([
+        "requested",
+        "layingOut",
+        "laidOut",
+      ])
+    } finally {
+      destroy()
+      vi.useRealTimers()
+    }
+  })
+
   it("does not publish item layouts until the whole pass completes", async () => {
     const { completeItemLayout, destroy, spineLayout, widths } =
       createDeferredSpineLayout(3)
@@ -724,6 +765,7 @@ describe("SpineLayout", () => {
 
         expect(stages, "the stages of the layout").toEqual([
           "requested",
+          "layingOut",
           "laidOut",
         ])
 
@@ -768,6 +810,7 @@ describe("SpineLayout", () => {
       expect(stages, "the stages of the layout").toEqual([
         "requested",
         "requested",
+        "layingOut",
         "laidOut",
       ])
 

@@ -25,12 +25,12 @@ const defaultLoadingElementCreate = ({
 
   const logoElement = loadingElementContainer.ownerDocument.createElement(`div`)
   logoElement.classList.add(LOGO_HTML_PREFIX)
-  logoElement.innerText = `prose`
+  logoElement.textContent = `prose`
   const detailsElement =
     loadingElementContainer.ownerDocument.createElement(`div`)
   detailsElement.classList.add(DETAILS_HTML_PREFIX)
   detailsElement.setAttribute(`data-details-element`, `true`)
-  detailsElement.innerText = `loading ${item.id}`
+  detailsElement.textContent = `loading ${item.id}`
   loadingElementContainer.appendChild(logoElement)
   loadingElementContainer.appendChild(detailsElement)
 

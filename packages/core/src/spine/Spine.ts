@@ -102,8 +102,11 @@ export class Spine extends ReactiveEntity<SpineState> {
         scan((firstItemIndexAwaitingLayout, event) => {
           if (event.stage === "pagesPublished") return undefined
 
-          // laid out, but the pages describing it are not published yet
-          if (event.stage === "laidOut") return firstItemIndexAwaitingLayout
+          /**
+           * A pass that starts or completes: its request counted already, and
+           * the pages describing what it lays out are not published yet.
+           */
+          if (event.stage !== "requested") return firstItemIndexAwaitingLayout
 
           /**
            * A pass that completed before this request keeps its items out of
@@ -204,6 +207,20 @@ export class Spine extends ReactiveEntity<SpineState> {
   public get layout$() {
     // first spineLayout then pages
     return this.pages.layout$
+  }
+
+  /**
+   * Every pass as it starts to lay the items out, before it moves the first
+   * of them. Until `itemsLayout$`, the pass moves the items one after the
+   * other, while `getSpineItemSpineLayoutInfo` still gives the sizes and
+   * places the last completed pass gave them. What must know how the items
+   * were before a pass, such as what the scroll showed, reads it here.
+   *
+   * A pass that stops and starts again, as when the viewport loses its size,
+   * emits again: some items are then already where it moved them.
+   */
+  public get itemsLayoutStart$() {
+    return this.spineLayout.layoutStart$
   }
 
   /**

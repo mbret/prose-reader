@@ -1,4 +1,11 @@
+[data-prose-reader-container="${id}"] {
+  /* Without it, the browser scrolls or zooms on touch screens and cancels the pointer events */
+  /* biome-ignore lint/complexity/noImportantStyles: it wins over a touch-action that the app sets on the container */
+  touch-action: none !important;
+}
+
 [data-prose-reader-container="${id}"] * {
-  /* Make sure that touche actions are correctly dispatched no matter where the user interact */
+  /* touch-action is not inherited, and the browser reads it only from the touched element up to its nearest scroll
+  container, such as the scroll navigator inside the container. So each element carries the container's value itself. */
   touch-action: inherit;
 }

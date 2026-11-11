@@ -5,7 +5,7 @@ name: check
 on:
   push:
     branches-ignore:
-      - 'master'
+      - "master"
   pull_request:
 
 # A new push to a branch supersedes the run still going for the previous one:
