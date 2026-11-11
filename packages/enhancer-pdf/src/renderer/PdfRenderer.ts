@@ -27,6 +27,7 @@ import {
   switchMap,
   takeUntil,
   tap,
+  throwError,
 } from "rxjs"
 import { isPdfJsArchive } from "../createArchiveFromPdf"
 import pdfFrameStyle from "./frame.css?inline"
@@ -268,8 +269,9 @@ export class PdfRenderer extends DocumentRenderer {
         const frameDoc = frameElement?.contentDocument
         const pdfPage = this.pageProxy
 
+        // The page is still loading: the layout once it is loaded sizes it.
         if (!frameDoc || !frameElement || !pdfPage || !this.textLayer) {
-          throw new Error("Unable to update text layer due to missing elements")
+          return of(undefined)
         }
 
         const textLayerElement = frameDoc.body
@@ -313,11 +315,15 @@ export class PdfRenderer extends DocumentRenderer {
 
         return of(undefined)
       }),
-      catchError((e) => {
-        if (!(e instanceof RenderingCancelledException)) console.error(e)
-
-        return of(undefined)
-      }),
+      /**
+       * A newer render of the page cancels this one, which is no failure. The
+       * reader reports any other error, and gives the page no size.
+       */
+      catchError((error) =>
+        error instanceof RenderingCancelledException
+          ? of(undefined)
+          : throwError(() => error),
+      ),
     )
   }
 
