@@ -333,8 +333,10 @@ describe("Given a book that scrolls", () => {
         topOfPage(2) + HEIGHT_GAINED_BY_PAGE_THAT_GROWS,
       )
 
-      // A browser reports the scroll at a later frame.
-      await waitFor(20)
+      /**
+       * A browser can report the scroll before those pages are published:
+       * nothing else has told the reader where the element is by then.
+       */
       deliverScrollEvent(scrollElement)
       await waitFor(PAST_THE_END_OF_A_USER_SCROLL)
 
