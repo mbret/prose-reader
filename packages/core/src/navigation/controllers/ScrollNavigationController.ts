@@ -1,6 +1,8 @@
 import {
   distinctUntilChanged,
+  exhaustMap,
   filter,
+  first,
   fromEvent,
   map,
   merge,
@@ -9,9 +11,11 @@ import {
   Subject,
   scan,
   share,
+  startWith,
   switchMap,
   takeUntil,
   tap,
+  withLatestFrom,
 } from "rxjs"
 import { HTML_PREFIX_SCROLL_NAVIGATOR } from "../../constants"
 import type { Context } from "../../context/Context"
@@ -56,24 +60,17 @@ type LayoutScrollAnchor = {
   scrollPositionBeforeLayout: ScrollPosition
 }
 
-/**
- * The scroll anchor of the layout that runs, then of the one that ended. A
- * layout has none to keep when the element showed no spine item at its corner
- * as it started, or scrolled since.
- */
-type LayoutScrollAnchoring =
-  | { stage: "noLayoutRunning" }
-  | { stage: "layingOut"; scrollAnchor: LayoutScrollAnchor | undefined }
-  | { stage: "laidOut"; scrollAnchor: LayoutScrollAnchor | undefined }
-
 export class ScrollNavigationController
   extends ReactiveEntity<{
     element: HTMLElement | undefined
   }>
   implements NavigationModeController
 {
-  /** Emits once a navigation has left the element where it goes. */
-  private readonly navigationAppliedSubject = new Subject<void>()
+  /**
+   * Emits once the reader has left the element where it wants it: after a
+   * navigation, and after it scrolled to keep its place through a layout.
+   */
+  private readonly scrollByReaderAppliedSubject = new Subject<void>()
 
   /**
    * Whether the book scrolls: the computed page turn mode is `scrollable`.
@@ -141,24 +138,16 @@ export class ScrollNavigationController
       .watch(["computedPageTurnMode"])
       .pipe(map(() => this.isActive()))
 
-    const scrollOfElementWhileActive$ = this.watch("element").pipe(
-      filter(isDefined),
-      switchMap((element) =>
-        this.isActive$.pipe(
-          switchMap((isActive) =>
-            isActive ? this.followScrollOfElement(element) : NEVER,
-          ),
-        ),
-      ),
-      share(),
-    )
+    const scrollOfElement$ = this.whileBookScrolls((element) =>
+      this.followScrollOfElement(element),
+    ).pipe(share())
 
-    this.scrollNotMadeByReader$ = scrollOfElementWhileActive$.pipe(
+    this.scrollNotMadeByReader$ = scrollOfElement$.pipe(
       filter(({ isMoveNotMadeByReader }) => isMoveNotMadeByReader),
       map(({ scrollPositionKnownToReader }) => scrollPositionKnownToReader),
     )
 
-    this.scrollPositionKnownToReader$ = scrollOfElementWhileActive$.pipe(
+    this.scrollPositionKnownToReader$ = scrollOfElement$.pipe(
       map(({ scrollPositionKnownToReader }) => scrollPositionKnownToReader),
       // A look that finds no move keeps the offsets it had.
       distinctUntilChanged(),
@@ -166,26 +155,40 @@ export class ScrollNavigationController
 
     elementCreation$.pipe(takeUntil(this.destroy$)).subscribe()
 
-    /**
-     * Followed whether or not anything listens for the user's scrolling:
-     * following the element is also what keeps it on the same place through
-     * each layout.
-     */
-    scrollOfElementWhileActive$.pipe(takeUntil(this.destroy$)).subscribe()
+    // Whether or not anything listens for the user's scrolling.
+    this.whileBookScrolls((element) =>
+      this.keepScrollAnchorThroughLayouts(element),
+    )
+      .pipe(takeUntil(this.destroy$))
+      .subscribe()
+  }
+
+  /** Runs what a function gives for the element, while the book scrolls. */
+  private whileBookScrolls<T>(
+    observeElement: (element: HTMLElement) => Observable<T>,
+  ) {
+    return this.watch("element").pipe(
+      filter(isDefined),
+      switchMap((element) =>
+        this.isActive$.pipe(
+          switchMap((isActive) => (isActive ? observeElement(element) : NEVER)),
+        ),
+      ),
+    )
   }
 
   /**
-   * Follows the element while the book scrolls: the offsets the reader knows
-   * it at, and whether it found the element moved by something else than
-   * itself. It also keeps the element on the same place through each layout.
+   * The offsets the reader knows the element at, and whether it found the
+   * element moved by something else than itself, at each look and each
+   * scroll of its own.
    */
   private followScrollOfElement(element: HTMLElement) {
     return merge(
       merge(
-        this.navigationAppliedSubject,
+        this.scrollByReaderAppliedSubject,
         // Read in the task that laid the items out, before the browser
         // reports what that did to the offsets.
-        this.keepScrollAnchorThroughLayouts(element),
+        this.spine.itemsLayout$,
       ).pipe(
         map(() => ({
           scrollPosition: this.scrollPosition,
@@ -237,68 +240,34 @@ export class ScrollNavigationController
   /**
    * Keeps the element on the same place through each layout: once a pass has
    * laid the items out, scrolls by as much as it moved the spine item at the
-   * top left corner. Emits once that is done, for each pass.
+   * top left corner.
    *
    * The anchor is read as the pass starts, and kept if the pass starts again:
-   * the layouts the reader knows are from before both starts. A scroll of the
-   * element during the pass, by the user or by a navigation, drops it: that
-   * place was chosen with the items as the pass had them. Only a pass of
-   * several tasks leaves time for that, as the pdf renderer's does.
+   * the layouts the reader knows are from before both starts. Once anything
+   * scrolls the element during the pass, there is nothing to keep: that place
+   * was chosen with the items as the pass had them. Only a pass of several
+   * tasks leaves time for that, as the pdf renderer's does.
    */
-  private keepScrollAnchorThroughLayouts(
-    element: HTMLElement,
-  ): Observable<unknown> {
-    const noLayoutRunning: LayoutScrollAnchoring = { stage: "noLayoutRunning" }
+  private keepScrollAnchorThroughLayouts(element: HTMLElement) {
+    return this.spine.itemsLayoutStart$.pipe(
+      exhaustMap(() => {
+        const scrollAnchor = this.readLayoutScrollAnchor()
+        const hasElementScrolledSince$ = merge(
+          this.scrollByReaderAppliedSubject,
+          fromEvent(element, `scroll`),
+        ).pipe(
+          map(() => true),
+          startWith(false),
+        )
 
-    return merge(
-      this.spine.itemsLayoutStart$.pipe(
-        map(() => ({
-          type: "itemsLayoutStart" as const,
-          scrollAnchor: this.readLayoutScrollAnchor(),
-        })),
-      ),
-      merge(this.navigationAppliedSubject, fromEvent(element, `scroll`)).pipe(
-        map(() => ({
-          type: "elementScroll" as const,
-          scrollPosition: this.scrollPosition,
-        })),
-      ),
-      this.spine.itemsLayout$.pipe(
-        map(() => ({ type: "itemsLaidOut" as const })),
-      ),
-    ).pipe(
-      scan((anchoring, event): LayoutScrollAnchoring => {
-        if (event.type === "itemsLaidOut")
-          return {
-            stage: "laidOut",
-            scrollAnchor:
-              anchoring.stage === "layingOut"
-                ? anchoring.scrollAnchor
-                : undefined,
-          }
-
-        if (event.type === "itemsLayoutStart")
-          return anchoring.stage === "layingOut"
-            ? anchoring
-            : { stage: "layingOut", scrollAnchor: event.scrollAnchor }
-
-        if (anchoring.stage !== "layingOut") return noLayoutRunning
-
-        const hasElementScrolledSinceLayoutStart =
-          anchoring.scrollAnchor !== undefined &&
-          !isSameScrollPlace(
-            anchoring.scrollAnchor.scrollPositionBeforeLayout,
-            event.scrollPosition,
-          )
-
-        return hasElementScrolledSinceLayoutStart
-          ? { stage: "layingOut", scrollAnchor: undefined }
-          : anchoring
-      }, noLayoutRunning),
-      filter((anchoring) => anchoring.stage === "laidOut"),
-      tap(({ scrollAnchor }) => {
-        if (scrollAnchor)
-          this.scrollToKeepLayoutScrollAnchor(element, scrollAnchor)
+        return this.spine.itemsLayout$.pipe(
+          first(),
+          withLatestFrom(hasElementScrolledSince$),
+          tap(([, hasElementScrolledSince]) => {
+            if (scrollAnchor && !hasElementScrolledSince)
+              this.scrollToKeepLayoutScrollAnchor(element, scrollAnchor)
+          }),
+        )
       }),
     )
   }
@@ -342,14 +311,20 @@ export class ScrollNavigationController
     if (distanceMoved.x === 0 && distanceMoved.y === 0) return
 
     const scaleFactor = this.viewport.scaleFactor
+    const scrollPositionThatKeepsAnchor = new ScrollPosition({
+      x: scrollPositionBeforeLayout.x + distanceMoved.x * scaleFactor,
+      y: scrollPositionBeforeLayout.y + distanceMoved.y * scaleFactor,
+    })
 
-    this.scrollElementTo(
-      element,
-      new ScrollPosition({
-        x: scrollPositionBeforeLayout.x + distanceMoved.x * scaleFactor,
-        y: scrollPositionBeforeLayout.y + distanceMoved.y * scaleFactor,
-      }),
-    )
+    /**
+     * The browser can have left the element there itself, as when it clamps
+     * the offsets by as much as the item moved.
+     */
+    if (isSameScrollPlace(this.scrollPosition, scrollPositionThatKeepsAnchor))
+      return
+
+    this.scrollElementTo(element, scrollPositionThatKeepsAnchor)
+    this.scrollByReaderAppliedSubject.next()
   }
 
   /** Scrolls the element at once, and tells the hooks its offsets moved. */
@@ -414,7 +389,7 @@ export class ScrollNavigationController
 
   public destroy() {
     super.destroy()
-    this.navigationAppliedSubject.complete()
+    this.scrollByReaderAppliedSubject.complete()
     this.value.element?.remove()
   }
 
@@ -430,7 +405,7 @@ export class ScrollNavigationController
     this.applyNavigationPosition(element, navigation)
     // Also for a navigation that found the element where it goes: the
     // browser may have moved it there, and not have reported it yet.
-    this.navigationAppliedSubject.next()
+    this.scrollByReaderAppliedSubject.next()
   }
 
   /** Whether the book scrolls: the computed page turn mode is `scrollable`. */
