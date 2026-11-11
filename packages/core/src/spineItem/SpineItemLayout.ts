@@ -4,18 +4,7 @@ import {
   type Manifest,
   type SpreadPosition,
 } from "@prose-reader/shared"
-import {
-  filter,
-  first,
-  map,
-  merge,
-  type Observable,
-  type ObservedValueOf,
-  of,
-  Subject,
-  share,
-  switchMap,
-} from "rxjs"
+import { defer, map, type Observable, Subject, tap } from "rxjs"
 import type { Context } from "../context/Context"
 import type { HookManager } from "../hooks/HookManager"
 import { isFullyPrePaginated } from "../manifest/isFullyPrePaginated"
@@ -25,17 +14,21 @@ import {
   removeStylePropertyIfPresent,
   setStylePropertyIfChanged,
 } from "../utils/dom"
-import { deferNextResult } from "../utils/rxjs"
 import type { Viewport } from "../viewport/Viewport"
 import type { DocumentRenderer } from "./renderer/DocumentRenderer"
 
+type SpineItemLayoutParams = {
+  spreadPosition: SpreadPosition
+  horizontalOffset: number
+  isLastItem: boolean
+  edgeX: number
+  edgeY: number
+}
+
 export class SpineItemLayout extends DestroyableClass {
-  private layoutTriggerSubject = new Subject<{
-    spreadPosition: SpreadPosition
-    horizontalOffset: number
-    isLastItem: boolean
-    edgeX: number
-    edgeY: number
+  private readonly didLayoutSubject = new Subject<{
+    width: number
+    height: number
   }>()
 
   private lastLayout: {
@@ -44,7 +37,7 @@ export class SpineItemLayout extends DestroyableClass {
     pageSize: { width: number; height: number }
   } | null = null
 
-  public readonly didLayout$: Observable<{ width: number; height: number }>
+  public readonly didLayout$ = this.didLayoutSubject.asObservable()
 
   constructor(
     public item: Manifest[`spineItems`][number],
@@ -56,66 +49,6 @@ export class SpineItemLayout extends DestroyableClass {
     public viewport: Viewport,
   ) {
     super()
-
-    const layoutProcess$ = this.layoutTriggerSubject.pipe(
-      switchMap(
-        ({ spreadPosition, horizontalOffset, isLastItem, edgeX, edgeY }) => {
-          const { blankPagePosition, minimumWidth } =
-            this.computeLayoutInformation({
-              horizontalOffset,
-              isLastItem,
-              spreadPosition,
-            })
-
-          this.hookManager.execute(`item.onBeforeLayout`, {
-            blankPagePosition,
-            item: this.item,
-            minimumWidth,
-          })
-
-          const rendererLayout$ = this.renderer.layout({
-            blankPagePosition,
-            minPageSpread: minimumWidth / this.viewport.pageSize.width,
-            minimumWidth,
-            spreadPosition,
-          })
-
-          return merge(
-            of({ type: "start" } as const),
-            rendererLayout$.pipe(
-              /**
-               * Now that inner layout is done from the renderer, we adjust the dimensions
-               * of the outer container element
-               */
-              this.updateContainerLayout({
-                minimumWidth,
-                edgeX,
-                edgeY,
-              }),
-              map((data) => {
-                this.hookManager.execute(`item.onAfterLayout`, {
-                  blankPagePosition,
-                  item: this.item,
-                  minimumWidth,
-                })
-
-                return {
-                  type: "end",
-                  data,
-                } as const
-              }),
-            ),
-          )
-        },
-      ),
-      share(),
-    )
-
-    this.didLayout$ = layoutProcess$.pipe(
-      filter((event) => event.type === `end`),
-      map((event) => event.data),
-      share(),
-    )
   }
 
   private validateDimension(
@@ -328,14 +261,55 @@ export class SpineItemLayout extends DestroyableClass {
         }),
       )
 
-  public layout = (
-    params: ObservedValueOf<typeof this.layoutTriggerSubject>,
-  ) => {
-    const nextResult = deferNextResult(this.didLayout$.pipe(first()))
+  /**
+   * Lays the item out once per subscription. Without a subscriber, nothing
+   * happens. If the pass is cancelled, the layout stops and the item stays
+   * dirty.
+   */
+  public layout = ({
+    spreadPosition,
+    horizontalOffset,
+    isLastItem,
+    edgeX,
+    edgeY,
+  }: SpineItemLayoutParams) =>
+    defer(() => {
+      const { blankPagePosition, minimumWidth } = this.computeLayoutInformation(
+        {
+          horizontalOffset,
+          isLastItem,
+          spreadPosition,
+        },
+      )
+      const hookParams = { blankPagePosition, item: this.item, minimumWidth }
 
-    this.layoutTriggerSubject.next(params)
+      this.hookManager.execute(`item.onBeforeLayout`, hookParams)
 
-    return nextResult()
+      return this.renderer
+        .layout({
+          blankPagePosition,
+          minPageSpread: minimumWidth / this.viewport.pageSize.width,
+          minimumWidth,
+          spreadPosition,
+        })
+        .pipe(
+          this.updateContainerLayout({ minimumWidth, edgeX, edgeY }),
+          tap(() => {
+            this.hookManager.execute(`item.onAfterLayout`, hookParams)
+          }),
+        )
+    }).pipe(
+      // A step of its own, which a hook that cancels the pass skips, so the
+      // item stays dirty.
+      tap((size) => {
+        this.didLayoutSubject.next(size)
+      }),
+    )
+
+  public destroy() {
+    this.didLayoutSubject.complete()
+
+    super.destroy()
   }
 
   get layoutInfo() {

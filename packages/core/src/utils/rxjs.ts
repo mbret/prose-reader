@@ -6,7 +6,6 @@ import {
   map,
   Observable,
   type OperatorFunction,
-  of,
   switchMap,
 } from "rxjs"
 import { pick } from "./objects"
@@ -54,24 +53,6 @@ export const waitForSwitch =
         ),
       ),
     )
-
-export const deferNextResult = <T>(stream: Observable<T>) => {
-  let value: { result: T } | undefined
-
-  const sub = stream.subscribe((result) => {
-    value = { result: result }
-  })
-
-  return () => {
-    sub.unsubscribe()
-
-    if (value) {
-      return of(value.result)
-    }
-
-    return stream
-  }
-}
 
 export function idle(): Observable<void> {
   return new Observable<void>((observer) => {

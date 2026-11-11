@@ -73,6 +73,7 @@ const createTestSpineLayout = ({
     hookManager,
     spineItemsManager,
     spineLayout,
+    viewport,
   }
 }
 
@@ -132,9 +133,10 @@ type ItemSize = { height: number; width: number }
  * to whole pages of 100 by 100, and updates the item's state.
  */
 const createDeferredSpineLayout = (numberOfItems: number) => {
-  const { destroy, spineItemsManager, spineLayout } = createTestSpineLayout({
-    items: numberOfItems,
-  })
+  const { destroy, hookManager, spineItemsManager, spineLayout, viewport } =
+    createTestSpineLayout({
+      items: numberOfItems,
+    })
 
   // An item asked to lay out again drops the layout it had pending, so only
   // the newest one per item can complete.
@@ -143,7 +145,7 @@ const createDeferredSpineLayout = (numberOfItems: number) => {
   const layoutsStarted = spineItemsManager.items.map(() => 0)
 
   spineItemsManager.items.forEach((item, itemIndex) => {
-    vi.spyOn(item.renderer, "layout").mockImplementation(() => {
+    vi.spyOn(item.renderer, "onLayout").mockImplementation(() => {
       const result = new Subject<ItemSize>()
 
       pendingLayouts[itemIndex] = result
@@ -197,11 +199,13 @@ const createDeferredSpineLayout = (numberOfItems: number) => {
     completeItemLayout,
     destroy,
     dirtyFlags,
+    hookManager,
     itemLayoutsStarted,
     items: spineItemsManager.items,
     layOutSpine,
     lefts,
     spineLayout,
+    viewport,
     widths,
   }
 }
@@ -464,10 +468,11 @@ describe("SpineLayout", () => {
     }
   })
 
-  it("lays out no other item once an item's hook cancels the pass", () => {
-    const { destroy, hookManager, spineLayout } = createTestSpineLayout({
-      items: 4,
-    })
+  it("lays out no other item once an item's hook cancels the pass, and leaves that item dirty", () => {
+    const { destroy, hookManager, spineItemsManager, spineLayout } =
+      createTestSpineLayout({
+        items: 4,
+      })
     const itemsLaidOut: number[] = []
     let itemsLaidOutWhenCancelled: number[] | undefined
 
@@ -486,6 +491,10 @@ describe("SpineLayout", () => {
 
       expect(itemsLaidOutWhenCancelled).toEqual([0, 1])
       expect(itemsLaidOut).toEqual(itemsLaidOutWhenCancelled)
+      expect(
+        spineItemsManager.items.map((item) => item.value.isDirty),
+        "the dirty items",
+      ).toEqual([true, true, true, true])
     } finally {
       destroy()
     }
@@ -517,7 +526,9 @@ describe("SpineLayout", () => {
 
         if (!firstItem) throw new Error("the spine has no item")
 
-        vi.spyOn(firstItem.renderer, "layout").mockReturnValue(firstItemLayout)
+        vi.spyOn(firstItem.renderer, "onLayout").mockReturnValue(
+          firstItemLayout,
+        )
       }
 
       try {
@@ -539,6 +550,51 @@ describe("SpineLayout", () => {
       }
     },
   )
+
+  it("stops the layout of an item when a newer request cancels its pass, and leaves the item dirty until the newer pass lays it out", async () => {
+    const {
+      completeItemLayout,
+      destroy,
+      dirtyFlags,
+      hookManager,
+      itemLayoutsStarted,
+      spineLayout,
+      widths,
+    } = createDeferredSpineLayout(3)
+    const itemsLaidOut: number[] = []
+
+    hookManager.register("item.onAfterLayout", ({ item }) => {
+      itemsLaidOut.push(item.index)
+    })
+
+    try {
+      spineLayout.layout({ immediate: true })
+      // Waits before its pass, so the first item's layout ends in between.
+      spineLayout.layout()
+      completeItemLayout(0, { height: 100, width: 100 })
+
+      expect(itemsLaidOut, "the items laid out").toEqual([])
+      expect(dirtyFlags(), "the dirty items").toEqual([true, true, true])
+
+      await vi.waitFor(() => {
+        expect(itemLayoutsStarted()[0], "the layouts of the first item").toBe(2)
+      })
+
+      const passDone = firstValueFrom(spineLayout.layout$)
+
+      for (const itemIndex of [0, 1, 2]) {
+        completeItemLayout(itemIndex, { height: 100, width: 200 })
+      }
+
+      await passDone
+
+      expect(itemsLaidOut, "the items laid out").toEqual([0, 1, 2])
+      expect(dirtyFlags(), "the dirty items").toEqual([false, false, false])
+      expect(widths()).toEqual([200, 200, 200])
+    } finally {
+      destroy()
+    }
+  })
 
   it("keeps RTL right-left spread pairs together after an odd number of pages", async () => {
     const { destroy, layoutRequests, spineLayout } =
