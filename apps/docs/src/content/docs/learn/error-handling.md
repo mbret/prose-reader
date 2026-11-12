@@ -54,3 +54,17 @@ config.onUnhandledError = (error) => {
 
 The handler also receives the errors that no subscriber in your app handles.
 
+An enhancer of your own that goes on past an error can report it the same way, with `reportRecoveredError` from `@prose-reader/core`, so that your app receives it with the reader's:
+
+```typescript
+import { reportRecoveredError } from "@prose-reader/core"
+import { catchError, EMPTY } from "rxjs"
+
+const highlightsOrNone$ = highlights$.pipe(
+  catchError((error) => {
+    reportRecoveredError(error)
+
+    return EMPTY
+  }),
+)
+```
