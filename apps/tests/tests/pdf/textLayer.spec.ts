@@ -1,5 +1,6 @@
-import { expect, test } from "@playwright/test"
+import { expect } from "@playwright/test"
 import { locateSpineItems, waitForSpineItemReady } from "../utils"
+import { test } from "../utils/test"
 
 test("should render text layer correctly", async ({ page }) => {
   await page.setViewportSize({

@@ -1,5 +1,6 @@
-import { expect, test } from "@playwright/test"
+import { expect } from "@playwright/test"
 import { waitForSettled } from "../../utils/pagination"
+import { test } from "../../utils/test"
 
 /**
  * A touch pans only as far as `touch-action` allows, read from the touched

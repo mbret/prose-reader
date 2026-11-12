@@ -1,4 +1,4 @@
-import { expect, test } from "@playwright/test"
+import { expect } from "@playwright/test"
 import {
   locateSpineItemFrame,
   navigateToSpineItem,
@@ -6,6 +6,7 @@ import {
 } from "../utils"
 import { waitForSettled } from "../utils/pagination"
 import { getReader } from "../utils/reader"
+import { test } from "../utils/test"
 
 /**
  * `pageNum-10.xhtml`, whose page is an SVG `<image>` referencing its picture,

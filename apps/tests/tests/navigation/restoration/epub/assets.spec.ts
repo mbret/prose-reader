@@ -1,7 +1,8 @@
-import { expect, test } from "@playwright/test"
+import { expect } from "@playwright/test"
 import { navigateToSpineItem, waitForSpineItemReady } from "../../../utils"
 import { waitForSettled } from "../../../utils/pagination"
 import { getReader } from "../../../utils/reader"
+import { test } from "../../../utils/test"
 
 /**
  * `ch03s03.xhtml` links PLS pronunciation lexicons, which a browser never

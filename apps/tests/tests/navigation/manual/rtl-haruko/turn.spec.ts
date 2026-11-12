@@ -1,9 +1,9 @@
-import { test } from "@playwright/test"
 import {
   expectSpineItemsInViewport,
   turnLeft,
   waitForSpineItemReady,
 } from "../../../utils"
+import { test } from "../../../utils/test"
 
 const parameters = [
   ["odd", { width: 323, height: 671 }],

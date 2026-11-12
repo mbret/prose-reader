@@ -1,4 +1,4 @@
-import { expect, test } from "@playwright/test"
+import { expect } from "@playwright/test"
 import {
   getLongChapterIndex,
   getNumberOfPagesOfSpineItem,
@@ -10,6 +10,7 @@ import {
   waitForSettledOnCurrentLayout,
 } from "../../../utils/pagination"
 import { expectEveryFrameToShowStartOfSpineItemWhile } from "../../../utils/spineItems"
+import { test } from "../../../utils/test"
 
 test.describe("Given a book whose pages turn, at the start of a chapter that follows chapters of several pages", () => {
   test.describe("When a larger font gives the chapters before it more pages", () => {

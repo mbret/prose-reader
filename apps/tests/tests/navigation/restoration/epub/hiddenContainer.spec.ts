@@ -1,10 +1,11 @@
-import { expect, type Page, test } from "@playwright/test"
+import { expect, type Page } from "@playwright/test"
 import type { ReadingPosition } from "@prose-reader/core"
 import {
   waitForSettled,
   waitForSettledOnCurrentLayout,
 } from "../../../utils/pagination"
 import { getReader } from "../../../utils/reader"
+import { test } from "../../../utils/test"
 
 const url = "http://localhost:3333/tests/navigation/restoration/epub/index.html"
 
@@ -27,16 +28,6 @@ type ScenarioWindow = {
   recordedSinceHiding: RecordedSinceHiding
 }
 
-const collectPageErrors = (page: Page) => {
-  const pageErrors: Error[] = []
-
-  page.on("pageerror", (error) => {
-    pageErrors.push(error)
-  })
-
-  return pageErrors
-}
-
 const openChapter = async (page: Page) => {
   await page.setViewportSize({ width: 536, height: 842 })
   await page.goto(
@@ -56,7 +47,6 @@ test.describe("Given a reader on a page after the first of its chapter", () => {
     test("should keep that page, and lay out only at a size", async ({
       page,
     }) => {
-      const pageErrors = collectPageErrors(page)
       const reader = await openChapter(page)
 
       await reader.evaluate((reader) => {
@@ -164,7 +154,6 @@ test.describe("Given a reader on a page after the first of its chapter", () => {
       expect(afterShowing.readingPosition?.cfi).toBe(
         beforeHiding.readingPosition?.cfi,
       )
-      expect(pageErrors).toEqual([])
     })
   })
 })
@@ -178,7 +167,6 @@ test.describe("Given a reader on the first page of a chapter it has loaded", () 
     test("should land on the cfi's page, and report it as the reading position", async ({
       page,
     }) => {
-      const pageErrors = collectPageErrors(page)
       const reader = await openChapter(page)
 
       // The cfi of a page after the first, found while the reader is shown.
@@ -257,7 +245,6 @@ test.describe("Given a reader on the first page of a chapter it has loaded", () 
 
       expect(shown.page).toBe(target.page)
       expect(shown.readingPosition?.cfi).toBe(targetCfi)
-      expect(pageErrors).toEqual([])
     })
   })
 })

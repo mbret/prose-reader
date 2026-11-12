@@ -1,10 +1,11 @@
-import { expect, test } from "@playwright/test"
+import { expect } from "@playwright/test"
 import { expectSpineItemsInViewport, goToNextSpineItem } from "../../utils"
 import {
   goToKoreaderProgress,
   readKoreaderReadingPosition,
 } from "../../utils/koreader"
 import { waitForSettled } from "../../utils/pagination"
+import { test } from "../../utils/test"
 
 /**
  * A KOReader sync client on a PDF pushes and pulls the 1-based page number,

@@ -1,4 +1,3 @@
-import { test } from "@playwright/test"
 import type { SpinePosition } from "@prose-reader/core"
 import {
   expectSpineItemsInViewport,
@@ -6,6 +5,7 @@ import {
   waitForSpineItemReady,
 } from "../../../utils"
 import { getReader } from "../../../utils/reader"
+import { test } from "../../../utils/test"
 
 test.describe(`Given vertical controlled book`, () => {
   test.describe("When the user turns bottom", () => {

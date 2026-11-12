@@ -1,10 +1,11 @@
-import { expect, type Page, test } from "@playwright/test"
+import { expect, type Page } from "@playwright/test"
 import {
   locateSpineItems,
   navigateToSpineItem,
   updateSettings,
 } from "../../utils"
 import { waitForSettled } from "../../utils/pagination"
+import { test } from "../../utils/test"
 
 /**
  * The book is a pre-paginated manga, which shows a spread in landscape and
