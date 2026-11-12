@@ -65,28 +65,38 @@ export const PAGE_VISIBILITY_THRESHOLD: { type: "percentage"; value: number } =
     value: 0.5,
   }
 
-// Chunk heavy first-visible-node lookups to keep frame time predictable.
-const FIRST_VISIBLE_NODE_PAGES_PER_FRAME = 10
+/**
+ * Chunk heavy first-visible-node lookups to keep frame time predictable. Only
+ * a page with a loaded document has one to look up, and counts.
+ */
+const FIRST_VISIBLE_NODE_LOOKUPS_PER_FRAME = 10
 
+/**
+ * The page with its first visible node, and whether finding it searched a
+ * document: a page whose item has no loaded document has no node to find.
+ */
 const resolveFirstVisibleNodeForPage = (
   page: UnresolvedPageEntry,
-): PageEntry => {
+): { resolvedPage: PageEntry; hasSearchedDocument: boolean } => {
   const { spineItem, ...rest } = page
   const loadedDocument = spineItem.loadedDocument
 
   if (!loadedDocument || loadedDocument.body === null) {
     return {
-      ...rest,
-      firstVisibleNode: undefined,
+      resolvedPage: { ...rest, firstVisibleNode: undefined },
+      hasSearchedDocument: false,
     }
   }
 
   return {
-    ...rest,
-    firstVisibleNode: getFirstVisibleNodeForPositionRelativeTo(
-      loadedDocument,
-      page.layout,
-    ),
+    resolvedPage: {
+      ...rest,
+      firstVisibleNode: getFirstVisibleNodeForPositionRelativeTo(
+        loadedDocument,
+        page.layout,
+      ),
+    },
+    hasSearchedDocument: true,
   }
 }
 
@@ -115,11 +125,11 @@ const resolvePagesFirstVisibleNodeInFrames$ = (
     const processChunk = () => {
       frameRequestId = undefined
 
-      let processedCount = 0
+      let lookupCount = 0
 
       while (
         nextPageIndex < pages.length &&
-        processedCount < FIRST_VISIBLE_NODE_PAGES_PER_FRAME
+        lookupCount < FIRST_VISIBLE_NODE_LOOKUPS_PER_FRAME
       ) {
         const page = pages[nextPageIndex]
 
@@ -128,9 +138,13 @@ const resolvePagesFirstVisibleNodeInFrames$ = (
           break
         }
 
-        resolvedPages[nextPageIndex] = resolveFirstVisibleNodeForPage(page)
+        const { resolvedPage, hasSearchedDocument } =
+          resolveFirstVisibleNodeForPage(page)
+
+        resolvedPages[nextPageIndex] = resolvedPage
         nextPageIndex += 1
-        processedCount += 1
+
+        if (hasSearchedDocument) lookupCount += 1
       }
 
       if (nextPageIndex >= pages.length) {
