@@ -840,6 +840,57 @@ describe("SpineLayout", () => {
       },
     )
 
+    it.each(["item.onBeforeLayout", "item.onAfterLayout"] as const)(
+      "lays it out at its size, and runs the hooks after it, when its %s hook throws",
+      async (hookName) => {
+        const unhandledErrors = recordUnhandledErrors()
+        const {
+          completeItemLayout,
+          destroy,
+          hookManager,
+          itemLayoutsStarted,
+          spineLayout,
+          widths,
+        } = createDeferredSpineLayout(3)
+        const itemsOfTheNextHook: number[] = []
+
+        hookManager.register(hookName, ({ item }) => {
+          if (item.index === 1) throw failure
+        })
+        hookManager.register(hookName, ({ item }) => {
+          itemsOfTheNextHook.push(item.index)
+        })
+
+        try {
+          const passDone = firstValueFrom(spineLayout.layout$)
+
+          spineLayout.layout({ immediate: true })
+
+          for (const itemIndex of [0, 1, 2]) {
+            expect(
+              itemLayoutsStarted()[itemIndex],
+              `the layouts of item ${itemIndex}`,
+            ).toBe(1)
+
+            completeItemLayout(itemIndex, { height: 100, width: 300 })
+          }
+
+          await passDone
+
+          expect(widths()).toEqual([300, 300, 300])
+          expect(itemsOfTheNextHook, "the items of the next hook").toEqual([
+            0, 1, 2,
+          ])
+
+          await waitFor(0)
+
+          expect(unhandledErrors).toEqual([failure])
+        } finally {
+          destroy()
+        }
+      },
+    )
+
     it("gives it its minimum width, a whole spread, when its renderer fails in a spread", async () => {
       const unhandledErrors = recordUnhandledErrors()
       const { destroy, spineItemsManager, spineLayout } = createTestSpineLayout(
@@ -1100,6 +1151,32 @@ describe("SpineLayout", () => {
       expect(itemsLaidOut, "the items laid out").toEqual([0, 1, 2])
       expect(dirtyFlags(), "the dirty items").toEqual([false, false, false])
       expect(widths()).toEqual([200, 200, 200])
+    } finally {
+      destroy()
+    }
+  })
+
+  it("gives the last item of a pre-paginated book a blank page after it, when it starts a spread alone", async () => {
+    const { destroy, layoutRequests, spineLayout } =
+      createSpreadModeTestEnvironment({
+        pageHeight: 100,
+        pageWidth: 100,
+        readingDirection: "ltr",
+        items: [undefined, undefined, undefined],
+      })
+
+    try {
+      const layoutDone = firstValueFrom(spineLayout.layout$)
+
+      spineLayout.layout({ immediate: true })
+      await layoutDone
+
+      expect(layoutRequests.find(({ id }) => id === "item-2")).toEqual({
+        blankPagePosition: "after",
+        id: "item-2",
+        minimumWidth: 200,
+      })
+      expect(spineLayout.getSpineItemSpineLayoutInfo(2).width).toBe(200)
     } finally {
       destroy()
     }

@@ -7,7 +7,6 @@ import {
 import { catchError, defer, map, type Observable, of, Subject, tap } from "rxjs"
 import type { Context } from "../context/Context"
 import type { HookManager } from "../hooks/HookManager"
-import { isFullyPrePaginated } from "../manifest/isFullyPrePaginated"
 import { reportRecoveredError } from "../report"
 import type { ReaderSettingsManager } from "../settings/ReaderSettingsManager"
 import { DestroyableClass } from "../utils/DestroyableClass"
@@ -98,10 +97,9 @@ export class SpineItemLayout extends DestroyableClass {
     let blankPagePosition: `none` | `before` | `after` = `none`
     const isScreenStartItem =
       horizontalOffset % this.viewport.absoluteViewport.width === 0
-    const manifest = this.context.manifest
-    const isGloballyPrePaginated = isFullyPrePaginated(manifest)
-
     if (this.viewport.value.isSpread) {
+      const isGloballyPrePaginated = this.context.value.isFullyPrePaginated
+
       /**
        * for now every reflowable content that has reflow siblings takes the entire screen by default
        * this simplify many things and I am not sure the specs allow one reflow
@@ -282,7 +280,8 @@ export class SpineItemLayout extends DestroyableClass {
   /**
    * Lays the item out once per subscription. Without a subscriber, nothing
    * happens. If the pass is cancelled, the layout stops, and the item stays
-   * dirty as `SpineItem.layout` marked it.
+   * dirty as `SpineItem.layout` marked it. A hook of the layout that throws is
+   * reported, and the layout goes on without it.
    */
   public layout = (params: SpineItemLayoutParams) =>
     defer(() => {
@@ -296,7 +295,7 @@ export class SpineItemLayout extends DestroyableClass {
       )
       const hookParams = { blankPagePosition, item: this.item, minimumWidth }
 
-      this.hookManager.execute(`item.onBeforeLayout`, hookParams)
+      this.hookManager.executeIsolated(`item.onBeforeLayout`, hookParams)
 
       return this.renderer
         .layout({
@@ -308,7 +307,7 @@ export class SpineItemLayout extends DestroyableClass {
         .pipe(
           this.updateContainerLayout({ minimumWidth, params }),
           tap(() => {
-            this.hookManager.execute(`item.onAfterLayout`, hookParams)
+            this.hookManager.executeIsolated(`item.onAfterLayout`, hookParams)
           }),
         )
     }).pipe(
