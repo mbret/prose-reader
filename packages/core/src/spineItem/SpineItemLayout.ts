@@ -18,7 +18,7 @@ import {
 import type { Viewport } from "../viewport/Viewport"
 import type { DocumentRenderer } from "./renderer/DocumentRenderer"
 
-type SpineItemLayoutParams = {
+export type SpineItemLayoutParams = {
   spreadPosition: SpreadPosition
   horizontalOffset: number
   isLastItem: boolean
@@ -34,13 +34,14 @@ export class SpineItemLayout extends DestroyableClass {
 
   /**
    * The size that the last layout gave the item's container, with the page
-   * size it was laid out for. It is the item's size: only that layout writes
-   * the container's width and height.
+   * size and the parameters it was laid out with. It is the item's size and
+   * place: only that layout writes the container's size and position.
    */
   private lastLayout: {
     width: number
     height: number
     pageSize: { width: number; height: number }
+    params: SpineItemLayoutParams
   } | null = null
 
   public readonly didLayout$ = this.didLayoutSubject.asObservable()
@@ -191,12 +192,10 @@ export class SpineItemLayout extends DestroyableClass {
   private updateContainerLayout =
     ({
       minimumWidth,
-      edgeX,
-      edgeY,
+      params,
     }: {
       minimumWidth: number
-      edgeX: number
-      edgeY: number
+      params: SpineItemLayoutParams
     }) =>
     (stream: Observable<{ width: number; height: number } | undefined>) =>
       stream.pipe(
@@ -232,7 +231,10 @@ export class SpineItemLayout extends DestroyableClass {
             width: safeWidth,
             height: safeHeight,
             pageSize: this.viewport.pageSize,
+            params,
           }
+
+          const { edgeX, edgeY } = params
 
           setStylePropertyIfChanged(
             this.containerElement.style,
@@ -272,14 +274,9 @@ export class SpineItemLayout extends DestroyableClass {
    * happens. If the pass is cancelled, the layout stops and the item stays
    * dirty.
    */
-  public layout = ({
-    spreadPosition,
-    horizontalOffset,
-    isLastItem,
-    edgeX,
-    edgeY,
-  }: SpineItemLayoutParams) =>
+  public layout = (params: SpineItemLayoutParams) =>
     defer(() => {
+      const { spreadPosition, horizontalOffset, isLastItem } = params
       const { blankPagePosition, minimumWidth } = this.computeLayoutInformation(
         {
           horizontalOffset,
@@ -299,7 +296,7 @@ export class SpineItemLayout extends DestroyableClass {
           spreadPosition,
         })
         .pipe(
-          this.updateContainerLayout({ minimumWidth, edgeX, edgeY }),
+          this.updateContainerLayout({ minimumWidth, params }),
           tap(() => {
             this.hookManager.execute(`item.onAfterLayout`, hookParams)
           }),
@@ -316,8 +313,7 @@ export class SpineItemLayout extends DestroyableClass {
         return of(undefined).pipe(
           this.updateContainerLayout({
             minimumWidth: this.viewport.pageSize.width,
-            edgeX,
-            edgeY,
+            params,
           }),
         )
       }),
@@ -333,6 +329,14 @@ export class SpineItemLayout extends DestroyableClass {
 
     super.destroy()
   }
+
+  /**
+   * Whether the last layout of the item was given these parameters, so that
+   * its container already holds the size and position a layout with them
+   * would give it, as long as nothing else changed the item since.
+   */
+  public isLaidOutWith = (params: SpineItemLayoutParams) =>
+    isShallowEqual(this.lastLayout?.params, params)
 
   /** The size of the item, or 0 by 0 before its first layout. */
   get layoutInfo() {

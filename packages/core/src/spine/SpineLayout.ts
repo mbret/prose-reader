@@ -24,6 +24,7 @@ import { reportRecoveredError } from "../report"
 import type { ReaderSettingsManager } from "../settings/ReaderSettingsManager"
 import type { DocumentLoadStatus } from "../spineItem/renderer/DocumentRenderer"
 import type { SpineItem } from "../spineItem/SpineItem"
+import type { SpineItemLayoutParams } from "../spineItem/SpineItemLayout"
 import { DestroyableClass } from "../utils/DestroyableClass"
 import { runWhileSized } from "../viewport/runWhileSized"
 import type { Viewport } from "../viewport/Viewport"
@@ -63,8 +64,11 @@ type SpineLayoutRequest = {
   options: SpineLayoutOptions
   /** Whether the viewport is measured first, as for a layout of the reader. */
   measuresViewport: boolean
-  /** The first item the request can change. */
-  firstAffectedItemIndex: number
+  /**
+   * The items the request changes, which a pass lays out wherever they are,
+   * in spine order. The items after them are laid out only if they move.
+   */
+  changedItems: readonly SpineItem[]
 }
 
 type SpineItemEndOffset = { horizontalOffset: number; verticalOffset: number }
@@ -194,28 +198,27 @@ export class SpineLayout extends DestroyableClass {
       observeOn(asapScheduler),
       map(({ item }) => ({
         options: { immediate: false } satisfies SpineLayoutOptions,
-        firstAffectedItemIndex: item.index,
+        changedItems: [item],
       })),
     )
 
     /**
      * A layout requested through `layout()` is a layout of the reader, whose
-     * viewport may have changed; one started because an item's load ended is
-     * not.
+     * viewport and settings may have changed, and which changes every item.
+     * One started because an item's load ended changes that item only.
      *
-     * Each request carries the first item it can change. An item's place only
-     * depends on the items before it, whatever the reading direction, so a
-     * layout started by an item's load ending lays out that item and the ones
-     * after it, and leaves the ones before it as the last completed pass laid
-     * them out: no hook, no renderer layout, no dirty flag. One of the reader
-     * lays them all out.
+     * An item's place only depends on the items before it, whatever the
+     * reading direction, so a layout started by an item's load ending leaves
+     * the ones before it as the last completed pass laid them out: no hook,
+     * no renderer layout, no dirty flag. The ones after it are laid out again
+     * only if it moves them, see `layOutItem`.
      */
     const request$: Observable<SpineLayoutRequest> = merge(
       this.externalLayoutTrigger.pipe(
         map((options) => ({
           options,
           measuresViewport: true,
-          firstAffectedItemIndex: 0,
+          changedItems: this.spineItemsManager.items,
         })),
       ),
       spineItemNeedsLayout$.pipe(
@@ -251,8 +254,10 @@ export class SpineLayout extends DestroyableClass {
    */
   private runLayoutPass(
     previousState: SpineLayoutState,
-    { options, measuresViewport, firstAffectedItemIndex }: SpineLayoutRequest,
+    { options, measuresViewport, changedItems }: SpineLayoutRequest,
   ): Observable<SpineLayoutState> {
+    const firstAffectedItemIndex = changedItems[0]?.index ?? 0
+
     /**
      * A request whose pass this one cancels still counts: that pass may not
      * have laid out the items it affects.
@@ -323,12 +328,6 @@ export class SpineLayout extends DestroyableClass {
     const pass$: Observable<SpineLayoutState> = defer(() => {
       if (measuresViewport) this.viewport.layout()
 
-      this.spineItemsManager.items
-        .slice(firstItemIndexAwaitingLayout)
-        .forEach((item) => {
-          item.markDirty()
-        })
-
       return wait$
     }).pipe(
       /**
@@ -354,7 +353,20 @@ export class SpineLayout extends DestroyableClass {
       firstItemIndexAwaitingLayout,
     }
 
-    return layOutWhileSized().pipe(
+    /**
+     * The items the request changes are dirty from the request on, whether the
+     * viewport has a size or not. A newer request that cancels this one before
+     * its pass lays them out finds them dirty, and its pass lays them out.
+     */
+    const markChangedItemsDirtyThenLayOut$ = defer(() => {
+      changedItems.forEach((item) => {
+        item.markDirty()
+      })
+
+      return layOutWhileSized()
+    })
+
+    return markChangedItemsDirtyThenLayOut$.pipe(
       startWith(requestedState),
       /**
        * A pass that fails goes back to the requested state, as a newer
@@ -498,34 +510,60 @@ export class SpineLayout extends DestroyableClass {
       this.viewport.absoluteViewport.height,
     )
 
-    // we trigger an item layout which will update the visual and return
-    // us with the item new eventual layout information.
-    // This step is not yet about moving item or adjusting position.
-    return item
-      .layout({
-        spreadPosition,
-        horizontalOffset,
-        isLastItem,
+    const params: SpineItemLayoutParams = {
+      spreadPosition,
+      horizontalOffset,
+      isLastItem,
+      edgeX,
+      edgeY,
+    }
+    const toLaidOutSpineItem = ({
+      width,
+      height,
+    }: {
+      width: number
+      height: number
+    }): LaidOutSpineItem => ({
+      layout: this.createSpineItemLayout(
+        isVertical,
+        isRTL,
         edgeX,
         edgeY,
-      })
-      .pipe(
-        map(({ width, height }) => ({
-          layout: this.createSpineItemLayout(
-            isVertical,
-            isRTL,
-            edgeX,
-            edgeY,
-            width,
-            height,
-            this.viewport.absoluteViewport.width,
-          ),
-          endOffset: {
-            horizontalOffset: edgeX + width,
-            verticalOffset: isVertical ? edgeY + height : 0,
-          },
-        })),
-      )
+        width,
+        height,
+        this.viewport.absoluteViewport.width,
+      ),
+      endOffset: {
+        horizontalOffset: edgeX + width,
+        verticalOffset: isVertical ? edgeY + height : 0,
+      },
+    })
+
+    /**
+     * An item no request changed, whose last layout had the parameters this
+     * one would have, is already where and what this layout would make it:
+     * its document, the viewport and the settings are the ones it was laid
+     * out with, since a change of any of them marks it dirty. It keeps that
+     * layout. A pre-paginated item keeps its size when its document loads, so
+     * the items after it keep their layouts too.
+     *
+     * Its last layout is compared rather than the last completed pass's: a
+     * pass that is cancelled, or stopped because the viewport lost its size,
+     * may have moved it since.
+     */
+    if (!item.value.isDirty && item.isLaidOutWith(params)) {
+      return of(toLaidOutSpineItem(item.layoutInfo))
+    }
+
+    /**
+     * An item that moves awaits its layout from here, as one a request
+     * changed does from the request.
+     */
+    item.markDirty()
+
+    // we trigger an item layout which will update the visual and return
+    // us with the item new eventual layout information.
+    return item.layout(params).pipe(map(toLaidOutSpineItem))
   }
 
   /** Requests a layout of the reader: the viewport is measured, then the spine laid out. */

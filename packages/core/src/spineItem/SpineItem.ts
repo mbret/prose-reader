@@ -253,6 +253,10 @@ export class SpineItem extends ReactiveEntity<SpineItemState> {
   public layout: SpineItemLayout["layout"] = (params) => {
     return this._layout.layout(params)
   }
+
+  /** {@link SpineItemLayout.isLaidOutWith} */
+  public isLaidOutWith: SpineItemLayout["isLaidOutWith"] = (params) =>
+    this._layout.isLaidOutWith(params)
 }
 
 const createContainerElement = (
