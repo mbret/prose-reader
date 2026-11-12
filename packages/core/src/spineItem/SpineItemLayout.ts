@@ -18,11 +18,21 @@ import {
 import type { Viewport } from "../viewport/Viewport"
 import type { DocumentRenderer } from "./renderer/DocumentRenderer"
 
+/** Where the spine lays an item out, which `SpineItem.layout` takes. */
 export type SpineItemLayoutParams = {
+  /** The side of the spread the item starts on, or `none` without spreads. */
   spreadPosition: SpreadPosition
+  /** Where the item before it ends along the spine, horizontally. */
   horizontalOffset: number
+  /** Whether it is the last item of the spine. */
   isLastItem: boolean
+  /**
+   * Where the item starts: from the left, or from the right in a
+   * right-to-left book. In a vertical spine, `0` for an item that starts a
+   * screen.
+   */
   edgeX: number
+  /** Where the item starts from the top. */
   edgeY: number
 }
 
@@ -34,8 +44,8 @@ export class SpineItemLayout extends DestroyableClass {
 
   /**
    * The size that the last layout gave the item's container, with the page
-   * size and the parameters it was laid out with. It is the item's size and
-   * place: only that layout writes the container's size and position.
+   * size and the parameters it was laid out with. Only that layout writes the
+   * container's size and position.
    */
   private lastLayout: {
     width: number
@@ -271,8 +281,8 @@ export class SpineItemLayout extends DestroyableClass {
 
   /**
    * Lays the item out once per subscription. Without a subscriber, nothing
-   * happens. If the pass is cancelled, the layout stops and the item stays
-   * dirty.
+   * happens. If the pass is cancelled, the layout stops, and the item stays
+   * dirty as `SpineItem.layout` marked it.
    */
   public layout = (params: SpineItemLayoutParams) =>
     defer(() => {
@@ -331,12 +341,13 @@ export class SpineItemLayout extends DestroyableClass {
   }
 
   /**
-   * Whether the last layout of the item was given these parameters, so that
-   * its container already holds the size and position a layout with them
-   * would give it, as long as nothing else changed the item since.
+   * Whether the last layout of the item was given these parameters, at the
+   * page size the viewport has now. Its container then holds what a layout
+   * with them would give it, unless its document changed since.
    */
   public isLaidOutWith = (params: SpineItemLayoutParams) =>
-    isShallowEqual(this.lastLayout?.params, params)
+    isShallowEqual(this.lastLayout?.params, params) &&
+    isShallowEqual(this.lastLayout?.pageSize, this.viewport.pageSize)
 
   /** The size of the item, or 0 by 0 before its first layout. */
   get layoutInfo() {
