@@ -16,7 +16,12 @@ export class HookManager<H extends Hook<any, any, any> = CoreHook> {
   _hooks: Array<H> = []
   _hookExecutions: Array<HookExecution<H>> = []
 
-  private getHooks<Name extends H["name"]>(name: Name) {
+  /**
+   * The hooks registered under `name`, in the order they were registered.
+   * For an enhancer that runs them with its own policy, such as asking each
+   * one apart so that one that throws does not keep the others from running.
+   */
+  public getHooks<Name extends H["name"]>(name: Name) {
     return this._hooks.filter(
       (hook): hook is HookFrom<H, Name> => name === hook.name,
     )
