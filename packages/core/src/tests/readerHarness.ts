@@ -190,7 +190,7 @@ export class TextDocumentRenderer extends DocumentRenderer {
 
   onUnload() {}
 
-  onLayout() {
+  onLayout(): ReturnType<DocumentRenderer["onLayout"]> {
     return of(undefined)
   }
 
@@ -280,6 +280,121 @@ export const holdItemLayout = (href: string) => {
     hold: () => isHeld.next(true),
     release: () => isHeld.next(false),
     layoutsStarted: () => layoutsStarted,
+  }
+}
+
+/**
+ * A renderer that gives each item the size a test sets for it, a page's until
+ * then. jsdom lays nothing out, and the spine places its items by their
+ * sizes. A new size shows at the next layout, the way an item that loads
+ * takes its size.
+ */
+export const renderItemsOfSetSizes = () => {
+  const sizeOfItemIndex = new Map<number, { width?: number; height?: number }>()
+
+  class SetSizeRenderer extends DocumentRenderer {
+    onCreateDocument() {
+      return of(this.context.document.createElement("div"))
+    }
+
+    onLoadDocument() {
+      return EMPTY
+    }
+
+    onUnload() {}
+
+    onLayout() {
+      const { width, height } = sizeOfItemIndex.get(this.item.index) ?? {}
+
+      return of({
+        width: width ?? viewport.width,
+        height: height ?? viewport.height,
+      })
+    }
+
+    onRenderHeadless() {
+      return EMPTY
+    }
+
+    getDocumentFrame() {
+      return undefined
+    }
+  }
+
+  return {
+    getRenderer: () => (props: DocumentRendererParams) =>
+      new SetSizeRenderer(props),
+    setItemSize: (
+      spineItemIndex: number,
+      size: { width?: number; height?: number },
+    ) => {
+      sizeOfItemIndex.set(spineItemIndex, size)
+    },
+  }
+}
+
+/**
+ * Renders every item as a text document three pages wide, see
+ * {@link TextDocumentRenderer}, with its paragraph on the page a test sets,
+ * the first until then. jsdom measures nothing, so a node has no page there.
+ * The reader finds the new page the next time it measures the paragraph: a
+ * layout that moves the text of an item and keeps its size, as a font size
+ * that keeps the page count does.
+ *
+ * The documents are written left to right: the reader finds the page of a
+ * node only in an item it knows to be.
+ */
+export const renderTextDocumentsWithParagraphOnSetPage = () => {
+  const numberOfPagesOfTextDocument = 3
+  let pageIndexOfParagraph = 0
+
+  const getRectOfParagraph = () =>
+    new DOMRect(pageIndexOfParagraph * viewport.width, 0, 1, 1)
+
+  class ParagraphOnSetPageRenderer extends TextDocumentRenderer {
+    onLoadDocument() {
+      const loading = super.onLoadDocument()
+      const body = this.getDocumentFrame()?.contentDocument?.body
+
+      if (!body) throw new Error("the frame has no document")
+
+      /**
+       * The frame's ranges measure what its body does, and the body holds the
+       * paragraph alone.
+       */
+      body.getBoundingClientRect = getRectOfParagraph
+      body.getClientRects = () => {
+        const rect = getRectOfParagraph()
+
+        return {
+          length: 1,
+          item: (index: number) => (index === 0 ? rect : null),
+          0: rect,
+          [Symbol.iterator]: () => [rect][Symbol.iterator](),
+        }
+      }
+
+      return loading
+    }
+
+    onLayout() {
+      return of({
+        width: numberOfPagesOfTextDocument * viewport.width,
+        height: viewport.height,
+      })
+    }
+
+    get readingDirection(): "ltr" {
+      return "ltr"
+    }
+  }
+
+  return {
+    getRenderer: () => (props: DocumentRendererParams) =>
+      new ParagraphOnSetPageRenderer(props),
+    setPageIndexOfParagraph: (pageIndex: number) => {
+      pageIndexOfParagraph = pageIndex
+    },
   }
 }
 
