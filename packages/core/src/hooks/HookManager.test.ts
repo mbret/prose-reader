@@ -1,5 +1,6 @@
 import { firstValueFrom, Subject, takeUntil } from "rxjs"
 import { describe, expect, it } from "vitest"
+import { recordUnhandledErrors, waitFor } from "../tests/utils"
 import { HookManager } from "./HookManager"
 import type { AsyncHookParams } from "./types"
 
@@ -83,6 +84,30 @@ describe("HookManager", () => {
     resolveHook?.("A")
 
     await expect(result).resolves.toEqual(["A"])
+  })
+
+  it("runs the other hooks when one throws, as isolated hooks, and reports the error", async () => {
+    const unhandledErrors = recordUnhandledErrors()
+    const hookManager = new HookManager<TestHook>()
+    const failure = new Error("the hook failed")
+    const values: string[] = []
+
+    hookManager.register("value.event", () => {
+      throw failure
+    })
+    hookManager.register("value.event", ({ value }) => {
+      values.push(value)
+
+      return value
+    })
+
+    hookManager.executeIsolated("value.event", { value: "a" })
+
+    expect(values).toEqual(["a"])
+
+    await waitFor(0)
+
+    expect(unhandledErrors).toEqual([failure])
   })
 
   it("executes sequential hooks in registration order without lifecycle executions", () => {

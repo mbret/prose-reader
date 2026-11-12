@@ -270,7 +270,8 @@ export class SpineItemLayout extends DestroyableClass {
   /**
    * Lays the item out once per subscription. Without a subscriber, nothing
    * happens. If the pass is cancelled, the layout stops and the item stays
-   * dirty.
+   * dirty. A hook of the layout that throws is reported, and the layout goes
+   * on without it.
    */
   public layout = ({
     spreadPosition,
@@ -289,7 +290,7 @@ export class SpineItemLayout extends DestroyableClass {
       )
       const hookParams = { blankPagePosition, item: this.item, minimumWidth }
 
-      this.hookManager.execute(`item.onBeforeLayout`, hookParams)
+      this.hookManager.executeIsolated(`item.onBeforeLayout`, hookParams)
 
       return this.renderer
         .layout({
@@ -301,7 +302,7 @@ export class SpineItemLayout extends DestroyableClass {
         .pipe(
           this.updateContainerLayout({ minimumWidth, edgeX, edgeY }),
           tap(() => {
-            this.hookManager.execute(`item.onAfterLayout`, hookParams)
+            this.hookManager.executeIsolated(`item.onAfterLayout`, hookParams)
           }),
         )
     }).pipe(
