@@ -7,7 +7,6 @@ import {
 import { catchError, defer, map, type Observable, of, Subject, tap } from "rxjs"
 import type { Context } from "../context/Context"
 import type { HookManager } from "../hooks/HookManager"
-import { isFullyPrePaginated } from "../manifest/isFullyPrePaginated"
 import { reportRecoveredError } from "../report"
 import type { ReaderSettingsManager } from "../settings/ReaderSettingsManager"
 import { DestroyableClass } from "../utils/DestroyableClass"
@@ -87,10 +86,9 @@ export class SpineItemLayout extends DestroyableClass {
     let blankPagePosition: `none` | `before` | `after` = `none`
     const isScreenStartItem =
       horizontalOffset % this.viewport.absoluteViewport.width === 0
-    const manifest = this.context.manifest
-    const isGloballyPrePaginated = isFullyPrePaginated(manifest)
-
     if (this.viewport.value.isSpread) {
+      const isGloballyPrePaginated = this.context.value.isFullyPrePaginated
+
       /**
        * for now every reflowable content that has reflow siblings takes the entire screen by default
        * this simplify many things and I am not sure the specs allow one reflow

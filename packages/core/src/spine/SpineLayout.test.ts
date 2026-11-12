@@ -967,6 +967,32 @@ describe("SpineLayout", () => {
     }
   })
 
+  it("gives the last item of a pre-paginated book a blank page after it, when it starts a spread alone", async () => {
+    const { destroy, layoutRequests, spineLayout } =
+      createSpreadModeTestEnvironment({
+        pageHeight: 100,
+        pageWidth: 100,
+        readingDirection: "ltr",
+        items: [undefined, undefined, undefined],
+      })
+
+    try {
+      const layoutDone = firstValueFrom(spineLayout.layout$)
+
+      spineLayout.layout({ immediate: true })
+      await layoutDone
+
+      expect(layoutRequests.find(({ id }) => id === "item-2")).toEqual({
+        blankPagePosition: "after",
+        id: "item-2",
+        minimumWidth: 200,
+      })
+      expect(spineLayout.getSpineItemSpineLayoutInfo(2).width).toBe(200)
+    } finally {
+      destroy()
+    }
+  })
+
   it("keeps RTL right-left spread pairs together after an odd number of pages", async () => {
     const { destroy, layoutRequests, spineLayout } =
       createSpreadModeTestEnvironment({
