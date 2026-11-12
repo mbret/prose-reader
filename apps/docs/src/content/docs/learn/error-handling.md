@@ -42,7 +42,9 @@ In each case the items after it still get a place, and pagination settles.
 
 A layout of the spine can still fail outside the layout of its items, through a bug of the reader. It then publishes no pages, and the layout stays [requested](/core-api/spine#layout). The reader shows no new page and loads no item until a later request lays the spine out, such as a resize or a call to `reader.layout()`.
 
-The reader reports these errors as rxjs reports an error that no subscriber handles. It calls `config.onUnhandledError` from rxjs if you set it, or else throws the error in a `setTimeout`, so that the browser reports it as uncaught. rxjs is a peer dependency of prose-reader, so the `config` that your app imports is the one that the reader uses. Set it to send these errors to your error tracker:
+The [gestures enhancer](/enhancers/gestures#hooks) also recovers from a `beforeTapGesture` hook that errors, or throws as it is called: the tap goes on, and the gestures that follow are recognized as before.
+
+The reader, and the gestures enhancer, report these errors as rxjs reports an error that no subscriber handles. They call `config.onUnhandledError` from rxjs if you set it, or else throw the error in a `setTimeout`, so that the browser reports it as uncaught. rxjs is a peer dependency of prose-reader, so the `config` that your app imports is the one that they use. Set it to send these errors to your error tracker:
 
 ```typescript
 import { config } from "rxjs"
