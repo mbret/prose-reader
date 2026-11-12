@@ -216,10 +216,12 @@ describe("Given a viewport laid out in a box, asked what it shows of the spine",
 describe("Given a viewport whose element is hidden, then shown", () => {
   /**
    * A resize observer that reports only when the test says, as a browser does
-   * once it has laid the page out, and how many are observing.
+   * once it has laid the page out. It counts the observers that are
+   * observing, and the ones that ever started to.
    */
   const stubResizeObserver = () => {
     const callbacks = new Set<() => void>()
+    let numberOfObserversStarted = 0
 
     vi.stubGlobal(
       "ResizeObserver",
@@ -232,6 +234,7 @@ describe("Given a viewport whose element is hidden, then shown", () => {
         }
 
         observe() {
+          numberOfObserversStarted += 1
           callbacks.add(this.report)
         }
 
@@ -250,6 +253,7 @@ describe("Given a viewport whose element is hidden, then shown", () => {
         for (const report of [...callbacks]) report()
       },
       observing: () => callbacks.size,
+      numberOfObserversStarted: () => numberOfObserversStarted,
     }
   }
 
@@ -290,6 +294,42 @@ describe("Given a viewport whose element is hidden, then shown", () => {
     reportResize()
 
     expect(isSized).toEqual([true, false, true])
+  })
+
+  /**
+   * An observer started while the browser reports the size of the element is
+   * one the browser cannot report to in that frame, which it tells the page
+   * with an error. Subscribers come at any moment, so none may start one.
+   */
+  it("observes the element with one observer, whoever subscribes and when", () => {
+    const { reportResize, numberOfObserversStarted } = stubResizeObserver()
+    const context = new Context(createTestManifest())
+    const viewport = new Viewport(
+      context,
+      new ReaderSettingsManager({}, context),
+    )
+    const { element } = viewport.value
+    let size = { width: 100, height: 100 }
+
+    vi.spyOn(element, "clientWidth", "get").mockImplementation(() => size.width)
+    vi.spyOn(element, "clientHeight", "get").mockImplementation(
+      () => size.height,
+    )
+
+    const firstSubscription = viewport.isSized$.subscribe()
+
+    viewport.isSized$.subscribe().unsubscribe()
+    firstSubscription.unsubscribe()
+
+    // After every subscriber has left, a new one still gets the resizes.
+    const isSized: boolean[] = []
+
+    viewport.isSized$.subscribe((value) => isSized.push(value))
+    size = { width: 0, height: 0 }
+    reportResize()
+
+    expect(isSized).toEqual([true, false])
+    expect(numberOfObserversStarted()).toBe(1)
   })
 
   it("stops observing the element when the reader is destroyed", () => {

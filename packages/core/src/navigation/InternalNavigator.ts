@@ -321,9 +321,10 @@ export class InternalNavigator extends DestroyableClass {
     )
 
     /**
-     * Whether the viewport has a size, from one observer for the navigator's
-     * life: a pan navigates on every pointer move, and measuring the viewport
-     * each time would force a style and layout pass each time.
+     * Whether the viewport has a size, from one subscription for the
+     * navigator's life. A pan navigates on every pointer move, and a
+     * subscription for each navigation would measure the viewport each time,
+     * which forces a style and layout pass.
      */
     const isViewportSized$ = viewport.isSized$.pipe(
       shareReplay({ bufferSize: 1, refCount: false }),
