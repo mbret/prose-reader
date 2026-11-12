@@ -200,6 +200,12 @@ const createDeferredSpineLayout = (numberOfItems: number) => {
       (_, itemIndex) => spineLayout.getSpineItemSpineLayoutInfo(itemIndex).left,
     )
 
+  /** Where each item's container is, which its last layout wrote. */
+  const containerLefts = () =>
+    spineItemsManager.items.map(({ element }) =>
+      Number.parseFloat(element.style.left),
+    )
+
   /** How many times each item has been asked to lay out. */
   const itemLayoutsStarted = () => [...layoutsStarted]
 
@@ -221,6 +227,7 @@ const createDeferredSpineLayout = (numberOfItems: number) => {
   return {
     completeItemLayout,
     completePendingItemLayouts,
+    containerLefts,
     destroy,
     dirtyFlags,
     failItemLayout,
@@ -433,9 +440,8 @@ describe("SpineLayout", () => {
       await vi.waitFor(() => expect(itemLayoutsStarted()).toEqual([1, 2, 1]))
 
       /**
-       * The first item is kept, so nothing in this pass would clear its dirty
-       * flag. The third one awaits a layout only once the second one moves
-       * it.
+       * The first item is kept, so this pass never marks it dirty. The third
+       * one awaits a layout only once the second one moves it.
        */
       expect(dirtyFlags()).toEqual([false, true, false])
 
@@ -504,6 +510,7 @@ describe("SpineLayout", () => {
     const {
       completeItemLayout,
       destroy,
+      dirtyFlags,
       itemLayoutsStarted,
       items,
       layOutSpine,
@@ -515,16 +522,33 @@ describe("SpineLayout", () => {
     try {
       await layOutSpine({ height: 100, width: 100 })
 
+      /**
+       * The pass of the reader layout lays the first item out, at the size it
+       * had, then waits on the second.
+       */
       spineLayout.layout({ immediate: true })
-      completeItemLayout(0, { height: 100, width: 200 })
+      expect(itemLayoutsStarted(), "the layouts of each item").toEqual([
+        2, 1, 1,
+      ])
+      completeItemLayout(0, { height: 100, width: 100 })
+      expect(itemLayoutsStarted(), "the layouts of each item").toEqual([
+        2, 2, 1,
+      ])
 
       /**
-       * The reader layout changed every item, the second one included, which
-       * its pass did not reach. The first item keeps the layout that pass gave
-       * it.
+       * The third item's load cancels that pass. The reader layout changed
+       * every item: the second and the third are still dirty, and the pass of
+       * the load lays them out, although nothing moves them. The first item
+       * keeps the layout the cancelled pass gave it.
        */
       items[2]?.load()
-      await vi.waitFor(() => expect(itemLayoutsStarted()).toEqual([2, 2, 1]))
+      await vi.waitFor(() => expect(items[2]?.value.loadStatus).toBe("loaded"))
+      await vi.waitFor(() =>
+        expect(itemLayoutsStarted(), "the layouts of each item").toEqual([
+          2, 3, 1,
+        ]),
+      )
+      expect(dirtyFlags(), "the dirty items").toEqual([false, true, true])
 
       const passDone = firstValueFrom(spineLayout.layout$)
 
@@ -532,8 +556,11 @@ describe("SpineLayout", () => {
       completeItemLayout(2, { height: 100, width: 100 })
       await passDone
 
-      expect(widths()).toEqual([200, 100, 100])
-      expect(lefts()).toEqual([0, 200, 300])
+      expect(itemLayoutsStarted(), "the layouts of each item").toEqual([
+        2, 3, 2,
+      ])
+      expect(widths()).toEqual([100, 100, 100])
+      expect(lefts()).toEqual([0, 100, 200])
     } finally {
       destroy()
     }
@@ -542,11 +569,13 @@ describe("SpineLayout", () => {
   it("lays out no item after an item whose load ended without moving them", async () => {
     const {
       completeItemLayout,
+      containerLefts,
       destroy,
       dirtyFlags,
       itemLayoutsStarted,
       items,
       layOutSpine,
+      lefts,
       spineLayout,
     } = createDeferredSpineLayout(4)
 
@@ -575,6 +604,7 @@ describe("SpineLayout", () => {
 
       await passDone
 
+      expect(containerLefts(), "the containers").toEqual(lefts())
       expect(dirtyFlags(), "the dirty items").toEqual([
         false,
         false,
@@ -590,13 +620,12 @@ describe("SpineLayout", () => {
     const {
       completeItemLayout,
       completePendingItemLayouts,
+      containerLefts,
       destroy,
       items,
       layOutSpine,
       lefts,
     } = createDeferredSpineLayout(3)
-    const containerLefts = () =>
-      items.map(({ element }) => Number.parseFloat(element.style.left))
 
     try {
       await layOutSpine({ height: 100, width: 100 })

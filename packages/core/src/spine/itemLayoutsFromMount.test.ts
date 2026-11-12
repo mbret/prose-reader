@@ -11,7 +11,7 @@ import {
 installReaderTestEnvironment()
 
 describe("Given a reader of pre-paginated items, from mount to settled", () => {
-  it("lays out once every item whose load never started, and lays out again after its load every item that loaded", async () => {
+  it("lays out once every item whose load never started, and again after its load every item that loaded", async () => {
     const numberOfItems = 20
     const reader = createTestReader({
       manifest: createPrePaginatedManifest({
@@ -19,44 +19,51 @@ describe("Given a reader of pre-paginated items, from mount to settled", () => {
       }),
     })
     const layoutsOfItemIndex = Array.from({ length: numberOfItems }, () => 0)
-    const loadedItemIndexes = new Set<number>()
+    const itemIndexesWhoseLoadStarted = new Set<number>()
 
     reader.hookManager.register("item.onBeforeLayout", ({ item }) => {
       layoutsOfItemIndex[item.index] = (layoutsOfItemIndex[item.index] ?? 0) + 1
     })
     reader.spineItemsManager.items.forEach((item) => {
       item.watch("loadStatus").subscribe((loadStatus) => {
-        if (loadStatus !== "idle") loadedItemIndexes.add(item.index)
+        if (loadStatus !== "idle") itemIndexesWhoseLoadStarted.add(item.index)
       })
     })
 
     mountTestReader(reader)
     await settledOn(reader)
 
-    // Preconditions: some items loaded, and some did not.
-    expect(loadedItemIndexes.size, "the items that loaded").toBeGreaterThan(0)
-    expect(loadedItemIndexes.size, "the items that loaded").toBeLessThan(
-      numberOfItems,
-    )
+    const itemIndexesNeverLoaded = layoutsOfItemIndex
+      .map((_, index) => index)
+      .filter((index) => !itemIndexesWhoseLoadStarted.has(index))
+
+    /**
+     * Precondition: an item whose load never started comes after one whose
+     * load did, so a layout of the items after that one would reach it.
+     */
+    expect(
+      Math.max(...itemIndexesNeverLoaded),
+      "the last item whose load never started",
+    ).toBeGreaterThan(Math.min(...itemIndexesWhoseLoadStarted))
 
     /**
      * A load changes its item only: the items after it are where the layout
      * of the reader put them, so nothing lays them out again.
      */
-    const layoutsOfItemsNeverLoaded = layoutsOfItemIndex
-      .map((layouts, index) => ({ index, layouts }))
-      .filter(({ index }) => !loadedItemIndexes.has(index))
-
     expect(
-      layoutsOfItemsNeverLoaded.filter(({ layouts }) => layouts !== 1),
-      "the items never loaded, laid out other than once",
+      itemIndexesNeverLoaded
+        .map((index) => ({ index, layouts: layoutsOfItemIndex[index] }))
+        .filter(({ layouts }) => layouts !== 1),
+      "the items whose load never started, laid out other than once",
     ).toEqual([])
 
+    // A loaded item is ready only once a layout follows its load.
     expect(
-      [...loadedItemIndexes].filter(
-        (index) => !reader.spineItemsManager.get(index)?.value.isReady,
-      ),
-      "the items loaded, not laid out since",
+      reader.spineItemsManager.items
+        .filter(({ value }) => value.loadStatus === "loaded")
+        .filter(({ value }) => !value.isReady)
+        .map(({ index }) => index),
+      "the loaded items not laid out since their load",
     ).toEqual([])
   })
 })

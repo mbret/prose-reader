@@ -59,33 +59,39 @@ test.describe(`Given a comic of ${LONG_COMIC_NUMBER_OF_PAGES} pages, one spine i
           }
         ).pagesFromMount,
     )
-    const pagesLoaded = pagesFromMount.filter(
-      ({ hasStartedLoading }) => hasStartedLoading,
+    const pageIndexesWhoseLoadStarted = pagesFromMount.flatMap(
+      ({ hasStartedLoading }, index) => (hasStartedLoading ? [index] : []),
     )
+    const pagesNeverLoaded = pagesFromMount
+      .map(({ layouts, hasStartedLoading }, index) => ({
+        index,
+        layouts,
+        hasStartedLoading,
+      }))
+      .filter(({ hasStartedLoading }) => !hasStartedLoading)
 
-    // Preconditions: the pages around the first one loaded, and the others
-    // did not.
-    expect(pagesLoaded.length, "the pages loaded").toBeGreaterThan(0)
-    expect(pagesLoaded.length, "the pages loaded").toBeLessThan(
-      LONG_COMIC_NUMBER_OF_PAGES,
-    )
+    /**
+     * Precondition: a page whose load never started comes after one whose
+     * load did, so a layout of the pages after that one would reach it.
+     */
+    expect(
+      pageIndexesWhoseLoadStarted.length,
+      "the pages whose load started",
+    ).toBeGreaterThan(0)
+    expect(
+      Math.max(...pagesNeverLoaded.map(({ index }) => index)),
+      "the last page whose load never started",
+    ).toBeGreaterThan(Math.min(...pageIndexesWhoseLoadStarted))
 
     /**
      * A page keeps its size when its image loads: the pages after it stay
      * where the first layout put them, and nothing lays them out again.
      */
     expect(
-      pagesFromMount
-        .map(({ layouts, hasStartedLoading }, index) => ({
-          index,
-          layouts,
-          hasStartedLoading,
-        }))
-        .filter(
-          ({ layouts, hasStartedLoading }) =>
-            !hasStartedLoading && layouts !== 1,
-        ),
-      "the pages never loaded, laid out other than once",
+      pagesNeverLoaded
+        .filter(({ layouts }) => layouts !== 1)
+        .map(({ index, layouts }) => ({ index, layouts })),
+      "the pages whose load never started, laid out other than once",
     ).toEqual([])
   })
 })
