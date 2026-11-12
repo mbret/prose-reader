@@ -4,9 +4,12 @@ import { describe, expect, it, vi } from "vitest"
 import { Context } from "../context/Context"
 import { HookManager } from "../hooks/HookManager"
 import { ReaderSettingsManager } from "../settings/ReaderSettingsManager"
+import type { SpineItem } from "../spineItem/SpineItem"
 import {
   createTestManifest,
   createTestManifestSpineItems,
+  recordUnhandledErrors,
+  waitFor,
 } from "../tests/utils"
 import { Viewport } from "../viewport/Viewport"
 import { SpineItemsManager } from "./SpineItemsManager"
@@ -155,15 +158,25 @@ const createDeferredSpineLayout = (numberOfItems: number) => {
     })
   })
 
-  const completeItemLayout = (itemIndex: number, size: ItemSize) => {
+  const takePendingLayout = (itemIndex: number) => {
     const result = pendingLayouts[itemIndex]
 
     if (!result) throw new Error(`No pending layout for item ${itemIndex}`)
 
     pendingLayouts[itemIndex] = undefined
 
+    return result
+  }
+
+  const completeItemLayout = (itemIndex: number, size: ItemSize) => {
+    const result = takePendingLayout(itemIndex)
+
     result.next(size)
     result.complete()
+  }
+
+  const failItemLayout = (itemIndex: number, error: Error) => {
+    takePendingLayout(itemIndex).error(error)
   }
 
   const widths = () =>
@@ -199,6 +212,7 @@ const createDeferredSpineLayout = (numberOfItems: number) => {
     completeItemLayout,
     destroy,
     dirtyFlags,
+    failItemLayout,
     hookManager,
     itemLayoutsStarted,
     items: spineItemsManager.items,
@@ -217,6 +231,22 @@ const layOutAndWait = async (spineLayout: SpineLayout) => {
   spineLayout.layout({ immediate: true })
 
   await passDone
+}
+
+/** Each stage the layout goes through, and `error` if its state errors. */
+const recordLayoutStages = (spineLayout: SpineLayout) => {
+  const stages: string[] = []
+
+  spineLayout.lifecycle$.subscribe({
+    next: ({ stage }) => {
+      stages.push(stage)
+    },
+    error: () => {
+      stages.push("error")
+    },
+  })
+
+  return stages
 }
 
 /** The number of frames on the call stack where it is called. */
@@ -601,6 +631,201 @@ describe("SpineLayout", () => {
     },
   )
 
+  describe("Given an item whose layout fails", () => {
+    const failure = new Error("the layout failed")
+
+    it.each([
+      {
+        ending: "throws as it starts",
+        arrangeFailure: (failingItem: SpineItem) => {
+          vi.spyOn(failingItem.renderer, "onLayout").mockImplementation(() => {
+            throw failure
+          })
+        },
+        endFailingItemLayout: () => {},
+        reportedErrors: [failure],
+      },
+      {
+        ending: "fails later",
+        arrangeFailure: () => {},
+        endFailingItemLayout: ({
+          failItemLayout,
+        }: ReturnType<typeof createDeferredSpineLayout>) => {
+          failItemLayout(1, failure)
+        },
+        reportedErrors: [failure],
+      },
+    ])(
+      "lays it out at one page, and completes the pass, when its renderer $ending",
+      async ({ arrangeFailure, endFailingItemLayout, reportedErrors }) => {
+        const unhandledErrors = recordUnhandledErrors()
+        const spineLayoutEnvironment = createDeferredSpineLayout(3)
+        const {
+          completeItemLayout,
+          destroy,
+          itemLayoutsStarted,
+          items,
+          lefts,
+          spineLayout,
+          widths,
+        } = spineLayoutEnvironment
+        const [, failingItem] = items
+
+        if (!failingItem) throw new Error("the spine has no second item")
+
+        arrangeFailure(failingItem)
+
+        try {
+          const passDone = firstValueFrom(spineLayout.layout$)
+
+          spineLayout.layout({ immediate: true })
+          completeItemLayout(0, { height: 100, width: 300 })
+          endFailingItemLayout(spineLayoutEnvironment)
+
+          expect(
+            itemLayoutsStarted()[2],
+            "the layouts of the item after the one that failed",
+          ).toBe(1)
+
+          completeItemLayout(2, { height: 100, width: 300 })
+          await passDone
+
+          expect(widths()).toEqual([300, 100, 300])
+          expect(lefts()).toEqual([0, 300, 400])
+
+          await waitFor(0)
+
+          expect(unhandledErrors).toEqual(reportedErrors)
+        } finally {
+          destroy()
+        }
+      },
+    )
+
+    it("gives it its minimum width, a whole spread, when its renderer fails in a spread", async () => {
+      const unhandledErrors = recordUnhandledErrors()
+      const { destroy, spineItemsManager, spineLayout } = createTestSpineLayout(
+        {
+          items: 3,
+          initialSettings: { spreadMode: "always" },
+          viewportSize: { height: 100, width: 200 },
+        },
+      )
+      const [, failingItem] = spineItemsManager.items
+
+      if (!failingItem) throw new Error("the spine has no second item")
+
+      vi.spyOn(failingItem.renderer, "onLayout").mockImplementation(() => {
+        throw failure
+      })
+
+      try {
+        await layOutAndWait(spineLayout)
+
+        expect(
+          spineLayout.getSpineItemSpineLayoutInfo(1).width,
+          "the width of its place",
+        ).toBe(200)
+
+        await waitFor(0)
+
+        expect(unhandledErrors).toEqual([failure])
+      } finally {
+        destroy()
+      }
+    })
+
+    it("lays it out at one page, and keeps it following its load, when its layout fails outside its renderer", async () => {
+      const unhandledErrors = recordUnhandledErrors()
+      const { destroy, spineItemsManager, spineLayout } = createTestSpineLayout(
+        {
+          items: 3,
+          initialSettings: { spreadMode: "always" },
+          viewportSize: { height: 100, width: 200 },
+        },
+      )
+      const [, failingItem] = spineItemsManager.items
+
+      if (!failingItem) throw new Error("the spine has no second item")
+
+      // A renderer's own getter, read for the spread, fails in the item's
+      // layout but outside its renderer's layout, on every layout.
+      vi.spyOn(
+        failingItem.renderer,
+        "renditionLayout",
+        "get",
+      ).mockImplementation(() => {
+        throw failure
+      })
+
+      const stages = recordLayoutStages(spineLayout)
+
+      try {
+        spineLayout.layout({ immediate: true })
+
+        expect(stages, "the stages of the layout").toEqual([
+          "requested",
+          "layingOut",
+          "laidOut",
+        ])
+
+        expect(
+          spineLayout.getSpineItemSpineLayoutInfo(1).width,
+          "the width of its place",
+        ).toBe(100)
+        expect(failingItem.value.isDirty, "the item is dirty").toBe(false)
+
+        failingItem.load()
+
+        await vi.waitFor(() => {
+          expect(failingItem.value.loadStatus, "the item's load").toBe("loaded")
+        })
+        await waitFor(0)
+
+        expect(unhandledErrors).toEqual([failure])
+      } finally {
+        destroy()
+      }
+    })
+  })
+
+  it("goes back to the requested state when its pass fails before laying the items out, and lays the spine out on the next request", async () => {
+    const unhandledErrors = recordUnhandledErrors()
+    const failure = new Error("the pass failed")
+    const { destroy, layOutSpine, spineLayout, viewport } =
+      createDeferredSpineLayout(3)
+    const stages = recordLayoutStages(spineLayout)
+
+    vi.spyOn(viewport, "layout").mockImplementationOnce(() => {
+      throw failure
+    })
+
+    try {
+      spineLayout.layout({ immediate: true })
+
+      expect(stages, "the stages of the layout").toEqual([
+        "requested",
+        "requested",
+      ])
+
+      await layOutSpine({ height: 100, width: 100 })
+
+      expect(stages, "the stages of the layout").toEqual([
+        "requested",
+        "requested",
+        "requested",
+        "layingOut",
+        "laidOut",
+      ])
+
+      await waitFor(0)
+
+      expect(unhandledErrors).toEqual([failure])
+    } finally {
+      destroy()
+    }
+  })
+
   it.each([
     {
       renderer: "gives two sizes",
@@ -652,6 +877,50 @@ describe("SpineLayout", () => {
       }
     },
   )
+
+  it("goes back to the requested state when its pass fails while laying the items out, and lays the spine out on the next request", async () => {
+    const unhandledErrors = recordUnhandledErrors()
+    const failure = new Error("the pass failed")
+    const { destroy, spineItemsManager, spineLayout } = createTestSpineLayout({
+      items: 3,
+    })
+    const [, secondItem] = spineItemsManager.items
+    const stages = recordLayoutStages(spineLayout)
+
+    if (!secondItem) throw new Error("the spine has no second item")
+
+    // Out of the guard of the item's own layout, as a bug of the pass would be.
+    vi.spyOn(secondItem, "layout").mockImplementationOnce(() => {
+      throw failure
+    })
+
+    try {
+      spineLayout.layout({ immediate: true })
+
+      expect(stages, "the stages of the layout").toEqual([
+        "requested",
+        "layingOut",
+        "requested",
+      ])
+
+      await layOutAndWait(spineLayout)
+
+      expect(stages, "the stages of the layout").toEqual([
+        "requested",
+        "layingOut",
+        "requested",
+        "requested",
+        "layingOut",
+        "laidOut",
+      ])
+
+      await waitFor(0)
+
+      expect(unhandledErrors).toEqual([failure])
+    } finally {
+      destroy()
+    }
+  })
 
   it("stops the layout of an item when a newer request cancels its pass, and leaves the item dirty until the newer pass lays it out", async () => {
     const {

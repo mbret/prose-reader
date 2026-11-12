@@ -4,10 +4,11 @@ import {
   type Manifest,
   type SpreadPosition,
 } from "@prose-reader/shared"
-import { defer, map, type Observable, Subject, tap } from "rxjs"
+import { catchError, defer, map, type Observable, of, Subject, tap } from "rxjs"
 import type { Context } from "../context/Context"
 import type { HookManager } from "../hooks/HookManager"
 import { isFullyPrePaginated } from "../manifest/isFullyPrePaginated"
+import { reportRecoveredError } from "../report"
 import type { ReaderSettingsManager } from "../settings/ReaderSettingsManager"
 import { DestroyableClass } from "../utils/DestroyableClass"
 import {
@@ -304,6 +305,22 @@ export class SpineItemLayout extends DestroyableClass {
           }),
         )
     }).pipe(
+      /**
+       * A layout that fails outside the renderer, such as in a getter that a
+       * renderer overrides, sizes the item as a renderer that gives no size
+       * does, from one page: the pass still gives every item a place.
+       */
+      catchError((error) => {
+        reportRecoveredError(error)
+
+        return of(undefined).pipe(
+          this.updateContainerLayout({
+            minimumWidth: this.viewport.pageSize.width,
+            edgeX,
+            edgeY,
+          }),
+        )
+      }),
       // A step of its own, which a hook that cancels the pass skips, so the
       // item stays dirty.
       tap((size) => {

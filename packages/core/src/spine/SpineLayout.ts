@@ -1,6 +1,7 @@
 import {
   asapScheduler,
   BehaviorSubject,
+  catchError,
   defer,
   filter,
   map,
@@ -19,6 +20,7 @@ import {
   timer,
 } from "rxjs"
 import type { Context } from "../context/Context"
+import { reportRecoveredError } from "../report"
 import type { ReaderSettingsManager } from "../settings/ReaderSettingsManager"
 import type { DocumentLoadStatus } from "../spineItem/renderer/DocumentRenderer"
 import type { SpineItem } from "../spineItem/SpineItem"
@@ -130,7 +132,8 @@ export class SpineLayout extends DestroyableClass {
    * completion. A request is announced before anything is done for it,
    * measuring the viewport included, and a newer request cancels whatever is
    * still running for an older one, so a completion always belongs to the
-   * latest request.
+   * latest request. A request whose pass fails has no completion: the layout
+   * stays requested until a later request completes.
    */
   public readonly lifecycle$: Observable<SpineLayoutLifecycleEvent> =
     this.stateSubject.pipe(
@@ -345,11 +348,25 @@ export class SpineLayout extends DestroyableClass {
      * synchronously, and whatever it notifies may navigate, so everything
      * tracking whether the layout is current must already know it is not.
      */
+    const requestedState: SpineLayoutState = {
+      stage: "requested",
+      laidOutItems: previousState.laidOutItems,
+      firstItemIndexAwaitingLayout,
+    }
+
     return layOutWhileSized().pipe(
-      startWith<SpineLayoutState>({
-        stage: "requested",
-        laidOutItems: previousState.laidOutItems,
-        firstItemIndexAwaitingLayout,
+      startWith(requestedState),
+      /**
+       * A pass that fails goes back to the requested state, as a newer
+       * request leaves a cancelled pass, so the next request also lays out the
+       * items this one had to. Left at `layingOut`, the state would say that a
+       * pass runs. The error must not reach `switchScan`: it would end the
+       * subscription to the requests, and no layout would run again.
+       */
+      catchError((error) => {
+        reportRecoveredError(error)
+
+        return of(requestedState)
       }),
     )
   }
