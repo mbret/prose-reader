@@ -225,7 +225,7 @@ laid out, lock or not: the lock is mostly held there for the user's own scroll,
 and what the user reads must not move under it.
 
 The reader also delays the layouts that can wait. A layout that only the loads
-of spine items ask for starts once every lock is released. A layout of the
+of spine items ask for waits until every lock is released. A layout of the
 reader, which `reader.layout()`, a resize or a setting requests, does not wait
 for the release.
 
