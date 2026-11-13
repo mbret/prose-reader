@@ -1,7 +1,8 @@
-import { expect, type Page, test } from "@playwright/test"
+import { expect, type Page } from "@playwright/test"
 import type { Theme } from "@prose-reader/core"
 import { waitForSpineItemReady } from "../utils"
 import { getReader } from "../utils/reader"
+import { test } from "../utils/test"
 
 const TRANSPARENT_BACKGROUND = "rgba(0, 0, 0, 0)"
 const DEFAULT_THEME_BACKGROUND = "rgb(255, 255, 255)"

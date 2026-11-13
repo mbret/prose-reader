@@ -1,8 +1,9 @@
-import { expect, test } from "@playwright/test"
+import { expect } from "@playwright/test"
 import { LONG_COMIC_NUMBER_OF_PAGES } from "../../../server/longComic"
 import { expectSpineItemsInViewport, navigateToSpineItem } from "../../utils"
 import { waitForSettledOnCurrentLayout } from "../../utils/pagination"
 import { getReader } from "../../utils/reader"
+import { test } from "../../utils/test"
 
 const url = "http://localhost:3333/tests/layout/long-spine/index.html"
 

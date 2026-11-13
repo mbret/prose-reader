@@ -1,8 +1,8 @@
-import { test } from "@playwright/test"
 import {
   expectEveryFrameToShowStartOfSpineItemWhile,
   goToSpineItemWithOnesBeforeItStillLoading,
 } from "../../utils/spineItems"
+import { test } from "../../utils/test"
 
 test.describe("Given a book that scrolls, at the top of a spine item with the two above it still loading", () => {
   test.describe("When the two above finish loading", () => {

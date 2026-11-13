@@ -1,6 +1,7 @@
-import { expect, type Page, test } from "@playwright/test"
+import { expect, type Page } from "@playwright/test"
 import { expectSpineItemsInViewport } from "../../utils"
 import { waitForSettled } from "../../utils/pagination"
+import { test } from "../../utils/test"
 
 /**
  * From its creation to its first published pages, a reader has no page to

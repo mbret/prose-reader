@@ -1,7 +1,8 @@
-import { expect, test } from "@playwright/test"
+import { expect } from "@playwright/test"
 import { goToNextSpineItem, waitForSpineItemReady } from "../../../utils"
 import { waitForSettled } from "../../../utils/pagination"
 import { getReader } from "../../../utils/reader"
+import { test } from "../../../utils/test"
 
 test("should navigate to second page and back to first page", async ({
   page,

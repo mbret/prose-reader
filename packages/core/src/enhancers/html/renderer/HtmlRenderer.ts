@@ -142,7 +142,7 @@ export class HtmlRenderer extends DocumentRenderer {
     const isUsingVerticalWriting = !!this.writingMode?.startsWith(`vertical`)
     const isImageType = this.isImageType()
 
-    const dims = renderReflowable({
+    const measuredSize = renderReflowable({
       pageHeight,
       pageWidth,
       frameElement,
@@ -154,15 +154,19 @@ export class HtmlRenderer extends DocumentRenderer {
       isRTL: this.context.isRTL(),
       minPageSpread,
       isImageType,
-      /**
-       * When we have scrollable content, we use "native" touch event from the frame instead of
-       * our own gestures.
-       * @todo move this into scroll navigator
-       */
-      enableTouch: this.settings.values.computedPageTurnMode === `scrollable`,
+      enableTouch: isTouchEnabled,
     })
 
-    return of(dims)
+    /**
+     * A layout runs in every load status. During a load the frame is in the
+     * page: blank at first, then with a document whose assets and fonts are
+     * not all in. A blank frame is 0 high in a scrolled book. It stays in the
+     * page as it is when an unload cancels the load, until its release. The
+     * frame is still laid out then, but what it measures is not the size of
+     * the document. The item gets a size from it only while the document is
+     * loaded.
+     */
+    return of(this.value.loadStatus === `loaded` ? measuredSize : undefined)
   }
 
   onRenderHeadless() {

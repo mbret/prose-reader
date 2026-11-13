@@ -1,7 +1,8 @@
-import { expect, type Page, test } from "@playwright/test"
+import { expect, type Page } from "@playwright/test"
 import { getLongChapterIndex, navigateToSpineItem } from "../../../utils"
 import { layOutAndSettle, waitForSettled } from "../../../utils/pagination"
 import { getReader } from "../../../utils/reader"
+import { test } from "../../../utils/test"
 import { isCfiPositionVisible } from "../../../utils/visibility"
 import { readPosition, turnPagesOfChapter } from "./position"
 

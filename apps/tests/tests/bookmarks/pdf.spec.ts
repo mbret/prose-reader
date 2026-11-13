@@ -1,6 +1,7 @@
-import { expect, test } from "@playwright/test"
+import { expect } from "@playwright/test"
 import { waitForSpineItemReady } from "../utils"
 import { waitForSettled } from "../utils/pagination"
+import { test } from "../utils/test"
 
 const BOOKMARK_ACTIVE_COLOR = "rgb(0, 128, 0)"
 const BOOKMARK_INACTIVE_COLOR = "rgb(255, 0, 0)"

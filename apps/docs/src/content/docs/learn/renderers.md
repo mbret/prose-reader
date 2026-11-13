@@ -45,6 +45,8 @@ A renderer extends `DocumentRenderer`, which runs the lifecycle of its document:
 
 It can also override the `renditionLayout`, `writingMode` and `readingDirection` getters when it knows them from its document. The spine item is `this.item`, its resource is fetched with `this.resourcesHandler`, and the reader's `this.context`, `this.settings` and `this.viewport` are at hand.
 
+The reader lays a renderer out in every load status, a load in progress included. A renderer that measures its document gives `undefined` unless `this.value.loadStatus` is `loaded`, as the html renderer does for a reflowable document. A size measured in another status is not the size of the document.
+
 ### The document container
 
 The element `onCreateDocument()` emits is the renderer's `documentContainer` until the document is released. `DocumentRenderer` looks after it:
