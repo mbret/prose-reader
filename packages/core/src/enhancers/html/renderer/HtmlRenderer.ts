@@ -125,44 +125,38 @@ export class HtmlRenderer extends DocumentRenderer {
       }
     }
 
-    if (this.isPrePaginated()) {
-      const dims = renderPrePaginated({
-        blankPagePosition,
-        frameElement,
-        isRTL: this.context.isRTL(),
-        minPageSpread,
-        pageHeight,
-        pageWidth,
-        spreadPosition,
-      })
+    const frameSize = this.isPrePaginated()
+      ? renderPrePaginated({
+          blankPagePosition,
+          frameElement,
+          isRTL: this.context.isRTL(),
+          minPageSpread,
+          pageHeight,
+          pageWidth,
+          spreadPosition,
+        })
+      : renderReflowable({
+          pageHeight,
+          pageWidth,
+          frameElement,
+          manifest: this.context.manifest,
+          renditionFlow:
+            this.item.renditionFlow ?? this.context.manifest.renditionFlow,
+          blankPagePosition,
+          isUsingVerticalWriting: !!this.writingMode?.startsWith(`vertical`),
+          isRTL: this.context.isRTL(),
+          minPageSpread,
+          isImageType: this.isImageType(),
+          enableTouch: isTouchEnabled,
+        })
 
-      return of(dims)
-    }
-
-    const isUsingVerticalWriting = !!this.writingMode?.startsWith(`vertical`)
-    const isImageType = this.isImageType()
-
-    const dims = renderReflowable({
-      pageHeight,
-      pageWidth,
-      frameElement,
-      manifest: this.context.manifest,
-      renditionFlow:
-        this.item.renditionFlow ?? this.context.manifest.renditionFlow,
-      blankPagePosition,
-      isUsingVerticalWriting,
-      isRTL: this.context.isRTL(),
-      minPageSpread,
-      isImageType,
-      /**
-       * When we have scrollable content, we use "native" touch event from the frame instead of
-       * our own gestures.
-       * @todo move this into scroll navigator
-       */
-      enableTouch: this.settings.values.computedPageTurnMode === `scrollable`,
-    })
-
-    return of(dims)
+    /**
+     * A layout runs at any moment, such as while the document loads, and it
+     * styles the frame then too, for the document that loads in it. The frame
+     * is blank until its document is in, so what it measures then is not the
+     * size of the document: a blank frame is 0 high in a scrolled book.
+     */
+    return of(this.holdsLoadedDocument ? frameSize : undefined)
   }
 
   onRenderHeadless() {
@@ -195,6 +189,16 @@ export class HtmlRenderer extends DocumentRenderer {
         return of(undefined)
       }),
     )
+  }
+
+  /**
+   * Whether the document has loaded and is still in the frame: from the end
+   * of its load until it is released.
+   */
+  private get holdsLoadedDocument() {
+    const { loadStatus } = this.value
+
+    return loadStatus === `loaded` || loadStatus === `unloading`
   }
 
   private isPrePaginated = () => {

@@ -4,7 +4,7 @@ import {
   Document as HappyDOMDocument,
   type Window as HappyDOMWindow,
 } from "happy-dom"
-import { of } from "rxjs"
+import { firstValueFrom, of } from "rxjs"
 import {
   afterAll,
   afterEach,
@@ -919,6 +919,56 @@ describe(`HtmlRenderer`, () => {
 
       expect(loadStatuses).not.toContain(`loaded`)
       expect(await readObjectUrl(imageUrl)).toBeUndefined()
+    })
+  })
+
+  /**
+   * A layout runs at any moment, such as while the document loads. The frame
+   * is in the page from the start of the load, and blank until its document
+   * is in. What it measures then is not the size of the document: a blank
+   * frame is 0 high in a scrolled book.
+   */
+  describe(`given a layout while the document loads`, () => {
+    it(`gives no size until the document has loaded`, async () => {
+      const { load, waitForImageRequests, waitForLoaded, renderer } = setup({
+        documentHref: `file://EPUB/chapter.xhtml`,
+        resources: {
+          "file://EPUB/images/a.png": { mediaType: `image/png`, body: `a` },
+        },
+        holdsImages: true,
+      })
+      const layOut = () =>
+        firstValueFrom(
+          renderer.layout({
+            blankPagePosition: `none`,
+            minPageSpread: 1,
+            minimumWidth: 100,
+            spreadPosition: `none`,
+          }),
+        )
+
+      load(documentWith(``, `<img src="images/a.png" />`))
+
+      // The frame is in the page, and its document waits for its image.
+      const [image] = await waitForImageRequests(1)
+      const loadStatusWhenLaidOut = renderer.value.loadStatus
+      const sizeWhileLoading = await layOut()
+
+      image?.load()
+      await waitForLoaded()
+
+      expect({
+        loadStatusWhenLaidOut,
+        sizeWhileLoading,
+        sizeOnceLoaded: await layOut(),
+      }).toEqual({
+        loadStatusWhenLaidOut: `loading`,
+        sizeWhileLoading: undefined,
+        sizeOnceLoaded: {
+          width: expect.any(Number),
+          height: expect.any(Number),
+        },
+      })
     })
   })
 
