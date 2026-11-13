@@ -4,22 +4,19 @@ import {
   filter,
   finalize,
   first,
-  ignoreElements,
   map,
   merge,
+  type Observable,
   of,
-  Subject,
+  share,
   startWith,
   switchMap,
   takeUntil,
-  tap,
+  takeWhile,
   timer,
   withLatestFrom,
 } from "rxjs"
-import type {
-  ScrollNavigationController,
-  ScrollPosition,
-} from "../../../navigation/controllers/ScrollNavigationController"
+import type { ScrollNavigationController } from "../../../navigation/controllers/ScrollNavigationController"
 import type { UserNavigationEntry } from "../../../navigation/types"
 import type { Spine } from "../../../spine/Spine"
 import { DestroyableClass } from "../../../utils/DestroyableClass"
@@ -29,14 +26,11 @@ const SCROLL_FINISHED_DEBOUNCE_TIMEOUT = 500
 
 export class UserScrollNavigation extends DestroyableClass {
   /**
-   * Navigation from external API.
-   *
-   * This is the navigation used by navigators and is not necessarily valid.
-   * We need to verify and adjust the correct navigation afterward
+   * The navigations that follow the user's scrolling. They only update the
+   * navigation: the element is already where the user scrolled it. The lock
+   * is held from the first move of a scroll until it is over.
    */
-  protected navigationSubject = new Subject<UserNavigationEntry>()
-
-  public navigation$ = this.navigationSubject.asObservable()
+  public readonly navigation$: Observable<UserNavigationEntry>
 
   constructor(
     protected scrollNavigationController: ScrollNavigationController,
@@ -45,25 +39,7 @@ export class UserScrollNavigation extends DestroyableClass {
   ) {
     super()
 
-    const navigateToScrollPosition = (scrollPosition: ScrollPosition) => {
-      this.navigationSubject.next({
-        animation: false,
-        type: "scroll",
-        target: {
-          type: "position",
-          value:
-            this.scrollNavigationController.fromScrollPosition(scrollPosition),
-        },
-      })
-    }
-
-    /**
-     * Update the navigation as the user scroll.
-     *
-     * Keep it synchronized with scrolling. This should
-     * not trigger viewport navigation, only update internal navigation.
-     */
-    const navigateOnScroll$ =
+    const scrollPositionToNavigateTo$ =
       this.scrollNavigationController.scrollNotMadeByReader$.pipe(
         exhaustMap((scrollPositionOfFirstMove) => {
           const unlock = this.lock()
@@ -78,18 +54,15 @@ export class UserScrollNavigation extends DestroyableClass {
            * last move, since a browser reports a move a frame or more after
            * it happens.
            *
-           * Only the first start since the items were last laid out counts.
-           * By a later one, as after the viewport lost its size or a newer
-           * request cancelled the pass, some items have moved already.
+           * Only the first start since the scroll began, or since the items
+           * were last laid out, counts. By a later one, as after the viewport
+           * lost its size or a newer request cancelled the pass, some items
+           * have moved already.
            */
-          const navigationAsLayoutStarts$ = this.spine.itemsLayout$.pipe(
+          const scrollPositionAsLayoutStarts$ = this.spine.itemsLayout$.pipe(
             startWith(undefined),
             switchMap(() => this.spine.itemsLayoutStart$.pipe(first())),
-            tap(() => {
-              navigateToScrollPosition(
-                this.scrollNavigationController.scrollPosition,
-              )
-            }),
+            map(() => this.scrollNavigationController.scrollPosition),
           )
 
           const scrollPositionAtEndOfScroll$ = merge(
@@ -133,11 +106,21 @@ export class UserScrollNavigation extends DestroyableClass {
           )
 
           return merge(
-            scrollPositionAtEndOfScroll$,
-            navigationAsLayoutStarts$.pipe(ignoreElements()),
+            scrollPositionAsLayoutStarts$.pipe(
+              map((scrollPosition) => ({
+                scrollPosition,
+                isEndOfScroll: false,
+              })),
+            ),
+            scrollPositionAtEndOfScroll$.pipe(
+              map((scrollPosition) => ({
+                scrollPosition,
+                isEndOfScroll: true,
+              })),
+            ),
           ).pipe(
-            first(),
-            tap(navigateToScrollPosition),
+            takeWhile(({ isEndOfScroll }) => !isEndOfScroll, true),
+            map(({ scrollPosition }) => scrollPosition),
             finalize(() => {
               unlock()
             }),
@@ -145,6 +128,22 @@ export class UserScrollNavigation extends DestroyableClass {
         }),
       )
 
-    merge(navigateOnScroll$).pipe(takeUntil(this.destroy$)).subscribe()
+    this.navigation$ = scrollPositionToNavigateTo$.pipe(
+      map(
+        (scrollPosition): UserNavigationEntry => ({
+          animation: false,
+          type: "scroll",
+          target: {
+            type: "position",
+            value:
+              this.scrollNavigationController.fromScrollPosition(
+                scrollPosition,
+              ),
+          },
+        }),
+      ),
+      takeUntil(this.destroy$),
+      share(),
+    )
   }
 }
