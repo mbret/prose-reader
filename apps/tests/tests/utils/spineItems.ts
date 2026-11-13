@@ -290,11 +290,14 @@ export const expectEveryFrameToShowWhereUserScrollsInSpineItemWhile = async (
  * finish, and resolves once the reader has laid out for them and its result
  * has settled.
  *
- * Given `distanceUserScrollsDownFirst`, that function first scrolls the book
- * down by as much, in the task that lets the loads finish: a user scroll
- * still in progress when the reader lays out for them. Either way it
- * resolves with whether the navigation was locked as the spine items were
- * laid out, as a user scroll in progress locks it.
+ * Given `duringUserScroll`, that function lets them finish once the
+ * navigation is locked, as the user's scroll locks it from its first move:
+ * the scroll is then still in progress when the reader lays out for them.
+ * With `scrollsDownFirstBy`, it first scrolls the book down by as much, as
+ * the user does. Without it, the spec scrolls before the call.
+ *
+ * Either way it resolves with whether the navigation was locked as the spine
+ * items were laid out.
  */
 export const goToSpineItemWithOnesBeforeItStillLoading = async (
   page: Page,
@@ -321,16 +324,31 @@ export const goToSpineItemWithOnesBeforeItStillLoading = async (
   await waitForSettledOnCurrentLayout(page)
 
   return async ({
-    distanceUserScrollsDownFirst,
+    duringUserScroll,
   }: {
-    distanceUserScrollsDownFirst?: number
+    duringUserScroll?: { scrollsDownFirstBy?: number }
   } = {}) => {
     const stateAtItemsLayout = await loadsHeld.evaluateHandle(
-      ({ letLoadsFinish }, { reader, distanceUserScrollsDownFirst }) => {
+      ({ letLoadsFinish }, { reader, duringUserScroll }) => {
         const stateAtItemsLayout: { wasNavigationLocked?: boolean } = {}
+        const scrollElement =
+          reader.navigation.scrollNavigationController.value.element
+
+        if (duringUserScroll?.scrollsDownFirstBy !== undefined) {
+          scrollElement?.scrollTo({
+            top: scrollElement.scrollTop + duringUserScroll.scrollsDownFirstBy,
+          })
+        }
+
+        // Replays whether the lock is held now, then follows it.
+        const lockOfUserScroll = duringUserScroll
+          ? reader.navigation.isLocked$.subscribe((isLocked) => {
+              if (isLocked) letLoadsFinish()
+            })
+          : undefined
         const itemsLayout = reader.spine.itemsLayout$.subscribe(() => {
           itemsLayout.unsubscribe()
-          // Replays whether the lock is held now.
+          lockOfUserScroll?.unsubscribe()
           reader.navigation.isLocked$
             .subscribe((isLocked) => {
               stateAtItemsLayout.wasNavigationLocked = isLocked
@@ -338,20 +356,11 @@ export const goToSpineItemWithOnesBeforeItStillLoading = async (
             .unsubscribe()
         })
 
-        if (distanceUserScrollsDownFirst !== undefined) {
-          const scrollElement =
-            reader.navigation.scrollNavigationController.value.element
-
-          scrollElement?.scrollTo({
-            top: scrollElement.scrollTop + distanceUserScrollsDownFirst,
-          })
-        }
-
-        letLoadsFinish()
+        if (!duringUserScroll) letLoadsFinish()
 
         return stateAtItemsLayout
       },
-      { reader, distanceUserScrollsDownFirst },
+      { reader, duringUserScroll },
     )
 
     /**

@@ -52,7 +52,9 @@ test.describe("Given a book that scrolls, at the top of a spine item with the tw
         spineItemIndex,
         async () => {
           const { wasNavigationLocked } = await letSpineItemsAboveFinishLoading(
-            { distanceUserScrollsDownFirst: distanceUserScrollsDown },
+            {
+              duringUserScroll: { scrollsDownFirstBy: distanceUserScrollsDown },
+            },
           )
 
           expect(
@@ -106,7 +108,7 @@ test.describe("Given a book that scrolls, at the top of a spine item with the tw
             await page.mouse.wheel(0, distanceWheelScrollsDown)
 
             const { wasNavigationLocked } =
-              await letSpineItemsAboveFinishLoading()
+              await letSpineItemsAboveFinishLoading({ duringUserScroll: {} })
 
             expect(
               wasNavigationLocked,
