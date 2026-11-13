@@ -15,7 +15,9 @@ type UncaughtPageErrorFixtures = {
  * the test asserts.
  *
  * It checks when the test ends, so a test that fails for another reason
- * reports the uncaught errors of its page too.
+ * reports the uncaught errors of its page too. The list is a fixture of its
+ * own, which the context needs: Playwright closes the context first, so the
+ * check also sees the errors of a page that closes.
  */
 export const test = playwrightTest.extend<UncaughtPageErrorFixtures>({
   // biome-ignore lint/correctness/noEmptyPattern: Playwright reads the fixtures that a fixture needs from this pattern, and this one needs none.

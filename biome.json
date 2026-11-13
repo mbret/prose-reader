@@ -120,7 +120,7 @@
                 "paths": {
                   "@playwright/test": {
                     "importNames": ["test"],
-                    "message": "Import `test` from tests/utils/test: it fails a test whose page had an uncaught error."
+                    "message": "Import `test` from `tests/utils/test.ts`. It fails a test whose page had an uncaught error."
                   }
                 }
               }

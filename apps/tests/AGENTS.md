@@ -28,7 +28,8 @@ An app would get the same error, so fix what throws, not the spec.
 
 A test that expects an error takes the `uncaughtPageErrors` fixture, asserts
 the error, and removes it from that list. `tests/utils/test.spec.ts` does so
-on every project, which proves that the errors of a page reach the list.
+on every project, which proves that the errors of a page and of its frames
+reach the list.
 
 ## Loading the book
 
