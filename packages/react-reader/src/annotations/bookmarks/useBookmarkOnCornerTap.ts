@@ -82,7 +82,7 @@ export const useBookmarkOnCornerTap = () => {
                 return !CONTINUE_TAP_GESTURE
               }
 
-              const canBookmarkPage = candidates?.[pageEntry.absolutePageIndex]
+              const canBookmarkPage = candidates[pageEntry.absolutePageIndex]
 
               if (canBookmarkPage) {
                 const annotation = reader?.annotations.createAnnotation({

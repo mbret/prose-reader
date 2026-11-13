@@ -8,6 +8,7 @@ export {
   type Theme,
 } from "./enhancers/theme"
 export { HookManager } from "./hooks/HookManager"
+export { reportRecoveredError } from "./report"
 export { SettingsManager } from "./settings/SettingsManager"
 export {
   type DocumentLoadStatus,

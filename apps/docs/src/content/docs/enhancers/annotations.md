@@ -30,6 +30,8 @@ We provide a `.candidates$` observable which you can observe to know which page 
 
 pre-paginated documents are by design always on one page so we don't check whether they have a visible node.
 
+`candidates$` emits one boolean per page the reader has published, by absolute page index, each time the reader publishes its pages. Until the reader has published its first pages, it emits an empty array. It gives its latest value to a new subscriber at once, so it can be read with `withLatestFrom`.
+
 ## Troubleshoots
 
 ### Annotation CFI is empty (root CFI)

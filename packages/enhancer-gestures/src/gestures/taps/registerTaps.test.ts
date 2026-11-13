@@ -1,8 +1,16 @@
 // @vitest-environment jsdom
-import type { HookManager, Reader } from "@prose-reader/core"
+import { HookManager, type Reader } from "@prose-reader/core"
 import type { TapEvent, TapRecognizer } from "gesturx"
-import { BehaviorSubject, of, Subject } from "rxjs"
-import { describe, expect, it, vi } from "vitest"
+import {
+  BehaviorSubject,
+  config,
+  EMPTY,
+  map,
+  of,
+  Subject,
+  throwError,
+} from "rxjs"
+import { afterEach, describe, expect, it, vi } from "vitest"
 import type { GesturesSettingsManager } from "../../SettingsManager"
 import type { GestureRecognizable, Hook, OutputSettings } from "../../types"
 import { registerTaps } from "./registerTaps"
@@ -56,12 +64,12 @@ const createDefaultSettings = (): OutputSettings => ({
 })
 
 const createHarness = ({
-  currentScale,
-  isZooming,
+  currentScale = 1,
+  isZooming = false,
 }: {
-  currentScale: number
-  isZooming: boolean
-}) => {
+  currentScale?: number
+  isZooming?: boolean
+} = {}) => {
   const events$ = new Subject<RecognizableEvent>()
   const values$ = new BehaviorSubject(createDefaultSettings())
 
@@ -118,13 +126,10 @@ const createHarness = ({
   // `recognizer` argument passed to registerTaps.
   const recognizer = {} as TapRecognizer
 
-  // Cast: registerTaps only calls `execute`, which returns an empty list
-  // when no hooks are registered.
-  const hookManager = {
-    execute: () => [],
-  } as unknown as HookManager<Hook>
+  const hookManager = new HookManager<Hook>()
 
   const tapResults: Array<{ handled: boolean }> = []
+  const onTapsError = vi.fn()
 
   const subscription = registerTaps({
     // Cast: registerTaps only reads `events$` from the recognizable.
@@ -140,8 +145,11 @@ const createHarness = ({
     } as unknown as GesturesSettingsManager,
     hookManager,
     recognizer,
-  }).subscribe(({ handled }) => {
-    tapResults.push({ handled })
+  }).subscribe({
+    next: ({ handled }) => {
+      tapResults.push({ handled })
+    },
+    error: onTapsError,
   })
 
   const tap = (x: number, y: number) => {
@@ -151,6 +159,8 @@ const createHarness = ({
   return {
     tap,
     tapResults,
+    onTapsError,
+    hookManager,
     turnLeftOrTop,
     turnRightOrBottom,
     subscription,
@@ -282,5 +292,170 @@ describe("registerTaps", () => {
       expect(turnLeftOrTop).not.toHaveBeenCalled()
       expect(tapResults).toEqual([{ handled: true }])
     })
+  })
+})
+
+/**
+ * A `beforeTapGesture` hook can only object to a tap, with a first verdict of
+ * `false`. Anything else it does (complete with no verdict, error, or throw as
+ * it is called) must neither drop the tap nor stop the taps that follow.
+ */
+describe("beforeTapGesture", () => {
+  const onUnhandledError = config.onUnhandledError
+
+  afterEach(() => {
+    config.onUnhandledError = onUnhandledError
+    vi.useRealTimers()
+  })
+
+  /** Records what the reader reports as recovered, once its timer has run. */
+  const recordRecoveredErrors = () => {
+    vi.useFakeTimers()
+    const recoveredErrors: unknown[] = []
+    config.onUnhandledError = (error) => {
+      recoveredErrors.push(error)
+    }
+
+    return {
+      recoveredErrors: () => {
+        vi.runAllTimers()
+
+        return recoveredErrors
+      },
+    }
+  }
+
+  it("drops the tap when a hook's first verdict is false", () => {
+    const { tap, tapResults, turnRightOrBottom, hookManager, onTapsError } =
+      createHarness()
+
+    hookManager.register("beforeTapGesture", ({ event$ }) =>
+      event$.pipe(map(() => false)),
+    )
+
+    tap(RIGHT_MARGIN_X, Y)
+
+    expect(tapResults).toEqual([])
+    expect(turnRightOrBottom).not.toHaveBeenCalled()
+    expect(onTapsError).not.toHaveBeenCalled()
+  })
+
+  /**
+   * A hook that reads a source with `withLatestFrom`, as react-reader's
+   * bookmark hook reads the annotation candidates, completes with no verdict
+   * while that source has emitted nothing.
+   */
+  it("goes on with the tap, and with the next ones, when a hook completes with no verdict", () => {
+    const { tap, tapResults, turnRightOrBottom, hookManager, onTapsError } =
+      createHarness()
+
+    hookManager.register("beforeTapGesture", () => EMPTY)
+
+    tap(RIGHT_MARGIN_X, Y)
+    tap(CENTER_X, Y)
+
+    expect(tapResults).toEqual([{ handled: true }, { handled: false }])
+    expect(turnRightOrBottom).toHaveBeenCalledTimes(1)
+    expect(onTapsError).not.toHaveBeenCalled()
+  })
+
+  it("still drops the tap for another hook's veto when one completes with no verdict", () => {
+    const { tap, tapResults, hookManager, onTapsError } = createHarness()
+
+    hookManager.register("beforeTapGesture", () => EMPTY)
+    hookManager.register("beforeTapGesture", ({ event$ }) =>
+      event$.pipe(map(() => false)),
+    )
+
+    tap(RIGHT_MARGIN_X, Y)
+
+    expect(tapResults).toEqual([])
+    expect(onTapsError).not.toHaveBeenCalled()
+  })
+
+  it("goes on with the tap, and with the next ones, when a hook errors, and reports the error", () => {
+    const { recoveredErrors } = recordRecoveredErrors()
+    const { tap, tapResults, hookManager, onTapsError } = createHarness()
+    const hookError = new Error("hook failed")
+
+    hookManager.register("beforeTapGesture", () => throwError(() => hookError))
+
+    tap(RIGHT_MARGIN_X, Y)
+    tap(CENTER_X, Y)
+
+    expect(tapResults).toEqual([{ handled: true }, { handled: false }])
+    expect(onTapsError).not.toHaveBeenCalled()
+    expect(recoveredErrors()).toEqual([hookError, hookError])
+  })
+
+  it("still drops the tap for another hook's veto when one errors", () => {
+    const { recoveredErrors } = recordRecoveredErrors()
+    const { tap, tapResults, hookManager, onTapsError } = createHarness()
+    const hookError = new Error("hook failed")
+
+    hookManager.register("beforeTapGesture", () => throwError(() => hookError))
+    hookManager.register("beforeTapGesture", ({ event$ }) =>
+      event$.pipe(map(() => false)),
+    )
+
+    tap(RIGHT_MARGIN_X, Y)
+
+    expect(tapResults).toEqual([])
+    expect(onTapsError).not.toHaveBeenCalled()
+    expect(recoveredErrors()).toEqual([hookError])
+  })
+
+  it("goes on with the tap, and with the next ones, when a hook throws as it is called, and reports the error", () => {
+    const { recoveredErrors } = recordRecoveredErrors()
+    const { tap, tapResults, hookManager, onTapsError } = createHarness()
+    const hookError = new Error("hook failed")
+
+    hookManager.register("beforeTapGesture", () => {
+      throw hookError
+    })
+
+    tap(RIGHT_MARGIN_X, Y)
+    tap(CENTER_X, Y)
+
+    expect(tapResults).toEqual([{ handled: true }, { handled: false }])
+    expect(onTapsError).not.toHaveBeenCalled()
+    expect(recoveredErrors()).toEqual([hookError, hookError])
+  })
+
+  it("still drops the tap for another hook's veto when one throws as it is called", () => {
+    const { recoveredErrors } = recordRecoveredErrors()
+    const { tap, tapResults, hookManager, onTapsError } = createHarness()
+    const hookError = new Error("hook failed")
+
+    hookManager.register("beforeTapGesture", () => {
+      throw hookError
+    })
+    hookManager.register("beforeTapGesture", ({ event$ }) =>
+      event$.pipe(map(() => false)),
+    )
+
+    tap(RIGHT_MARGIN_X, Y)
+
+    expect(tapResults).toEqual([])
+    expect(onTapsError).not.toHaveBeenCalled()
+    expect(recoveredErrors()).toEqual([hookError])
+  })
+
+  /**
+   * Only the first verdict counts: a hook that keeps emitting does not hold
+   * the tap, nor turn the page twice.
+   */
+  it("takes the first verdict of a hook that keeps emitting", () => {
+    const { tap, tapResults, turnRightOrBottom, hookManager } = createHarness()
+    const verdicts = new BehaviorSubject(true)
+
+    hookManager.register("beforeTapGesture", () => verdicts)
+
+    tap(RIGHT_MARGIN_X, Y)
+    verdicts.next(false)
+    verdicts.next(true)
+
+    expect(tapResults).toEqual([{ handled: true }])
+    expect(turnRightOrBottom).toHaveBeenCalledTimes(1)
   })
 })
