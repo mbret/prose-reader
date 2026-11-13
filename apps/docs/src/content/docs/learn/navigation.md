@@ -219,15 +219,15 @@ of a layout that lands meanwhile waits for the release, and so does the snap of
 a navigation made while it is held. Locks add up, so the navigation is held
 until every one of them is released; a release called twice releases it once.
 
-The reader does not lay out for a spine item that finishes loading while it is
-held either: that layout starts once the lock is released. A layout of the
-reader, which `reader.layout()`, a resize or a setting requests, still runs
-while it is held.
+A book that scrolls has one exception. When a layout moves the spine items,
+the reader scrolls the book back onto the place it showed as soon as they are
+laid out, lock or not: the lock is mostly held there for the user's own scroll,
+and what the user reads must not move under it.
 
-A book that scrolls has one exception. When such a layout moves the spine
-items, the reader scrolls the book back onto the place it showed as soon as
-they are laid out, lock or not: the lock is mostly held there for the user's
-own scroll, and what the user reads must not move under it.
+The reader also keeps the layouts it can away from a lock. The one that follows
+the load of a spine item starts after the release. A layout of the reader,
+which `reader.layout()`, a resize or a setting requests, runs while the lock is
+held.
 
 A navigation made while it is held has not landed anywhere yet, so the
 [reading position](#reading-position) stays where it was. Once released, it

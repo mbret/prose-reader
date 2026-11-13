@@ -662,6 +662,103 @@ describe("SpineLayout", () => {
     })
   })
 
+  describe("Given a layout that the load of an item asks for, after a pass that started and did not complete", () => {
+    it("starts its pass after the wait, whatever the viewport does, when it cancels that pass", async () => {
+      vi.useFakeTimers()
+      const {
+        completeItemLayout,
+        context,
+        destroy,
+        items,
+        layOutSpine,
+        spineLayout,
+      } = createDeferredSpineLayout(3)
+
+      try {
+        await layOutSpine({ height: 100, width: 100 })
+
+        const stages = recordLayoutStages(spineLayout)
+
+        /**
+         * The pass for the load of the second item makes that item wider,
+         * then waits on the third one, which it moves.
+         */
+        items[1]?.load()
+        await vi.advanceTimersByTimeAsync(50)
+        completeItemLayout(1, { height: 100, width: 300 })
+
+        expect(stages, "the stages once the pass started").toEqual([
+          "requested",
+          "layingOut",
+        ])
+
+        // The load of the third item cancels it, then the viewport is busy.
+        items[2]?.load()
+        await vi.advanceTimersByTimeAsync(0)
+        context.bridgeEvent.viewportStateSubject.next("busy")
+        await vi.advanceTimersByTimeAsync(50)
+
+        expect(stages, "the stages once the wait is over").toEqual([
+          "requested",
+          "layingOut",
+          "requested",
+          "layingOut",
+        ])
+      } finally {
+        destroy()
+        vi.useRealTimers()
+      }
+    })
+
+    it("starts its pass after the wait, whatever the viewport does, when that pass failed", async () => {
+      vi.useFakeTimers()
+      const unhandledErrors = recordUnhandledErrors()
+      const failure = new Error("the pass failed")
+      const { context, destroy, spineItemsManager, spineLayout } =
+        createTestSpineLayout({ items: 3 })
+      const [, secondItem, thirdItem] = spineItemsManager.items
+
+      if (!secondItem || !thirdItem) throw new Error("the spine has no item")
+
+      try {
+        await layOutAndWait(spineLayout)
+
+        const stages = recordLayoutStages(spineLayout)
+
+        // Out of the guard of the item's own layout, as a bug of the pass is.
+        vi.spyOn(secondItem, "layout").mockImplementationOnce(() => {
+          throw failure
+        })
+        secondItem.load()
+        await vi.advanceTimersByTimeAsync(50)
+
+        expect(stages, "the stages once the pass failed").toEqual([
+          "requested",
+          "layingOut",
+          "requested",
+        ])
+
+        thirdItem.load()
+        await vi.advanceTimersByTimeAsync(0)
+        context.bridgeEvent.viewportStateSubject.next("busy")
+        await vi.advanceTimersByTimeAsync(50)
+
+        expect(stages, "the stages once the wait is over").toEqual([
+          "requested",
+          "layingOut",
+          "requested",
+          "requested",
+          "layingOut",
+          "laidOut",
+        ])
+        expect(unhandledErrors).toEqual([failure])
+      } finally {
+        destroy()
+        vi.useRealTimers()
+      }
+    })
+  })
+
   describe("Given a layout of the reader", () => {
     it("starts its pass after the wait, while the viewport is busy", async () => {
       vi.useFakeTimers()

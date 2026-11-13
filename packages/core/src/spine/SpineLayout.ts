@@ -67,8 +67,7 @@ type SpineLayoutRequest = {
   /**
    * Whether `layout()` requests it, for the reader, rather than the end of
    * an item's load, for that item. For a layout of the reader, the viewport
-   * is measured first, and the pass starts whether the viewport is free or
-   * busy.
+   * is measured first, and the pass does not wait for a free viewport.
    */
   isLayoutOfReader: boolean
   /**
@@ -110,16 +109,24 @@ const spineStartOffset: SpineItemEndOffset = {
  * can lay out: the items before it keep their layouts. It is the first one
  * any request since the last completed pass affects, since a request cancels
  * a pass still running for an older one, which may not have laid its items
- * out. For the same reason it records whether one of those requests is a
- * layout of the reader: a pass that cancels the pass of one does not wait for
- * a free viewport either.
+ * out.
  */
 type SpineLayoutState =
   | {
-      stage: "requested" | "layingOut"
+      stage: "requested"
       laidOutItems: readonly LaidOutSpineItem[]
       firstItemIndexAwaitingLayout: number
-      isLayoutOfReaderAwaited: boolean
+      /**
+       * Whether the pass of the request waits for a free viewport before it
+       * starts. It does when only the loads of items ask for it, and every
+       * item is where the last completed pass put it.
+       */
+      canPassWaitForFreeViewport: boolean
+    }
+  | {
+      stage: "layingOut"
+      laidOutItems: readonly LaidOutSpineItem[]
+      firstItemIndexAwaitingLayout: number
     }
   | { stage: "laidOut"; laidOutItems: readonly LaidOutSpineItem[] }
 
@@ -295,43 +302,56 @@ export class SpineLayout extends DestroyableClass {
     )
     const firstItemIndexAwaitingLayout = itemsKeptFromLastCompletedPass.length
 
-    const isLayoutOfReaderAwaited =
-      isLayoutOfReader ||
-      (previousState.stage !== "laidOut" &&
-        previousState.isLayoutOfReaderAwaited)
+    /**
+     * A layout of the reader does not wait for a free viewport: the viewport
+     * or the settings changed, and the items no longer fit them. Neither does
+     * a pass that follows one that started and did not complete, which may
+     * have moved some items already: the spine is half laid out until a pass
+     * completes. A request made before the pass of an older one started
+     * waits only if that one did.
+     */
+    const canPassWaitForFreeViewport =
+      !isLayoutOfReader &&
+      (previousState.stage === "laidOut" ||
+        (previousState.stage === "requested" &&
+          previousState.canPassWaitForFreeViewport))
 
     /**
-     * The wait sits inside the switch rather than before it, so a request
+     * The delay sits inside the switch rather than before it, so a request
      * cancels a pass already running for an older one instead of letting it
      * finish while the new request waits. Requests still coalesce, since each
-     * one restarts the wait.
+     * one restarts the delay.
      *
      * Immediate only skips this artificial delay. Item layout itself can still
      * complete asynchronously depending on the renderer.
      */
-    const waitOfRequest$: Observable<unknown> = options.immediate
+    const delayOfRequest$: Observable<unknown> = options.immediate
       ? of(undefined)
       : timer(50)
 
     /**
-     * A layout of the reader starts once the wait of its request is over,
-     * whether the viewport is free or busy: the viewport or the settings
-     * changed, and the items no longer fit them. A pass that only the loads
-     * of items ask for can wait, and it moves the items after them, which
-     * can be the ones on screen. So it starts once the viewport has stayed
-     * free for the wait of the request: not while a page turns, while the
-     * user scrolls, or while a lock is held. The viewport is then still free
-     * as the pass starts, in a task of its own rather than in the one that
-     * frees the viewport.
+     * A pass that only the loads of items ask for moves the items after
+     * them, which can be the ones on screen. So it starts once the viewport
+     * has stayed free for the delay of the request: not while a page turns,
+     * while the user scrolls, or while a lock is held. The viewport is then
+     * still free as the pass starts, in a task of its own rather than in the
+     * one that frees the viewport.
+     *
+     * A pass that starts again, because the viewport lost its size during
+     * it, has moved some items already, and does not wait for a free
+     * viewport either.
      */
-    const wait$: Observable<unknown> = isLayoutOfReaderAwaited
-      ? waitOfRequest$
-      : this.context.bridgeEvent.viewportState$.pipe(
-          switchMap((viewportState) =>
-            viewportState === "free" ? waitOfRequest$ : NEVER,
-          ),
-          first(),
-        )
+    const waitBeforePassStarts$: Observable<unknown> = defer(() =>
+      canPassWaitForFreeViewport &&
+      this.stateSubject.value.stage !== "layingOut"
+        ? this.context.bridgeEvent.viewportState$.pipe(
+            switchMap((viewportState) =>
+              viewportState === "free" ? delayOfRequest$ : NEVER,
+            ),
+            first(),
+          )
+        : delayOfRequest$,
+    )
 
     /**
      * A pass runs while the viewport has a size. Hidden, the viewport measures
@@ -362,14 +382,13 @@ export class SpineLayout extends DestroyableClass {
         stage: "layingOut",
         laidOutItems: previousState.laidOutItems,
         firstItemIndexAwaitingLayout,
-        isLayoutOfReaderAwaited,
       }),
     )
 
     const pass$: Observable<SpineLayoutState> = defer(() => {
       if (isLayoutOfReader) this.viewport.layout()
 
-      return wait$
+      return waitBeforePassStarts$
     }).pipe(
       /**
        * The browser reports a hide at its next rendering update, which can
@@ -392,7 +411,7 @@ export class SpineLayout extends DestroyableClass {
       stage: "requested",
       laidOutItems: previousState.laidOutItems,
       firstItemIndexAwaitingLayout,
-      isLayoutOfReaderAwaited,
+      canPassWaitForFreeViewport,
     }
 
     /**
@@ -417,11 +436,17 @@ export class SpineLayout extends DestroyableClass {
        * items this one had to. Left at `layingOut`, the state would say that a
        * pass runs. The error must not reach `switchScan`: it would end the
        * subscription to the requests, and no layout would run again.
+       *
+       * The pass may have moved some items before it failed, so the next one
+       * does not wait for a free viewport.
        */
       catchError((error) => {
         reportRecoveredError(error)
 
-        return of(requestedState)
+        return of<SpineLayoutState>({
+          ...requestedState,
+          canPassWaitForFreeViewport: false,
+        })
       }),
     )
   }

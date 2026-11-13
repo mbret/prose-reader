@@ -306,8 +306,7 @@ Observable<"free">
 
 Emits each time the viewport becomes free, and at once if it is free when you
 subscribe. The reader waits for it before it loads or unloads the document of a
-spine item, and before it lays the spine out for one whose load ended. Do the
-same with work that should not run while a page turns:
+spine item. Do the same with work that should not run while a page turns:
 
 ```typescript
 import { first } from "rxjs"
@@ -316,3 +315,6 @@ reader.viewportFree$.pipe(first()).subscribe(() => {
   // the viewport is not moving
 })
 ```
+
+The layout that follows the load of a spine item waits longer: until the
+viewport has stayed free for 50 ms, see [Layout](/core-api/spine#layout).

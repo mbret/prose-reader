@@ -92,10 +92,13 @@ until the container is shown again.
 A layout that only the loads of spine items ask for also waits for a free
 viewport, see [`reader.viewportState$`](/core-api/viewport#viewportstateusd):
 it starts once the viewport has stayed free for 50 ms. It moves the spine items
-after the ones that loaded, so it does not run while a page turns, while the
-user scrolls or while a `lock()` is held. A layout of the reader does not wait:
-`reader.layout()`, a resize or a setting starts it whether the viewport is free
-or busy, and it then lays out for the spine items that loaded too.
+after the ones that loaded, so it does not start while a page turns, while the
+user scrolls or while a `lock()` is held. Once started, it goes on whatever the
+viewport does, and so does the layout that replaces it or starts it again.
+
+A layout of the reader does not wait: `reader.layout()`, a resize or a setting
+starts it whether the viewport is free or busy, and it then lays out for the
+spine items that loaded too.
 
 Read it before you use where a page is, with `.isLayoutCurrent()` or
 `.isLayoutCurrentFor()`: while it is a number, the pages of that item and of the

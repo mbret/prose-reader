@@ -12,6 +12,7 @@ import {
   installReaderTestEnvironment,
   mountTestReader,
   notifyResize,
+  requestLayoutByUnloadingItem,
   resizeObservers,
   setTestViewport,
   settledOn,
@@ -369,6 +370,52 @@ describe("Given a mounted reader whose container is hidden", () => {
     await firstValueFrom(reader.layout$.pipe(timeout(2000)))
 
     expect(itemLayoutsShown, "the items as shown").toEqual(itemLayouts())
+  })
+
+  it("starts the layout for a spine item's load again while the navigation is locked, when it is hidden and shown after that layout laid out some items", async () => {
+    const secondItem = holdItemLayout("/page_1.jpg")
+    const reader = await mountedAndSettled({
+      getRenderer: secondItem.getRenderer,
+    })
+    let layoutStarts = 0
+
+    reader.spine.itemsLayoutStart$.subscribe(() => {
+      layoutStarts += 1
+    })
+
+    // The pass for the end of the second item's load waits on that item.
+    const layoutsOfSecondItemBefore = secondItem.layoutsStarted()
+
+    secondItem.hold()
+    await requestLayoutByUnloadingItem(reader, 1)
+    await vi.waitFor(() => {
+      expect(secondItem.layoutsStarted(), "the layouts of the second").toBe(
+        layoutsOfSecondItemBefore + 1,
+      )
+    })
+
+    expect(layoutStarts, "the starts of a layout, before it is hidden").toBe(1)
+
+    /**
+     * Shown again at the same size, so no layout of the reader is requested.
+     * The spine is half laid out: the pass does not wait for the release.
+     */
+    const release = reader.navigation.lock()
+
+    setTestViewport(hidden)
+    notifyResize()
+    setTestViewport(defaultTestViewport)
+    notifyResize()
+
+    await vi.waitFor(() => {
+      expect(layoutStarts, "the starts of a layout, once it is shown").toBe(2)
+    })
+
+    release()
+    secondItem.release()
+    await vi.waitFor(() => {
+      expect(reader.spine.isLayoutCurrent(), "the layout is current").toBe(true)
+    })
   })
 
   it("lays nothing out when the container is hidden before the browser reports it, and lays out once it is shown", async () => {
