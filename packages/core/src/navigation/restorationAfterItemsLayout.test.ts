@@ -309,6 +309,8 @@ describe("Given a layout that moves the spine item the navigation shows", () => 
         2 * pageHeight + distanceUserScrolledIntoThirdPage
       deliverScrollEvent(scrollElement)
 
+      const spineItemsLaidOut = firstValueFrom(reader.spine.itemsLayout$)
+
       // Loaded, the first page is taller by 300: the third one moves down.
       setSizeOfFirstPage({ height: pageHeight + 300 })
       loadOfFirstPage.release()
@@ -316,7 +318,7 @@ describe("Given a layout that moves the spine item the navigation shows", () => 
 
       expect(await isNavigationLocked()).toBe(true)
 
-      await firstValueFrom(reader.spine.itemsLayout$)
+      await spineItemsLaidOut
 
       expect(
         wasNavigationLockedAsEachLayoutStarted,
