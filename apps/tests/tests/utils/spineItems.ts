@@ -126,26 +126,54 @@ const recordDistanceFromSpineItemToCornerOfReaderAtEachFrame = async (
     })
 }
 
-const isAwayFromCorner = ({ x, y }: { x: number; y: number }) =>
-  Math.abs(x) >= 1 || Math.abs(y) >= 1
+type DistanceToCornerOfReader = { x: number; y: number }
+
+const START_OF_SPINE_ITEM: DistanceToCornerOfReader = { x: 0, y: 0 }
+
+const isLessThanOnePixelApart = (
+  a: DistanceToCornerOfReader,
+  b: DistanceToCornerOfReader,
+) => Math.abs(a.x - b.x) < 1 && Math.abs(a.y - b.y) < 1
+
+const isBetweenStartOfSpineItemAnd = (
+  place: DistanceToCornerOfReader,
+  distance: DistanceToCornerOfReader,
+) =>
+  distance.x > -1 &&
+  distance.x < place.x + 1 &&
+  distance.y > -1 &&
+  distance.y < place.y + 1
 
 /**
- * Expects every frame to show the start of a spine item, before, while and
- * after something moves that spine item in the spine. The reader shows its
- * start as this is called. `moveSpineItemInSpine` resolves once the reader
- * has laid out and its result has settled on that layout.
+ * Expects every frame to show a place of a spine item that `isPlaceFrameCanShow`
+ * accepts, before, while and after something moves that spine item in the
+ * spine, and the reader to end on one that `isPlaceReaderCanEndOn` accepts.
+ * A place is given as the distance from the spine item to the corner of the
+ * reader. The reader shows the start of the spine item as this is called.
+ * `moveSpineItemInSpine` resolves once the reader has laid out and its result
+ * has settled on that layout.
  */
-export const expectEveryFrameToShowStartOfSpineItemWhile = async (
+const expectEveryFrameToShowPlaceOfSpineItemWhile = async (
   page: Page,
   spineItemIndex: number,
-  moveSpineItemInSpine: () => Promise<void>,
+  moveSpineItemInSpine: () => Promise<unknown>,
+  {
+    isPlaceFrameCanShow,
+    isPlaceReaderCanEndOn,
+  }: {
+    isPlaceFrameCanShow: (distance: DistanceToCornerOfReader) => boolean
+    isPlaceReaderCanEndOn: (distance: DistanceToCornerOfReader) => boolean
+  },
 ) => {
   const placeBefore = await getPlaceOfSpineItem(page, spineItemIndex)
 
   expect(
-    isAwayFromCorner(placeBefore.distanceToCornerOfReader),
-    "whether the reader shows another place than the start of the spine item, before it moves",
-  ).toBe(false)
+    isLessThanOnePixelApart(
+      placeBefore.distanceToCornerOfReader,
+      START_OF_SPINE_ITEM,
+    ),
+    "whether the reader shows the start of the spine item, before it moves",
+  ).toBe(true)
 
   const stopAndGetDistancesAtEachFrame =
     await recordDistanceFromSpineItemToCornerOfReaderAtEachFrame(
@@ -164,9 +192,96 @@ export const expectEveryFrameToShowStartOfSpineItemWhile = async (
   ).not.toEqual(placeBefore.placeInSpine)
   expect(distancesAtEachFrame.length).toBeGreaterThan(0)
   expect(
-    distancesAtEachFrame.filter(isAwayFromCorner),
+    distancesAtEachFrame.filter((distance) => !isPlaceFrameCanShow(distance)),
     "the distances from the spine item to the corner of the reader, at the frames that showed another place",
   ).toEqual([])
+  expect(
+    isPlaceReaderCanEndOn(placeAfter.distanceToCornerOfReader),
+    `whether the reader ends on a place it can, at ${JSON.stringify(placeAfter.distanceToCornerOfReader)} from its corner`,
+  ).toBe(true)
+
+  return {
+    distancesAtEachFrame,
+    placeReaderEndsOn: placeAfter.distanceToCornerOfReader,
+  }
+}
+
+const isStartOfSpineItem = (distance: DistanceToCornerOfReader) =>
+  isLessThanOnePixelApart(distance, START_OF_SPINE_ITEM)
+
+/**
+ * Expects every frame to show the start of a spine item, before, while and
+ * after something moves that spine item in the spine. The reader shows its
+ * start as this is called. `moveSpineItemInSpine` resolves once the reader
+ * has laid out and its result has settled on that layout.
+ */
+export const expectEveryFrameToShowStartOfSpineItemWhile = (
+  page: Page,
+  spineItemIndex: number,
+  moveSpineItemInSpine: () => Promise<unknown>,
+) =>
+  expectEveryFrameToShowPlaceOfSpineItemWhile(
+    page,
+    spineItemIndex,
+    moveSpineItemInSpine,
+    {
+      isPlaceFrameCanShow: isStartOfSpineItem,
+      isPlaceReaderCanEndOn: isStartOfSpineItem,
+    },
+  )
+
+/**
+ * The same, while `moveSpineItemInSpine` also scrolls as the user does, to a
+ * place of the spine item given as its distance to the corner of the reader:
+ * a frame can show the start of the spine item or that place, and the reader
+ * has to end on that place.
+ *
+ * With `canScrollStopOnItsWay`, a frame can show any place between the two,
+ * and the reader can end on any of them. A browser can animate the scroll of
+ * a wheel, and stop it where the reader scrolls the book.
+ *
+ * No frame shows a place the scroll had already passed: the reader does not
+ * take the book back. Resolves with the place the reader ends on.
+ */
+export const expectEveryFrameToShowWhereUserScrollsInSpineItemWhile = async (
+  page: Page,
+  spineItemIndex: number,
+  moveSpineItemInSpine: () => Promise<unknown>,
+  {
+    placeUserScrollsTo,
+    canScrollStopOnItsWay,
+  }: {
+    placeUserScrollsTo: DistanceToCornerOfReader
+    canScrollStopOnItsWay: boolean
+  },
+) => {
+  const isPlaceScrollCanEndOn = (distance: DistanceToCornerOfReader) =>
+    isLessThanOnePixelApart(distance, placeUserScrollsTo) ||
+    (canScrollStopOnItsWay &&
+      isBetweenStartOfSpineItemAnd(placeUserScrollsTo, distance))
+
+  const { distancesAtEachFrame, placeReaderEndsOn } =
+    await expectEveryFrameToShowPlaceOfSpineItemWhile(
+      page,
+      spineItemIndex,
+      moveSpineItemInSpine,
+      {
+        isPlaceFrameCanShow: (distance) =>
+          isStartOfSpineItem(distance) || isPlaceScrollCanEndOn(distance),
+        isPlaceReaderCanEndOn: isPlaceScrollCanEndOn,
+      },
+    )
+
+  expect(
+    distancesAtEachFrame.filter(
+      (distance, frameIndex) =>
+        frameIndex > 0 &&
+        distance.y <= (distancesAtEachFrame[frameIndex - 1]?.y ?? 0) - 1,
+    ),
+    "the distances from the spine item to the corner of the reader, at the frames that showed a place the scroll had already passed",
+  ).toEqual([])
+
+  return placeReaderEndsOn
 }
 
 /**
@@ -174,6 +289,12 @@ export const expectEveryFrameToShowStartOfSpineItemWhile = async (
  * it wait at the end of their load. Resolves to a function that lets them
  * finish, and resolves once the reader has laid out for them and its result
  * has settled.
+ *
+ * Given `distanceUserScrollsDownFirst`, that function first scrolls the book
+ * down by as much, in the task that lets the loads finish: a user scroll
+ * still in progress when the reader lays out for them. Either way it
+ * resolves with whether the navigation was locked as the spine items were
+ * laid out, as a user scroll in progress locks it.
  */
 export const goToSpineItemWithOnesBeforeItStillLoading = async (
   page: Page,
@@ -199,10 +320,39 @@ export const goToSpineItemWithOnesBeforeItStillLoading = async (
   )
   await waitForSettledOnCurrentLayout(page)
 
-  return async () => {
-    await loadsHeld.evaluate(({ letLoadsFinish }) => {
-      letLoadsFinish()
-    })
+  return async ({
+    distanceUserScrollsDownFirst,
+  }: {
+    distanceUserScrollsDownFirst?: number
+  } = {}) => {
+    const stateAtItemsLayout = await loadsHeld.evaluateHandle(
+      ({ letLoadsFinish }, { reader, distanceUserScrollsDownFirst }) => {
+        const stateAtItemsLayout: { wasNavigationLocked?: boolean } = {}
+        const itemsLayout = reader.spine.itemsLayout$.subscribe(() => {
+          itemsLayout.unsubscribe()
+          // Replays whether the lock is held now.
+          reader.navigation.isLocked$
+            .subscribe((isLocked) => {
+              stateAtItemsLayout.wasNavigationLocked = isLocked
+            })
+            .unsubscribe()
+        })
+
+        if (distanceUserScrollsDownFirst !== undefined) {
+          const scrollElement =
+            reader.navigation.scrollNavigationController.value.element
+
+          scrollElement?.scrollTo({
+            top: scrollElement.scrollTop + distanceUserScrollsDownFirst,
+          })
+        }
+
+        letLoadsFinish()
+
+        return stateAtItemsLayout
+      },
+      { reader, distanceUserScrollsDownFirst },
+    )
 
     /**
      * Nothing from before the loads satisfies this: a load that ends asks
@@ -219,5 +369,7 @@ export const goToSpineItemWithOnesBeforeItStillLoading = async (
         reader.pagination.state.isSettled,
       { reader, spineItemIndexes: spineItemIndexesLoadingBefore },
     )
+
+    return stateAtItemsLayout.jsonValue()
   }
 }
