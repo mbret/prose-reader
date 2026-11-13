@@ -1,10 +1,11 @@
-import { expect, test } from "@playwright/test"
+import { expect } from "@playwright/test"
 import {
   locateSpineItems,
   navigateToSpineItem,
   waitForSpineItemReady,
   waitForSpineItemUnloaded,
 } from "../../utils"
+import { test } from "../../utils/test"
 
 test("first spine item should have correct width and height", async ({
   page,

@@ -1,4 +1,4 @@
-import { expect, type Page, test } from "@playwright/test"
+import { expect, type Page } from "@playwright/test"
 import type { ReadingPosition } from "@prose-reader/core"
 import {
   getChapterIndex,
@@ -8,6 +8,7 @@ import {
 } from "../../../utils"
 import { resizeAndSettle, waitForSettled } from "../../../utils/pagination"
 import { getReader } from "../../../utils/reader"
+import { test } from "../../../utils/test"
 import { isCfiPositionVisible } from "../../../utils/visibility"
 import { readPosition } from "./position"
 

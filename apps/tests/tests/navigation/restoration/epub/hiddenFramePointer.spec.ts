@@ -1,6 +1,7 @@
-import { expect, test } from "@playwright/test"
+import { expect } from "@playwright/test"
 import { waitForSettledOnCurrentLayout } from "../../../utils/pagination"
 import { getReader } from "../../../utils/reader"
+import { test } from "../../../utils/test"
 
 const url = "http://localhost:3333/tests/navigation/restoration/epub/index.html"
 
@@ -29,12 +30,6 @@ test.describe("Given the pointer over a chapter's frame", () => {
         browserName !== "chromium",
         "Firefox and WebKit send a frame they hide no pointer event, so there is nothing to forward",
       )
-
-      const pageErrors: Error[] = []
-
-      page.on("pageerror", (error) => {
-        pageErrors.push(error)
-      })
 
       await page.setViewportSize({ width: 536, height: 842 })
       await page.goto(
@@ -133,7 +128,6 @@ test.describe("Given the pointer over a chapter's frame", () => {
         return { frameLeave: await frameLeave, forwardedLeaves }
       }, chapterSpineItemIndex)
 
-      expect(pageErrors).toEqual([])
       // The hidden frame has no size to scale the position by.
       expect(leaves.forwardedLeaves).toEqual([leaves.frameLeave])
     })

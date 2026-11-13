@@ -130,7 +130,8 @@ describe("Given a mounted reader", () => {
 
     reader.settings.update({ layoutAutoResize: "container" })
 
-    expect(resizeObservers(container).watching).toBe(1)
+    // an observer starts in the next animation frame
+    await vi.waitFor(() => expect(resizeObservers(container).watching).toBe(1))
   })
 
   it("does not lay out again when the container reports the size it was laid out at", async () => {

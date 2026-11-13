@@ -22,21 +22,34 @@ export const watchKeys =
     return stream.pipe(mapKeysTo(keys), distinctUntilChanged(isShallowEqual))
   }
 
+/**
+ * The resize reports of `element`, from an observer of its own for each
+ * subscriber. A new observer reports once the size its element has, whatever
+ * that size is, then each resize.
+ *
+ * The observer starts in the next animation frame. A subscriber can come at
+ * any moment, such as in a microtask that follows a report. The browser
+ * cannot report to an observer started while it reports resizes, and it
+ * sends the page an error: "ResizeObserver loop completed with undelivered
+ * notifications". The first report comes in the same frame either way.
+ */
 export function observeResize(
   element: HTMLElement,
 ): Observable<ResizeObserverEntry[]> {
   return new Observable<ResizeObserverEntry[]>((observer) => {
     // Use the observed element's own realm so observation is correct even
     // when the reader is mounted into a foreign document.
-    const Ctor =
-      element.ownerDocument.defaultView?.ResizeObserver ?? ResizeObserver
+    const view = element.ownerDocument.defaultView ?? window
+    const Ctor = view.ResizeObserver ?? ResizeObserver
     const resizeObserver = new Ctor((entries) => {
       observer.next(entries)
     })
-
-    resizeObserver.observe(element)
+    const frameRequest = view.requestAnimationFrame(() => {
+      resizeObserver.observe(element)
+    })
 
     return () => {
+      view.cancelAnimationFrame(frameRequest)
       resizeObserver.disconnect()
     }
   })

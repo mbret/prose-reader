@@ -1,4 +1,4 @@
-import { expect, test } from "@playwright/test"
+import { expect } from "@playwright/test"
 import {
   getScrollNavigationMetadata,
   waitForSpineItemReady,
@@ -6,6 +6,7 @@ import {
 } from "../../utils"
 import { waitForSettled } from "../../utils/pagination"
 import { getReader } from "../../utils/reader"
+import { test } from "../../utils/test"
 
 const scales = [0.2, 0.5, 1]
 const height = 1294

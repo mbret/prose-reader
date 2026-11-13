@@ -1,6 +1,7 @@
-import { expect, test } from "@playwright/test"
+import { expect } from "@playwright/test"
 import { resizeAndSettle } from "../../../utils/pagination"
 import { getReader } from "../../../utils/reader"
+import { test } from "../../../utils/test"
 import { isCfiPositionVisible } from "../../../utils/visibility"
 
 test.describe("Given a CFI", () => {

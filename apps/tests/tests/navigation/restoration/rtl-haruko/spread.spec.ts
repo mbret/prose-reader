@@ -1,6 +1,7 @@
-import { expect, type Page, test } from "@playwright/test"
+import { expect, type Page } from "@playwright/test"
 import { resizeAndSettle, waitForSettled } from "../../../utils/pagination"
 import { getReader } from "../../../utils/reader"
+import { test } from "../../../utils/test"
 
 /**
  * A spread shows two items at once, and its result only settles once both are

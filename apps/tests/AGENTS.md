@@ -19,6 +19,18 @@ scripts are in `tools/`, and those of the KOReader page fixtures in
 `packages/koreader/tools/`. Shared helpers live in `tests/utils`; add to them
 rather than copying a wait or a locator into a second spec.
 
+## Uncaught errors
+
+A spec imports `test` from `tests/utils/test.ts`, not from `@playwright/test`:
+the linter refuses the other one. That `test` fails a test whose page had an
+uncaught error or an unhandled promise rejection, whatever the test asserts.
+An app would get the same error, so fix what throws, not the spec.
+
+A test that expects an error takes the `uncaughtPageErrors` fixture, asserts
+the error, and removes it from that list. `tests/utils/test.spec.ts` does so
+on every project, which proves that the errors of a page and of its frames
+reach the list.
+
 ## Loading the book
 
 A scenario opens a fixture with `openFixtureBook` (`tests/fixtureBook.ts`) and

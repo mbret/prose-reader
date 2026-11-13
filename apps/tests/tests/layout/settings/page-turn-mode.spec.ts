@@ -1,4 +1,4 @@
-import { expect, type Page, test } from "@playwright/test"
+import { expect, type Page } from "@playwright/test"
 import { navigateToSpineItem } from "../../utils"
 import {
   expectSpineItemKeptThroughPageTurnModes,
@@ -6,6 +6,7 @@ import {
 } from "../../utils/pageTurnMode"
 import { layOutAndSettle, waitForSettled } from "../../utils/pagination"
 import { getReader } from "../../utils/reader"
+import { test } from "../../utils/test"
 import {
   getSpineItemIndexesOnScreen,
   updateSettingsAndGetSpineItemsOnScreen,

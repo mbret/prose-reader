@@ -1,4 +1,4 @@
-import { expect, type Page, test } from "@playwright/test"
+import { expect, type Page } from "@playwright/test"
 import { expectSpineItemsInViewport, goToNextSpineItem } from "../../utils"
 import {
   goToKoreaderProgress,
@@ -6,6 +6,7 @@ import {
 } from "../../utils/koreader"
 import { waitForSettled } from "../../utils/pagination"
 import { getReader } from "../../utils/reader"
+import { test } from "../../utils/test"
 
 /**
  * A KOReader sync client on a comic pushes and pulls page numbers: the place
