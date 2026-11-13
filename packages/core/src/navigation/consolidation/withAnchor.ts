@@ -22,7 +22,12 @@ type Navigation = {
       awaitsLockRelease: boolean
       previousNavigation: InternalNavigationEntry
     }
-  // A restoration waits for the lock to be released.
+  /**
+   * A restoration waits for the lock to be released, except the one that
+   * follows the items layout of a book that scrolls. That one comes before
+   * the pages of what it shows, so it finds no page to anchor on: its anchor
+   * stays as it is, or stands in.
+   */
   | { awaitsLockRelease?: never }
 )
 

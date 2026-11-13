@@ -216,6 +216,9 @@ Observable<{
 Every navigation as it happens: a `"user"` one that you or a gesture asked for,
 the one to where the reader opens included, or a `"restoration"` of the current
 one onto a new layout or when a pan ends.
+The user's scroll of a book that scrolls gives a `"user"` one when it is over,
+and one as a layout starts during it: where the scroll has taken the user by
+then.
 A restoration is emitted even when it lands where the navigation already was.
 
 ### `.navigationAgainstCurrentLayout$` { #navigationagainstcurrentlayoutusd }
@@ -244,7 +247,8 @@ hold:
   is shown or comes before the ones shown;
 - through the `"restoration"` that puts the viewport back as soon as the
   spine items are laid out, when the layout moved what the navigation shows:
-  the new pages are not in yet;
+  the new pages are not in yet. In a book that scrolls, this one does not wait
+  for a `lock()` to be released;
 - once the new pages are in, until the navigation is restored onto them, by a
   `"restoration"` that holds.
 

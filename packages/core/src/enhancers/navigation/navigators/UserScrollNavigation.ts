@@ -4,17 +4,24 @@ import {
   filter,
   finalize,
   first,
+  ignoreElements,
   map,
   merge,
   of,
   Subject,
+  startWith,
   switchMap,
   takeUntil,
   tap,
   timer,
+  withLatestFrom,
 } from "rxjs"
-import type { ScrollNavigationController } from "../../../navigation/controllers/ScrollNavigationController"
+import type {
+  ScrollNavigationController,
+  ScrollPosition,
+} from "../../../navigation/controllers/ScrollNavigationController"
 import type { UserNavigationEntry } from "../../../navigation/types"
+import type { Spine } from "../../../spine/Spine"
 import { DestroyableClass } from "../../../utils/DestroyableClass"
 
 /** How long after its last scroll event a scroll of the user's is over. */
@@ -34,8 +41,21 @@ export class UserScrollNavigation extends DestroyableClass {
   constructor(
     protected scrollNavigationController: ScrollNavigationController,
     protected lock: () => () => void,
+    protected spine: Spine,
   ) {
     super()
+
+    const navigateToScrollPosition = (scrollPosition: ScrollPosition) => {
+      this.navigationSubject.next({
+        animation: false,
+        type: "scroll",
+        target: {
+          type: "position",
+          value:
+            this.scrollNavigationController.fromScrollPosition(scrollPosition),
+        },
+      })
+    }
 
     /**
      * Update the navigation as the user scroll.
@@ -48,7 +68,31 @@ export class UserScrollNavigation extends DestroyableClass {
         exhaustMap((scrollPositionOfFirstMove) => {
           const unlock = this.lock()
 
-          return merge(
+          /**
+           * Until the scroll is over, the navigation is from before it. A
+           * layout that starts meanwhile can move the spine items, and the
+           * restoration that follows it works from the navigation. So as the
+           * layout starts, before it moves the first item, the reader
+           * navigates to where the element is: the restoration then scrolls
+           * the book to that place again. The element is read rather than the
+           * last move, since a browser reports a move a frame or more after
+           * it happens.
+           *
+           * Only the first start since the items were last laid out counts.
+           * By a later one, as after the viewport lost its size or a newer
+           * request cancelled the pass, some items have moved already.
+           */
+          const navigationAsLayoutStarts$ = this.spine.itemsLayout$.pipe(
+            startWith(undefined),
+            switchMap(() => this.spine.itemsLayoutStart$.pipe(first())),
+            tap(() => {
+              navigateToScrollPosition(
+                this.scrollNavigationController.scrollPosition,
+              )
+            }),
+          )
+
+          const scrollPositionAtEndOfScroll$ = merge(
             of(scrollPositionOfFirstMove),
             this.scrollNavigationController.scrollNotMadeByReader$,
           ).pipe(
@@ -67,29 +111,33 @@ export class UserScrollNavigation extends DestroyableClass {
                 /**
                  * It is over at once when the book no longer scrolls, as
                  * after a change of page turn mode. The element has lost its
-                 * box, and its offsets with it: the user is where the last
-                 * move took the element.
+                 * box, and its offsets with it: the user is where the reader
+                 * last knew the element. That is where the last move took it,
+                 * or where the reader scrolled it since, as it does to keep
+                 * the book on the same place through a layout.
                  */
                 this.scrollNavigationController.isActive$.pipe(
                   filter((isActive) => !isActive),
-                  map(() => scrollPositionOfLastMove),
+                  withLatestFrom(
+                    this.scrollNavigationController.scrollPositionKnownToReader$.pipe(
+                      startWith(scrollPositionOfLastMove),
+                    ),
+                  ),
+                  map(
+                    ([, scrollPositionKnownToReader]) =>
+                      scrollPositionKnownToReader,
+                  ),
                 ),
               ),
             ),
+          )
+
+          return merge(
+            scrollPositionAtEndOfScroll$,
+            navigationAsLayoutStarts$.pipe(ignoreElements()),
+          ).pipe(
             first(),
-            tap((scrollPosition) => {
-              this.navigationSubject.next({
-                animation: false,
-                type: "scroll",
-                target: {
-                  type: "position",
-                  value:
-                    this.scrollNavigationController.fromScrollPosition(
-                      scrollPosition,
-                    ),
-                },
-              })
-            }),
+            tap(navigateToScrollPosition),
             finalize(() => {
               unlock()
             }),

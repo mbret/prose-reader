@@ -219,6 +219,11 @@ of a layout that lands meanwhile waits for the release, and so does the snap of
 a navigation made while it is held. Locks add up, so the navigation is held
 until every one of them is released; a release called twice releases it once.
 
+A book that scrolls has one exception. When a layout moves the spine items,
+the reader scrolls the book back onto the place it showed as soon as they are
+laid out, lock or not: the lock is mostly held there for the user's own scroll,
+and what the user reads must not move under it.
+
 A navigation made while it is held has not landed anywhere yet, so the
 [reading position](#reading-position) stays where it was. Once released, it
 moves to where the navigation lands: for a pan, the page it snaps to, which
