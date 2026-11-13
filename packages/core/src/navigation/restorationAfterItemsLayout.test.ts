@@ -184,6 +184,34 @@ describe("Given a layout that moves the spine item the navigation shows", () => 
       )
     })
 
+    it("leaves the book where the user scrolls on, between the items layout and the pages", async () => {
+      const { reader, scrollElement, setSizeOfFirstPage } =
+        await openOnThirdPageOfScrollingBook()
+      const scrollTopAfterItemsLayout =
+        2 * pageHeight + 300 + distanceUserScrolledIntoThirdPage
+
+      scrollElement.scrollTop =
+        2 * pageHeight + distanceUserScrolledIntoThirdPage
+      deliverScrollEvent(scrollElement)
+
+      setSizeOfFirstPage({ height: pageHeight + 300 })
+      reader.layout()
+      await firstValueFrom(reader.spine.itemsLayout$)
+
+      expect(scrollElement.scrollTop).toBe(scrollTopAfterItemsLayout)
+
+      // The pages come some frames later: the user scrolls on meanwhile.
+      scrollElement.scrollTop = scrollTopAfterItemsLayout + 40
+      deliverScrollEvent(scrollElement)
+      await firstValueFrom(reader.spine.layout$)
+
+      expect(scrollElement.scrollTop).toBe(scrollTopAfterItemsLayout + 40)
+
+      await settledOn(reader, 2)
+
+      expect(scrollElement.scrollTop).toBe(scrollTopAfterItemsLayout + 40)
+    })
+
     it("restores the navigation where the user scrolled to, when the browser has not reported the last move as the layout starts", async () => {
       const { reader, scrollElement, setSizeOfFirstPage } =
         await openOnThirdPageOfScrollingBook()
