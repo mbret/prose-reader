@@ -430,6 +430,10 @@ const createHarness = ({
     waitForSwappedSvgImages,
     waitForLoaded: () =>
       vi.waitFor(() => expect(renderer.value.loadStatus).toBe(`loaded`)),
+    /** A release of the document waits for the viewport to be free. */
+    setViewportState: (state: `free` | `busy`) => {
+      context.bridgeEvent.viewportStateSubject.next(state)
+    },
     /** Resizes the viewport, and reports it as a browser does once laid out. */
     resizeViewport: (size: { width: number; height: number }) => {
       viewportSize = size
@@ -923,36 +927,36 @@ describe(`HtmlRenderer`, () => {
   })
 
   /**
-   * A layout runs at any moment, such as while the document loads. The frame
-   * is in the page from the start of the load, and blank until its document
-   * is in. What it measures then is not the size of the document: a blank
-   * frame is 0 high in a scrolled book.
+   * The frame is blank until its document is in. A blank frame is 0 high in a
+   * scrolled book, so a layout during the load must give no size.
    */
   describe(`given a layout while the document loads`, () => {
+    const documentHref = `file://EPUB/chapter.xhtml`
+    const resources = {
+      "file://EPUB/images/a.png": { mediaType: `image/png`, body: `a` },
+    }
+    const layoutParams = {
+      blankPagePosition: `none`,
+      minPageSpread: 1,
+      minimumWidth: 100,
+      spreadPosition: `none`,
+    } as const
+
     it(`gives no size until the document has loaded`, async () => {
       const { load, waitForImageRequests, waitForLoaded, renderer } = setup({
-        documentHref: `file://EPUB/chapter.xhtml`,
-        resources: {
-          "file://EPUB/images/a.png": { mediaType: `image/png`, body: `a` },
-        },
+        documentHref,
+        resources,
         holdsImages: true,
       })
-      const layOut = () =>
-        firstValueFrom(
-          renderer.layout({
-            blankPagePosition: `none`,
-            minPageSpread: 1,
-            minimumWidth: 100,
-            spreadPosition: `none`,
-          }),
-        )
 
       load(documentWith(``, `<img src="images/a.png" />`))
 
       // The frame is in the page, and its document waits for its image.
       const [image] = await waitForImageRequests(1)
       const loadStatusWhenLaidOut = renderer.value.loadStatus
-      const sizeWhileLoading = await layOut()
+      const sizeWhileLoading = await firstValueFrom(
+        renderer.layout(layoutParams),
+      )
 
       image?.load()
       await waitForLoaded()
@@ -960,7 +964,7 @@ describe(`HtmlRenderer`, () => {
       expect({
         loadStatusWhenLaidOut,
         sizeWhileLoading,
-        sizeOnceLoaded: await layOut(),
+        sizeOnceLoaded: await firstValueFrom(renderer.layout(layoutParams)),
       }).toEqual({
         loadStatusWhenLaidOut: `loading`,
         sizeWhileLoading: undefined,
@@ -969,6 +973,42 @@ describe(`HtmlRenderer`, () => {
           height: expect.any(Number),
         },
       })
+    })
+
+    it(`gives no size once an unload has cancelled the load, while the frame waits for its release`, async () => {
+      const { load, waitForImageRequests, setViewportState, renderer } = setup({
+        documentHref,
+        resources,
+        holdsImages: true,
+      })
+
+      load(documentWith(``, `<img src="images/a.png" />`))
+      await waitForImageRequests(1)
+      setViewportState(`busy`)
+      renderer.unload()
+
+      expect({
+        loadStatusWhenLaidOut: renderer.value.loadStatus,
+        size: await firstValueFrom(renderer.layout(layoutParams)),
+      }).toEqual({ loadStatusWhenLaidOut: `unloading`, size: undefined })
+    })
+
+    // The item then keeps the size of its last layout, as an unloaded one.
+    it(`gives no size once the loaded document unloads, while the frame waits for its release`, async () => {
+      const { load, waitForLoaded, setViewportState, renderer } = setup({
+        documentHref,
+        resources,
+      })
+
+      load(documentWith(``, `<img src="images/a.png" />`))
+      await waitForLoaded()
+      setViewportState(`busy`)
+      renderer.unload()
+
+      expect({
+        loadStatusWhenLaidOut: renderer.value.loadStatus,
+        size: await firstValueFrom(renderer.layout(layoutParams)),
+      }).toEqual({ loadStatusWhenLaidOut: `unloading`, size: undefined })
     })
   })
 

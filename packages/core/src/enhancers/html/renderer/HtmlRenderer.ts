@@ -125,38 +125,48 @@ export class HtmlRenderer extends DocumentRenderer {
       }
     }
 
-    const frameSize = this.isPrePaginated()
-      ? renderPrePaginated({
-          blankPagePosition,
-          frameElement,
-          isRTL: this.context.isRTL(),
-          minPageSpread,
-          pageHeight,
-          pageWidth,
-          spreadPosition,
-        })
-      : renderReflowable({
-          pageHeight,
-          pageWidth,
-          frameElement,
-          manifest: this.context.manifest,
-          renditionFlow:
-            this.item.renditionFlow ?? this.context.manifest.renditionFlow,
-          blankPagePosition,
-          isUsingVerticalWriting: !!this.writingMode?.startsWith(`vertical`),
-          isRTL: this.context.isRTL(),
-          minPageSpread,
-          isImageType: this.isImageType(),
-          enableTouch: isTouchEnabled,
-        })
+    if (this.isPrePaginated()) {
+      const dims = renderPrePaginated({
+        blankPagePosition,
+        frameElement,
+        isRTL: this.context.isRTL(),
+        minPageSpread,
+        pageHeight,
+        pageWidth,
+        spreadPosition,
+      })
+
+      return of(dims)
+    }
+
+    const isUsingVerticalWriting = !!this.writingMode?.startsWith(`vertical`)
+    const isImageType = this.isImageType()
+
+    const measuredSize = renderReflowable({
+      pageHeight,
+      pageWidth,
+      frameElement,
+      manifest: this.context.manifest,
+      renditionFlow:
+        this.item.renditionFlow ?? this.context.manifest.renditionFlow,
+      blankPagePosition,
+      isUsingVerticalWriting,
+      isRTL: this.context.isRTL(),
+      minPageSpread,
+      isImageType,
+      enableTouch: isTouchEnabled,
+    })
 
     /**
-     * A layout runs at any moment, such as while the document loads, and it
-     * styles the frame then too, for the document that loads in it. The frame
-     * is blank until its document is in, so what it measures then is not the
-     * size of the document: a blank frame is 0 high in a scrolled book.
+     * A layout runs in every load status. During a load the frame is in the
+     * page: blank at first, then with a document whose assets and fonts are
+     * not all in. A blank frame is 0 high in a scrolled book. It stays in the
+     * page as it is when an unload cancels the load, until its release. The
+     * frame is still laid out then, but what it measures is not the size of
+     * the document. The item gets a size from it only while the document is
+     * loaded.
      */
-    return of(this.holdsLoadedDocument ? frameSize : undefined)
+    return of(this.value.loadStatus === `loaded` ? measuredSize : undefined)
   }
 
   onRenderHeadless() {
@@ -189,16 +199,6 @@ export class HtmlRenderer extends DocumentRenderer {
         return of(undefined)
       }),
     )
-  }
-
-  /**
-   * Whether the document has loaded and is still in the frame: from the end
-   * of its load until it is released.
-   */
-  private get holdsLoadedDocument() {
-    const { loadStatus } = this.value
-
-    return loadStatus === `loaded` || loadStatus === `unloading`
   }
 
   private isPrePaginated = () => {
