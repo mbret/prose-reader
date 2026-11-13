@@ -62,6 +62,7 @@ export const navigationEnhancer =
     const userScrollNavigation = new UserScrollNavigation(
       reader.navigation.scrollNavigationController,
       reader.navigation.lock,
+      reader.spine,
     )
 
     const navigateOnUserScroll$ = userScrollNavigation.navigation$.pipe(

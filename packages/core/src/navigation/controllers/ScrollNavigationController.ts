@@ -85,6 +85,18 @@ export class ScrollNavigationController
    */
   public readonly scrollNotMadeByReader$: Observable<ScrollPosition>
 
+  /**
+   * The offsets of the element as the reader knows them, at each scroll event
+   * and each time the reader may have moved it: where the event found the
+   * element, or where the reader left it. Never emits in controlled mode, and
+   * does not replay.
+   *
+   * Unlike `scrollPosition`, it does not read the element. So its latest
+   * value still holds once the element has lost its box, and its offsets with
+   * it, as after a change to controlled mode.
+   */
+  public readonly scrollPositionKnownToReader$: Observable<ScrollPosition>
+
   constructor(
     protected viewport: Viewport,
     protected settings: ReaderSettingsManager,
@@ -114,22 +126,36 @@ export class ScrollNavigationController
       .watch(["computedPageTurnMode"])
       .pipe(map(() => this.isActive()))
 
-    this.scrollNotMadeByReader$ = this.watch("element").pipe(
+    const scrollOfElement$ = this.watch("element").pipe(
       filter(isDefined),
       switchMap((element) =>
         this.isActive$.pipe(
           switchMap((isActive) =>
-            isActive ? this.observeScrollsNotMadeByReader(element) : NEVER,
+            isActive ? this.followScrollOfElement(element) : NEVER,
           ),
         ),
       ),
       share(),
     )
 
+    this.scrollNotMadeByReader$ = scrollOfElement$.pipe(
+      filter(({ isMoveNotMadeByReader }) => isMoveNotMadeByReader),
+      map(({ scrollPositionKnownToReader }) => scrollPositionKnownToReader),
+    )
+
+    this.scrollPositionKnownToReader$ = scrollOfElement$.pipe(
+      map(({ scrollPositionKnownToReader }) => scrollPositionKnownToReader),
+    )
+
     elementCreation$.pipe(takeUntil(this.destroy$)).subscribe()
   }
 
-  private observeScrollsNotMadeByReader(element: HTMLElement) {
+  /**
+   * The offsets the reader knows the element at, and whether it found the
+   * element moved by something else than itself, at each scroll event and
+   * each time the reader may have moved it.
+   */
+  private followScrollOfElement(element: HTMLElement) {
     return merge(
       merge(
         this.navigationAppliedSubject,
@@ -177,8 +203,6 @@ export class ScrollNavigationController
           isMoveNotMadeByReader: false,
         },
       ),
-      filter(({ isMoveNotMadeByReader }) => isMoveNotMadeByReader),
-      map(({ scrollPositionKnownToReader }) => scrollPositionKnownToReader),
     )
   }
 

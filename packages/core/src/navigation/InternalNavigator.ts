@@ -191,7 +191,8 @@ export class InternalNavigator extends DestroyableClass {
      * Whether `lock()` is held, as by a pan, the user's scrolling or the app.
      * Meanwhile automatic position adjustments (correction, restoration) are
      * deferred so they don't fight whoever moves the page, and a navigation
-     * lands once the lock is released.
+     * lands once the lock is released. One restoration is not deferred: the
+     * one that follows the items layout of a book that scrolls.
      */
     protected isNavigationLocked$: Observable<boolean>,
     /** Where the reader opens, the start of the book by default. */
@@ -482,6 +483,13 @@ export class InternalNavigator extends DestroyableClass {
      * that moved what the navigation shows: the viewport is put back in the
      * task that moved the items, before a frame shows another place. Then
      * once its pages are published, which the anchor is found on.
+     *
+     * A restoration waits for `lock()` to be released: until then the
+     * position is the lock holder's. The one that follows the items layout
+     * of a book that scrolls does not wait. A position there is an offset
+     * into spine items that just moved, so it no longer shows what the lock
+     * holder left on screen: the book has to scroll to that place again,
+     * whether or not the lock is released.
      */
     const navigationUpdateFromLayout$ = merge(
       merge(navigationModeRenderingLayerSwitch$, spine.layout$).pipe(
@@ -492,13 +500,18 @@ export class InternalNavigator extends DestroyableClass {
       // Nothing to restore before the first navigation.
       skipUntil(navigationFromUser$),
       switchMap(({ isBeforePagesArePublished }) => {
-        return of(null).pipe(
-          switchMap(() =>
-            isNavigationLocked$.pipe(
-              filter((isLocked) => !isLocked),
-              first(),
-            ),
-          ),
+        const waitsForLockRelease = !(
+          isBeforePagesArePublished &&
+          settings.values.computedPageTurnMode === "scrollable"
+        )
+        const isNavigationFreeToRestore$ = waitsForLockRelease
+          ? isNavigationLocked$.pipe(
+              map((isLocked) => !isLocked),
+              first((isFree) => isFree),
+            )
+          : of(true)
+
+        return isNavigationFreeToRestore$.pipe(
           map(() => ({
             navigation: {
               ...this.navigationSubject.getValue(),
