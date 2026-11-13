@@ -37,12 +37,15 @@ The layout of the spine recovers from these errors, and goes on without the resu
 
 - A renderer whose `onLayout` throws or errors gives its item no size. The item keeps the size of its last layout at the same page size, or else takes its minimum width: one page, or a whole spread.
 - Any other error in the layout of an item, such as in a getter that its renderer overrides, gives the item the size of its last layout at the same page size, or else one page.
+- An `item.onBeforeLayout` or `item.onAfterLayout` hook that throws does not stop the layout of its item, nor the hooks registered after it.
 
 In each case the items after it still get a place, and pagination settles.
 
 A layout of the spine can still fail outside the layout of its items, through a bug of the reader. It then publishes no pages, and the layout stays [requested](/core-api/spine#layout). The reader shows no new page and loads no item until a later request lays the spine out, such as a resize or a call to `reader.layout()`.
 
-The reader reports these errors as rxjs reports an error that no subscriber handles. It calls `config.onUnhandledError` from rxjs if you set it, or else throws the error in a `setTimeout`, so that the browser reports it as uncaught. rxjs is a peer dependency of prose-reader, so the `config` that your app imports is the one that the reader uses. Set it to send these errors to your error tracker:
+The [gestures enhancer](/enhancers/gestures#hooks) also recovers from a `beforeTapGesture` hook that errors, or throws as it is called: the tap goes on, and the gestures that follow are recognized as before.
+
+The reader, and the gestures enhancer, report these errors as rxjs reports an error that no subscriber handles. They call `config.onUnhandledError` from rxjs if you set it, or else throw the error in a `setTimeout`, so that the browser reports it as uncaught. rxjs is a peer dependency of prose-reader, so the `config` that your app imports is the one that they use. Set it to send these errors to your error tracker:
 
 ```typescript
 import { config } from "rxjs"
@@ -54,3 +57,17 @@ config.onUnhandledError = (error) => {
 
 The handler also receives the errors that no subscriber in your app handles.
 
+An enhancer of your own that goes on past an error can report it the same way, with `reportRecoveredError` from `@prose-reader/core`, so that your app receives it with the reader's:
+
+```typescript
+import { reportRecoveredError } from "@prose-reader/core"
+import { catchError, EMPTY } from "rxjs"
+
+const highlightsOrNone$ = highlights$.pipe(
+  catchError((error) => {
+    reportRecoveredError(error)
+
+    return EMPTY
+  }),
+)
+```

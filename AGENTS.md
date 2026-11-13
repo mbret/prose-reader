@@ -46,6 +46,16 @@ So:
   larger rework, say so and propose it instead of quietly doing the narrow
   thing. You are not expected to stay inside the boundary of what was asked when
   what you found is bigger than it.
+- **Put a behaviour in the process that owns it, not where the task is.**
+  Before you add a behaviour, or heavily change one, ask which existing process
+  already makes that decision. If one does, the change belongs there, even when
+  a few lines in the file you were working in would solve the task and that
+  process has to be reworked first. Do the larger change, or name in the pull
+  request the process that owns the behaviour and what stops it from doing the
+  job. A fix that held a scrolled view in place while spine items loaded above
+  it was first written in the scroll navigation controller. Putting the view
+  back after a layout is the restoration's job. It ran too late to do it, so
+  the change prose needed was a restoration that runs earlier.
 - **Hunt duplication, redundancy and deletions on every change**, not only when
   asked. In an rxjs codebase they compound: two sources of the same truth become
   two subscriptions, two orderings and a race. Removing code is a good outcome.

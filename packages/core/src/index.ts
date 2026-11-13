@@ -8,6 +8,7 @@ export {
   type Theme,
 } from "./enhancers/theme"
 export { HookManager } from "./hooks/HookManager"
+export { reportRecoveredError } from "./report"
 export { SettingsManager } from "./settings/SettingsManager"
 export {
   type DocumentLoadStatus,
@@ -49,6 +50,7 @@ export type { SpineLayoutLifecycleEvent } from "./spine/SpineLayout"
 export * from "./spine/types"
 export * from "./spineItem/SpineItem"
 export { SpineItem } from "./spineItem/SpineItem"
+export type { SpineItemLayoutParams } from "./spineItem/SpineItemLayout"
 export * from "./spineItem/types"
 export * from "./utilities"
 export * from "./utils/DestroyableClass"

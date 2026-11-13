@@ -179,6 +179,16 @@ const createDeferredSpineLayout = (numberOfItems: number) => {
     takePendingLayout(itemIndex).error(error)
   }
 
+  /**
+   * Completes, in spine order, the layout of every item that has one pending
+   * once the items before it complete theirs.
+   */
+  const completePendingItemLayouts = (size: ItemSize) => {
+    pendingLayouts.forEach((_, itemIndex) => {
+      if (pendingLayouts[itemIndex]) completeItemLayout(itemIndex, size)
+    })
+  }
+
   const widths = () =>
     spineItemsManager.items.map(
       (_, itemIndex) =>
@@ -188,6 +198,12 @@ const createDeferredSpineLayout = (numberOfItems: number) => {
   const lefts = () =>
     spineItemsManager.items.map(
       (_, itemIndex) => spineLayout.getSpineItemSpineLayoutInfo(itemIndex).left,
+    )
+
+  /** Where each item's container is, which its last layout wrote. */
+  const containerLefts = () =>
+    spineItemsManager.items.map(({ element }) =>
+      Number.parseFloat(element.style.left),
     )
 
   /** How many times each item has been asked to lay out. */
@@ -210,6 +226,8 @@ const createDeferredSpineLayout = (numberOfItems: number) => {
 
   return {
     completeItemLayout,
+    completePendingItemLayouts,
+    containerLefts,
     destroy,
     dirtyFlags,
     failItemLayout,
@@ -402,7 +420,7 @@ describe("SpineLayout", () => {
     }
   })
 
-  it("lays out an item whose load ended and the items after it, and keeps the layouts of the items before it", async () => {
+  it("lays out an item whose load ended and the items it moves, and keeps the layouts of the items before it", async () => {
     const {
       completeItemLayout,
       destroy,
@@ -421,13 +439,16 @@ describe("SpineLayout", () => {
       items[1]?.load()
       await vi.waitFor(() => expect(itemLayoutsStarted()).toEqual([1, 2, 1]))
 
-      // The first item is kept, so nothing in this pass would clear its dirty
-      // flag.
-      expect(dirtyFlags()).toEqual([false, true, true])
+      /**
+       * The first item is kept, so this pass never marks it dirty. The third
+       * one awaits a layout only once the second one moves it.
+       */
+      expect(dirtyFlags()).toEqual([false, true, false])
 
       const passDone = firstValueFrom(spineLayout.layout$)
 
       completeItemLayout(1, { height: 100, width: 200 })
+      expect(dirtyFlags()).toEqual([false, false, true])
       completeItemLayout(2, { height: 100, width: 100 })
       await passDone
 
@@ -442,7 +463,7 @@ describe("SpineLayout", () => {
     }
   })
 
-  it("lays out from the first item of a request whose pass was cancelled", async () => {
+  it("keeps the layout a cancelled pass gave an item, and lays out the items after it from where it ends", async () => {
     const {
       completeItemLayout,
       destroy,
@@ -464,20 +485,20 @@ describe("SpineLayout", () => {
 
       /**
        * The third item's load cancels that pass, whose layout of the second
-       * item was never published. The next pass lays out from the second item
-       * again, not from the third, which would start where the second item
-       * ended before it changed.
+       * item was never published. The second item's container holds that
+       * layout all the same, so the next pass keeps it, and lays the third
+       * item out from where the second one ends now, not from where it ended
+       * before it changed.
        */
       items[2]?.load()
-      await vi.waitFor(() => expect(itemLayoutsStarted()).toEqual([1, 3, 2]))
+      await vi.waitFor(() => expect(itemLayoutsStarted()).toEqual([1, 2, 3]))
 
       const passDone = firstValueFrom(spineLayout.layout$)
 
-      completeItemLayout(1, { height: 100, width: 200 })
       completeItemLayout(2, { height: 100, width: 100 })
       await passDone
 
-      expect(itemLayoutsStarted()).toEqual([1, 3, 3])
+      expect(itemLayoutsStarted()).toEqual([1, 2, 3])
       expect(widths()).toEqual([100, 200, 100])
       expect(lefts()).toEqual([0, 100, 300])
     } finally {
@@ -485,10 +506,11 @@ describe("SpineLayout", () => {
     }
   })
 
-  it("lays out every item when an item's load cancels the pass of a reader layout", async () => {
+  it("lays out every item a reader layout changed when an item's load cancels its pass", async () => {
     const {
       completeItemLayout,
       destroy,
+      dirtyFlags,
       itemLayoutsStarted,
       items,
       layOutSpine,
@@ -500,21 +522,137 @@ describe("SpineLayout", () => {
     try {
       await layOutSpine({ height: 100, width: 100 })
 
+      /**
+       * The pass of the reader layout lays the first item out, at the size it
+       * had, then waits on the second.
+       */
       spineLayout.layout({ immediate: true })
-      completeItemLayout(0, { height: 100, width: 200 })
+      expect(itemLayoutsStarted(), "the layouts of each item").toEqual([
+        2, 1, 1,
+      ])
+      completeItemLayout(0, { height: 100, width: 100 })
+      expect(itemLayoutsStarted(), "the layouts of each item").toEqual([
+        2, 2, 1,
+      ])
 
+      /**
+       * The third item's load cancels that pass. The reader layout changed
+       * every item: the second and the third are still dirty, and the pass of
+       * the load lays them out, although nothing moves them. The first item
+       * keeps the layout the cancelled pass gave it.
+       */
       items[2]?.load()
-      await vi.waitFor(() => expect(itemLayoutsStarted()).toEqual([3, 2, 1]))
+      await vi.waitFor(() => expect(items[2]?.value.loadStatus).toBe("loaded"))
+      await vi.waitFor(() =>
+        expect(itemLayoutsStarted(), "the layouts of each item").toEqual([
+          2, 3, 1,
+        ]),
+      )
+      expect(dirtyFlags(), "the dirty items").toEqual([false, true, true])
 
       const passDone = firstValueFrom(spineLayout.layout$)
 
-      completeItemLayout(0, { height: 100, width: 200 })
       completeItemLayout(1, { height: 100, width: 100 })
       completeItemLayout(2, { height: 100, width: 100 })
       await passDone
 
-      expect(widths()).toEqual([200, 100, 100])
-      expect(lefts()).toEqual([0, 200, 300])
+      expect(itemLayoutsStarted(), "the layouts of each item").toEqual([
+        2, 3, 2,
+      ])
+      expect(widths()).toEqual([100, 100, 100])
+      expect(lefts()).toEqual([0, 100, 200])
+    } finally {
+      destroy()
+    }
+  })
+
+  it("lays out no item after an item whose load ended without moving them", async () => {
+    const {
+      completeItemLayout,
+      containerLefts,
+      destroy,
+      dirtyFlags,
+      itemLayoutsStarted,
+      items,
+      layOutSpine,
+      lefts,
+      spineLayout,
+    } = createDeferredSpineLayout(4)
+
+    try {
+      await layOutSpine({ height: 100, width: 100 })
+
+      items[1]?.load()
+      await vi.waitFor(() =>
+        expect(itemLayoutsStarted()[1], "the layouts of the second item").toBe(
+          2,
+        ),
+      )
+
+      const passDone = firstValueFrom(spineLayout.layout$)
+
+      // It keeps its size, as a pre-paginated item does when it loads.
+      completeItemLayout(1, { height: 100, width: 100 })
+
+      /**
+       * No request changed the items after it, and they start where they
+       * started: they are where this pass would put them.
+       */
+      expect(itemLayoutsStarted(), "the layouts of each item").toEqual([
+        1, 2, 1, 1,
+      ])
+
+      await passDone
+
+      expect(containerLefts(), "the containers").toEqual(lefts())
+      expect(dirtyFlags(), "the dirty items").toEqual([
+        false,
+        false,
+        false,
+        false,
+      ])
+    } finally {
+      destroy()
+    }
+  })
+
+  it("lays out again an item that a cancelled pass moved, once a later pass puts it back where its published layout has it", async () => {
+    const {
+      completeItemLayout,
+      completePendingItemLayouts,
+      containerLefts,
+      destroy,
+      items,
+      layOutSpine,
+      lefts,
+    } = createDeferredSpineLayout(3)
+
+    try {
+      await layOutSpine({ height: 100, width: 100 })
+
+      // A pass for the first item's load grows it, which moves the second
+      // item, then waits on the third.
+      items[0]?.load()
+      await vi.waitFor(() => expect(items[0]?.value.loadStatus).toBe("loaded"))
+      await vi.waitFor(() => completeItemLayout(0, { height: 100, width: 200 }))
+      completeItemLayout(1, { height: 100, width: 100 })
+
+      expect(containerLefts(), "the containers mid-pass").toEqual([0, 200, 200])
+
+      /**
+       * The first item's release cancels that pass, whose layouts were never
+       * published, and its next pass gives the first item its size back. The
+       * second item starts where the published layout has it, but its
+       * container holds where the cancelled pass moved it.
+       */
+      items[0]?.unload()
+      await vi.waitFor(() => completeItemLayout(0, { height: 100, width: 100 }))
+      completePendingItemLayouts({ height: 100, width: 100 })
+
+      await vi.waitFor(() =>
+        expect(lefts(), "the published layout").toEqual([0, 100, 200]),
+      )
+      expect(containerLefts(), "the containers").toEqual(lefts())
     } finally {
       destroy()
     }
@@ -696,6 +834,57 @@ describe("SpineLayout", () => {
           await waitFor(0)
 
           expect(unhandledErrors).toEqual(reportedErrors)
+        } finally {
+          destroy()
+        }
+      },
+    )
+
+    it.each(["item.onBeforeLayout", "item.onAfterLayout"] as const)(
+      "lays it out at its size, and runs the hooks after it, when its %s hook throws",
+      async (hookName) => {
+        const unhandledErrors = recordUnhandledErrors()
+        const {
+          completeItemLayout,
+          destroy,
+          hookManager,
+          itemLayoutsStarted,
+          spineLayout,
+          widths,
+        } = createDeferredSpineLayout(3)
+        const itemsOfTheNextHook: number[] = []
+
+        hookManager.register(hookName, ({ item }) => {
+          if (item.index === 1) throw failure
+        })
+        hookManager.register(hookName, ({ item }) => {
+          itemsOfTheNextHook.push(item.index)
+        })
+
+        try {
+          const passDone = firstValueFrom(spineLayout.layout$)
+
+          spineLayout.layout({ immediate: true })
+
+          for (const itemIndex of [0, 1, 2]) {
+            expect(
+              itemLayoutsStarted()[itemIndex],
+              `the layouts of item ${itemIndex}`,
+            ).toBe(1)
+
+            completeItemLayout(itemIndex, { height: 100, width: 300 })
+          }
+
+          await passDone
+
+          expect(widths()).toEqual([300, 300, 300])
+          expect(itemsOfTheNextHook, "the items of the next hook").toEqual([
+            0, 1, 2,
+          ])
+
+          await waitFor(0)
+
+          expect(unhandledErrors).toEqual([failure])
         } finally {
           destroy()
         }
@@ -962,6 +1151,32 @@ describe("SpineLayout", () => {
       expect(itemsLaidOut, "the items laid out").toEqual([0, 1, 2])
       expect(dirtyFlags(), "the dirty items").toEqual([false, false, false])
       expect(widths()).toEqual([200, 200, 200])
+    } finally {
+      destroy()
+    }
+  })
+
+  it("gives the last item of a pre-paginated book a blank page after it, when it starts a spread alone", async () => {
+    const { destroy, layoutRequests, spineLayout } =
+      createSpreadModeTestEnvironment({
+        pageHeight: 100,
+        pageWidth: 100,
+        readingDirection: "ltr",
+        items: [undefined, undefined, undefined],
+      })
+
+    try {
+      const layoutDone = firstValueFrom(spineLayout.layout$)
+
+      spineLayout.layout({ immediate: true })
+      await layoutDone
+
+      expect(layoutRequests.find(({ id }) => id === "item-2")).toEqual({
+        blankPagePosition: "after",
+        id: "item-2",
+        minimumWidth: 200,
+      })
+      expect(spineLayout.getSpineItemSpineLayoutInfo(2).width).toBe(200)
     } finally {
       destroy()
     }

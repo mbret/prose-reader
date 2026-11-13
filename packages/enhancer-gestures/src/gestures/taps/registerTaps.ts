@@ -1,23 +1,68 @@
-import type { HookManager, Reader } from "@prose-reader/core"
+import {
+  type HookManager,
+  type Reader,
+  reportRecoveredError,
+} from "@prose-reader/core"
 import type { TapRecognizer } from "gesturx"
 import {
-  combineLatest,
+  catchError,
+  defaultIfEmpty,
+  defer,
   EMPTY,
   filter,
-  first,
+  forkJoin,
   map,
+  type Observable,
   of,
   switchMap,
+  take,
   withLatestFrom,
 } from "rxjs"
 import type { GesturesSettingsManager } from "../../SettingsManager"
-import type { GestureRecognizable, Hook } from "../../types"
+import type {
+  BeforeTapGestureContext,
+  GestureRecognizable,
+  Hook,
+} from "../../types"
 import {
   getPositionRelativeToContainer,
   isNotLink,
   istMatchingSelectors,
 } from "../../utils"
 import { calculatePageTurnLinearMargin, isPositionInArea } from "./utils"
+
+/** Given when no hook is registered. */
+const noVerdicts: boolean[] = []
+
+/**
+ * Whether the `beforeTapGesture` hooks let a tap go on, once each has given
+ * its verdict. Only a first verdict of `false` objects to the tap.
+ *
+ * Whatever else a hook does gives no objection, so that it cannot cost the
+ * reader its gestures: a hook that completes with no verdict, errors, or
+ * throws as it is called lets the tap go on, and its error is reported. Each
+ * hook is asked apart, so that one that throws cancels no other hook's veto.
+ */
+const isTapAllowedByBeforeTapGestureHooks = (
+  hookManager: HookManager<Hook>,
+  tapContext: BeforeTapGestureContext,
+): Observable<boolean> =>
+  forkJoin(
+    hookManager.getHooks("beforeTapGesture").map((hook) =>
+      defer(() => hook.runFn({ event$: of(tapContext) })).pipe(
+        take(1),
+        catchError((error) => {
+          reportRecoveredError(error)
+
+          return EMPTY
+        }),
+        defaultIfEmpty(true),
+      ),
+    ),
+  ).pipe(
+    defaultIfEmpty(noVerdicts),
+    map((verdicts) => !verdicts.includes(false)),
+  )
 
 export const registerTaps = ({
   reader,
@@ -70,13 +115,11 @@ export const registerTaps = ({
               )
             : undefined
 
-          const beforeTapResults$ = hookManager.execute("beforeTapGesture", {
-            event$: of({ event, page: spineItemPageInfo }),
-          })
-
-          return combineLatest([...beforeTapResults$, of(true)]).pipe(
-            first(),
-            filter((results) => !results.some((result) => result === false)),
+          return isTapAllowedByBeforeTapGestureHooks(hookManager, {
+            event,
+            page: spineItemPageInfo,
+          }).pipe(
+            filter((isTapAllowed) => isTapAllowed),
             map(() => {
               const isZoomedIn =
                 reader.zoom.state.isZooming &&

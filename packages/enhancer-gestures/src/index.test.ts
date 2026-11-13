@@ -5,7 +5,20 @@ import {
   type Manifest,
   type Navigation,
 } from "@prose-reader/core"
-import { EMPTY, filter, first, of, skip } from "rxjs"
+import {
+  BehaviorSubject,
+  combineLatest,
+  config,
+  EMPTY,
+  filter,
+  first,
+  map,
+  of,
+  skip,
+  switchMap,
+  tap,
+  withLatestFrom,
+} from "rxjs"
 import { afterEach, beforeAll, describe, expect, it, vi } from "vitest"
 import { gesturesEnhancer } from "./index"
 
@@ -109,17 +122,45 @@ beforeAll(() => {
   )
 })
 
-const createGesturesReader = (ownerDocument?: Document) =>
+/**
+ * Holds every layout while held, so that the spine publishes no pages until
+ * it is released.
+ */
+const createLayoutHold = () => {
+  const isLayoutHeld = new BehaviorSubject(true)
+
+  class HeldLayoutRenderer extends EmptyRenderer {
+    onLayout() {
+      return isLayoutHeld.pipe(
+        first((isHeld) => !isHeld),
+        map(() => undefined),
+      )
+    }
+  }
+
+  return {
+    Renderer: HeldLayoutRenderer,
+    release: () => isLayoutHeld.next(false),
+  }
+}
+
+const createGesturesReader = (
+  ownerDocument?: Document,
+  Renderer: typeof EmptyRenderer = EmptyRenderer,
+) =>
   gesturesEnhancer(createReader)({
     manifest,
     ownerDocument,
-    getRenderer: () => (props) => new EmptyRenderer(props),
+    getRenderer: () => (props) => new Renderer(props),
     getResource: () => of(new Response("", { status: 200 })),
   })
 
 const readers: { destroy: () => void }[] = []
 
+const onUnhandledError = config.onUnhandledError
+
 afterEach(() => {
+  config.onUnhandledError = onUnhandledError
   for (const reader of readers.splice(0)) reader.destroy()
   document.body.replaceChildren()
   vi.useRealTimers()
@@ -130,23 +171,23 @@ const excludeFromCleanup = (reader: { destroy: () => void }) => {
 }
 
 /**
- * A reader settled on its first page, recording every user navigation and
- * gesture from then on.
+ * A mounted reader, recording every user navigation and gesture from then on.
  */
-const onFirstPage = async (container = document.createElement("div")) => {
+const mountGesturesReader = async ({
+  container = document.createElement("div"),
+  Renderer,
+}: {
+  container?: HTMLElement
+  Renderer?: typeof EmptyRenderer
+} = {}) => {
   vi.useFakeTimers()
 
-  const reader = createGesturesReader()
+  const reader = createGesturesReader(undefined, Renderer)
   readers.push(reader)
 
   document.body.appendChild(container)
   reader.mount(container)
   await vi.runAllTimersAsync()
-
-  expect(reader.pagination.state).toMatchObject({
-    isSettled: true,
-    begin: { spineItemIndex: 0 },
-  })
 
   const navigations: Navigation[] = []
   reader.navigation.navigation$
@@ -158,12 +199,16 @@ const onFirstPage = async (container = document.createElement("div")) => {
     .subscribe((navigation) => navigations.push(navigation))
 
   const gestures: { type: string; handled?: boolean }[] = []
-  reader.gestures.gestures$.subscribe((gesture) => {
-    gestures.push(
-      gesture.type === "tap"
-        ? { type: gesture.type, handled: gesture.handled }
-        : { type: gesture.type },
-    )
+  const gesturesErrors: unknown[] = []
+  reader.gestures.gestures$.subscribe({
+    next: (gesture) => {
+      gestures.push(
+        gesture.type === "tap"
+          ? { type: gesture.type, handled: gesture.handled }
+          : { type: gesture.type },
+      )
+    },
+    error: (error) => gesturesErrors.push(error),
   })
 
   /**
@@ -285,7 +330,22 @@ const onFirstPage = async (container = document.createElement("div")) => {
     await vi.runAllTimersAsync()
   }
 
-  return { reader, navigations, gestures, drag, pinch }
+  return { reader, navigations, gestures, gesturesErrors, drag, pinch }
+}
+
+/**
+ * A reader settled on its first page, recording every user navigation and
+ * gesture from then on.
+ */
+const onFirstPage = async (container?: HTMLElement) => {
+  const mountedReader = await mountGesturesReader({ container })
+
+  expect(mountedReader.reader.pagination.state).toMatchObject({
+    isSettled: true,
+    begin: { spineItemIndex: 0 },
+  })
+
+  return mountedReader
 }
 
 describe("Given a reader on its first page", () => {
@@ -503,5 +563,72 @@ describe("Given a reader a gesture was made on", () => {
     expect(addedListeners).not.toEqual([])
     expect(removedListeners).toEqual(expect.arrayContaining(addedListeners))
     expect(container.outerHTML).toBe(containerBeforeMount)
+  })
+})
+
+/**
+ * From its creation to its first published pages, a reader has no page to
+ * give a tap. A `beforeTapGesture` hook that reads something derived from the
+ * pages with `withLatestFrom`, as react-reader's bookmark hook reads the
+ * annotation candidates, can then complete with no verdict. Such a tap must
+ * go on, and must not stop the gestures.
+ */
+describe("Given a reader whose first layout has not ended", () => {
+  it("recognizes taps and pans once its pages are published, after a hook gave no verdict on a tap before them", async () => {
+    // What the enhancer's own subscription to the gestures would throw, so
+    // that the test fails on what it checks rather than on the throw.
+    const unhandledErrors: unknown[] = []
+    config.onUnhandledError = (error) => {
+      unhandledErrors.push(error)
+    }
+    const layoutHold = createLayoutHold()
+    const { reader, gestures, gesturesErrors, navigations, drag } =
+      await mountGesturesReader({
+        Renderer: layoutHold.Renderer,
+      })
+    /**
+     * One value per published page, from `combineLatest`, which emits
+     * nothing for an empty list: the hook gives no verdict until the reader
+     * has pages, and a verdict once it has.
+     */
+    const isTapAllowedOnEachPage$ = reader.layoutInfo$.pipe(
+      switchMap(({ pages }) => combineLatest(pages.map(() => of(true)))),
+    )
+    const verdicts: boolean[] = []
+    reader.gestures.hooks.register("beforeTapGesture", ({ event$ }) =>
+      event$.pipe(
+        withLatestFrom(isTapAllowedOnEachPage$),
+        map(() => true),
+        tap((verdict) => verdicts.push(verdict)),
+      ),
+    )
+
+    expect(reader.spine.pages.value.pages).toEqual([])
+
+    await drag({ x: viewport.width / 2, distance: 0 })
+
+    expect(verdicts).toEqual([])
+    expect(gestures).toEqual([{ type: "tap", handled: false }])
+
+    layoutHold.release()
+    await vi.runAllTimersAsync()
+
+    expect(reader.pagination.state).toMatchObject({
+      isSettled: true,
+      begin: { spineItemIndex: 0 },
+    })
+
+    await drag({ x: viewport.width / 2, distance: 0 })
+    await drag({ x: viewport.width / 2, distance: -60 })
+
+    expect(verdicts).toEqual([true])
+    expect(gestures.filter(({ type }) => type === "tap")).toEqual([
+      { type: "tap", handled: false },
+      { type: "tap", handled: false },
+    ])
+    expect(gestures.map(({ type }) => type)).toContain("pan")
+    expect(navigations.length).toBeGreaterThan(0)
+    expect(gesturesErrors).toEqual([])
+    expect(unhandledErrors).toEqual([])
   })
 })
