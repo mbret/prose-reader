@@ -242,6 +242,9 @@ hold:
 - from the moment a layout that can change what it shows is requested: one
   by `reader.layout()`, or by a spine item loading or unloading when that item
   is shown or comes before the ones shown;
+- through the `"restoration"` that puts the viewport back as soon as the
+  spine items are laid out, when the layout moved what the navigation shows:
+  the new pages are not in yet;
 - once the new pages are in, until the navigation is restored onto them, by a
   `"restoration"` that holds.
 

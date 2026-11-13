@@ -58,8 +58,10 @@ reader.spine
 ## Layout
 
 A spine item's place depends only on the items before it. A layout started by
-an item's load changes that item and the ones after it, and leaves the ones
-before it as they are, so the spine tracks the layout from the first item it
+an item's load lays that item out again. It lays out the ones after it again
+only if that item's size changes and moves them, and it leaves the ones before
+it as they are. A pre-paginated item keeps its size when it loads, so its load
+lays out that item alone. The spine tracks the layout from the first item it
 can change: its state's `firstItemIndexAwaitingLayout`. The items after that one
 can change too, and the ones before it cannot.
 
@@ -75,6 +77,12 @@ A request never moves it past an earlier item still waiting. It turns
 updates its state before the pages reach anything else. A newer request
 cancels everything still running for older ones, so the pages published then
 are the ones it asked for. It is `0` until the first pages are published.
+A layout that fails outside the layout of its items, through a bug of the
+reader, publishes no pages, and the reader
+[reports its error](/learn/error-handling#errors-the-reader-recovers-from):
+`firstItemIndexAwaitingLayout` stays a number until a later request publishes
+its pages. The reader requests none on its own: until a resize, a setting or
+`reader.layout()` requests one, it loads no new item.
 
 A layout runs only while the viewport has a size, see
 [`reader.viewport.isSized$`](/core-api/viewport#issizedusd). A request made
@@ -86,7 +94,10 @@ Read it before you use where a page is, with `.isLayoutCurrent()` or
 ones after it describe the layout before the request. A spine item's place in
 the spine does not wait for them: it is replaced once the items are laid out.
 Neither does a spine item's `isDirty`: a layout clears it as soon as it lays
-that item out, long before the pages are computed again. For the latest
+that item out, long before the pages are computed again. A request marks dirty
+the spine items it changes: every one for `reader.layout()`, the one whose load
+ended otherwise. A spine item that a layout moves is dirty only from the moment
+the layout reaches it. For the latest
 navigation with whether it holds on this layout, read
 [`reader.navigation.navigationAgainstCurrentLayout$`](/core-api/navigation#navigationagainstcurrentlayoutusd).
 
@@ -109,9 +120,9 @@ one. A layout waits 50 ms after its request, unless it is asked for with
 `reader.layout({ immediate: true })`, so this comes after the request, and
 after any request that replaced it.
 
-From here until `.itemsLayout$`, the layout moves the spine items one after
-the other, and the place the spine gives for each one is still the place from
-before the layout. Read here what you need from before a layout, such as
+From here until `.itemsLayout$`, the layout lays out again, one after the
+other, the spine items it changes or moves, and the place the spine gives for
+each one is still the place from before the layout. Read here what you need from before a layout, such as
 what a book that scrolls shows.
 
 It can emit twice with no `.itemsLayout$` in between. A layout stops and starts

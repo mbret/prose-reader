@@ -8,6 +8,7 @@ import {
   defaultTestViewport,
   getTestContainer,
   holdItem,
+  holdItemLayout,
   installReaderTestEnvironment,
   mountTestReader,
   notifyResize,
@@ -313,6 +314,60 @@ describe("Given a mounted reader whose container is hidden", () => {
     expect(layouts()).toBe(2)
     expect(reader.spine.isLayoutCurrent()).toBe(true)
     expect(viewportSizesAtItemLayouts).not.toEqual([])
+  })
+
+  it("lays every item out for the size the container is shown at, when it is hidden after the layout laid out some of them", async () => {
+    const secondItem = holdItemLayout("/page_1.jpg")
+    const reader = await mountedAndSettled({
+      getRenderer: secondItem.getRenderer,
+    })
+    const firstItem = reader.spineItemsManager.get(0)
+
+    if (!firstItem) throw new Error("item 0 is missing")
+
+    // The pass lays the first item out at this size, then waits on the second.
+    const layoutsOfSecondItemBefore = secondItem.layoutsStarted()
+
+    secondItem.hold()
+    reader.layout()
+    await vi.waitFor(() => {
+      expect(firstItem.value.isDirty, "the first item awaits a layout").toBe(
+        false,
+      )
+      expect(secondItem.layoutsStarted(), "the layouts of the second").toBe(
+        layoutsOfSecondItemBefore + 1,
+      )
+    })
+
+    /**
+     * Shown at another size whose pages are not side by side either, so the
+     * spine gives the first item the same place: only the size of its pages
+     * changes.
+     */
+    setTestViewport(hidden)
+    notifyResize()
+    setTestViewport({ width: 150, height: 250 })
+    notifyResize()
+    secondItem.release()
+
+    await vi.waitFor(() => {
+      expect(reader.spine.isLayoutCurrent(), "the layout is current").toBe(true)
+    })
+    expect(reader.viewport.value.width, "the width laid out at").toBe(150)
+
+    const itemLayouts = () =>
+      reader.spineItemsManager.items.map(({ index }) => {
+        const { left, width } = reader.spine.getSpineItemSpineLayoutInfo(index)
+
+        return { left, width }
+      })
+    const itemLayoutsShown = itemLayouts()
+
+    // Laid out again at the same size, from scratch, nothing moves.
+    reader.layout()
+    await firstValueFrom(reader.layout$.pipe(timeout(2000)))
+
+    expect(itemLayoutsShown, "the items as shown").toEqual(itemLayouts())
   })
 
   it("lays nothing out when the container is hidden before the browser reports it, and lays out once it is shown", async () => {

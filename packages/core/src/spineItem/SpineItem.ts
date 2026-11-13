@@ -1,4 +1,4 @@
-import { merge, share, takeUntil, tap } from "rxjs"
+import { defer, merge, share, takeUntil, tap } from "rxjs"
 import type { Manifest } from ".."
 import { HTML_PREFIX_SPINE_ITEM } from "../constants"
 import type { Context } from "../context/Context"
@@ -13,7 +13,7 @@ import type {
   DocumentRenderer,
 } from "./renderer/DocumentRenderer"
 import { ResourceHandler } from "./resources/ResourceHandler"
-import { SpineItemLayout } from "./SpineItemLayout"
+import { SpineItemLayout, type SpineItemLayoutParams } from "./SpineItemLayout"
 
 export type SpineItemReference = string | SpineItem | number
 
@@ -28,8 +28,10 @@ export type SpineItemState = DocumentLoad & {
    */
   isReady: boolean
   /**
-   * - Layout has been requested
-   * - Item layout not done yet
+   * Whether the item awaits a layout: a layout request changed it, or a
+   * layout of it started, and no layout of it completed since. The items
+   * after one a request changes are not dirty: a layout lays them out only if
+   * they move, and they are dirty from then until it is done.
    */
   isDirty: boolean
 }
@@ -250,9 +252,25 @@ export class SpineItem extends ReactiveEntity<SpineItemState> {
     })
   }
 
-  public layout: SpineItemLayout["layout"] = (params) => {
-    return this._layout.layout(params)
-  }
+  /**
+   * Lays the item out once per subscription. The item is dirty from the
+   * subscription until the layout completes, and stays dirty if it does not.
+   */
+  public layout: SpineItemLayout["layout"] = (params) =>
+    defer(() => {
+      this.markDirty()
+
+      return this._layout.layout(params)
+    })
+
+  /**
+   * Whether laying the item out with these parameters would change nothing:
+   * it is not dirty, and its last layout had these parameters, at the page
+   * size the viewport has now. Its container is then where and what that
+   * layout would make it.
+   */
+  public isLaidOutWith = (params: SpineItemLayoutParams) =>
+    !this.value.isDirty && this._layout.isLaidOutWith(params)
 }
 
 const createContainerElement = (

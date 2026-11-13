@@ -1,12 +1,10 @@
 import { isShallowEqual, type Reader } from "@prose-reader/core"
 import {
-  combineLatest,
   debounceTime,
   distinctUntilChanged,
   map,
   merge,
   NEVER,
-  of,
   shareReplay,
   switchMap,
   takeUntil,
@@ -148,22 +146,24 @@ export const annotationsEnhancer =
       switchMap(() => readerHighlights.layout()),
     )
 
+    /**
+     * One entry per published page, so an empty array while the reader has
+     * published none: a consumer reading it with `withLatestFrom` gets a
+     * value at once. That holds because `layoutInfo$` replays the current
+     * pages, which the layout enhancer keeps subscribed.
+     */
     const candidates$ = reader.layoutInfo$.pipe(
-      switchMap(({ pages }) =>
-        combineLatest(
-          pages.map((page) => {
-            const item = reader.spineItemsManager.get(page.itemIndex)
+      map(({ pages }) =>
+        pages.map((page) => {
+          const item = reader.spineItemsManager.get(page.itemIndex)
 
-            if (!item) return of(false)
+          if (!item) return false
 
-            // pre-paginated can always be annotated on their unique page
-            if (item.renditionLayout === "pre-paginated") return of(true)
+          // pre-paginated can always be annotated on their unique page
+          if (item.renditionLayout === "pre-paginated") return true
 
-            if (page.firstVisibleNode) return of(true)
-
-            return of(false)
-          }),
-        ),
+          return page.firstVisibleNode !== undefined
+        }),
       ),
     )
 

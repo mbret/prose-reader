@@ -477,13 +477,21 @@ export class InternalNavigator extends DestroyableClass {
      * directly to new position. NO layout should happens during viewport busy.
      * This is responsibility of other components.
      */
+    /**
+     * A layout restores the navigation twice. Once its items are laid out, if
+     * that moved what the navigation shows: the viewport is put back in the
+     * task that moved the items, before a frame shows another place. Then
+     * once its pages are published, which the anchor is found on.
+     */
     const navigationUpdateFromLayout$ = merge(
-      navigationModeRenderingLayerSwitch$,
-      spine.layout$,
+      merge(navigationModeRenderingLayerSwitch$, spine.layout$).pipe(
+        map(() => ({ isBeforePagesArePublished: false })),
+      ),
+      spine.itemsLayout$.pipe(map(() => ({ isBeforePagesArePublished: true }))),
     ).pipe(
       // Nothing to restore before the first navigation.
       skipUntil(navigationFromUser$),
-      switchMap(() => {
+      switchMap(({ isBeforePagesArePublished }) => {
         return of(null).pipe(
           switchMap(() =>
             isNavigationLocked$.pipe(
@@ -496,6 +504,7 @@ export class InternalNavigator extends DestroyableClass {
               ...this.navigationSubject.getValue(),
               animation: false as const,
             },
+            isBeforePagesArePublished,
           })),
           /**
            * We need to cancel the restoration as soon as there is
@@ -507,9 +516,14 @@ export class InternalNavigator extends DestroyableClass {
       }),
     )
 
-    const navigationRestored$ = merge(
+    const navigationWithRestoredPosition$ = merge(
       navigationUpdateFromLayout$,
-      navigationUpdateOnLockRelease$,
+      navigationUpdateOnLockRelease$.pipe(
+        map(({ navigation }) => ({
+          navigation,
+          isBeforePagesArePublished: false,
+        })),
+      ),
     ).pipe(
       withAnchorFromTarget({ resolvers: targetResolvers }),
       withRestoredPosition({
@@ -519,6 +533,24 @@ export class InternalNavigator extends DestroyableClass {
         spine,
         cfiManager,
       }),
+      /**
+       * Before the pages are published, there is nothing to tell unless the
+       * layout moved the navigation: where it stays, the restoration that
+       * follows the pages says all there is to say, once.
+       */
+      filter(({ navigation, isBeforePagesArePublished }) => {
+        if (!isBeforePagesArePublished) return true
+
+        const { position } = this.navigationSubject.getValue()
+
+        return (
+          navigation.position.x !== position.x ||
+          navigation.position.y !== position.y
+        )
+      }),
+    )
+
+    const navigationRestored$ = navigationWithRestoredPosition$.pipe(
       map(({ navigation, ...rest }) => {
         const updated: InternalNavigationEntry = {
           ...navigation,
