@@ -575,7 +575,7 @@ describe("SpineLayout", () => {
   })
 
   describe("Given a layout that only the load of an item asks for", () => {
-    it("starts its pass once the viewport has stayed free for the wait", async () => {
+    it("starts its pass once the viewport has stayed free for the delay of its request", async () => {
       vi.useFakeTimers()
       const { context, destroy, items, layOutSpine, spineLayout } =
         createDeferredSpineLayout(2)
@@ -590,7 +590,7 @@ describe("SpineLayout", () => {
 
         expect(stages, "the stages once the load ended").toEqual(["requested"])
 
-        // The viewport becomes busy during the wait, as when the user scrolls.
+        // The viewport becomes busy during the delay, as when the user scrolls.
         context.bridgeEvent.viewportStateSubject.next("busy")
         await vi.advanceTimersByTimeAsync(1000)
 
@@ -598,7 +598,7 @@ describe("SpineLayout", () => {
           "requested",
         ])
 
-        // Free for less than the wait, then busy again: the wait starts again.
+        // Free for less than the delay, then busy: the delay starts again.
         context.bridgeEvent.viewportStateSubject.next("free")
         await vi.advanceTimersByTimeAsync(49)
         context.bridgeEvent.viewportStateSubject.next("busy")
@@ -612,13 +612,13 @@ describe("SpineLayout", () => {
         context.bridgeEvent.viewportStateSubject.next("free")
         await vi.advanceTimersByTimeAsync(49)
 
-        expect(stages, "the stages before the wait is over").toEqual([
+        expect(stages, "the stages before the delay is over").toEqual([
           "requested",
         ])
 
         await vi.advanceTimersByTimeAsync(1)
 
-        expect(stages, "the stages once the wait is over").toEqual([
+        expect(stages, "the stages once the delay is over").toEqual([
           "requested",
           "layingOut",
         ])
@@ -628,29 +628,34 @@ describe("SpineLayout", () => {
       }
     })
 
-    it("starts its pass after the wait, whatever the viewport does, when it cancels the pass of a layout of the reader", async () => {
+    it("keeps waiting for a free viewport when the load of another item ends before its pass starts", async () => {
       vi.useFakeTimers()
       const { context, destroy, items, layOutSpine, spineLayout } =
-        createDeferredSpineLayout(2)
+        createDeferredSpineLayout(3)
 
       try {
         await layOutSpine({ height: 100, width: 100 })
 
         const stages = recordLayoutStages(spineLayout)
 
-        spineLayout.layout()
+        // Both loads end before the viewport is busy: a renderer holds the
+        // end of a load until the viewport is free.
         items[1]?.load()
+        await vi.advanceTimersByTimeAsync(10)
+        items[2]?.load()
         await vi.advanceTimersByTimeAsync(0)
+        context.bridgeEvent.viewportStateSubject.next("busy")
+        await vi.advanceTimersByTimeAsync(1000)
 
-        expect(stages, "the stages once the load ended").toEqual([
+        expect(stages, "the stages while the viewport is busy").toEqual([
           "requested",
           "requested",
         ])
 
-        context.bridgeEvent.viewportStateSubject.next("busy")
+        context.bridgeEvent.viewportStateSubject.next("free")
         await vi.advanceTimersByTimeAsync(50)
 
-        expect(stages, "the stages once the wait is over").toEqual([
+        expect(stages, "the stages once the delay is over").toEqual([
           "requested",
           "requested",
           "layingOut",
@@ -663,7 +668,7 @@ describe("SpineLayout", () => {
   })
 
   describe("Given a layout that the load of an item asks for, after a pass that started and did not complete", () => {
-    it("starts its pass after the wait, whatever the viewport does, when it cancels that pass", async () => {
+    it("does not wait for a free viewport when it cancels that pass", async () => {
       vi.useFakeTimers()
       const {
         completeItemLayout,
@@ -698,7 +703,7 @@ describe("SpineLayout", () => {
         context.bridgeEvent.viewportStateSubject.next("busy")
         await vi.advanceTimersByTimeAsync(50)
 
-        expect(stages, "the stages once the wait is over").toEqual([
+        expect(stages, "the stages once the delay is over").toEqual([
           "requested",
           "layingOut",
           "requested",
@@ -710,7 +715,7 @@ describe("SpineLayout", () => {
       }
     })
 
-    it("starts its pass after the wait, whatever the viewport does, when that pass failed", async () => {
+    it("does not wait for a free viewport when that pass failed", async () => {
       vi.useFakeTimers()
       const unhandledErrors = recordUnhandledErrors()
       const failure = new Error("the pass failed")
@@ -743,7 +748,7 @@ describe("SpineLayout", () => {
         context.bridgeEvent.viewportStateSubject.next("busy")
         await vi.advanceTimersByTimeAsync(50)
 
-        expect(stages, "the stages once the wait is over").toEqual([
+        expect(stages, "the stages once the delay is over").toEqual([
           "requested",
           "layingOut",
           "requested",
@@ -760,7 +765,7 @@ describe("SpineLayout", () => {
   })
 
   describe("Given a layout of the reader", () => {
-    it("starts its pass after the wait, while the viewport is busy", async () => {
+    it("does not wait for a free viewport", async () => {
       vi.useFakeTimers()
       const { context, destroy, layOutSpine, spineLayout } =
         createDeferredSpineLayout(2)
@@ -774,7 +779,40 @@ describe("SpineLayout", () => {
         spineLayout.layout()
         await vi.advanceTimersByTimeAsync(50)
 
-        expect(stages, "the stages once the wait is over").toEqual([
+        expect(stages, "the stages once the delay is over").toEqual([
+          "requested",
+          "layingOut",
+        ])
+      } finally {
+        destroy()
+        vi.useRealTimers()
+      }
+    })
+
+    it("does not wait for a free viewport when the load of an item ends before its pass starts", async () => {
+      vi.useFakeTimers()
+      const { context, destroy, items, layOutSpine, spineLayout } =
+        createDeferredSpineLayout(2)
+
+      try {
+        await layOutSpine({ height: 100, width: 100 })
+
+        const stages = recordLayoutStages(spineLayout)
+
+        spineLayout.layout()
+        items[1]?.load()
+        await vi.advanceTimersByTimeAsync(0)
+
+        expect(stages, "the stages once the load ended").toEqual([
+          "requested",
+          "requested",
+        ])
+
+        context.bridgeEvent.viewportStateSubject.next("busy")
+        await vi.advanceTimersByTimeAsync(50)
+
+        expect(stages, "the stages once the delay is over").toEqual([
+          "requested",
           "requested",
           "layingOut",
         ])

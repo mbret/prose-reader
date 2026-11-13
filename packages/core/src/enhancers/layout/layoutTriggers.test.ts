@@ -372,6 +372,44 @@ describe("Given a mounted reader whose container is hidden", () => {
     expect(itemLayoutsShown, "the items as shown").toEqual(itemLayouts())
   })
 
+  it("waits for the release to start the layout for a spine item's load, when it is hidden and shown before that layout started", async () => {
+    const reader = await mountedAndSettled()
+    const viewportElement = reader.viewport.value.element
+    const observersOfViewportBefore = resizeObservers(viewportElement).watching
+    let layoutStarts = 0
+
+    reader.spine.itemsLayoutStart$.subscribe(() => {
+      layoutStarts += 1
+    })
+
+    // Locked during the delay of the request, before its pass starts.
+    await requestLayoutByUnloadingItem(reader, 1)
+
+    const release = reader.navigation.lock()
+
+    // The pass observes the size of the viewport from a later frame.
+    await vi.waitFor(() => {
+      expect(
+        resizeObservers(viewportElement).watching,
+        "the observers of the viewport",
+      ).toBeGreaterThan(observersOfViewportBefore)
+    })
+
+    vi.useFakeTimers()
+    setTestViewport(hidden)
+    notifyResize()
+    setTestViewport(defaultTestViewport)
+    notifyResize()
+    await vi.advanceTimersByTimeAsync(1000)
+
+    expect(layoutStarts, "the starts of a layout, while it is locked").toBe(0)
+
+    release()
+    await vi.advanceTimersByTimeAsync(1000)
+
+    expect(layoutStarts, "the starts of a layout, once released").toBe(1)
+  })
+
   it("starts the layout for a spine item's load again while the navigation is locked, when it is hidden and shown after that layout laid out some items", async () => {
     const secondItem = holdItemLayout("/page_1.jpg")
     const reader = await mountedAndSettled({
@@ -398,7 +436,8 @@ describe("Given a mounted reader whose container is hidden", () => {
 
     /**
      * Shown again at the same size, so no layout of the reader is requested.
-     * The spine is half laid out: the pass does not wait for the release.
+     * A pass started and did not complete: the pass that starts again does
+     * not wait for the release.
      */
     const release = reader.navigation.lock()
 

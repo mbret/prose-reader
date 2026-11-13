@@ -316,5 +316,5 @@ reader.viewportFree$.pipe(first()).subscribe(() => {
 })
 ```
 
-The layout that follows the load of a spine item waits longer: until the
+A layout that only the loads of spine items ask for waits longer: until the
 viewport has stayed free for 50 ms, see [Layout](/core-api/spine#layout).

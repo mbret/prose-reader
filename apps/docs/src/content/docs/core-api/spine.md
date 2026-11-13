@@ -91,14 +91,18 @@ until the container is shown again.
 
 A layout that only the loads of spine items ask for also waits for a free
 viewport, see [`reader.viewportState$`](/core-api/viewport#viewportstateusd):
-it starts once the viewport has stayed free for 50 ms. It moves the spine items
-after the ones that loaded, so it does not start while a page turns, while the
-user scrolls or while a `lock()` is held. Once started, it goes on whatever the
-viewport does, and so does the layout that replaces it or starts it again.
+it starts once the viewport has stayed free for 50 ms. It can move the spine
+items after the ones that loaded, so it does not start while a page turns,
+while the user scrolls or while a `lock()` is held.
 
-A layout of the reader does not wait: `reader.layout()`, a resize or a setting
-starts it whether the viewport is free or busy, and it then lays out for the
-spine items that loaded too.
+Once it has started, it does not stop when the viewport becomes busy. Some
+spine items may already have moved, so the layout that completes it does not
+wait for a free viewport either: one that replaces it, one that follows its
+failure, or the same layout when it starts again.
+
+A layout of the reader does not wait for a free viewport. `reader.layout()`, a
+resize or a setting requests it, and it also lays out for the spine items that
+loaded.
 
 Read it before you use where a page is, with `.isLayoutCurrent()` or
 `.isLayoutCurrentFor()`: while it is a number, the pages of that item and of the
@@ -130,7 +134,7 @@ Emits as a layout starts to lay the spine items out, before it moves the first
 one. A layout waits 50 ms after its request, unless it is asked for with
 `reader.layout({ immediate: true })`, so this comes after the request, and
 after any request that replaced it. A layout that only the loads of spine items
-ask for waits longer while the viewport is busy, see [Layout](#layout).
+ask for also waits for a free viewport, see [Layout](#layout).
 
 From here until `.itemsLayout$`, the layout lays out again, one after the
 other, the spine items it changes or moves, and the place the spine gives for

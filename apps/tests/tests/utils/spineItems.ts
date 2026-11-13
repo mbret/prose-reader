@@ -12,6 +12,7 @@ import { getReader } from "./reader"
  * - `areAllWaiting()` says whether each of them has reached its hooks. Until
  *   then, one that still fetches would finish at a time of its own.
  * - `letLoadsFinish()` lets them all finish.
+ * - `haveAllLoaded()` says whether they all have.
  */
 const holdLoadOfSpineItems = async (page: Page, spineItemIndexes: number[]) =>
   (await getReader(page)).evaluateHandle((reader, spineItemIndexes) => {
@@ -38,6 +39,12 @@ const holdLoadOfSpineItems = async (page: Page, spineItemIndexes: number[]) =>
             itemId !== undefined && idsOfSpineItemsWaiting.has(itemId),
         ),
       letLoadsFinish,
+      haveAllLoaded: () =>
+        spineItemIndexes.every(
+          (spineItemIndex) =>
+            reader.spineItemsManager.get(spineItemIndex)?.value.loadStatus ===
+            "loaded",
+        ),
     }
   }, spineItemIndexes)
 
@@ -298,8 +305,8 @@ export const expectEveryFrameToShowWhereUserScrollsInSpineItemWhile = async (
  *
  * The reader lays out for a load once the user's scroll is over. With
  * `laysOutReaderOnceLoadsFinish`, the function asks for a layout of the
- * reader as soon as they finish, in a task of its own, as a resize of the
- * reader's container does: that layout does not wait for the end of the
+ * reader as soon as they finish. It asks in a task of its own, as a resize of
+ * the reader's container does. That layout does not wait for the end of the
  * scroll, and lays out for them too.
  *
  * Either way it resolves with whether the navigation was locked as the loads
@@ -337,29 +344,26 @@ export const goToSpineItemWithOnesBeforeItStillLoading = async (
       laysOutReaderOnceLoadsFinish?: boolean
     }
   } = {}) => {
-    const lockOfNavigation = await loadsHeld.evaluateHandle(
-      (
-        { letLoadsFinish },
-        { reader, duringUserScroll, spineItemIndexesLoadingBefore },
-      ) => {
-        const lockOfNavigation: {
-          wasHeldAsLoadsFinished?: boolean
-          wasHeldAsSpineItemsWereLaidOut?: boolean
+    const stateOfNavigationLock = await loadsHeld.evaluateHandle(
+      ({ letLoadsFinish, haveAllLoaded }, { reader, duringUserScroll }) => {
+        const stateOfNavigationLock: {
+          wasNavigationLockedAsLoadsFinished?: boolean
+          wasNavigationLockedAsSpineItemsWereLaidOut?: boolean
         } = {}
         const scrollElement =
           reader.navigation.scrollNavigationController.value.element
 
         const isNavigationLocked = () => {
-          let isNavigationLocked = false
+          let isLockedNow = false
 
           // Replays whether the lock is held now.
           reader.navigation.isLocked$
             .subscribe((isLocked) => {
-              isNavigationLocked = isLocked
+              isLockedNow = isLocked
             })
             .unsubscribe()
 
-          return isNavigationLocked
+          return isLockedNow
         }
 
         if (duringUserScroll?.scrollsDownFirstBy !== undefined) {
@@ -376,17 +380,12 @@ export const goToSpineItemWithOnesBeforeItStillLoading = async (
           : undefined
         const loadsFinishing =
           reader.spineItemsObserver.itemLoadStatusChange$.subscribe(() => {
-            const haveLoadsFinished = spineItemIndexesLoadingBefore.every(
-              (spineItemIndex) =>
-                reader.spineItemsManager.get(spineItemIndex)?.value
-                  .loadStatus === "loaded",
-            )
-
-            if (!haveLoadsFinished) return
+            if (!haveAllLoaded()) return
 
             loadsFinishing.unsubscribe()
             lockOfUserScroll?.unsubscribe()
-            lockOfNavigation.wasHeldAsLoadsFinished = isNavigationLocked()
+            stateOfNavigationLock.wasNavigationLockedAsLoadsFinished =
+              isNavigationLocked()
 
             if (duringUserScroll?.laysOutReaderOnceLoadsFinish) {
               setTimeout(() => {
@@ -396,14 +395,15 @@ export const goToSpineItemWithOnesBeforeItStillLoading = async (
           })
         const itemsLayout = reader.spine.itemsLayout$.subscribe(() => {
           itemsLayout.unsubscribe()
-          lockOfNavigation.wasHeldAsSpineItemsWereLaidOut = isNavigationLocked()
+          stateOfNavigationLock.wasNavigationLockedAsSpineItemsWereLaidOut =
+            isNavigationLocked()
         })
 
         if (!duringUserScroll) letLoadsFinish()
 
-        return lockOfNavigation
+        return stateOfNavigationLock
       },
-      { reader, duringUserScroll, spineItemIndexesLoadingBefore },
+      { reader, duringUserScroll },
     )
 
     /**
@@ -411,24 +411,13 @@ export const goToSpineItemWithOnesBeforeItStillLoading = async (
      * for a layout in the same task.
      */
     await page.waitForFunction(
-      ({ reader, spineItemIndexes }) =>
-        spineItemIndexes.every(
-          (spineItemIndex) =>
-            reader.spineItemsManager.get(spineItemIndex)?.value.loadStatus ===
-            "loaded",
-        ) &&
+      ({ reader, loadsHeld }) =>
+        loadsHeld.haveAllLoaded() &&
         reader.spine.isLayoutCurrent() &&
         reader.pagination.state.isSettled,
-      { reader, spineItemIndexes: spineItemIndexesLoadingBefore },
+      { reader, loadsHeld },
     )
 
-    const { wasHeldAsLoadsFinished, wasHeldAsSpineItemsWereLaidOut } =
-      await lockOfNavigation.jsonValue()
-
-    return {
-      wasNavigationLockedAsLoadsFinished: wasHeldAsLoadsFinished,
-      wasNavigationLockedAsSpineItemsWereLaidOut:
-        wasHeldAsSpineItemsWereLaidOut,
-    }
+    return stateOfNavigationLock.jsonValue()
   }
 }
