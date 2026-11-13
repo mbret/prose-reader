@@ -1,11 +1,12 @@
 // @vitest-environment jsdom
-import { first, firstValueFrom } from "rxjs"
+import { first, firstValueFrom, withLatestFrom } from "rxjs"
 import { describe, expect, it, vi } from "vitest"
 import {
   createPrePaginatedManifest,
   createTestReader,
   defaultTestViewport,
   deliverScrollEvent,
+  holdItemDocumentLoadHooks,
   installReaderTestEnvironment,
   mountTestReader,
   notifyResize,
@@ -272,6 +273,65 @@ describe("Given a layout that moves the spine item the navigation shows", () => 
       expect(scrollElement.scrollTop).toBe(
         2 * pageHeight + 300 + distanceUserScrolledIntoThirdPage,
       )
+    })
+
+    it("lays the spine out for a spine item that finished loading once the scroll is over, and restores the navigation where the user scrolled to", async () => {
+      const { reader, scrollElement, setSizeOfFirstPage, isNavigationLocked } =
+        await openOnThirdPageOfScrollingBook()
+      const firstPage = reader.spineItemsManager.get(0)
+
+      if (!firstPage) throw new Error("the book has no first page")
+
+      /**
+       * The first page loads again, as one the reader had released, and waits
+       * at the end of that load, as behind a slow hook.
+       */
+      const loadOfFirstPage = holdItemDocumentLoadHooks(
+        reader,
+        firstPage.item.id,
+      )
+
+      firstPage.unload()
+      await vi.waitFor(() => {
+        expect(firstPage.value.loadStatus).toBe("loading")
+        expect(reader.spine.isLayoutCurrent()).toBe(true)
+      })
+
+      const wasNavigationLockedAsEachLayoutStarted: boolean[] = []
+
+      reader.spine.itemsLayoutStart$
+        .pipe(withLatestFrom(reader.navigation.isLocked$))
+        .subscribe(([, isLocked]) => {
+          wasNavigationLockedAsEachLayoutStarted.push(isLocked)
+        })
+
+      scrollElement.scrollTop =
+        2 * pageHeight + distanceUserScrolledIntoThirdPage
+      deliverScrollEvent(scrollElement)
+
+      // Loaded, the first page is taller by 300: the third one moves down.
+      setSizeOfFirstPage({ height: pageHeight + 300 })
+      loadOfFirstPage.release()
+      await vi.waitFor(() => expect(firstPage.value.loadStatus).toBe("loaded"))
+
+      expect(await isNavigationLocked()).toBe(true)
+
+      await firstValueFrom(reader.spine.itemsLayout$)
+
+      expect(
+        wasNavigationLockedAsEachLayoutStarted,
+        "whether the user was scrolling as each layout started",
+      ).toEqual([false])
+      expect(scrollElement.scrollTop).toBe(
+        2 * pageHeight + 300 + distanceUserScrolledIntoThirdPage,
+      )
+      expect(reader.navigation.getNavigation()).toMatchObject({
+        position: {
+          x: 0,
+          y: 2 * pageHeight + 300 + distanceUserScrolledIntoThirdPage,
+        },
+        spineItem: 2,
+      })
     })
 
     it("keeps the reader on that spine item when the page turn mode becomes controlled before the scroll is over", async () => {

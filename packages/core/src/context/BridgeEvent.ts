@@ -3,7 +3,8 @@ import { BehaviorSubject, filter } from "rxjs"
 /**
  * The viewport state, which the navigator produces, carried by the context
  * for what is built before the navigator: the spine items' renderers wait for
- * a free viewport before doing heavy work. The reader relays it here once the
+ * a free viewport before doing heavy work, and the spine before it lays out
+ * for a spine item whose load ended. The reader relays it here once the
  * navigator exists.
  */
 export class BridgeEvent {

@@ -292,12 +292,18 @@ export const expectEveryFrameToShowWhereUserScrollsInSpineItemWhile = async (
  *
  * Given `duringUserScroll`, that function lets them finish once the
  * navigation is locked, as the user's scroll locks it from its first move:
- * the scroll is then still in progress when the reader lays out for them.
- * With `scrollsDownFirstBy`, it first scrolls the book down by as much, as
- * the user does. Without it, the spec scrolls before the call.
+ * the scroll is then still in progress as they finish. With
+ * `scrollsDownFirstBy`, it first scrolls the book down by as much, as the
+ * user does. Without it, the spec scrolls before the call.
  *
- * Either way it resolves with whether the navigation was locked as the spine
- * items were laid out.
+ * The reader lays out for a load once the user's scroll is over. With
+ * `laysOutReaderOnceLoadsFinish`, the function asks for a layout of the
+ * reader as soon as they finish, in a task of its own, as a resize of the
+ * reader's container does: that layout does not wait for the end of the
+ * scroll, and lays out for them too.
+ *
+ * Either way it resolves with whether the navigation was locked as the loads
+ * finished, and as the spine items were laid out.
  */
 export const goToSpineItemWithOnesBeforeItStillLoading = async (
   page: Page,
@@ -326,13 +332,35 @@ export const goToSpineItemWithOnesBeforeItStillLoading = async (
   return async ({
     duringUserScroll,
   }: {
-    duringUserScroll?: { scrollsDownFirstBy?: number }
+    duringUserScroll?: {
+      scrollsDownFirstBy?: number
+      laysOutReaderOnceLoadsFinish?: boolean
+    }
   } = {}) => {
-    const stateAtItemsLayout = await loadsHeld.evaluateHandle(
-      ({ letLoadsFinish }, { reader, duringUserScroll }) => {
-        const stateAtItemsLayout: { wasNavigationLocked?: boolean } = {}
+    const lockOfNavigation = await loadsHeld.evaluateHandle(
+      (
+        { letLoadsFinish },
+        { reader, duringUserScroll, spineItemIndexesLoadingBefore },
+      ) => {
+        const lockOfNavigation: {
+          wasHeldAsLoadsFinished?: boolean
+          wasHeldAsSpineItemsWereLaidOut?: boolean
+        } = {}
         const scrollElement =
           reader.navigation.scrollNavigationController.value.element
+
+        const isNavigationLocked = () => {
+          let isNavigationLocked = false
+
+          // Replays whether the lock is held now.
+          reader.navigation.isLocked$
+            .subscribe((isLocked) => {
+              isNavigationLocked = isLocked
+            })
+            .unsubscribe()
+
+          return isNavigationLocked
+        }
 
         if (duringUserScroll?.scrollsDownFirstBy !== undefined) {
           scrollElement?.scrollTo({
@@ -346,21 +374,36 @@ export const goToSpineItemWithOnesBeforeItStillLoading = async (
               if (isLocked) letLoadsFinish()
             })
           : undefined
+        const loadsFinishing =
+          reader.spineItemsObserver.itemLoadStatusChange$.subscribe(() => {
+            const haveLoadsFinished = spineItemIndexesLoadingBefore.every(
+              (spineItemIndex) =>
+                reader.spineItemsManager.get(spineItemIndex)?.value
+                  .loadStatus === "loaded",
+            )
+
+            if (!haveLoadsFinished) return
+
+            loadsFinishing.unsubscribe()
+            lockOfUserScroll?.unsubscribe()
+            lockOfNavigation.wasHeldAsLoadsFinished = isNavigationLocked()
+
+            if (duringUserScroll?.laysOutReaderOnceLoadsFinish) {
+              setTimeout(() => {
+                reader.layout()
+              })
+            }
+          })
         const itemsLayout = reader.spine.itemsLayout$.subscribe(() => {
           itemsLayout.unsubscribe()
-          lockOfUserScroll?.unsubscribe()
-          reader.navigation.isLocked$
-            .subscribe((isLocked) => {
-              stateAtItemsLayout.wasNavigationLocked = isLocked
-            })
-            .unsubscribe()
+          lockOfNavigation.wasHeldAsSpineItemsWereLaidOut = isNavigationLocked()
         })
 
         if (!duringUserScroll) letLoadsFinish()
 
-        return stateAtItemsLayout
+        return lockOfNavigation
       },
-      { reader, duringUserScroll },
+      { reader, duringUserScroll, spineItemIndexesLoadingBefore },
     )
 
     /**
@@ -379,6 +422,13 @@ export const goToSpineItemWithOnesBeforeItStillLoading = async (
       { reader, spineItemIndexes: spineItemIndexesLoadingBefore },
     )
 
-    return stateAtItemsLayout.jsonValue()
+    const { wasHeldAsLoadsFinished, wasHeldAsSpineItemsWereLaidOut } =
+      await lockOfNavigation.jsonValue()
+
+    return {
+      wasNavigationLockedAsLoadsFinished: wasHeldAsLoadsFinished,
+      wasNavigationLockedAsSpineItemsWereLaidOut:
+        wasHeldAsSpineItemsWereLaidOut,
+    }
   }
 }

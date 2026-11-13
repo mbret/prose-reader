@@ -72,6 +72,7 @@ const createTestSpineLayout = ({
   }
 
   return {
+    context,
     destroy,
     hookManager,
     spineItemsManager,
@@ -136,10 +137,16 @@ type ItemSize = { height: number; width: number }
  * to whole pages of 100 by 100, and updates the item's state.
  */
 const createDeferredSpineLayout = (numberOfItems: number) => {
-  const { destroy, hookManager, spineItemsManager, spineLayout, viewport } =
-    createTestSpineLayout({
-      items: numberOfItems,
-    })
+  const {
+    context,
+    destroy,
+    hookManager,
+    spineItemsManager,
+    spineLayout,
+    viewport,
+  } = createTestSpineLayout({
+    items: numberOfItems,
+  })
 
   // An item asked to lay out again drops the layout it had pending, so only
   // the newest one per item can complete.
@@ -228,6 +235,7 @@ const createDeferredSpineLayout = (numberOfItems: number) => {
     completeItemLayout,
     completePendingItemLayouts,
     containerLefts,
+    context,
     destroy,
     dirtyFlags,
     failItemLayout,
@@ -564,6 +572,120 @@ describe("SpineLayout", () => {
     } finally {
       destroy()
     }
+  })
+
+  describe("Given a layout that only the load of an item asks for", () => {
+    it("starts its pass once the viewport has stayed free for the wait", async () => {
+      vi.useFakeTimers()
+      const { context, destroy, items, layOutSpine, spineLayout } =
+        createDeferredSpineLayout(2)
+
+      try {
+        await layOutSpine({ height: 100, width: 100 })
+
+        const stages = recordLayoutStages(spineLayout)
+
+        items[1]?.load()
+        await vi.advanceTimersByTimeAsync(0)
+
+        expect(stages, "the stages once the load ended").toEqual(["requested"])
+
+        // The viewport becomes busy during the wait, as when the user scrolls.
+        context.bridgeEvent.viewportStateSubject.next("busy")
+        await vi.advanceTimersByTimeAsync(1000)
+
+        expect(stages, "the stages while the viewport is busy").toEqual([
+          "requested",
+        ])
+
+        // Free for less than the wait, then busy again: the wait starts again.
+        context.bridgeEvent.viewportStateSubject.next("free")
+        await vi.advanceTimersByTimeAsync(49)
+        context.bridgeEvent.viewportStateSubject.next("busy")
+        await vi.advanceTimersByTimeAsync(1000)
+
+        expect(
+          stages,
+          "the stages once the viewport is busy a second time",
+        ).toEqual(["requested"])
+
+        context.bridgeEvent.viewportStateSubject.next("free")
+        await vi.advanceTimersByTimeAsync(49)
+
+        expect(stages, "the stages before the wait is over").toEqual([
+          "requested",
+        ])
+
+        await vi.advanceTimersByTimeAsync(1)
+
+        expect(stages, "the stages once the wait is over").toEqual([
+          "requested",
+          "layingOut",
+        ])
+      } finally {
+        destroy()
+        vi.useRealTimers()
+      }
+    })
+
+    it("starts its pass after the wait, whatever the viewport does, when it cancels the pass of a layout of the reader", async () => {
+      vi.useFakeTimers()
+      const { context, destroy, items, layOutSpine, spineLayout } =
+        createDeferredSpineLayout(2)
+
+      try {
+        await layOutSpine({ height: 100, width: 100 })
+
+        const stages = recordLayoutStages(spineLayout)
+
+        spineLayout.layout()
+        items[1]?.load()
+        await vi.advanceTimersByTimeAsync(0)
+
+        expect(stages, "the stages once the load ended").toEqual([
+          "requested",
+          "requested",
+        ])
+
+        context.bridgeEvent.viewportStateSubject.next("busy")
+        await vi.advanceTimersByTimeAsync(50)
+
+        expect(stages, "the stages once the wait is over").toEqual([
+          "requested",
+          "requested",
+          "layingOut",
+        ])
+      } finally {
+        destroy()
+        vi.useRealTimers()
+      }
+    })
+  })
+
+  describe("Given a layout of the reader", () => {
+    it("starts its pass after the wait, while the viewport is busy", async () => {
+      vi.useFakeTimers()
+      const { context, destroy, layOutSpine, spineLayout } =
+        createDeferredSpineLayout(2)
+
+      try {
+        await layOutSpine({ height: 100, width: 100 })
+
+        const stages = recordLayoutStages(spineLayout)
+
+        context.bridgeEvent.viewportStateSubject.next("busy")
+        spineLayout.layout()
+        await vi.advanceTimersByTimeAsync(50)
+
+        expect(stages, "the stages once the wait is over").toEqual([
+          "requested",
+          "layingOut",
+        ])
+      } finally {
+        destroy()
+        vi.useRealTimers()
+      }
+    })
   })
 
   it("lays out no item after an item whose load ended without moving them", async () => {
