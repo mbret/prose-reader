@@ -2,7 +2,7 @@ import { afterEach, describe, expect, it, vi } from "vitest"
 import { Context } from "../context/Context"
 import { ReaderSettingsManager } from "../settings/ReaderSettingsManager"
 import { SpinePosition } from "../spine/types"
-import { createTestManifest } from "../tests/utils"
+import { createTestManifest, holdAnimationFrames } from "../tests/utils"
 import { Viewport } from "./Viewport"
 
 /** A viewport laid out at 100 px, whose element sizes the test controls. */
@@ -216,12 +216,10 @@ describe("Given a viewport laid out in a box, asked what it shows of the spine",
 describe("Given a viewport whose element is hidden, then shown", () => {
   /**
    * A resize observer that reports only when the test says, as a browser does
-   * once it has laid the page out. It counts the observers that are
-   * observing, and the ones that ever started to.
+   * once it has laid the page out, and how many are observing.
    */
   const stubResizeObserver = () => {
     const callbacks = new Set<() => void>()
-    let numberOfObserversStarted = 0
 
     vi.stubGlobal(
       "ResizeObserver",
@@ -234,7 +232,6 @@ describe("Given a viewport whose element is hidden, then shown", () => {
         }
 
         observe() {
-          numberOfObserversStarted += 1
           callbacks.add(this.report)
         }
 
@@ -253,7 +250,6 @@ describe("Given a viewport whose element is hidden, then shown", () => {
         for (const report of [...callbacks]) report()
       },
       observing: () => callbacks.size,
-      numberOfObserversStarted: () => numberOfObserversStarted,
     }
   }
 
@@ -276,12 +272,15 @@ describe("Given a viewport whose element is hidden, then shown", () => {
       () => size.height,
     )
 
+    const { runAnimationFrame } = holdAnimationFrames(window)
     const isSized: boolean[] = []
 
     viewport.isSized$.subscribe((value) => isSized.push(value))
 
     expect(isSized).toEqual([true])
 
+    // the observer starts in the next frame
+    runAnimationFrame()
     // a resize that keeps a size is not a change
     size = { width: 120, height: 100 }
     reportResize()
@@ -296,42 +295,6 @@ describe("Given a viewport whose element is hidden, then shown", () => {
     expect(isSized).toEqual([true, false, true])
   })
 
-  /**
-   * An observer started while the browser reports the size of the element is
-   * one the browser cannot report to in that frame, which it tells the page
-   * with an error. Subscribers come at any moment, so none may start one.
-   */
-  it("observes the element with one observer, whoever subscribes and when", () => {
-    const { reportResize, numberOfObserversStarted } = stubResizeObserver()
-    const context = new Context(createTestManifest())
-    const viewport = new Viewport(
-      context,
-      new ReaderSettingsManager({}, context),
-    )
-    const { element } = viewport.value
-    let size = { width: 100, height: 100 }
-
-    vi.spyOn(element, "clientWidth", "get").mockImplementation(() => size.width)
-    vi.spyOn(element, "clientHeight", "get").mockImplementation(
-      () => size.height,
-    )
-
-    const firstSubscription = viewport.isSized$.subscribe()
-
-    viewport.isSized$.subscribe().unsubscribe()
-    firstSubscription.unsubscribe()
-
-    // After every subscriber has left, a new one still gets the resizes.
-    const isSized: boolean[] = []
-
-    viewport.isSized$.subscribe((value) => isSized.push(value))
-    size = { width: 0, height: 0 }
-    reportResize()
-
-    expect(isSized).toEqual([true, false])
-    expect(numberOfObserversStarted()).toBe(1)
-  })
-
   it("stops observing the element when the reader is destroyed", () => {
     const { observing } = stubResizeObserver()
     const context = new Context(createTestManifest())
@@ -339,6 +302,7 @@ describe("Given a viewport whose element is hidden, then shown", () => {
       context,
       new ReaderSettingsManager({}, context),
     )
+    const { runAnimationFrame } = holdAnimationFrames(window)
     let isComplete = false
 
     viewport.isSized$.subscribe({
@@ -346,6 +310,8 @@ describe("Given a viewport whose element is hidden, then shown", () => {
         isComplete = true
       },
     })
+    // the observer starts in the next frame
+    runAnimationFrame()
 
     expect(observing()).toBe(1)
 

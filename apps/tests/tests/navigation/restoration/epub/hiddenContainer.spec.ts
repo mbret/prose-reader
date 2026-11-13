@@ -156,6 +156,43 @@ test.describe("Given a reader on a page after the first of its chapter", () => {
       )
     })
   })
+
+  /**
+   * A resize observer reports a size that is not the one of its last report.
+   * Shown again at the same size before the browser reports the hide, the
+   * container gives an observer that saw it before the hide nothing to
+   * report.
+   */
+  test.describe("when its container is hidden, then shown before the browser reports the hide", () => {
+    test("should run the layout requested while hidden", async ({ page }) => {
+      const reader = await openChapter(page)
+
+      const viewportSizesLaidOut = await reader.evaluateHandle((reader) => {
+        const container = document.getElementById("app")
+
+        if (!container) throw new Error("the page has no #app container")
+
+        const viewportSizesLaidOut: { width: number; height: number }[] = []
+
+        reader.viewport.layout$.subscribe(() => {
+          const { width, height } = reader.viewport.absoluteViewport
+
+          viewportSizesLaidOut.push({ width, height })
+        })
+
+        container.style.display = "none"
+        reader.layout()
+        container.style.removeProperty("display")
+
+        return viewportSizesLaidOut
+      })
+
+      await expect
+        .poll(() => viewportSizesLaidOut.jsonValue())
+        .toEqual([page.viewportSize()])
+      await waitForSettledOnCurrentLayout(page)
+    })
+  })
 })
 
 /**

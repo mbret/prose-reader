@@ -177,9 +177,9 @@ Whether the element has a size: measured as soon as you subscribe, then each
 time a resize changes it, as when its container is hidden or shown. It
 completes when the reader is destroyed.
 
-Every subscription shares one resize observer of the element. A browser
-reports a resize at its next rendering update, so a hide just made reads
-`false` from [`.hasSize()`](#hassize) before it does here.
+Each subscription observes the element with its own resize observer. A
+browser reports a resize at its next rendering update, so a hide just made
+reads `false` from [`.hasSize()`](#hassize) before it does here.
 
 The reader works only while the element has a size:
 

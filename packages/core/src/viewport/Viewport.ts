@@ -5,7 +5,6 @@ import {
   map,
   type Observable,
   Subject,
-  share,
   startWith,
   takeUntil,
 } from "rxjs"
@@ -126,34 +125,20 @@ export class Viewport extends ReactiveEntity<State> {
   }
 
   /**
-   * The resizes of the element, from one observer that every subscriber
-   * shares. It observes from the first subscription until the reader is
-   * destroyed.
-   *
-   * An observer of its own for each subscriber would start at any moment,
-   * such as in a microtask that follows the report of another one. The
-   * browser cannot report to an observer started then in the same frame, and
-   * it sends the page an error: "ResizeObserver loop completed with
-   * undelivered notifications".
-   */
-  private readonly elementResize$ = observeResize(this.value.element).pipe(
-    takeUntil(this.destroy$),
-    share({ resetOnRefCountZero: false }),
-  )
-
-  /**
    * Whether the element has a size, measured as soon as you subscribe, then
    * each time a resize changes it, as when its container is hidden or shown.
-   * It completes when the reader is destroyed, at once for a subscriber that
-   * comes after.
+   * Each subscriber observes the element with its own observer, whose first
+   * report gives the size as it is then. It completes when the reader is
+   * destroyed, at once for a subscriber that comes after.
    */
   public readonly isSized$: Observable<boolean> = defer(() =>
     this.isDestroyed
       ? EMPTY
-      : this.elementResize$.pipe(
+      : observeResize(this.value.element).pipe(
           map(() => this.hasSize()),
           startWith(this.hasSize()),
           distinctUntilChanged(),
+          takeUntil(this.destroy$),
         ),
   )
 

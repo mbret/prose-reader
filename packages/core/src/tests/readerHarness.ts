@@ -120,7 +120,7 @@ class TestResizeObserver {
 /**
  * How many observers were ever created, and how many are observing now: of
  * `target` only when given, such as the container, since the viewport is
- * observed too.
+ * observed too while a layout waits on its size.
  */
 export const resizeObservers = (target?: Element) => {
   const isOfTarget = (targets: Set<Element>) =>
