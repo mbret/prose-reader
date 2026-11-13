@@ -475,8 +475,9 @@ export class InternalNavigator extends DestroyableClass {
      * the user to be restored instantly.
      *
      * This means that if a layout happens during navigation, we will cut it and navigate
-     * directly to new position. NO layout should happens during viewport busy.
-     * This is responsibility of other components.
+     * directly to new position. The spine delays a layout that only the
+     * loads of spine items ask for until the viewport is free, see
+     * `SpineLayout`. A layout of the reader does not wait.
      */
     /**
      * A layout restores the navigation twice. Once its items are laid out, if

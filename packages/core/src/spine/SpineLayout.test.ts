@@ -72,6 +72,7 @@ const createTestSpineLayout = ({
   }
 
   return {
+    context,
     destroy,
     hookManager,
     spineItemsManager,
@@ -136,10 +137,16 @@ type ItemSize = { height: number; width: number }
  * to whole pages of 100 by 100, and updates the item's state.
  */
 const createDeferredSpineLayout = (numberOfItems: number) => {
-  const { destroy, hookManager, spineItemsManager, spineLayout, viewport } =
-    createTestSpineLayout({
-      items: numberOfItems,
-    })
+  const {
+    context,
+    destroy,
+    hookManager,
+    spineItemsManager,
+    spineLayout,
+    viewport,
+  } = createTestSpineLayout({
+    items: numberOfItems,
+  })
 
   // An item asked to lay out again drops the layout it had pending, so only
   // the newest one per item can complete.
@@ -228,6 +235,7 @@ const createDeferredSpineLayout = (numberOfItems: number) => {
     completeItemLayout,
     completePendingItemLayouts,
     containerLefts,
+    context,
     destroy,
     dirtyFlags,
     failItemLayout,
@@ -564,6 +572,255 @@ describe("SpineLayout", () => {
     } finally {
       destroy()
     }
+  })
+
+  describe("Given a layout that only the load of an item asks for", () => {
+    it("starts its pass once the viewport has stayed free for the delay of its request", async () => {
+      vi.useFakeTimers()
+      const { context, destroy, items, layOutSpine, spineLayout } =
+        createDeferredSpineLayout(2)
+
+      try {
+        await layOutSpine({ height: 100, width: 100 })
+
+        const stages = recordLayoutStages(spineLayout)
+
+        items[1]?.load()
+        await vi.advanceTimersByTimeAsync(0)
+
+        expect(stages, "the stages once the load ended").toEqual(["requested"])
+
+        // The viewport becomes busy during the delay, as when the user scrolls.
+        context.bridgeEvent.viewportStateSubject.next("busy")
+        await vi.advanceTimersByTimeAsync(1000)
+
+        expect(stages, "the stages while the viewport is busy").toEqual([
+          "requested",
+        ])
+
+        // Free for less than the delay, then busy: the delay starts again.
+        context.bridgeEvent.viewportStateSubject.next("free")
+        await vi.advanceTimersByTimeAsync(49)
+        context.bridgeEvent.viewportStateSubject.next("busy")
+        await vi.advanceTimersByTimeAsync(1000)
+
+        expect(
+          stages,
+          "the stages once the viewport is busy a second time",
+        ).toEqual(["requested"])
+
+        context.bridgeEvent.viewportStateSubject.next("free")
+        await vi.advanceTimersByTimeAsync(49)
+
+        expect(stages, "the stages before the delay is over").toEqual([
+          "requested",
+        ])
+
+        await vi.advanceTimersByTimeAsync(1)
+
+        expect(stages, "the stages once the delay is over").toEqual([
+          "requested",
+          "layingOut",
+        ])
+      } finally {
+        destroy()
+        vi.useRealTimers()
+      }
+    })
+
+    it("keeps waiting for a free viewport when the load of another item ends before its pass starts", async () => {
+      vi.useFakeTimers()
+      const { context, destroy, items, layOutSpine, spineLayout } =
+        createDeferredSpineLayout(3)
+
+      try {
+        await layOutSpine({ height: 100, width: 100 })
+
+        const stages = recordLayoutStages(spineLayout)
+
+        // Both loads end before the viewport is busy: a renderer holds the
+        // end of a load until the viewport is free.
+        items[1]?.load()
+        await vi.advanceTimersByTimeAsync(10)
+        items[2]?.load()
+        await vi.advanceTimersByTimeAsync(0)
+        context.bridgeEvent.viewportStateSubject.next("busy")
+        await vi.advanceTimersByTimeAsync(1000)
+
+        expect(stages, "the stages while the viewport is busy").toEqual([
+          "requested",
+          "requested",
+        ])
+
+        context.bridgeEvent.viewportStateSubject.next("free")
+        await vi.advanceTimersByTimeAsync(50)
+
+        expect(stages, "the stages once the delay is over").toEqual([
+          "requested",
+          "requested",
+          "layingOut",
+        ])
+      } finally {
+        destroy()
+        vi.useRealTimers()
+      }
+    })
+  })
+
+  describe("Given a layout that the load of an item asks for, after a pass that started and did not complete", () => {
+    it("does not wait for a free viewport when it cancels that pass", async () => {
+      vi.useFakeTimers()
+      const {
+        completeItemLayout,
+        context,
+        destroy,
+        items,
+        layOutSpine,
+        spineLayout,
+      } = createDeferredSpineLayout(3)
+
+      try {
+        await layOutSpine({ height: 100, width: 100 })
+
+        const stages = recordLayoutStages(spineLayout)
+
+        /**
+         * The pass for the load of the second item makes that item wider,
+         * then waits on the third one, which it moves.
+         */
+        items[1]?.load()
+        await vi.advanceTimersByTimeAsync(50)
+        completeItemLayout(1, { height: 100, width: 300 })
+
+        expect(stages, "the stages once the pass started").toEqual([
+          "requested",
+          "layingOut",
+        ])
+
+        // The load of the third item cancels it, then the viewport is busy.
+        items[2]?.load()
+        await vi.advanceTimersByTimeAsync(0)
+        context.bridgeEvent.viewportStateSubject.next("busy")
+        await vi.advanceTimersByTimeAsync(50)
+
+        expect(stages, "the stages once the delay is over").toEqual([
+          "requested",
+          "layingOut",
+          "requested",
+          "layingOut",
+        ])
+      } finally {
+        destroy()
+        vi.useRealTimers()
+      }
+    })
+
+    it("does not wait for a free viewport when that pass failed", async () => {
+      vi.useFakeTimers()
+      const unhandledErrors = recordUnhandledErrors()
+      const failure = new Error("the pass failed")
+      const { context, destroy, spineItemsManager, spineLayout } =
+        createTestSpineLayout({ items: 3 })
+      const [, secondItem, thirdItem] = spineItemsManager.items
+
+      if (!secondItem || !thirdItem) throw new Error("the spine has no item")
+
+      try {
+        await layOutAndWait(spineLayout)
+
+        const stages = recordLayoutStages(spineLayout)
+
+        // Out of the guard of the item's own layout, as a bug of the pass is.
+        vi.spyOn(secondItem, "layout").mockImplementationOnce(() => {
+          throw failure
+        })
+        secondItem.load()
+        await vi.advanceTimersByTimeAsync(50)
+
+        expect(stages, "the stages once the pass failed").toEqual([
+          "requested",
+          "layingOut",
+          "requested",
+        ])
+
+        thirdItem.load()
+        await vi.advanceTimersByTimeAsync(0)
+        context.bridgeEvent.viewportStateSubject.next("busy")
+        await vi.advanceTimersByTimeAsync(50)
+
+        expect(stages, "the stages once the delay is over").toEqual([
+          "requested",
+          "layingOut",
+          "requested",
+          "requested",
+          "layingOut",
+          "laidOut",
+        ])
+        expect(unhandledErrors).toEqual([failure])
+      } finally {
+        destroy()
+        vi.useRealTimers()
+      }
+    })
+  })
+
+  describe("Given a layout of the reader", () => {
+    it("does not wait for a free viewport", async () => {
+      vi.useFakeTimers()
+      const { context, destroy, layOutSpine, spineLayout } =
+        createDeferredSpineLayout(2)
+
+      try {
+        await layOutSpine({ height: 100, width: 100 })
+
+        const stages = recordLayoutStages(spineLayout)
+
+        context.bridgeEvent.viewportStateSubject.next("busy")
+        spineLayout.layout()
+        await vi.advanceTimersByTimeAsync(50)
+
+        expect(stages, "the stages once the delay is over").toEqual([
+          "requested",
+          "layingOut",
+        ])
+      } finally {
+        destroy()
+        vi.useRealTimers()
+      }
+    })
+
+    it("does not wait for a free viewport when the load of an item ends before its pass starts", async () => {
+      vi.useFakeTimers()
+      const { context, destroy, items, layOutSpine, spineLayout } =
+        createDeferredSpineLayout(2)
+
+      try {
+        await layOutSpine({ height: 100, width: 100 })
+
+        const stages = recordLayoutStages(spineLayout)
+
+        spineLayout.layout()
+        items[1]?.load()
+        await vi.advanceTimersByTimeAsync(0)
+
+        expect(stages, "the stages once the load ended").toEqual([
+          "requested",
+          "requested",
+        ])
+
+        context.bridgeEvent.viewportStateSubject.next("busy")
+        await vi.advanceTimersByTimeAsync(50)
+
+        expect(stages, "the stages once the delay is over").toEqual([
+          "requested",
+          "requested",
+          "layingOut",
+        ])
+      } finally {
+        destroy()
+        vi.useRealTimers()
+      }
+    })
   })
 
   it("lays out no item after an item whose load ended without moving them", async () => {
