@@ -1,8 +1,12 @@
-import { getUrlExtension } from "./url"
+import { getUriExtension } from "./uri"
 
+/**
+ * The media type a file name or an archive path's extension registers. A `#`
+ * or a `?` is part of the name: use `detectMimeTypeFromUrl` for a url.
+ */
 export const detectMimeTypeFromName = (name: string) => {
   // extensions are case-insensitive (`COVER.JPG` is a jpeg)
-  const extension = getUrlExtension(name).toLowerCase()
+  const extension = getUriExtension(name).toLowerCase()
 
   switch (extension) {
     case `png`:
@@ -48,6 +52,13 @@ export const detectMimeTypeFromName = (name: string) => {
 
   return undefined
 }
+
+/**
+ * The media type a url's path registers. Its query and fragment are not part
+ * of the file name.
+ */
+export const detectMimeTypeFromUrl = (url: string) =>
+  detectMimeTypeFromName(url.split(/[?#]/)[0] ?? url)
 
 export const isXmlBasedMimeType = ({
   mimeType,

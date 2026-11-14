@@ -1,7 +1,3 @@
-export const getUrlExtension = (url: string) => {
-  return url.split(/[#?]/)[0]?.split(`.`).pop()?.trim() || ``
-}
-
 function normalize(strArray: string[]) {
   const resultArray = []
   if (strArray.length === 0) {

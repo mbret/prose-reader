@@ -1,4 +1,4 @@
-import { detectMimeTypeFromName } from "@prose-reader/shared"
+import { detectMimeTypeFromUrl } from "@prose-reader/shared"
 import { filter, from, map, of, switchMap, tap } from "rxjs"
 import { DocumentRenderer } from "../../../spineItem/renderer/DocumentRenderer"
 import { isHtmlTagElement, setAttributeIfChanged } from "../../../utils/dom"
@@ -211,7 +211,7 @@ export class HtmlRenderer extends DocumentRenderer {
 
   private isImageType = () => {
     const mimeType =
-      this.item.mediaType ?? detectMimeTypeFromName(this.item.href)
+      this.item.mediaType ?? detectMimeTypeFromUrl(this.item.href)
 
     return !!mimeType?.startsWith(`image/`)
   }
