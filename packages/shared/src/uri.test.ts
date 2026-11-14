@@ -1,5 +1,10 @@
 import { describe, expect, it } from "vitest"
-import { getUriBasename, getUriBasePath, removeTrailingSlash } from "./uri"
+import {
+  getUriBasename,
+  getUriBasePath,
+  getUriExtension,
+  removeTrailingSlash,
+} from "./uri"
 
 describe("getUriBasename", () => {
   it("returns the file name for a nested file uri", () => {
@@ -45,4 +50,22 @@ describe("getUriBasePath", () => {
   it("returns an empty string when there is no slash", () => {
     expect(getUriBasePath("content.opf")).toBe("")
   })
+})
+
+describe("getUriExtension", () => {
+  it.each([
+    ["Batman #12.cbz", "cbz"],
+    ["What? Vol.2.cbz", "cbz"],
+    ["pages/Batman #12 - 001.JPG", "JPG"],
+    ["archive.tar.gz", "gz"],
+  ])("reads %s after the last dot of its last segment", (uri, extension) => {
+    expect(getUriExtension(uri)).toBe(extension)
+  })
+
+  it.each(["README", ".hidden", "notes.", "OEBPS.v2/content"])(
+    "returns an empty string for %s, whose last segment has no extension",
+    (uri) => {
+      expect(getUriExtension(uri)).toBe("")
+    },
+  )
 })

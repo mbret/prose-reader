@@ -257,3 +257,21 @@ describe(`Given a non-epub archive without encoding formats`, () => {
     ])
   })
 })
+
+describe(`Given a comic archive whose page names hold a #`, () => {
+  it(`should still detect each page as an image, pre-paginated`, async () => {
+    const archive = archiveWith([
+      textRecord(`Batman #12/Batman #12 - 001.jpg`, ``, { size: 1 }),
+    ])
+
+    expect(await resolveArchiveReadingOrder(archive)).toEqual([
+      {
+        uri: `Batman #12/Batman #12 - 001.jpg`,
+        mediaType: `image/jpg`,
+        size: 1,
+        renditionLayout: `pre-paginated`,
+        progressionWeight: 1,
+      },
+    ])
+  })
+})

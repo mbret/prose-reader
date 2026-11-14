@@ -1,4 +1,4 @@
-import { getUrlExtension, parseContentType } from "@prose-reader/shared"
+import { getUriExtension, parseContentType } from "@prose-reader/shared"
 import type { Archive } from "../archives/types.ts"
 import { getArchiveOcfContainerRecord } from "../metadata/ocf/container.ts"
 
@@ -70,7 +70,7 @@ export const resolveArchiveMediaType = (archive: Archive): string => {
     return declared
 
   const fromFilename = BOOK_MEDIA_TYPE_BY_EXTENSION.get(
-    getUrlExtension(archive.filename ?? "").toLowerCase(),
+    getUriExtension(archive.filename ?? "").toLowerCase(),
   )
 
   if (fromFilename) return fromFilename
