@@ -34,25 +34,7 @@ jobs:
       - uses: ./.github/actions/setup
         with:
           build: libs
-
-      # Keyed on the Playwright version, which pins the browser builds, so an
-      # unrelated lockfile change does not download them again.
-      - name: Read the Playwright version
-        id: playwright
-        run: |
-          version=$(pnpm --filter prose-reader-tests exec playwright --version)
-          echo "version=${version#Version }" >> "$GITHUB_OUTPUT"
-
-      - uses: actions/cache@v5
-        with:
-          path: ~/Library/Caches/ms-playwright
-          key: ${{ runner.os }}-playwright-${{ steps.playwright.outputs.version }}
-
-      - name: Install Playwright Browsers
-        # On a cache hit the browsers are already present; install still runs to
-        # verify/refresh them but skips the multi-hundred-MB download. Playwright
-        # is the test app's dependency, not the root's, so run it from there.
-        run: pnpm --filter prose-reader-tests exec playwright install --with-deps
+      - uses: ./.github/actions/playwright-browsers
 
       - name: Test
         run: pnpm --filter prose-reader-tests test --shard=${{ matrix.shard }}/${{ strategy.job-total }}
