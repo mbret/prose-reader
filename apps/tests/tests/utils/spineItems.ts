@@ -353,18 +353,7 @@ export const goToSpineItemWithOnesBeforeItStillLoading = async (
         const scrollElement =
           reader.navigation.scrollNavigationController.value.element
 
-        const isNavigationLocked = () => {
-          let isLockedNow = false
-
-          // Replays whether the lock is held now.
-          reader.navigation.isLocked$
-            .subscribe((isLocked) => {
-              isLockedNow = isLocked
-            })
-            .unsubscribe()
-
-          return isLockedNow
-        }
+        let isNavigationLocked = false
 
         if (duringUserScroll?.scrollsDownFirstBy !== undefined) {
           scrollElement?.scrollTo({
@@ -372,20 +361,21 @@ export const goToSpineItemWithOnesBeforeItStillLoading = async (
           })
         }
 
-        // Replays whether the lock is held now, then follows it.
-        const lockOfUserScroll = duringUserScroll
-          ? reader.navigation.isLocked$.subscribe((isLocked) => {
-              if (isLocked) letLoadsFinish()
-            })
-          : undefined
+        // Gives whether the lock is held now, then each change of it.
+        const lockOfNavigation = reader.navigation.isLocked$.subscribe(
+          (isLocked) => {
+            isNavigationLocked = isLocked
+
+            if (isLocked && duringUserScroll) letLoadsFinish()
+          },
+        )
         const loadsFinishing =
           reader.spineItemsObserver.itemLoadStatusChange$.subscribe(() => {
             if (!haveAllLoaded()) return
 
             loadsFinishing.unsubscribe()
-            lockOfUserScroll?.unsubscribe()
             stateOfNavigationLock.wasNavigationLockedAsLoadsFinished =
-              isNavigationLocked()
+              isNavigationLocked
 
             if (duringUserScroll?.laysOutReaderOnceLoadsFinish) {
               setTimeout(() => {
@@ -395,8 +385,9 @@ export const goToSpineItemWithOnesBeforeItStillLoading = async (
           })
         const itemsLayout = reader.spine.itemsLayout$.subscribe(() => {
           itemsLayout.unsubscribe()
+          lockOfNavigation.unsubscribe()
           stateOfNavigationLock.wasNavigationLockedAsSpineItemsWereLaidOut =
-            isNavigationLocked()
+            isNavigationLocked
         })
 
         if (!duringUserScroll) letLoadsFinish()
