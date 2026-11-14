@@ -174,15 +174,16 @@ export class InternalNavigator extends DestroyableClass {
   public locker = new Locker()
 
   /**
-   * Each navigation asked of the reader whose target names a place in the
-   * book, as `navigate()` was given it. One whose target names nothing in
-   * the book is ignored, and is not told.
+   * Each request for a navigation whose target names a place in the book, as
+   * `navigate()` was given it. One whose target names nothing in the book is
+   * ignored, and is not told. It completes when the reader is destroyed.
    *
-   * It is told once the reader has handled the request: the navigation is
+   * A request is told once the reader has handled it: the navigation is
    * made, unless the viewport has no size, where the request waits for one.
-   * So it comes before a navigation that a listener makes in answer to it.
+   * A request that a listener makes in answer to another is told before the
+   * one it answers.
    */
-  public readonly requestedNavigation$: Observable<UserNavigationEntry>
+  public readonly navigationRequest$: Observable<UserNavigationEntry>
 
   constructor(
     protected settings: ReaderSettingsManager,
@@ -337,7 +338,9 @@ export class InternalNavigator extends DestroyableClass {
      * other listener can, so the reader handles a request before the others
      * hear of it.
      */
-    this.requestedNavigation$ = userNavigationInBook$
+    this.navigationRequest$ = userNavigationInBook$.pipe(
+      takeUntil(this.destroy$),
+    )
 
     /**
      * Whether the viewport has a size, from one observer for the navigator's

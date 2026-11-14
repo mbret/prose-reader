@@ -225,12 +225,13 @@ and one as a layout starts during it: where the scroll has taken the user by
 then.
 A restoration is emitted even when it lands where the navigation already was.
 
-A navigation asked for while a `lock()` is held is emitted twice: as a `"user"`
-one when it is made, then as a `"restoration"` when the lock is released and it
-lands. The same holds during a scroll of the user's, which that navigation
-ends, see [`.requestedNavigation$`](#requestednavigationusd).
+A navigation asked for while a `lock()` is held is emitted as a `"user"` one
+when it is made. The last one asked for is emitted again, as a `"restoration"`,
+when the lock is released and it lands. The same holds during a scroll of the
+user's, which that navigation ends, see
+[`.navigationRequest$`](#navigationrequestusd).
 
-### `.requestedNavigation$` { #requestednavigationusd }
+### `.navigationRequest$` { #navigationrequestusd }
 
 ```typescript
 Observable<{
@@ -240,14 +241,18 @@ Observable<{
 }>
 ```
 
-Each navigation asked for through `.navigate()` whose target names a place in
-the book, as it was asked. One whose target names nothing in the book is
-ignored, and is not emitted.
+Each request for a navigation whose target names a place in the book, as core
+was given it: a target that an enhancer adds, such as a url, is emitted as the
+core target it was translated to. A request whose target names nothing in the
+book is ignored, and is not emitted. It completes when the reader is destroyed.
 
 It emits once the reader has handled the request. The navigation is made by
 then, unless the reader's container is hidden: the request then waits for the
 container to be shown. So `.navigation$` emits that navigation before
-`.requestedNavigation$` emits its request.
+`.navigationRequest$` emits its request.
+
+A request that a listener of this stream, or of `.navigation$`, makes in answer
+to another one is emitted before the one it answers.
 
 Use it to end something of your own when something else navigates. The reader
 does so for a scroll of the user's: a request that the scroll did not make ends

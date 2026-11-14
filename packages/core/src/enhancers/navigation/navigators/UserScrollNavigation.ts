@@ -44,7 +44,7 @@ export class UserScrollNavigation extends DestroyableClass {
      * then.
      */
     const navigationRequestedByOtherThanScroll$ =
-      this.reader.navigation.requestedNavigation$.pipe(
+      this.reader.navigation.navigationRequest$.pipe(
         filter(({ type }) => type !== "scroll"),
       )
 

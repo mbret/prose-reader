@@ -287,9 +287,17 @@ describe("Given a book that scrolls", () => {
     it("keeps it when the reader's container is hidden, and makes it once the container is shown", async () => {
       const { reader } = await openAndScrollAsUser()
 
+      const { isLockHeld } = recordNavigationsAndLock(reader)
+
       setTestViewport({ width: 0, height: 0 })
       notifyResize()
       reader.navigation.goToSpineItem({ indexOrId: 3, animation: false })
+
+      expect(
+        isLockHeld(),
+        "whether the scroll holds the lock, while the container is hidden",
+      ).toBe(false)
+
       await waitFor(PAST_THE_END_OF_A_USER_SCROLL)
       setTestViewport(defaultTestViewport)
       notifyResize()
@@ -307,6 +315,16 @@ describe("Given a book that scrolls", () => {
         pageTurnMode: "scrollable",
       })
 
+      const { isLockHeld } = recordNavigationsAndLock(reader)
+      const navigationsTold: string[] = []
+
+      // The first one is the latest navigation, replayed.
+      reader.navigation.navigation$
+        .pipe(skip(1))
+        .subscribe(({ triggeredBy }) => {
+          navigationsTold.push(triggeredBy)
+        })
+
       // Something that navigates as soon as the navigation is locked.
       reader.navigation.isLocked$
         .pipe(first((isLocked) => isLocked))
@@ -315,6 +333,13 @@ describe("Given a book that scrolls", () => {
         })
 
       scrollAsUser(scrollElement, topOfPage(1) + 50)
+
+      expect(isLockHeld(), "whether the scroll holds the lock").toBe(false)
+      expect(navigationsTold, "what triggered each navigation").toEqual([
+        "user",
+        "restoration",
+      ])
+
       await waitFor(PAST_THE_END_OF_A_USER_SCROLL)
 
       expect(getTargetAndTypeOfNavigation(reader)).toEqual({
