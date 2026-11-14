@@ -229,6 +229,12 @@ export type InternalNavigationEntry = {
    * zoom/mode change cannot reinterpret the original request.
    */
   requestedVisibleArea?: NavigationVisibleArea
+  /**
+   * `"scroll"` for a navigation that follows the user's scroll of a book that
+   * scrolls. `"api"` for any other one: asked through the reader, as a page
+   * turn, a link, a pan or the app does. A restoration keeps the type of the
+   * navigation it restores.
+   */
   type: `api` | `scroll`
   animation?: boolean | `turn` | `snap`
   /** The spine item the navigation resolved to. */
@@ -281,7 +287,7 @@ export type InternalNavigationInput = Omit<
 
 export type Navigation = Pick<
   InternalNavigationEntry,
-  "position" | "id" | "requestedPosition" | "requestedVisibleArea"
+  "position" | "id" | "requestedPosition" | "requestedVisibleArea" | "type"
 > & {
   triggeredBy: InternalNavigationEntry["meta"]["triggeredBy"]
 }

@@ -206,6 +206,114 @@ describe("Given a book that scrolls", () => {
     })
   })
 
+  describe("When the app navigates before a scroll of the user's is over", () => {
+    it("ends the scroll at once", async () => {
+      const { reader, scrollElement } = await openOnPage(0, {
+        pageTurnMode: "scrollable",
+      })
+      const { isLockHeld } = recordNavigationsAndLock(reader)
+
+      scrollAsUser(scrollElement, topOfPage(1) + 50)
+
+      expect(isLockHeld(), "whether the scroll holds the lock").toBe(true)
+
+      reader.navigation.goToSpineItem({ indexOrId: 3, animation: false })
+      // The scroll ends once the navigation has reached all of its listeners.
+      await waitFor(0)
+
+      expect(
+        isLockHeld(),
+        "whether the scroll holds the lock, after the navigation",
+      ).toBe(false)
+    })
+
+    it("keeps the navigation the app asked for, once the scroll would have been over", async () => {
+      const { reader, scrollElement } = await openOnPage(0, {
+        pageTurnMode: "scrollable",
+      })
+
+      scrollAsUser(scrollElement, topOfPage(1) + 50)
+      reader.navigation.goToSpineItem({ indexOrId: 3, animation: false })
+      await waitFor(PAST_THE_END_OF_A_USER_SCROLL)
+
+      expect(
+        reader.navigation.getNavigation().target,
+        "the target of the navigation",
+      ).toEqual({ type: "spineItem", value: 3 })
+      expect(scrollElement.scrollTop).toBe(topOfPage(3))
+      expect(reader.pagination.state).toMatchObject({
+        isSettled: true,
+        begin: { spineItemIndex: 3 },
+      })
+    })
+
+    it("does not navigate to where the element is when a layout starts", async () => {
+      const { reader, scrollElement } = await openOnPage(0, {
+        pageTurnMode: "scrollable",
+      })
+
+      scrollAsUser(scrollElement, topOfPage(1) + 50)
+      reader.navigation.goToSpineItem({ indexOrId: 3, animation: false })
+      await waitFor(0)
+
+      // Before the scroll would have been over.
+      reader.layout()
+      await firstValueFrom(reader.spine.layout$)
+
+      expect(
+        reader.navigation.getNavigation().target,
+        "the target of the navigation, once the reader is laid out",
+      ).toEqual({ type: "spineItem", value: 3 })
+    })
+
+    it("tells every listener of the navigation before its landing, which the release of the lock makes", async () => {
+      const { reader, scrollElement } = await openOnPage(0, {
+        pageTurnMode: "scrollable",
+      })
+
+      scrollAsUser(scrollElement, topOfPage(1) + 50)
+
+      // A listener that comes during the scroll, after the scroll's own.
+      const navigationsToldToListener: string[] = []
+
+      reader.navigation.navigation$
+        .pipe(skip(1))
+        .subscribe(({ triggeredBy }) => {
+          navigationsToldToListener.push(triggeredBy)
+        })
+
+      reader.navigation.goToSpineItem({ indexOrId: 3, animation: false })
+      await waitFor(0)
+
+      expect(navigationsToldToListener).toEqual(["user", "restoration"])
+    })
+
+    it("takes the next move of the user for a new scroll", async () => {
+      const { reader, scrollElement } = await openOnPage(0, {
+        pageTurnMode: "scrollable",
+      })
+      const { isLockHeld } = recordNavigationsAndLock(reader)
+
+      scrollAsUser(scrollElement, topOfPage(1) + 50)
+      reader.navigation.goToSpineItem({ indexOrId: 3, animation: false })
+      await waitFor(0)
+
+      scrollAsUser(scrollElement, topOfPage(2) + 20)
+
+      expect(isLockHeld(), "whether the new scroll holds the lock").toBe(true)
+
+      await waitFor(PAST_THE_END_OF_A_USER_SCROLL)
+
+      expect(isLockHeld(), "whether the lock is held, once it is over").toBe(
+        false,
+      )
+      expect(reader.navigation.getNavigation()).toMatchObject({
+        type: "scroll",
+        position: { x: 0, y: topOfPage(2) + 20 },
+      })
+    })
+  })
+
   describe("When the page turn mode becomes controlled while the user scrolls", () => {
     it("ends the scroll at once, on the page the user scrolled to", async () => {
       const { reader, scrollElement } = await openOnPage(0, {

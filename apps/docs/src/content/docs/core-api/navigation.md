@@ -209,6 +209,7 @@ Observable<{
   position: SpinePosition | UnboundSpinePosition
   requestedPosition: SpinePosition | UnboundSpinePosition | undefined
   requestedVisibleArea: { width: number; height: number } | undefined
+  type: "api" | "scroll"
   triggeredBy: "user" | "restoration"
 }>
 ```
@@ -216,10 +217,16 @@ Observable<{
 Every navigation as it happens: a `"user"` one that you or a gesture asked for,
 the one to where the reader opens included, or a `"restoration"` of the current
 one onto a new layout or when a pan ends.
-The user's scroll of a book that scrolls gives a `"user"` one when it is over,
-and one as a layout starts during it: where the scroll has taken the user by
-then.
 A restoration is emitted even when it lands where the navigation already was.
+
+`type` is `"scroll"` for a navigation that follows the user's scroll of a book
+that scrolls, and `"api"` for any other one. A restoration keeps the type of
+the navigation it restores.
+
+The user's scroll gives a `"user"` navigation of type `"scroll"` when it is
+over, and one as a layout starts during it: where the scroll has taken the user
+by then. A navigation of type `"api"` made during the scroll ends the scroll at
+once, and the scroll then gives no navigation of its own.
 
 ### `.navigationAgainstCurrentLayout$` { #navigationagainstcurrentlayoutusd }
 

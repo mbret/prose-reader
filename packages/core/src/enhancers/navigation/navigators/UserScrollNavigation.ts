@@ -1,5 +1,6 @@
 import {
   animationFrameScheduler,
+  asapScheduler,
   exhaustMap,
   filter,
   finalize,
@@ -7,8 +8,10 @@ import {
   map,
   merge,
   type Observable,
+  observeOn,
   of,
   share,
+  skip,
   startWith,
   switchMap,
   takeUntil,
@@ -17,7 +20,7 @@ import {
   withLatestFrom,
 } from "rxjs"
 import type { ScrollNavigationController } from "../../../navigation/controllers/ScrollNavigationController"
-import type { UserNavigationEntry } from "../../../navigation/types"
+import type { Navigation, UserNavigationEntry } from "../../../navigation/types"
 import type { Spine } from "../../../spine/Spine"
 import { DestroyableClass } from "../../../utils/DestroyableClass"
 
@@ -36,8 +39,27 @@ export class UserScrollNavigation extends DestroyableClass {
     protected scrollNavigationController: ScrollNavigationController,
     protected lock: () => () => void,
     protected spine: Spine,
+    /** Every navigation of the reader as it happens. */
+    protected navigationOfReader$: Observable<Navigation>,
   ) {
     super()
+
+    /**
+     * A navigation that the scroll did not make, as a link, a bookmark or a
+     * page turn asks for, takes the reader elsewhere: the user's scroll is
+     * over. It is over once that navigation has reached all of its
+     * listeners. The release of the lock makes the navigation land, and a
+     * landing told while the navigation is still being told would reach some
+     * listeners first.
+     */
+    const navigationNotMadeByScroll$ = this.navigationOfReader$.pipe(
+      // The latest navigation, replayed.
+      skip(1),
+      filter(
+        ({ triggeredBy, type }) => triggeredBy === "user" && type !== "scroll",
+      ),
+      observeOn(asapScheduler),
+    )
 
     const scrollPositionToNavigateTo$ =
       this.scrollNavigationController.scrollNotMadeByReader$.pipe(
@@ -121,6 +143,12 @@ export class UserScrollNavigation extends DestroyableClass {
           ).pipe(
             takeWhile(({ isEndOfScroll }) => !isEndOfScroll, true),
             map(({ scrollPosition }) => scrollPosition),
+            /**
+             * Ended by a navigation that it did not make, the scroll makes
+             * none of its own: one to where the element is would replace
+             * that navigation, and its target with it.
+             */
+            takeUntil(navigationNotMadeByScroll$),
             finalize(() => {
               unlock()
             }),

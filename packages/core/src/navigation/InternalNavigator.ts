@@ -102,13 +102,23 @@ export class InternalNavigator extends DestroyableClass {
    * reader is, `position$` only emits when the position changes.
    */
   public navigation$ = this.navigationSubject.pipe(
-    map(({ position, id, requestedPosition, requestedVisibleArea, meta }) => ({
-      position,
-      id,
-      requestedPosition,
-      requestedVisibleArea,
-      triggeredBy: meta.triggeredBy,
-    })),
+    map(
+      ({
+        position,
+        id,
+        requestedPosition,
+        requestedVisibleArea,
+        type,
+        meta,
+      }) => ({
+        position,
+        id,
+        requestedPosition,
+        requestedVisibleArea,
+        type,
+        triggeredBy: meta.triggeredBy,
+      }),
+    ),
     shareReplay(1),
   )
 
