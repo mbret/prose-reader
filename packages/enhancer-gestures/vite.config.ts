@@ -1,15 +1,15 @@
 import { resolve } from "node:path"
 import externals from "rollup-plugin-node-externals"
 import { defineConfig } from "vite"
-import { dtsPlugin } from "../../config/vite-lib"
+import { dtsPlugin } from "../../config/vite-lib.mts"
 
 export default defineConfig(({ mode }) => ({
   build: {
     minify: false,
     lib: {
-      entry: resolve(__dirname, `src/index.ts`),
+      entry: resolve(import.meta.dirname, `src/index.ts`),
       fileName: "index",
-      // ESM + CJS only, no UMD (see config/vite-lib.ts for the rationale).
+      // ESM + CJS only, no UMD (see config/vite-lib.mts for the rationale).
       formats: [`es`, `cjs`],
     },
     emptyOutDir: mode !== `development`,
