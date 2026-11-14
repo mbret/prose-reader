@@ -1,4 +1,4 @@
-import { defer, merge, share, takeUntil, tap } from "rxjs"
+import { defer, merge, type Observable, share, takeUntil, tap } from "rxjs"
 import type { Manifest } from ".."
 import { HTML_PREFIX_SPINE_ITEM } from "../constants"
 import type { Context } from "../context/Context"
@@ -49,6 +49,12 @@ export class SpineItem extends ReactiveEntity<SpineItemState> {
    */
   public readonly didLayout$: SpineItemLayout["didLayout$"]
 
+  /**
+   * Whether the item's document is loaded and laid out: true from the first
+   * layout after the document loads, until it unloads.
+   */
+  public readonly isReady$: Observable<boolean>
+
   private readonly _layout: SpineItemLayout
 
   constructor(
@@ -65,6 +71,8 @@ export class SpineItem extends ReactiveEntity<SpineItemState> {
       isDirty: false,
       loadError: undefined,
     })
+
+    this.isReady$ = this.watch(`isReady`)
 
     this.containerElement = createContainerElement(item, context.document)
 
@@ -185,14 +193,6 @@ export class SpineItem extends ReactiveEntity<SpineItemState> {
       isDirty: update.isDirty ?? currentIsDirty,
       isReady: isReady && load.loadStatus === "loaded",
     })
-  }
-
-  /**
-   * Whether the item's document is loaded and laid out: true from the first
-   * layout after the document loads, until it unloads.
-   */
-  public get isReady$() {
-    return this.watch(`isReady`)
   }
 
   public get loadedDocument(): Document | undefined {
