@@ -55,7 +55,7 @@
   },
   "devDependencies": {
     "happy-dom": "21.0.3",
-    "sass-embedded": "^1.108.1"
+    "sass-embedded": "^1.108.2"
   },
   "madge": {
     "detectiveOptions": {

@@ -39,13 +39,13 @@
     "test": "vitest run --coverage"
   },
   "devDependencies": {
-    "@types/react": "^19.0.0",
-    "@types/react-dom": "^19.0.0",
+    "@types/react": "^19.3.0",
+    "@types/react-dom": "^19.3.0",
     "@vitejs/plugin-react": "^6.3.0",
-    "react": "^19.2.7",
-    "react-dom": "^19.2.7",
+    "react": "^19.3.1",
+    "react-dom": "^19.3.1",
     "typescript": "*",
-    "vite": "^8.3.7"
+    "vite": "^8.3.8"
   },
   "peerDependencies": {
     "@chakra-ui/react": "3.x",
@@ -63,7 +63,7 @@
     "react": "19.x",
     "react-dom": "19.x",
     "react-icons": "^5.4.0",
-    "reactjrx": "4.x || 5.x",
+    "reactjrx": "6.x",
     "rxjs": "^7.5.5",
     "screenfull": "^6.0.2"
   }
