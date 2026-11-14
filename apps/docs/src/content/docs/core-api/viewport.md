@@ -315,3 +315,6 @@ reader.viewportFree$.pipe(first()).subscribe(() => {
   // the viewport is not moving
 })
 ```
+
+A layout that only the loads of spine items ask for waits longer: until the
+viewport has stayed free for 50 ms, see [Layout](/core-api/spine#layout).

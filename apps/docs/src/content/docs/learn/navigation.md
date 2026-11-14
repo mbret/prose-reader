@@ -224,6 +224,11 @@ the reader scrolls the book back onto the place it showed as soon as they are
 laid out, lock or not: the lock is mostly held there for the user's own scroll,
 and what the user reads must not move under it.
 
+The reader also delays the layouts that can wait. A layout that only the loads
+of spine items ask for waits until every lock is released. A layout of the
+reader, which `reader.layout()`, a resize or a setting requests, does not wait
+for the release.
+
 A navigation made while it is held has not landed anywhere yet, so the
 [reading position](#reading-position) stays where it was. Once released, it
 moves to where the navigation lands: for a pan, the page it snaps to, which
