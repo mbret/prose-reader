@@ -59,12 +59,7 @@ export const navigationEnhancer =
     const outOfSpineBoundary$ = outOfSpineBoundary(reader)
     const manualNavigator = new ManualNavigator(reader)
     const panNavigator = new PanNavigator(reader)
-    const userScrollNavigation = new UserScrollNavigation(
-      reader.navigation.scrollNavigationController,
-      reader.navigation.lock,
-      reader.spine,
-      reader.navigation.navigation$,
-    )
+    const userScrollNavigation = new UserScrollNavigation(reader)
 
     const navigateOnUserScroll$ = userScrollNavigation.navigation$.pipe(
       tap((navigation) => {

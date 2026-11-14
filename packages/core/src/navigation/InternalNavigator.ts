@@ -102,23 +102,13 @@ export class InternalNavigator extends DestroyableClass {
    * reader is, `position$` only emits when the position changes.
    */
   public navigation$ = this.navigationSubject.pipe(
-    map(
-      ({
-        position,
-        id,
-        requestedPosition,
-        requestedVisibleArea,
-        type,
-        meta,
-      }) => ({
-        position,
-        id,
-        requestedPosition,
-        requestedVisibleArea,
-        type,
-        triggeredBy: meta.triggeredBy,
-      }),
-    ),
+    map(({ position, id, requestedPosition, requestedVisibleArea, meta }) => ({
+      position,
+      id,
+      requestedPosition,
+      requestedVisibleArea,
+      triggeredBy: meta.triggeredBy,
+    })),
     shareReplay(1),
   )
 
@@ -182,6 +172,17 @@ export class InternalNavigator extends DestroyableClass {
     )
 
   public locker = new Locker()
+
+  /**
+   * Each navigation asked of the reader whose target names a place in the
+   * book, as `navigate()` was given it. One whose target names nothing in
+   * the book is ignored, and is not told.
+   *
+   * It is told once the reader has handled the request: the navigation is
+   * made, unless the viewport has no size, where the request waits for one.
+   * So it comes before a navigation that a listener makes in answer to it.
+   */
+  public readonly requestedNavigation$: Observable<UserNavigationEntry>
 
   constructor(
     protected settings: ReaderSettingsManager,
@@ -330,6 +331,13 @@ export class InternalNavigator extends DestroyableClass {
       }),
       share(),
     )
+
+    /**
+     * What follows in this constructor subscribes to the requests before any
+     * other listener can, so the reader handles a request before the others
+     * hear of it.
+     */
+    this.requestedNavigation$ = userNavigationInBook$
 
     /**
      * Whether the viewport has a size, from one observer for the navigator's

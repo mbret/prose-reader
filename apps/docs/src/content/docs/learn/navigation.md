@@ -202,9 +202,10 @@ that moment wrong.
 
 A gesture that moves the page itself, a pan, has to keep the reader from moving
 it at the same time. `panNavigator` holds a lock for the pans it drives, from
-`start()` to `stop()`, and the reader holds one while the user scrolls, until
-the scroll is over or a navigation is asked for. For a gesture of your own,
-take a `lock()` when it starts and release it when it ends:
+`start()` to `stop()`. The reader holds one while the user scrolls. A
+navigation made during the scroll ends the scroll, and the reader releases its
+lock. For a gesture of your own, take a `lock()` when it starts and release it
+when it ends:
 
 ```typescript
 const release = reader.navigation.lock()

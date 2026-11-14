@@ -100,7 +100,6 @@ const createHarness = ({
     navigation: {
       id: Symbol(),
       position: new SpinePosition({ x, y: 0 }),
-      type: "api",
       triggeredBy,
     },
     holdsOnCurrentLayout: true,

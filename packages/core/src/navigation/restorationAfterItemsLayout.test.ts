@@ -353,16 +353,15 @@ describe("Given a layout that moves the spine item the navigation shows", () => 
 
       const restorations: string[] = []
 
-      reader.navigation.navigation$.subscribe(({ triggeredBy, type }) => {
-        if (triggeredBy === "restoration") restorations.push(type)
+      reader.navigation.navigation$.subscribe(({ triggeredBy }) => {
+        if (triggeredBy === "restoration")
+          restorations.push(reader.navigation.getNavigation().type)
       })
 
       // The first page grows by 300: the third one moves down by as much.
       setSizeOfFirstPage({ height: pageHeight + 300 })
       reader.layout()
       await firstValueFrom(reader.spine.itemsLayout$)
-      // A navigation that ends the scroll ends it once all have heard of it.
-      await new Promise((resolve) => setTimeout(resolve, 0))
 
       expect(restorations, "the type of each restoration").toEqual(["api"])
       expect(

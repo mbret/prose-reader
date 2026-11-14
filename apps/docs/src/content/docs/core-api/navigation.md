@@ -166,6 +166,10 @@ book is ignored, with a warning: a cfi that can't be read, or a `cfi`,
 `spineItem` or `selector` naming a spine item the book does not have. A position
 is clamped to the book, so it always names a place.
 
+`type` is `"api"` unless you give it. `"scroll"` is for a navigation that
+follows a scroll of the user's: the view is already at its position, and the
+reader does not move it. The reader makes those itself in a book that scrolls.
+
 Enhancers can add target types: the
 reader `createReader` returns also takes `{ type: "url"; value: string | URL }`,
 from its navigation enhancer. `NavigationTargetOf<typeof reader>` is every
@@ -209,7 +213,6 @@ Observable<{
   position: SpinePosition | UnboundSpinePosition
   requestedPosition: SpinePosition | UnboundSpinePosition | undefined
   requestedVisibleArea: { width: number; height: number } | undefined
-  type: "api" | "scroll"
   triggeredBy: "user" | "restoration"
 }>
 ```
@@ -217,16 +220,39 @@ Observable<{
 Every navigation as it happens: a `"user"` one that you or a gesture asked for,
 the one to where the reader opens included, or a `"restoration"` of the current
 one onto a new layout or when a pan ends.
+The user's scroll of a book that scrolls gives a `"user"` one when it is over,
+and one as a layout starts during it: where the scroll has taken the user by
+then.
 A restoration is emitted even when it lands where the navigation already was.
 
-`type` is `"scroll"` for a navigation that follows the user's scroll of a book
-that scrolls, and `"api"` for any other one. A restoration keeps the type of
-the navigation it restores.
+A navigation asked for while a `lock()` is held is emitted twice: as a `"user"`
+one when it is made, then as a `"restoration"` when the lock is released and it
+lands. The same holds during a scroll of the user's, which that navigation
+ends, see [`.requestedNavigation$`](#requestednavigationusd).
 
-The user's scroll gives a `"user"` navigation of type `"scroll"` when it is
-over, and one as a layout starts during it: where the scroll has taken the user
-by then. A navigation of type `"api"` made during the scroll ends the scroll at
-once, and the scroll then gives no navigation of its own.
+### `.requestedNavigation$` { #requestednavigationusd }
+
+```typescript
+Observable<{
+  target: NavigationTarget
+  animation?: Animation
+  type?: "api" | "scroll"
+}>
+```
+
+Each navigation asked for through `.navigate()` whose target names a place in
+the book, as it was asked. One whose target names nothing in the book is
+ignored, and is not emitted.
+
+It emits once the reader has handled the request. The navigation is made by
+then, unless the reader's container is hidden: the request then waits for the
+container to be shown. So `.navigation$` emits that navigation before
+`.requestedNavigation$` emits its request.
+
+Use it to end something of your own when something else navigates. The reader
+does so for a scroll of the user's: a request that the scroll did not make ends
+the scroll at once, its lock is released, and the scroll makes no navigation of
+its own.
 
 ### `.navigationAgainstCurrentLayout$` { #navigationagainstcurrentlayoutusd }
 
