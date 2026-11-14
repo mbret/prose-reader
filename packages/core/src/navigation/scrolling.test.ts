@@ -348,6 +348,26 @@ describe("Given a book that scrolls", () => {
       })
     })
 
+    it("takes the book to the place the navigation already has, when the app asks for that place", async () => {
+      const { reader, scrollElement } = await openAndScrollAsUser()
+
+      // The reader is still on the first page: the scroll is not over.
+      expect(reader.navigation.getNavigation().spineItem).toBe(0)
+
+      reader.navigation.goToSpineItem({ indexOrId: 0, animation: false })
+      await waitFor(PAST_THE_END_OF_A_USER_SCROLL)
+
+      expect(scrollElement.scrollTop, "where the book is").toBe(topOfPage(0))
+      expect(reader.navigation.getNavigation()).toMatchObject({
+        position: { x: 0, y: topOfPage(0) },
+        spineItem: 0,
+      })
+      expect(reader.pagination.state).toMatchObject({
+        isSettled: true,
+        begin: { spineItemIndex: 0 },
+      })
+    })
+
     it("goes on with the scroll when the navigation names nothing in the book", async () => {
       const { reader, scrollElement } = await openAndScrollAsUser()
       const { isLockHeld } = recordNavigationsAndLock(reader)

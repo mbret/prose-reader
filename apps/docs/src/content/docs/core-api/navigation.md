@@ -246,10 +246,10 @@ was given it: a target that an enhancer adds, such as a url, is emitted as the
 core target it was translated to. A request whose target names nothing in the
 book is ignored, and is not emitted. It completes when the reader is destroyed.
 
-It emits once the reader has handled the request. The navigation is made by
-then, unless the reader's container is hidden: the request then waits for the
-container to be shown. So `.navigation$` emits that navigation before
-`.navigationRequest$` emits its request.
+It emits once the reader has handled the request. The reader has made the
+navigation by then, so `.navigation$` emits it first. While the reader's
+container is hidden, the order is the reverse: the request is emitted at once,
+and the reader makes the navigation once the container is shown.
 
 A request that a listener of this stream, or of `.navigation$`, makes in answer
 to another one is emitted before the one it answers.
