@@ -3,6 +3,13 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## [44.0.0](https://github.com/mbret/prose-reader/compare/v43.0.0...v44.0.0) (2026-11-14)
+
+### Bug Fixes
+
+* **enhancer-annotations:** emit an empty candidates$ before the first pages ([6fdc764](https://github.com/mbret/prose-reader/commit/6fdc7645891d66870d764f8e988e71013ca90edb))
+
+
 ## [43.0.0](https://github.com/mbret/prose-reader/compare/v42.0.0...v43.0.0) (2026-11-11)
 
 **Note:** Version bump only for package @prose-reader/enhancer-annotations

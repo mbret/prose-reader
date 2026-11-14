@@ -3,6 +3,19 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## [44.0.0](https://github.com/mbret/prose-reader/compare/v43.0.0...v44.0.0) (2026-11-14)
+
+### ⚠ BREAKING CHANGES
+
+* **deps:** @prose-reader/react-reader needs reactjrx 6: its
+  reactjrx peer is `6.x`. @prose-reader/react-native needs Expo SDK 58:
+  its expo-file-system peer is `^58.0.0`.
+
+### Build System
+
+* **deps:** upgrade reactjrx to 6, Expo to SDK 58 and the other dependencies ([8b41a66](https://github.com/mbret/prose-reader/commit/8b41a66f69c7d78924eea0ff8bf199a009ad3a47))
+
+
 ## [43.0.0](https://github.com/mbret/prose-reader/compare/v42.0.0...v43.0.0) (2026-11-11)
 
 **Note:** Version bump only for package @prose-reader/react-reader

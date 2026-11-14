@@ -3,6 +3,50 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## [44.0.0](https://github.com/mbret/prose-reader/compare/v43.0.0...v44.0.0) (2026-11-14)
+
+### ⚠ BREAKING CHANGES
+
+* **deps:** @prose-reader/react-reader needs reactjrx 6: its
+  reactjrx peer is `6.x`. @prose-reader/react-native needs Expo SDK 58:
+  its expo-file-system peer is `^58.0.0`.
+* **core:** `deferNextResult` is no longer exported from `@prose-reader/core`. `SpineItem.layout()` lays the item out only while something subscribes to the Observable it returns.
+
+### Features
+
+* **core:** export reportRecoveredError for enhancers ([9cb57f8](https://github.com/mbret/prose-reader/commit/9cb57f89c1e6fb6997fbbb4c89e0b475d009461a))
+* **core:** make HookManager.getHooks public ([762489d](https://github.com/mbret/prose-reader/commit/762489d2e49b6023bb6c6a9286dd1875b74e25e6))
+
+### Bug Fixes
+
+* **core:** do not hold a layout that follows a pass that started ([926e44b](https://github.com/mbret/prose-reader/commit/926e44b6ccc6e6b9382485681901e31db2e310a4))
+* **core:** give a spine item no size from a frame whose document has not loaded ([efc1767](https://github.com/mbret/prose-reader/commit/efc176766f6365ad999d7602e8ef981597b37912)), references [mbret/prose-reader#763](https://github.com/mbret/prose-reader/issues/763) [mbret/prose-reader#763](https://github.com/mbret/prose-reader/issues/763)
+* **core:** give an HTML spine item a size from its frame only while its document is loaded ([ad8670e](https://github.com/mbret/prose-reader/commit/ad8670eb499d038b7459586495685a5aa2524fdc)), references [mbret/prose-reader#763](https://github.com/mbret/prose-reader/issues/763)
+* **core:** give the same isReady$ stream on every read ([2c91d92](https://github.com/mbret/prose-reader/commit/2c91d922333b7b58dd217aab851f60a1b96e5df4))
+* **core:** give the same pagination stream on every read ([3070d9d](https://github.com/mbret/prose-reader/commit/3070d9db6c4989d35ddc7361129539276e4019da))
+* **core:** keep a scrolling book on its place when a layout comes while the user scrolls ([3718d6e](https://github.com/mbret/prose-reader/commit/3718d6e1716ea8c8a19f666b751f152a9c1d63fd)), references [#508](https://github.com/mbret/prose-reader/issues/508)
+* **core:** keep laying out the spine when the layout of an item fails ([b5e6d76](https://github.com/mbret/prose-reader/commit/b5e6d76546f1651e166bddeb4b7f2cd3803751c7)), references [#719](https://github.com/mbret/prose-reader/issues/719)
+* **core:** lay out again an item laid out at another page size ([44a5f8c](https://github.com/mbret/prose-reader/commit/44a5f8cf01e102e05747d9a858e0d0ab7585e638))
+* **core:** lay out for a loaded item once the viewport is free ([dd1d2e3](https://github.com/mbret/prose-reader/commit/dd1d2e3b60a96401a2aba74ee262d090329415bf))
+* **core:** observe the size of the viewport with one observer ([37eed74](https://github.com/mbret/prose-reader/commit/37eed74a9ef0f13029ace6b370cd746c2d6bf90a))
+* **core:** restore the navigation as soon as a layout has moved what it shows ([c9070fb](https://github.com/mbret/prose-reader/commit/c9070fba51513b39e931c2acbb9a00bd1eb58221))
+* **core:** return a failed layout pass to the requested state ([a7364c4](https://github.com/mbret/prose-reader/commit/a7364c4ef6bf4feb7961726f1a678fd40076e21b))
+* **core:** run each layout hook on its own, so one that throws skips no other ([0dcc6fe](https://github.com/mbret/prose-reader/commit/0dcc6feb2b1e7dae9463b9417baa5a257c86d178)), closes [#719](https://github.com/mbret/prose-reader/issues/719)
+* **core:** start a resize observer in an animation frame, not during a report ([5979228](https://github.com/mbret/prose-reader/commit/597922847327d3934bfbc243c0e7a377443f0416)), references [mbret/prose-reader#763](https://github.com/mbret/prose-reader/issues/763)
+* **core:** stop the layout of an item when its pass is cancelled ([20646b1](https://github.com/mbret/prose-reader/commit/20646b1d84a0c6e75f1297045b2918c2c2e2a9e4))
+* **core:** take one size from a renderer for each layout of its item ([d7450d1](https://github.com/mbret/prose-reader/commit/d7450d1be71c0b487b2dde30415ed644a5d3e1f2))
+
+### Performance Improvements
+
+* **core:** lay out again only the items a request changes or moves ([5593875](https://github.com/mbret/prose-reader/commit/5593875484d1339722134f7cd80d75962878478a))
+* **core:** read whether the book is fully pre-paginated from the context, not from every spine item ([033dcc0](https://github.com/mbret/prose-reader/commit/033dcc061942d18b92518f98d818d96bd0364cd1))
+* **core:** spend the frames of page resolution on pages with a document only ([78d3632](https://github.com/mbret/prose-reader/commit/78d3632a37919086648d6a745ee39768a3866512))
+
+### Build System
+
+* **deps:** upgrade reactjrx to 6, Expo to SDK 58 and the other dependencies ([8b41a66](https://github.com/mbret/prose-reader/commit/8b41a66f69c7d78924eea0ff8bf199a009ad3a47))
+
+
 ## [43.0.0](https://github.com/mbret/prose-reader/compare/v42.0.0...v43.0.0) (2026-11-11)
 
 ### ⚠ BREAKING CHANGES

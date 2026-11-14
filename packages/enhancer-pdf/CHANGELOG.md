@@ -3,6 +3,13 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## [44.0.0](https://github.com/mbret/prose-reader/compare/v43.0.0...v44.0.0) (2026-11-14)
+
+### Bug Fixes
+
+* **enhancer-pdf:** report the layout errors of a page through the reader ([e7d7da5](https://github.com/mbret/prose-reader/commit/e7d7da5d9ba5507f3b1f82d9761b42a7b13ca894))
+
+
 ## [43.0.0](https://github.com/mbret/prose-reader/compare/v42.0.0...v43.0.0) (2026-11-11)
 
 **Note:** Version bump only for package @prose-reader/enhancer-pdf
