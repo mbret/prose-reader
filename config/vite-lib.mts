@@ -8,12 +8,12 @@ import {
   type UserConfig,
 } from "vite"
 import dts, { type PluginOptions as DtsOptions } from "vite-plugin-dts"
-import { TEST_FILES } from "./testFiles.mjs"
+import { TEST_FILES } from "./testFiles.mts"
 
 type Entry = string | Record<string, string>
 
 interface LibConfigOptions {
-  /** Absolute path to the package directory; pass `__dirname`. */
+  /** Absolute path to the package directory; pass `import.meta.dirname`. */
   packageDir: string
   /** @default `${packageDir}/src/index.ts` */
   entry?: Entry

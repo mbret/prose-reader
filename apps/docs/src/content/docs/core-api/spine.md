@@ -47,6 +47,8 @@ watch<K extends keyof SpineState>(keys: K[]): Observable<Pick<SpineState, K>>
 
 One field, or several, as soon as you subscribe, then whenever they change.
 
+Each call returns a new stream: see [Streams](/core-api/introduction#streams).
+
 ```typescript
 reader.spine
   .watch("firstItemIndexAwaitingLayout")

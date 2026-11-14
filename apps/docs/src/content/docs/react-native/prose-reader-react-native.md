@@ -28,7 +28,7 @@ npx expo install expo-file-system react-native-webview
 The package only uses peer dependencies, all of them required, so your app
 declares each one and holds its single copy. `npx expo install` picks the
 `expo-file-system` and `react-native-webview` versions your Expo SDK expects.
-The package targets SDK 57: its `expo-file-system` peer is `^57.0.0`, and an
+The package targets SDK 58: its `expo-file-system` peer is `^58.0.0`, and an
 `expo-file-system` major is the SDK it ships with. `react` 19 is your app's
 own.
 

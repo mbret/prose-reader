@@ -26,20 +26,19 @@
     "check:expo-sdk": "CI=1 EXPO_OFFLINE=1 pnpm --filter @prose-reader/react-native exec expo install --check"
   },
   "devDependencies": {
-    "@biomejs/biome": "^2.6.6",
-    "@rolldown/plugin-babel": "^0.3.1",
+    "@biomejs/biome": "^2.6.7",
     "@types/node": "^26.6.6",
     "@vitest/coverage-v8": "^5.1.0",
     "conventional-changelog-conventionalcommits": "^10.4.1",
     "happy-dom": "21.0.3",
     "husky": "^9.1.7",
-    "jsdom": "^31.0.0",
-    "lerna": "^10.1.0",
-    "lint-staged": "^17.0.5",
-    "rollup-plugin-node-externals": "^9.0.0",
-    "typescript": "^6.0.0",
-    "vite": "^8.3.7",
-    "vite-plugin-dts": "^5.1.1",
+    "jsdom": "^31.0.1",
+    "lerna": "^10.1.1",
+    "lint-staged": "^17.6.0",
+    "rollup-plugin-node-externals": "^9.0.1",
+    "typescript": "^6.0.3",
+    "vite": "^8.3.8",
+    "vite-plugin-dts": "^5.1.2",
     "vitest": "^5.1.0"
   },
   "lint-staged": {

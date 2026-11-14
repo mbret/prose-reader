@@ -131,9 +131,7 @@ export const paginationEnhancer =
         get state() {
           return enhancedPagination.value
         },
-        get state$() {
-          return enhancedPagination.asObservable()
-        },
+        state$: enhancedPagination.asObservable(),
       },
     } as unknown as PaginationOutput
   }

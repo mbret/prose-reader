@@ -89,6 +89,8 @@ them. A single field is compared by its value, and `pageSize` by its width and
 height. In a list, each field is compared as it is, so `pageSize`, a new object
 at every layout, counts as changed every time: watch it on its own.
 
+Each call returns a new stream: see [Streams](/core-api/introduction#streams).
+
 ```typescript
 reader.viewport.watch("isSpread").subscribe((isSpread) => {
   // true while two pages share the viewport
