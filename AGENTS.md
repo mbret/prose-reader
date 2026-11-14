@@ -46,6 +46,13 @@ So:
   larger rework, say so and propose it instead of quietly doing the narrow
   thing. You are not expected to stay inside the boundary of what was asked when
   what you found is bigger than it.
+- **An issue's proposed fix is a suggestion, not a specification.** Its author
+  wrote it before reading the code as closely as you are about to. Judge it
+  like any other design: find the process that owns the behaviour and the
+  cleanest shape, and depart from the proposal when it is wrong. Say in the
+  pull request where you departed and why. #693 proposed to teach
+  `ReactiveEntity.watch(key)` about DOM elements; the flaw was in
+  `isShallowEqual`, which took any two objects without own keys for equal.
 - **Put a behaviour in the process that owns it, not where the task is.**
   Before you add a behaviour, or heavily change one, ask which existing process
   already makes that decision. If one does, the change belongs there, even when
