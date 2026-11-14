@@ -2,7 +2,7 @@ import { createReadStream } from "node:fs"
 import { createRequire } from "node:module"
 import react from "@vitejs/plugin-react"
 import { defineConfig, type Plugin } from "vite"
-import { serveBooks } from "./server/serveBooks"
+import { serveBooks } from "./server/serveBooks.ts"
 
 const require = createRequire(import.meta.url)
 

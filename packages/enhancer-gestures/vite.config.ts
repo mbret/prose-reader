@@ -1,26 +1,9 @@
-import { resolve } from "node:path"
-import externals from "rollup-plugin-node-externals"
 import { defineConfig } from "vite"
-import { dtsPlugin } from "../../config/vite-lib.mts"
+import { createLibConfig } from "../../config/vite-lib.mts"
 
-export default defineConfig(({ mode }) => ({
-  build: {
+export default defineConfig(
+  createLibConfig({
+    packageDir: import.meta.dirname,
     minify: false,
-    lib: {
-      entry: resolve(import.meta.dirname, `src/index.ts`),
-      fileName: "index",
-      // ESM + CJS only, no UMD (see config/vite-lib.mts for the rationale).
-      formats: [`es`, `cjs`],
-    },
-    emptyOutDir: mode !== `development`,
-    sourcemap: true,
-  },
-  plugins: [
-    externals({
-      peerDeps: true,
-      deps: true,
-      devDeps: true,
-    }),
-    dtsPlugin(),
-  ],
-}))
+  }),
+)
