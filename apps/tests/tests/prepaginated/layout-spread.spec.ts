@@ -1,7 +1,8 @@
-import { expect, test } from "@playwright/test"
+import { expect } from "@playwright/test"
 import { waitForSpineItemReady } from "../utils"
 import { waitForSettled } from "../utils/pagination"
 import { getReader } from "../utils/reader"
+import { test } from "../utils/test"
 
 test.describe("Given a prepaginated book with first page on spread right", () => {
   test.describe("and numberOfAdjacentSpineItemToPreLoad as 0", () => {

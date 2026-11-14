@@ -5,7 +5,7 @@ import { ServiceWorkerStreamer } from "@prose-reader/streamer"
 // CommonJS in Node, where a named import of it fails
 import JSZip from "jszip"
 import type { Plugin } from "vite"
-import { LONG_COMIC_NUMBER_OF_PAGES } from "./longComic"
+import { LONG_COMIC_NUMBER_OF_PAGES } from "./longComic.ts"
 
 const BOOKS_DIRECTORY = resolve(import.meta.dirname, "../public/epubs")
 const BOOKS_PATH = "/epubs"

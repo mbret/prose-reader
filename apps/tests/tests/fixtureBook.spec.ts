@@ -1,10 +1,11 @@
-import { expect, test } from "@playwright/test"
+import { expect } from "@playwright/test"
 import { waitForSettled } from "./utils/pagination"
 import { getReader } from "./utils/reader"
 import {
   DOCUMENT_PROTOCOL_BY_RESOURCE_LOADING,
   isResourceLoading,
 } from "./utils/resourceLoading"
+import { test } from "./utils/test"
 
 /**
  * A project runs every spec with its scenarios loading their book one way,

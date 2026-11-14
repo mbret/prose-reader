@@ -1,4 +1,4 @@
-import { expect, type Page, test } from "@playwright/test"
+import { expect, type Page } from "@playwright/test"
 import {
   getLongChapterIndex,
   getNumberOfPagesOfSpineItem,
@@ -6,6 +6,7 @@ import {
 } from "../../utils"
 import { layOutAndSettle, waitForSettled } from "../../utils/pagination"
 import { getReader } from "../../utils/reader"
+import { test } from "../../utils/test"
 
 const url = "http://localhost:3333/tests/layout/fonts/index.html"
 

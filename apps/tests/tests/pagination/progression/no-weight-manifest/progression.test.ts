@@ -1,4 +1,5 @@
-import { expect, test } from "@playwright/test"
+import { expect } from "@playwright/test"
+import { test } from "../../../utils/test"
 
 test.describe("Given undefined progression weight", () => {
   test("should set progression based on number of items", async ({ page }) => {

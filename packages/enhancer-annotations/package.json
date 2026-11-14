@@ -37,7 +37,8 @@
   },
   "scripts": {
     "start": "vite build --watch --mode development",
-    "build": "tsc && vite build"
+    "build": "tsc && vite build",
+    "test": "vitest run --coverage"
   },
   "peerDependencies": {
     "@prose-reader/core": "workspace:^",

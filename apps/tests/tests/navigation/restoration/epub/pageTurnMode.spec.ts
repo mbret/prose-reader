@@ -1,6 +1,7 @@
-import { expect, test } from "@playwright/test"
+import { expect } from "@playwright/test"
 import { getLongChapterIndex } from "../../../utils"
 import { layOutAndSettle, waitForSettled } from "../../../utils/pagination"
+import { test } from "../../../utils/test"
 import {
   readingPositionsSinceCreation,
   readPosition,

@@ -8,9 +8,11 @@ import {
   defaultTestViewport,
   getTestContainer,
   holdItem,
+  holdItemLayout,
   installReaderTestEnvironment,
   mountTestReader,
   notifyResize,
+  requestLayoutByUnloadingItem,
   resizeObservers,
   setTestViewport,
   settledOn,
@@ -129,7 +131,8 @@ describe("Given a mounted reader", () => {
 
     reader.settings.update({ layoutAutoResize: "container" })
 
-    expect(resizeObservers(container).watching).toBe(1)
+    // an observer starts in the next animation frame
+    await vi.waitFor(() => expect(resizeObservers(container).watching).toBe(1))
   })
 
   it("does not lay out again when the container reports the size it was laid out at", async () => {
@@ -313,6 +316,145 @@ describe("Given a mounted reader whose container is hidden", () => {
     expect(layouts()).toBe(2)
     expect(reader.spine.isLayoutCurrent()).toBe(true)
     expect(viewportSizesAtItemLayouts).not.toEqual([])
+  })
+
+  it("lays every item out for the size the container is shown at, when it is hidden after the layout laid out some of them", async () => {
+    const secondItem = holdItemLayout("/page_1.jpg")
+    const reader = await mountedAndSettled({
+      getRenderer: secondItem.getRenderer,
+    })
+    const firstItem = reader.spineItemsManager.get(0)
+
+    if (!firstItem) throw new Error("item 0 is missing")
+
+    // The pass lays the first item out at this size, then waits on the second.
+    const layoutsOfSecondItemBefore = secondItem.layoutsStarted()
+
+    secondItem.hold()
+    reader.layout()
+    await vi.waitFor(() => {
+      expect(firstItem.value.isDirty, "the first item awaits a layout").toBe(
+        false,
+      )
+      expect(secondItem.layoutsStarted(), "the layouts of the second").toBe(
+        layoutsOfSecondItemBefore + 1,
+      )
+    })
+
+    /**
+     * Shown at another size whose pages are not side by side either, so the
+     * spine gives the first item the same place: only the size of its pages
+     * changes.
+     */
+    setTestViewport(hidden)
+    notifyResize()
+    setTestViewport({ width: 150, height: 250 })
+    notifyResize()
+    secondItem.release()
+
+    await vi.waitFor(() => {
+      expect(reader.spine.isLayoutCurrent(), "the layout is current").toBe(true)
+    })
+    expect(reader.viewport.value.width, "the width laid out at").toBe(150)
+
+    const itemLayouts = () =>
+      reader.spineItemsManager.items.map(({ index }) => {
+        const { left, width } = reader.spine.getSpineItemSpineLayoutInfo(index)
+
+        return { left, width }
+      })
+    const itemLayoutsShown = itemLayouts()
+
+    // Laid out again at the same size, from scratch, nothing moves.
+    reader.layout()
+    await firstValueFrom(reader.layout$.pipe(timeout(2000)))
+
+    expect(itemLayoutsShown, "the items as shown").toEqual(itemLayouts())
+  })
+
+  it("waits for the release to start the layout for a spine item's load, when it is hidden and shown before that layout started", async () => {
+    const reader = await mountedAndSettled()
+    const viewportElement = reader.viewport.value.element
+    const observersOfViewportBefore = resizeObservers(viewportElement).watching
+    let layoutStarts = 0
+
+    reader.spine.itemsLayoutStart$.subscribe(() => {
+      layoutStarts += 1
+    })
+
+    // Locked during the delay of the request, before its pass starts.
+    await requestLayoutByUnloadingItem(reader, 1)
+
+    const release = reader.navigation.lock()
+
+    // The pass observes the size of the viewport from a later frame.
+    await vi.waitFor(() => {
+      expect(
+        resizeObservers(viewportElement).watching,
+        "the observers of the viewport",
+      ).toBeGreaterThan(observersOfViewportBefore)
+    })
+
+    vi.useFakeTimers()
+    setTestViewport(hidden)
+    notifyResize()
+    setTestViewport(defaultTestViewport)
+    notifyResize()
+    await vi.advanceTimersByTimeAsync(1000)
+
+    expect(layoutStarts, "the starts of a layout, while it is locked").toBe(0)
+
+    release()
+    await vi.advanceTimersByTimeAsync(1000)
+
+    expect(layoutStarts, "the starts of a layout, once released").toBe(1)
+  })
+
+  it("starts the layout for a spine item's load again while the navigation is locked, when it is hidden and shown after that layout laid out some items", async () => {
+    const secondItem = holdItemLayout("/page_1.jpg")
+    const reader = await mountedAndSettled({
+      getRenderer: secondItem.getRenderer,
+    })
+    let layoutStarts = 0
+
+    reader.spine.itemsLayoutStart$.subscribe(() => {
+      layoutStarts += 1
+    })
+
+    // The pass for the end of the second item's load waits on that item.
+    const layoutsOfSecondItemBefore = secondItem.layoutsStarted()
+
+    secondItem.hold()
+    await requestLayoutByUnloadingItem(reader, 1)
+    await vi.waitFor(() => {
+      expect(secondItem.layoutsStarted(), "the layouts of the second").toBe(
+        layoutsOfSecondItemBefore + 1,
+      )
+    })
+
+    expect(layoutStarts, "the starts of a layout, before it is hidden").toBe(1)
+
+    /**
+     * Shown again at the same size, so no layout of the reader is requested.
+     * A pass started and did not complete: the pass that starts again does
+     * not wait for the release.
+     */
+    const release = reader.navigation.lock()
+
+    setTestViewport(hidden)
+    notifyResize()
+    setTestViewport(defaultTestViewport)
+    notifyResize()
+
+    await vi.waitFor(() => {
+      expect(layoutStarts, "the starts of a layout, once it is shown").toBe(2)
+    })
+
+    release()
+    secondItem.release()
+    await vi.waitFor(() => {
+      expect(reader.spine.isLayoutCurrent(), "the layout is current").toBe(true)
+    })
   })
 
   it("lays nothing out when the container is hidden before the browser reports it, and lays out once it is shown", async () => {

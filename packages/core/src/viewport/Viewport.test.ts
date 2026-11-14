@@ -2,7 +2,7 @@ import { afterEach, describe, expect, it, vi } from "vitest"
 import { Context } from "../context/Context"
 import { ReaderSettingsManager } from "../settings/ReaderSettingsManager"
 import { SpinePosition } from "../spine/types"
-import { createTestManifest } from "../tests/utils"
+import { createTestManifest, holdAnimationFrames } from "../tests/utils"
 import { Viewport } from "./Viewport"
 
 /** A viewport laid out at 100 px, whose element sizes the test controls. */
@@ -272,12 +272,15 @@ describe("Given a viewport whose element is hidden, then shown", () => {
       () => size.height,
     )
 
+    const { runAnimationFrame } = holdAnimationFrames(window)
     const isSized: boolean[] = []
 
     viewport.isSized$.subscribe((value) => isSized.push(value))
 
     expect(isSized).toEqual([true])
 
+    // the observer starts in the next frame
+    runAnimationFrame()
     // a resize that keeps a size is not a change
     size = { width: 120, height: 100 }
     reportResize()
@@ -299,6 +302,7 @@ describe("Given a viewport whose element is hidden, then shown", () => {
       context,
       new ReaderSettingsManager({}, context),
     )
+    const { runAnimationFrame } = holdAnimationFrames(window)
     let isComplete = false
 
     viewport.isSized$.subscribe({
@@ -306,6 +310,8 @@ describe("Given a viewport whose element is hidden, then shown", () => {
         isComplete = true
       },
     })
+    // the observer starts in the next frame
+    runAnimationFrame()
 
     expect(observing()).toBe(1)
 

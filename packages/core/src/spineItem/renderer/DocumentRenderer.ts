@@ -19,7 +19,7 @@ import {
 } from "rxjs"
 import type { Context } from "../../context/Context"
 import type { HookManager } from "../../hooks/HookManager"
-import { Report } from "../../report"
+import { Report, reportRecoveredError } from "../../report"
 import type { ReaderSettingsManager } from "../../settings/ReaderSettingsManager"
 import { getFrameViewportInfo } from "../../utils/frames"
 import { ReactiveEntity } from "../../utils/ReactiveEntity"
@@ -326,8 +326,21 @@ export abstract class DocumentRenderer extends ReactiveEntity<DocumentRendererSt
     )
   }
 
+  /**
+   * Gives one size, or `undefined` when the renderer gives none. A renderer
+   * that fails gives `undefined` too, and its error is reported: an item that
+   * its renderer cannot lay out must not stop the layout of the spine.
+   */
   public layout(params: LayoutParams) {
-    return this.onLayout(params)
+    return defer(() => this.onLayout(params)).pipe(
+      endWith(undefined),
+      first(),
+      catchError((error) => {
+        reportRecoveredError(error)
+
+        return of(undefined)
+      }),
+    )
   }
 
   public destroy() {

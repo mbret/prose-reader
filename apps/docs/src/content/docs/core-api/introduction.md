@@ -23,3 +23,16 @@ If it answers all the questions by YES, it should be in the core:
 * Is it likely needed by all developers ?
 * Is it following strictly browser API ?
 
+
+## Streams { #streams }
+
+A stream that the reader exposes as a property, such as `reader.pagination.state$` or a spine item's `isReady$`, is the same object every time you read it.
+
+A method that returns a stream, such as `.watch()`, builds a new stream on every call. A hook that takes the stream as a dependency, such as reactjrx's `useObserve`, subscribes again each time the stream changes. Give it the call through a factory, with its dependencies:
+
+```tsx
+const { data: isSpread } = useObserve(
+  () => reader?.viewport.watch("isSpread"),
+  [reader],
+)
+```

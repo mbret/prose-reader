@@ -53,6 +53,6 @@
     "@prose-reader/archive-reader": "workspace:^",
     "@prose-reader/cbz": "workspace:^",
     "@prose-reader/streamer": "workspace:^",
-    "rxjs": "^7.5.5"
+    "rxjs": "^7.8.2"
   }
 }

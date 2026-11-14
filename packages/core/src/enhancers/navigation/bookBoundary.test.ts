@@ -32,7 +32,7 @@ const overrideLastItemReadiness = (
 
   const subject = new BehaviorSubject<boolean>(initial)
 
-  vi.spyOn(lastItem, "isReady$", "get").mockReturnValue(subject.asObservable())
+  Object.defineProperty(lastItem, "isReady$", { value: subject.asObservable() })
   vi.spyOn(lastItem, "value", "get").mockReturnValue({
     ...lastItem.value,
     isReady: initial,

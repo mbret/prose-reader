@@ -1,5 +1,6 @@
-import { expect, test } from "@playwright/test"
+import { expect } from "@playwright/test"
 import { waitForSpineItemReady } from "../utils"
+import { test } from "../utils/test"
 
 test("should display basic text", async ({ page }) => {
   await page.setViewportSize({

@@ -1,7 +1,8 @@
-import { expect, test } from "@playwright/test"
+import { expect } from "@playwright/test"
 import { navigateToSpineItem } from "../utils"
 import { expectSpineItemKeptThroughPageTurnModes } from "../utils/pageTurnMode"
 import { waitForSettled } from "../utils/pagination"
+import { test } from "../utils/test"
 import { getSpineItemIndexesOnScreen } from "../utils/visibility"
 
 /**

@@ -1,4 +1,4 @@
-import { expect, type Page, test } from "@playwright/test"
+import { expect, type Page } from "@playwright/test"
 import type { UnboundSpinePosition } from "@prose-reader/core"
 import {
   navigateTo,
@@ -7,6 +7,7 @@ import {
   zoomAt,
 } from "../../utils"
 import { getReader } from "../../utils/reader"
+import { test } from "../../utils/test"
 import {
   expectLoadedSpineItemsToBeTheOnesOnScreen,
   getSpineItemIndexesOnScreen,

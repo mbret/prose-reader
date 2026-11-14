@@ -1,10 +1,11 @@
-import { expect, type Page, test } from "@playwright/test"
+import { expect, type Page } from "@playwright/test"
 import type { ReadingPosition } from "@prose-reader/core"
 import type { generateXPointer, xPointerToCfi } from "@prose-reader/koreader"
 import { getChapterIndex } from "../utils"
 import { goToKoreaderProgress } from "../utils/koreader"
 import { waitForSettled } from "../utils/pagination"
 import { getReader } from "../utils/reader"
+import { test } from "../utils/test"
 import {
   isCfiPositionVisible,
   isElementStartOnScreen,

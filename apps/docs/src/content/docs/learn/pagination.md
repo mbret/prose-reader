@@ -113,7 +113,9 @@ navigation onto the new layout, a navigation like any other. So settlement can
 drop briefly while the book loads around the page being read. A visible item
 whose load failed does not keep pagination waiting: it settles on it, with the
 item's start as its edge's `cfi`, as the
-[error handling page](/learn/error-handling#errors-in-spine-item) explains. Page
+[error handling page](/learn/error-handling#errors-in-spine-item) explains. A
+visible item whose renderer failed to lay it out settles too, at the size the
+reader [gave it instead](/learn/error-handling#errors-the-reader-recovers-from). Page
 metrics such as `begin.pageIndexInSpineItem` stay available throughout, so
 navigation controls keep working on estimates while a result is pending.
 

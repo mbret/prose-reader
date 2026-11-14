@@ -1,5 +1,6 @@
-import { expect, test } from "@playwright/test"
+import { expect } from "@playwright/test"
 import { getReader } from "../../../utils/reader"
+import { test } from "../../../utils/test"
 import type { ChapterDocumentWhenLoaded } from "./chapterDocumentsWhenLoaded"
 
 const url = "http://localhost:3333/tests/navigation/restoration/epub/index.html"

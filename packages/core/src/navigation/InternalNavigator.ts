@@ -191,7 +191,8 @@ export class InternalNavigator extends DestroyableClass {
      * Whether `lock()` is held, as by a pan, the user's scrolling or the app.
      * Meanwhile automatic position adjustments (correction, restoration) are
      * deferred so they don't fight whoever moves the page, and a navigation
-     * lands once the lock is released.
+     * lands once the lock is released. One restoration is not deferred: the
+     * one that follows the items layout of a book that scrolls.
      */
     protected isNavigationLocked$: Observable<boolean>,
     /** Where the reader opens, the start of the book by default. */
@@ -474,28 +475,50 @@ export class InternalNavigator extends DestroyableClass {
      * the user to be restored instantly.
      *
      * This means that if a layout happens during navigation, we will cut it and navigate
-     * directly to new position. NO layout should happens during viewport busy.
-     * This is responsibility of other components.
+     * directly to new position. The spine delays a layout that only the
+     * loads of spine items ask for until the viewport is free, see
+     * `SpineLayout`. A layout of the reader does not wait.
+     */
+    /**
+     * A layout restores the navigation twice. Once its items are laid out, if
+     * that moved what the navigation shows: the viewport is put back in the
+     * task that moved the items, before a frame shows another place. Then
+     * once its pages are published, which the anchor is found on.
+     *
+     * A restoration waits for `lock()` to be released: until then the
+     * position is the lock holder's. The one that follows the items layout
+     * of a book that scrolls does not wait. A position there is an offset
+     * into spine items that just moved, so it no longer shows what the lock
+     * holder left on screen: the book has to scroll to that place again,
+     * whether or not the lock is released.
      */
     const navigationUpdateFromLayout$ = merge(
-      navigationModeRenderingLayerSwitch$,
-      spine.layout$,
+      merge(navigationModeRenderingLayerSwitch$, spine.layout$).pipe(
+        map(() => ({ isBeforePagesArePublished: false })),
+      ),
+      spine.itemsLayout$.pipe(map(() => ({ isBeforePagesArePublished: true }))),
     ).pipe(
       // Nothing to restore before the first navigation.
       skipUntil(navigationFromUser$),
-      switchMap(() => {
-        return of(null).pipe(
-          switchMap(() =>
-            isNavigationLocked$.pipe(
-              filter((isLocked) => !isLocked),
-              first(),
-            ),
-          ),
+      switchMap(({ isBeforePagesArePublished }) => {
+        const waitsForLockRelease = !(
+          isBeforePagesArePublished &&
+          settings.values.computedPageTurnMode === "scrollable"
+        )
+        const isNavigationFreeToRestore$ = waitsForLockRelease
+          ? isNavigationLocked$.pipe(
+              map((isLocked) => !isLocked),
+              first((isFree) => isFree),
+            )
+          : of(true)
+
+        return isNavigationFreeToRestore$.pipe(
           map(() => ({
             navigation: {
               ...this.navigationSubject.getValue(),
               animation: false as const,
             },
+            isBeforePagesArePublished,
           })),
           /**
            * We need to cancel the restoration as soon as there is
@@ -507,9 +530,14 @@ export class InternalNavigator extends DestroyableClass {
       }),
     )
 
-    const navigationRestored$ = merge(
+    const navigationWithRestoredPosition$ = merge(
       navigationUpdateFromLayout$,
-      navigationUpdateOnLockRelease$,
+      navigationUpdateOnLockRelease$.pipe(
+        map(({ navigation }) => ({
+          navigation,
+          isBeforePagesArePublished: false,
+        })),
+      ),
     ).pipe(
       withAnchorFromTarget({ resolvers: targetResolvers }),
       withRestoredPosition({
@@ -519,6 +547,24 @@ export class InternalNavigator extends DestroyableClass {
         spine,
         cfiManager,
       }),
+      /**
+       * Before the pages are published, there is nothing to tell unless the
+       * layout moved the navigation: where it stays, the restoration that
+       * follows the pages says all there is to say, once.
+       */
+      filter(({ navigation, isBeforePagesArePublished }) => {
+        if (!isBeforePagesArePublished) return true
+
+        const { position } = this.navigationSubject.getValue()
+
+        return (
+          navigation.position.x !== position.x ||
+          navigation.position.y !== position.y
+        )
+      }),
+    )
+
+    const navigationRestored$ = navigationWithRestoredPosition$.pipe(
       map(({ navigation, ...rest }) => {
         const updated: InternalNavigationEntry = {
           ...navigation,

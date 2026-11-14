@@ -1,6 +1,7 @@
-import { expect, type Page, test } from "@playwright/test"
+import { expect, type Page } from "@playwright/test"
 import { locateSpineItems, updateSettings } from "../../utils"
 import { waitForSettled } from "../../utils/pagination"
+import { test } from "../../utils/test"
 
 // the precision toBeCloseTo checks with by default
 const isCloseTo = (a: number, b: number) => Math.abs(a - b) < 0.005

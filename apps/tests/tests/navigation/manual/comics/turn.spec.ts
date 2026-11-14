@@ -1,4 +1,3 @@
-import { test } from "@playwright/test"
 import type { SpinePosition } from "@prose-reader/core"
 import {
   expectSpineItemsInViewport,
@@ -6,6 +5,7 @@ import {
   turnRight,
   waitForSpineItemReady,
 } from "../../../utils"
+import { test } from "../../../utils/test"
 
 const parameters = [
   ["odd", { width: 723, height: 671 }],

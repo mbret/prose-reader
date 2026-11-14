@@ -16,14 +16,15 @@ import type { Observable, ObservedValueOf } from "rxjs"
 import type { TapAreaGestureContext } from "./gestures/taps/types"
 import type { GesturesSettingsManager } from "./SettingsManager"
 
+/** What a `beforeTapGesture` hook is asked about: the tap, and its page. */
+export type BeforeTapGestureContext = {
+  event: GestureEvent["event"]
+} & TapAreaGestureContext
+
 export type Hook = {
   name: "beforeTapGesture"
   runFn: (params: {
-    event$: Observable<
-      {
-        event: GestureEvent["event"]
-      } & TapAreaGestureContext
-    >
+    event$: Observable<BeforeTapGestureContext>
   }) => Observable<boolean>
 }
 

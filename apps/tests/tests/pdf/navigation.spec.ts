@@ -1,10 +1,10 @@
-import { test } from "@playwright/test"
 import {
   expectSpineItemsInViewport,
   locateSpineItemFrame,
   waitForSpineItemReady,
 } from "../utils"
 import { pan } from "../utils/pan"
+import { test } from "../utils/test"
 
 test.describe("Given PDF", () => {
   test.describe("Given a mouse pan gesture", () => {

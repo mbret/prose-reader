@@ -1,6 +1,7 @@
-import { expect, type Page, test } from "@playwright/test"
+import { expect, type Page } from "@playwright/test"
 import type { AudioEnhancedReader } from "@prose-reader/enhancer-audio"
 import { getReader } from "../utils/reader"
+import { test } from "../utils/test"
 
 const readAudioState = async (page: Page) =>
   (await getReader<AudioEnhancedReader>(page)).evaluate(

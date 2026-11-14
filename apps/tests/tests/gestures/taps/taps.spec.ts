@@ -1,5 +1,6 @@
-import { expect, type Page, test } from "@playwright/test"
+import { expect, type Page } from "@playwright/test"
 import { waitForSettled } from "../../utils/pagination"
+import { test } from "../../utils/test"
 
 /**
  * A right click is for the context menu. It must not reach the app as a tap,

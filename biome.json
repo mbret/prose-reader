@@ -1,5 +1,5 @@
 {
-  "$schema": "https://biomejs.dev/schemas/2.6.6/schema.json",
+  "$schema": "https://biomejs.dev/schemas/2.6.7/schema.json",
   "vcs": {
     "enabled": false,
     "clientKind": "git",
@@ -105,6 +105,26 @@
         "rules": {
           "correctness": {
             "noComponentHookFactories": "off"
+          }
+        }
+      }
+    },
+    {
+      "includes": ["apps/tests/tests/**", "!apps/tests/tests/utils/test.ts"],
+      "linter": {
+        "rules": {
+          "style": {
+            "noRestrictedImports": {
+              "level": "error",
+              "options": {
+                "paths": {
+                  "@playwright/test": {
+                    "importNames": ["test"],
+                    "message": "Import `test` from `tests/utils/test.ts`. It fails a test whose page had an uncaught error."
+                  }
+                }
+              }
+            }
           }
         }
       }

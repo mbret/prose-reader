@@ -1,6 +1,7 @@
-import { expect, type Page, test } from "@playwright/test"
+import { expect, type Page } from "@playwright/test"
 import { locateSpineItemFrame, waitForSpineItemReady } from "../utils"
 import { getReader } from "../utils/reader"
+import { test } from "../utils/test"
 
 /**
  * One spine item per page of the PDF, each rendering its own page. The

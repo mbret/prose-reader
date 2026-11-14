@@ -1,6 +1,7 @@
-import { expect, type Page, test } from "@playwright/test"
+import { expect, type Page } from "@playwright/test"
 import { expectSpineItemsInViewport, locateSpineItemFrame } from "../../utils"
 import { waitForSettled } from "../../utils/pagination"
+import { test } from "../../utils/test"
 
 /**
  * A comic's pages are images, and a browser lets an image be dragged out of

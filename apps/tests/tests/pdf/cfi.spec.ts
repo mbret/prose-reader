@@ -1,6 +1,7 @@
-import { expect, test } from "@playwright/test"
+import { expect } from "@playwright/test"
 import { waitForSpineItemReady } from "../utils"
 import { getReader } from "../utils/reader"
+import { test } from "../utils/test"
 
 test.describe("Given headless rendering", () => {
   /**

@@ -120,6 +120,12 @@ type Hook = {
 }
 ```
 
+The first value of each `beforeTapGesture` hook is its verdict, and later values change nothing. The tap waits for the verdict of every hook, so a hook that neither emits nor completes holds the tap until the next tap. A verdict of `false` from any hook drops the tap: it turns no page, and `gestures$` does not report it. Anything else from a hook lets the tap go on:
+
+- a verdict of `true`;
+- a completion with no verdict;
+- an error, emitted or thrown as the hook is called. The enhancer [reports the error](/learn/error-handling#errors-the-reader-recovers-from), the other hooks still give their verdicts, and the gestures that follow are recognized as before.
+
 ### `.gestures$` { #gesturesusd }
 
 ```typescript

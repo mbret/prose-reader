@@ -4,6 +4,8 @@ import { openFixtureBook } from "../../fixtureBook"
 
 async function run() {
   const book = await openFixtureBook("sample.cbz")
+  const query = new URLSearchParams(window.location.search)
+  const panNavigation = query.get("panNavigation") === "swipe" ? "swipe" : "pan"
 
   const createReaderWithEnhancers = gesturesEnhancer(createReader)
 
@@ -11,6 +13,7 @@ async function run() {
     ...book,
     pageTurnAnimation: "none",
     layoutLayerTransition: false,
+    gestures: { panNavigation },
   })
 
   // biome-ignore lint/style/noNonNullAssertion: TODO

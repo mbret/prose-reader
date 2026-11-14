@@ -1,29 +1,29 @@
 import { resolve } from "node:path"
 import { defineConfig, mergeConfig } from "vite"
-import { createLibConfig } from "../../config/vite-lib"
+import { createLibConfig } from "../../config/vite-lib.mts"
 
 const libConfig = createLibConfig({
-  packageDir: __dirname,
+  packageDir: import.meta.dirname,
   entry: {
-    index: resolve(__dirname, "src/index.ts"),
+    index: resolve(import.meta.dirname, "src/index.ts"),
     "archives/createArchiveFromJszip": resolve(
-      __dirname,
+      import.meta.dirname,
       "src/archives/createArchiveFromJszip.ts",
     ),
     "archives/createArchiveFromLibArchive": resolve(
-      __dirname,
+      import.meta.dirname,
       "src/archives/createArchiveFromLibArchive.ts",
     ),
     "archives/createArchiveFromUnzipper": resolve(
-      __dirname,
+      import.meta.dirname,
       "src/archives/createArchiveFromUnzipper.ts",
     ),
     "archives/createArchiveFromNodeUnrarJs": resolve(
-      __dirname,
+      import.meta.dirname,
       "src/archives/createArchiveFromNodeUnrarJs.ts",
     ),
     "archives/createArchiveFromZipJs": resolve(
-      __dirname,
+      import.meta.dirname,
       "src/archives/createArchiveFromZipJs.ts",
     ),
   },

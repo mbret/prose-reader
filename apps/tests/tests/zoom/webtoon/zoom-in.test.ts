@@ -1,9 +1,10 @@
-import { expect, test } from "@playwright/test"
+import { expect } from "@playwright/test"
 import {
   getScrollNavigationMetadata,
   waitForSpineItemReady,
   zoomAt,
 } from "../../utils"
+import { test } from "../../utils/test"
 
 const pageWidth = 300
 const pageHeight = 400

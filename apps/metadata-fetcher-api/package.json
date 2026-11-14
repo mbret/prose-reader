@@ -14,12 +14,12 @@
   },
   "dependencies": {
     "@prose-reader/metadata-fetcher": "workspace:*",
-    "express": "^5.2.1"
+    "express": "^5.3.0"
   },
   "devDependencies": {
     "@prose-reader/archive-reader": "workspace:*",
     "@types/express": "^5.0.6",
-    "@zip.js/zip.js": "^2.8.51",
+    "@zip.js/zip.js": "^2.25.0",
     "typescript": "*"
   }
 }

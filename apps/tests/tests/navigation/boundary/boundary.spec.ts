@@ -1,4 +1,4 @@
-import { expect, type Page, test } from "@playwright/test"
+import { expect, type Page } from "@playwright/test"
 import {
   expectSpineItemsInViewport,
   navigateToSpineItem,
@@ -7,6 +7,7 @@ import {
   waitForSpineItemReady,
 } from "../../utils"
 import { waitForSettled } from "../../utils/pagination"
+import { test } from "../../utils/test"
 
 const URL = "http://localhost:3333/tests/navigation/boundary/index.html"
 const LAST_SPINE_INDEX = 11 // sample.cbz has 12 single-page spine items

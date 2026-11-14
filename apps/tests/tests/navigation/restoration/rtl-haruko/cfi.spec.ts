@@ -1,8 +1,8 @@
-import { test } from "@playwright/test"
 import {
   expectSpineItemsInViewport,
   waitForSpineItemReady,
 } from "../../../utils"
+import { test } from "../../../utils/test"
 
 test.describe("Given a CFI which points to item index 1", () => {
   const parameters = [
