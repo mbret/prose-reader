@@ -1,0 +1,116 @@
+name: find flaky browser tests
+
+# Started by hand. Runs the browser suite many times with no retry, so that a
+# test which fails once in a while fails here. In `check`, a retry that passes
+# leaves the job green and hides it. The summary of the run lists each test
+# that failed, with how many of its runs failed.
+on:
+  workflow_dispatch:
+    inputs:
+      repeat-each:
+        description: How many times to run each test
+        type: number
+        default: 20
+      project:
+        description: >
+          The Playwright projects to run, as a name or a glob such as
+          `webkit*`. Empty runs every project.
+        type: string
+        default: ""
+      tests:
+        description: >
+          The spec files or filters to run, separated by spaces, as
+          `playwright test` takes them. Empty runs every spec.
+        type: string
+        default: ""
+
+jobs:
+  # macOS, with the browsers `check` runs, so that a result here holds for CI.
+  browser:
+    runs-on: macos-latest
+    # One run of the suite takes about 17 minutes of shard time in `check`,
+    # so 20 runs take about 70 minutes on each of the 5 shards.
+    timeout-minutes: 240
+    strategy:
+      fail-fast: false
+      matrix:
+        # The number of macOS runners an account gets at once. Each run of
+        # `check` waits for runners until this one is over.
+        shard: [1, 2, 3, 4, 5]
+    steps:
+      - uses: actions/checkout@v6
+      - uses: ./.github/actions/setup
+        with:
+          build: libs
+      - uses: ./.github/actions/playwright-browsers
+
+      - name: Test
+        env:
+          REPEAT_EACH: ${{ inputs.repeat-each }}
+          PROJECT: ${{ inputs.project }}
+          TESTS: ${{ inputs.tests }}
+          SHARD: ${{ matrix.shard }}/${{ strategy.job-total }}
+        run: |
+          args=(--repeat-each="$REPEAT_EACH" --retries=0 --shard="$SHARD" --reporter=blob)
+          if [ -n "$PROJECT" ]; then args+=(--project="$PROJECT"); fi
+          # Unquoted on purpose: each word is one spec file or filter.
+          # shellcheck disable=SC2086
+          pnpm --filter prose-reader-tests test "${args[@]}" $TESTS
+
+      - uses: actions/upload-artifact@v7
+        if: ${{ !cancelled() }}
+        with:
+          name: blob-report-${{ matrix.shard }}
+          path: apps/tests/blob-report/
+          retention-days: 15
+
+  report:
+    needs: browser
+    if: ${{ !cancelled() }}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+      - uses: ./.github/actions/setup
+
+      - uses: actions/download-artifact@v6
+        with:
+          pattern: blob-report-*
+          path: apps/tests/all-blob-reports
+          merge-multiple: true
+
+      - name: Merge the reports
+        working-directory: apps/tests
+        env:
+          PLAYWRIGHT_JSON_OUTPUT_FILE: report.json
+        run: pnpm exec playwright merge-reports --reporter=html,json all-blob-reports
+
+      # One row per test and project: each repeat of a test is a test of its
+      # own in the report.
+      - name: List the tests that failed
+        working-directory: apps/tests
+        run: |
+          {
+            echo "## Tests that failed at least once"
+            echo
+            jq -r '
+              [ .suites[] | recurse(.suites[]?) | .specs[]? as $spec | $spec.tests[]
+                | { project: .projectName,
+                    test: "\($spec.file):\($spec.line) \($spec.title)",
+                    failed: (.status == "unexpected") } ]
+              | group_by([.project, .test])
+              | map({ project: .[0].project, test: .[0].test, runs: length,
+                      failures: (map(select(.failed)) | length) })
+              | map(select(.failures > 0))
+              | sort_by(-.failures)
+              | if length == 0 then "None."
+                else ("| Failed runs | Project | Test |", "| --- | --- | --- |",
+                      (.[] | "| \(.failures) of \(.runs) | \(.project) | \(.test) |"))
+                end
+            ' report.json
+          } >> "$GITHUB_STEP_SUMMARY"
+
+      - uses: actions/upload-artifact@v7
+        with:
+          name: playwright-report
+          path: apps/tests/playwright-report/
+          retention-days: 15
