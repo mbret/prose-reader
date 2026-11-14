@@ -85,7 +85,8 @@ jobs:
         run: pnpm exec playwright merge-reports --reporter=html,json all-blob-reports
 
       # One row per test and project: each repeat of a test is a test of its
-      # own in the report.
+      # own in the report. A test is named with its `describe` titles, since
+      # a test written in a loop shares its line and its own title.
       - name: List the tests that failed
         working-directory: apps/tests
         run: |
@@ -93,9 +94,13 @@ jobs:
             echo "## Tests that failed at least once"
             echo
             jq -r '
-              [ .suites[] | recurse(.suites[]?) | .specs[]? as $spec | $spec.tests[]
+              def specs_with_titles($titles):
+                (.specs[]? | { titles: ($titles + [.title]), spec: . }),
+                (.suites[]? as $suite | $suite | specs_with_titles($titles + [$suite.title]));
+              [ .suites[] | specs_with_titles([]) | .titles as $titles | .spec as $spec
+                | $spec.tests[]
                 | { project: .projectName,
-                    test: "\($spec.file):\($spec.line) \($spec.title)",
+                    test: "\($spec.file):\($spec.line) \($titles | join(" › "))",
                     failed: (.status == "unexpected") } ]
               | group_by([.project, .test])
               | map({ project: .[0].project, test: .[0].test, runs: length,
