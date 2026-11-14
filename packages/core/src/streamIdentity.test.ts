@@ -2,7 +2,6 @@ import { isObservable } from "rxjs"
 import { describe, expect, it } from "vitest"
 import {
   createFullTestReader,
-  createPrePaginatedManifest,
   installReaderTestEnvironment,
   mountTestReader,
   settledOn,
@@ -28,43 +27,58 @@ const getPropertyNamesWithPrototypes = (target: object) => {
   return propertyNames
 }
 
-/**
- * Reads every property of `root` twice, getters included, down to
- * `maxDepth`, and returns the path of each observable that is a different
- * object on the second read.
- */
-const findStreamsRecreatedOnEachRead = (root: object, maxDepth = 6) => {
-  const visitedObjects = new WeakSet<object>()
+const readPropertyTwice = (target: object, propertyName: string) => {
+  try {
+    const firstRead: unknown = Reflect.get(target, propertyName)
+    const secondRead: unknown = Reflect.get(target, propertyName)
+
+    return { firstRead, secondRead }
+  } catch {
+    return undefined
+  }
+}
+
+const walkStreamsBreadthFirst = (root: object, maxDepth = 6) => {
+  const visitedObjects = new WeakSet<object>([root])
+  const pendingObjects = [{ target: root, path: "reader", depth: 0 }]
+  const checkedStreamPaths: string[] = []
   const recreatedStreamPaths: string[] = []
 
-  const visit = (target: unknown, path: string, depth: number) => {
-    if (
-      typeof target !== "object" ||
-      target === null ||
-      target instanceof Node ||
-      depth > maxDepth ||
-      visitedObjects.has(target)
-    ) {
-      return
-    }
-
-    visitedObjects.add(target)
-
+  for (const { target, path, depth } of pendingObjects) {
     for (const propertyName of getPropertyNamesWithPrototypes(target)) {
-      const firstRead: unknown = Reflect.get(target, propertyName)
-      const secondRead: unknown = Reflect.get(target, propertyName)
+      const reads = readPropertyTwice(target, propertyName)
+      const propertyPath = `${path}.${propertyName}`
 
-      if (isObservable(firstRead) && firstRead !== secondRead) {
-        recreatedStreamPaths.push(`${path}.${propertyName}`)
+      if (!reads) continue
+
+      if (isObservable(reads.firstRead)) {
+        checkedStreamPaths.push(propertyPath)
+
+        if (reads.firstRead !== reads.secondRead) {
+          recreatedStreamPaths.push(propertyPath)
+        }
       }
 
-      visit(firstRead, `${path}.${propertyName}`, depth + 1)
+      const { firstRead } = reads
+
+      if (
+        typeof firstRead === "object" &&
+        firstRead !== null &&
+        !(firstRead instanceof Node) &&
+        !visitedObjects.has(firstRead) &&
+        depth < maxDepth
+      ) {
+        visitedObjects.add(firstRead)
+        pendingObjects.push({
+          target: firstRead,
+          path: propertyPath,
+          depth: depth + 1,
+        })
+      }
     }
   }
 
-  visit(root, "reader", 0)
-
-  return recreatedStreamPaths
+  return { checkedStreamPaths, recreatedStreamPaths }
 }
 
 describe("Given a reader with every core enhancer and its spine items", () => {
@@ -73,12 +87,19 @@ describe("Given a reader with every core enhancer and its spine items", () => {
    * reactjrx's useObserve, given a new stream on every render, never settles.
    */
   it(`should give the same stream on every read`, async () => {
-    const reader = createFullTestReader({
-      manifest: createPrePaginatedManifest(),
-    })
+    const reader = createFullTestReader()
     mountTestReader(reader)
     await settledOn(reader)
 
-    expect(findStreamsRecreatedOnEachRead(reader)).toEqual([])
+    const { checkedStreamPaths, recreatedStreamPaths } =
+      walkStreamsBreadthFirst(reader)
+
+    expect(checkedStreamPaths).toEqual(
+      expect.arrayContaining([
+        "reader.pagination.state$",
+        "reader.spineItemsManager.items.0.isReady$",
+      ]),
+    )
+    expect(recreatedStreamPaths).toEqual([])
   })
 })

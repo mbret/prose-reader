@@ -89,7 +89,7 @@ const createLaidOutTwoPageItems = async ({
 
   if (!firstItem) throw new Error("the manifest has no first item")
 
-  vi.spyOn(firstItem, "isReady$", "get").mockReturnValue(of(isFirstItemReady))
+  Object.defineProperty(firstItem, "isReady$", { value: of(isFirstItemReady) })
   vi.spyOn(firstItem, "readingDirection", "get").mockReturnValue(
     firstItemReadingDirection,
   )
