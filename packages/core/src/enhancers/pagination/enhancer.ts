@@ -118,6 +118,11 @@ export const paginationEnhancer =
       unenrichedPagination,
     )
     const paginationSub = enhancedPagination$.subscribe(enhancedPagination)
+    /**
+     * Created once: a consumer that keys on the stream, such as a React hook
+     * that takes it as a dependency, must get the same one on every read.
+     */
+    const enhancedPaginationState$ = enhancedPagination.asObservable()
 
     return {
       ...reader,
@@ -131,9 +136,7 @@ export const paginationEnhancer =
         get state() {
           return enhancedPagination.value
         },
-        get state$() {
-          return enhancedPagination.asObservable()
-        },
+        state$: enhancedPaginationState$,
       },
     } as unknown as PaginationOutput
   }

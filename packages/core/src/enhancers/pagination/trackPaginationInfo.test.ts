@@ -299,3 +299,15 @@ describe("Given a book with two chapters", () => {
     })
   })
 })
+
+describe("Given an enhanced reader", () => {
+  /**
+   * A consumer that keys on the stream subscribes again whenever it changes:
+   * reactjrx's useObserve, given a new stream on every render, never settles.
+   */
+  it(`should give the same pagination stream on every read`, () => {
+    const reader = createEnhancedTestReader()
+
+    expect(reader.pagination.state$).toBe(reader.pagination.state$)
+  })
+})
