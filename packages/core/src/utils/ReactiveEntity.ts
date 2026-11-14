@@ -9,25 +9,6 @@ import {
 } from "rxjs"
 import { watchKeys } from "./rxjs"
 
-const isPlainObjectOrArray = (value: unknown) => {
-  if (Array.isArray(value)) return true
-  if (typeof value !== "object" || value === null) return false
-
-  const prototype = Object.getPrototypeOf(value)
-
-  return prototype === Object.prototype || prototype === null
-}
-
-/**
- * A plain object or an array is the same value when its keys have the same
- * values, so a copy reports no change. Anything else is compared by identity:
- * a DOM element has no own keys, so `isShallowEqual` takes any two for equal.
- */
-const isSameWatchedValue = (a: unknown, b: unknown) =>
-  isPlainObjectOrArray(a) && isPlainObjectOrArray(b)
-    ? isShallowEqual(a, b)
-    : Object.is(a, b)
-
 /**
  * Convenience class to manage reactive entities.
  * Used across the codebase.
@@ -78,7 +59,7 @@ export class ReactiveEntity<
     }
     return this.stateSubject.pipe(
       map((result) => result[keyOrKeys]),
-      distinctUntilChanged(isSameWatchedValue),
+      distinctUntilChanged(isShallowEqual),
     )
   }
 

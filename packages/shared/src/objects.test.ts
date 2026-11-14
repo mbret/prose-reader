@@ -27,3 +27,27 @@ test(`null !== {}`, () => {
   expect(isShallowEqual({}, null)).toBe(false)
   expect(isShallowEqual(null, {})).toBe(false)
 })
+
+test(`an object that keeps its state out of its own keys equals only itself`, () => {
+  const map = new Map([[`a`, 1]])
+
+  expect(isShallowEqual(map, new Map([[`a`, 2]]))).toBe(false)
+  expect(isShallowEqual(new Date(0), new Date(1))).toBe(false)
+  expect(isShallowEqual(map, {})).toBe(false)
+  expect(isShallowEqual(map, map)).toBe(true)
+})
+
+test(`instances of a class compare by their own fields`, () => {
+  class Position {
+    x: number
+    y: number
+
+    constructor(x: number, y: number) {
+      this.x = x
+      this.y = y
+    }
+  }
+
+  expect(isShallowEqual(new Position(1, 2), new Position(1, 2))).toBe(true)
+  expect(isShallowEqual(new Position(1, 2), new Position(1, 3))).toBe(false)
+})
