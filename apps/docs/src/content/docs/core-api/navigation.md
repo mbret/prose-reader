@@ -330,9 +330,12 @@ subscribe to it.
 
 ### `.outOfSpineBoundary$` { #outofspineboundaryusd }
 
-Emits when a navigation request targets a position outside the spine's current
-extent. Pure geometric primitive, with no content-lifecycle semantics. For "end
-of book reached" with lazy-load awareness, compose with readiness signals (see
+Emits when a navigation request targets a position outside the spine's
+[bounding box](/core-api/spine#boundingbox): `"start"` before the first screen,
+`"end"` past the last, in reading order. Until a layout has laid out a spine
+item, the spine has no bounding box, and it emits nothing. Pure geometric
+primitive, with no content-lifecycle semantics. For "end of book reached" with
+lazy-load awareness, compose with readiness signals (see
 `observeBookBoundaryReached`).
 
 ```typescript
