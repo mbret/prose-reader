@@ -24,6 +24,21 @@ const rewriteEachXhtmlPage =
     }
   }
 
+/** Makes the spine of a book progress from right to left. */
+const makeSpineProgressRightToLeft = async (bookZip: JSZip) => {
+  const [packageDocument] = bookZip.file(/\.opf$/)
+
+  if (!packageDocument) throw new Error("the fixture has no package document")
+
+  bookZip.file(
+    packageDocument.name,
+    (await packageDocument.async("string")).replace(
+      "<spine>",
+      '<spine page-progression-direction="rtl">',
+    ),
+  )
+}
+
 /**
  * Books made from a fixture by rewriting it, for the scenarios that need a
  * fixture to differ in one way. Each is served beside the files of
@@ -80,6 +95,42 @@ const REWRITTEN_BOOKS = new Map<string, RewrittenBook>([
           "<style>body, body * { font-family: sans-serif !important; }</style></head>",
         ),
       ),
+    },
+  ],
+  [
+    "accessible_epub_3-rtl.epub",
+    {
+      fixture: "accessible_epub_3.epub",
+      /**
+       * A right-to-left book: the spine progresses from right to left, and
+       * the text of every page runs from right to left.
+       */
+      rewrite: async (bookZip) => {
+        await makeSpineProgressRightToLeft(bookZip)
+        await rewriteEachXhtmlPage((fixturePage) =>
+          fixturePage.replace("<html ", '<html dir="rtl" '),
+        )(bookZip)
+      },
+    },
+  ],
+  [
+    "accessible_epub_3-vertical-rl.epub",
+    {
+      fixture: "accessible_epub_3.epub",
+      /**
+       * A book in vertical writing, as Japanese is: the spine progresses from
+       * right to left, and the lines of every page run from top to bottom,
+       * from the right.
+       */
+      rewrite: async (bookZip) => {
+        await makeSpineProgressRightToLeft(bookZip)
+        await rewriteEachXhtmlPage((fixturePage) =>
+          fixturePage.replace(
+            "</head>",
+            "<style>html { writing-mode: vertical-rl; }</style></head>",
+          ),
+        )(bookZip)
+      },
     },
   ],
   [
