@@ -6,6 +6,7 @@ import {
   turnRight,
   waitForSpineItemReady,
 } from "../../utils"
+import { holdPageClockDuring } from "../../utils/clock"
 import { waitForSettled } from "../../utils/pagination"
 import { test } from "../../utils/test"
 
@@ -64,22 +65,17 @@ test.describe("Given the user is on the first page (start of book)", () => {
     await page.clock.install()
     await setup(page)
 
-    // `pauseAt` refuses a time in the past, and the page's clock moves on
-    // while the call travels, so it pauses a second ahead. The reader is
-    // idle by then, so the timers that jump runs are none of the gesture's.
-    await page.clock.pauseAt(await page.evaluate(() => Date.now() + 1000))
-
-    // 5px, below the pan recognizer's `posThreshold` of 20, in the middle of
-    // the page, away from the page turn margins
-    await page.mouse.move(200, 300)
-    await page.mouse.down()
-    await page.mouse.move(205, 300, { steps: 2 })
-    // a quick press: time for a pan to start had the move passed its
-    // threshold, and well within `maximumPressTime`
-    await page.clock.runFor(50)
-    await page.mouse.up()
-
-    await page.clock.resume()
+    await holdPageClockDuring(page, async () => {
+      // 5px, below the pan recognizer's `posThreshold` of 20, in the middle
+      // of the page, away from the page turn margins
+      await page.mouse.move(200, 300)
+      await page.mouse.down()
+      await page.mouse.move(205, 300, { steps: 2 })
+      // a quick press: time for a pan to start had the move passed its
+      // threshold, and well within `maximumPressTime`
+      await page.clock.runFor(50)
+      await page.mouse.up()
+    })
 
     await expect(marker(page)).toHaveAttribute("data-gestures", "unhandled tap")
     await expectSpineItemsInViewport({ page, indexes: [0] })

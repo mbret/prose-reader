@@ -77,6 +77,23 @@ Adding a signal to the reader is a change to the library like any other, and
 the root `AGENTS.md`, *Nothing in the library exists only for a test*, says
 when that is acceptable.
 
+An input whose timing is part of what it does, such as a quick flick or a
+short press, is played with the page's clock held: `holdPageClockDuring` in
+`tests/utils/clock.ts`. A busy runner puts more time between two input
+commands than the spec asked for, and the recognizers read that time from the
+page's clock. Held, the clock moves only when the spec moves it. Move it only
+once the page has taken the input before: a browser hands a touch move to the
+page at its next frame, after the command that sent it returns.
+`playTouchGesture` plays every touch gesture that way.
+
+## Flaky tests
+
+CI retries a failed test, so a test that fails once in a while leaves its job
+green. The `find flaky browser tests` workflow, started by hand from the
+Actions tab, runs the suite on macOS many times with no retry and lists each
+test that failed. To show that the fix of a flaky spec holds, run it there
+with `tests` set to that spec.
+
 ## Assertions
 
 Assert on where content ended up, not on which element happens to contain it:

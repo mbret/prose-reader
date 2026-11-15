@@ -1,0 +1,34 @@
+name: setup-browser-suite
+description: >
+  What the browser suite in `apps/tests` runs on: the workspace with the
+  libraries built, which the test app imports from `dist`, and the browser
+  builds that its Playwright version pins. macOS only: the cache path is the
+  one Playwright uses there.
+
+runs:
+  using: composite
+  steps:
+    - uses: ./.github/actions/setup
+      with:
+        build: libs
+
+    # Keyed on the Playwright version, which pins the browser builds, so an
+    # unrelated lockfile change does not download them again.
+    - name: Read the Playwright version
+      id: playwright
+      shell: bash
+      run: |
+        version=$(pnpm --filter prose-reader-tests exec playwright --version)
+        echo "version=${version#Version }" >> "$GITHUB_OUTPUT"
+
+    - uses: actions/cache@v5
+      with:
+        path: ~/Library/Caches/ms-playwright
+        key: ${{ runner.os }}-playwright-${{ steps.playwright.outputs.version }}
+
+    - name: Install Playwright Browsers
+      shell: bash
+      # On a cache hit the browsers are already present; install still runs to
+      # verify/refresh them but skips the multi-hundred-MB download. Playwright
+      # is the test app's dependency, not the root's, so run it from there.
+      run: pnpm --filter prose-reader-tests exec playwright install --with-deps
