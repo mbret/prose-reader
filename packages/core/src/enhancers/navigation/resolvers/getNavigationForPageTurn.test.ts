@@ -3,6 +3,7 @@ import { CfiManager } from "../../../cfi"
 import { Context } from "../../../context/Context"
 import { HookManager } from "../../../hooks/HookManager"
 import { createNavigationResolver } from "../../../navigation/resolvers/NavigationResolver"
+import { mockSpineLayout } from "../../../navigation/tests/utils"
 import { ReaderSettingsManager } from "../../../settings/ReaderSettingsManager"
 import { Spine } from "../../../spine/Spine"
 import { SpineItemsManager } from "../../../spine/SpineItemsManager"
@@ -88,9 +89,7 @@ const createContext = ({
   vi.spyOn(spineItem, "isUsingVerticalWriting").mockReturnValue(
     isUsingVerticalWriting,
   )
-  vi.spyOn(spine, "getSpineItemSpineLayoutInfo").mockReturnValue(
-    spineItemLayout,
-  )
+  mockSpineLayout(spine, spineItemsManager, [spineItemLayout])
 
   viewport.layout()
 

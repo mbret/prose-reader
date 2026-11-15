@@ -21,6 +21,10 @@ type Turn = (params: { page: Page }) => Promise<void>
 
 type Size = { width: number; height: number }
 
+type ChapterScreen =
+  | { pagesPerScreen: 1 }
+  | { pagesPerScreen: 2; firstPageSide: "left" | "right" }
+
 /** What tells the books of this scenario apart. */
 type BookCase = {
   book: ScenarioBook
@@ -31,10 +35,9 @@ type BookCase = {
     pageIndex: number,
     sizes: { itemSize: Size; pageSize: Size },
   ) => { x: number; y: number }
-  /** The half of a spread that shows the first of its two pages. */
-  firstPageSideInSpread: "left" | "right"
-  /** Why the pages after the first page of a chapter cannot be reached. */
-  laterPagesUnreachable?: string
+  screenInSpread: ChapterScreen
+  /** Why the reader finds the first node shown on another page. */
+  firstShownNodeOnWrongPage?: string
 }
 
 const BOOK_CASES: BookCase[] = [
@@ -46,7 +49,7 @@ const BOOK_CASES: BookCase[] = [
       x: pageIndex * pageSize.width,
       y: 0,
     }),
-    firstPageSideInSpread: "left",
+    screenInSpread: { pagesPerScreen: 2, firstPageSide: "left" },
   },
   {
     book: "rtl",
@@ -56,7 +59,7 @@ const BOOK_CASES: BookCase[] = [
       x: itemSize.width - (pageIndex + 1) * pageSize.width,
       y: 0,
     }),
-    firstPageSideInSpread: "right",
+    screenInSpread: { pagesPerScreen: 2, firstPageSide: "right" },
   },
   {
     book: "vertical-rl",
@@ -66,9 +69,10 @@ const BOOK_CASES: BookCase[] = [
       x: 0,
       y: pageIndex * pageSize.height,
     }),
-    firstPageSideInSpread: "right",
-    laterPagesUnreachable:
-      "#793: clampRectInSpine holds a navigation within the height of the last spine item, which is one page",
+    // A page of vertical writing is as wide as the spread, so a spread shows one.
+    screenInSpread: { pagesPerScreen: 1 },
+    firstShownNodeOnWrongPage:
+      "#713: the node lookups ignore the vertical axis, so the reader finds the node on the first page, or finds no node in a spread",
   },
 ]
 
@@ -84,8 +88,8 @@ for (const {
   turnToNextPage,
   turnToPreviousPage,
   getPagePosition,
-  firstPageSideInSpread,
-  laterPagesUnreachable,
+  screenInSpread,
+  firstShownNodeOnWrongPage,
 } of BOOK_CASES) {
   test.describe(`Given a long chapter of the ${book} book`, () => {
     test("places its pages one page apart, in reading order", async ({
@@ -125,8 +129,6 @@ for (const {
     test("gives a tap on a later page, and where in it, to the beforeTapGesture hooks", async ({
       page,
     }) => {
-      test.fail(Boolean(laterPagesUnreachable), laterPagesUnreachable)
-
       await openBook(page, book, SINGLE_PAGE_WINDOW)
       const { chapterIndex } = await goToLongChapter(page, book)
 
@@ -146,12 +148,12 @@ for (const {
     })
 
     for (const { name, window } of WINDOWS) {
-      const { pagesPerScreen } = window
+      const chapterScreen: ChapterScreen =
+        window.pagesPerScreen === 2 ? screenInSpread : { pagesPerScreen: 1 }
+      const { pagesPerScreen } = chapterScreen
 
       test.describe(`When the window shows ${name}`, () => {
         test("turns through the pages in reading order", async ({ page }) => {
-          test.fail(Boolean(laterPagesUnreachable), laterPagesUnreachable)
-
           await openBook(page, book, window)
           const { chapterIndex } = await goToLongChapter(page, book)
 
@@ -172,8 +174,6 @@ for (const {
         })
 
         test("goes to a page, and to the last page", async ({ page }) => {
-          test.fail(Boolean(laterPagesUnreachable), laterPagesUnreachable)
-
           await openBook(page, book, window)
           const { chapterIndex, numberOfPages } = await goToLongChapter(
             page,
@@ -212,8 +212,6 @@ for (const {
         test("finds the first node shown on the first page shown", async ({
           page,
         }) => {
-          test.fail(Boolean(laterPagesUnreachable), laterPagesUnreachable)
-
           await openBook(page, book, window)
           const { chapterIndex } = await goToLongChapter(page, book)
 
@@ -224,6 +222,10 @@ for (const {
             numberOfScreens: 3,
           })
 
+          test.fail(
+            Boolean(firstShownNodeOnWrongPage),
+            firstShownNodeOnWrongPage,
+          )
           test.fail(
             (await readFrameOffsetInShownSpineItem(page)) !== 0,
             "#795: the anchor of a page ignores the blank page before the frame",
@@ -241,7 +243,8 @@ for (const {
 
           const firstPageWidth = position.window.width / pagesPerScreen
           const firstPageLeft =
-            pagesPerScreen === 2 && firstPageSideInSpread === "right"
+            chapterScreen.pagesPerScreen === 2 &&
+            chapterScreen.firstPageSide === "right"
               ? firstPageWidth
               : 0
 
