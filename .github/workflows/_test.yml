@@ -31,10 +31,7 @@ jobs:
         shard: [1, 2, 3]
     steps:
       - uses: actions/checkout@v6
-      - uses: ./.github/actions/setup
-        with:
-          build: libs
-      - uses: ./.github/actions/playwright-browsers
+      - uses: ./.github/actions/setup-browser-suite
 
       - name: Test
         run: pnpm --filter prose-reader-tests test --shard=${{ matrix.shard }}/${{ strategy.job-total }}

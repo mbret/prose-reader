@@ -1,12 +1,17 @@
-name: playwright-browsers
+name: setup-browser-suite
 description: >
-  The browser builds that the browser suite's Playwright version pins, with
-  the system libraries they need. Runs after `setup`, which installs
-  Playwright. macOS only: the cache path is the one Playwright uses there.
+  What the browser suite in `apps/tests` runs on: the workspace with the
+  libraries built, which the test app imports from `dist`, and the browser
+  builds that its Playwright version pins. macOS only: the cache path is the
+  one Playwright uses there.
 
 runs:
   using: composite
   steps:
+    - uses: ./.github/actions/setup
+      with:
+        build: libs
+
     # Keyed on the Playwright version, which pins the browser builds, so an
     # unrelated lockfile change does not download them again.
     - name: Read the Playwright version
