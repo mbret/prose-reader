@@ -125,9 +125,10 @@ is under it:
 
 - `spineItemPagePosition`: where the tap is, from the top-left corner of that
   page.
-- `pageSize`: the size of that page, usually `reader.viewport.pageSize`. A page
-  of vertical writing fills the whole view, even when two pages show side by
-  side, so its `pageSize` is as wide as the view.
+- `pageSize`: the size of that page, usually `reader.viewport.pageSize`. In a
+  spread, a chapter in vertical writing does not show two pages side by side:
+  it shows one page across the whole view, so its `pageSize` is as wide as the
+  view.
 
 In a book that scrolls, the page under the tap is its whole spine item, but
 `pageSize` stays the size of a page as above, not the size of the spine item.
