@@ -17,6 +17,11 @@ import {
  * profile only.
  */
 
+// `playTouchGesture` holds the page's clock during a gesture.
+test.beforeEach(async ({ page }) => {
+  await page.clock.install()
+})
+
 const url = "http://localhost:3333/tests/gestures/pan/index.html"
 // portrait, so a single page spans the window and every touch lands on it
 const portraitWindow = { width: 400, height: 600 }
@@ -95,8 +100,7 @@ test.describe("Given a comic on a touch screen, on its first page", () => {
       skipWithoutTouchScreen({ browserName, hasTouch })
       await openFirstPage(page, "?panNavigation=swipe")
 
-      // 300px in three steps, a frame apart: still a swipe at 100ms a step,
-      // should a runner be slow
+      // 300px in three steps, a frame apart
       await playTouchGesture(page, {
         steps: touchSteps(touchPath({ x: 350, y: Y }, { x: 50, y: Y }, 3)),
         stepDelays: 16,
@@ -108,7 +112,7 @@ test.describe("Given a comic on a touch screen, on its first page", () => {
     /**
      * gesturx reads a swipe's speed when the finger lifts, over its last
      * 100ms. Over the whole gesture, this one is too slow to swipe: 280px in
-     * more than 360ms, under gesturx's 0.9px/ms.
+     * 436ms, under gesturx's 0.9px/ms.
      */
     test("a slow drag that ends in a quick flick turns to the next page", async ({
       page,
@@ -118,7 +122,7 @@ test.describe("Given a comic on a touch screen, on its first page", () => {
       skipWithoutTouchScreen({ browserName, hasTouch })
       await openFirstPage(page, "?panNavigation=swipe")
 
-      // 30px in at least 360ms, then 250px in two steps, a frame apart
+      // 30px in 360ms, still for 60ms, then 250px in two steps, a frame apart
       const slowPart = touchPath({ x: 300, y: Y }, { x: 270, y: Y }, 6)
       const flick = touchPath({ x: 270, y: Y }, { x: 20, y: Y }, 2).slice(1)
 

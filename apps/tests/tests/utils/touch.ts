@@ -21,11 +21,18 @@ export const touchPath = (from: TouchPoint, to: TouchPoint, count: number) =>
  * `touch-action`, and fires each finger's pointer events. Playwright has no
  * other way to press several fingers, so this runs on Chromium only.
  *
- * gesturx reads a gesture's speed from the time between its events, so the
- * time waited between two steps, in milliseconds, is part of the gesture:
- * `stepDelays` gives one after each step, or one for every step, and no time
- * passes between the last step and the lift. The times are real: the page
- * never sees the protocol's `timestamp`, so a busy runner makes them longer.
+ * gesturx reads a gesture's speed from the page's clock as it takes each
+ * event, so the time between two steps, in milliseconds, is part of the
+ * gesture: `stepDelays` gives one after each step, or one for every step, and
+ * no time passes between the last step and the lift, as in a flick.
+ *
+ * Each command waits for the page to take its touch, and on a busy runner two
+ * steps asked to be 16ms apart have been 190ms apart. The move before the
+ * last then falls out of the 100ms over which gesturx reads a swipe's speed,
+ * and the swipe is lost. So the page's clock holds still during the gesture
+ * and moves only by the step delays: the page reads the times given here, on
+ * any runner. Install the page's clock before the page loads, with
+ * `page.clock.install()`.
  */
 export const playTouchGesture = async (
   page: Page,
@@ -40,35 +47,33 @@ export const playTouchGesture = async (
   const session = await page.context().newCDPSession(page)
   const lastIndex = steps.length - 1
 
+  // `pauseAt` refuses a time in the past, and the page's clock moves on while
+  // the call travels, so it pauses a second ahead. A spec plays a gesture on
+  // an idle reader, so the timers that jump runs are none of the gesture's.
+  await page.clock.pauseAt(await page.evaluate(() => Date.now() + 1000))
+
   for (const [index, points] of steps.entries()) {
-    const touch = session.send("Input.dispatchTouchEvent", {
+    await session.send("Input.dispatchTouchEvent", {
       type: index === 0 ? "touchStart" : "touchMove",
       touchPoints: points.map((point, id) => ({ ...point, id })),
     })
 
-    if (index === lastIndex) {
-      // Sent with the last move, the lift follows it at once, as in a flick.
-      // gesturx takes a finger that stays still for 40ms before it lifts as
-      // stopped, and a busy runner can take that long between two commands.
-      await Promise.all([
-        touch,
-        session.send("Input.dispatchTouchEvent", {
-          type: "touchEnd",
-          touchPoints: [],
-        }),
-      ])
-    } else {
-      await touch
+    const delayAfterStep =
+      index === lastIndex
+        ? 0
+        : typeof stepDelays === "number"
+          ? stepDelays
+          : (stepDelays[index] ?? 0)
 
-      const delayAfterStep =
-        typeof stepDelays === "number" ? stepDelays : (stepDelays[index] ?? 0)
-
-      if (delayAfterStep > 0) {
-        await new Promise((resolve) => setTimeout(resolve, delayAfterStep))
-      }
-    }
+    if (delayAfterStep > 0) await page.clock.runFor(delayAfterStep)
   }
 
+  await session.send("Input.dispatchTouchEvent", {
+    type: "touchEnd",
+    touchPoints: [],
+  })
+
+  await page.clock.resume()
   await session.detach()
 }
 
