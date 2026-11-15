@@ -31,10 +31,8 @@ The spine's state, read synchronously.
 Observable<typeof reader.spine.value>
 ```
 
-The state as soon as you subscribe, then each time it changes. To react to one
-field, watch it with `.watch()`. `reader.spine` is itself an observable of the
-same states: subscribing to it is subscribing to `.state$`. Both complete when
-the reader is destroyed.
+The state as soon as you subscribe, then each time it changes. See
+[Reactive state](/core-api/introduction#reactive-state).
 
 ### `.watch()` { #watch }
 
@@ -45,17 +43,7 @@ watch<K extends keyof SpineState>(key: K): Observable<SpineState[K]>
 watch<K extends keyof SpineState>(keys: K[]): Observable<Pick<SpineState, K>>
 ```
 
-One field, or several, as soon as you subscribe, then whenever they change.
-
-Each call returns a new stream: see [Streams](/core-api/introduction#streams).
-
-```typescript
-reader.spine
-  .watch("firstItemIndexAwaitingLayout")
-  .subscribe((firstItemIndexAwaitingLayout) => {
-    // undefined once the pages describe every item again
-  })
-```
+See [Reactive state](/core-api/introduction#reactive-state).
 
 ## Layout
 

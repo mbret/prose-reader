@@ -321,3 +321,27 @@ describe("Given a viewport whose element is hidden, then shown", () => {
     expect(observing()).toBe(0)
   })
 })
+
+describe("Given a viewport laid out again", () => {
+  it("keeps its page size until the size changes, and reports every layout", () => {
+    const { viewport, clientWidth } = laidOutViewport()
+    const reportState = vi.fn()
+    const reportPageSize = vi.fn()
+
+    viewport.state$.subscribe(reportState)
+    viewport.watch("pageSize").subscribe(reportPageSize)
+
+    const pageSizeBefore = viewport.value.pageSize
+
+    viewport.layout()
+
+    expect(viewport.value.pageSize).toBe(pageSizeBefore)
+
+    clientWidth.mockReturnValue(50)
+    viewport.layout()
+
+    expect(viewport.value.pageSize).not.toBe(pageSizeBefore)
+    expect(reportPageSize).toHaveBeenCalledTimes(2)
+    expect(reportState).toHaveBeenCalledTimes(3)
+  })
+})
