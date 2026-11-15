@@ -190,25 +190,6 @@ export const readFirstShownNode = async (page: Page) => {
   return firstShownNode
 }
 
-/**
- * How far the frame of the spine item shown starts from the item's left edge:
- * a page width when the reader puts a blank page before the text.
- */
-export const readFrameOffsetInShownSpineItem = async (page: Page) =>
-  (await getReader(page)).evaluate((reader) => {
-    const spineItem = reader.spineItemsManager.get(
-      reader.pagination.state.begin.spineItemIndex,
-    )
-    const frame = spineItem?.renderer.getDocumentFrame()
-
-    if (!spineItem || !frame) throw new Error("no frame for the item shown")
-
-    return (
-      frame.getBoundingClientRect().left -
-      spineItem.containerElement.getBoundingClientRect().left
-    )
-  })
-
 export const tapAndReadTappedPage = async (
   page: Page,
   point: { x: number; y: number },
