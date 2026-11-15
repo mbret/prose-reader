@@ -33,16 +33,21 @@ describe(`Given a watched field`, () => {
     expect(reportedElementIds).toEqual([undefined, `first`, `second`])
   })
 
-  it(`should not report a plain object replaced by an equal copy`, () => {
+  it(`should report the same changes as the field watched in a list`, () => {
     const entity = createTestEntity()
-    const reportedPositions: { x: number }[] = []
+    const reportedOnItsOwn: { x: number }[] = []
+    const reportedInAList: { x: number }[] = []
 
     entity.watch(`position`).subscribe((position) => {
-      reportedPositions.push(position)
+      reportedOnItsOwn.push(position)
+    })
+    entity.watch([`position`]).subscribe(({ position }) => {
+      reportedInAList.push(position)
     })
     entity.update({ position: { x: 1 } })
     entity.update({ position: { x: 1 } })
 
-    expect(reportedPositions).toEqual([{ x: 0 }, { x: 1 }])
+    expect(reportedOnItsOwn).toHaveLength(3)
+    expect(reportedOnItsOwn).toEqual(reportedInAList)
   })
 })

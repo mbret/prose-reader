@@ -1,14 +1,3 @@
-const isPlainObjectOrArray = (value: object) => {
-  if (Array.isArray(value)) return true
-
-  const prototype = Object.getPrototypeOf(value)
-
-  return prototype === Object.prototype || prototype === null
-}
-
-const hasStateOutsideOwnKeys = (value: object) =>
-  Object.keys(value).length === 0 && !isPlainObjectOrArray(value)
-
 /**
  * Return true if `objectA` is shallow equal to `objectB`.
  *
@@ -17,9 +6,6 @@ const hasStateOutsideOwnKeys = (value: object) =>
  *   each value pair compared with `Object.is` (or `customEqual`).
  * - Two objects with the same keys but different prototypes are considered
  *   equal — class identity is not checked.
- * - An object with no own enumerable keys, other than a plain object or an
- *   array, equals only itself: a DOM element, a `Map` or a `Date` keeps its
- *   state where this comparison cannot read it.
  *
  * Pass `customEqual` to override the per-value comparator (e.g. to recurse
  * one level deeper, or to compare specific value types by content).
@@ -40,10 +26,6 @@ export const isShallowEqual = <A = unknown, B = unknown>(
     typeof objectB !== "object" ||
     objectB === null
   ) {
-    return false
-  }
-
-  if (hasStateOutsideOwnKeys(objectA) || hasStateOutsideOwnKeys(objectB)) {
     return false
   }
 

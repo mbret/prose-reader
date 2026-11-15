@@ -85,9 +85,8 @@ watch<K extends keyof ViewportState>(keys: K[]): Observable<Pick<ViewportState, 
 ```
 
 One field, or several, as soon as you subscribe, then whenever a layout changes
-them. A single field is compared by its value, and `pageSize` by its width and
-height. In a list, each field is compared as it is, so `pageSize`, a new object
-at every layout, counts as changed every time: watch it on its own.
+them. Each field is compared as it is: `pageSize` stays the same object until a
+layout changes the size of a page.
 
 Each call returns a new stream: see [Streams](/core-api/introduction#streams).
 

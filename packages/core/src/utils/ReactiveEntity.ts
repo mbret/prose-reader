@@ -59,7 +59,7 @@ export class ReactiveEntity<
     }
     return this.stateSubject.pipe(
       map((result) => result[keyOrKeys]),
-      distinctUntilChanged(isShallowEqual),
+      distinctUntilChanged(),
     )
   }
 
