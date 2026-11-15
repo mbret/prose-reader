@@ -225,26 +225,22 @@ describe(`Given a navigation on the second page of an item whose size did not ch
   })
 
   /**
-   * The reader cannot tell which page of such an item a node is on: in
-   * vertical writing it knows only the first, and right to left it finds the
-   * last page that the node's text reaches. The items here are laid out side by
-   * side, as a vertical item is not, so the test checks that the anchor is
-   * not resolved rather than where the reader lands.
+   * The items here are laid out side by side, as a vertical item is not, so
+   * the test checks that the anchor is resolved rather than where the reader
+   * lands. The browser specs of `apps/tests/tests/navigation/pages` check
+   * where.
    */
   it.each([
     { writing: "right to left", options: { readingDirection: "rtl" as const } },
     { writing: "vertically", options: { isUsingVerticalWriting: true } },
-  ])(
-    `does not resolve its anchor in an item written $writing`,
-    async ({ options }) => {
-      const { isAnchorResolved } = await restoreWithAnchorNowOnFirstPage(
-        { cfi: "epubcfi(/6/2!/4/2/1:12)", isPageElement: false },
-        options,
-      )
+  ])(`resolves its anchor in an item written $writing`, async ({ options }) => {
+    const { isAnchorResolved } = await restoreWithAnchorNowOnFirstPage(
+      { cfi: "epubcfi(/6/2!/4/2/1:12)", isPageElement: false },
+      options,
+    )
 
-      expect(isAnchorResolved).toBe(false)
-    },
-  )
+    expect(isAnchorResolved).toBe(true)
+  })
 
   it(`keeps its page while the item's document is not ready, which holds no anchor to find`, async () => {
     expect(

@@ -340,9 +340,6 @@ export const renderItemsOfSetSizes = () => {
  * The reader finds the new page the next time it measures the paragraph: a
  * layout that moves the text of an item and keeps its size, as a font size
  * that keeps the page count does.
- *
- * The documents are written left to right: the reader finds the page of a
- * node only in an item it knows to be.
  */
 export const renderTextDocumentsWithParagraphOnSetPage = () => {
   const numberOfPagesOfTextDocument = 3
@@ -382,10 +379,6 @@ export const renderTextDocumentsWithParagraphOnSetPage = () => {
         width: numberOfPagesOfTextDocument * viewport.width,
         height: viewport.height,
       })
-    }
-
-    get readingDirection(): "ltr" {
-      return "ltr"
     }
   }
 
