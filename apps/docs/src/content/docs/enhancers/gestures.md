@@ -120,13 +120,17 @@ type Hook = {
 }
 ```
 
-The `page` of a tap is the page under it: `spineItemPagePosition` is the tap's
-position from that page's top-left corner, and `pageSize` the size of that page.
-A page of vertical writing is as wide as its spine item, both halves of a
-spread, and any other page as wide as `reader.viewport.pageSize`. In a book
-that scrolls, a spine item is one page, and `pageSize` stays the size of one
-screen of it. `page` is `undefined` when the reader finds no spine item under
-the tap.
+`page` describes the page under the tap, or is `undefined` when no spine item
+is under it:
+
+- `spineItemPagePosition`: where the tap is, from the top-left corner of that
+  page.
+- `pageSize`: the size of that page, usually `reader.viewport.pageSize`. A page
+  of vertical writing fills the whole view, even when two pages show side by
+  side, so its `pageSize` is as wide as the view.
+
+In a book that scrolls, the page under the tap is its whole spine item, but
+`pageSize` stays the size of a page as above, not the size of the spine item.
 
 The first value of each `beforeTapGesture` hook is its verdict, and later values change nothing. The tap waits for the verdict of every hook, so a hook that neither emits nor completes holds the tap until the next tap. A verdict of `false` from any hook drops the tap: it turns no page, and `gestures$` does not report it. Anything else from a hook lets the tap go on:
 
