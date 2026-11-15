@@ -21,10 +21,6 @@ type Turn = (params: { page: Page }) => Promise<void>
 
 type Size = { width: number; height: number }
 
-/**
- * What one screen shows of the chapter: one page, or two side by side with
- * the first one on one half.
- */
 type ChapterScreen =
   | { pagesPerScreen: 1 }
   | { pagesPerScreen: 2; firstPageSide: "left" | "right" }
@@ -39,10 +35,6 @@ type BookCase = {
     pageIndex: number,
     sizes: { itemSize: Size; pageSize: Size },
   ) => { x: number; y: number }
-  /**
-   * What a spread shows of the chapter. A page of vertical writing is as wide
-   * as the spread, so a spread shows one.
-   */
   screenInSpread: ChapterScreen
   /** Why the reader finds the first node shown on another page. */
   firstShownNodeOnWrongPage?: string
@@ -77,9 +69,10 @@ const BOOK_CASES: BookCase[] = [
       x: 0,
       y: pageIndex * pageSize.height,
     }),
+    // A page of vertical writing is as wide as the spread, so a spread shows one.
     screenInSpread: { pagesPerScreen: 1 },
     firstShownNodeOnWrongPage:
-      "#713: the node lookups ignore the vertical axis, so a page finds its node on the first page, or finds no node in a spread",
+      "#713: the node lookups ignore the vertical axis, so the reader finds the node on the first page, or finds no node in a spread",
   },
 ]
 
@@ -219,11 +212,6 @@ for (const {
         test("finds the first node shown on the first page shown", async ({
           page,
         }) => {
-          test.fail(
-            Boolean(firstShownNodeOnWrongPage),
-            firstShownNodeOnWrongPage,
-          )
-
           await openBook(page, book, window)
           const { chapterIndex } = await goToLongChapter(page, book)
 
@@ -234,6 +222,10 @@ for (const {
             numberOfScreens: 3,
           })
 
+          test.fail(
+            Boolean(firstShownNodeOnWrongPage),
+            firstShownNodeOnWrongPage,
+          )
           test.fail(
             (await readFrameOffsetInShownSpineItem(page)) !== 0,
             "#795: the anchor of a page ignores the blank page before the frame",
