@@ -1,8 +1,7 @@
 import { vi } from "vitest"
 import type { Spine } from "../../spine/Spine"
 import type { SpineItemsManager } from "../../spine/SpineItemsManager"
-import { SpineItemSpineLayout } from "../../spine/types"
-import { LayoutEntry } from "../../spineItem/types"
+import { SpineBoundingBox, SpineItemSpineLayout } from "../../spine/types"
 
 /**
  * Mock the place of each spine item in the spine, by index, and the box of
@@ -20,22 +19,8 @@ export const mockSpineLayout = (
     return itemLayouts[itemIndex]!
   })
 
-  const left = Math.min(...itemLayouts.map((layout) => layout.left))
-  const right = Math.max(...itemLayouts.map((layout) => layout.right))
-  const top = Math.min(...itemLayouts.map((layout) => layout.top))
-  const bottom = Math.max(...itemLayouts.map((layout) => layout.bottom))
-
-  vi.spyOn(spine, "layoutInfo", "get").mockReturnValue(
-    new LayoutEntry({
-      left,
-      right,
-      top,
-      bottom,
-      width: right - left,
-      height: bottom - top,
-      x: left,
-      y: top,
-    }),
+  vi.spyOn(spine, "boundingBox", "get").mockReturnValue(
+    SpineBoundingBox.fromSpineItemLayouts(itemLayouts),
   )
 }
 

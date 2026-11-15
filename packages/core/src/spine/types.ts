@@ -29,6 +29,42 @@ export class SpineItemPageSpineLayout extends LayoutEntry {
   public readonly __symbol = `SpineItemPageSpineLayout`
 }
 
+/**
+ * The smallest box that holds spine items, in the coordinates of their
+ * `SpineItemSpineLayout`.
+ */
+export class SpineBoundingBox extends LayoutEntry {
+  public readonly __symbol = `SpineBoundingBox`
+
+  /** The box that holds these layouts, or `undefined` when there are none. */
+  static fromSpineItemLayouts(layouts: readonly SpineItemSpineLayout[]) {
+    if (layouts.length === 0) return undefined
+
+    let left = Number.POSITIVE_INFINITY
+    let right = Number.NEGATIVE_INFINITY
+    let top = Number.POSITIVE_INFINITY
+    let bottom = Number.NEGATIVE_INFINITY
+
+    for (const layout of layouts) {
+      left = Math.min(left, layout.left)
+      right = Math.max(right, layout.right)
+      top = Math.min(top, layout.top)
+      bottom = Math.max(bottom, layout.bottom)
+    }
+
+    return new SpineBoundingBox({
+      left,
+      right,
+      top,
+      bottom,
+      width: right - left,
+      height: bottom - top,
+      x: left,
+      y: top,
+    })
+  }
+}
+
 export class AbstractSpinePosition {
   public readonly x: number
   public readonly y: number

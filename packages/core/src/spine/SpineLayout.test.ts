@@ -433,12 +433,7 @@ describe("SpineLayout", () => {
       createDeferredSpineLayout(3)
 
     try {
-      expect(spineLayout.layoutInfo).toMatchObject({
-        left: 0,
-        right: 0,
-        top: 0,
-        bottom: 0,
-      })
+      expect(spineLayout.boundingBox).toBeUndefined()
 
       const passDone = firstValueFrom(spineLayout.layout$)
 
@@ -449,7 +444,7 @@ describe("SpineLayout", () => {
       await passDone
 
       // The item before the last is the tallest.
-      expect(spineLayout.layoutInfo).toMatchObject({
+      expect(spineLayout.boundingBox).toMatchObject({
         left: 0,
         right: 300,
         top: 0,
@@ -463,15 +458,71 @@ describe("SpineLayout", () => {
       completeItemLayout(0, { height: 100, width: 100 })
       completeItemLayout(1, { height: 100, width: 100 })
 
-      expect(spineLayout.layoutInfo).toMatchObject({ right: 300, bottom: 300 })
+      expect(spineLayout.boundingBox).toMatchObject({ right: 300, bottom: 300 })
 
       completeItemLayout(2, { height: 100, width: 100 })
 
-      expect(spineLayout.layoutInfo).toMatchObject({ right: 300, bottom: 100 })
+      expect(spineLayout.boundingBox).toMatchObject({ right: 300, bottom: 100 })
 
       await layOutSpine({ height: 100, width: 200 })
 
-      expect(spineLayout.layoutInfo).toMatchObject({ right: 600, bottom: 100 })
+      expect(spineLayout.boundingBox).toMatchObject({ right: 600, bottom: 100 })
+    } finally {
+      destroy()
+    }
+  })
+
+  it("gives a box that reaches left of the first screen in a right-to-left book", async () => {
+    const { destroy, spineLayout } = createTestSpineLayout({
+      items: 3,
+      manifest: { readingDirection: "rtl" },
+    })
+
+    try {
+      await layOutAndWait(spineLayout)
+
+      const lefts = [0, 1, 2].map(
+        (itemIndex) => spineLayout.getSpineItemSpineLayoutInfo(itemIndex).left,
+      )
+
+      expect(lefts).toEqual([0, -100, -200])
+      expect(spineLayout.boundingBox).toMatchObject({
+        left: -200,
+        right: 100,
+        top: 0,
+        bottom: 100,
+        width: 300,
+      })
+    } finally {
+      destroy()
+    }
+  })
+
+  it("gives the box of a right-to-left spread that scrolls, whose last item is on the right half", async () => {
+    const { destroy, spineLayout } = createTestSpineLayout({
+      items: [
+        { renditionLayout: "pre-paginated" },
+        { renditionLayout: "pre-paginated" },
+      ],
+      manifest: {
+        readingDirection: "rtl",
+        renditionLayout: "pre-paginated",
+        renditionSpread: "auto",
+      },
+      initialSettings: { spreadMode: "always", pageTurnMode: "scrollable" },
+      viewportSize: { height: 100, width: 200 },
+    })
+
+    try {
+      await layOutAndWait(spineLayout)
+
+      const lefts = [0, 1].map(
+        (itemIndex) => spineLayout.getSpineItemSpineLayoutInfo(itemIndex).left,
+      )
+
+      // A vertical page turn places the items of a spread from the left.
+      expect(lefts).toEqual([0, 100])
+      expect(spineLayout.boundingBox).toMatchObject({ left: 0, right: 200 })
     } finally {
       destroy()
     }

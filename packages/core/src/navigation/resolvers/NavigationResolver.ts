@@ -143,7 +143,6 @@ export const createNavigationResolver = ({
       }),
       size: viewport.absoluteViewport,
       isRTL: context.isRTL(),
-      spineItemsManager,
       spine,
     })
 
@@ -210,7 +209,6 @@ export const createNavigationResolver = ({
         position,
         size,
         isRTL: context.isRTL(),
-        spineItemsManager,
         spine,
       }),
     getBoundaryForPosition: (
@@ -221,7 +219,6 @@ export const createNavigationResolver = ({
         position,
         size,
         isRTL: context.isRTL(),
-        spineItemsManager,
         spine,
       }),
     isNavigationGoingForwardFrom,

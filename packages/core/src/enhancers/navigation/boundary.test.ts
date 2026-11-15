@@ -484,7 +484,6 @@ describe("outOfSpineBoundary", () => {
           }),
       )
 
-      // Replaces the LTR layout `mockSpineItemsLayout` mocked.
       mockSpineLayout(spine, spineItemsManager, layoutInfos)
 
       return { lastItemLeft: -(items.length - 1) * itemSize }

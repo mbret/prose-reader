@@ -27,12 +27,11 @@ import type { ReaderSettingsManager } from "../settings/ReaderSettingsManager"
 import type { DocumentLoadStatus } from "../spineItem/renderer/DocumentRenderer"
 import type { SpineItem } from "../spineItem/SpineItem"
 import type { SpineItemLayoutParams } from "../spineItem/SpineItemLayout"
-import { LayoutEntry } from "../spineItem/types"
 import { DestroyableClass } from "../utils/DestroyableClass"
 import type { Viewport } from "../viewport/Viewport"
 import type { SpineItemsManager } from "./SpineItemsManager"
 import type { SpineItemsObserver } from "./SpineItemsObserver"
-import { SpineItemSpineLayout } from "./types"
+import { SpineBoundingBox, SpineItemSpineLayout } from "./types"
 
 /**
  * Whether a change of an item's load status ends a load: its document
@@ -156,6 +155,13 @@ export class SpineLayout extends DestroyableClass {
     stage: "laidOut",
     laidOutItems: [],
   })
+
+  private boundingBoxOfLaidOutItems:
+    | {
+        laidOutItems: readonly LaidOutSpineItem[]
+        boundingBox: SpineBoundingBox | undefined
+      }
+    | undefined
 
   /**
    * Each layout request as it is made, from `layout()` or from an item loading
@@ -670,47 +676,26 @@ export class SpineLayout extends DestroyableClass {
 
   /**
    * The smallest box that holds every item as the last completed pass laid
-   * them out, in the coordinates of `getSpineItemSpineLayoutInfo`. Before the
-   * first pass completes, every edge is 0.
+   * them out, in the coordinates of `getSpineItemSpineLayoutInfo`.
+   * `undefined` until a pass has laid out an item.
    */
-  get layoutInfo() {
+  get boundingBox() {
     const { laidOutItems } = this.stateSubject.value
 
-    if (laidOutItems.length === 0) {
-      return new LayoutEntry({
-        left: 0,
-        right: 0,
-        top: 0,
-        bottom: 0,
-        width: 0,
-        height: 0,
-        x: 0,
-        y: 0,
-      })
+    /**
+     * A completed pass publishes a new list, and nothing changes a list once
+     * published, so the box of a list is computed once.
+     */
+    if (this.boundingBoxOfLaidOutItems?.laidOutItems !== laidOutItems) {
+      this.boundingBoxOfLaidOutItems = {
+        laidOutItems,
+        boundingBox: SpineBoundingBox.fromSpineItemLayouts(
+          laidOutItems.map(({ layout }) => layout),
+        ),
+      }
     }
 
-    let left = Number.POSITIVE_INFINITY
-    let right = Number.NEGATIVE_INFINITY
-    let top = Number.POSITIVE_INFINITY
-    let bottom = Number.NEGATIVE_INFINITY
-
-    for (const { layout } of laidOutItems) {
-      left = Math.min(left, layout.left)
-      right = Math.max(right, layout.right)
-      top = Math.min(top, layout.top)
-      bottom = Math.max(bottom, layout.bottom)
-    }
-
-    return new LayoutEntry({
-      left,
-      right,
-      top,
-      bottom,
-      width: right - left,
-      height: bottom - top,
-      x: left,
-      y: top,
-    })
+    return this.boundingBoxOfLaidOutItems.boundingBox
   }
 
   get numberOfPages() {

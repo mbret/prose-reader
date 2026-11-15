@@ -1,72 +1,44 @@
 import { describe, expect, it } from "vitest"
 import type { Spine } from "../../spine/Spine"
-import type { SpineItemsManager } from "../../spine/SpineItemsManager"
-import { SpinePosition, UnboundSpinePosition } from "../../spine/types"
+import {
+  SpineBoundingBox,
+  SpinePosition,
+  UnboundSpinePosition,
+} from "../../spine/types"
 import { clampRectInSpine, getBoundaryForRectInSpine } from "./clampRectInSpine"
 
-type LayoutInfo = {
-  left: number
-  right: number
-  top: number
-  bottom: number
-  width: number
-  height: number
-  x: number
-  y: number
-}
-
-type Fixture = {
-  spineItemsManager: SpineItemsManager
-  spine: Spine
-}
-
-/**
- * A spine of one item, whose box is `spineLayoutInfo`: the box the clamp
- * reads.
- */
-const buildFixture = (spineLayoutInfo: Partial<LayoutInfo>): Fixture => {
-  const layoutInfo: LayoutInfo = {
-    left: 0,
-    right: 0,
-    top: 0,
-    bottom: 0,
-    width: 0,
-    height: 0,
-    x: 0,
-    y: 0,
-    ...spineLayoutInfo,
-  }
-
-  // Cast: minimal spine items manager mock, which only gives the item count.
-  const spineItemsManager = {
-    items: { length: 1 },
-  } as unknown as SpineItemsManager
-
+/** A spine whose items fill a box of these edges: the box the clamp reads. */
+const buildSpine = ({
+  left = 0,
+  right = 0,
+  top = 0,
+  bottom = 0,
+}: Partial<Pick<SpineBoundingBox, "left" | "right" | "top" | "bottom">>) => {
   // Cast: minimal spine mock, which only gives the box of its items.
-  const spine = { layoutInfo } as unknown as Spine
-
-  return { spineItemsManager, spine }
+  return {
+    boundingBox: new SpineBoundingBox({
+      left,
+      right,
+      top,
+      bottom,
+      width: right - left,
+      height: bottom - top,
+      x: left,
+      y: top,
+    }),
+  } as unknown as Spine
 }
 
 describe(`clampRectInSpine`, () => {
-  describe(`empty spine`, () => {
-    const spineItemsManager = {
-      items: { length: 0 },
-      // Cast: minimal spine items manager mock for boundary helper tests.
-    } as unknown as SpineItemsManager
-    const spine = {
-      get layoutInfo() {
-        throw new Error(`should not be read when there are no spine items`)
-      },
-      // Cast: minimal spine mock; its box must not be read here.
-    } as unknown as Spine
+  describe(`spine with no item laid out`, () => {
+    // Cast: minimal spine mock, which has no box yet.
+    const spine = { boundingBox: undefined } as unknown as Spine
 
-    it(`returns the origin without reading the box of the spine`, () => {
+    it(`returns the origin`, () => {
       const result = clampRectInSpine({
         position: new SpinePosition({ x: 9999, y: 9999 }),
         size: { width: 200, height: 100 },
         isRTL: false,
-        spineItemsManager,
         spine,
       })
 
@@ -75,7 +47,7 @@ describe(`clampRectInSpine`, () => {
   })
 
   describe(`LTR`, () => {
-    const { spineItemsManager, spine } = buildFixture({
+    const spine = buildSpine({
       left: 0,
       right: 1000,
       bottom: 600,
@@ -86,7 +58,6 @@ describe(`clampRectInSpine`, () => {
         position: new SpinePosition({ x: 9999, y: 9999 }),
         size: { width: 200, height: 100 },
         isRTL: false,
-        spineItemsManager,
         spine,
       })
 
@@ -98,7 +69,6 @@ describe(`clampRectInSpine`, () => {
         position: new UnboundSpinePosition({ x: -50, y: -50 }),
         size: { width: 200, height: 100 },
         isRTL: false,
-        spineItemsManager,
         spine,
       })
 
@@ -110,7 +80,6 @@ describe(`clampRectInSpine`, () => {
         position: new SpinePosition({ x: 250, y: 100 }),
         size: { width: 200, height: 100 },
         isRTL: false,
-        spineItemsManager,
         spine,
       })
 
@@ -119,7 +88,7 @@ describe(`clampRectInSpine`, () => {
   })
 
   describe(`RTL`, () => {
-    const { spineItemsManager, spine } = buildFixture({
+    const spine = buildSpine({
       left: -1000,
       right: 200,
       bottom: 600,
@@ -130,7 +99,6 @@ describe(`clampRectInSpine`, () => {
         position: new UnboundSpinePosition({ x: 9999, y: 0 }),
         size: { width: 200, height: 100 },
         isRTL: true,
-        spineItemsManager,
         spine,
       })
 
@@ -142,7 +110,6 @@ describe(`clampRectInSpine`, () => {
         position: new UnboundSpinePosition({ x: -9999, y: 0 }),
         size: { width: 200, height: 100 },
         isRTL: true,
-        spineItemsManager,
         spine,
       })
 
@@ -154,7 +121,6 @@ describe(`clampRectInSpine`, () => {
         position: new UnboundSpinePosition({ x: -100, y: 9999 }),
         size: { width: 200, height: 100 },
         isRTL: true,
-        spineItemsManager,
         spine,
       })
 
@@ -176,7 +142,7 @@ describe(`clampRectInSpine`, () => {
    */
   describe(`rect larger than spine`, () => {
     describe(`LTR`, () => {
-      const { spineItemsManager, spine } = buildFixture({
+      const spine = buildSpine({
         left: 0,
         right: 100,
         bottom: 50,
@@ -187,7 +153,6 @@ describe(`clampRectInSpine`, () => {
           position: new SpinePosition({ x: 9999, y: 0 }),
           size: { width: 200, height: 30 },
           isRTL: false,
-          spineItemsManager,
           spine,
         })
 
@@ -199,7 +164,6 @@ describe(`clampRectInSpine`, () => {
           position: new SpinePosition({ x: 0, y: 9999 }),
           size: { width: 50, height: 100 },
           isRTL: false,
-          spineItemsManager,
           spine,
         })
 
@@ -208,7 +172,7 @@ describe(`clampRectInSpine`, () => {
     })
 
     describe(`RTL`, () => {
-      const { spineItemsManager, spine } = buildFixture({
+      const spine = buildSpine({
         left: -100,
         right: 50,
         bottom: 50,
@@ -219,7 +183,6 @@ describe(`clampRectInSpine`, () => {
           position: new UnboundSpinePosition({ x: 9999, y: 0 }),
           size: { width: 200, height: 30 },
           isRTL: true,
-          spineItemsManager,
           spine,
         })
 
@@ -231,7 +194,6 @@ describe(`clampRectInSpine`, () => {
           position: new UnboundSpinePosition({ x: 0, y: 9999 }),
           size: { width: 50, height: 100 },
           isRTL: true,
-          spineItemsManager,
           spine,
         })
 
@@ -242,24 +204,15 @@ describe(`clampRectInSpine`, () => {
 })
 
 describe(`getBoundaryForRectInSpine`, () => {
-  describe(`empty spine`, () => {
-    // Cast: minimal spine items manager mock for boundary helper tests.
-    const spineItemsManager = {
-      items: { length: 0 },
-    } as unknown as SpineItemsManager
-    // Cast: minimal spine mock; its box must not be read here.
-    const spine = {
-      get layoutInfo() {
-        throw new Error(`should not be read when there are no spine items`)
-      },
-    } as unknown as Spine
+  describe(`spine with no item laid out`, () => {
+    // Cast: minimal spine mock, which has no box yet.
+    const spine = { boundingBox: undefined } as unknown as Spine
 
-    it(`returns undefined without reading the box of the spine`, () => {
+    it(`returns undefined`, () => {
       const result = getBoundaryForRectInSpine({
         position: new SpinePosition({ x: 9999, y: 9999 }),
         size: { width: 200, height: 100 },
         isRTL: false,
-        spineItemsManager,
         spine,
       })
 
@@ -268,7 +221,7 @@ describe(`getBoundaryForRectInSpine`, () => {
   })
 
   describe(`LTR`, () => {
-    const { spineItemsManager, spine } = buildFixture({
+    const spine = buildSpine({
       left: 0,
       right: 1000,
       bottom: 600,
@@ -279,7 +232,6 @@ describe(`getBoundaryForRectInSpine`, () => {
         position: new UnboundSpinePosition({ x: -1, y: 0 }),
         size: { width: 200, height: 100 },
         isRTL: false,
-        spineItemsManager,
         spine,
       })
 
@@ -291,7 +243,6 @@ describe(`getBoundaryForRectInSpine`, () => {
         position: new UnboundSpinePosition({ x: 801, y: 0 }),
         size: { width: 200, height: 100 },
         isRTL: false,
-        spineItemsManager,
         spine,
       })
 
@@ -303,7 +254,6 @@ describe(`getBoundaryForRectInSpine`, () => {
         position: new SpinePosition({ x: 800, y: 500 }),
         size: { width: 200, height: 100 },
         isRTL: false,
-        spineItemsManager,
         spine,
       })
 
@@ -312,7 +262,7 @@ describe(`getBoundaryForRectInSpine`, () => {
   })
 
   describe(`RTL`, () => {
-    const { spineItemsManager, spine } = buildFixture({
+    const spine = buildSpine({
       left: -1000,
       right: 200,
       bottom: 600,
@@ -323,7 +273,6 @@ describe(`getBoundaryForRectInSpine`, () => {
         position: new UnboundSpinePosition({ x: 1, y: 0 }),
         size: { width: 200, height: 100 },
         isRTL: true,
-        spineItemsManager,
         spine,
       })
 
@@ -335,7 +284,6 @@ describe(`getBoundaryForRectInSpine`, () => {
         position: new UnboundSpinePosition({ x: -1001, y: 0 }),
         size: { width: 200, height: 100 },
         isRTL: true,
-        spineItemsManager,
         spine,
       })
 
@@ -347,7 +295,6 @@ describe(`getBoundaryForRectInSpine`, () => {
         position: new SpinePosition({ x: 0, y: 500 }),
         size: { width: 200, height: 100 },
         isRTL: true,
-        spineItemsManager,
         spine,
       })
 
@@ -358,7 +305,7 @@ describe(`getBoundaryForRectInSpine`, () => {
 
 describe(`clampRectInSpine with size 1×1 (point clamp)`, () => {
   describe(`LTR`, () => {
-    const { spineItemsManager, spine } = buildFixture({
+    const spine = buildSpine({
       left: 0,
       right: 1000,
       bottom: 600,
@@ -369,7 +316,6 @@ describe(`clampRectInSpine with size 1×1 (point clamp)`, () => {
         position: new SpinePosition({ x: 9999, y: 9999 }),
         size: { width: 1, height: 1 },
         isRTL: false,
-        spineItemsManager,
         spine,
       })
 
@@ -378,7 +324,7 @@ describe(`clampRectInSpine with size 1×1 (point clamp)`, () => {
   })
 
   describe(`RTL`, () => {
-    const { spineItemsManager, spine } = buildFixture({
+    const spine = buildSpine({
       left: -1000,
       right: 200,
       bottom: 600,
@@ -395,7 +341,6 @@ describe(`clampRectInSpine with size 1×1 (point clamp)`, () => {
         position: new UnboundSpinePosition({ x: 9999, y: 0 }),
         size: { width: 1, height: 1 },
         isRTL: true,
-        spineItemsManager,
         spine,
       })
 

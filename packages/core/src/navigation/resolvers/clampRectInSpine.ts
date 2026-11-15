@@ -1,5 +1,4 @@
 import type { Spine } from "../../spine/Spine"
-import type { SpineItemsManager } from "../../spine/SpineItemsManager"
 import type { SpinePosition } from "../../spine/types"
 import { UnboundSpinePosition } from "../../spine/types"
 import type { NavigationVisibleArea, SpineBoundary } from "../types"
@@ -8,11 +7,10 @@ export type ClampRectInSpineParams = {
   position: SpinePosition | UnboundSpinePosition
   size: NavigationVisibleArea
   isRTL: boolean
-  spineItemsManager: SpineItemsManager
   spine: Spine
 }
 
-type RectBoundsInSpineParams = Omit<ClampRectInSpineParams, "position">
+type RectBoundsInSpineParams = Pick<ClampRectInSpineParams, "size" | "spine">
 
 type RectBoundsInSpine = {
   xMin: number
@@ -23,29 +21,17 @@ type RectBoundsInSpine = {
 
 const getRectBoundsInSpine = ({
   size,
-  isRTL,
-  spineItemsManager,
   spine,
 }: RectBoundsInSpineParams): RectBoundsInSpine | undefined => {
-  if (spineItemsManager.items.length === 0) return undefined
+  const { boundingBox } = spine
 
-  const { left, right, bottom } = spine.layoutInfo
-  const yMax = Math.max(0, bottom - size.height)
-
-  if (isRTL) {
-    return {
-      xMin: left,
-      xMax: Math.max(0, right - size.width),
-      yMin: 0,
-      yMax,
-    }
-  }
+  if (!boundingBox) return undefined
 
   return {
-    xMin: 0,
-    xMax: Math.max(0, right - size.width),
-    yMin: 0,
-    yMax,
+    xMin: boundingBox.left,
+    xMax: Math.max(0, boundingBox.right - size.width),
+    yMin: boundingBox.top,
+    yMax: Math.max(0, boundingBox.bottom - size.height),
   }
 }
 
@@ -57,15 +43,9 @@ export const clampRectInSpine = ({
   position,
   size,
   isRTL,
-  spineItemsManager,
   spine,
 }: ClampRectInSpineParams): UnboundSpinePosition => {
-  const bounds = getRectBoundsInSpine({
-    size,
-    isRTL,
-    spineItemsManager,
-    spine,
-  })
+  const bounds = getRectBoundsInSpine({ size, spine })
 
   if (!bounds) return new UnboundSpinePosition({ x: 0, y: 0 })
 
@@ -81,15 +61,9 @@ export const getBoundaryForRectInSpine = ({
   position,
   size,
   isRTL,
-  spineItemsManager,
   spine,
 }: ClampRectInSpineParams): SpineBoundary | undefined => {
-  const bounds = getRectBoundsInSpine({
-    size,
-    isRTL,
-    spineItemsManager,
-    spine,
-  })
+  const bounds = getRectBoundsInSpine({ size, spine })
 
   if (!bounds) return undefined
 
