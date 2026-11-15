@@ -67,8 +67,8 @@ describe("getFirstNodeInBox", () => {
 
 describe("getFirstNodeInBox, the offset in the first node", () => {
   /**
-   * Records each point the lookup asks a caret for, and puts the caret at
-   * `offset` in the node the point is in.
+   * Records each point the lookup asks a caret for, and answers every one
+   * with a caret at `offset` in `offsetNode`.
    */
   const stubCaretPositionFromPoint = (offsetNode: Node, offset: number) => {
     const points: { x: number; y: number }[] = []
