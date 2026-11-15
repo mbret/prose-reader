@@ -428,6 +428,55 @@ describe("SpineLayout", () => {
     }
   })
 
+  it("gives the box of every item as the last completed pass laid them out", async () => {
+    const { completeItemLayout, destroy, layOutSpine, spineLayout } =
+      createDeferredSpineLayout(3)
+
+    try {
+      expect(spineLayout.layoutInfo).toMatchObject({
+        left: 0,
+        right: 0,
+        top: 0,
+        bottom: 0,
+      })
+
+      const passDone = firstValueFrom(spineLayout.layout$)
+
+      spineLayout.layout({ immediate: true })
+      completeItemLayout(0, { height: 100, width: 100 })
+      completeItemLayout(1, { height: 300, width: 100 })
+      completeItemLayout(2, { height: 100, width: 100 })
+      await passDone
+
+      // The item before the last is the tallest.
+      expect(spineLayout.layoutInfo).toMatchObject({
+        left: 0,
+        right: 300,
+        top: 0,
+        bottom: 300,
+        width: 300,
+        height: 300,
+      })
+
+      // A pass in flight leaves the box of the last completed one.
+      spineLayout.layout({ immediate: true })
+      completeItemLayout(0, { height: 100, width: 100 })
+      completeItemLayout(1, { height: 100, width: 100 })
+
+      expect(spineLayout.layoutInfo).toMatchObject({ right: 300, bottom: 300 })
+
+      completeItemLayout(2, { height: 100, width: 100 })
+
+      expect(spineLayout.layoutInfo).toMatchObject({ right: 300, bottom: 100 })
+
+      await layOutSpine({ height: 100, width: 200 })
+
+      expect(spineLayout.layoutInfo).toMatchObject({ right: 600, bottom: 100 })
+    } finally {
+      destroy()
+    }
+  })
+
   it("lays out an item whose load ended and the items it moves, and keeps the layouts of the items before it", async () => {
     const {
       completeItemLayout,

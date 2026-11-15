@@ -27,6 +27,7 @@ import type { ReaderSettingsManager } from "../settings/ReaderSettingsManager"
 import type { DocumentLoadStatus } from "../spineItem/renderer/DocumentRenderer"
 import type { SpineItem } from "../spineItem/SpineItem"
 import type { SpineItemLayoutParams } from "../spineItem/SpineItemLayout"
+import { LayoutEntry } from "../spineItem/types"
 import { DestroyableClass } from "../utils/DestroyableClass"
 import type { Viewport } from "../viewport/Viewport"
 import type { SpineItemsManager } from "./SpineItemsManager"
@@ -665,6 +666,51 @@ export class SpineLayout extends DestroyableClass {
         y: 0,
       })
     )
+  }
+
+  /**
+   * The smallest box that holds every item as the last completed pass laid
+   * them out, in the coordinates of `getSpineItemSpineLayoutInfo`. Before the
+   * first pass completes, every edge is 0.
+   */
+  get layoutInfo() {
+    const { laidOutItems } = this.stateSubject.value
+
+    if (laidOutItems.length === 0) {
+      return new LayoutEntry({
+        left: 0,
+        right: 0,
+        top: 0,
+        bottom: 0,
+        width: 0,
+        height: 0,
+        x: 0,
+        y: 0,
+      })
+    }
+
+    let left = Number.POSITIVE_INFINITY
+    let right = Number.NEGATIVE_INFINITY
+    let top = Number.POSITIVE_INFINITY
+    let bottom = Number.NEGATIVE_INFINITY
+
+    for (const { layout } of laidOutItems) {
+      left = Math.min(left, layout.left)
+      right = Math.max(right, layout.right)
+      top = Math.min(top, layout.top)
+      bottom = Math.max(bottom, layout.bottom)
+    }
+
+    return new LayoutEntry({
+      left,
+      right,
+      top,
+      bottom,
+      width: right - left,
+      height: bottom - top,
+      x: left,
+      y: top,
+    })
   }
 
   get numberOfPages() {

@@ -199,6 +199,16 @@ export class Spine extends ReactiveEntity<SpineState> {
     return this.spineLayout.getSpineItemSpineLayoutInfo(spineItemOrIndex)
   }
 
+  /**
+   * The smallest box that holds every spine item, in the coordinates of
+   * `getSpineItemSpineLayoutInfo`. Like it, it gives the places of the last
+   * completed layout until `itemsLayout$`. Before the first one, every edge
+   * is 0.
+   */
+  public get layoutInfo() {
+    return this.spineLayout.layoutInfo
+  }
+
   public get layout$() {
     // first spineLayout then pages
     return this.pages.layout$
