@@ -1,15 +1,18 @@
 import { expect, type Page } from "@playwright/test"
 import { navigateToPageOfSpineItem, turnLeft, turnRight } from "../../utils"
-import { readSettledPagination } from "../../utils/pagination"
+import { layOutAndSettle, readSettledPagination } from "../../utils/pagination"
 import { test } from "../../utils/test"
-import { readCfiPositionInWindow } from "../../utils/visibility"
+import {
+  isCfiPositionVisible,
+  readCfiPositionInWindow,
+} from "../../utils/visibility"
 import type { ScenarioBook } from "./books"
 import {
   getScreenOfPage,
   goToLongChapter,
+  ODD_SPREAD_WINDOW,
   openBook,
   readFirstShownNode,
-  readFrameOffsetInShownSpineItem,
   readPagesOfShownSpineItem,
   SINGLE_PAGE_WINDOW,
   SPREAD_WINDOW,
@@ -36,8 +39,6 @@ type BookCase = {
     sizes: { itemSize: Size; pageSize: Size },
   ) => { x: number; y: number }
   screenInSpread: ChapterScreen
-  /** Why the reader finds the first node shown on another page. */
-  firstShownNodeOnWrongPage?: string
 }
 
 const BOOK_CASES: BookCase[] = [
@@ -71,17 +72,20 @@ const BOOK_CASES: BookCase[] = [
     }),
     // A page of vertical writing is as wide as the spread, so a spread shows one.
     screenInSpread: { pagesPerScreen: 1 },
-    firstShownNodeOnWrongPage:
-      "#713: the node lookups ignore the vertical axis, so the reader finds the node on the first page, or finds no node in a spread",
   },
 ]
 
 const WINDOWS = [
   { name: "one page", window: SINGLE_PAGE_WINDOW },
   { name: "a spread", window: SPREAD_WINDOW },
+  { name: "a spread of an odd width", window: ODD_SPREAD_WINDOW },
 ]
 
 const TAP_POINT = { x: 200, y: 300 }
+
+const FONT_SCALE_STEPS = [
+  0.99, 0.98, 0.97, 0.96, 0.95, 0.94, 0.93, 0.92, 0.91, 0.9,
+]
 
 for (const {
   book,
@@ -89,7 +93,6 @@ for (const {
   turnToPreviousPage,
   getPagePosition,
   screenInSpread,
-  firstShownNodeOnWrongPage,
 } of BOOK_CASES) {
   test.describe(`Given a long chapter of the ${book} book`, () => {
     test("places its pages one page apart, in reading order", async ({
@@ -153,6 +156,58 @@ for (const {
       const { pagesPerScreen } = chapterScreen
 
       test.describe(`When the window shows ${name}`, () => {
+        /**
+         * A smaller font scale moves the text to earlier pages, and can keep the
+         * chapter's number of pages, and so its size. Which step keeps it differs
+         * per browser and per book, so the test runs ten small steps.
+         */
+        test("keeps the first node shown on screen as a smaller font scale moves the text", async ({
+          page,
+        }) => {
+          await openBook(page, book, window)
+          const { chapterIndex } = await goToLongChapter(page, book)
+
+          await turnScreensOfChapter(page, {
+            turnToNextPage,
+            chapterIndex,
+            pagesPerScreen,
+            numberOfScreens: 3,
+          })
+
+          const { cfi } = await readFirstShownNode(page)
+          let { numberOfPages, beginPageIndex } =
+            await readSettledPagination(page)
+          let stepsThatMovedTheNodeOnly = 0
+
+          for (const fontScale of FONT_SCALE_STEPS) {
+            await layOutAndSettle(page, { settings: { fontScale } })
+
+            expect(
+              await isCfiPositionVisible(page, cfi),
+              `whether the first node shown is on screen at a font scale of ${fontScale}`,
+            ).toBe(true)
+
+            const pagination = await readSettledPagination(page)
+
+            if (
+              pagination.numberOfPages === numberOfPages &&
+              pagination.beginPageIndex !== beginPageIndex
+            ) {
+              stepsThatMovedTheNodeOnly++
+            }
+
+            numberOfPages = pagination.numberOfPages
+            beginPageIndex = pagination.beginPageIndex
+          }
+
+          // A step that changes the number of pages changes the chapter's size,
+          // and the reader finds the node again after any size change.
+          expect(
+            stepsThatMovedTheNodeOnly,
+            "the number of steps that moved the node to another page and kept the chapter's number of pages",
+          ).toBeGreaterThan(0)
+        })
+
         test("turns through the pages in reading order", async ({ page }) => {
           await openBook(page, book, window)
           const { chapterIndex } = await goToLongChapter(page, book)
@@ -221,15 +276,6 @@ for (const {
             pagesPerScreen,
             numberOfScreens: 3,
           })
-
-          test.fail(
-            Boolean(firstShownNodeOnWrongPage),
-            firstShownNodeOnWrongPage,
-          )
-          test.fail(
-            (await readFrameOffsetInShownSpineItem(page)) !== 0,
-            "#795: the anchor of a page ignores the blank page before the frame",
-          )
 
           const { cfi, pageIndex } = await readFirstShownNode(page)
 

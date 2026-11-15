@@ -131,6 +131,7 @@ export const createSpineLocator = ({
       }
     | undefined => {
     const { pageGeometry } = spineItem
+    const { pageSize } = pageGeometry
 
     const pages = Array.from(Array(pageGeometry.numberOfPages)).map(
       (_, index) => {
@@ -144,12 +145,12 @@ export const createSpineLocator = ({
         return {
           index,
           absolutePosition: {
-            width: viewport.pageSize.width,
-            height: viewport.pageSize.height,
+            width: pageSize.width,
+            height: pageSize.height,
             left: spinePosition.x,
             top: spinePosition.y,
-            bottom: spinePosition.y + viewport.pageSize.height,
-            right: spinePosition.x + viewport.pageSize.width,
+            bottom: spinePosition.y + pageSize.height,
+            right: spinePosition.x + pageSize.width,
           },
         }
       },
@@ -235,7 +236,7 @@ export const createSpineLocator = ({
       spineItem,
       spineItemPageIndex,
       spineItemPagePosition,
-      pageSize: viewport.value.pageSize,
+      pageSize: pageGeometry.pageSize,
     }
   }
 

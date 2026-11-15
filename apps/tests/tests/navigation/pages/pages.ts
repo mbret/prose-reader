@@ -19,6 +19,12 @@ export const SPREAD_WINDOW: ScenarioWindow = {
   pagesPerScreen: 2,
 }
 
+/** A spread whose pages are half a pixel wider than a whole pixel count. */
+export const ODD_SPREAD_WINDOW: ScenarioWindow = {
+  size: { width: 1201, height: 800 },
+  pagesPerScreen: 2,
+}
+
 export const openBook = async (
   page: Page,
   book: ScenarioBook,
@@ -189,25 +195,6 @@ export const readFirstShownNode = async (page: Page) => {
 
   return firstShownNode
 }
-
-/**
- * How far the frame of the spine item shown starts from the item's left edge:
- * a page width when the reader puts a blank page before the text.
- */
-export const readFrameOffsetInShownSpineItem = async (page: Page) =>
-  (await getReader(page)).evaluate((reader) => {
-    const spineItem = reader.spineItemsManager.get(
-      reader.pagination.state.begin.spineItemIndex,
-    )
-    const frame = spineItem?.renderer.getDocumentFrame()
-
-    if (!spineItem || !frame) throw new Error("no frame for the item shown")
-
-    return (
-      frame.getBoundingClientRect().left -
-      spineItem.containerElement.getBoundingClientRect().left
-    )
-  })
 
 export const tapAndReadTappedPage = async (
   page: Page,
