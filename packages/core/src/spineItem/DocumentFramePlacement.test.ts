@@ -16,8 +16,8 @@ type RenderedBox = {
  * there, from a layout size of `layoutWidth` by `layoutHeight`: a transform
  * of the element or of an ancestor scales one into the other.
  */
-const createRenderedElement = <Element extends HTMLElement>(
-  element: Element,
+const createRenderedElement = (
+  element: HTMLElement,
   { left, top, width, height, layoutWidth, layoutHeight }: RenderedBox,
 ) => {
   vi.spyOn(element, "getBoundingClientRect").mockReturnValue(
