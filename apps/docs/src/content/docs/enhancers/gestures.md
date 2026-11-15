@@ -130,8 +130,10 @@ is under it:
   it shows one page across the whole view, so its `pageSize` is as wide as the
   view.
 
-In a book that scrolls, the page under the tap is its whole spine item, but
-`pageSize` stays the size of a page as above, not the size of the spine item.
+In a book that scrolls, a chapter is not cut into pages: it is one long page.
+A tap far down a chapter is then on its page 0, with a large
+`spineItemPagePosition.y`, while `pageSize` stays `reader.viewport.pageSize`,
+not the size of the chapter. The position can be outside `pageSize`.
 
 The first value of each `beforeTapGesture` hook is its verdict, and later values change nothing. The tap waits for the verdict of every hook, so a hook that neither emits nor completes holds the tap until the next tap. A verdict of `false` from any hook drops the tap: it turns no page, and `gestures$` does not report it. Anything else from a hook lets the tap go on:
 
