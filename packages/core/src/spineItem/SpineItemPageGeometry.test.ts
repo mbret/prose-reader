@@ -224,13 +224,20 @@ describe("SpineItemPageGeometry", () => {
       expect(geometry.getPositionFromPageIndex(7)).toMatchObject({ x: 0 })
     })
 
-    it("never starts a page outside an item narrower than a page", () => {
-      expect(
-        createGeometry({
-          isRTL: true,
-          itemSize: { width: 0, height: 0 },
-        }).getPositionFromPageIndex(0),
-      ).toMatchObject({ x: 0, y: 0 })
+    it("places an item narrower than a page at the right edge of its page in a right-to-left book", () => {
+      const geometry = createGeometry({
+        isRTL: true,
+        itemSize: { width: 300, height: 400 },
+      })
+
+      expect(geometry.getPositionFromPageIndex(0)).toMatchObject({
+        x: -200,
+        y: 0,
+      })
+      expect(geometry.getPositionInPage(position(100, 50), 0)).toMatchObject({
+        x: 300,
+        y: 50,
+      })
     })
 
     it("goes down the item for vertical writing", () => {
@@ -268,6 +275,25 @@ describe("SpineItemPageGeometry", () => {
             ),
           ).toBe(pageIndex)
         }
+      }
+    })
+
+    it.fails("is the start of the page it gives the index of, with a vertical page turn and horizontal writing (#788)", () => {
+      const geometry = createGeometry({
+        pageTurnDirection: "vertical",
+        itemSize: { width: 500, height: 1200 },
+      })
+
+      for (
+        let pageIndex = 0;
+        pageIndex < geometry.numberOfPages;
+        pageIndex += 1
+      ) {
+        expect(
+          geometry.getPageIndexFromPosition(
+            geometry.getPositionFromPageIndex(pageIndex),
+          ),
+        ).toBe(pageIndex)
       }
     })
   })

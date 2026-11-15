@@ -143,9 +143,14 @@ export class SpineItemPageGeometry {
       itemSize.width,
     )
 
+    /**
+     * In a right-to-left book, the reader places an item at the right edge of
+     * its page. The page of an item narrower than a page then starts before
+     * the item's left edge, at a negative x.
+     */
     return new SpineItemPosition({
       x: isRTL
-        ? Math.max(0, itemSize.width - pageStartFromLeft - pageSize.width)
+        ? itemSize.width - pageStartFromLeft - pageSize.width
         : pageStartFromLeft,
       y: 0,
     })

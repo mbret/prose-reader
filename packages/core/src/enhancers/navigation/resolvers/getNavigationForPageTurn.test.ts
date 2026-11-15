@@ -281,27 +281,26 @@ describe("Given a spread of two pages", () => {
     })
   })
 
-  it("leaves a vertical-writing item by a whole spread, in the book's direction", () => {
-    const options = {
-      spreadMode: "always" as const,
-      viewportWidth: 200,
-      itemSize: { width: 100, height: 100 },
-      isUsingVerticalWriting: true,
-    }
+  const verticalWritingItemOfOnePage = {
+    spreadMode: "always" as const,
+    viewportWidth: 200,
+    itemSize: { width: 100, height: 100 },
+    isUsingVerticalWriting: true,
+  }
 
-    expect(turn("rightOrBottom", { x: 0, y: 0 }, options)).toEqual({
-      x: 200,
-      y: 0,
-    })
+  it("leaves a vertical-writing item by a whole spread to the right", () => {
     expect(
-      turn(
-        "rightOrBottom",
-        { x: 0, y: 0 },
-        {
-          ...options,
-          readingDirection: "rtl",
-        },
-      ),
-    ).toEqual({ x: 0, y: 0 })
+      turn("rightOrBottom", { x: 0, y: 0 }, verticalWritingItemOfOnePage),
+    ).toEqual({ x: 200, y: 0 })
+  })
+
+  it.fails("leaves a vertical-writing item to the right in a right-to-left book (#794)", () => {
+    const { x } = turn(
+      "rightOrBottom",
+      { x: 0, y: 0 },
+      { ...verticalWritingItemOfOnePage, readingDirection: "rtl" },
+    )
+
+    expect(x).toBeGreaterThan(0)
   })
 })
