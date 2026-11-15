@@ -152,11 +152,10 @@ export const recordSpineItemsUnloadedOnScreen = async (page: Page) => {
 }
 
 /**
- * Whether the exact position a cfi points to is inside the window, so a
- * restored page is judged by where the anchored character ended up rather
- * than by whichever element happens to contain it.
+ * Where the exact position a cfi points to is in the window, with the
+ * window's size, or why it has none.
  */
-export const isCfiPositionVisible = async (page: Page, cfi: string) =>
+export const readCfiPositionInWindow = async (page: Page, cfi: string) =>
   (await getReader(page)).evaluate((reader, cfi) => {
     const { node, offset } = reader.cfi.resolveCfi({ cfi })
 
@@ -178,11 +177,28 @@ export const isCfiPositionVisible = async (page: Page, cfi: string) =>
 
     const rect = range.getBoundingClientRect()
     const frameRect = frame.getBoundingClientRect()
-    const x = frameRect.left + rect.left
-    const y = frameRect.top + rect.top
 
-    return x >= 0 && x < window.innerWidth && y >= 0 && y < window.innerHeight
+    return {
+      x: frameRect.left + rect.left,
+      y: frameRect.top + rect.top,
+      window: { width: window.innerWidth, height: window.innerHeight },
+    }
   }, cfi)
+
+/**
+ * Whether the exact position a cfi points to is inside the window, so a
+ * restored page is judged by where the anchored character ended up rather
+ * than by whichever element happens to contain it.
+ */
+export const isCfiPositionVisible = async (page: Page, cfi: string) => {
+  const position = await readCfiPositionInWindow(page, cfi)
+
+  if (typeof position === "string") return position
+
+  const { x, y, window } = position
+
+  return x >= 0 && x < window.width && y >= 0 && y < window.height
+}
 
 /** Whether the start of an element of a spine item is inside the window. */
 export const isElementStartOnScreen = async (

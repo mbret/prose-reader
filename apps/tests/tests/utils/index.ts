@@ -126,6 +126,28 @@ export const navigateToSpineItem = async ({
   }, index)
 }
 
+export const navigateToPageOfSpineItem = async ({
+  page,
+  spineItemIndex,
+  pageIndex,
+}: {
+  page: Page
+  spineItemIndex: number
+  pageIndex: number
+}) => {
+  const reader = await getReader(page)
+
+  await reader.evaluate(
+    (reader, { spineItemIndex, pageIndex }) => {
+      reader.navigation.goToPageOfSpineItem({
+        spineItemId: spineItemIndex,
+        pageIndex,
+      })
+    },
+    { spineItemIndex, pageIndex },
+  )
+}
+
 /**
  * Goes to the next spine item, whichever way the book reads: a comic reads
  * right to left unless it says otherwise.
