@@ -37,8 +37,9 @@ export const touchPath = (from: TouchPoint, to: TouchPoint, count: number) =>
  * any runner. Install the page's clock before the page loads (see
  * `holdPageClockDuring`).
  *
- * The touches have to land on the page's own document: a book's frame has a
- * document of its own, whose pointer events the wait does not see.
+ * The wait counts the pointer events that reach the page's own document. Over
+ * a book's page, a touch lands in the page's frame, and those are the copies
+ * that core's events enhancer passes to the reader's root element.
  */
 export const playTouchGesture = async (
   page: Page,
@@ -120,10 +121,9 @@ export const playTouchGesture = async (
 }
 
 /**
- * Starts counting the touch pointer events of the page's own document, and
- * returns a function that reads how many it took, and whether a pointer was
- * cancelled. A book's frames have documents of their own, which it does not
- * count.
+ * Starts counting the touch pointer events that reach the page's own
+ * document, and returns a function that reads how many it took, and whether a
+ * pointer was cancelled.
  */
 const countTouchPointerEventsTaken = async (page: Page) => {
   await page.evaluate(() => {
