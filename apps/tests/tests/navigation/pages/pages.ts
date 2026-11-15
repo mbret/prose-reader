@@ -1,99 +1,171 @@
 import { expect, type Page } from "@playwright/test"
 import { getLongChapterIndex, navigateToSpineItem } from "../../utils"
-import { waitForSettled } from "../../utils/pagination"
+import { readSettledPagination } from "../../utils/pagination"
 import { getReader } from "../../utils/reader"
-import type { BookDirection, TappedPage } from "./types"
+import type { ScenarioBook, TappedPage } from "./books"
 
-/** One page fills a portrait window; two pages, a spread, fill a landscape one. */
-export const SINGLE_PAGE_WINDOW = { width: 600, height: 800 }
-export const SPREAD_WINDOW = { width: 1200, height: 800 }
+export type ScenarioWindow = {
+  size: { width: number; height: number }
+  pagesPerScreen: number
+}
+
+export const SINGLE_PAGE_WINDOW: ScenarioWindow = {
+  size: { width: 600, height: 800 },
+  pagesPerScreen: 1,
+}
+
+export const SPREAD_WINDOW: ScenarioWindow = {
+  size: { width: 1200, height: 800 },
+  pagesPerScreen: 2,
+}
 
 export const openBook = async (
   page: Page,
-  book: BookDirection,
-  windowSize: { width: number; height: number },
+  book: ScenarioBook,
+  { size, pagesPerScreen }: ScenarioWindow,
 ) => {
-  await page.setViewportSize(windowSize)
+  await page.setViewportSize(size)
   await page.goto(
     `http://localhost:3333/tests/navigation/pages/index.html?book=${book}`,
   )
-  await waitForSettled(page)
+  await readSettledPagination(page)
+
+  const viewport = await (await getReader(page)).evaluate((reader) => ({
+    isSpread: reader.viewport.value.isSpread,
+    pageWidth: reader.viewport.value.pageSize.width,
+  }))
+
+  expect(viewport, `the window shows ${pagesPerScreen} page(s)`).toEqual({
+    isSpread: pagesPerScreen === 2,
+    pageWidth: size.width / pagesPerScreen,
+  })
 }
 
-/** The pages the settled result shows, and the spine item they belong to. */
-export const readShownPages = async (page: Page) => {
-  const reader = await getReader(page)
-  const handle = await page.waitForFunction((reader) => {
-    const { isSettled, begin, end } = reader.pagination.state
+/** The pages a window shows together when it shows the page `pageIndex`. */
+export const getScreenOfPage = (pageIndex: number, pagesPerScreen: number) => {
+  const beginPageIndex = Math.floor(pageIndex / pagesPerScreen) * pagesPerScreen
 
-    if (!isSettled) return undefined
-
-    return {
-      spineItemIndex: begin.spineItemIndex,
-      beginPageIndex: begin.pageIndexInSpineItem,
-      endPageIndex: end.pageIndexInSpineItem,
-      numberOfPages: begin.numberOfPagesInSpineItem,
-      cfi: begin.cfi,
-    }
-  }, reader)
-
-  const shownPages = await handle.jsonValue()
-
-  if (!shownPages) throw new Error("no settled pagination result")
-
-  return shownPages
+  return {
+    beginPageIndex,
+    endPageIndex: beginPageIndex + pagesPerScreen - 1,
+  }
 }
 
-/** Goes to the first page of `ch02.xhtml`, a chapter of many pages. */
-export const goToLongChapter = async (page: Page) => {
+export const goToLongChapter = async (page: Page, book: ScenarioBook) => {
   const chapterIndex = await getLongChapterIndex(page)
 
   await navigateToSpineItem({ page, index: chapterIndex })
-  await expect
-    .poll(async () => (await readShownPages(page)).spineItemIndex)
-    .toBe(chapterIndex)
 
-  const shownPages = await readShownPages(page)
+  const { spineItemIndex, beginPageIndex, numberOfPages } =
+    await readSettledPagination(page)
 
-  expect(shownPages.beginPageIndex, "the chapter opens on its first page").toBe(
-    0,
+  expect(spineItemIndex, "the long chapter is shown").toBe(chapterIndex)
+  expect(beginPageIndex, "the chapter opens on its first page").toBe(0)
+  expect(numberOfPages, "the chapter has many pages").toBeGreaterThan(8)
+
+  const bookAsRead = await (await getReader(page)).evaluate(
+    (reader, chapterIndex) => ({
+      isRTL: reader.context.isRTL(),
+      isUsingVerticalWriting: Boolean(
+        reader.spineItemsManager.get(chapterIndex)?.isUsingVerticalWriting(),
+      ),
+    }),
+    chapterIndex,
   )
-  expect(
-    shownPages.numberOfPages,
-    "the chapter has many pages",
-  ).toBeGreaterThan(8)
 
-  return chapterIndex
+  expect(bookAsRead, `the reader reads the ${book} book as one`).toEqual({
+    isRTL: book !== "ltr",
+    isUsingVerticalWriting: book === "vertical-rl",
+  })
+
+  return { chapterIndex, numberOfPages }
 }
 
 /**
- * The pages the reader lists for a spine item, each where it starts in the
- * item, in page order; the item's place in the spine; and the page size.
+ * Turns `numberOfScreens` times from the first screen of a chapter, and
+ * checks after each turn that the window shows the next screen of the
+ * chapter.
  */
-export const readPagesOfSpineItem = async (
+export const turnScreensOfChapter = async (
   page: Page,
-  spineItemIndex: number,
-) =>
-  (await getReader(page)).evaluate((reader, spineItemIndex) => {
+  {
+    turnToNextPage,
+    chapterIndex,
+    pagesPerScreen,
+    numberOfScreens,
+  }: {
+    turnToNextPage: (params: { page: Page }) => Promise<void>
+    chapterIndex: number
+    pagesPerScreen: number
+    numberOfScreens: number
+  },
+) => {
+  for (let screen = 1; screen <= numberOfScreens; screen++) {
+    await turnToNextPage({ page })
+    await expect
+      .poll(() => readSettledPagination(page))
+      .toMatchObject({
+        spineItemIndex: chapterIndex,
+        ...getScreenOfPage(screen * pagesPerScreen, pagesPerScreen),
+      })
+  }
+}
+
+/**
+ * Each page the reader lists for the spine item shown, with where it is in
+ * the item: the position of its top-left corner, from the item's top-left
+ * corner. Read once the result has settled on the current layout, so that
+ * the pages, the item and the page count describe the same layout.
+ */
+export const readPagesOfShownSpineItem = async (page: Page) => {
+  const reader = await getReader(page)
+  const handle = await page.waitForFunction((reader) => {
+    const { isSettled, begin } = reader.pagination.state
+    const { spineItemIndex } = begin
+
+    if (
+      !isSettled ||
+      spineItemIndex === undefined ||
+      !reader.spine.isLayoutCurrentFor(spineItemIndex)
+    ) {
+      return undefined
+    }
+
     const itemLayout = reader.spine.getSpineItemSpineLayoutInfo(spineItemIndex)
 
     return {
-      pageStarts: reader.spine.pages.value.pages
+      numberOfPages: begin.numberOfPagesInSpineItem,
+      pages: reader.spine.pages.value.pages
         .filter(({ itemIndex }) => itemIndex === spineItemIndex)
-        .map(({ absoluteLayout }) => ({
-          x: absoluteLayout.left - itemLayout.left,
-          y: absoluteLayout.top - itemLayout.top,
+        .map(({ pageIndex, layout }) => ({
+          pageIndex,
+          x: layout.left,
+          y: layout.top,
         })),
       itemSize: { width: itemLayout.width, height: itemLayout.height },
       pageSize: reader.viewport.value.pageSize,
     }
-  }, spineItemIndex)
+  }, reader)
+  const pagesOfSpineItem = await handle.jsonValue()
 
-/** The page of the node that the cfi of the first page shown names. */
-export const readPageIndexOfFirstShownNode = async (page: Page) => {
-  const { cfi } = await readShownPages(page)
+  if (!pagesOfSpineItem) throw new Error("no settled pagination result")
 
-  return (await getReader(page)).evaluate((reader, cfi) => {
+  return pagesOfSpineItem
+}
+
+/**
+ * The node the first page shown starts with, by its cfi, and the page the
+ * reader finds it on, read with the settled result that names it.
+ */
+export const readFirstShownNode = async (page: Page) => {
+  const reader = await getReader(page)
+  const handle = await page.waitForFunction((reader) => {
+    const { isSettled, begin } = reader.pagination.state
+
+    if (!isSettled) return undefined
+
+    const { cfi } = begin
+
     if (!cfi || reader.cfi.isRootCfi(cfi)) {
       throw new Error(`the first page shown has no node cfi: ${cfi}`)
     }
@@ -102,18 +174,41 @@ export const readPageIndexOfFirstShownNode = async (page: Page) => {
 
     if (!node || !spineItem) throw new Error(`${cfi} names no node`)
 
-    return reader.spine.locator.getSpineItemPageIndexFromNode(
-      node,
-      offset ?? 0,
-      spineItem,
-    )
-  }, cfi)
+    return {
+      cfi,
+      pageIndex: reader.spine.locator.getSpineItemPageIndexFromNode(
+        node,
+        offset ?? 0,
+        spineItem,
+      ),
+    }
+  }, reader)
+  const firstShownNode = await handle.jsonValue()
+
+  if (!firstShownNode) throw new Error("no settled pagination result")
+
+  return firstShownNode
 }
 
 /**
- * Taps at a point of the window, and gives the page that the
- * `beforeTapGesture` hooks got for the tap. The scenario records it.
+ * How far the frame of the spine item shown starts from the item's left edge:
+ * a page width when the reader puts a blank page before the text.
  */
+export const readFrameOffsetInShownSpineItem = async (page: Page) =>
+  (await getReader(page)).evaluate((reader) => {
+    const spineItem = reader.spineItemsManager.get(
+      reader.pagination.state.begin.spineItemIndex,
+    )
+    const frame = spineItem?.renderer.getDocumentFrame()
+
+    if (!spineItem || !frame) throw new Error("no frame for the item shown")
+
+    return (
+      frame.getBoundingClientRect().left -
+      spineItem.containerElement.getBoundingClientRect().left
+    )
+  })
+
 export const tapAndReadTappedPage = async (
   page: Page,
   point: { x: number; y: number },

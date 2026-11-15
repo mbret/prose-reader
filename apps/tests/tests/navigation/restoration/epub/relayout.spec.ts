@@ -1,5 +1,9 @@
 import { expect, type Page } from "@playwright/test"
-import { getLongChapterIndex, navigateToSpineItem } from "../../../utils"
+import {
+  getLongChapterIndex,
+  navigateToPageOfSpineItem,
+  navigateToSpineItem,
+} from "../../../utils"
 import { layOutAndSettle, waitForSettled } from "../../../utils/pagination"
 import { getReader } from "../../../utils/reader"
 import { test } from "../../../utils/test"
@@ -248,15 +252,11 @@ test.describe("Given a layout that changes nothing", () => {
 
     expect(lastPageIndex).toBeGreaterThanOrEqual(numberOfPages)
 
-    await reader.evaluate(
-      (reader, { chapterIndex, lastPageIndex }) => {
-        reader.navigation.goToPageOfSpineItem({
-          spineItemId: chapterIndex,
-          pageIndex: lastPageIndex,
-        })
-      },
-      { chapterIndex, lastPageIndex },
-    )
+    await navigateToPageOfSpineItem({
+      page,
+      spineItemIndex: chapterIndex,
+      pageIndex: lastPageIndex,
+    })
     await waitForSettled(page)
 
     const lastPage = await readPosition(page)

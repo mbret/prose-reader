@@ -1,52 +1,48 @@
 import { createReader } from "@prose-reader/core"
 import { gesturesEnhancer } from "@prose-reader/enhancer-gestures"
-import { map } from "rxjs"
+import { map, tap } from "rxjs"
 import { openFixtureBook } from "../../fixtureBook"
-import { BOOK_DIRECTIONS, isBookDirection, type TappedPage } from "./types"
+import { isScenarioBook, SCENARIO_BOOKS, type TappedPage } from "./books"
 
 async function run() {
-  const query = new URLSearchParams(window.location.search)
-  const direction = query.get("book") ?? "ltr"
+  const requestedBook = new URLSearchParams(window.location.search).get("book")
+  const book = requestedBook ?? "ltr"
 
-  if (!isBookDirection(direction)) {
-    throw new Error(`this scenario has no ${direction} book`)
-  }
-
-  // `server/serveBooks.ts` makes the right-to-left and vertical books.
-  const book = await openFixtureBook(BOOK_DIRECTIONS[direction])
+  if (!isScenarioBook(book))
+    throw new Error(`this scenario has no ${book} book`)
 
   const reader = gesturesEnhancer(createReader)({
-    ...book,
+    ...(await openFixtureBook(SCENARIO_BOOKS[book])),
     pageTurnAnimation: "none",
     layoutLayerTransition: false,
   })
 
-  // The page of every tap, as the `beforeTapGesture` hooks of an app get it.
   const tappedPages: TappedPage[] = []
 
   reader.gestures.hooks.register("beforeTapGesture", ({ event$ }) =>
     event$.pipe(
-      map(({ page }) => {
-        if (page) {
-          tappedPages.push({
+      tap(({ page }) => {
+        tappedPages.push(
+          page && {
             spineItemIndex: page.spineItem.index,
-            pageIndex: page.spineItemPageIndex,
-            positionInPage: {
+            spineItemPageIndex: page.spineItemPageIndex,
+            spineItemPagePosition: {
               x: page.spineItemPagePosition.x,
               y: page.spineItemPagePosition.y,
             },
             pageSize: page.pageSize,
-          })
-        }
-
-        // Lets the tap go on.
-        return true
+          },
+        )
       }),
+      map(() => true),
     ),
   )
 
-  // biome-ignore lint/style/noNonNullAssertion: TODO
-  reader.mount(document.getElementById(`app`)!)
+  const container = document.getElementById(`app`)
+
+  if (!container) throw new Error("the page has no app element")
+
+  reader.mount(container)
 
   // @ts-expect-error export for debug
   window.reader = reader
