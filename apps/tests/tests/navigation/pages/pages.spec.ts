@@ -10,6 +10,7 @@ import type { ScenarioBook } from "./books"
 import {
   getScreenOfPage,
   goToLongChapter,
+  ODD_SPREAD_WINDOW,
   openBook,
   readFirstShownNode,
   readPagesOfShownSpineItem,
@@ -77,15 +78,14 @@ const BOOK_CASES: BookCase[] = [
 const WINDOWS = [
   { name: "one page", window: SINGLE_PAGE_WINDOW },
   { name: "a spread", window: SPREAD_WINDOW },
+  { name: "a spread of an odd width", window: ODD_SPREAD_WINDOW },
 ]
 
 const TAP_POINT = { x: 200, y: 300 }
 
-/** From 0.99 down to 0.9, by 0.01. */
-const FONT_SCALE_STEPS = Array.from(
-  { length: 10 },
-  (_, step) => Math.round((0.99 - step * 0.01) * 100) / 100,
-)
+const FONT_SCALE_STEPS = [
+  0.99, 0.98, 0.97, 0.96, 0.95, 0.94, 0.93, 0.92, 0.91, 0.9,
+]
 
 for (const {
   book,
@@ -150,63 +150,64 @@ for (const {
       })
     })
 
-    /**
-     * A smaller font scale moves the text to earlier pages, and can keep the
-     * chapter's number of pages, and so its size. Which step keeps it differs
-     * per browser and per book, so the test runs ten small steps.
-     */
-    test("keeps the first node shown on screen as a smaller font scale moves the text", async ({
-      page,
-    }) => {
-      await openBook(page, book, SINGLE_PAGE_WINDOW)
-      const { chapterIndex } = await goToLongChapter(page, book)
-
-      await turnScreensOfChapter(page, {
-        turnToNextPage,
-        chapterIndex,
-        pagesPerScreen: 1,
-        numberOfScreens: 3,
-      })
-
-      const { cfi } = await readFirstShownNode(page)
-      let { numberOfPages, beginPageIndex } = await readSettledPagination(page)
-      let stepsThatMovedTheNodeOnly = 0
-
-      for (const fontScale of FONT_SCALE_STEPS) {
-        await layOutAndSettle(page, { settings: { fontScale } })
-
-        expect(
-          await isCfiPositionVisible(page, cfi),
-          `the first node shown, at a font scale of ${fontScale}`,
-        ).toBe(true)
-
-        const pagination = await readSettledPagination(page)
-
-        if (
-          pagination.numberOfPages === numberOfPages &&
-          pagination.beginPageIndex !== beginPageIndex
-        ) {
-          stepsThatMovedTheNodeOnly++
-        }
-
-        numberOfPages = pagination.numberOfPages
-        beginPageIndex = pagination.beginPageIndex
-      }
-
-      // A step that changes the number of pages changes the chapter's size,
-      // and the reader finds the node again after any size change.
-      expect(
-        stepsThatMovedTheNodeOnly,
-        "the steps that moved the node to another page and kept the chapter's number of pages",
-      ).toBeGreaterThan(0)
-    })
-
     for (const { name, window } of WINDOWS) {
       const chapterScreen: ChapterScreen =
         window.pagesPerScreen === 2 ? screenInSpread : { pagesPerScreen: 1 }
       const { pagesPerScreen } = chapterScreen
 
       test.describe(`When the window shows ${name}`, () => {
+        /**
+         * A smaller font scale moves the text to earlier pages, and can keep the
+         * chapter's number of pages, and so its size. Which step keeps it differs
+         * per browser and per book, so the test runs ten small steps.
+         */
+        test("keeps the first node shown on screen as a smaller font scale moves the text", async ({
+          page,
+        }) => {
+          await openBook(page, book, window)
+          const { chapterIndex } = await goToLongChapter(page, book)
+
+          await turnScreensOfChapter(page, {
+            turnToNextPage,
+            chapterIndex,
+            pagesPerScreen,
+            numberOfScreens: 3,
+          })
+
+          const { cfi } = await readFirstShownNode(page)
+          let { numberOfPages, beginPageIndex } =
+            await readSettledPagination(page)
+          let stepsThatMovedTheNodeOnly = 0
+
+          for (const fontScale of FONT_SCALE_STEPS) {
+            await layOutAndSettle(page, { settings: { fontScale } })
+
+            expect(
+              await isCfiPositionVisible(page, cfi),
+              `whether the first node shown is on screen at a font scale of ${fontScale}`,
+            ).toBe(true)
+
+            const pagination = await readSettledPagination(page)
+
+            if (
+              pagination.numberOfPages === numberOfPages &&
+              pagination.beginPageIndex !== beginPageIndex
+            ) {
+              stepsThatMovedTheNodeOnly++
+            }
+
+            numberOfPages = pagination.numberOfPages
+            beginPageIndex = pagination.beginPageIndex
+          }
+
+          // A step that changes the number of pages changes the chapter's size,
+          // and the reader finds the node again after any size change.
+          expect(
+            stepsThatMovedTheNodeOnly,
+            "the number of steps that moved the node to another page and kept the chapter's number of pages",
+          ).toBeGreaterThan(0)
+        })
+
         test("turns through the pages in reading order", async ({ page }) => {
           await openBook(page, book, window)
           const { chapterIndex } = await goToLongChapter(page, book)

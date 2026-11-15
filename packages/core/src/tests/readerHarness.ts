@@ -182,7 +182,6 @@ export class TextDocumentRenderer extends DocumentRenderer {
       frameDocument.createRange(),
     )
 
-    rangePrototype.getBoundingClientRect = () => body.getBoundingClientRect()
     rangePrototype.getClientRects = () => body.getClientRects()
 
     return EMPTY

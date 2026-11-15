@@ -19,6 +19,12 @@ export const SPREAD_WINDOW: ScenarioWindow = {
   pagesPerScreen: 2,
 }
 
+/** A spread whose pages are half a pixel wider than a whole pixel count. */
+export const ODD_SPREAD_WINDOW: ScenarioWindow = {
+  size: { width: 1201, height: 800 },
+  pagesPerScreen: 2,
+}
+
 export const openBook = async (
   page: Page,
   book: ScenarioBook,
