@@ -25,6 +25,43 @@ const rewriteEachXhtmlPage =
   }
 
 /**
+ * Replaces `pattern` in a file of the fixture. A fixture without it would make
+ * a book that differs in no way, and the spec would blame the reader.
+ */
+const replaceInFixture = (
+  fixtureFile: string,
+  pattern: string,
+  replacement: string,
+) => {
+  if (!fixtureFile.includes(pattern)) {
+    throw new Error(`the fixture has no ${pattern}`)
+  }
+
+  return fixtureFile.replace(pattern, replacement)
+}
+
+const inOrder =
+  (...rewrites: RewrittenBook["rewrite"][]): RewrittenBook["rewrite"] =>
+  async (bookZip) => {
+    for (const rewrite of rewrites) await rewrite(bookZip)
+  }
+
+const makeSpineProgressRightToLeft = async (bookZip: JSZip) => {
+  const [packageDocument] = bookZip.file(/\.opf$/)
+
+  if (!packageDocument) throw new Error("the fixture has no package document")
+
+  bookZip.file(
+    packageDocument.name,
+    replaceInFixture(
+      await packageDocument.async("string"),
+      "<spine>",
+      '<spine page-progression-direction="rtl">',
+    ),
+  )
+}
+
+/**
  * Books made from a fixture by rewriting it, for the scenarios that need a
  * fixture to differ in one way. Each is served beside the files of
  * `public/epubs`, as one of them, so that a scenario opens it the same way
@@ -78,6 +115,39 @@ const REWRITTEN_BOOKS = new Map<string, RewrittenBook>([
         fixturePage.replace(
           "</head>",
           "<style>body, body * { font-family: sans-serif !important; }</style></head>",
+        ),
+      ),
+    },
+  ],
+  [
+    "accessible_epub_3-rtl.epub",
+    {
+      fixture: "accessible_epub_3.epub",
+      /**
+       * The columns of each page progress from right to left, as the spine
+       * does. The words stay English.
+       */
+      rewrite: inOrder(
+        makeSpineProgressRightToLeft,
+        rewriteEachXhtmlPage((fixturePage) =>
+          replaceInFixture(fixturePage, "<html ", '<html dir="rtl" '),
+        ),
+      ),
+    },
+  ],
+  [
+    "accessible_epub_3-vertical-rl.epub",
+    {
+      fixture: "accessible_epub_3.epub",
+      /** Vertical writing as in Japanese, where pages also turn from right to left. */
+      rewrite: inOrder(
+        makeSpineProgressRightToLeft,
+        rewriteEachXhtmlPage((fixturePage) =>
+          replaceInFixture(
+            fixturePage,
+            "</head>",
+            "<style>html { writing-mode: vertical-rl; }</style></head>",
+          ),
         ),
       ),
     },

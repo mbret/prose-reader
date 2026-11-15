@@ -17,22 +17,20 @@ import {
  * profile only.
  */
 
+test.skip(
+  ({ browserName, hasTouch }) => browserName !== "chromium" || !hasTouch,
+  "the touch screen is driven through the Chrome DevTools Protocol, on a touch profile",
+)
+
+// `playTouchGesture` holds the page's clock during a gesture.
+test.beforeEach(async ({ page }) => {
+  await page.clock.install()
+})
+
 const url = "http://localhost:3333/tests/gestures/pan/index.html"
 // portrait, so a single page spans the window and every touch lands on it
 const portraitWindow = { width: 400, height: 600 }
 const Y = 300
-
-const skipWithoutTouchScreen = ({
-  browserName,
-  hasTouch,
-}: {
-  browserName: string
-  hasTouch: boolean
-}) =>
-  test.skip(
-    browserName !== "chromium" || !hasTouch,
-    "the touch screen is driven through the Chrome DevTools Protocol, on a touch profile",
-  )
 
 const openFirstPage = async (page: Page, query = "") => {
   await page.setViewportSize(portraitWindow)
@@ -48,15 +46,11 @@ const readBeginSpineItemIndex = async (page: Page) =>
 test.describe("Given a comic on a touch screen, on its first page", () => {
   test("a finger dragged to the left turns to the next page", async ({
     page,
-    browserName,
-    hasTouch,
   }) => {
-    skipWithoutTouchScreen({ browserName, hasTouch })
     await openFirstPage(page)
 
     await playTouchGesture(page, {
       steps: touchSteps(touchPath({ x: 300, y: Y }, { x: 100, y: Y }, 10)),
-      stepDelays: 16,
     })
 
     await expect.poll(() => readBeginSpineItemIndex(page)).toBe(1)
@@ -64,10 +58,7 @@ test.describe("Given a comic on a touch screen, on its first page", () => {
 
   test("two fingers spread apart zoom the book, and not the page", async ({
     page,
-    browserName,
-    hasTouch,
   }) => {
-    skipWithoutTouchScreen({ browserName, hasTouch })
     await openFirstPage(page)
 
     await playTouchGesture(page, {
@@ -75,7 +66,6 @@ test.describe("Given a comic on a touch screen, on its first page", () => {
         touchPath({ x: 150, y: Y }, { x: 60, y: Y }, 10),
         touchPath({ x: 250, y: Y }, { x: 340, y: Y }, 10),
       ),
-      stepDelays: 16,
     })
 
     const reader = await getReader(page)
@@ -89,17 +79,12 @@ test.describe("Given a comic on a touch screen, on its first page", () => {
   test.describe("with swipe navigation", () => {
     test("a quick flick to the left turns to the next page", async ({
       page,
-      browserName,
-      hasTouch,
     }) => {
-      skipWithoutTouchScreen({ browserName, hasTouch })
       await openFirstPage(page, "?panNavigation=swipe")
 
-      // 300px in three steps, a frame apart: still a swipe at 100ms a step,
-      // should a runner be slow
       await playTouchGesture(page, {
         steps: touchSteps(touchPath({ x: 350, y: Y }, { x: 50, y: Y }, 3)),
-        stepDelays: 16,
+        timeBetweenSteps: 16,
       })
 
       await expect.poll(() => readBeginSpineItemIndex(page)).toBe(1)
@@ -108,24 +93,21 @@ test.describe("Given a comic on a touch screen, on its first page", () => {
     /**
      * gesturx reads a swipe's speed when the finger lifts, over its last
      * 100ms. Over the whole gesture, this one is too slow to swipe: 280px in
-     * more than 360ms, under gesturx's 0.9px/ms.
+     * 392ms, under gesturx's 0.9px/ms.
      */
     test("a slow drag that ends in a quick flick turns to the next page", async ({
       page,
-      browserName,
-      hasTouch,
     }) => {
-      skipWithoutTouchScreen({ browserName, hasTouch })
       await openFirstPage(page, "?panNavigation=swipe")
 
-      // 30px in at least 360ms, then 250px in two steps, a frame apart
+      // 30px in 360ms, then 250px in two steps, a frame apart
       const slowPart = touchPath({ x: 300, y: Y }, { x: 270, y: Y }, 6)
       const flick = touchPath({ x: 270, y: Y }, { x: 20, y: Y }, 2).slice(1)
 
       await playTouchGesture(page, {
         steps: touchSteps([...slowPart, ...flick]),
-        stepDelays: [
-          ...Array(slowPart.length).fill(60),
+        timeBetweenSteps: [
+          ...Array(slowPart.length - 1).fill(60),
           ...Array(flick.length).fill(16),
         ],
       })
@@ -153,10 +135,7 @@ test.describe("Given a comic in a landscape window, on a touch screen", () => {
 
   test("a vertical drag that starts beside the page keeps its pointer", async ({
     page,
-    browserName,
-    hasTouch,
   }) => {
-    skipWithoutTouchScreen({ browserName, hasTouch })
     await page.setViewportSize({ width: 900, height: 500 })
     await page.goto(url)
     await waitForSettled(page)

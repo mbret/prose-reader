@@ -21,6 +21,7 @@ import {
   removeStylePropertyIfPresent,
   setStylePropertyIfChanged,
 } from "../utils/dom"
+import { isShallowEqual } from "../utils/objects"
 import { ReactiveEntity } from "../utils/ReactiveEntity"
 import { observeResize } from "../utils/rxjs"
 import { shouldUseSpreadModeForViewport } from "./spreadMode"
@@ -181,16 +182,23 @@ export class Viewport extends ReactiveEntity<State> {
   public layout() {
     const size = this.measure()
     const isSpread = this.wouldSpreadAt(size)
+    const measuredPageSize = {
+      width: isSpread ? size.width / 2 : size.width,
+      height: size.height,
+    }
+    const isPageSizeUnchanged = isShallowEqual(
+      measuredPageSize,
+      this.value.pageSize,
+    )
 
     this.syncAbsoluteViewportCssVariables(size)
 
-    this.mergeCompare({
+    // Every layout reports a state, changed or not, as `state$` documents.
+    this.next({
+      ...this.value,
       ...size,
       isSpread,
-      pageSize: {
-        width: isSpread ? size.width / 2 : size.width,
-        height: size.height,
-      },
+      pageSize: isPageSizeUnchanged ? this.value.pageSize : measuredPageSize,
     })
     this.layoutSubject.next()
   }

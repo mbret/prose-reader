@@ -17,6 +17,32 @@ export const waitForSettled = async (page: Page) => {
 }
 
 /**
+ * Waits for the current result to settle, and reads the pages it shows in the
+ * same evaluation: a result read after its wait may already be withdrawn.
+ */
+export const readSettledPagination = async (page: Page) => {
+  const reader = await getReader(page)
+  const handle = await page.waitForFunction((reader) => {
+    const { isSettled, begin, end } = reader.pagination.state
+
+    if (!isSettled) return undefined
+
+    return {
+      spineItemIndex: begin.spineItemIndex,
+      beginPageIndex: begin.pageIndexInSpineItem,
+      endPageIndex: end.pageIndexInSpineItem,
+      numberOfPages: begin.numberOfPagesInSpineItem,
+      cfi: begin.cfi,
+    }
+  }, reader)
+  const pagination = await handle.jsonValue()
+
+  if (!pagination) throw new Error("no settled pagination result")
+
+  return pagination
+}
+
+/**
  * The reader exists, its current result has settled, and the layout that
  * result was found on is still the current one.
  */
