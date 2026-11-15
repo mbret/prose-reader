@@ -76,7 +76,7 @@ export class Snapshot extends Observable<HTMLElement> {
 
             const measure = options
             const { height, width } = item.layoutInfo
-            const numberOfPages = item.numberOfPages
+            const { numberOfPages } = item.pageGeometry
             const widthScaleFullFrame = (measure.width / width) * numberOfPages
             const heightScale = measure.height / height
 

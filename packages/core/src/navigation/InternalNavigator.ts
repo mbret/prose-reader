@@ -565,7 +565,6 @@ export class InternalNavigator extends DestroyableClass {
       withRestoredPosition({
         navigationResolver,
         settings,
-        context,
         spine,
         cfiManager,
       }),

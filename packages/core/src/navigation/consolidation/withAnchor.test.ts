@@ -53,7 +53,7 @@ const createSpine = ({
   const spineItem = {
     item,
     index: 0,
-    numberOfPages: 4,
+    pageGeometry: { numberOfPages: 4 },
     value: { isReady, loadStatus },
   }
   const spine = {
@@ -62,7 +62,7 @@ const createSpine = ({
       get: () => spineItem,
     },
     locator: {
-      spineItemLocator: { getSpineItemPageIndexFromNode: () => 3 },
+      getSpineItemPageIndexFromNode: () => 3,
       getVisibleSpineItemsFromPosition: () => ({
         beginIndex: 0,
         endIndex: 0,

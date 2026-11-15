@@ -573,8 +573,8 @@ describe("reading position and settled pagination", () => {
             spineItemIndex: begin.spineItemIndex ?? 0,
             pageIndex: begin.pageIndexInSpineItem ?? 0,
             numberOfPages:
-              reader.spineItemsManager.get(begin.spineItemIndex)
-                ?.numberOfPages ?? 1,
+              reader.spineItemsManager.get(begin.spineItemIndex)?.pageGeometry
+                .numberOfPages ?? 1,
           }),
         })
       })

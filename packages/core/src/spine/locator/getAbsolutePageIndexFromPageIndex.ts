@@ -28,7 +28,7 @@ export const getAbsolutePageIndexFromPageIndex = ({
     (acc, item) => {
       if (acc.found) return acc
 
-      const numberOfPages = item.numberOfPages
+      const { numberOfPages } = item.pageGeometry
 
       if (spineItem === item) {
         if (pageIndex <= numberOfPages - 1) {

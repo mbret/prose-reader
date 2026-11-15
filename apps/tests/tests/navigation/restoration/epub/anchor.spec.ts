@@ -1097,8 +1097,8 @@ test.describe("Given pages without a horizontal margin", () => {
 
         const pageIndexes = {
           lastPage:
-            (reader.spineItemsManager.get(chapterIndex)?.numberOfPages ?? 0) -
-            1,
+            (reader.spineItemsManager.get(chapterIndex)?.pageGeometry
+              .numberOfPages ?? 0) - 1,
           title: titlePageIndex,
           hiddenText: getPageIndex(hiddenText),
           hiddenImage: getPageIndex(hiddenImage),
@@ -1280,7 +1280,7 @@ const appendVideoAndGallery = async (page: Page, chapterIndex: number) => {
     gallery.append(image(), image())
     document.body.append(video, gallery)
 
-    const numberOfPagesBefore = spineItem.numberOfPages
+    const numberOfPagesBefore = spineItem.pageGeometry.numberOfPages
 
     reader.layout()
 
@@ -1374,7 +1374,7 @@ test.describe("Given an element without text holding content over several pages"
         throw new Error("no paragraph's text goes on to the next page")
 
       return {
-        lastPage: spineItem.numberOfPages - 1,
+        lastPage: spineItem.pageGeometry.numberOfPages - 1,
         video: getPageIndex(video, 0),
         afterVideoSource: getPageIndex(video, video.childNodes.length),
         firstImage: getPageIndex(firstImage, 0),

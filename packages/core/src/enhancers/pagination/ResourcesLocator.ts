@@ -88,12 +88,11 @@ export const consolidate = (
         spineItem.renditionLayout !== `pre-paginated` && node
 
       if (reflowableItemWithFoundNode) {
-        itemPageIndex =
-          reader.spine.locator.spineItemLocator.getSpineItemPageIndexFromNode(
-            node,
-            startOffset ?? 0,
-            spineItem,
-          )
+        itemPageIndex = reader.spine.locator.getSpineItemPageIndexFromNode(
+          node,
+          startOffset ?? 0,
+          spineItem,
+        )
       }
 
       let absolutePageIndex = resource?.absolutePageIndex

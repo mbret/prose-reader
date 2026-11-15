@@ -7,8 +7,6 @@ import {
   takeUntil,
   withLatestFrom,
 } from "rxjs"
-import type { Context } from "../context/Context"
-import type { SpineItemLocator } from "../spineItem/locationResolver"
 import type { SpineItem } from "../spineItem/SpineItem"
 import { SpineItemPageLayout } from "../spineItem/types"
 import { getFirstVisibleNodeForPositionRelativeTo } from "../utils/dom"
@@ -172,8 +170,6 @@ export class Pages extends ReactiveEntity<PagesState> {
   constructor(
     public readonly spineLayout: SpineLayout,
     public readonly spineItemsManager: SpineItemsManager,
-    public readonly spineItemLocator: SpineItemLocator,
-    public readonly context: Context,
     public readonly locator: SpineLocator,
     public readonly viewport: Viewport,
   ) {
@@ -192,18 +188,17 @@ export class Pages extends ReactiveEntity<PagesState> {
 
         const pages = spineItemsManager.items.reduce<UnresolvedPageEntry[]>(
           (acc, spineItem, itemIndex) => {
+            const { pageGeometry } = spineItem
+
             for (
               let pageIndex = 0;
-              pageIndex < spineItem.numberOfPages;
+              pageIndex < pageGeometry.numberOfPages;
               pageIndex += 1
             ) {
               // @todo handle vertical jp
               // top seems ok but left is not, it should probably not be 0 or something
               const pageSpineItemPosition =
-                spineItemLocator.getSpineItemPositionFromPageIndex({
-                  spineItem,
-                  pageIndex,
-                })
+                pageGeometry.getPositionFromPageIndex(pageIndex)
 
               const pageSpinePosition =
                 locator.getSpinePositionFromSpineItemPosition({

@@ -145,7 +145,7 @@ export const withAnchor =
         return undefined
 
       const pageIndex = node
-        ? spine.locator.spineItemLocator.getSpineItemPageIndexFromNode(
+        ? spine.locator.getSpineItemPageIndexFromNode(
             node,
             offset ?? 0,
             spineItem,
@@ -166,7 +166,7 @@ export const withAnchor =
         manifest: context.manifest,
         spineItemIndex: spineItem.index,
         pageIndex,
-        numberOfPages: spineItem.numberOfPages,
+        numberOfPages: spineItem.pageGeometry.numberOfPages,
       })
 
     /**
