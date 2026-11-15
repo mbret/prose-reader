@@ -8,15 +8,16 @@ import type { SpineItem } from "./SpineItem"
 
 /**
  * The first box a node lays out, from `offset` on: where it starts, on the
- * page it starts on. `undefined` when it isn't rendered: `display: none`, or
- * inside it. Its boxes as one rect would start on the last page the node
- * reaches when its pages run right to left.
+ * page it starts on. The rect around all its boxes has its left edge on the
+ * last page the node reaches when pages run right to left. `undefined` when
+ * the node isn't rendered: `display: none`, or inside it.
  *
- * A rect alone cannot tell the two apart. A node that isn't rendered
- * measures an empty rect at `x === 0`, the same `x` as rendered text at the
- * item's left edge, such as a page's first line without a horizontal margin.
- * Only a rendered node has client rects, whatever their size: an element
- * without one still has its box, a collapsed range in text its line's.
+ * A rect alone cannot tell a node that isn't rendered from one that is. A
+ * node that isn't rendered measures an empty rect at `x === 0`, the same `x`
+ * as rendered text at the item's left edge, such as a page's first line
+ * without a horizontal margin. Only a rendered node has client rects, whatever
+ * their size: an element without one still has its box, a collapsed range in
+ * text its line's.
  */
 const getRenderedRectOfNode = (node: Node, offset: number) => {
   const range = getRangeFromNode(node, offset)
@@ -35,7 +36,7 @@ const getRenderedRectOfNode = (node: Node, offset: number) => {
   /**
    * A range that selects no box in an element rendered all the same, such
    * as an `img`, which has no contents, or a `video`, whose sources lay out
-   * none: the element is measured itself.
+   * none: the element's own first box is measured.
    */
   return isHtmlElement(node) ? node.getClientRects()[0] : undefined
 }
@@ -104,8 +105,13 @@ export const getSpineItemPageIndexFromNode = (
 
   if (!renderedBox) return pageGeometry.numberOfPages - 1
 
+  const framePlacement = DocumentFramePlacement.measure({
+    itemElement: spineItem.containerElement,
+    frameElement: spineItem.renderer.getDocumentFrame(),
+  })
+
   return pageGeometry.getPageIndexFromPosition(
-    DocumentFramePlacement.measure(spineItem).toSpineItemPosition(renderedBox),
+    framePlacement.toSpineItemPosition(renderedBox),
   )
 }
 

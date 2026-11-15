@@ -14,7 +14,7 @@ const createGeometry = ({
 } = {}) =>
   new SpineItemPageGeometry({
     itemSize: { width: 1000, height: 800 },
-    pageSize: { width: 500, height: 400 },
+    viewportPageSize: { width: 500, height: 400 },
     isUsingVerticalWriting: () => isUsingVerticalWriting,
     isRTL: false,
     pageTurnDirection: "horizontal",
@@ -25,6 +25,21 @@ const createGeometry = ({
 const position = (x: number, y: number) => new SpineItemPosition({ x, y })
 
 describe("SpineItemPageGeometry", () => {
+  describe("pageSize", () => {
+    it("is the viewport's page size for horizontal writing", () => {
+      expect(createGeometry().pageSize).toEqual({ width: 500, height: 400 })
+    })
+
+    it("is as wide as the item for vertical writing, as in a spread", () => {
+      expect(
+        createGeometry({
+          isUsingVerticalWriting: true,
+          itemSize: { width: 1000, height: 2000 },
+        }).pageSize,
+      ).toEqual({ width: 1000, height: 400 })
+    })
+  })
+
   describe("numberOfPages", () => {
     it("counts whole pages across the width", () => {
       expect(
@@ -70,7 +85,8 @@ describe("SpineItemPageGeometry", () => {
         createGeometry({ itemSize: { width: 0, height: 0 } }).numberOfPages,
       ).toBe(1)
       expect(
-        createGeometry({ pageSize: { width: 0, height: 0 } }).numberOfPages,
+        createGeometry({ viewportPageSize: { width: 0, height: 0 } })
+          .numberOfPages,
       ).toBe(1)
       expect(
         createGeometry({ itemSize: { width: 400, height: 400 } }).numberOfPages,
@@ -167,7 +183,7 @@ describe("SpineItemPageGeometry", () => {
       ).toBe(0)
       expect(
         createGeometry({
-          pageSize: { width: 0, height: 0 },
+          viewportPageSize: { width: 0, height: 0 },
         }).getPageIndexFromPosition(position(300, 0)),
       ).toBe(0)
     })
@@ -175,7 +191,7 @@ describe("SpineItemPageGeometry", () => {
     it("handles a page width that is not a whole number", () => {
       const geometry = createGeometry({
         itemSize: { width: 202, height: 400 },
-        pageSize: { width: 50.5, height: 400 },
+        viewportPageSize: { width: 50.5, height: 400 },
       })
 
       expect(geometry.getPageIndexFromPosition(position(50, 0))).toBe(0)
@@ -360,7 +376,7 @@ describe("SpineItemPageGeometry", () => {
     it("is the item's start while the page has no size", () => {
       expect(
         createGeometry({
-          pageSize: { width: 0, height: 0 },
+          viewportPageSize: { width: 0, height: 0 },
         }).snapPositionToPageGrid(position(300, 300)),
       ).toMatchObject({ x: 0, y: 0 })
     })
@@ -371,7 +387,7 @@ describe("SpineItemPageGeometry", () => {
       const isUsingVerticalWriting = vi.fn(() => false)
       const geometry = new SpineItemPageGeometry({
         itemSize: { width: 1500, height: 400 },
-        pageSize: { width: 500, height: 400 },
+        viewportPageSize: { width: 500, height: 400 },
         isUsingVerticalWriting,
         isRTL: false,
         pageTurnDirection: "horizontal",

@@ -1,19 +1,52 @@
 import { getRenderedScale } from "../utils/coordinates"
-import type { SpineItem } from "./SpineItem"
+import type { Box } from "../utils/dom"
 import { SpineItemPosition } from "./types"
 
-type Box = { left: number; right: number; top: number; bottom: number }
+/**
+ * The layout size of an element, before any transform, from its computed
+ * style. `offsetWidth` and `offsetHeight` round it to whole pixels, while its
+ * rendered size is not rounded: a page half of an odd window width would
+ * measure a scale where there is none.
+ */
+const getLayoutSize = (element: HTMLElement) => {
+  const style = element.ownerDocument.defaultView?.getComputedStyle(element)
+
+  return {
+    width: Number.parseFloat(style?.width ?? ""),
+    height: Number.parseFloat(style?.height ?? ""),
+  }
+}
+
+/**
+ * The scale an element is rendered at, on each axis, from its rendered box
+ * and its layout size.
+ */
+const getRenderedScaleOfElement = (element: HTMLElement, rect: DOMRect) => {
+  const layoutSize = getLayoutSize(element)
+
+  return {
+    x: getRenderedScale({
+      renderedSize: rect.width,
+      layoutSize: layoutSize.width,
+    }),
+    y: getRenderedScale({
+      renderedSize: rect.height,
+      layoutSize: layoutSize.height,
+    }),
+  }
+}
 
 /**
  * Where the document frame of a spine item sits in the item, as it is
  * rendered: the item position of the frame's top-left corner, and the scale
  * of the frame in the item. A renderer can move the frame in its item, as it
- * does for a blank page before the text in a spread, and scale it, as it does
- * for a pre-paginated page that fits the page.
+ * does to leave a blank page to its left in a spread, and scale it, as it
+ * does to fit a document with a fixed viewport, such as a pre-paginated page,
+ * into the page.
  *
- * A rect measured in the frame's document, with `getClientRects()`, is in the
- * frame's coordinates. This converts it to the item's coordinates, and a box
- * of the item back to the frame's.
+ * `getClientRects()` measures a node in the frame's coordinates. This converts
+ * a point of the frame to the item's coordinates, and a box of the item to the
+ * frame's.
  */
 export class DocumentFramePlacement {
   constructor(
@@ -24,44 +57,33 @@ export class DocumentFramePlacement {
   ) {}
 
   /**
-   * Measures it from the rendered boxes of the frame and of the item, so it
-   * holds whatever transforms the spine and its ancestors have. An item
-   * without a frame has its document at its top-left corner, unscaled.
+   * Measures it from the rendered boxes of the frame and of the item's
+   * element, so it holds whatever transforms the spine and its ancestors
+   * have. Without a frame, it moves and scales nothing.
    */
-  static measure(spineItem: SpineItem) {
-    const frame = spineItem.renderer.getDocumentFrame()
+  static measure({
+    itemElement,
+    frameElement,
+  }: {
+    itemElement: HTMLElement
+    frameElement: HTMLElement | undefined
+  }) {
+    if (!frameElement) return new DocumentFramePlacement(0, 0, 1, 1)
 
-    if (!frame) return new DocumentFramePlacement(0, 0, 1, 1)
-
-    const { containerElement } = spineItem
-    const itemRect = containerElement.getBoundingClientRect()
-    const frameRect = frame.getBoundingClientRect()
-    const itemScaleX = getRenderedScale({
-      renderedSize: itemRect.width,
-      layoutSize: containerElement.offsetWidth,
-    })
-    const itemScaleY = getRenderedScale({
-      renderedSize: itemRect.height,
-      layoutSize: containerElement.offsetHeight,
-    })
-    const frameScaleX = getRenderedScale({
-      renderedSize: frameRect.width,
-      layoutSize: frame.offsetWidth,
-    })
-    const frameScaleY = getRenderedScale({
-      renderedSize: frameRect.height,
-      layoutSize: frame.offsetHeight,
-    })
+    const itemRect = itemElement.getBoundingClientRect()
+    const frameRect = frameElement.getBoundingClientRect()
+    const itemScale = getRenderedScaleOfElement(itemElement, itemRect)
+    const frameScale = getRenderedScaleOfElement(frameElement, frameRect)
 
     return new DocumentFramePlacement(
-      (frameRect.left - itemRect.left) / itemScaleX,
-      (frameRect.top - itemRect.top) / itemScaleY,
-      frameScaleX / itemScaleX,
-      frameScaleY / itemScaleY,
+      (frameRect.left - itemRect.left) / itemScale.x,
+      (frameRect.top - itemRect.top) / itemScale.y,
+      frameScale.x / itemScale.x,
+      frameScale.y / itemScale.y,
     )
   }
 
-  /** A point of the frame's document, in the item. */
+  /** A point of the frame, in the item. */
   toSpineItemPosition({ x, y }: { x: number; y: number }) {
     return new SpineItemPosition({
       x: this.x + x * this.scaleX,
@@ -69,8 +91,8 @@ export class DocumentFramePlacement {
     })
   }
 
-  /** A box of the item, in the frame's document. */
-  toDocumentBox({ left, right, top, bottom }: Box): Box {
+  /** A box of the item, in the frame. */
+  toFrameBox({ left, right, top, bottom }: Box): Box {
     return {
       left: (left - this.x) / this.scaleX,
       right: (right - this.x) / this.scaleX,

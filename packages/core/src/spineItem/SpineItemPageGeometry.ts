@@ -7,7 +7,8 @@ type Size = { width: number; height: number }
 
 export type SpineItemPageGeometryParams = {
   itemSize: Size
-  pageSize: Size
+  /** The size of a page of the viewport: half its width in a spread. */
+  viewportPageSize: Size
   /**
    * Called only by the methods that need it, at most once: reading the
    * writing mode of a loaded document reads its computed style.
@@ -54,8 +55,8 @@ const getPageStartAlongAxis = (
 ) => Math.max(0, Math.min(itemLength - pageLength, pageIndex * pageLength))
 
 /**
- * How a spine item divides into pages of the viewport's page size, and where
- * a position in the item falls among them.
+ * How a spine item divides into pages of `pageSize`, and where a position in
+ * the item falls among them.
  *
  * Pages are placed from the top down for vertical writing, and across the
  * item otherwise, from its right edge in a right-to-left book. Positions are
@@ -84,29 +85,30 @@ export class SpineItemPageGeometry {
    * width.
    */
   get numberOfPages() {
-    const { itemSize, pageSize, pageTurnDirection, pageTurnMode } = this.params
+    const { itemSize, viewportPageSize, pageTurnDirection, pageTurnMode } =
+      this.params
 
     if (pageTurnDirection === "vertical" && pageTurnMode === "scrollable") {
       return 1
     }
 
     if (this.isUsingVerticalWriting || pageTurnDirection === "vertical") {
-      return getNumberOfPagesAlongAxis(itemSize.height, pageSize.height)
+      return getNumberOfPagesAlongAxis(itemSize.height, viewportPageSize.height)
     }
 
-    return getNumberOfPagesAlongAxis(itemSize.width, pageSize.width)
+    return getNumberOfPagesAlongAxis(itemSize.width, viewportPageSize.width)
   }
 
   /**
    * The size of each page of the item. A page of vertical writing is as wide
-   * as the item: in a spread, its lines run across both halves.
+   * as the item: in a spread, its lines fill both halves.
    */
   get pageSize(): Size {
-    const { itemSize, pageSize } = this.params
+    const { itemSize, viewportPageSize } = this.params
 
     return this.isUsingVerticalWriting
-      ? { width: itemSize.width, height: pageSize.height }
-      : pageSize
+      ? { width: itemSize.width, height: viewportPageSize.height }
+      : viewportPageSize
   }
 
   /**
@@ -114,21 +116,21 @@ export class SpineItemPageGeometry {
    * on its nearest page.
    */
   getPageIndexFromPosition(position: SpineItemPosition) {
-    const { itemSize, pageSize, isRTL } = this.params
+    const { itemSize, viewportPageSize, isRTL } = this.params
     const positionInItem = clampPositionInSpineItem(position, itemSize)
     const { numberOfPages } = this
 
     if (this.isUsingVerticalWriting) {
       return getPageIndexAlongAxis(
         positionInItem.y,
-        pageSize.height,
+        viewportPageSize.height,
         numberOfPages,
       )
     }
 
     const pageIndexFromLeft = getPageIndexAlongAxis(
       positionInItem.x,
-      pageSize.width,
+      viewportPageSize.width,
       numberOfPages,
     )
 
@@ -140,18 +142,22 @@ export class SpineItemPageGeometry {
    * the last page gives the last page.
    */
   getPositionFromPageIndex(pageIndex: number) {
-    const { itemSize, pageSize, isRTL } = this.params
+    const { itemSize, viewportPageSize, isRTL } = this.params
 
     if (this.isUsingVerticalWriting) {
       return new SpineItemPosition({
         x: 0,
-        y: getPageStartAlongAxis(pageIndex, pageSize.height, itemSize.height),
+        y: getPageStartAlongAxis(
+          pageIndex,
+          viewportPageSize.height,
+          itemSize.height,
+        ),
       })
     }
 
     const pageStartFromLeft = getPageStartAlongAxis(
       pageIndex,
-      pageSize.width,
+      viewportPageSize.width,
       itemSize.width,
     )
 
@@ -162,7 +168,7 @@ export class SpineItemPageGeometry {
      */
     return new SpineItemPosition({
       x: isRTL
-        ? itemSize.width - pageStartFromLeft - pageSize.width
+        ? itemSize.width - pageStartFromLeft - viewportPageSize.width
         : pageStartFromLeft,
       y: 0,
     })
@@ -185,22 +191,22 @@ export class SpineItemPageGeometry {
    * position shows the item from there.
    */
   snapPositionToPageGrid(position: SpineItemPosition) {
-    const { itemSize, pageSize } = this.params
+    const { itemSize, viewportPageSize } = this.params
 
     return new SpineItemPosition({
       x:
-        pageSize.width *
+        viewportPageSize.width *
         getPageIndexAlongAxis(
           position.x,
-          pageSize.width,
-          getNumberOfPagesAlongAxis(itemSize.width, pageSize.width),
+          viewportPageSize.width,
+          getNumberOfPagesAlongAxis(itemSize.width, viewportPageSize.width),
         ),
       y:
-        pageSize.height *
+        viewportPageSize.height *
         getPageIndexAlongAxis(
           position.y,
-          pageSize.height,
-          getNumberOfPagesAlongAxis(itemSize.height, pageSize.height),
+          viewportPageSize.height,
+          getNumberOfPagesAlongAxis(itemSize.height, viewportPageSize.height),
         ),
     })
   }
@@ -221,7 +227,7 @@ export const createSpineItemPageGeometry = ({
 }) =>
   new SpineItemPageGeometry({
     itemSize,
-    pageSize: viewport.pageSize,
+    viewportPageSize: viewport.pageSize,
     isUsingVerticalWriting,
     isRTL: context.isRTL(),
     pageTurnDirection: settings.values.computedPageTurnDirection,
