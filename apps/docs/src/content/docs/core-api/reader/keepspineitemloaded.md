@@ -57,7 +57,7 @@ if (item) {
     )
     .subscribe(() => {
       // a reflowable item's pages are only measured while it is loaded
-      console.log(item.numberOfPages)
+      console.log(item.pageGeometry.numberOfPages)
     })
 }
 ```

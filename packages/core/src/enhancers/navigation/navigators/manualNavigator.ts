@@ -42,8 +42,6 @@ export class ManualNavigator {
       context: this.reader.context,
       navigationResolver: this.reader.navigation.navigationResolver,
       position: navigation.position,
-      computedPageTurnDirection:
-        this.reader.settings.values.computedPageTurnDirection,
       spineItem,
       spineItemsManager: this.reader.spineItemsManager,
       spineLocator: this.reader.spine.locator,

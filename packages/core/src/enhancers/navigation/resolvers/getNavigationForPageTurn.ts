@@ -12,10 +12,6 @@ import type { SpineItem } from "../../../spineItem/SpineItem"
 import { SpineItemPosition } from "../../../spineItem/types"
 import type { Viewport } from "../../../viewport/Viewport"
 
-/**
- * Where a page turn goes: to the left, or up when pages turn vertically, or
- * to the right, or down.
- */
 export type PageTurnSide = "leftOrTop" | "rightOrBottom"
 
 /**
@@ -23,10 +19,10 @@ export type PageTurnSide = "leftOrTop" | "rightOrBottom"
  * its item, or past the item's edge when it has no page there.
  *
  * @important
- * The page on the right of vertical writing is the one above it, and the
- * page on its left the one below. With a vertical page turn, an item one page
- * wide has no page on either side, so a turn goes past its edge: down for a
- * turn to the right, up for a turn to the left.
+ * In vertical writing, the page on the right is the one above and the page on
+ * the left the one below. With a vertical page turn, an item in horizontal
+ * writing one page wide has no page on either side, so a turn goes past its
+ * edge: down for a turn to the right, up for a turn to the left.
  */
 const getNavigationForSinglePageTurn = ({
   side,
@@ -40,7 +36,7 @@ const getNavigationForSinglePageTurn = ({
   side: PageTurnSide
   position: SpinePosition | UnboundSpinePosition
   navigationResolver: NavigationResolver
-  computedPageTurnDirection: "horizontal" | "vertical"
+  computedPageTurnDirection: ComputedCoreSettings["computedPageTurnDirection"]
   spineItemsManager: SpineItemsManager
   spineLocator: SpineLocator
   viewport: Viewport
@@ -55,7 +51,7 @@ const getNavigationForSinglePageTurn = ({
     position,
     spineItem,
   )
-  const spineItemPositionOnSide = spineItem.pageGeometry.getClosestPageStart(
+  const spineItemPositionOnSide = spineItem.pageGeometry.snapPositionToPageGrid(
     spineItem.isUsingVerticalWriting()
       ? new SpineItemPosition({
           x: spineItemPosition.x,
@@ -91,8 +87,6 @@ const getNavigationForSinglePageTurn = ({
 }
 
 /**
- * The position a page turn to `side` goes to from `position`.
- *
  * Very naive approach for spread. It could be optimized but by using this approach
  * we do not add complexity to the code and use the current logic to handle it correctly.
  *
@@ -107,7 +101,6 @@ export const getNavigationForPageTurn = ({
   navigationResolver,
   spineItemsManager,
   spineLocator,
-  computedPageTurnDirection,
   viewport,
   settings,
 }: {
@@ -118,7 +111,6 @@ export const getNavigationForPageTurn = ({
   spineItemsManager: SpineItemsManager
   navigationResolver: NavigationResolver
   spineLocator: SpineLocator
-  computedPageTurnDirection: "horizontal" | "vertical"
   viewport: Viewport
   settings: SettingsInterface<
     CoreInputSettings,
@@ -126,6 +118,7 @@ export const getNavigationForPageTurn = ({
   >
 }): SpinePosition | UnboundSpinePosition => {
   const sideSign = side === "rightOrBottom" ? 1 : -1
+  const { computedPageTurnDirection } = settings.values
 
   if (
     settings.values.computedPageTurnMode === "scrollable" &&

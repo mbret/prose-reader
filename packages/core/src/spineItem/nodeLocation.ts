@@ -4,6 +4,7 @@ import {
   isHtmlElement,
 } from "../utils/dom"
 import type { SpineItem } from "./SpineItem"
+import type { SpineItemPageGeometry } from "./SpineItemPageGeometry"
 import { SpineItemPosition } from "./types"
 
 /**
@@ -83,6 +84,23 @@ const getRenderedRectAfterNode = (node: Node) => {
   return undefined
 }
 
+const getPageStartOfNode = (
+  node: Node,
+  offset: number,
+  pageGeometry: SpineItemPageGeometry,
+) => {
+  const renderedRect =
+    getRenderedRectOfNode(node, offset) ?? getRenderedRectAfterNode(node)
+
+  if (!renderedRect)
+    return pageGeometry.getPositionFromPageIndex(pageGeometry.numberOfPages - 1)
+
+  // @todo vertical
+  return pageGeometry.snapPositionToPageGrid(
+    new SpineItemPosition({ x: renderedRect.x, y: 0 }),
+  )
+}
+
 /**
  * Where the page holding a node, from `offset` on, starts in its item.
  *
@@ -95,28 +113,16 @@ export const getSpineItemPositionFromNode = (
   node: Node,
   offset: number,
   spineItem: SpineItem,
-) => {
-  const { pageGeometry } = spineItem
-  const renderedRect =
-    getRenderedRectOfNode(node, offset) ?? getRenderedRectAfterNode(node)
+) => getPageStartOfNode(node, offset, spineItem.pageGeometry)
 
-  if (!renderedRect)
-    return pageGeometry.getPositionFromPageIndex(pageGeometry.numberOfPages - 1)
-
-  // @todo vertical
-  return pageGeometry.getClosestPageStart(
-    new SpineItemPosition({ x: renderedRect.x, y: 0 }),
-  )
-}
-
-/**
- * The index of the page holding a node, from `offset` on, in its item.
- */
 export const getSpineItemPageIndexFromNode = (
   node: Node,
   offset: number,
   spineItem: SpineItem,
-) =>
-  spineItem.pageGeometry.getPageIndexFromPosition(
-    getSpineItemPositionFromNode(node, offset, spineItem),
+) => {
+  const { pageGeometry } = spineItem
+
+  return pageGeometry.getPageIndexFromPosition(
+    getPageStartOfNode(node, offset, pageGeometry),
   )
+}

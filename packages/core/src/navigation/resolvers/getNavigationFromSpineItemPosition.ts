@@ -16,7 +16,7 @@ export const getNavigationFromSpineItemPosition = ({
   viewport: Viewport
 }) => {
   const navigationInSpineItem =
-    spineItem.pageGeometry.getClosestPageStart(spineItemPosition)
+    spineItem.pageGeometry.snapPositionToPageGrid(spineItemPosition)
 
   const spinePosition = spineLocator.getSpinePositionFromSpineItemPosition({
     spineItemPosition: navigationInSpineItem,

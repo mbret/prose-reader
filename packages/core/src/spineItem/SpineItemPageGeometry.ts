@@ -8,15 +8,16 @@ type Size = { width: number; height: number }
 export type SpineItemPageGeometryParams = {
   itemSize: Size
   pageSize: Size
-  isUsingVerticalWriting: boolean
+  /**
+   * Called only by the methods that need it, at most once: reading the
+   * writing mode of a loaded document reads its computed style.
+   */
+  isUsingVerticalWriting: () => boolean
   isRTL: boolean
   pageTurnDirection: "horizontal" | "vertical"
   pageTurnMode: "controlled" | "scrollable"
 }
 
-/**
- * A position held within an item: from 0 to its width and its height.
- */
 export const clampPositionInSpineItem = (
   position: SpineItemPosition,
   itemSize: Size,
@@ -26,20 +27,12 @@ export const clampPositionInSpineItem = (
     y: Math.min(Math.max(0, position.y), itemSize.height),
   })
 
-/**
- * How many pages of `pageLength` fit in `itemLength`: only whole pages, and
- * at least one, as an item with no size yet has.
- */
 const getNumberOfPagesAlongAxis = (itemLength: number, pageLength: number) => {
   if (!itemLength || !pageLength) return 1
 
   return Math.floor(Math.max(1, itemLength / pageLength))
 }
 
-/**
- * The index of the page holding an offset along one axis, counted from the
- * axis origin: the first page before it, the last page after it.
- */
 const getPageIndexAlongAxis = (
   offset: number,
   pageLength: number,
@@ -54,10 +47,6 @@ const getPageIndexAlongAxis = (
   return numberOfPages - 1
 }
 
-/**
- * Where a page starts along one axis, counted from the axis origin. A page
- * after the last one starts where the last one does.
- */
 const getPageStartAlongAxis = (
   pageIndex: number,
   pageLength: number,
@@ -73,37 +62,39 @@ const getPageStartAlongAxis = (
  * in the item's own coordinates, from its top-left corner.
  */
 export class SpineItemPageGeometry {
-  /**
-   * At least one. An item has one page when the book scrolls vertically. The
-   * pages are counted down the item's height for vertical writing or a
-   * vertical page turn, and across its width otherwise. So with a vertical
-   * page turn and horizontal writing, the count reads the height while the
-   * methods below place the pages across the width.
-   */
-  public readonly numberOfPages: number
+  private isUsingVerticalWritingValue: boolean | undefined
 
-  constructor(private readonly params: SpineItemPageGeometryParams) {
-    const {
-      itemSize,
-      pageSize,
-      isUsingVerticalWriting,
-      pageTurnDirection,
-      pageTurnMode,
-    } = params
+  constructor(private readonly params: SpineItemPageGeometryParams) {}
+
+  private get isUsingVerticalWriting() {
+    this.isUsingVerticalWritingValue ??= this.params.isUsingVerticalWriting()
+
+    return this.isUsingVerticalWritingValue
+  }
+
+  /**
+   * At least one. It counts a blank page laid out before or after the item
+   * in a spread.
+   *
+   * It is one when the `pageTurnMode` setting is `scrollable` with a
+   * vertical page turn. Otherwise the pages are counted down the item's
+   * height for vertical writing or a vertical page turn, and across its width
+   * for the rest. So with a vertical page turn and horizontal writing, the
+   * count reads the height while the methods below place the pages across the
+   * width.
+   */
+  get numberOfPages() {
+    const { itemSize, pageSize, pageTurnDirection, pageTurnMode } = this.params
 
     if (pageTurnDirection === "vertical" && pageTurnMode === "scrollable") {
-      this.numberOfPages = 1
-    } else if (isUsingVerticalWriting || pageTurnDirection === "vertical") {
-      this.numberOfPages = getNumberOfPagesAlongAxis(
-        itemSize.height,
-        pageSize.height,
-      )
-    } else {
-      this.numberOfPages = getNumberOfPagesAlongAxis(
-        itemSize.width,
-        pageSize.width,
-      )
+      return 1
     }
+
+    if (this.isUsingVerticalWriting || pageTurnDirection === "vertical") {
+      return getNumberOfPagesAlongAxis(itemSize.height, pageSize.height)
+    }
+
+    return getNumberOfPagesAlongAxis(itemSize.width, pageSize.width)
   }
 
   /**
@@ -111,26 +102,25 @@ export class SpineItemPageGeometry {
    * on its nearest page.
    */
   getPageIndexFromPosition(position: SpineItemPosition) {
-    const { itemSize, pageSize, isUsingVerticalWriting, isRTL } = this.params
+    const { itemSize, pageSize, isRTL } = this.params
     const positionInItem = clampPositionInSpineItem(position, itemSize)
+    const { numberOfPages } = this
 
-    if (isUsingVerticalWriting) {
+    if (this.isUsingVerticalWriting) {
       return getPageIndexAlongAxis(
         positionInItem.y,
         pageSize.height,
-        this.numberOfPages,
+        numberOfPages,
       )
     }
 
     const pageIndexFromLeft = getPageIndexAlongAxis(
       positionInItem.x,
       pageSize.width,
-      this.numberOfPages,
+      numberOfPages,
     )
 
-    return isRTL
-      ? this.numberOfPages - 1 - pageIndexFromLeft
-      : pageIndexFromLeft
+    return isRTL ? numberOfPages - 1 - pageIndexFromLeft : pageIndexFromLeft
   }
 
   /**
@@ -138,9 +128,9 @@ export class SpineItemPageGeometry {
    * the last page gives the last page.
    */
   getPositionFromPageIndex(pageIndex: number) {
-    const { itemSize, pageSize, isUsingVerticalWriting, isRTL } = this.params
+    const { itemSize, pageSize, isRTL } = this.params
 
-    if (isUsingVerticalWriting) {
+    if (this.isUsingVerticalWriting) {
       return new SpineItemPosition({
         x: 0,
         y: getPageStartAlongAxis(pageIndex, pageSize.height, itemSize.height),
@@ -161,10 +151,7 @@ export class SpineItemPageGeometry {
     })
   }
 
-  /**
-   * A position relative to the top-left corner of a page. It is outside the
-   * page when the position is.
-   */
+  /** A position relative to the top-left corner of a page. */
   getPositionInPage(position: SpineItemPosition, pageIndex: number) {
     const pageStart = this.getPositionFromPageIndex(pageIndex)
 
@@ -175,11 +162,12 @@ export class SpineItemPageGeometry {
   }
 
   /**
-   * The start of the page a position falls on: each axis snapped to a grid
-   * of pages laid from the item's top-left corner, and held within the item.
-   * This is where a navigation to that position shows the item from.
+   * Each axis of a position moved back to a multiple of the page size, and
+   * held within the item: a grid of pages laid from the item's top-left
+   * corner, whatever the writing mode and the page count. A navigation to the
+   * position shows the item from there.
    */
-  getClosestPageStart(position: SpineItemPosition) {
+  snapPositionToPageGrid(position: SpineItemPosition) {
     const { itemSize, pageSize } = this.params
 
     return new SpineItemPosition({
@@ -201,10 +189,6 @@ export class SpineItemPageGeometry {
   }
 }
 
-/**
- * The page geometry of an item of `itemSize`, at the viewport's current page
- * size, with the book's current direction and page turn settings.
- */
 export const createSpineItemPageGeometry = ({
   itemSize,
   isUsingVerticalWriting,
@@ -213,7 +197,7 @@ export const createSpineItemPageGeometry = ({
   viewport,
 }: {
   itemSize: Size
-  isUsingVerticalWriting: boolean
+  isUsingVerticalWriting: () => boolean
   context: Context
   settings: ReaderSettingsManager
   viewport: Viewport

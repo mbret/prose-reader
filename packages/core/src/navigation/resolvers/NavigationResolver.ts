@@ -87,22 +87,14 @@ export const createNavigationResolver = ({
     return getNavigationForNode({ spineItem, node, offset })
   }
 
-  const getNavigationForLastPage = (spineItem: SpineItem): SpinePosition => {
-    const { pageGeometry } = spineItem
-    const spineItemNavigation = pageGeometry.getPositionFromPageIndex(
-      pageGeometry.numberOfPages - 1,
-    )
-    const position = locator.getSpinePositionFromSpineItemPosition({
-      spineItemPosition: spineItemNavigation,
-      spineItem,
+  const getNavigationForLastPage = (spineItem: SpineItem): SpinePosition =>
+    getNavigationForSpineItemPage({
+      pageIndex: spineItem.pageGeometry.numberOfPages - 1,
+      spineItemId: spineItem,
+      spineItemsManager,
+      spineLocator: locator,
+      viewport,
     })
-
-    return getAdjustedPositionForSpread({
-      position,
-      pageSizeWidth: viewport.pageSize.width,
-      visibleAreaRectWidth: viewport.absoluteViewport.width,
-    })
-  }
 
   const getNavigationForSpineIndexOrId = (
     indexOrId: number | string | SpineItem,

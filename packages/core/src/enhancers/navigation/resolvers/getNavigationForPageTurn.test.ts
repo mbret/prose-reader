@@ -15,11 +15,33 @@ import {
   createTestManifestSpineItems,
 } from "../../../tests/utils"
 import { Viewport } from "../../../viewport/Viewport"
-import { getNavigationForPageTurn } from "./getNavigationForPageTurn"
+import {
+  getNavigationForPageTurn,
+  type PageTurnSide,
+} from "./getNavigationForPageTurn"
 
-const createContext = () => {
+/**
+ * One spine item at the origin of the spine. Its size and how its text is
+ * written are set, since no document loads.
+ */
+const createContext = ({
+  pageTurnMode = "scrollable",
+  spreadMode = "never",
+  readingDirection = "ltr",
+  viewportWidth = 100,
+  itemSize = { width: 200, height: 250 },
+  isUsingVerticalWriting = false,
+}: {
+  pageTurnMode?: "scrollable" | "controlled"
+  spreadMode?: "never" | "always"
+  readingDirection?: "ltr" | "rtl"
+  viewportWidth?: number
+  itemSize?: { width: number; height: number }
+  isUsingVerticalWriting?: boolean
+} = {}) => {
   const context = new Context(
     createTestManifest({
+      readingDirection,
       spineItems: createTestManifestSpineItems([
         { href: "item.xhtml", id: "item" },
       ]),
@@ -27,7 +49,9 @@ const createContext = () => {
   )
   const settings = new ReaderSettingsManager(
     {
-      pageTurnMode: "scrollable",
+      pageTurnMode,
+      spreadMode,
+      pageTurnAnimation: "none",
     },
     context,
   )
@@ -46,22 +70,24 @@ const createContext = () => {
   if (!spineItem) throw new Error("Expected one spine item from the manifest")
 
   const spineItemLayout = new SpineItemSpineLayout({
-    bottom: 250,
-    height: 250,
+    bottom: itemSize.height,
+    height: itemSize.height,
     left: 0,
-    right: 200,
+    right: itemSize.width,
     top: 0,
-    width: 200,
+    width: itemSize.width,
     x: 0,
     y: 0,
   })
 
-  vi.spyOn(viewport.value.element, "clientWidth", "get").mockReturnValue(100)
+  vi.spyOn(viewport.value.element, "clientWidth", "get").mockReturnValue(
+    viewportWidth,
+  )
   vi.spyOn(viewport.value.element, "clientHeight", "get").mockReturnValue(100)
-  vi.spyOn(spineItem, "layoutInfo", "get").mockReturnValue({
-    height: 250,
-    width: 200,
-  })
+  vi.spyOn(spineItem, "layoutInfo", "get").mockReturnValue(itemSize)
+  vi.spyOn(spineItem, "isUsingVerticalWriting").mockReturnValue(
+    isUsingVerticalWriting,
+  )
   vi.spyOn(spine, "getSpineItemSpineLayoutInfo").mockReturnValue(
     spineItemLayout,
   )
@@ -104,7 +130,6 @@ describe("getNavigationForPageTurn to the right or bottom", () => {
 
     const target = getNavigationForPageTurn({
       side: "rightOrBottom",
-      computedPageTurnDirection: settings.values.computedPageTurnDirection,
       context,
       navigationResolver,
       position: currentBottomPosition,
@@ -140,7 +165,6 @@ describe("getNavigationForPageTurn to the left or top", () => {
 
     const target = getNavigationForPageTurn({
       side: "leftOrTop",
-      computedPageTurnDirection: settings.values.computedPageTurnDirection,
       context,
       navigationResolver,
       position: currentTopPosition,
@@ -158,5 +182,126 @@ describe("getNavigationForPageTurn to the left or top", () => {
         viewport.relativeViewport,
       ),
     ).toMatchObject(currentTopPosition)
+  })
+})
+
+/**
+ * Pages of 100 by 100. The single turn steps one page inside the item, or
+ * past its edge when it has no page on that side.
+ */
+const turn = (
+  side: PageTurnSide,
+  from: { x: number; y: number },
+  options: Parameters<typeof createContext>[0],
+) => {
+  const {
+    context,
+    navigationResolver,
+    settings,
+    spine,
+    spineItem,
+    spineItemsManager,
+    viewport,
+  } = createContext({ pageTurnMode: "controlled", ...options })
+
+  const { x, y } = getNavigationForPageTurn({
+    side,
+    context,
+    navigationResolver,
+    position: new UnboundSpinePosition(from),
+    settings,
+    spineItem,
+    spineItemsManager,
+    spineLocator: spine.locator,
+    viewport,
+  })
+
+  return { x, y }
+}
+
+describe("Given a controlled page turn across an item two pages wide", () => {
+  const options = { itemSize: { width: 200, height: 100 } }
+
+  it("turns to the next page on the right, then past the item's edge", () => {
+    expect(turn("rightOrBottom", { x: 0, y: 0 }, options)).toEqual({
+      x: 100,
+      y: 0,
+    })
+    expect(turn("rightOrBottom", { x: 100, y: 0 }, options)).toEqual({
+      x: 200,
+      y: 0,
+    })
+  })
+
+  it("turns to the page on the left, then past the item's edge", () => {
+    expect(turn("leftOrTop", { x: 100, y: 0 }, options)).toEqual({
+      x: 0,
+      y: 0,
+    })
+    expect(turn("leftOrTop", { x: 0, y: 0 }, options)).toEqual({
+      x: -100,
+      y: 0,
+    })
+  })
+})
+
+describe("Given vertical writing in an item two pages high", () => {
+  const options = {
+    itemSize: { width: 100, height: 200 },
+    isUsingVerticalWriting: true,
+  }
+
+  it("turns right to the page above, and left to the page below", () => {
+    expect(turn("rightOrBottom", { x: 0, y: 100 }, options)).toEqual({
+      x: 0,
+      y: 0,
+    })
+    expect(turn("leftOrTop", { x: 0, y: 0 }, options)).toEqual({
+      x: 0,
+      y: 100,
+    })
+  })
+})
+
+describe("Given a spread of two pages", () => {
+  it("turns two pages at once", () => {
+    const options = {
+      spreadMode: "always" as const,
+      viewportWidth: 200,
+      itemSize: { width: 400, height: 100 },
+    }
+
+    expect(turn("rightOrBottom", { x: 0, y: 0 }, options)).toEqual({
+      x: 200,
+      y: 0,
+    })
+    expect(turn("leftOrTop", { x: 200, y: 0 }, options)).toEqual({
+      x: 0,
+      y: 0,
+    })
+  })
+
+  it("leaves a vertical-writing item by a whole spread, in the book's direction", () => {
+    const options = {
+      spreadMode: "always" as const,
+      viewportWidth: 200,
+      itemSize: { width: 100, height: 100 },
+      isUsingVerticalWriting: true,
+    }
+
+    expect(turn("rightOrBottom", { x: 0, y: 0 }, options)).toEqual({
+      x: 200,
+      y: 0,
+    })
+    expect(
+      turn(
+        "rightOrBottom",
+        { x: 0, y: 0 },
+        {
+          ...options,
+          readingDirection: "rtl",
+        },
+      ),
+    ).toEqual({ x: 0, y: 0 })
   })
 })

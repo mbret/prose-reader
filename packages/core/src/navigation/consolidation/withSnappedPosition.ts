@@ -38,7 +38,8 @@ export const getSnappedPosition = ({
         width: navigation.spineItemWidth,
         height: navigation.spineItemHeight,
       },
-      isUsingVerticalWriting: !!navigation.spineItemIsUsingVerticalWriting,
+      isUsingVerticalWriting: () =>
+        !!navigation.spineItemIsUsingVerticalWriting,
       context: spineItem.context,
       settings: spineItem.settings,
       viewport: spineItem.viewport,

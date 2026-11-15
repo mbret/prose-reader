@@ -247,7 +247,7 @@ export class SpineItem extends ReactiveEntity<SpineItemState> {
   get pageGeometry() {
     return createSpineItemPageGeometry({
       itemSize: this.layoutInfo,
-      isUsingVerticalWriting: this.isUsingVerticalWriting(),
+      isUsingVerticalWriting: () => this.isUsingVerticalWriting(),
       context: this.context,
       settings: this.settings,
       viewport: this.viewport,

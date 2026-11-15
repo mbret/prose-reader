@@ -1,4 +1,4 @@
-import { describe, expect, it } from "vitest"
+import { describe, expect, it, vi } from "vitest"
 import {
   clampPositionInSpineItem,
   SpineItemPageGeometry,
@@ -6,11 +6,16 @@ import {
 } from "./SpineItemPageGeometry"
 import { SpineItemPosition } from "./types"
 
-const createGeometry = (params: Partial<SpineItemPageGeometryParams> = {}) =>
+const createGeometry = ({
+  isUsingVerticalWriting = false,
+  ...params
+}: Partial<Omit<SpineItemPageGeometryParams, "isUsingVerticalWriting">> & {
+  isUsingVerticalWriting?: boolean
+} = {}) =>
   new SpineItemPageGeometry({
     itemSize: { width: 1000, height: 800 },
     pageSize: { width: 500, height: 400 },
-    isUsingVerticalWriting: false,
+    isUsingVerticalWriting: () => isUsingVerticalWriting,
     isRTL: false,
     pageTurnDirection: "horizontal",
     pageTurnMode: "controlled",
@@ -50,7 +55,7 @@ describe("SpineItemPageGeometry", () => {
       ).toBe(3)
     })
 
-    it("has one page per item when the book scrolls vertically", () => {
+    it("has one page when the pageTurnMode setting scrolls vertically", () => {
       expect(
         createGeometry({
           pageTurnDirection: "vertical",
@@ -107,6 +112,16 @@ describe("SpineItemPageGeometry", () => {
       expect(geometry.getPageIndexFromPosition(position(500, 0))).toBe(2)
       expect(geometry.getPageIndexFromPosition(position(1000, 0))).toBe(1)
       expect(geometry.getPageIndexFromPosition(position(1500, 0))).toBe(0)
+    })
+
+    it("gives the nearest page for a position outside a right-to-left item", () => {
+      const geometry = createGeometry({
+        isRTL: true,
+        itemSize: { width: 2000, height: 400 },
+      })
+
+      expect(geometry.getPageIndexFromPosition(position(-100, 0))).toBe(3)
+      expect(geometry.getPageIndexFromPosition(position(2500, 0))).toBe(0)
     })
 
     it("reads y for vertical writing, whatever the book direction", () => {
@@ -279,20 +294,22 @@ describe("SpineItemPageGeometry", () => {
     })
   })
 
-  describe("getClosestPageStart", () => {
+  describe("snapPositionToPageGrid", () => {
     it("snaps each axis to the start of its page", () => {
       const geometry = createGeometry({
         itemSize: { width: 1500, height: 800 },
       })
 
-      expect(geometry.getClosestPageStart(position(0, 0))).toMatchObject({
+      expect(geometry.snapPositionToPageGrid(position(0, 0))).toMatchObject({
         x: 0,
         y: 0,
       })
-      expect(geometry.getClosestPageStart(position(740, 410))).toMatchObject({
-        x: 500,
-        y: 400,
-      })
+      expect(geometry.snapPositionToPageGrid(position(740, 410))).toMatchObject(
+        {
+          x: 500,
+          y: 400,
+        },
+      )
     })
 
     it("holds a position outside the item on its first or last page", () => {
@@ -300,11 +317,15 @@ describe("SpineItemPageGeometry", () => {
         itemSize: { width: 1500, height: 800 },
       })
 
-      expect(geometry.getClosestPageStart(position(-200, -10))).toMatchObject({
+      expect(
+        geometry.snapPositionToPageGrid(position(-200, -10)),
+      ).toMatchObject({
         x: 0,
         y: 0,
       })
-      expect(geometry.getClosestPageStart(position(2000, 900))).toMatchObject({
+      expect(
+        geometry.snapPositionToPageGrid(position(2000, 900)),
+      ).toMatchObject({
         x: 1000,
         y: 400,
       })
@@ -314,8 +335,32 @@ describe("SpineItemPageGeometry", () => {
       expect(
         createGeometry({
           pageSize: { width: 0, height: 0 },
-        }).getClosestPageStart(position(300, 300)),
+        }).snapPositionToPageGrid(position(300, 300)),
       ).toMatchObject({ x: 0, y: 0 })
+    })
+  })
+
+  describe("the writing mode", () => {
+    it("is read once, and not to snap a position to the page grid", () => {
+      const isUsingVerticalWriting = vi.fn(() => false)
+      const geometry = new SpineItemPageGeometry({
+        itemSize: { width: 1500, height: 400 },
+        pageSize: { width: 500, height: 400 },
+        isUsingVerticalWriting,
+        isRTL: false,
+        pageTurnDirection: "horizontal",
+        pageTurnMode: "controlled",
+      })
+
+      geometry.snapPositionToPageGrid(position(700, 0))
+
+      expect(isUsingVerticalWriting).not.toHaveBeenCalled()
+
+      geometry.getPageIndexFromPosition(position(700, 0))
+      geometry.getPositionFromPageIndex(1)
+      geometry.getPositionInPage(position(700, 0), 1)
+
+      expect(isUsingVerticalWriting).toHaveBeenCalledTimes(1)
     })
   })
 })
