@@ -27,24 +27,14 @@ const getRectBoundsInSpine = ({
   spineItemsManager,
   spine,
 }: RectBoundsInSpineParams): RectBoundsInSpine | undefined => {
-  // @todo use container width instead to increase performances
-  const lastSpineItem = spineItemsManager.get(
-    spineItemsManager.items.length - 1,
-  )
+  if (spineItemsManager.items.length === 0) return undefined
 
-  if (!lastSpineItem) return undefined
-
-  const last = spine.getSpineItemSpineLayoutInfo(lastSpineItem)
-  const yMax = Math.max(0, last.bottom - size.height)
+  const { left, right, bottom } = spine.layoutInfo
+  const yMax = Math.max(0, bottom - size.height)
 
   if (isRTL) {
-    const firstSpineItem = spineItemsManager.get(0)
-    const right = firstSpineItem
-      ? spine.getSpineItemSpineLayoutInfo(firstSpineItem).right
-      : 0
-
     return {
-      xMin: last.left,
+      xMin: left,
       xMax: Math.max(0, right - size.width),
       yMin: 0,
       yMax,
@@ -53,7 +43,7 @@ const getRectBoundsInSpine = ({
 
   return {
     xMin: 0,
-    xMax: Math.max(0, last.right - size.width),
+    xMax: Math.max(0, right - size.width),
     yMin: 0,
     yMax,
   }

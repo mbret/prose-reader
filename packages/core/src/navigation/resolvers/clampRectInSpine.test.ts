@@ -21,12 +21,11 @@ type Fixture = {
 }
 
 /**
- * Single-item spine fixture: `firstItem === lastItem`, so the same
- * layout drives both the LTR right edge (`last.right`) and the RTL right
- * edge (`first.right`).
+ * A spine of one item, whose box is `spineLayoutInfo`: the box the clamp
+ * reads.
  */
-const buildFixture = (lastItemLayout: Partial<LayoutInfo>): Fixture => {
-  const layout: LayoutInfo = {
+const buildFixture = (spineLayoutInfo: Partial<LayoutInfo>): Fixture => {
+  const layoutInfo: LayoutInfo = {
     left: 0,
     right: 0,
     top: 0,
@@ -35,19 +34,16 @@ const buildFixture = (lastItemLayout: Partial<LayoutInfo>): Fixture => {
     height: 0,
     x: 0,
     y: 0,
-    ...lastItemLayout,
+    ...spineLayoutInfo,
   }
 
-  const item = { __isFakeSpineItem: true }
-
+  // Cast: minimal spine items manager mock, which only gives the item count.
   const spineItemsManager = {
-    get: (index: number) => (index === 0 ? item : undefined),
     items: { length: 1 },
   } as unknown as SpineItemsManager
 
-  const spine = {
-    getSpineItemSpineLayoutInfo: () => layout,
-  } as unknown as Spine
+  // Cast: minimal spine mock, which only gives the box of its items.
+  const spine = { layoutInfo } as unknown as Spine
 
   return { spineItemsManager, spine }
 }
@@ -55,18 +51,17 @@ const buildFixture = (lastItemLayout: Partial<LayoutInfo>): Fixture => {
 describe(`clampRectInSpine`, () => {
   describe(`empty spine`, () => {
     const spineItemsManager = {
-      get: () => undefined,
       items: { length: 0 },
       // Cast: minimal spine items manager mock for boundary helper tests.
     } as unknown as SpineItemsManager
     const spine = {
-      getSpineItemSpineLayoutInfo: () => {
-        throw new Error(`should not be invoked when there are no spine items`)
+      get layoutInfo() {
+        throw new Error(`should not be read when there are no spine items`)
       },
-      // Cast: minimal spine mock; layout lookup must not be reached here.
+      // Cast: minimal spine mock; its box must not be read here.
     } as unknown as Spine
 
-    it(`returns the origin without consulting layout info`, () => {
+    it(`returns the origin without reading the box of the spine`, () => {
       const result = clampRectInSpine({
         position: new SpinePosition({ x: 9999, y: 9999 }),
         size: { width: 200, height: 100 },
@@ -130,7 +125,7 @@ describe(`clampRectInSpine`, () => {
       bottom: 600,
     })
 
-    it(`clamps x to first.right - size.width on the right edge`, () => {
+    it(`clamps x to right - size.width on the right edge`, () => {
       const result = clampRectInSpine({
         position: new UnboundSpinePosition({ x: 9999, y: 0 }),
         size: { width: 200, height: 100 },
@@ -142,7 +137,7 @@ describe(`clampRectInSpine`, () => {
       expect(result).toEqual(new UnboundSpinePosition({ x: 0, y: 0 }))
     })
 
-    it(`clamps x to lastItem.left on the left edge`, () => {
+    it(`clamps x to left on the left edge`, () => {
       const result = clampRectInSpine({
         position: new UnboundSpinePosition({ x: -9999, y: 0 }),
         size: { width: 200, height: 100 },
@@ -171,9 +166,8 @@ describe(`clampRectInSpine`, () => {
    * The `Math.max(0, …)` floors guarantee the function honours its
    * contract ("position … inside the spine") even when the rectangle is
    * larger than the spine on either axis. Without them,
-   * `last.right - size.width` (LTR) / `first.right - size.width` (RTL) /
-   * `last.bottom - size.height` go negative and pull the clamped
-   * position outside the spine on the wrong side.
+   * `right - size.width` and `bottom - size.height` go negative and pull
+   * the clamped position outside the spine on the wrong side.
    *
    * Real layouts that hit this:
    *   - spread mode with a single (or short) book — the rectangle
@@ -188,7 +182,7 @@ describe(`clampRectInSpine`, () => {
         bottom: 50,
       })
 
-      it(`floors xMax at 0 when size.width exceeds last.right`, () => {
+      it(`floors xMax at 0 when size.width exceeds right`, () => {
         const result = clampRectInSpine({
           position: new SpinePosition({ x: 9999, y: 0 }),
           size: { width: 200, height: 30 },
@@ -200,7 +194,7 @@ describe(`clampRectInSpine`, () => {
         expect(result).toEqual(new UnboundSpinePosition({ x: 0, y: 0 }))
       })
 
-      it(`floors yMax at 0 when size.height exceeds last.bottom`, () => {
+      it(`floors yMax at 0 when size.height exceeds bottom`, () => {
         const result = clampRectInSpine({
           position: new SpinePosition({ x: 0, y: 9999 }),
           size: { width: 50, height: 100 },
@@ -220,7 +214,7 @@ describe(`clampRectInSpine`, () => {
         bottom: 50,
       })
 
-      it(`floors xMax at 0 when size.width exceeds first.right`, () => {
+      it(`floors xMax at 0 when size.width exceeds right`, () => {
         const result = clampRectInSpine({
           position: new UnboundSpinePosition({ x: 9999, y: 0 }),
           size: { width: 200, height: 30 },
@@ -232,7 +226,7 @@ describe(`clampRectInSpine`, () => {
         expect(result).toEqual(new UnboundSpinePosition({ x: 0, y: 0 }))
       })
 
-      it(`floors yMax at 0 when size.height exceeds last.bottom`, () => {
+      it(`floors yMax at 0 when size.height exceeds bottom`, () => {
         const result = clampRectInSpine({
           position: new UnboundSpinePosition({ x: 0, y: 9999 }),
           size: { width: 50, height: 100 },
@@ -251,17 +245,16 @@ describe(`getBoundaryForRectInSpine`, () => {
   describe(`empty spine`, () => {
     // Cast: minimal spine items manager mock for boundary helper tests.
     const spineItemsManager = {
-      get: () => undefined,
       items: { length: 0 },
     } as unknown as SpineItemsManager
-    // Cast: minimal spine mock; layout lookup must not be reached here.
+    // Cast: minimal spine mock; its box must not be read here.
     const spine = {
-      getSpineItemSpineLayoutInfo: () => {
-        throw new Error(`should not be invoked when there are no spine items`)
+      get layoutInfo() {
+        throw new Error(`should not be read when there are no spine items`)
       },
     } as unknown as Spine
 
-    it(`returns undefined without consulting layout info`, () => {
+    it(`returns undefined without reading the box of the spine`, () => {
       const result = getBoundaryForRectInSpine({
         position: new SpinePosition({ x: 9999, y: 9999 }),
         size: { width: 200, height: 100 },
@@ -397,7 +390,7 @@ describe(`clampRectInSpine with size 1×1 (point clamp)`, () => {
      * with LTR's `right - 1` convention and let the point sit one pixel
      * outside the spine on the right edge.
      */
-    it(`clamps x to first.right - 1 on the right edge`, () => {
+    it(`clamps x to right - 1 on the right edge`, () => {
       const result = clampRectInSpine({
         position: new UnboundSpinePosition({ x: 9999, y: 0 }),
         size: { width: 1, height: 1 },
