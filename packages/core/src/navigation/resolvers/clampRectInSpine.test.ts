@@ -38,7 +38,6 @@ describe(`clampRectInSpine`, () => {
       const result = clampRectInSpine({
         position: new SpinePosition({ x: 9999, y: 9999 }),
         size: { width: 200, height: 100 },
-        isRTL: false,
         spine,
       })
 
@@ -46,7 +45,7 @@ describe(`clampRectInSpine`, () => {
     })
   })
 
-  describe(`LTR`, () => {
+  describe(`a box from x = 0, as in a left-to-right book`, () => {
     const spine = buildSpine({
       left: 0,
       right: 1000,
@@ -57,7 +56,6 @@ describe(`clampRectInSpine`, () => {
       const result = clampRectInSpine({
         position: new SpinePosition({ x: 9999, y: 9999 }),
         size: { width: 200, height: 100 },
-        isRTL: false,
         spine,
       })
 
@@ -68,7 +66,6 @@ describe(`clampRectInSpine`, () => {
       const result = clampRectInSpine({
         position: new UnboundSpinePosition({ x: -50, y: -50 }),
         size: { width: 200, height: 100 },
-        isRTL: false,
         spine,
       })
 
@@ -79,7 +76,6 @@ describe(`clampRectInSpine`, () => {
       const result = clampRectInSpine({
         position: new SpinePosition({ x: 250, y: 100 }),
         size: { width: 200, height: 100 },
-        isRTL: false,
         spine,
       })
 
@@ -87,7 +83,7 @@ describe(`clampRectInSpine`, () => {
     })
   })
 
-  describe(`RTL`, () => {
+  describe(`a box that reaches negative x, as in a right-to-left book`, () => {
     const spine = buildSpine({
       left: -1000,
       right: 200,
@@ -98,7 +94,6 @@ describe(`clampRectInSpine`, () => {
       const result = clampRectInSpine({
         position: new UnboundSpinePosition({ x: 9999, y: 0 }),
         size: { width: 200, height: 100 },
-        isRTL: true,
         spine,
       })
 
@@ -109,7 +104,6 @@ describe(`clampRectInSpine`, () => {
       const result = clampRectInSpine({
         position: new UnboundSpinePosition({ x: -9999, y: 0 }),
         size: { width: 200, height: 100 },
-        isRTL: true,
         spine,
       })
 
@@ -120,7 +114,6 @@ describe(`clampRectInSpine`, () => {
       const result = clampRectInSpine({
         position: new UnboundSpinePosition({ x: -100, y: 9999 }),
         size: { width: 200, height: 100 },
-        isRTL: true,
         spine,
       })
 
@@ -141,7 +134,7 @@ describe(`clampRectInSpine`, () => {
    *   - any spine item shorter than the viewport on the y-axis
    */
   describe(`rect larger than spine`, () => {
-    describe(`LTR`, () => {
+    describe(`a box from x = 0, as in a left-to-right book`, () => {
       const spine = buildSpine({
         left: 0,
         right: 100,
@@ -152,7 +145,6 @@ describe(`clampRectInSpine`, () => {
         const result = clampRectInSpine({
           position: new SpinePosition({ x: 9999, y: 0 }),
           size: { width: 200, height: 30 },
-          isRTL: false,
           spine,
         })
 
@@ -163,7 +155,6 @@ describe(`clampRectInSpine`, () => {
         const result = clampRectInSpine({
           position: new SpinePosition({ x: 0, y: 9999 }),
           size: { width: 50, height: 100 },
-          isRTL: false,
           spine,
         })
 
@@ -171,7 +162,7 @@ describe(`clampRectInSpine`, () => {
       })
     })
 
-    describe(`RTL`, () => {
+    describe(`a box that reaches negative x, as in a right-to-left book`, () => {
       const spine = buildSpine({
         left: -100,
         right: 50,
@@ -182,7 +173,6 @@ describe(`clampRectInSpine`, () => {
         const result = clampRectInSpine({
           position: new UnboundSpinePosition({ x: 9999, y: 0 }),
           size: { width: 200, height: 30 },
-          isRTL: true,
           spine,
         })
 
@@ -193,7 +183,6 @@ describe(`clampRectInSpine`, () => {
         const result = clampRectInSpine({
           position: new UnboundSpinePosition({ x: 0, y: 9999 }),
           size: { width: 50, height: 100 },
-          isRTL: true,
           spine,
         })
 
@@ -304,7 +293,7 @@ describe(`getBoundaryForRectInSpine`, () => {
 })
 
 describe(`clampRectInSpine with size 1×1 (point clamp)`, () => {
-  describe(`LTR`, () => {
+  describe(`a box from x = 0, as in a left-to-right book`, () => {
     const spine = buildSpine({
       left: 0,
       right: 1000,
@@ -315,7 +304,6 @@ describe(`clampRectInSpine with size 1×1 (point clamp)`, () => {
       const result = clampRectInSpine({
         position: new SpinePosition({ x: 9999, y: 9999 }),
         size: { width: 1, height: 1 },
-        isRTL: false,
         spine,
       })
 
@@ -323,24 +311,17 @@ describe(`clampRectInSpine with size 1×1 (point clamp)`, () => {
     })
   })
 
-  describe(`RTL`, () => {
+  describe(`a box that reaches negative x, as in a right-to-left book`, () => {
     const spine = buildSpine({
       left: -1000,
       right: 200,
       bottom: 600,
     })
 
-    /**
-     * Regression: prior to the rect-based unification a "point" RTL clamp
-     * returned the viewport for the upper bound, which was inconsistent
-     * with LTR's `right - 1` convention and let the point sit one pixel
-     * outside the spine on the right edge.
-     */
     it(`clamps x to right - 1 on the right edge`, () => {
       const result = clampRectInSpine({
         position: new UnboundSpinePosition({ x: 9999, y: 0 }),
         size: { width: 1, height: 1 },
-        isRTL: true,
         spine,
       })
 

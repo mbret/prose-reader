@@ -142,7 +142,6 @@ export const createNavigationResolver = ({
         y: triggerYPosition,
       }),
       size: viewport.absoluteViewport,
-      isRTL: context.isRTL(),
       spine,
     })
 
@@ -204,13 +203,7 @@ export const createNavigationResolver = ({
     clampPositionInSpine: (
       position: SpinePosition | UnboundSpinePosition,
       size: NavigationVisibleArea,
-    ) =>
-      clampRectInSpine({
-        position,
-        size,
-        isRTL: context.isRTL(),
-        spine,
-      }),
+    ) => clampRectInSpine({ position, size, spine }),
     getBoundaryForPosition: (
       position: SpinePosition | UnboundSpinePosition,
       size: NavigationVisibleArea = viewport.absoluteViewport,

@@ -6,7 +6,6 @@ import type { NavigationVisibleArea, SpineBoundary } from "../types"
 export type ClampRectInSpineParams = {
   position: SpinePosition | UnboundSpinePosition
   size: NavigationVisibleArea
-  isRTL: boolean
   spine: Spine
 }
 
@@ -42,27 +41,28 @@ const getRectBoundsInSpine = ({
 export const clampRectInSpine = ({
   position,
   size,
-  isRTL,
   spine,
 }: ClampRectInSpineParams): UnboundSpinePosition => {
   const bounds = getRectBoundsInSpine({ size, spine })
 
   if (!bounds) return new UnboundSpinePosition({ x: 0, y: 0 })
 
-  const y = Math.min(Math.max(bounds.yMin, position.y), bounds.yMax)
-  const x = isRTL
-    ? Math.max(bounds.xMin, Math.min(bounds.xMax, position.x))
-    : Math.min(Math.max(bounds.xMin, position.x), bounds.xMax)
-
-  return new UnboundSpinePosition({ x, y })
+  return new UnboundSpinePosition({
+    x: Math.min(Math.max(bounds.xMin, position.x), bounds.xMax),
+    y: Math.min(Math.max(bounds.yMin, position.y), bounds.yMax),
+  })
 }
 
+/**
+ * The edge of the spine a rectangle (`size` at `position` top-left) is past,
+ * in reading order, or `undefined` when it fits.
+ */
 export const getBoundaryForRectInSpine = ({
   position,
   size,
   isRTL,
   spine,
-}: ClampRectInSpineParams): SpineBoundary | undefined => {
+}: ClampRectInSpineParams & { isRTL: boolean }): SpineBoundary | undefined => {
   const bounds = getRectBoundsInSpine({ size, spine })
 
   if (!bounds) return undefined
