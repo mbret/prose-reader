@@ -10,14 +10,12 @@ import {
   SpineItemSpineLayout,
   UnboundSpinePosition,
 } from "../../../spine/types"
-import { createSpineItemLocator } from "../../../spineItem/locationResolver"
 import {
   createTestManifest,
   createTestManifestSpineItems,
 } from "../../../tests/utils"
 import { Viewport } from "../../../viewport/Viewport"
-import { getNavigationForLeftOrTopPage } from "./getNavigationForLeftOrTopPage"
-import { getNavigationForRightOrBottomPage } from "./getNavigationForRightOrBottomPage"
+import { getNavigationForPageTurn } from "./getNavigationForPageTurn"
 
 const createContext = () => {
   const context = new Context(
@@ -42,18 +40,7 @@ const createContext = () => {
     viewport,
   )
   const cfi = new CfiManager(hookManager, spineItemsManager)
-  const spineItemLocator = createSpineItemLocator({
-    context,
-    settings,
-    viewport,
-  })
-  const spine = new Spine(
-    context,
-    spineItemsManager,
-    spineItemLocator,
-    settings,
-    viewport,
-  )
+  const spine = new Spine(context, spineItemsManager, settings, viewport)
   const spineItem = spineItemsManager.items[0]
 
   if (!spineItem) throw new Error("Expected one spine item from the manifest")
@@ -102,7 +89,7 @@ const createContext = () => {
   }
 }
 
-describe("getNavigationForRightOrBottomPage", () => {
+describe("getNavigationForPageTurn to the right or bottom", () => {
   it("keeps vertical scrollable turns continuous so the bottom clamps in place", () => {
     const {
       context,
@@ -115,7 +102,8 @@ describe("getNavigationForRightOrBottomPage", () => {
     } = createContext()
     const currentBottomPosition = new UnboundSpinePosition({ x: 0, y: 150 })
 
-    const target = getNavigationForRightOrBottomPage({
+    const target = getNavigationForPageTurn({
+      side: "rightOrBottom",
       computedPageTurnDirection: settings.values.computedPageTurnDirection,
       context,
       navigationResolver,
@@ -137,7 +125,7 @@ describe("getNavigationForRightOrBottomPage", () => {
   })
 })
 
-describe("getNavigationForLeftOrTopPage", () => {
+describe("getNavigationForPageTurn to the left or top", () => {
   it("keeps vertical scrollable turns continuous so the top clamps in place", () => {
     const {
       context,
@@ -150,7 +138,8 @@ describe("getNavigationForLeftOrTopPage", () => {
     } = createContext()
     const currentTopPosition = new UnboundSpinePosition({ x: 12, y: 0 })
 
-    const target = getNavigationForLeftOrTopPage({
+    const target = getNavigationForPageTurn({
+      side: "leftOrTop",
       computedPageTurnDirection: settings.values.computedPageTurnDirection,
       context,
       navigationResolver,

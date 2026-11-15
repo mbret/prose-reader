@@ -1,7 +1,6 @@
 import type { SpineLocator } from "../../spine/locator/SpineLocator"
 import type { SpineItemsManager } from "../../spine/SpineItemsManager"
 import { SpinePosition } from "../../spine/types"
-import type { SpineItemNavigationResolver } from "../../spineItem/navigationResolver"
 import type { SpineItem } from "../../spineItem/SpineItem"
 import type { Viewport } from "../../viewport/Viewport"
 import { getAdjustedPositionForSpread } from "./getAdjustedPositionForSpread"
@@ -12,13 +11,11 @@ export const getNavigationForSpineItemPage = ({
   spineItemsManager,
   spineItemId,
   spineLocator,
-  spineItemNavigationResolver,
   viewport,
 }: {
   pageIndex: number
   spineItemId: SpineItem | number | string
   spineItemsManager: SpineItemsManager
-  spineItemNavigationResolver: SpineItemNavigationResolver
   spineLocator: SpineLocator
   viewport: Viewport
 }): SpinePosition => {
@@ -30,17 +27,13 @@ export const getNavigationForSpineItemPage = ({
     const xPositionForPageIndex = pageIndex * viewport.pageSize.width
     return getNavigationForPosition({
       viewportPosition: new SpinePosition({ x: xPositionForPageIndex, y: 0 }),
-      spineItemNavigationResolver,
       spineLocator,
       viewport,
     })
   }
 
   const spineItemNavigation =
-    spineLocator.spineItemLocator.getSpineItemPositionFromPageIndex({
-      pageIndex,
-      spineItem,
-    })
+    spineItem.pageGeometry.getPositionFromPageIndex(pageIndex)
 
   const readingOffset = spineLocator.getSpinePositionFromSpineItemPosition({
     spineItemPosition: spineItemNavigation,

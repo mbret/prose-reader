@@ -84,10 +84,9 @@ export const withSpineItemPosition =
             : visiblePagesAtNavigablePosition?.endPageIndex) ?? 0
 
         const positionInSpineItem =
-          spineLocator.spineItemLocator.getSpineItemPositionFromPageIndex({
-            pageIndex: beginPageIndexForDirection,
-            spineItem,
-          })
+          spineItem.pageGeometry.getPositionFromPageIndex(
+            beginPageIndexForDirection,
+          )
 
         return positionInSpineItem
       }

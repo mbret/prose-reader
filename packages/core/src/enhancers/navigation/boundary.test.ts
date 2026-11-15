@@ -15,7 +15,6 @@ import {
   SpinePosition,
   UnboundSpinePosition,
 } from "../../spine/types"
-import { createSpineItemLocator } from "../../spineItem/locationResolver"
 import {
   createTestManifest,
   createTestManifestSpineItems,
@@ -49,18 +48,7 @@ const createTestReader = ({
     viewport,
   )
   const cfi = new CfiManager(hookManager, spineItemsManager)
-  const spineItemLocator = createSpineItemLocator({
-    context,
-    settings,
-    viewport,
-  })
-  const spine = new Spine(
-    context,
-    spineItemsManager,
-    spineItemLocator,
-    settings,
-    viewport,
-  )
+  const spine = new Spine(context, spineItemsManager, settings, viewport)
   const navigator = createNavigator({
     cfi,
     context,

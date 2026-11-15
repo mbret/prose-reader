@@ -7,7 +7,6 @@ import { ReaderSettingsManager } from "../../settings/ReaderSettingsManager"
 import { Spine } from "../../spine/Spine"
 import { SpineItemsManager } from "../../spine/SpineItemsManager"
 import { SpinePosition } from "../../spine/types"
-import { createSpineItemLocator } from "../../spineItem/locationResolver"
 import { SpineItemPosition } from "../../spineItem/types"
 import {
   createTestManifest,
@@ -53,18 +52,7 @@ const createLaidOutTwoPageItems = async ({
     viewport,
   )
   const cfiManager = new CfiManager(hooksManager, spineItemsManager)
-  const spineItemLocator = createSpineItemLocator({
-    context,
-    settings,
-    viewport,
-  })
-  const spine = new Spine(
-    context,
-    spineItemsManager,
-    spineItemLocator,
-    settings,
-    viewport,
-  )
+  const spine = new Spine(context, spineItemsManager, settings, viewport)
   const navigationResolver = createNavigationResolver({
     cfi: cfiManager,
     context,

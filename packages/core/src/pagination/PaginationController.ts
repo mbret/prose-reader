@@ -237,7 +237,7 @@ export class PaginationController extends DestroyableClass {
         : this.cfi.generateRootCfi(spineItem.item),
       spineItemIndex,
       pageIndexInSpineItem,
-      numberOfPagesInSpineItem: spineItem.numberOfPages,
+      numberOfPagesInSpineItem: spineItem.pageGeometry.numberOfPages,
     }
   }
 

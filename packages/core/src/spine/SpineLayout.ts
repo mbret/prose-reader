@@ -669,7 +669,7 @@ export class SpineLayout extends DestroyableClass {
 
   get numberOfPages() {
     return this.spineItemsManager.items.reduce((acc, item) => {
-      return acc + item.numberOfPages
+      return acc + item.pageGeometry.numberOfPages
     }, 0)
   }
 

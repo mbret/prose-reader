@@ -2,7 +2,6 @@ import { filter, map, merge, scan, skip, takeUntil, tap } from "rxjs"
 import { HTML_PREFIX } from "../constants"
 import type { Context } from "../context/Context"
 import type { ReaderSettingsManager } from "../settings/ReaderSettingsManager"
-import type { createSpineItemLocator as createSpineItemLocationResolver } from "../spineItem/locationResolver"
 import type { SpineItem } from "../spineItem/SpineItem"
 import { isDefined } from "../utils/isDefined"
 import { ReactiveEntity } from "../utils/ReactiveEntity"
@@ -53,7 +52,6 @@ export class Spine extends ReactiveEntity<SpineState> {
   constructor(
     protected context: Context,
     public spineItemsManager: SpineItemsManager,
-    public spineItemLocator: ReturnType<typeof createSpineItemLocationResolver>,
     protected settings: ReaderSettingsManager,
     protected viewport: Viewport,
   ) {
@@ -76,7 +74,6 @@ export class Spine extends ReactiveEntity<SpineState> {
     this.locator = createSpineLocator({
       context,
       spineItemsManager,
-      spineItemLocator,
       settings,
       spineLayout: this.spineLayout,
       viewport,
@@ -85,8 +82,6 @@ export class Spine extends ReactiveEntity<SpineState> {
     this.pages = new Pages(
       this.spineLayout,
       this.spineItemsManager,
-      this.spineItemLocator,
-      this.context,
       this.locator,
       this.viewport,
     )

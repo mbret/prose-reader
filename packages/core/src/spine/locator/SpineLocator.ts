@@ -1,6 +1,6 @@
 import type { Context } from "../../context/Context"
 import type { ReaderSettingsManager } from "../../settings/ReaderSettingsManager"
-import type { createSpineItemLocator } from "../../spineItem/locationResolver"
+import * as nodeLocation from "../../spineItem/nodeLocation"
 import type { SpineItem } from "../../spineItem/SpineItem"
 import { SpineItemPosition } from "../../spineItem/types"
 import { ViewportSlicePosition } from "../../viewport/types"
@@ -22,14 +22,12 @@ export type SpineLocator = ReturnType<typeof createSpineLocator>
 export const createSpineLocator = ({
   spineItemsManager,
   context,
-  spineItemLocator,
   settings,
   spineLayout,
   viewport,
 }: {
   spineItemsManager: SpineItemsManager
   context: Context
-  spineItemLocator: ReturnType<typeof createSpineItemLocator>
   settings: ReaderSettingsManager
   spineLayout: SpineLayout
   viewport: Viewport
@@ -81,27 +79,30 @@ export const createSpineLocator = ({
     })
   }
 
-  const getSpineItemPageIndexFromNode = (
+  /**
+   * The index of the page holding a node, from `offset` on, in its spine
+   * item, or `undefined` when no item has that index.
+   */
+  function getSpineItemPageIndexFromNode(
+    node: Node,
+    offset: number | undefined,
+    spineItem: SpineItem,
+  ): number
+  function getSpineItemPageIndexFromNode(
+    node: Node,
+    offset: number | undefined,
+    spineItemIndex: number,
+  ): number | undefined
+  function getSpineItemPageIndexFromNode(
     node: Node,
     offset: number | undefined,
     spineItemOrIndex: SpineItem | number,
-  ) => {
-    if (typeof spineItemOrIndex === "number") {
-      const spineItem = spineItemsManager.get(spineItemOrIndex)
-      return spineItem
-        ? spineItemLocator.getSpineItemPageIndexFromNode(
-            node,
-            offset || 0,
-            spineItem,
-          )
-        : undefined
-    }
+  ) {
+    const spineItem = spineItemsManager.get(spineItemOrIndex)
 
-    return spineItemLocator.getSpineItemPageIndexFromNode(
-      node,
-      offset || 0,
-      spineItemOrIndex,
-    )
+    return spineItem
+      ? nodeLocation.getSpineItemPageIndexFromNode(node, offset || 0, spineItem)
+      : undefined
   }
 
   /**
@@ -129,32 +130,30 @@ export const createSpineLocator = ({
         endPageIndex: number
       }
     | undefined => {
-    const numberOfPages = spineItem.numberOfPages
+    const { pageGeometry } = spineItem
 
-    const pages = Array.from(Array(numberOfPages)).map((_, index) => {
-      const spineItemPosition =
-        spineItemLocator.getSpineItemPositionFromPageIndex({
-          pageIndex: index,
-          spineItem,
+    const pages = Array.from(Array(pageGeometry.numberOfPages)).map(
+      (_, index) => {
+        const spineItemPosition = pageGeometry.getPositionFromPageIndex(index)
+
+        const spinePosition = getSpinePositionFromSpineItemPosition({
+          spineItemPosition,
+          itemLayout: spineLayout.getSpineItemSpineLayoutInfo(spineItem),
         })
 
-      const spinePosition = getSpinePositionFromSpineItemPosition({
-        spineItemPosition,
-        itemLayout: spineLayout.getSpineItemSpineLayoutInfo(spineItem),
-      })
-
-      return {
-        index,
-        absolutePosition: {
-          width: viewport.pageSize.width,
-          height: viewport.pageSize.height,
-          left: spinePosition.x,
-          top: spinePosition.y,
-          bottom: spinePosition.y + viewport.pageSize.height,
-          right: spinePosition.x + viewport.pageSize.width,
-        },
-      }
-    })
+        return {
+          index,
+          absolutePosition: {
+            width: viewport.pageSize.width,
+            height: viewport.pageSize.height,
+            left: spinePosition.x,
+            top: spinePosition.y,
+            bottom: spinePosition.y + viewport.pageSize.height,
+            right: spinePosition.x + viewport.pageSize.width,
+          },
+        }
+      },
+    )
 
     const viewportPosition = ViewportSlicePosition.from(
       position,
@@ -206,19 +205,6 @@ export const createSpineLocator = ({
     )
   }
 
-  // @todo move into spine item locator
-  const getSafeSpineItemPositionFromUnsafeSpineItemPosition = (
-    unsafePosition: SpineItemPosition,
-    spineItem: SpineItem,
-  ): SpineItemPosition => {
-    const { height, width } = spineLayout.getSpineItemSpineLayoutInfo(spineItem)
-
-    return new SpineItemPosition({
-      x: Math.min(Math.max(0, unsafePosition.x), width),
-      y: Math.min(Math.max(0, unsafePosition.y), height),
-    })
-  }
-
   const getSpineItemPagePositionFromSpinePosition = (
     spinePosition: UnboundSpinePosition | SpinePosition,
   ) => {
@@ -237,20 +223,13 @@ export const createSpineLocator = ({
       spineItem,
     )
 
+    const { pageGeometry } = spineItem
     const spineItemPageIndex =
-      spineItemLocator.getSpineItemPageIndexFromPosition({
-        itemWidth: spineItem.layoutInfo.width,
-        itemHeight: spineItem.layoutInfo.height,
-        position: spineItemPosition,
-        isUsingVerticalWriting: !!spineItem.isUsingVerticalWriting(),
-      })
-
-    const spineItemPagePosition =
-      spineItemLocator.getSpineItemPagePositionFromSpineItemPosition(
-        spineItemPosition,
-        spineItemPageIndex,
-        spineItem,
-      )
+      pageGeometry.getPageIndexFromPosition(spineItemPosition)
+    const spineItemPagePosition = pageGeometry.getPositionInPage(
+      spineItemPosition,
+      spineItemPageIndex,
+    )
 
     return {
       spineItem,
@@ -338,7 +317,5 @@ export const createSpineLocator = ({
         viewport,
       }),
     isPositionWithinSpineItem,
-    spineItemLocator,
-    getSafeSpineItemPositionFromUnsafeSpineItemPosition,
   }
 }

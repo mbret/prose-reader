@@ -1,18 +1,15 @@
 import type { SpineLocator } from "../../spine/locator/SpineLocator"
 import { SpinePosition, type UnboundSpinePosition } from "../../spine/types"
-import type { SpineItemNavigationResolver } from "../../spineItem/navigationResolver"
 import type { Viewport } from "../../viewport/Viewport"
 import { getAdjustedPositionForSpread } from "./getAdjustedPositionForSpread"
 
 export const getNavigationForPosition = ({
   viewportPosition,
   spineLocator,
-  spineItemNavigationResolver,
   viewport,
 }: {
   viewportPosition: SpinePosition | UnboundSpinePosition
   spineLocator: SpineLocator
-  spineItemNavigationResolver: SpineItemNavigationResolver
   viewport: Viewport
 }) => {
   const spineItem = spineLocator.getSpineItemFromPosition(viewportPosition)
@@ -25,10 +22,7 @@ export const getNavigationForPosition = ({
       )
 
     const spineItemValidPosition =
-      spineItemNavigationResolver.getNavigationForPosition(
-        spineItem,
-        spineItemPosition,
-      )
+      spineItem.pageGeometry.getClosestPageStart(spineItemPosition)
 
     const viewportNavigation =
       spineLocator.getSpinePositionFromSpineItemPosition({

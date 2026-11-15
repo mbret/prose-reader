@@ -4,6 +4,7 @@ import type { SpineLocator } from "../../spine/locator/SpineLocator"
 import type { Spine } from "../../spine/Spine"
 import { SpinePosition } from "../../spine/types"
 import type { SpineItem } from "../../spineItem/SpineItem"
+import { createSpineItemPageGeometry } from "../../spineItem/SpineItemPageGeometry"
 import type { NavigationResolver } from "../resolvers/NavigationResolver"
 import type { InternalNavigationEntry } from "../types"
 
@@ -32,13 +33,19 @@ export const getSnappedPosition = ({
     navigation.spineItemHeight &&
     navigation.spineItemWidth
   ) {
-    const pageIndex =
-      spineLocator.spineItemLocator.getSpineItemPageIndexFromPosition({
-        itemWidth: navigation.spineItemWidth,
-        itemHeight: navigation.spineItemHeight,
-        isUsingVerticalWriting: !!navigation.spineItemIsUsingVerticalWriting,
-        position: navigation.positionInSpineItem,
-      })
+    const pageGeometryOfNavigatedLayout = createSpineItemPageGeometry({
+      itemSize: {
+        width: navigation.spineItemWidth,
+        height: navigation.spineItemHeight,
+      },
+      isUsingVerticalWriting: !!navigation.spineItemIsUsingVerticalWriting,
+      context: spineItem.context,
+      settings: spineItem.settings,
+      viewport: spineItem.viewport,
+    })
+    const pageIndex = pageGeometryOfNavigatedLayout.getPageIndexFromPosition(
+      navigation.positionInSpineItem,
+    )
 
     return navigationResolver.getNavigationForSpineItemPage({
       pageIndex,

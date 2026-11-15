@@ -1,12 +1,11 @@
 import { type Observable, of } from "rxjs"
 import type { CfiManager } from "../../cfi"
-import type { Context } from "../../context/Context"
 import type { ReaderSettingsManager } from "../../settings/ReaderSettingsManager"
 import type { SpineLocator } from "../../spine/locator/SpineLocator"
 import type { Spine } from "../../spine/Spine"
 import type { SpineItemsManager } from "../../spine/SpineItemsManager"
 import { SpinePosition, type UnboundSpinePosition } from "../../spine/types"
-import type { SpineItemLocator } from "../../spineItem/locationResolver"
+import { clampPositionInSpineItem } from "../../spineItem/SpineItemPageGeometry"
 import { SpineItemPosition } from "../../spineItem/types"
 import type { NavigationResolver } from "../resolvers/NavigationResolver"
 import type { InternalNavigationEntry } from "../types"
@@ -32,7 +31,8 @@ const restoreNavigationForScrollingPageTurnMode = ({
 
   if (!foundSpineItem) return new SpinePosition({ x: 0, y: 0 })
 
-  const { height, top } = spine.getSpineItemSpineLayoutInfo(foundSpineItem)
+  const spineItemLayout = spine.getSpineItemSpineLayoutInfo(foundSpineItem)
+  const { height, top } = spineItemLayout
 
   const isPositionWithinSpineItem = spineLocator.isPositionWithinSpineItem(
     navigation.position,
@@ -90,15 +90,14 @@ const restoreNavigationForScrollingPageTurnMode = ({
       /**
        * -> fallback to position we were in spine item
        */
-      const positionInSpineItem =
-        spineLocator.getSafeSpineItemPositionFromUnsafeSpineItemPosition(
-          navigation.positionInSpineItem ??
-            new SpineItemPosition({
-              x: 0,
-              y: 0,
-            }),
-          foundSpineItem,
-        )
+      const positionInSpineItem = clampPositionInSpineItem(
+        navigation.positionInSpineItem ??
+          new SpineItemPosition({
+            x: 0,
+            y: 0,
+          }),
+        spineItemLayout,
+      )
 
       return spineLocator.getSpinePositionFromSpineItemPosition({
         spineItemPosition: positionInSpineItem,
@@ -140,11 +139,10 @@ const restoreNavigationForScrollingPageTurnMode = ({
         /**
          * - we navigate to the closest valid position
          */
-        const positionInSpineItem =
-          spineLocator.getSafeSpineItemPositionFromUnsafeSpineItemPosition(
-            positionInspineItem,
-            foundSpineItem,
-          )
+        const positionInSpineItem = clampPositionInSpineItem(
+          positionInspineItem,
+          spineItemLayout,
+        )
 
         return spineLocator.getSpinePositionFromSpineItemPosition({
           spineItemPosition: positionInSpineItem,
@@ -175,11 +173,10 @@ const restoreNavigationForScrollingPageTurnMode = ({
           })
 
           return spineLocator.getSpinePositionFromSpineItemPosition({
-            spineItemPosition:
-              spineLocator.getSafeSpineItemPositionFromUnsafeSpineItemPosition(
-                positionInItem,
-                foundSpineItem,
-              ),
+            spineItemPosition: clampPositionInSpineItem(
+              positionInItem,
+              spineItemLayout,
+            ),
             spineItem: foundSpineItem,
           })
         }
@@ -209,8 +206,6 @@ export const restorePosition = ({
   navigationResolver: NavigationResolver
   navigation: InternalNavigationEntry
   spineItemsManager: SpineItemsManager
-  spineItemLocator: SpineItemLocator
-  context: Context
   spine: Spine
   cfiManager: CfiManager
 }): Observable<SpinePosition | UnboundSpinePosition> => {

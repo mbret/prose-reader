@@ -108,7 +108,8 @@ export const getLongChapterIndex = (page: Page) =>
 /** The number of pages of a spine item, as the reader counts them now. */
 export const getNumberOfPagesOfSpineItem = async (page: Page, index: number) =>
   (await getReader(page)).evaluate(
-    (reader, index) => reader.spineItemsManager.get(index)?.numberOfPages,
+    (reader, index) =>
+      reader.spineItemsManager.get(index)?.pageGeometry.numberOfPages,
     index,
   )
 
