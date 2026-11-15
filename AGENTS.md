@@ -51,8 +51,9 @@ So:
   like any other design: find the process that owns the behaviour and the
   cleanest shape, and depart from the proposal when it is wrong. Say in the
   pull request where you departed and why. #693 proposed to teach
-  `ReactiveEntity.watch(key)` about DOM elements; the flaw was in
-  `isShallowEqual`, which took any two objects without own keys for equal.
+  `ReactiveEntity.watch(key)` about DOM elements; the flaw was that
+  `watch(key)` compared a field's value with `isShallowEqual`, which is made
+  for plain objects.
 - **Put a behaviour in the process that owns it, not where the task is.**
   Before you add a behaviour, or heavily change one, ask which existing process
   already makes that decision. If one does, the change belongs there, even when
