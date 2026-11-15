@@ -70,14 +70,28 @@ function createRangeOrCaretFromPoint(
   }
 }
 
-type ViewPort = { left: number; right: number; top: number; bottom: number }
+type Box = { left: number; right: number; top: number; bottom: number }
 
 /**
+ * Whether a rect overlaps a box on both axes. One that only touches an edge
+ * of the box, such as text at the start of the next page, does not.
+ */
+const isRectInBox = (rect: DOMRect, box: Box) =>
+  rect.right > box.left &&
+  rect.left < box.right &&
+  rect.bottom > box.top &&
+  rect.top < box.bottom
+
+/**
+ * The first node, in document order, with a box in `box`, and the offset in
+ * it of the first character there. `box` is in the coordinates of the
+ * document's own viewport, as `getClientRects()` measures them.
+ *
  * @todo optimize
  */
 export const getFirstVisibleNodeForPositionRelativeTo = (
   documentOrElement: Document | Element,
-  viewport: ViewPort,
+  box: Box,
 ) => {
   const ownerDocument =
     `createRange` in documentOrElement
@@ -88,8 +102,8 @@ export const getFirstVisibleNodeForPositionRelativeTo = (
 
   const element =
     `body` in documentOrElement
-      ? getFirstVisibleElementForViewport(documentOrElement.body, viewport)
-      : getFirstVisibleElementForViewport(documentOrElement, viewport)
+      ? getFirstVisibleElementForViewport(documentOrElement.body, box)
+      : getFirstVisibleElementForViewport(documentOrElement, box)
 
   if (element) {
     let lastValidRange: Range | undefined
@@ -106,7 +120,9 @@ export const getFirstVisibleNodeForPositionRelativeTo = (
 
       const rects = range.getClientRects() // this forces layout ? needs to find better approach
 
-      const visibleRect = getFirstVisibleDOMRect(rects, viewport)
+      const visibleRect = Array.from(rects).find((rect) =>
+        isRectInBox(rect, box),
+      )
 
       // At this point we know the range is valid and contains visible rect.
       // This means we have a valid Node. We still need to know the visible offset to be 100% accurate
@@ -163,14 +179,8 @@ export const getFirstVisibleNodeForPositionRelativeTo = (
 
 const getFirstVisibleElementForViewport = (
   element: Element,
-  viewport: ViewPort,
+  box: Box,
 ): Element | undefined => {
-  const rect = element.getBoundingClientRect()
-  const positionFromViewport = getElementOrNodePositionFromViewPort(
-    rect,
-    viewport,
-  )
-
   let lastValidElement: Element | undefined
 
   /**
@@ -181,12 +191,12 @@ const getFirstVisibleElementForViewport = (
    * We could do some heuristic assumptions or checking depth but nothing is quite safe at 100%
    */
 
-  if (positionFromViewport !== `before` && positionFromViewport !== `after`) {
+  if (isRectInBox(element.getBoundingClientRect(), box)) {
     lastValidElement = element
   }
 
   for (const child of element.children) {
-    const childInViewPort = getFirstVisibleElementForViewport(child, viewport)
+    const childInViewPort = getFirstVisibleElementForViewport(child, box)
 
     if (childInViewPort) {
       return childInViewPort
@@ -194,34 +204,6 @@ const getFirstVisibleElementForViewport = (
   }
 
   return lastValidElement
-}
-
-function getElementOrNodePositionFromViewPort(
-  domRect: DOMRect,
-  { left, right }: ViewPort,
-) {
-  // horizontal + ltr
-  if (domRect.left <= left && domRect.right <= left) return `before`
-  if (domRect.left <= left && domRect.right > left && domRect.right <= right)
-    return `partially-before`
-  if (domRect.left <= right && domRect.right > right) return `partially-after`
-  if (domRect.left > right) return `after`
-  return `within`
-
-  // @todo rtl
-  // @todo vertical-lrt
-  // @todo vertical-rtl
-}
-
-function getFirstVisibleDOMRect(domRect: DOMRectList, viewport: ViewPort) {
-  return Array.from(domRect).find((domRect) => {
-    const position = getElementOrNodePositionFromViewPort(domRect, viewport)
-
-    if (position !== `before` && position !== `after`) {
-      return true
-    }
-    return false
-  })
 }
 
 export const getRangeFromNode = (node: Node, offset: number) => {

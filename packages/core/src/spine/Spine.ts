@@ -83,7 +83,6 @@ export class Spine extends ReactiveEntity<SpineState> {
       this.spineLayout,
       this.spineItemsManager,
       this.locator,
-      this.viewport,
     )
 
     merge(

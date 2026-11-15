@@ -3,15 +3,16 @@ import {
   getRangeFromNode,
   isHtmlElement,
 } from "../utils/dom"
+import { DocumentFramePlacement } from "./DocumentFramePlacement"
 import type { SpineItem } from "./SpineItem"
-import type { SpineItemPageGeometry } from "./SpineItemPageGeometry"
-import { SpineItemPosition } from "./types"
 
 /**
- * The rect a node covers, from `offset` on, or `undefined` when it isn't
- * rendered: `display: none`, or inside it.
+ * The first box a node lays out, from `offset` on: where it starts, on the
+ * page it starts on. `undefined` when it isn't rendered: `display: none`, or
+ * inside it. Its boxes as one rect would start on the last page the node
+ * reaches when its pages run right to left.
  *
- * Its rect alone cannot tell the two apart. A node that isn't rendered
+ * A rect alone cannot tell the two apart. A node that isn't rendered
  * measures an empty rect at `x === 0`, the same `x` as rendered text at the
  * item's left edge, such as a page's first line without a horizontal margin.
  * Only a rendered node has client rects, whatever their size: an element
@@ -27,16 +28,16 @@ const getRenderedRectOfNode = (node: Node, offset: number) => {
   if (range?.collapsed && node.hasChildNodes())
     return getRenderedEndOfContents(node)
 
-  if (range?.getClientRects().length) return range.getBoundingClientRect()
+  const rangeBox = range?.getClientRects()[0]
+
+  if (rangeBox) return rangeBox
 
   /**
    * A range that selects no box in an element rendered all the same, such
    * as an `img`, which has no contents, or a `video`, whose sources lay out
-   * none: the element is measured as a whole.
+   * none: the element is measured itself.
    */
-  return isHtmlElement(node) && node.getClientRects().length
-    ? node.getBoundingClientRect()
-    : undefined
+  return isHtmlElement(node) ? node.getClientRects()[0] : undefined
 }
 
 /**
@@ -84,45 +85,36 @@ const getRenderedRectAfterNode = (node: Node) => {
   return undefined
 }
 
-const getPageStartOfNode = (
-  node: Node,
-  offset: number,
-  pageGeometry: SpineItemPageGeometry,
-) => {
-  const renderedRect =
-    getRenderedRectOfNode(node, offset) ?? getRenderedRectAfterNode(node)
-
-  if (!renderedRect)
-    return pageGeometry.getPositionFromPageIndex(pageGeometry.numberOfPages - 1)
-
-  // @todo vertical
-  return pageGeometry.snapPositionToPageGrid(
-    new SpineItemPosition({ x: renderedRect.x, y: 0 }),
-  )
-}
-
 /**
- * Where the page holding a node, from `offset` on, starts in its item.
+ * The page of its item a node starts on, from `offset` on.
  *
  * A node that isn't rendered, `display: none` or inside it, is where the
  * content after it is: a hidden page-break marker is on the page it breaks
  * to. With nothing rendered after it, it is past everything shown, on the
  * item's last page.
  */
-export const getSpineItemPositionFromNode = (
-  node: Node,
-  offset: number,
-  spineItem: SpineItem,
-) => getPageStartOfNode(node, offset, spineItem.pageGeometry)
-
 export const getSpineItemPageIndexFromNode = (
   node: Node,
   offset: number,
   spineItem: SpineItem,
 ) => {
   const { pageGeometry } = spineItem
+  const renderedBox =
+    getRenderedRectOfNode(node, offset) ?? getRenderedRectAfterNode(node)
+
+  if (!renderedBox) return pageGeometry.numberOfPages - 1
 
   return pageGeometry.getPageIndexFromPosition(
-    getPageStartOfNode(node, offset, pageGeometry),
+    DocumentFramePlacement.measure(spineItem).toSpineItemPosition(renderedBox),
   )
 }
+
+/** Where the page a node starts on, from `offset` on, starts in its item. */
+export const getSpineItemPositionFromNode = (
+  node: Node,
+  offset: number,
+  spineItem: SpineItem,
+) =>
+  spineItem.pageGeometry.getPositionFromPageIndex(
+    getSpineItemPageIndexFromNode(node, offset, spineItem),
+  )

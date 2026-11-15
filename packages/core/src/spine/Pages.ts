@@ -1,17 +1,9 @@
-import {
-  EMPTY,
-  map,
-  Observable,
-  share,
-  switchMap,
-  takeUntil,
-  withLatestFrom,
-} from "rxjs"
+import { EMPTY, map, Observable, share, switchMap, takeUntil } from "rxjs"
+import { DocumentFramePlacement } from "../spineItem/DocumentFramePlacement"
 import type { SpineItem } from "../spineItem/SpineItem"
 import { SpineItemPageLayout } from "../spineItem/types"
 import { getFirstVisibleNodeForPositionRelativeTo } from "../utils/dom"
 import { ReactiveEntity } from "../utils/ReactiveEntity"
-import type { Viewport } from "../viewport/Viewport"
 import type { SpineLocator } from "./locator/SpineLocator"
 import { Report } from "./report"
 import type { SpineItemsManager } from "./SpineItemsManager"
@@ -77,16 +69,24 @@ const getDocumentToSearchForPage = ({ spineItem }: UnresolvedPageEntry) => {
   return loadedDocument?.body ? loadedDocument : undefined
 }
 
+/**
+ * The page with its first visible node. The page's box is in its item, and
+ * the document lays out its nodes in its frame, which the renderer can move
+ * and scale in the item.
+ */
 const resolveFirstVisibleNodeForPage = (
   page: UnresolvedPageEntry,
   documentToSearch: Document | undefined,
 ): PageEntry => {
-  const { spineItem: _spineItem, ...rest } = page
+  const { spineItem, ...rest } = page
 
   return {
     ...rest,
     firstVisibleNode: documentToSearch
-      ? getFirstVisibleNodeForPositionRelativeTo(documentToSearch, page.layout)
+      ? getFirstVisibleNodeForPositionRelativeTo(
+          documentToSearch,
+          DocumentFramePlacement.measure(spineItem).toDocumentBox(page.layout),
+        )
       : undefined,
   }
 }
@@ -171,13 +171,11 @@ export class Pages extends ReactiveEntity<PagesState> {
     public readonly spineLayout: SpineLayout,
     public readonly spineItemsManager: SpineItemsManager,
     public readonly locator: SpineLocator,
-    public readonly viewport: Viewport,
   ) {
     super({ pages: [] })
 
     this.layout$ = spineLayout.lifecycle$.pipe(
-      withLatestFrom(viewport),
-      switchMap(([{ stage }, { pageSize }]) => {
+      switchMap(({ stage }) => {
         /**
          * Resolving first visible nodes runs across animation frames. A layout
          * requested meanwhile makes the pages being computed describe a layout
@@ -189,14 +187,13 @@ export class Pages extends ReactiveEntity<PagesState> {
         const pages = spineItemsManager.items.reduce<UnresolvedPageEntry[]>(
           (acc, spineItem, itemIndex) => {
             const { pageGeometry } = spineItem
+            const { pageSize } = pageGeometry
 
             for (
               let pageIndex = 0;
               pageIndex < pageGeometry.numberOfPages;
               pageIndex += 1
             ) {
-              // @todo handle vertical jp
-              // top seems ok but left is not, it should probably not be 0 or something
               const pageSpineItemPosition =
                 pageGeometry.getPositionFromPageIndex(pageIndex)
 

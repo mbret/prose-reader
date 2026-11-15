@@ -98,6 +98,18 @@ export class SpineItemPageGeometry {
   }
 
   /**
+   * The size of each page of the item. A page of vertical writing is as wide
+   * as the item: in a spread, its lines run across both halves.
+   */
+  get pageSize(): Size {
+    const { itemSize, pageSize } = this.params
+
+    return this.isUsingVerticalWriting
+      ? { width: itemSize.width, height: pageSize.height }
+      : pageSize
+  }
+
+  /**
    * The index of the page holding a position. A position outside the item is
    * on its nearest page.
    */
