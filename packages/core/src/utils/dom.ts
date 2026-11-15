@@ -83,19 +83,21 @@ const isRectInBox = (rect: DOMRect, box: Box) =>
   rect.top < box.bottom
 
 /**
- * Where a line box of an element starts, inside the box: at its left edge,
- * or at its right edge for horizontal text written right to left. A vertical
- * line starts at its top.
+ * Where a line box of an element starts, at a whole pixel inside the box: at
+ * its left edge, or at its right edge for horizontal text written right to
+ * left. A vertical line starts at its top.
  */
 const getStartOfLineBox = (lineBox: DOMRect, element: Element) => {
   const style = element.ownerDocument.defaultView?.getComputedStyle(element)
   const isHorizontalRightToLeft =
     style?.direction === "rtl" && !style.writingMode.startsWith("vertical")
+  const left = Math.ceil(lineBox.left)
 
   return {
+    // A line box under two pixels wide holds no pixel left of its right edge.
     x: isHorizontalRightToLeft
-      ? Math.floor(lineBox.right) - 1
-      : Math.ceil(lineBox.left),
+      ? Math.max(left, Math.floor(lineBox.right) - 1)
+      : left,
     y: Math.ceil(lineBox.top),
   }
 }

@@ -64,3 +64,76 @@ describe("getFirstNodeInBox", () => {
     ).toBe(paragraphs[1]?.firstChild)
   })
 })
+
+describe("getFirstNodeInBox, the offset in the first node", () => {
+  /**
+   * Records each point the lookup asks a caret for, and puts the caret at
+   * `offset` in the node the point is in.
+   */
+  const stubCaretPositionFromPoint = (offsetNode: Node, offset: number) => {
+    const points: { x: number; y: number }[] = []
+
+    Object.defineProperty(document, "caretPositionFromPoint", {
+      configurable: true,
+      value: (x: number, y: number) => {
+        points.push({ x, y })
+
+        return { offsetNode, offset }
+      },
+    })
+    onTestFinished(() => {
+      Reflect.deleteProperty(document, "caretPositionFromPoint")
+    })
+
+    return points
+  }
+
+  const box = { left: 0, right: 600, top: 0, bottom: 800 }
+
+  it("reads the caret at the left edge of a line written left to right", () => {
+    const [paragraph] = createDocumentOfParagraphs([
+      { x: 100, y: 10, width: 400, height: 20 },
+    ])
+    const text = paragraph?.firstChild
+
+    if (!text) throw new Error("the paragraph has no text")
+
+    const points = stubCaretPositionFromPoint(text, 3)
+
+    expect(getFirstNodeInBox(document, box)).toEqual({ node: text, offset: 3 })
+    expect(points).toEqual([{ x: 100, y: 10 }])
+  })
+
+  it("reads the caret at the right edge of a line written right to left, where it starts", () => {
+    const [paragraph] = createDocumentOfParagraphs([
+      { x: 100, y: 10, width: 400, height: 20 },
+    ])
+    const text = paragraph?.firstChild
+
+    if (!paragraph || !text) throw new Error("the paragraph has no text")
+
+    paragraph.style.direction = "rtl"
+
+    const points = stubCaretPositionFromPoint(text, 3)
+
+    expect(getFirstNodeInBox(document, box)).toEqual({ node: text, offset: 3 })
+    expect(points).toEqual([{ x: 499, y: 10 }])
+  })
+
+  it("reads the caret inside a line written right to left that is under two pixels wide", () => {
+    const [paragraph] = createDocumentOfParagraphs([
+      { x: 100.5, y: 10, width: 1.2, height: 20 },
+    ])
+    const text = paragraph?.firstChild
+
+    if (!paragraph || !text) throw new Error("the paragraph has no text")
+
+    paragraph.style.direction = "rtl"
+
+    const points = stubCaretPositionFromPoint(text, 0)
+
+    getFirstNodeInBox(document, box)
+
+    expect(points).toEqual([{ x: 101, y: 10 }])
+  })
+})
