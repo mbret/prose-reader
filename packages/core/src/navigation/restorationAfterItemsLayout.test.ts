@@ -33,7 +33,12 @@ const openOnThirdPage = async (
 ) => {
   stubElementScrolling()
 
-  const { getRenderer, setItemSize } = renderItemsOfSetSizes()
+  const {
+    getRenderer,
+    setItemSize,
+    holdLayoutOfItem,
+    getNumberOfLayoutsStartedOfItem,
+  } = renderItemsOfSetSizes()
   const reader = createTestReader({
     manifest: createPrePaginatedManifest({
       pageSpreads: [undefined, undefined, undefined, undefined],
@@ -49,8 +54,11 @@ const openOnThirdPage = async (
 
   return {
     reader,
+    setItemSize,
     setSizeOfFirstPage: (size: Parameters<typeof setItemSize>[1]) =>
       setItemSize(0, size),
+    holdLayoutOfItem,
+    getNumberOfLayoutsStartedOfItem,
   }
 }
 
@@ -135,7 +143,7 @@ describe("Given a layout that moves the spine item the navigation shows", () => 
     const distanceUserScrolledIntoThirdPage = 50
 
     const openOnThirdPageOfScrollingBook = async () => {
-      const { reader, setSizeOfFirstPage } = await openOnThirdPage({
+      const { reader, ...sizesAndLayoutOfSpineItems } = await openOnThirdPage({
         pageTurnMode: "scrollable",
       })
       const scrollElement =
@@ -146,7 +154,7 @@ describe("Given a layout that moves the spine item the navigation shows", () => 
       return {
         reader,
         scrollElement,
-        setSizeOfFirstPage,
+        ...sizesAndLayoutOfSpineItems,
         isNavigationLocked: () => firstValueFrom(reader.navigation.isLocked$),
       }
     }
@@ -336,6 +344,47 @@ describe("Given a layout that moves the spine item the navigation shows", () => 
       })
     })
 
+    it("restores the navigation where the last move took the book, when the user scrolls on while the spine items are laid out", async () => {
+      const {
+        reader,
+        scrollElement,
+        setSizeOfFirstPage,
+        holdLayoutOfItem,
+        getNumberOfLayoutsStartedOfItem,
+      } = await openOnThirdPageOfScrollingBook()
+
+      scrollElement.scrollTop =
+        2 * pageHeight + distanceUserScrolledIntoThirdPage
+      deliverScrollEvent(scrollElement)
+
+      // The first page grows by 300, and the pass waits at the second page.
+      const numberOfLayoutsOfSecondPageBeforePass =
+        getNumberOfLayoutsStartedOfItem(1)
+      const releaseLayoutOfSecondPage = holdLayoutOfItem(1)
+
+      setSizeOfFirstPage({ height: pageHeight + 300 })
+      reader.layout()
+      await vi.waitFor(() =>
+        expect(getNumberOfLayoutsStartedOfItem(1)).toBe(
+          numberOfLayoutsOfSecondPageBeforePass + 1,
+        ),
+      )
+
+      // The user scrolls on by 10 while the third page has not moved yet.
+      scrollElement.scrollTop =
+        2 * pageHeight + distanceUserScrolledIntoThirdPage + 10
+      deliverScrollEvent(scrollElement)
+
+      const spineItemsLaidOut = firstValueFrom(reader.spine.itemsLayout$)
+
+      releaseLayoutOfSecondPage()
+      await spineItemsLaidOut
+
+      expect(scrollElement.scrollTop, "where the book is").toBe(
+        2 * pageHeight + 300 + distanceUserScrolledIntoThirdPage + 10,
+      )
+    })
+
     it("restores the navigation where the user scrolled to, and goes on with the scroll, when the scroll begins as the layout has started", async () => {
       const { reader, scrollElement, setSizeOfFirstPage, isNavigationLocked } =
         await openOnThirdPageOfScrollingBook()
@@ -498,5 +547,88 @@ describe("Given a layout that keeps the place and size of the spine item the nav
     await settledOn(reader, 1)
 
     expect(reader.navigation.getNavigation().position.x).toBe(5 * pageWidth)
+  })
+})
+
+describe("Given a spine item of a book that scrolls, which changes height once a scroll of the user's is over", () => {
+  const { height: pageHeight } = defaultTestViewport
+
+  /**
+   * A book of four pages, one item each, that scrolls. The user scrolls from
+   * one page into the third one, then moves a pixel the other way, and the
+   * scroll ends. The third page then grows by 300 where it is.
+   */
+  const scrollIntoThirdPageThenMakeItTaller = async ({
+    fromPage,
+    toDistanceIntoThirdPage,
+    thenByOnePixel,
+  }: {
+    fromPage: number
+    toDistanceIntoThirdPage: number
+    thenByOnePixel: "down" | "up"
+  }) => {
+    stubElementScrolling()
+
+    const { getRenderer, setItemSize } = renderItemsOfSetSizes()
+    const reader = createTestReader({
+      manifest: createPrePaginatedManifest({
+        pageSpreads: [undefined, undefined, undefined, undefined],
+      }),
+      getRenderer,
+      pageTurnMode: "scrollable",
+    })
+
+    mountTestReader(reader)
+    await settledOn(reader, 0)
+    reader.navigation.goToSpineItem({ indexOrId: fromPage, animation: false })
+    await settledOn(reader, fromPage)
+
+    const scrollElement =
+      reader.navigation.scrollNavigationController.value.element
+
+    if (!scrollElement) throw new Error("the reader has no scroll element")
+
+    const scrollTopAtEndOfScroll =
+      2 * pageHeight +
+      toDistanceIntoThirdPage +
+      (thenByOnePixel === "down" ? 1 : -1)
+
+    scrollElement.scrollTop = 2 * pageHeight + toDistanceIntoThirdPage
+    deliverScrollEvent(scrollElement)
+    scrollElement.scrollTop = scrollTopAtEndOfScroll
+    deliverScrollEvent(scrollElement)
+    await settledOn(reader, 2)
+
+    setItemSize(2, { height: pageHeight + 300 })
+    reader.layout()
+    await firstValueFrom(reader.spine.itemsLayout$)
+
+    return { scrollElement, scrollTopAtEndOfScroll }
+  }
+
+  describe("When the user came into it from the spine item after it, and the last move went a pixel down", () => {
+    it("keeps the book as far from the bottom of the spine item", async () => {
+      const { scrollElement, scrollTopAtEndOfScroll } =
+        await scrollIntoThirdPageThenMakeItTaller({
+          fromPage: 3,
+          toDistanceIntoThirdPage: 70,
+          thenByOnePixel: "down",
+        })
+
+      expect(scrollElement.scrollTop).toBe(scrollTopAtEndOfScroll + 300)
+    })
+  })
+
+  describe("When the user came into it from the spine item before it, and the last move went a pixel up", () => {
+    it("keeps the book as far from the top of the spine item", async () => {
+      const { scrollElement, scrollTopAtEndOfScroll } =
+        await scrollIntoThirdPageThenMakeItTaller({
+          fromPage: 1,
+          toDistanceIntoThirdPage: 50,
+          thenByOnePixel: "up",
+        })
+
+      expect(scrollElement.scrollTop).toBe(scrollTopAtEndOfScroll)
+    })
   })
 })

@@ -287,9 +287,17 @@ export const holdItemLayout = (href: string) => {
  * then. jsdom lays nothing out, and the spine places its items by their
  * sizes. A new size shows at the next layout, the way an item that loads
  * takes its size.
+ *
+ * A test can also stop the spine's layout pass at one item, as
+ * `holdItemLayout` does: while held, that item's layout does not complete, so
+ * the pass has laid out the items before it and waits.
  */
 export const renderItemsOfSetSizes = () => {
   const sizeOfItemIndex = new Map<number, { width?: number; height?: number }>()
+  const itemIndexesWithLayoutHeld = new BehaviorSubject<ReadonlySet<number>>(
+    new Set(),
+  )
+  const numberOfLayoutsStartedOfItemIndex = new Map<number, number>()
 
   class SetSizeRenderer extends DocumentRenderer {
     onCreateDocument() {
@@ -303,12 +311,24 @@ export const renderItemsOfSetSizes = () => {
     onUnload() {}
 
     onLayout() {
-      const { width, height } = sizeOfItemIndex.get(this.item.index) ?? {}
+      const { index } = this.item
 
-      return of({
-        width: width ?? viewport.width,
-        height: height ?? viewport.height,
-      })
+      numberOfLayoutsStartedOfItemIndex.set(
+        index,
+        (numberOfLayoutsStartedOfItemIndex.get(index) ?? 0) + 1,
+      )
+
+      return itemIndexesWithLayoutHeld.pipe(
+        first((itemIndexes) => !itemIndexes.has(index)),
+        map(() => {
+          const { width, height } = sizeOfItemIndex.get(index) ?? {}
+
+          return {
+            width: width ?? viewport.width,
+            height: height ?? viewport.height,
+          }
+        }),
+      )
     }
 
     onRenderHeadless() {
@@ -329,6 +349,25 @@ export const renderItemsOfSetSizes = () => {
     ) => {
       sizeOfItemIndex.set(spineItemIndex, size)
     },
+    /** Holds the layout of an item, and returns its release. */
+    holdLayoutOfItem: (spineItemIndex: number) => {
+      itemIndexesWithLayoutHeld.next(
+        new Set([...itemIndexesWithLayoutHeld.value, spineItemIndex]),
+      )
+
+      return () => {
+        itemIndexesWithLayoutHeld.next(
+          new Set(
+            [...itemIndexesWithLayoutHeld.value].filter(
+              (itemIndex) => itemIndex !== spineItemIndex,
+            ),
+          ),
+        )
+      }
+    },
+    /** How many layouts of an item have started: a pass has reached it. */
+    getNumberOfLayoutsStartedOfItem: (spineItemIndex: number) =>
+      numberOfLayoutsStartedOfItemIndex.get(spineItemIndex) ?? 0,
   }
 }
 
