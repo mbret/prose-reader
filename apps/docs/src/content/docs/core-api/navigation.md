@@ -166,6 +166,10 @@ book is ignored, with a warning: a cfi that can't be read, or a `cfi`,
 `spineItem` or `selector` naming a spine item the book does not have. A position
 is clamped to the book, so it always names a place.
 
+`type` is `"api"` unless you give it. `"scroll"` is for a navigation that
+follows a scroll of the user's: the view is already at its position, and the
+reader does not move it. The reader makes those itself in a book that scrolls.
+
 Enhancers can add target types: the
 reader `createReader` returns also takes `{ type: "url"; value: string | URL }`,
 from its navigation enhancer. `NavigationTargetOf<typeof reader>` is every
@@ -220,6 +224,40 @@ The user's scroll of a book that scrolls gives a `"user"` one when it is over,
 and one as a layout starts during it: where the scroll has taken the user by
 then.
 A restoration is emitted even when it lands where the navigation already was.
+
+A navigation asked for while a `lock()` is held is emitted as a `"user"` one
+when it is made. The last one asked for is emitted again, as a `"restoration"`,
+when the lock is released and it lands. The same holds during a scroll of the
+user's, which that navigation ends, see
+[`.navigationRequest$`](#navigationrequestusd).
+
+### `.navigationRequest$` { #navigationrequestusd }
+
+```typescript
+Observable<{
+  target: NavigationTarget
+  animation?: Animation
+  type?: "api" | "scroll"
+}>
+```
+
+Each request for a navigation whose target names a place in the book, as core
+was given it: a target that an enhancer adds, such as a url, is emitted as the
+core target it was translated to. A request whose target names nothing in the
+book is ignored, and is not emitted. It completes when the reader is destroyed.
+
+It emits once the reader has handled the request. The reader has made the
+navigation by then, so `.navigation$` emits it first. While the reader's
+container is hidden, the order is the reverse: the request is emitted at once,
+and the reader makes the navigation once the container is shown.
+
+A request that a listener of this stream, or of `.navigation$`, makes in answer
+to another one is emitted before the one it answers.
+
+Use it to end something of your own when something else navigates. The reader
+does so for a scroll of the user's: a request that the scroll did not make ends
+the scroll at once, its lock is released, and the scroll makes no navigation of
+its own.
 
 ### `.navigationAgainstCurrentLayout$` { #navigationagainstcurrentlayoutusd }
 
@@ -292,9 +330,12 @@ subscribe to it.
 
 ### `.outOfSpineBoundary$` { #outofspineboundaryusd }
 
-Emits when a navigation request targets a position outside the spine's current
-extent. Pure geometric primitive, with no content-lifecycle semantics. For "end
-of book reached" with lazy-load awareness, compose with readiness signals (see
+Emits when a navigation request targets a position outside the spine's
+[bounding box](/core-api/spine#boundingbox): `"start"` before the first screen,
+`"end"` past the last, in reading order. Until a layout has laid out a spine
+item, the spine has no bounding box, and it emits nothing. Pure geometric
+primitive, with no content-lifecycle semantics. For "end of book reached" with
+lazy-load awareness, compose with readiness signals (see
 `observeBookBoundaryReached`).
 
 ```typescript

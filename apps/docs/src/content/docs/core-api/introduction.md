@@ -24,6 +24,16 @@ If it answers all the questions by YES, it should be in the core:
 * Is it following strictly browser API ?
 
 
+## Reactive state { #reactive-state }
+
+`reader.context`, `reader.viewport`, `reader.spine`, a spine item and its renderer each hold a state, and expose it the same way:
+
+- `.value`: the state now.
+- `.state$`: the state as soon as you subscribe, then each new one. The object itself is an observable of the same states.
+- `.watch(key)`: one field as soon as you subscribe, then each time it changes. `.watch(keys)` does the same for several fields, as one object.
+
+A field changes when its new value is another instance than the last, compared with `Object.is`. These streams complete when the object is destroyed.
+
 ## Streams { #streams }
 
 A stream that the reader exposes as a property, such as `reader.pagination.state$` or a spine item's `isReady$`, is the same object every time you read it.

@@ -43,13 +43,9 @@ The [pagination page](/learn/pagination#pagination-or-reading-position) explains
 that makes it the value to save rather than pagination's `begin.cfi`. With
 the [`controlled` page turn mode](/learn/page-turn-mode), the default, it is
 also what the reader returns to itself after such a relayout, so a book reopened at a saved reading position shows the same text
-as one that was resized. The reader keeps the page instead, until the chapter
-changes size or finishes loading, in two cases:
-
-- a page that starts with an element rather than text, such as an image: the
-  element can start on an earlier page;
-- a chapter written right to left or vertically: the reader cannot yet tell
-  which page of it a place is on.
+as one that was resized. On a page that starts with an element rather than
+text, such as an image, the reader keeps the page instead, until the chapter
+changes size or finishes loading: the element can start on an earlier page.
 
 It is the reader's own answer, the same whatever the navigation's target: a
 cfi, a url, a spine item, a page turn, or a target an enhancer adds. It is set
@@ -202,9 +198,10 @@ that moment wrong.
 
 A gesture that moves the page itself, a pan, has to keep the reader from moving
 it at the same time. `panNavigator` holds a lock for the pans it drives, from
-`start()` to `stop()`, and the reader holds one while the user scrolls. For a
-gesture of your own, take a `lock()` when it starts and release it when it
-ends:
+`start()` to `stop()`. The reader holds one while the user scrolls. A
+navigation made during the scroll ends the scroll, and the reader releases its
+lock. For a gesture of your own, take a `lock()` when it starts and release it
+when it ends:
 
 ```typescript
 const release = reader.navigation.lock()

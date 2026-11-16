@@ -108,7 +108,8 @@ export const getLongChapterIndex = (page: Page) =>
 /** The number of pages of a spine item, as the reader counts them now. */
 export const getNumberOfPagesOfSpineItem = async (page: Page, index: number) =>
   (await getReader(page)).evaluate(
-    (reader, index) => reader.spineItemsManager.get(index)?.numberOfPages,
+    (reader, index) =>
+      reader.spineItemsManager.get(index)?.pageGeometry.numberOfPages,
     index,
   )
 
@@ -124,6 +125,28 @@ export const navigateToSpineItem = async ({
   await reader.evaluate((reader, indexOrId) => {
     reader.navigation.goToSpineItem({ indexOrId })
   }, index)
+}
+
+export const navigateToPageOfSpineItem = async ({
+  page,
+  spineItemIndex,
+  pageIndex,
+}: {
+  page: Page
+  spineItemIndex: number
+  pageIndex: number
+}) => {
+  const reader = await getReader(page)
+
+  await reader.evaluate(
+    (reader, { spineItemIndex, pageIndex }) => {
+      reader.navigation.goToPageOfSpineItem({
+        spineItemId: spineItemIndex,
+        pageIndex,
+      })
+    },
+    { spineItemIndex, pageIndex },
+  )
 }
 
 /**

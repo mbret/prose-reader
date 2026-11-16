@@ -1,6 +1,6 @@
 import {
   createXmlSafeIdFactory,
-  detectMimeTypeFromName,
+  detectMimeTypeFromUrl,
   escapeXmlAttributeValue,
   getUriBasename,
 } from "@prose-reader/shared"
@@ -25,6 +25,7 @@ export const createArchiveFromUrls = async (
   const resources = urls.map((url) => ({
     id: createSafeId(url),
     url,
+    mediaType: detectMimeTypeFromUrl(url),
   }))
   const opfFileData = `
     <?xml version="1.0" encoding="UTF-8"?><package xmlns="http://www.idpf.org/2007/opf" version="2.0" unique-identifier="bookid">
@@ -34,11 +35,10 @@ export const createArchiveFromUrls = async (
       </metadata>
       <manifest>
         ${resources
-          .map(({ id, url }) => {
-            const mediaType = detectMimeTypeFromName(url)
-
-            return `<item id="${id}" href="${escapeXmlAttributeValue(url)}" media-type="${escapeXmlAttributeValue(mediaType ?? ``)}"/>`
-          })
+          .map(
+            ({ id, url, mediaType }) =>
+              `<item id="${id}" href="${escapeXmlAttributeValue(url)}" media-type="${escapeXmlAttributeValue(mediaType ?? ``)}"/>`,
+          )
           .join(`\n`)}
       </manifest>
       <spine>
@@ -47,18 +47,20 @@ export const createArchiveFromUrls = async (
     </package>
   `
 
-  const filesFromUrl: Archive[`records`] = urls.map((url) => ({
-    dir: false,
-    basename: getUriBasename(url),
-    encodingFormat: detectMimeTypeFromName(url),
-    uri: url,
-    size: 0,
-    ...blobFileAccessors(async () => {
-      const response = await fetch(url)
+  const filesFromUrl: Archive[`records`] = resources.map(
+    ({ url, mediaType }) => ({
+      dir: false,
+      basename: getUriBasename(url),
+      encodingFormat: mediaType,
+      uri: url,
+      size: 0,
+      ...blobFileAccessors(async () => {
+        const response = await fetch(url)
 
-      return response.blob()
+        return response.blob()
+      }),
     }),
-  }))
+  )
 
   const opfFile: Archive[`records`][number] = {
     dir: false,

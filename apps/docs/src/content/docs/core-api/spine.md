@@ -1,6 +1,6 @@
 ---
 title: "reader.spine"
-description: "The reader.spine reference: its element, and which spine items the pages describe as the latest layout requested lays them out."
+description: "The reader.spine reference: its element, the bounding box of its spine items, and which spine items the pages describe as the latest layout requested lays them out."
 sidebar:
   label: ".spine"
 ---
@@ -31,10 +31,8 @@ The spine's state, read synchronously.
 Observable<typeof reader.spine.value>
 ```
 
-The state as soon as you subscribe, then each time it changes. To react to one
-field, watch it with `.watch()`. `reader.spine` is itself an observable of the
-same states: subscribing to it is subscribing to `.state$`. Both complete when
-the reader is destroyed.
+The state as soon as you subscribe, then each time it changes. See
+[Reactive state](/core-api/introduction#reactive-state).
 
 ### `.watch()` { #watch }
 
@@ -45,17 +43,7 @@ watch<K extends keyof SpineState>(key: K): Observable<SpineState[K]>
 watch<K extends keyof SpineState>(keys: K[]): Observable<Pick<SpineState, K>>
 ```
 
-One field, or several, as soon as you subscribe, then whenever they change.
-
-Each call returns a new stream: see [Streams](/core-api/introduction#streams).
-
-```typescript
-reader.spine
-  .watch("firstItemIndexAwaitingLayout")
-  .subscribe((firstItemIndexAwaitingLayout) => {
-    // undefined once the pages describe every item again
-  })
-```
+See [Reactive state](/core-api/introduction#reactive-state).
 
 ## Layout
 
@@ -155,8 +143,8 @@ Observable<unknown>
 ```
 
 Emits once a layout has laid the spine items out. Their sizes and places in
-the spine are the new ones. Their pages are not published yet, so
-`firstItemIndexAwaitingLayout` is still a number.
+the spine are the new ones, and so is `.boundingBox`. Their pages are not
+published yet, so `firstItemIndexAwaitingLayout` is still a number.
 
 ### `.layout$` { #layoutusd }
 
@@ -212,3 +200,20 @@ reader.spine
     // true once the pages describe every item again
   })
 ```
+
+### `.boundingBox` { #boundingbox }
+
+```typescript
+SpineBoundingBox | undefined // { left, right, top, bottom, width, height, x, y }
+```
+
+The smallest box that holds every spine item, in the coordinates the spine
+places its items in, from the top-left corner of the first screen. When pages
+turn horizontally, a book read right to left places the items after the first
+screen on its left, at a negative `left`. A navigation stays within this box
+wherever the box is larger than the viewport: one to a position past an edge
+stops at that edge.
+
+It holds the places of the last layout that laid the items out. A layout in
+progress replaces it at `.itemsLayout$`. It is `undefined` until a layout has
+laid out a spine item.

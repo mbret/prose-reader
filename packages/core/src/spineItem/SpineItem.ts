@@ -6,7 +6,6 @@ import type { HookManager } from "../hooks/HookManager"
 import type { ReaderSettingsManager } from "../settings/ReaderSettingsManager"
 import { ReactiveEntity } from "../utils/ReactiveEntity"
 import type { Viewport } from "../viewport/Viewport"
-import { getSpineItemNumberOfPages } from "./layout/getSpineItemNumberOfPages"
 import { DefaultRenderer } from "./renderer/DefaultRenderer"
 import type {
   DocumentLoad,
@@ -14,6 +13,7 @@ import type {
 } from "./renderer/DocumentRenderer"
 import { ResourceHandler } from "./resources/ResourceHandler"
 import { SpineItemLayout, type SpineItemLayoutParams } from "./SpineItemLayout"
+import { createSpineItemPageGeometry } from "./SpineItemPageGeometry"
 
 export type SpineItemReference = string | SpineItem | number
 
@@ -240,15 +240,17 @@ export class SpineItem extends ReactiveEntity<SpineItemState> {
     return this._layout.layoutInfo
   }
 
-  get numberOfPages() {
-    return getSpineItemNumberOfPages({
-      isUsingVerticalWriting: !!this.isUsingVerticalWriting(),
-      itemHeight: this._layout.layoutInfo.height,
-      itemWidth: this._layout.layoutInfo.width,
-      pageWidth: this.viewport.pageSize.width,
-      pageHeight: this.viewport.pageSize.height,
-      pageTurnDirection: this.settings.values.computedPageTurnDirection,
-      pageTurnMode: this.settings.values.pageTurnMode,
+  /**
+   * How the item divides into pages: its size at its last layout, at the
+   * viewport's current page size and with the current settings.
+   */
+  get pageGeometry() {
+    return createSpineItemPageGeometry({
+      itemSize: this.layoutInfo,
+      isUsingVerticalWriting: () => this.isUsingVerticalWriting(),
+      context: this.context,
+      settings: this.settings,
+      viewport: this.viewport,
     })
   }
 

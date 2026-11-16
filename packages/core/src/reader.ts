@@ -33,7 +33,6 @@ import type { CoreInputSettings } from "./settings/types"
 import { SpineItemsLoader } from "./spine/loader/SpineItemsLoader"
 import { Spine } from "./spine/Spine"
 import { SpineItemsManager } from "./spine/SpineItemsManager"
-import { createSpineItemLocator } from "./spineItem/locationResolver"
 import type { SpineItemReference } from "./spineItem/SpineItem"
 import { injectCSS, removeCSS, setAttributeIfChanged } from "./utils/dom"
 import { isDefined } from "./utils/isDefined"
@@ -98,19 +97,8 @@ export const createReader = ({
     viewport,
   )
   const cfi = new CfiManager(hookManager, spineItemsManager)
-  const spineItemLocator = createSpineItemLocator({
-    context,
-    settings: settingsManager,
-    viewport,
-  })
   const pagination = new Pagination(context, spineItemsManager)
-  const spine = new Spine(
-    context,
-    spineItemsManager,
-    spineItemLocator,
-    settingsManager,
-    viewport,
-  )
+  const spine = new Spine(context, spineItemsManager, settingsManager, viewport)
   const navigator = createNavigator({
     cfi,
     context,

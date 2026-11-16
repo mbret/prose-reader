@@ -175,6 +175,12 @@ export const createNavigator = ({
     /** Every navigation as it happens, restorations included. */
     navigation$: internalNavigator.navigation$,
     /**
+     * Each request made through `navigate()` whose target names a place in
+     * the book, once the reader has handled it. Completes when the reader is
+     * destroyed.
+     */
+    navigationRequest$: internalNavigator.navigationRequest$,
+    /**
      * The latest navigation, and whether it holds on the current layout:
      * whether its position and the pages agree. Completes when the reader is
      * destroyed.

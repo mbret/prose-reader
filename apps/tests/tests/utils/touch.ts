@@ -1,4 +1,5 @@
-import type { Page } from "@playwright/test"
+import { expect, type Page } from "@playwright/test"
+import { holdPageClockDuring } from "./clock"
 
 export type TouchPoint = { x: number; y: number }
 
@@ -21,55 +22,145 @@ export const touchPath = (from: TouchPoint, to: TouchPoint, count: number) =>
  * `touch-action`, and fires each finger's pointer events. Playwright has no
  * other way to press several fingers, so this runs on Chromium only.
  *
- * gesturx reads a gesture's speed from the time between its events, so the
- * time waited between two steps, in milliseconds, is part of the gesture:
- * `stepDelays` gives one after each step, or one for every step, and no time
- * passes between the last step and the lift. The times are real: the page
- * never sees the protocol's `timestamp`, so a busy runner makes them longer.
+ * gesturx reads a gesture's speed from the page's clock as it takes each
+ * event, so the time between two steps is part of the gesture.
+ * `timeBetweenSteps` gives it in milliseconds: one time for every gap, or
+ * one per gap, as many as the steps less one. It is a frame by default. The
+ * fingers lift at the time of the last step, as in a flick.
+ *
+ * On a busy runner, the steps would land further apart than asked, and the
+ * move before the last could fall out of the 100ms over which gesturx reads
+ * a swipe's speed. So the gesture plays with the page's clock held, which
+ * moves only by the time between steps, and only once the page has taken the
+ * step before: the browser hands a move to the page at its next frame, after
+ * the command that sent it returns. The page reads the times given here, on
+ * any runner. Install the page's clock before the page loads (see
+ * `holdPageClockDuring`).
+ *
+ * The wait counts the pointer events that reach the page's own document. Over
+ * a book's page, a touch lands in the page's frame, and those are the copies
+ * that core's events enhancer passes to the reader's root element.
  */
 export const playTouchGesture = async (
   page: Page,
   {
     steps,
-    stepDelays = 0,
+    timeBetweenSteps = 16,
   }: {
     steps: TouchPoint[][]
-    stepDelays?: number | number[]
+    timeBetweenSteps?: number | number[]
   },
 ) => {
-  const session = await page.context().newCDPSession(page)
-  const lastIndex = steps.length - 1
+  const gaps =
+    typeof timeBetweenSteps === "number"
+      ? Array<number>(Math.max(0, steps.length - 1)).fill(timeBetweenSteps)
+      : timeBetweenSteps
 
-  for (const [index, points] of steps.entries()) {
-    const touch = session.send("Input.dispatchTouchEvent", {
-      type: index === 0 ? "touchStart" : "touchMove",
-      touchPoints: points.map((point, id) => ({ ...point, id })),
-    })
-
-    if (index === lastIndex) {
-      // Sent with the last move, the lift follows it at once, as in a flick.
-      // gesturx takes a finger that stays still for 40ms before it lifts as
-      // stopped, and a busy runner can take that long between two commands.
-      await Promise.all([
-        touch,
-        session.send("Input.dispatchTouchEvent", {
-          type: "touchEnd",
-          touchPoints: [],
-        }),
-      ])
-    } else {
-      await touch
-
-      const delayAfterStep =
-        typeof stepDelays === "number" ? stepDelays : (stepDelays[index] ?? 0)
-
-      if (delayAfterStep > 0) {
-        await new Promise((resolve) => setTimeout(resolve, delayAfterStep))
-      }
-    }
+  if (gaps.length !== steps.length - 1) {
+    throw new Error(
+      `${steps.length} steps have ${steps.length - 1} gaps, not ${gaps.length}`,
+    )
   }
 
-  await session.detach()
+  const readTouchPointerEventsTaken = await countTouchPointerEventsTaken(page)
+  const session = await page.context().newCDPSession(page)
+  let touchPointerEventsSent = 0
+
+  /**
+   * Sends one touch event, one pointer event per finger, and waits for the
+   * page to take them. A cancelled pointer gets no more events, which ends
+   * the wait as well: the spec then reads the cancel.
+   */
+  const sendTouchAndWaitForThePage = async (
+    type: "touchStart" | "touchMove" | "touchEnd",
+    touchPoints: TouchPoint[],
+    fingers: number,
+  ) => {
+    await session.send("Input.dispatchTouchEvent", {
+      type,
+      touchPoints: touchPoints.map((point, id) => ({ ...point, id })),
+    })
+
+    touchPointerEventsSent += fingers
+
+    await expect
+      .poll(
+        async () => {
+          const { taken, isCancelled } = await readTouchPointerEventsTaken()
+
+          return isCancelled || taken >= touchPointerEventsSent
+        },
+        { message: "the page takes each touch before the clock moves on" },
+      )
+      .toBe(true)
+  }
+
+  try {
+    await holdPageClockDuring(page, async () => {
+      for (const [index, points] of steps.entries()) {
+        // Also for a gap of 0: it runs the timers already due, such as the
+        // one that starts a pan once a move passes its threshold.
+        if (index > 0) await page.clock.runFor(gaps[index - 1] ?? 0)
+
+        await sendTouchAndWaitForThePage(
+          index === 0 ? "touchStart" : "touchMove",
+          points,
+          points.length,
+        )
+      }
+
+      await sendTouchAndWaitForThePage(
+        "touchEnd",
+        [],
+        steps[steps.length - 1]?.length ?? 0,
+      )
+    })
+  } finally {
+    await session.detach()
+  }
+}
+
+/**
+ * Starts counting the touch pointer events that reach the page's own
+ * document, and returns a function that reads how many it took, and whether a
+ * pointer was cancelled.
+ */
+const countTouchPointerEventsTaken = async (page: Page) => {
+  await page.evaluate(() => {
+    const touchPointerEventsTaken = { taken: 0, isCancelled: false }
+
+    Object.assign(window, { touchPointerEventsTaken })
+
+    for (const type of ["pointerdown", "pointermove", "pointerup"]) {
+      document.addEventListener(
+        type,
+        (event) => {
+          if (event instanceof PointerEvent && event.pointerType === "touch")
+            touchPointerEventsTaken.taken++
+        },
+        true,
+      )
+    }
+
+    document.addEventListener(
+      "pointercancel",
+      () => {
+        touchPointerEventsTaken.isCancelled = true
+      },
+      true,
+    )
+  })
+
+  return () =>
+    page.evaluate(
+      () =>
+        // The page's window is untyped: the function above sets the counter.
+        (
+          window as unknown as {
+            touchPointerEventsTaken: { taken: number; isCancelled: boolean }
+          }
+        ).touchPointerEventsTaken,
+    )
 }
 
 /**

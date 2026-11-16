@@ -5,10 +5,11 @@ import type { Reader } from "../../reader"
 export type BoundaryReachedEvent = { boundary: "start" | "end" }
 
 /**
- * Emits when a navigation request targets a position outside the spine's
- * current extent. Pure geometric primitive — no content-lifecycle
- * semantics. For "end of book reached" with lazy-load awareness, compose
- * with readiness signals (see `observeBookBoundaryReached`).
+ * Emits when a navigation request targets a position outside
+ * `reader.spine.boundingBox`, and nothing until the spine has one. Pure
+ * geometric primitive, with no content-lifecycle semantics. For "end of book
+ * reached" with lazy-load awareness, compose with readiness signals (see
+ * `observeBookBoundaryReached`).
  */
 export const outOfSpineBoundary = (
   reader: Reader,

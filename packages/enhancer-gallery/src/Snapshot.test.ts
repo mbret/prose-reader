@@ -31,7 +31,7 @@ const createSnapshot = () => {
     isReady$,
     element,
     layoutInfo: { width: 100, height: 100 },
-    numberOfPages: 1,
+    pageGeometry: { numberOfPages: 1 },
   } as unknown as SpineItem
   const parent = document.createElement("div")
   document.body.appendChild(parent)

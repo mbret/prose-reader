@@ -1,4 +1,4 @@
-import { detectMimeTypeFromName } from "@prose-reader/shared"
+import { detectMimeTypeFromUrl } from "@prose-reader/shared"
 import {
   debounceTime,
   EMPTY,
@@ -99,7 +99,7 @@ export const layoutEnhancer =
      */
     reader.hookManager.register(`item.onBeforeLayout`, ({ item }) => {
       const spineItem = reader.spineItemsManager.get(item.id)
-      const mimeType = item.mediaType ?? detectMimeTypeFromName(item.href)
+      const mimeType = item.mediaType ?? detectMimeTypeFromUrl(item.href)
       const isImageType = !!mimeType?.startsWith(`image/`)
 
       const { pageHorizontalMargin, pageVerticalMargin } = settings.values

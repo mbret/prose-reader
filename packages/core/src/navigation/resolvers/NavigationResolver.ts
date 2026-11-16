@@ -6,7 +6,7 @@ import type { SpineLocator } from "../../spine/locator/SpineLocator"
 import type { Spine } from "../../spine/Spine"
 import type { SpineItemsManager } from "../../spine/SpineItemsManager"
 import { SpinePosition, type UnboundSpinePosition } from "../../spine/types"
-import { createNavigationResolver as createSpineItemNavigator } from "../../spineItem/navigationResolver"
+import { getSpineItemPositionFromNode } from "../../spineItem/nodeLocation"
 import type { SpineItem } from "../../spineItem/SpineItem"
 import { SpineItemPosition } from "../../spineItem/types"
 import type { Viewport } from "../../viewport/Viewport"
@@ -38,12 +38,6 @@ export const createNavigationResolver = ({
   spine: Spine
   viewport: Viewport
 }) => {
-  const spineItemNavigator = createSpineItemNavigator({
-    context,
-    settings,
-    viewport,
-  })
-
   const arePositionsDifferent = (
     a: { x: number; y: number },
     b: { x: number; y: number },
@@ -63,7 +57,7 @@ export const createNavigationResolver = ({
     offset?: number
   }): SpinePosition => {
     const spineItemNavigation = node
-      ? spineItemNavigator.getNavigationFromNode(spineItem, node, offset)
+      ? getSpineItemPositionFromNode(node, offset, spineItem)
       : new SpineItemPosition({ x: 0, y: 0 })
     const readingPosition = locator.getSpinePositionFromSpineItemPosition({
       spineItemPosition: spineItemNavigation,
@@ -93,20 +87,14 @@ export const createNavigationResolver = ({
     return getNavigationForNode({ spineItem, node, offset })
   }
 
-  const getNavigationForLastPage = (spineItem: SpineItem): SpinePosition => {
-    const spineItemNavigation =
-      spineItemNavigator.getNavigationForLastPage(spineItem)
-    const position = locator.getSpinePositionFromSpineItemPosition({
-      spineItemPosition: spineItemNavigation,
-      spineItem,
+  const getNavigationForLastPage = (spineItem: SpineItem): SpinePosition =>
+    getNavigationForSpineItemPage({
+      pageIndex: spineItem.pageGeometry.numberOfPages - 1,
+      spineItemId: spineItem,
+      spineItemsManager,
+      spineLocator: locator,
+      viewport,
     })
-
-    return getAdjustedPositionForSpread({
-      position,
-      pageSizeWidth: viewport.pageSize.width,
-      visibleAreaRectWidth: viewport.absoluteViewport.width,
-    })
-  }
 
   const getNavigationForSpineIndexOrId = (
     indexOrId: number | string | SpineItem,
@@ -154,13 +142,10 @@ export const createNavigationResolver = ({
         y: triggerYPosition,
       }),
       size: viewport.absoluteViewport,
-      isRTL: context.isRTL(),
-      spineItemsManager,
       spine,
     })
 
     return getNavigationForPosition({
-      spineItemNavigationResolver: spineItemNavigator,
       spineLocator: locator,
       viewportPosition: midScreenPositionSafePosition,
       viewport,
@@ -184,16 +169,12 @@ export const createNavigationResolver = ({
     getNavigationForSpineItemPage: (
       params: Omit<
         Parameters<typeof getNavigationForSpineItemPage>[0],
-        | "spineItemsManager"
-        | "spineItemNavigationResolver"
-        | "spineLocator"
-        | "viewport"
+        "spineItemsManager" | "spineLocator" | "viewport"
       >,
     ) =>
       getNavigationForSpineItemPage({
         ...params,
         spineItemsManager,
-        spineItemNavigationResolver: spineItemNavigator,
         spineLocator: locator,
         viewport,
       }),
@@ -203,7 +184,6 @@ export const createNavigationResolver = ({
     }) =>
       getNavigationFromSpineItemPosition({
         ...params,
-        spineItemLocator: locator.spineItemLocator,
         spineLocator: locator,
         viewport,
       }),
@@ -216,7 +196,6 @@ export const createNavigationResolver = ({
     ) =>
       getNavigationForPosition({
         viewportPosition,
-        spineItemNavigationResolver: spineItemNavigator,
         spineLocator: locator,
         viewport,
       }),
@@ -224,14 +203,7 @@ export const createNavigationResolver = ({
     clampPositionInSpine: (
       position: SpinePosition | UnboundSpinePosition,
       size: NavigationVisibleArea,
-    ) =>
-      clampRectInSpine({
-        position,
-        size,
-        isRTL: context.isRTL(),
-        spineItemsManager,
-        spine,
-      }),
+    ) => clampRectInSpine({ position, size, spine }),
     getBoundaryForPosition: (
       position: SpinePosition | UnboundSpinePosition,
       size: NavigationVisibleArea = viewport.absoluteViewport,
@@ -240,7 +212,6 @@ export const createNavigationResolver = ({
         position,
         size,
         isRTL: context.isRTL(),
-        spineItemsManager,
         spine,
       }),
     isNavigationGoingForwardFrom,
@@ -253,6 +224,5 @@ export const createNavigationResolver = ({
         pageSizeWidth: viewport.pageSize.width,
         visibleAreaRectWidth: viewport.absoluteViewport.width,
       }),
-    spineItemNavigator,
   }
 }

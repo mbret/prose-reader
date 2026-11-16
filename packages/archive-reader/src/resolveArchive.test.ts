@@ -446,6 +446,21 @@ describe(`Given the file a book was opened from`, () => {
     )
   })
 
+  it(`the extension follows the file name's last dot, a # or a ? before it included`, async () => {
+    expect(
+      await resolveMediaType(archiveWith([imageRecord], `Batman #12.cbz`)),
+    ).toBe(`application/vnd.comicbook+zip`)
+    expect(
+      await resolveMediaType(archiveWith([imageRecord], `What? Vol.2.cbz`)),
+    ).toBe(`application/vnd.comicbook+zip`)
+  })
+
+  it(`a file name without an extension tells nothing`, async () => {
+    expect(await resolveMediaType(archiveWith([imageRecord], `pdf`))).toBe(
+      `application/octet-stream`,
+    )
+  })
+
   it(`else an OCF container file makes it an EPUB`, async () => {
     expect(
       await resolveMediaType(

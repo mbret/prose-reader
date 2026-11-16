@@ -1,4 +1,4 @@
-import { detectMimeTypeFromName, parseContentType } from "@prose-reader/shared"
+import { detectMimeTypeFromUrl, parseContentType } from "@prose-reader/shared"
 import type { Manifest } from "../../.."
 
 /**
@@ -31,7 +31,7 @@ export const createHtmlPageFromResource = async (
 
   const contentType =
     parseContentType(resourceResponse.headers.get(`Content-Type`) || ``) ||
-    detectMimeTypeFromName(item.href)
+    detectMimeTypeFromUrl(item.href)
 
   if (
     IMAGE_MEDIA_TYPES_REQUIRING_TRANSFORM.some((mime) => mime === contentType)

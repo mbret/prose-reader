@@ -71,9 +71,7 @@ Observable<typeof reader.viewport.value>
 ```
 
 The state as soon as you subscribe, then the state of every layout, changed or
-not. To react to a change, watch the fields you need with `.watch()`.
-`reader.viewport` is itself an observable of the same states: subscribing to it
-is subscribing to `.state$`. Both complete when the reader is destroyed.
+not. See [Reactive state](/core-api/introduction#reactive-state).
 
 ### `.watch()` { #watch }
 
@@ -84,22 +82,7 @@ watch<K extends keyof ViewportState>(key: K): Observable<ViewportState[K]>
 watch<K extends keyof ViewportState>(keys: K[]): Observable<Pick<ViewportState, K>>
 ```
 
-One field, or several, as soon as you subscribe, then whenever a layout changes
-them. A single field is compared by its value, and `pageSize` by its width and
-height. In a list, each field is compared as it is, so `pageSize`, a new object
-at every layout, counts as changed every time: watch it on its own.
-
-Each call returns a new stream: see [Streams](/core-api/introduction#streams).
-
-```typescript
-reader.viewport.watch("isSpread").subscribe((isSpread) => {
-  // true while two pages share the viewport
-})
-
-reader.viewport.watch(["width", "height"]).subscribe(({ width, height }) => {
-  // the size of the viewport, after each layout that changes it
-})
-```
+See [Reactive state](/core-api/introduction#reactive-state).
 
 ### `.layout$` { #layoutusd }
 

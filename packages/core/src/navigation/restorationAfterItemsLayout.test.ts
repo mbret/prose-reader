@@ -336,6 +336,40 @@ describe("Given a layout that moves the spine item the navigation shows", () => 
       })
     })
 
+    it("goes on with the scroll when the reader restores the navigation from before it", async () => {
+      const { reader, scrollElement, setSizeOfFirstPage, isNavigationLocked } =
+        await openOnThirdPageOfScrollingBook()
+
+      /**
+       * The scroll begins as the layout has started: the scroll navigates at
+       * no start of a layout, so the reader restores the navigation that
+       * `goToSpineItem` made.
+       */
+      reader.spine.itemsLayoutStart$.pipe(first()).subscribe(() => {
+        scrollElement.scrollTop =
+          2 * pageHeight + distanceUserScrolledIntoThirdPage
+        deliverScrollEvent(scrollElement)
+      })
+
+      const restorations: string[] = []
+
+      reader.navigation.navigation$.subscribe(({ triggeredBy }) => {
+        if (triggeredBy === "restoration")
+          restorations.push(reader.navigation.getNavigation().type)
+      })
+
+      // The first page grows by 300: the third one moves down by as much.
+      setSizeOfFirstPage({ height: pageHeight + 300 })
+      reader.layout()
+      await firstValueFrom(reader.spine.itemsLayout$)
+
+      expect(restorations, "the type of each restoration").toEqual(["api"])
+      expect(
+        await isNavigationLocked(),
+        "whether the scroll holds the lock, after the restoration",
+      ).toBe(true)
+    })
+
     it("keeps the reader on that spine item when the page turn mode becomes controlled before the scroll is over", async () => {
       const { reader, scrollElement, setSizeOfFirstPage, isNavigationLocked } =
         await openOnThirdPageOfScrollingBook()

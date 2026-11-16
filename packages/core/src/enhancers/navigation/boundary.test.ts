@@ -5,7 +5,10 @@ import { Context } from "../../context/Context"
 import { HookManager } from "../../hooks/HookManager"
 import { createNavigator } from "../../navigation/Navigator"
 import { observeSettledNavigation } from "../../navigation/operators"
-import { mockSpineItemsLayout } from "../../navigation/tests/utils"
+import {
+  mockSpineItemsLayout,
+  mockSpineLayout,
+} from "../../navigation/tests/utils"
 import type { Reader } from "../../reader"
 import { ReaderSettingsManager } from "../../settings/ReaderSettingsManager"
 import { Spine } from "../../spine/Spine"
@@ -15,7 +18,6 @@ import {
   SpinePosition,
   UnboundSpinePosition,
 } from "../../spine/types"
-import { createSpineItemLocator } from "../../spineItem/locationResolver"
 import {
   createTestManifest,
   createTestManifestSpineItems,
@@ -49,18 +51,7 @@ const createTestReader = ({
     viewport,
   )
   const cfi = new CfiManager(hookManager, spineItemsManager)
-  const spineItemLocator = createSpineItemLocator({
-    context,
-    settings,
-    viewport,
-  })
-  const spine = new Spine(
-    context,
-    spineItemsManager,
-    spineItemLocator,
-    settings,
-    viewport,
-  )
+  const spine = new Spine(context, spineItemsManager, settings, viewport)
   const navigator = createNavigator({
     cfi,
     context,
@@ -493,19 +484,7 @@ describe("outOfSpineBoundary", () => {
           }),
       )
 
-      // `mockSpineItemsLayout` already installed an LTR-layout spy on the same
-      // method; reset before re-installing the RTL implementation so the
-      // new mock fully replaces the old one (vi.spyOn returns the existing
-      // spy when the prop is already spied — without the reset we'd end up
-      // running with whichever mockImplementation happened to win).
-      vi.mocked(spine.getSpineItemSpineLayoutInfo).mockReset()
-      vi.spyOn(spine, "getSpineItemSpineLayoutInfo").mockImplementation(
-        (item) => {
-          const itemIndex = spineItemsManager.getSpineItemIndex(item) ?? 0
-          // biome-ignore lint/style/noNonNullAssertion: index in range
-          return layoutInfos[itemIndex]!
-        },
-      )
+      mockSpineLayout(spine, spineItemsManager, layoutInfos)
 
       return { lastItemLeft: -(items.length - 1) * itemSize }
     }

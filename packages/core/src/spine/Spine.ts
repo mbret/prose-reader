@@ -2,7 +2,6 @@ import { filter, map, merge, scan, skip, takeUntil, tap } from "rxjs"
 import { HTML_PREFIX } from "../constants"
 import type { Context } from "../context/Context"
 import type { ReaderSettingsManager } from "../settings/ReaderSettingsManager"
-import type { createSpineItemLocator as createSpineItemLocationResolver } from "../spineItem/locationResolver"
 import type { SpineItem } from "../spineItem/SpineItem"
 import { isDefined } from "../utils/isDefined"
 import { ReactiveEntity } from "../utils/ReactiveEntity"
@@ -53,7 +52,6 @@ export class Spine extends ReactiveEntity<SpineState> {
   constructor(
     protected context: Context,
     public spineItemsManager: SpineItemsManager,
-    public spineItemLocator: ReturnType<typeof createSpineItemLocationResolver>,
     protected settings: ReaderSettingsManager,
     protected viewport: Viewport,
   ) {
@@ -76,7 +74,6 @@ export class Spine extends ReactiveEntity<SpineState> {
     this.locator = createSpineLocator({
       context,
       spineItemsManager,
-      spineItemLocator,
       settings,
       spineLayout: this.spineLayout,
       viewport,
@@ -85,10 +82,7 @@ export class Spine extends ReactiveEntity<SpineState> {
     this.pages = new Pages(
       this.spineLayout,
       this.spineItemsManager,
-      this.spineItemLocator,
-      this.context,
       this.locator,
-      this.viewport,
     )
 
     merge(
@@ -202,6 +196,16 @@ export class Spine extends ReactiveEntity<SpineState> {
     spineItemOrIndex: SpineItem | number | string | undefined,
   ) {
     return this.spineLayout.getSpineItemSpineLayoutInfo(spineItemOrIndex)
+  }
+
+  /**
+   * The smallest box that holds every spine item, in the coordinates of
+   * `getSpineItemSpineLayoutInfo`. Like the places of the items, it holds the
+   * last completed layout and changes at `itemsLayout$`. `undefined` until a
+   * layout has laid out an item.
+   */
+  public get boundingBox() {
+    return this.spineLayout.boundingBox
   }
 
   public get layout$() {

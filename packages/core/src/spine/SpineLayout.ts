@@ -31,7 +31,7 @@ import { DestroyableClass } from "../utils/DestroyableClass"
 import type { Viewport } from "../viewport/Viewport"
 import type { SpineItemsManager } from "./SpineItemsManager"
 import type { SpineItemsObserver } from "./SpineItemsObserver"
-import { SpineItemSpineLayout } from "./types"
+import { SpineBoundingBox, SpineItemSpineLayout } from "./types"
 
 /**
  * Whether a change of an item's load status ends a load: its document
@@ -155,6 +155,13 @@ export class SpineLayout extends DestroyableClass {
     stage: "laidOut",
     laidOutItems: [],
   })
+
+  private boundingBoxOfLaidOutItems:
+    | {
+        laidOutItems: readonly LaidOutSpineItem[]
+        boundingBox: SpineBoundingBox | undefined
+      }
+    | undefined
 
   /**
    * Each layout request as it is made, from `layout()` or from an item loading
@@ -667,9 +674,33 @@ export class SpineLayout extends DestroyableClass {
     )
   }
 
+  /**
+   * The smallest box that holds every item as the last completed pass laid
+   * them out, in the coordinates of `getSpineItemSpineLayoutInfo`.
+   * `undefined` until a pass has laid out an item.
+   */
+  get boundingBox() {
+    const { laidOutItems } = this.stateSubject.value
+
+    /**
+     * A completed pass publishes a new list, and nothing changes a list once
+     * published, so the box of a list is computed once.
+     */
+    if (this.boundingBoxOfLaidOutItems?.laidOutItems !== laidOutItems) {
+      this.boundingBoxOfLaidOutItems = {
+        laidOutItems,
+        boundingBox: SpineBoundingBox.fromSpineItemLayouts(
+          laidOutItems.map(({ layout }) => layout),
+        ),
+      }
+    }
+
+    return this.boundingBoxOfLaidOutItems.boundingBox
+  }
+
   get numberOfPages() {
     return this.spineItemsManager.items.reduce((acc, item) => {
-      return acc + item.numberOfPages
+      return acc + item.pageGeometry.numberOfPages
     }, 0)
   }
 

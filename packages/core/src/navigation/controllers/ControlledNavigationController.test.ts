@@ -5,7 +5,6 @@ import { ReaderSettingsManager } from "../../settings/ReaderSettingsManager"
 import { Spine } from "../../spine/Spine"
 import { SpineItemsManager } from "../../spine/SpineItemsManager"
 import { SpinePosition } from "../../spine/types"
-import { createSpineItemLocator } from "../../spineItem/locationResolver"
 import { createTestManifest, waitFor } from "../../tests/utils"
 import { Viewport } from "../../viewport/Viewport"
 import { ControlledNavigationController } from "./ControlledNavigationController"
@@ -21,18 +20,7 @@ const createTestController = () => {
     hookManager,
     viewport,
   )
-  const spineItemLocator = createSpineItemLocator({
-    context,
-    settings,
-    viewport,
-  })
-  const spine = new Spine(
-    context,
-    spineItemsManager,
-    spineItemLocator,
-    settings,
-    viewport,
-  )
+  const spine = new Spine(context, spineItemsManager, settings, viewport)
 
   const controller = new ControlledNavigationController(
     settings,
