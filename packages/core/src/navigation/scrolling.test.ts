@@ -10,6 +10,7 @@ import {
   installReaderTestEnvironment,
   mountTestReader,
   notifyResize,
+  renderItemsOfSetSizes,
   setTestViewport,
   settledOn,
   stubElementScrolling,
@@ -205,6 +206,40 @@ describe("Given a book that scrolls", () => {
 
       // at 1.2, a pixel or more from where the reader left the element
       expect(scrollsNotMadeByReader).toHaveLength(1)
+    })
+  })
+
+  describe("When the user scrolls before the spine items are first laid out", () => {
+    it("opens the book at its target", async () => {
+      stubElementScrolling()
+
+      const { getRenderer, holdLayoutOfItem, getNumberOfLayoutsStartedOfItem } =
+        renderItemsOfSetSizes()
+      const releaseLayoutOfSecondPage = holdLayoutOfItem(1)
+      const reader = createTestReader({
+        manifest: createPrePaginatedManifest({
+          pageSpreads: [undefined, undefined, undefined, undefined],
+        }),
+        getRenderer,
+        pageTurnMode: "scrollable",
+        target: { type: "spineItem", value: 2 },
+      })
+
+      mountTestReader(reader)
+      // The first pass has laid out the first page, and waits at the second.
+      await vi.waitFor(() => expect(getNumberOfLayoutsStartedOfItem(1)).toBe(1))
+
+      const { element: scrollElement } =
+        reader.navigation.scrollNavigationController.value
+
+      if (!scrollElement) throw new Error("the reader has no scroll element")
+
+      scrollAsUser(scrollElement, 30)
+      releaseLayoutOfSecondPage()
+      await waitFor(PAST_THE_END_OF_A_USER_SCROLL)
+
+      expect(scrollElement.scrollTop, "where the book is").toBe(topOfPage(2))
+      expect(reader.navigation.getNavigation().spineItem).toBe(2)
     })
   })
 

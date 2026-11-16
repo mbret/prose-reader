@@ -390,7 +390,9 @@ export class InternalNavigator extends DestroyableClass {
      * The reader's first navigation, once its items are first laid out: its
      * target resolves against the book's layout, once every enhancer has added
      * its hooks. A target naming nothing in the book opens it at its start, as
-     * without one. A navigation asked for before then replaces it.
+     * without one. A navigation asked for before then replaces it. One that
+     * follows a scroll of the user's does not: the book is not laid out yet,
+     * so the scroll took the user to no place in it.
      */
     const firstNavigation$ = spine.itemsLayout$.pipe(
       take(1),
@@ -400,7 +402,9 @@ export class InternalNavigator extends DestroyableClass {
           animation: false,
         }),
       ),
-      takeUntil(userNavigationInBook$),
+      takeUntil(
+        userNavigationInBook$.pipe(filter(({ type }) => type !== "scroll")),
+      ),
     )
 
     const navigationFromUser$ = merge(
