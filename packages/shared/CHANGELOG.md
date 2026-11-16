@@ -3,6 +3,20 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## [45.0.0](https://github.com/mbret/prose-reader/compare/v44.0.0...v45.0.0) (2026-11-16)
+
+### ⚠ BREAKING CHANGES
+
+* **shared:** `getUrlExtension` is no longer exported from
+  @prose-reader/shared: use `getUriExtension` for a file name or an
+  archive path. `detectMimeTypeFromName` keeps a `#` or a `?` in the name:
+  use `detectMimeTypeFromUrl` for a url.
+
+### Bug Fixes
+
+* **shared:** read the extension of a file name after its last dot ([7752912](https://github.com/mbret/prose-reader/commit/7752912da29e474f9367b9f799087cdb4a58e6a6)), closes [#665](https://github.com/mbret/prose-reader/issues/665), references [#12](https://github.com/mbret/prose-reader/issues/12) [#12](https://github.com/mbret/prose-reader/issues/12)
+
+
 ## [44.0.0](https://github.com/mbret/prose-reader/compare/v43.0.0...v44.0.0) (2026-11-14)
 
 **Note:** Version bump only for package @prose-reader/shared

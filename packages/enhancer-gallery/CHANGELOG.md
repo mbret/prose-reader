@@ -3,6 +3,23 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## [45.0.0](https://github.com/mbret/prose-reader/compare/v44.0.0...v45.0.0) (2026-11-16)
+
+### ⚠ BREAKING CHANGES
+
+* **core:** `SpineItem.numberOfPages` is removed. Read
+  `spineItem.pageGeometry.numberOfPages`. `reader.spine.locator` no
+  longer has `spineItemLocator` or
+  `getSafeSpineItemPositionFromUnsafeSpineItemPosition`.
+  `reader.navigation.navigationResolver` no longer has
+  `spineItemNavigator`. The `Spine` and `Pages` constructors no longer
+  take the item locator.
+
+### Code Refactoring
+
+* **core:** give each spine item one model of its pages ([b453353](https://github.com/mbret/prose-reader/commit/b453353d3497fec1484e982eba70703080c378cb))
+
+
 ## [44.0.0](https://github.com/mbret/prose-reader/compare/v43.0.0...v44.0.0) (2026-11-14)
 
 ### ⚠ BREAKING CHANGES

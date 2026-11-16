@@ -3,6 +3,14 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## [45.0.0](https://github.com/mbret/prose-reader/compare/v44.0.0...v45.0.0) (2026-11-16)
+
+**Note:** Version bump only for package @prose-reader/enhancer-audio
+
+
+
+
+
 ## [44.0.0](https://github.com/mbret/prose-reader/compare/v43.0.0...v44.0.0) (2026-11-14)
 
 **Note:** Version bump only for package @prose-reader/enhancer-audio

@@ -3,6 +3,49 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## [45.0.0](https://github.com/mbret/prose-reader/compare/v44.0.0...v45.0.0) (2026-11-16)
+
+### ⚠ BREAKING CHANGES
+
+* **shared:** `getUrlExtension` is no longer exported from
+  @prose-reader/shared: use `getUriExtension` for a file name or an
+  archive path. `detectMimeTypeFromName` keeps a `#` or a `?` in the name:
+  use `detectMimeTypeFromUrl` for a url.
+* **core:** `SpineItem.numberOfPages` is removed. Read
+  `spineItem.pageGeometry.numberOfPages`. `reader.spine.locator` no
+  longer has `spineItemLocator` or
+  `getSafeSpineItemPositionFromUnsafeSpineItemPosition`.
+  `reader.navigation.navigationResolver` no longer has
+  `spineItemNavigator`. The `Spine` and `Pages` constructors no longer
+  take the item locator.
+* **core:** `watch(key)` compares a field by identity: a field that
+  gets a new object with equal contents is now reported. The viewport's
+  `pageSize` keeps its object while the size is unchanged.
+
+### Features
+
+* **core:** give the box of every spine item as `reader.spine.layoutInfo` ([5be4eaa](https://github.com/mbret/prose-reader/commit/5be4eaac0baa1f2974b8ae50fd282f8d55cf6545))
+
+### Bug Fixes
+
+* **core:** clamp a navigation within the box of every spine item ([d2053aa](https://github.com/mbret/prose-reader/commit/d2053aa6a979aa77cf9c20363e412dd2b7e93512)), closes [#793](https://github.com/mbret/prose-reader/issues/793)
+* **core:** compare a watched field by identity ([7b881e3](https://github.com/mbret/prose-reader/commit/7b881e380789c5645e05e5ec06e3d80bcf2df52b)), closes [#693](https://github.com/mbret/prose-reader/issues/693)
+* **core:** end a user scroll on the request, not on the navigation ([0e1c0fc](https://github.com/mbret/prose-reader/commit/0e1c0fc374fe7131c18a4e72e75e4ea85e0f8c65))
+* **core:** end a user scroll when another navigation is made ([4aa2f93](https://github.com/mbret/prose-reader/commit/4aa2f936b127623396323819f417ce3b7b322156))
+* **core:** find a node's page and a page's anchor where the frame sits ([d62d3c2](https://github.com/mbret/prose-reader/commit/d62d3c24dc4b186f39b1ca6a0b5fdc1ce78dd0d7)), closes [#795](https://github.com/mbret/prose-reader/issues/795), references [#713](https://github.com/mbret/prose-reader/issues/713)
+* **core:** give a page one size, and measure the frame's layout size unrounded ([577d54e](https://github.com/mbret/prose-reader/commit/577d54ee5b078c2d30359901d12e55777cf4fd78))
+* **core:** name the stream for what it tells, and end it with the reader ([d55ca9e](https://github.com/mbret/prose-reader/commit/d55ca9edfcd53bd4dae2f09ed38e7d3e145d594d))
+* **core:** read a page anchor's caret inside its line box ([feeb8d5](https://github.com/mbret/prose-reader/commit/feeb8d5f4c3c734f43bc3a69228fdb02ed029358))
+* **core:** report a watched DOM element replaced by another ([cedb0c4](https://github.com/mbret/prose-reader/commit/cedb0c476f323d58b9bdb779cb091ed278f59cc9)), closes [#693](https://github.com/mbret/prose-reader/issues/693)
+* **core:** restore from the anchor in right-to-left and vertical items ([8ed84c8](https://github.com/mbret/prose-reader/commit/8ed84c823c5b1b3eba1b61f021d2fe901237910f))
+* **shared:** an object isShallowEqual cannot read equals only itself ([8da6050](https://github.com/mbret/prose-reader/commit/8da605097a6a6124761e2d105c1a90573f10bb8a)), closes [#693](https://github.com/mbret/prose-reader/issues/693), references [#693](https://github.com/mbret/prose-reader/issues/693)
+* **shared:** read the extension of a file name after its last dot ([7752912](https://github.com/mbret/prose-reader/commit/7752912da29e474f9367b9f799087cdb4a58e6a6)), closes [#665](https://github.com/mbret/prose-reader/issues/665), references [#12](https://github.com/mbret/prose-reader/issues/12) [#12](https://github.com/mbret/prose-reader/issues/12)
+
+### Code Refactoring
+
+* **core:** give each spine item one model of its pages ([b453353](https://github.com/mbret/prose-reader/commit/b453353d3497fec1484e982eba70703080c378cb))
+
+
 ## [44.0.0](https://github.com/mbret/prose-reader/compare/v43.0.0...v44.0.0) (2026-11-14)
 
 ### ⚠ BREAKING CHANGES
