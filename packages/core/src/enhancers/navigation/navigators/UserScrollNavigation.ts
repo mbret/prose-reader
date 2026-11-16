@@ -11,6 +11,7 @@ import {
   type Observable,
   of,
   share,
+  skipUntil,
   startWith,
   switchMap,
   takeUntil,
@@ -51,6 +52,13 @@ export class UserScrollNavigation extends DestroyableClass {
 
     const scrollPositionToNavigateTo$ =
       scrollNavigationController.scrollNotMadeByReader$.pipe(
+        /**
+         * Until the spine items are first laid out, the book has no place
+         * that a scroll can take the user to, and the reader has not opened
+         * at its target. A navigation that followed such a scroll would
+         * replace that target.
+         */
+        skipUntil(spine.itemsLayout$),
         exhaustMap((scrollPositionOfFirstMove) =>
           defer(() => {
             const unlock = this.reader.navigation.lock()
