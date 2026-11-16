@@ -110,7 +110,9 @@ whenever an item finishes loading, fails to load or unloads, from that item on.
 That can change the visible pages when the item is visible or comes before
 them. One after them leaves the result settled, until the reader restores the
 navigation onto the new layout, a navigation like any other. So settlement can
-drop briefly while the book loads around the page being read. A visible item
+drop briefly while the book loads around the page being read. In a book that
+scrolls, a scroll of the user's is a navigation from its first move: settlement
+ends there, and returns once the scroll is over. A visible item
 whose load failed does not keep pagination waiting: it settles on it, with the
 item's start as its edge's `cfi`, as the
 [error handling page](/learn/error-handling#errors-in-spine-item) explains. A
