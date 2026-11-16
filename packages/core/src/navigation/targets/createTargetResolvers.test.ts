@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest"
 import type { CfiManager } from "../../cfi"
 import type { Context } from "../../context/Context"
 import type { ReaderSettingsManager } from "../../settings/ReaderSettingsManager"
+import type { SpineLocator } from "../../spine/locator/SpineLocator"
 import type { SpineItemsManager } from "../../spine/SpineItemsManager"
 import { SpinePosition } from "../../spine/types"
 import type { DocumentLoadStatus } from "../../spineItem/renderer/DocumentRenderer"
@@ -78,6 +79,8 @@ const createResolvers = ({
     cfi: cfi as unknown as CfiManager,
     settings: settings as unknown as ReaderSettingsManager,
     spineItemsManager: spineItemsManager as unknown as SpineItemsManager,
+    // Only read in a book that scrolls, which this one is not.
+    spineLocator: {} as unknown as SpineLocator,
     context: { manifest: createTestManifest() } as unknown as Context,
     getNavigationVisibleArea: () => ({ width: 100, height: 100 }),
   })

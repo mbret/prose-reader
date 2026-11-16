@@ -303,6 +303,7 @@ export class InternalNavigator extends DestroyableClass {
       cfi: cfiManager,
       settings,
       spineItemsManager: spine.spineItemsManager,
+      spineLocator: spine.locator,
       context,
       getNavigationVisibleArea,
     })
