@@ -1,5 +1,6 @@
 import {
-  animationFrameScheduler,
+  concatWith,
+  debounceTime,
   defer,
   exhaustMap,
   filter,
@@ -13,26 +14,22 @@ import {
   startWith,
   switchMap,
   takeUntil,
-  takeWhile,
-  timer,
-  withLatestFrom,
 } from "rxjs"
 import type { UserNavigationEntry } from "../../../navigation/types"
 import type { Reader } from "../../../reader"
 import { DestroyableClass } from "../../../utils/DestroyableClass"
 
-/** How long after its last scroll event a scroll of the user's is over. */
+/** How long after its last move a scroll of the user's is over. */
 const SCROLL_FINISHED_DEBOUNCE_TIMEOUT = 500
 
 export class UserScrollNavigation extends DestroyableClass {
   /**
    * The navigations that follow the user's scrolling. The scroll makes one at
-   * each move, one as a layout starts during it, and one when it is over,
-   * unless another navigation ended it. With one at each move, a page turn
-   * made during the scroll starts from where the scroll has taken the book.
-   * They only update the navigation: the element is already where the user
-   * scrolled it. The lock is held from the first move of a scroll until it is
-   * over.
+   * each move, one as a layout starts during it, and one when nothing has
+   * moved for a while. With one at each move, a page turn made during the
+   * scroll starts from where the scroll has taken the book. They only update
+   * the navigation: the element is already where the user scrolled it. The
+   * lock is held from the first move of a scroll until it is over.
    */
   public readonly navigation$: Observable<UserNavigationEntry>
 
@@ -83,60 +80,38 @@ export class UserScrollNavigation extends DestroyableClass {
               map(() => scrollNavigationController.scrollPosition),
             )
 
-            const scrollPositionAtEndOfScroll$ = scrollPositionOfEachMove$.pipe(
-              switchMap((scrollPositionOfLastMove) =>
-                merge(
-                  /**
-                   * The scroll is over once nothing has moved for a while:
-                   * the user is where the element is by then.
-                   */
-                  timer(
-                    SCROLL_FINISHED_DEBOUNCE_TIMEOUT,
-                    animationFrameScheduler,
-                  ).pipe(map(() => scrollNavigationController.scrollPosition)),
-                  /**
-                   * It is over at once when the book no longer scrolls, as
-                   * after a change of page turn mode. The element has lost
-                   * its box, and its offsets with it: the user is where the
-                   * reader last knew the element. That is where the last move
-                   * took it, or where the reader scrolled it since, as it
-                   * does to keep the book on the same place through a layout.
-                   */
-                  scrollNavigationController.isActive$.pipe(
-                    filter((isActive) => !isActive),
-                    withLatestFrom(
-                      scrollNavigationController.scrollPositionKnownToReader$.pipe(
-                        startWith(scrollPositionOfLastMove),
-                      ),
-                    ),
-                    map(
-                      ([, scrollPositionKnownToReader]) =>
-                        scrollPositionKnownToReader,
-                    ),
-                  ),
-                ),
-              ),
+            const nothingMovedForAWhile$ = scrollPositionOfEachMove$.pipe(
+              debounceTime(SCROLL_FINISHED_DEBOUNCE_TIMEOUT),
             )
 
+            /**
+             * As after a change of page turn mode. The navigation is where
+             * the scroll took the book, and the reader restores it once the
+             * lock is released.
+             */
+            const bookNoLongerScrolls$ =
+              scrollNavigationController.isActive$.pipe(
+                filter((isActive) => !isActive),
+              )
+
             return merge(
-              merge(
-                scrollPositionOfEachMove$,
-                scrollPositionAsLayoutStarts$,
-              ).pipe(
-                map((scrollPosition) => ({
-                  scrollPosition,
-                  isEndOfScroll: false,
-                })),
-              ),
-              scrollPositionAtEndOfScroll$.pipe(
-                map((scrollPosition) => ({
-                  scrollPosition,
-                  isEndOfScroll: true,
-                })),
-              ),
+              // First, so that it hears of a layout that the navigation of
+              // the first move starts.
+              scrollPositionAsLayoutStarts$,
+              scrollPositionOfEachMove$,
             ).pipe(
-              takeWhile(({ isEndOfScroll }) => !isEndOfScroll, true),
-              map(({ scrollPosition }) => scrollPosition),
+              takeUntil(nothingMovedForAWhile$),
+              /**
+               * The element can rest less than a pixel from its last move:
+               * a scroll of less than a pixel is not told as a move. The
+               * reader navigates to where the element rests, so that the
+               * release of the lock finds the element where the navigation
+               * is.
+               */
+              concatWith(
+                defer(() => of(scrollNavigationController.scrollPosition)),
+              ),
+              takeUntil(bookNoLongerScrolls$),
               finalize(() => {
                 unlock()
               }),

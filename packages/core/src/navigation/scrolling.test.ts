@@ -222,6 +222,10 @@ describe("Given a book that scrolls", () => {
         position: { x: 0, y: topOfPage(1) + 50 },
         spineItem: 1,
       })
+      expect(
+        reader.pagination.state.isSettled,
+        "whether pagination is settled, after the first move",
+      ).toBe(false)
 
       scrollAsUser(scrollElement, topOfPage(2))
 
@@ -231,6 +235,31 @@ describe("Given a book that scrolls", () => {
         spineItem: 2,
       })
       expect(isLockHeld(), "whether the scroll holds the lock").toBe(true)
+    })
+
+    it("navigates to where the element rests once the scroll is over, when that is less than a pixel from its last move", async () => {
+      const { reader, scrollElement } = await openOnPage(0, {
+        pageTurnMode: "scrollable",
+      })
+
+      scrollAsUser(scrollElement, topOfPage(1) + 50)
+      // Less than a pixel further is not told as a move: no navigation follows.
+      scrollAsUser(scrollElement, topOfPage(1) + 50.4)
+
+      expect(reader.navigation.getNavigation().position).toMatchObject({
+        x: 0,
+        y: topOfPage(1) + 50,
+      })
+
+      await waitFor(PAST_THE_END_OF_A_USER_SCROLL)
+
+      expect(scrollElement.scrollTop, "where the book is").toBe(
+        topOfPage(1) + 50.4,
+      )
+      expect(reader.navigation.getNavigation().position).toMatchObject({
+        x: 0,
+        y: topOfPage(1) + 50.4,
+      })
     })
 
     it("moves the reading position and settles pagination only once the scroll is over", async () => {
@@ -477,6 +506,30 @@ describe("Given a book that scrolls", () => {
       })
     })
 
+    it("ends the scroll when a listener navigates in answer to the navigation of its first move", async () => {
+      const { reader, scrollElement } = await openOnPage(0, {
+        pageTurnMode: "scrollable",
+      })
+      const { isLockHeld } = recordNavigationsAndLock(reader)
+
+      // The first one is the latest navigation, replayed.
+      reader.navigation.navigation$.pipe(skip(1), first()).subscribe(() => {
+        reader.navigation.goToSpineItem({ indexOrId: 3, animation: false })
+      })
+
+      scrollAsUser(scrollElement, topOfPage(1) + 50)
+
+      expect(isLockHeld(), "whether the scroll holds the lock").toBe(false)
+
+      await waitFor(PAST_THE_END_OF_A_USER_SCROLL)
+
+      expect(getTargetAndTypeOfNavigation(reader)).toEqual({
+        target: targetOfApp,
+        type: "api",
+      })
+      expect(scrollElement.scrollTop).toBe(topOfPage(3))
+    })
+
     it("takes the book back to the page the scroll began on, when the app asks for that page", async () => {
       const { reader, scrollElement } = await openAndScrollAsUser()
 
@@ -588,37 +641,44 @@ describe("Given a book that scrolls", () => {
   })
 
   describe("When the page turn mode becomes controlled while the user scrolls", () => {
-    it("ends the scroll at once, on the page the user scrolled to", async () => {
-      const { reader, scrollElement } = await openOnPage(0, {
-        pageTurnMode: "scrollable",
-      })
-      const { isLockHeld } = recordNavigationsAndLock(reader)
+    /**
+     * At each of these distances into the third page, that page is the one
+     * that shows the most.
+     */
+    it.each([0, 50, 99])(
+      "ends the scroll at once, on the page the user scrolled to, %i px into it",
+      async (distanceIntoThirdPage) => {
+        const { reader, scrollElement } = await openOnPage(0, {
+          pageTurnMode: "scrollable",
+        })
+        const { isLockHeld } = recordNavigationsAndLock(reader)
 
-      scrollAsUser(scrollElement, topOfPage(2))
+        scrollAsUser(scrollElement, topOfPage(2) + distanceIntoThirdPage)
 
-      expect(isLockHeld()).toBe(true)
+        expect(isLockHeld()).toBe(true)
 
-      /**
-       * A browser takes the element's box away with the mode, and its
-       * offsets with it: they no longer say where the user is. jsdom keeps
-       * them, so the test resets them.
-       */
-      scrollElement.scrollTop = 0
-      reader.settings.update({ pageTurnMode: "controlled" })
+        /**
+         * A browser takes the element's box away with the mode, and its
+         * offsets with it: they no longer say where the user is. jsdom keeps
+         * them, so the test resets them.
+         */
+        scrollElement.scrollTop = 0
+        reader.settings.update({ pageTurnMode: "controlled" })
 
-      expect(isLockHeld()).toBe(false)
+        expect(isLockHeld()).toBe(false)
 
-      // Polled rather than awaited, so that a failure names the page.
-      await vi.waitFor(
-        () =>
-          expect(reader.pagination.state).toMatchObject({
-            isSettled: true,
-            begin: { spineItemIndex: 2 },
-          }),
-        { timeout: 2000 },
-      )
-      expect(reader.navigation.getNavigation().spineItem).toBe(2)
-    })
+        // Polled rather than awaited, so that a failure names the page.
+        await vi.waitFor(
+          () =>
+            expect(reader.pagination.state).toMatchObject({
+              isSettled: true,
+              begin: { spineItemIndex: 2 },
+            }),
+          { timeout: 2000 },
+        )
+        expect(reader.navigation.getNavigation().spineItem).toBe(2)
+      },
+    )
   })
 
   describe("When a layout leaves less to scroll than the element had scrolled", () => {

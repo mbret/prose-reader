@@ -85,18 +85,6 @@ export class ScrollNavigationController
    */
   public readonly scrollNotMadeByReader$: Observable<ScrollPosition>
 
-  /**
-   * The offsets of the element as the reader knows them, at each scroll event
-   * and each time the reader may have moved it: where the event found the
-   * element, or where the reader left it. Never emits in controlled mode, and
-   * does not replay.
-   *
-   * Unlike `scrollPosition`, it does not read the element. So its latest
-   * value still holds once the element has lost its box, and its offsets with
-   * it, as after a change to controlled mode.
-   */
-  public readonly scrollPositionKnownToReader$: Observable<ScrollPosition>
-
   constructor(
     protected viewport: Viewport,
     protected settings: ReaderSettingsManager,
@@ -140,10 +128,6 @@ export class ScrollNavigationController
 
     this.scrollNotMadeByReader$ = scrollOfElement$.pipe(
       filter(({ isMoveNotMadeByReader }) => isMoveNotMadeByReader),
-      map(({ scrollPositionKnownToReader }) => scrollPositionKnownToReader),
-    )
-
-    this.scrollPositionKnownToReader$ = scrollOfElement$.pipe(
       map(({ scrollPositionKnownToReader }) => scrollPositionKnownToReader),
     )
 
