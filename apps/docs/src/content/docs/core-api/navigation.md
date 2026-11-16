@@ -222,8 +222,8 @@ Every navigation as it happens: a `"user"` one that you or a gesture asked for,
 the one to where the reader opens included, or a `"restoration"` of the current
 one onto a new layout or when a pan ends.
 The user's scroll of a book that scrolls gives a `"user"` one at each move,
-one as a layout starts during it and one when it is over: where the scroll has
-taken the user by then.
+one as a layout starts during it, and one when the scrolling has stopped for
+half a second: where the scroll has taken the user by then.
 A restoration is emitted even when it lands where the navigation already was.
 
 A navigation asked for while a `lock()` is held is emitted as a `"user"` one
@@ -259,8 +259,8 @@ Use it to end something of your own when something else navigates. The reader
 does so for a scroll of the user's: a request that the scroll did not make ends
 the scroll at once, its lock is released, and the scroll makes no more
 navigations of its own. The requests that the scroll makes have the `type`
-`"scroll"`: one at each move, one as a layout starts during it and one when it
-is over.
+`"scroll"`: one at each move, one as a layout starts during it, and one when
+the scrolling has stopped for half a second.
 
 ### `.navigationAgainstCurrentLayout$` { #navigationagainstcurrentlayoutusd }
 

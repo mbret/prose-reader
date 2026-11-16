@@ -174,7 +174,7 @@ const reader = createReader({
 
 - `"user"`: a navigation you or a gesture asked for, including the one to where
   the reader opens. In a book that scrolls, a scroll of the user's gives one at
-  each move, and one when it is over.
+  each move, see [`navigation$`](/core-api/navigation#navigationusd).
 - `"restoration"`: the reader re-applying the current navigation, after the book
   was laid out again or when a pan ends. A restoration is emitted even when it
   lands where the navigation already was: what it tells is that the navigation
