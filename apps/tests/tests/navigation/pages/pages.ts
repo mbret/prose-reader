@@ -196,6 +196,54 @@ export const readFirstShownNode = async (page: Page) => {
   return firstShownNode
 }
 
+/**
+ * Puts a spacer before the text of the chapter shown and another after it,
+ * two pages long, in the direction its blocks follow. `moveSpaceBeforeText`
+ * then moves the text two pages on, while the chapter keeps its number of
+ * pages. A transparent border keeps margins from collapsing through either
+ * spacer, so moving the space moves nothing else.
+ */
+export const addSpacersAroundTextOfShownChapter = async (page: Page) =>
+  (await getReader(page)).evaluate((reader) => {
+    const chapterDocument = reader.spineItemsManager.get(
+      reader.pagination.state.begin.spineItemIndex,
+    )?.loadedDocument
+
+    if (!chapterDocument) throw new Error("the chapter shown has no document")
+
+    const { body } = chapterDocument
+    const pageBlockSize = Number.parseFloat(getComputedStyle(body).blockSize)
+    const createSpacer = (id: string, blockSize: number) => {
+      const spacer = chapterDocument.createElement("div")
+
+      spacer.id = id
+      spacer.style.cssText = `margin: 0; padding: 0; border-block-start: 1px solid transparent; block-size: ${blockSize}px;`
+
+      return spacer
+    }
+
+    body.prepend(createSpacer("spacer-before-text", 0))
+    body.append(createSpacer("spacer-after-text", 2 * pageBlockSize))
+  })
+
+/** Moves the space of the spacer after the text to the spacer before it. */
+export const moveSpaceBeforeText = async (page: Page) =>
+  (await getReader(page)).evaluate((reader) => {
+    const chapterDocument = reader.spineItemsManager.get(
+      reader.pagination.state.begin.spineItemIndex,
+    )?.loadedDocument
+    const spacerBeforeText =
+      chapterDocument?.getElementById("spacer-before-text")
+    const spacerAfterText = chapterDocument?.getElementById("spacer-after-text")
+
+    if (!spacerBeforeText || !spacerAfterText) {
+      throw new Error("the chapter shown has no spacers")
+    }
+
+    spacerBeforeText.style.blockSize = spacerAfterText.style.blockSize
+    spacerAfterText.style.blockSize = "0px"
+  })
+
 export const tapAndReadTappedPage = async (
   page: Page,
   point: { x: number; y: number },
