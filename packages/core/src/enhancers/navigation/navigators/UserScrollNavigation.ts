@@ -26,9 +26,13 @@ const SCROLL_FINISHED_DEBOUNCE_TIMEOUT = 500
 
 export class UserScrollNavigation extends DestroyableClass {
   /**
-   * The navigations that follow the user's scrolling. They only update the
-   * navigation: the element is already where the user scrolled it. The lock
-   * is held from the first move of a scroll until it is over.
+   * The navigations that follow the user's scrolling. The scroll makes one at
+   * each move, one as a layout starts during it, and one when it is over,
+   * unless another navigation ended it. With one at each move, a page turn
+   * made during the scroll starts from where the scroll has taken the book.
+   * They only update the navigation: the element is already where the user
+   * scrolled it. The lock is held from the first move of a scroll until it is
+   * over.
    */
   public readonly navigation$: Observable<UserNavigationEntry>
 
@@ -54,15 +58,19 @@ export class UserScrollNavigation extends DestroyableClass {
           defer(() => {
             const unlock = this.reader.navigation.lock()
 
+            const scrollPositionOfEachMove$ = merge(
+              of(scrollPositionOfFirstMove),
+              scrollNavigationController.scrollNotMadeByReader$,
+            )
+
             /**
-             * Until the scroll is over, the navigation is from before it. A
-             * layout that starts meanwhile can move the spine items, and the
-             * restoration that follows it works from the navigation. So as
-             * the layout starts, before it moves the first item, the reader
-             * navigates to where the element is: the restoration then scrolls
-             * the book to that place again. The element is read rather than
-             * the last move, since a browser reports a move a frame or more
-             * after it happens.
+             * A browser reports a move a frame or more after it happens, so
+             * the element can be further than the navigation of the last
+             * move. A layout that starts then can move the spine items, and
+             * the restoration that follows it works from the navigation. So
+             * as the layout starts, before it moves the first item, the
+             * reader navigates to where the element is: the restoration then
+             * scrolls the book to that place again.
              *
              * Only the first start since the scroll began, or since the items
              * were last laid out, counts. By a later one, as after the
@@ -75,10 +83,7 @@ export class UserScrollNavigation extends DestroyableClass {
               map(() => scrollNavigationController.scrollPosition),
             )
 
-            const scrollPositionAtEndOfScroll$ = merge(
-              of(scrollPositionOfFirstMove),
-              scrollNavigationController.scrollNotMadeByReader$,
-            ).pipe(
+            const scrollPositionAtEndOfScroll$ = scrollPositionOfEachMove$.pipe(
               switchMap((scrollPositionOfLastMove) =>
                 merge(
                   /**
@@ -114,7 +119,10 @@ export class UserScrollNavigation extends DestroyableClass {
             )
 
             return merge(
-              scrollPositionAsLayoutStarts$.pipe(
+              merge(
+                scrollPositionOfEachMove$,
+                scrollPositionAsLayoutStarts$,
+              ).pipe(
                 map((scrollPosition) => ({
                   scrollPosition,
                   isEndOfScroll: false,
@@ -137,8 +145,9 @@ export class UserScrollNavigation extends DestroyableClass {
             /**
              * The scroll is also over when something else asks for a
              * navigation: the reader goes there, no longer where the user
-             * scrolled. The scroll then makes no navigation. One to where the
-             * element is would replace the other navigation and its target.
+             * scrolled. The scroll then makes no more navigations. One to
+             * where the element is would replace the other navigation and its
+             * target.
              *
              * It follows the requests from before it takes the lock, so that
              * a request made as the lock is taken ends it too.

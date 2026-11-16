@@ -336,14 +336,14 @@ describe("Given a layout that moves the spine item the navigation shows", () => 
       })
     })
 
-    it("goes on with the scroll when the reader restores the navigation from before it", async () => {
+    it("restores the navigation where the user scrolled to, and goes on with the scroll, when the scroll begins as the layout has started", async () => {
       const { reader, scrollElement, setSizeOfFirstPage, isNavigationLocked } =
         await openOnThirdPageOfScrollingBook()
 
       /**
-       * The scroll begins as the layout has started: the scroll navigates at
-       * no start of a layout, so the reader restores the navigation that
-       * `goToSpineItem` made.
+       * The scroll begins as the layout has started: it navigates at no
+       * start of a layout, so the reader restores the navigation that the
+       * first move of the scroll made.
        */
       reader.spine.itemsLayoutStart$.pipe(first()).subscribe(() => {
         scrollElement.scrollTop =
@@ -363,7 +363,10 @@ describe("Given a layout that moves the spine item the navigation shows", () => 
       reader.layout()
       await firstValueFrom(reader.spine.itemsLayout$)
 
-      expect(restorations, "the type of each restoration").toEqual(["api"])
+      expect(scrollElement.scrollTop, "where the book is").toBe(
+        2 * pageHeight + 300 + distanceUserScrolledIntoThirdPage,
+      )
+      expect(restorations, "the type of each restoration").toEqual(["scroll"])
       expect(
         await isNavigationLocked(),
         "whether the scroll holds the lock, after the restoration",

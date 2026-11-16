@@ -15,7 +15,7 @@ import {
   stubElementScrolling,
 } from "../tests/readerHarness"
 import { waitFor } from "../tests/utils"
-import type { Navigation } from "./types"
+import type { Navigation, ReadingPosition } from "./types"
 
 installReaderTestEnvironment()
 
@@ -208,6 +208,135 @@ describe("Given a book that scrolls", () => {
     })
   })
 
+  describe("While the user scrolls", () => {
+    it("navigates to where each move takes the book, before the scroll is over", async () => {
+      const { reader, scrollElement } = await openOnPage(0, {
+        pageTurnMode: "scrollable",
+      })
+      const { isLockHeld } = recordNavigationsAndLock(reader)
+
+      scrollAsUser(scrollElement, topOfPage(1) + 50)
+
+      expect(reader.navigation.getNavigation()).toMatchObject({
+        type: "scroll",
+        position: { x: 0, y: topOfPage(1) + 50 },
+        spineItem: 1,
+      })
+
+      scrollAsUser(scrollElement, topOfPage(2))
+
+      expect(reader.navigation.getNavigation()).toMatchObject({
+        type: "scroll",
+        position: { x: 0, y: topOfPage(2) },
+        spineItem: 2,
+      })
+      expect(isLockHeld(), "whether the scroll holds the lock").toBe(true)
+    })
+
+    it("moves the reading position and settles pagination only once the scroll is over", async () => {
+      const { reader, scrollElement } = await openOnPage(0, {
+        pageTurnMode: "scrollable",
+      })
+      const whileScrollHeldLock: {
+        readingPositions: ReadingPosition[]
+        paginationSettlements: boolean[]
+      } = { readingPositions: [], paginationSettlements: [] }
+      let isLockHeld = false
+
+      reader.navigation.isLocked$.subscribe((isLocked) => {
+        isLockHeld = isLocked
+      })
+      // The first one of each is the value now, replayed.
+      reader.navigation.readingPosition$
+        .pipe(skip(1))
+        .subscribe((readingPosition) => {
+          if (isLockHeld)
+            whileScrollHeldLock.readingPositions.push(readingPosition)
+        })
+      reader.pagination.state$.pipe(skip(1)).subscribe(({ isSettled }) => {
+        if (isLockHeld)
+          whileScrollHeldLock.paginationSettlements.push(isSettled)
+      })
+
+      scrollAsUser(scrollElement, topOfPage(1) + 50)
+      scrollAsUser(scrollElement, topOfPage(2))
+      await waitFor(100)
+      scrollAsUser(scrollElement, topOfPage(2) + 10)
+
+      expect(isLockHeld, "whether the scroll holds the lock").toBe(true)
+
+      const settled = await settledOn(reader, 2)
+
+      expect(whileScrollHeldLock).toEqual({
+        readingPositions: [],
+        // The first move drops the settlement, and no move settles again.
+        paginationSettlements: [false],
+      })
+      expect(await firstValueFrom(reader.navigation.readingPosition$)).toEqual({
+        cfi: settled.begin.cfi,
+        percentageEstimateOfBook: 0.5,
+        status: "success",
+      })
+    })
+  })
+
+  describe("When the app turns a page before a scroll of the user's is over", () => {
+    const openAndScrollAsUserToThirdPage = async () => {
+      const { reader, scrollElement } = await openOnPage(0, {
+        pageTurnMode: "scrollable",
+      })
+
+      scrollAsUser(scrollElement, topOfPage(1))
+      scrollAsUser(scrollElement, topOfPage(2))
+
+      return { reader, scrollElement }
+    }
+
+    it.each([
+      {
+        name: "goToNextSpineItem()",
+        navigate: (reader: TestReader) => reader.navigation.goToNextSpineItem(),
+        pageIndex: 3,
+      },
+      {
+        name: "goToPreviousSpineItem()",
+        navigate: (reader: TestReader) =>
+          reader.navigation.goToPreviousSpineItem(),
+        pageIndex: 1,
+      },
+      {
+        name: "turnBottom()",
+        navigate: (reader: TestReader) => reader.navigation.turnBottom(),
+        pageIndex: 3,
+      },
+      {
+        name: "turnTop()",
+        navigate: (reader: TestReader) => reader.navigation.turnTop(),
+        pageIndex: 1,
+      },
+    ])(
+      "starts $name from the page the user scrolled to",
+      async ({ navigate, pageIndex }) => {
+        const { reader, scrollElement } = await openAndScrollAsUserToThirdPage()
+
+        navigate(reader)
+        await waitFor(PAST_THE_END_OF_A_USER_SCROLL)
+
+        expect(scrollElement.scrollTop, "where the book is").toBe(
+          topOfPage(pageIndex),
+        )
+        expect(reader.navigation.getNavigation()).toMatchObject({
+          type: "api",
+          spineItem: pageIndex,
+        })
+        expect(reader.pagination.state).toMatchObject({
+          isSettled: true,
+          begin: { spineItemIndex: pageIndex },
+        })
+      },
+    )
+  })
+
   describe("When the app navigates before a scroll of the user's is over", () => {
     const targetOfApp = { type: "spineItem", value: 3 }
 
@@ -348,11 +477,8 @@ describe("Given a book that scrolls", () => {
       })
     })
 
-    it("takes the book to the place the navigation already has, when the app asks for that place", async () => {
+    it("takes the book back to the page the scroll began on, when the app asks for that page", async () => {
       const { reader, scrollElement } = await openAndScrollAsUser()
-
-      // The reader is still on the first page: the scroll is not over.
-      expect(reader.navigation.getNavigation().spineItem).toBe(0)
 
       reader.navigation.goToSpineItem({ indexOrId: 0, animation: false })
       await waitFor(PAST_THE_END_OF_A_USER_SCROLL)
@@ -365,6 +491,34 @@ describe("Given a book that scrolls", () => {
       expect(reader.pagination.state).toMatchObject({
         isSettled: true,
         begin: { spineItemIndex: 0 },
+      })
+    })
+
+    it("ends the scroll and leaves the book where it is, when the app asks for the place the scroll has reached", async () => {
+      const { reader, scrollElement } = await openAndScrollAsUser()
+      const { isLockHeld } = recordNavigationsAndLock(reader)
+      const placeScrollHasReached = reader.navigation.getNavigation().position
+
+      reader.navigation.navigate({
+        target: { type: "position", value: placeScrollHasReached },
+        animation: false,
+      })
+
+      expect(isLockHeld(), "whether the scroll holds the lock").toBe(false)
+
+      await waitFor(PAST_THE_END_OF_A_USER_SCROLL)
+
+      expect(scrollElement.scrollTop, "where the book is").toBe(
+        topOfPage(1) + 50,
+      )
+      expect(reader.navigation.getNavigation()).toMatchObject({
+        type: "api",
+        position: { x: 0, y: topOfPage(1) + 50 },
+        spineItem: 1,
+      })
+      expect(reader.pagination.state).toMatchObject({
+        isSettled: true,
+        begin: { spineItemIndex: 1 },
       })
     })
 
