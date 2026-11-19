@@ -20,7 +20,7 @@ vi.mock("react-dom", async () => {
   }
 })
 
-vi.mock("../audio/AudioSpineItem", () => ({
+vi.mock("../audio/AudioSpineItem.tsx", () => ({
   AudioSpineItem: audioSpineItemMock,
 }))
 

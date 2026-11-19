@@ -8,8 +8,8 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
 
 const { useReaderMock } = vi.hoisted(() => ({ useReaderMock: vi.fn() }))
 
-vi.mock("../context/useReader", async (importOriginal) => ({
-  ...(await importOriginal<typeof import("../context/useReader")>()),
+vi.mock("../context/useReader.ts", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("../context/useReader.ts")>()),
   useReader: useReaderMock,
 }))
 

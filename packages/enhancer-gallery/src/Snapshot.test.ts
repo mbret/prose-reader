@@ -6,9 +6,9 @@ import { Snapshot } from "./Snapshot.ts"
 
 const { deepCloneElement } = vi.hoisted(() => ({ deepCloneElement: vi.fn() }))
 
-vi.mock("./utils/deepCloneElement", async (importOriginal) => {
+vi.mock("./utils/deepCloneElement.ts", async (importOriginal) => {
   const original =
-    await importOriginal<typeof import("./utils/deepCloneElement")>()
+    await importOriginal<typeof import("./utils/deepCloneElement.ts")>()
 
   deepCloneElement.mockImplementation(original.deepCloneElement)
 

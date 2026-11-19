@@ -14,7 +14,7 @@ const { sliderRenders } = vi.hoisted(() => {
   return { sliderRenders }
 })
 
-vi.mock("../components/ui/slider", () => ({
+vi.mock("../components/ui/slider.tsx", () => ({
   Slider: (props: SliderProps) => {
     sliderRenders.push(props)
 
