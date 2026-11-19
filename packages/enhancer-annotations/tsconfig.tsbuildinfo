@@ -1,1 +1,0 @@
-{"root":["./src/Settings.ts","./src/annotationsEnhancer.test.ts","./src/annotationsEnhancer.ts","./src/index.ts","./src/report.ts","./src/types.ts","./src/annotations/ReaderHighlights.ts","./src/annotations/SpineItemHighlight.ts","./src/annotations/SpineItemHighlights.ts","./src/annotations/types.ts","./src/annotations/utils.ts"],"version":"6.0.3"}
