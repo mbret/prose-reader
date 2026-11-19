@@ -1,6 +1,6 @@
 ---
 title: "Annotations enhancer"
-description: "Install @prose-reader/enhancer-annotations, find the pages that can hold an annotation with candidates$, and avoid the root CFI you get on a blank page."
+description: "Install @prose-reader/enhancer-annotations, create annotations you can store as they are with createAnnotation, find the pages that can hold one with candidates$, and avoid the root CFI you get on a blank page."
 sidebar:
   label: "Annotations"
 ---
@@ -13,6 +13,37 @@ npm install @prose-reader/enhancer-annotations @prose-reader/core @prose-reader/
 
 All three are peer dependencies: the enhancer runs against the reader your app
 creates, so it shares that reader's copies rather than bringing its own.
+
+## Creating an annotation
+
+`reader.annotations.createAnnotation()` gives a new annotation its `id` and its `cfi`. Pass it a selection with the index of its spine item, or the absolute index of a page:
+
+```typescript
+// A highlight of what the user selected
+const selection = reader.selection.getSelection()
+
+if (selection) {
+  const annotation = reader.annotations.createAnnotation({
+    itemIndex: selection.itemIndex,
+    selection: selection.selection,
+  })
+
+  if (annotation) {
+    saveAnnotation({ ...annotation, highlightColor: "yellow", notes: "" })
+  }
+}
+
+// A bookmark of a page
+const bookmark = reader.annotations.createAnnotation({ absolutePageIndex })
+```
+
+It returns `{ id, cfi }` and nothing else, whatever else the parameter holds, so you can store the result as it is, in IndexedDB for example. Add the other fields of your annotation to it, such as `highlightColor` and `notes`.
+
+- For a selection, the CFI is the range of the selection.
+- For a page, the CFI is the first visible node of the page, or the root of its spine item when the page has none: see [Blank pages and annotations](#blank-pages-and-annotations).
+- It returns `undefined` when the reader has no such spine item or page.
+
+The result holds no page index, because the page of an annotation changes with the layout: see [Danger of persisting weak references](/learn/annotations#danger-of-persisting-weak-references).
 
 ## Blank pages and annotations
 

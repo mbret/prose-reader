@@ -31,8 +31,36 @@ class EmptyRenderer extends DocumentRenderer {
     return EMPTY
   }
 
-  getDocumentFrame() {
+  getDocumentFrame(): HTMLIFrameElement | undefined {
     return undefined
+  }
+}
+
+/**
+ * Renders each item as a text document in a frame, the way the html renderer
+ * does, so that its text can be selected. Its body holds one paragraph.
+ */
+class TextDocumentRenderer extends EmptyRenderer {
+  onCreateDocument() {
+    return of(this.context.document.createElement("iframe"))
+  }
+
+  onLoadDocument() {
+    this.attach()
+
+    const frameDocument = this.getDocumentFrame()?.contentDocument
+
+    if (!frameDocument) throw new Error("the frame has no document")
+
+    frameDocument.body.innerHTML = `<p>A paragraph of text.</p>`
+
+    return EMPTY
+  }
+
+  getDocumentFrame() {
+    const frame = this.documentContainer
+
+    return frame instanceof HTMLIFrameElement ? frame : undefined
   }
 }
 
@@ -169,5 +197,86 @@ describe("candidates$", () => {
     const reader = await mountAnnotationsReader()
 
     expect(observeCandidates(reader)).toEqual([[true, true]])
+  })
+})
+
+/**
+ * Selects text in the document of an item and releases the pointer, as a user
+ * does. The reader then holds the selection, the event that ended it and the
+ * item, in `reader.selection.getSelection()`.
+ */
+const selectTextAndRelease = async (
+  reader: Awaited<ReturnType<typeof mountAnnotationsReader>>,
+  itemIndex: number,
+) => {
+  const frameDocument = reader.spineItemsManager
+    .get(itemIndex)
+    ?.renderer.getDocumentFrame()?.contentDocument
+  const frameWindow = frameDocument?.defaultView
+  const text = frameDocument?.querySelector("p")?.firstChild
+
+  if (!frameDocument || !frameWindow || !text) {
+    throw new Error(`item ${itemIndex} has no text to select`)
+  }
+
+  frameDocument.getSelection()?.setBaseAndExtent(text, 2, text, 11)
+  frameDocument.dispatchEvent(new frameWindow.PointerEvent("pointerdown"))
+  frameDocument.dispatchEvent(new frameWindow.PointerEvent("pointerup"))
+  await vi.runAllTimersAsync()
+
+  const selection = reader.selection.getSelection()
+
+  if (selection?.type !== "over") {
+    throw new Error("the reader holds no released selection")
+  }
+
+  return selection
+}
+
+/**
+ * An app stores what `createAnnotation` returns, in a database or through a
+ * message, which copy a value with the structured clone algorithm. A browser
+ * cannot clone an event or a selection. The result is an `Annotation`, an id
+ * and a cfi, whatever else the parameter holds. What the app adds, such as a
+ * highlight color, it adds to that result.
+ *
+ * The tests compare the keys of the result, not whether it clones: jsdom
+ * clones its events like plain objects, so a clone would succeed here with the
+ * event in the result.
+ */
+describe("createAnnotation", () => {
+  it("annotates a selection with its id and a range cfi, and nothing of the selection itself", async () => {
+    const reader = await mountAnnotationsReader(TextDocumentRenderer)
+    // What react-reader passes: the value the reader holds for a selection,
+    // which carries the event that ended it.
+    const selection = await selectTextAndRelease(reader, 0)
+
+    const annotation = reader.annotations.createAnnotation(selection)
+
+    expect(annotation).toStrictEqual({
+      id: expect.any(String),
+      cfi: expect.any(String),
+    })
+    expect(reader.cfi.parseCfi(annotation?.cfi ?? "")).toMatchObject({
+      itemIndex: 0,
+      isCfiRange: true,
+    })
+  })
+
+  it("annotates a page with its id and the cfi of its item, and not the page index", async () => {
+    const reader = await mountAnnotationsReader(TextDocumentRenderer)
+
+    const annotation = reader.annotations.createAnnotation({
+      absolutePageIndex: 1,
+    })
+
+    expect(annotation).toStrictEqual({
+      id: expect.any(String),
+      cfi: expect.any(String),
+    })
+    expect(reader.cfi.parseCfi(annotation?.cfi ?? "")).toMatchObject({
+      itemIndex: 1,
+      isCfiRange: false,
+    })
   })
 })

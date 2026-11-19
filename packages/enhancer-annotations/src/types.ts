@@ -10,7 +10,7 @@ export interface Annotation {
   selected?: boolean
 }
 
-type AnnotationSharedParams = Omit<Annotation, "id" | "cfi"> & {
+type AnnotationSharedParams = {
   selection?: Selection
 }
 
@@ -33,9 +33,17 @@ export type AnnotationsEnhancerAPI = {
     annotations$: Observable<RuntimeAnnotation[]>
     highlightTap$: ReaderHighlights["tap$"]
     candidates$: Observable<boolean[]>
+    /**
+     * Creates the annotation of a selection, or of a page: a new `id`, and
+     * the `cfi` of the selected range, or of the page. It returns these two
+     * fields only, whatever else `params` holds, so that the result can be
+     * stored as it is. Add the other fields of your annotation to it, such as
+     * `highlightColor` or `notes`. It returns `undefined` when the reader has
+     * no such spine item.
+     */
     createAnnotation: (
       params: AnnotateParams | AnnotateAbsolutePageParams,
-    ) => Annotation | undefined
+    ) => Pick<Annotation, "id" | "cfi"> | undefined
     isTargetWithinHighlight: (target: EventTarget) => boolean
   }
 }

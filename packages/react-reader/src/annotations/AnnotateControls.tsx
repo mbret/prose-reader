@@ -34,14 +34,17 @@ export const AnnotateControls = () => {
         variant="outline"
         size="sm"
         onClick={() => {
-          const selection = reader?.selection.getSelection()
+          const selectionToAnnotate = reader?.selection.getSelection()
 
-          if (!selection) return
+          if (!selectionToAnnotate) return
 
           context.update((state) => ({
             ...state,
             selectedHighlight: {
-              selection,
+              selection: {
+                selection: selectionToAnnotate.selection,
+                itemIndex: selectionToAnnotate.itemIndex,
+              },
             },
           }))
         }}

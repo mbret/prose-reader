@@ -17,6 +17,7 @@ import { Settings } from "./Settings.ts"
 import type {
   AnnotateAbsolutePageParams,
   AnnotateParams,
+  Annotation,
   AnnotationsEnhancerAPI,
   AnnotationsEnhancerOptions,
 } from "./types.ts"
@@ -98,15 +99,12 @@ export const annotationsEnhancer =
       return undefined
     }
 
-    const createAnnotation = ({
-      selection,
-      ...rest
-    }: (AnnotateParams | AnnotateAbsolutePageParams) & {
-      absolutePageIndex?: number
-    }) => {
-      const { itemIndex, pageIndex = 0 } = resolveItemInformation(rest) ?? {}
+    const createAnnotation = (
+      params: AnnotateParams | AnnotateAbsolutePageParams,
+    ): Pick<Annotation, "id" | "cfi"> | undefined => {
+      const { selection } = params
+      const { itemIndex, pageIndex = 0 } = resolveItemInformation(params) ?? {}
       const spineItem = reader.spineItemsManager.get(itemIndex)
-      const id = window.crypto.randomUUID()
 
       if (!spineItem) return undefined
 
@@ -131,14 +129,10 @@ export const annotationsEnhancer =
             })
           : reader.cfi.generateRootCfi(spineItem.item)
 
-      const highlight = {
+      return {
+        id: window.crypto.randomUUID(),
         cfi: cfiWithRangeOrFirstNodeOrRoot,
-        itemIndex: spineItem.index,
-        id,
-        ...rest,
-      } satisfies RuntimeAnnotation
-
-      return highlight
+      }
     }
 
     const renderAnnotations$ = merge(runtimeAnnotations$, reader.layout$).pipe(

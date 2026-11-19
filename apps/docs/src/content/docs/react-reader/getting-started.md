@@ -207,6 +207,9 @@ See [Annotations](/enhancers/annotations) to install enhancer
 
 See [Annotations](/enhancers/annotations) to install enhancer
 
+* Pass your annotations to `ReactReaderProvider` as `annotations`, and keep them up to date from `onAnnotationCreate`, `onAnnotationUpdate` and `onAnnotationDelete`.
+* `onAnnotationCreate` receives an `Annotation` you can store as it is: its `id` and `cfi`, and for a highlight its `highlightColor` and `notes`. A bookmark has only an `id` and a `cfi`.
+
 ### Audio / Audiobooks { #audio-audiobooks }
 
 See [Audio](/enhancers/audio) to install enhancer
