@@ -1,6 +1,6 @@
 ---
 title: "Annotations enhancer"
-description: "Install @prose-reader/enhancer-annotations, find the pages that can hold an annotation with candidates$, and avoid the root CFI you get on a blank page."
+description: "Install @prose-reader/enhancer-annotations, draw highlights from your annotations, find the pages that can hold an annotation with candidates$, and avoid the root CFI you get on a blank page."
 sidebar:
   label: "Annotations"
 ---
@@ -13,6 +13,33 @@ npm install @prose-reader/enhancer-annotations @prose-reader/core @prose-reader/
 
 All three are peer dependencies: the enhancer runs against the reader your app
 creates, so it shares that reader's copies rather than bringing its own.
+
+## Highlights
+
+Give the enhancer your annotations as an observable, and it draws them:
+
+```ts
+const annotations$ = new BehaviorSubject<Annotation[]>([])
+
+const reader = annotationsEnhancer(createReader)({
+  manifest,
+  annotations: { annotations$ },
+})
+```
+
+Each list replaces the one before. The enhancer draws a highlight for each
+annotation whose CFI is a range, in the chapters whose document is loaded:
+
+* in its `highlightColor`, or yellow when it has none;
+* with a note icon when it has `notes`;
+* with a dashed border when it is `selected`.
+
+When an annotation leaves the list, its highlight goes. When its data changes,
+its highlight is drawn again.
+
+`reader.annotations.highlightTap$` emits `{ event, highlight }` when the user
+taps a highlight, with its annotation as `highlight`. The highlights do not
+depend on it: subscribe only to handle the taps.
 
 ## Blank pages and annotations
 

@@ -1,40 +1,13 @@
 // @vitest-environment jsdom
+import { BehaviorSubject, first, map } from "rxjs"
+import { describe, expect, it, vi } from "vitest"
 import {
-  createReader,
-  DocumentRenderer,
-  type Manifest,
-} from "@prose-reader/core"
-import { BehaviorSubject, EMPTY, first, map, of } from "rxjs"
-import { afterEach, beforeAll, describe, expect, it, vi } from "vitest"
-import { annotationsEnhancer } from "./annotationsEnhancer.ts"
-
-/** jsdom has no layout, so every element reports this size. */
-const viewport = { width: 400, height: 600 }
-
-/** Renders each item as an empty element, so it is ready once loaded. */
-class EmptyRenderer extends DocumentRenderer {
-  onUnload() {}
-
-  onCreateDocument() {
-    return of(this.context.document.createElement("div"))
-  }
-
-  onLoadDocument() {
-    return EMPTY
-  }
-
-  onLayout() {
-    return of(undefined)
-  }
-
-  onRenderHeadless() {
-    return EMPTY
-  }
-
-  getDocumentFrame() {
-    return undefined
-  }
-}
+  createCfiOfItem,
+  EmptyRenderer,
+  mountAnnotationsReader,
+  readHighlightedAnnotationIds,
+} from "./tests/readerHarness.ts"
+import type { Annotation } from "./types.ts"
 
 /**
  * Holds every layout while held, so that the spine publishes no pages until
@@ -56,77 +29,6 @@ const createLayoutHold = () => {
     Renderer: HeldLayoutRenderer,
     release: () => isLayoutHeld.next(false),
   }
-}
-
-/** Two single pages, each a candidate once laid out. */
-const manifest: Manifest = {
-  filename: "test",
-  mediaType: "application/vnd.comicbook+zip",
-  title: "test",
-  readingDirection: "ltr",
-  renditionLayout: "pre-paginated",
-  renditionSpread: "none",
-  items: [],
-  spineItems: [0, 1].map((index) => ({
-    href: `/page_${index}.jpg`,
-    containerUri: `page_${index}.jpg`,
-    id: `${index}`,
-    index,
-    mediaType: "image/jpeg",
-    progressionWeight: 0.5,
-    renditionLayout: "pre-paginated",
-  })),
-}
-
-/** jsdom has neither observer, and nothing here depends on what they report. */
-class InertObserver {
-  observe() {}
-  unobserve() {}
-  disconnect() {}
-}
-
-beforeAll(() => {
-  vi.stubGlobal("ResizeObserver", InertObserver)
-  vi.stubGlobal("IntersectionObserver", InertObserver)
-  Object.defineProperty(HTMLElement.prototype, "clientWidth", {
-    configurable: true,
-    get: () => viewport.width,
-  })
-  Object.defineProperty(HTMLElement.prototype, "clientHeight", {
-    configurable: true,
-    get: () => viewport.height,
-  })
-  vi.spyOn(HTMLElement.prototype, "getBoundingClientRect").mockReturnValue(
-    new DOMRect(0, 0, viewport.width, viewport.height),
-  )
-})
-
-const readers: { destroy: () => void }[] = []
-
-afterEach(() => {
-  for (const reader of readers.splice(0)) reader.destroy()
-  document.body.replaceChildren()
-  vi.useRealTimers()
-})
-
-const mountAnnotationsReader = async (
-  Renderer: typeof EmptyRenderer = EmptyRenderer,
-) => {
-  vi.useFakeTimers()
-
-  const reader = annotationsEnhancer(createReader)({
-    manifest,
-    getRenderer: () => (props) => new Renderer(props),
-    getResource: () => of(new Response("", { status: 200 })),
-  })
-  readers.push(reader)
-
-  const container = document.createElement("div")
-  document.body.appendChild(container)
-  reader.mount(container)
-  await vi.runAllTimersAsync()
-
-  return reader
 }
 
 /** Records what `candidates$` emits, from one subscription. */
@@ -151,7 +53,9 @@ describe("candidates$", () => {
    */
   it("emits an empty array while the reader has published no pages, then one candidate per page", async () => {
     const layoutHold = createLayoutHold()
-    const reader = await mountAnnotationsReader(layoutHold.Renderer)
+    const reader = await mountAnnotationsReader({
+      Renderer: layoutHold.Renderer,
+    })
 
     expect(reader.spine.pages.value.pages).toEqual([])
 
@@ -169,5 +73,69 @@ describe("candidates$", () => {
     const reader = await mountAnnotationsReader()
 
     expect(observeCandidates(reader)).toEqual([[true, true]])
+  })
+})
+
+describe("highlights", () => {
+  const createAnnotationOfFirstItem = (id: string): Annotation => ({
+    id,
+    cfi: createCfiOfItem(0),
+    highlightColor: "red",
+  })
+
+  /**
+   * The highlights alive in the reader are the annotations of the list, at
+   * every step. An app that does not handle taps on highlights does not
+   * subscribe to `highlightTap$`, and one that does, does: neither changes
+   * which highlights exist.
+   */
+  it.each([
+    { highlightTapSubscriber: "no subscriber" },
+    { highlightTapSubscriber: "a subscriber" },
+  ])(
+    "has one highlight per annotation of the list, with $highlightTapSubscriber to highlightTap$",
+    async ({ highlightTapSubscriber }) => {
+      const annotations$ = new BehaviorSubject<Annotation[]>([])
+      const reader = await mountAnnotationsReader({ annotations$ })
+
+      if (highlightTapSubscriber === "a subscriber") {
+        reader.annotations.highlightTap$.subscribe()
+      }
+
+      expect(reader.spineItemsManager.get(0)?.value.loadStatus).toBe("loaded")
+
+      const listSteps = [
+        ["first", "second"],
+        ["second"],
+        ["second", "third"],
+        [],
+      ]
+
+      for (const ids of listSteps) {
+        annotations$.next(ids.map(createAnnotationOfFirstItem))
+        await vi.runAllTimersAsync()
+
+        expect(readHighlightedAnnotationIds()).toEqual(ids)
+      }
+    },
+  )
+
+  it("keeps one highlight per annotation when the list gives its data again", async () => {
+    const annotations$ = new BehaviorSubject<Annotation[]>([
+      createAnnotationOfFirstItem("first"),
+    ])
+    await mountAnnotationsReader({ annotations$ })
+
+    annotations$.next([
+      { ...createAnnotationOfFirstItem("first"), highlightColor: "blue" },
+    ])
+    await vi.runAllTimersAsync()
+
+    annotations$.next([
+      { ...createAnnotationOfFirstItem("first"), notes: "A note" },
+    ])
+    await vi.runAllTimersAsync()
+
+    expect(readHighlightedAnnotationIds()).toEqual(["first"])
   })
 })

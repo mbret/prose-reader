@@ -83,7 +83,7 @@ export class ReaderHighlights extends DestroyableClass {
     return this.spineItemHighlights
       .getValue()
       .flatMap((layer) => layer.getHighlightsForTarget(target))
-      .map((annotation) => annotation.highlight)
+      .map((highlight) => highlight.annotation)
   }
 
   isTargetWithinHighlight = (target: EventTarget) => {
