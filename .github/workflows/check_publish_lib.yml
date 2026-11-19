@@ -37,6 +37,14 @@ jobs:
   publish:
     needs: [lint, ts, ts_react_native_demo, tests, docker]
     runs-on: ubuntu-latest
+    # A job-level block replaces the default permissions, so it lists all
+    # that the job uses.
+    permissions:
+      # to push the release commit and its tag to master
+      contents: write
+      # for npm trusted publishing: for each package, lerna exchanges the
+      # job's OIDC token for an npm token, and publishes it with provenance
+      id-token: write
     outputs:
       outcome: ${{ steps.publish.outputs.outcome }}
       version: ${{ steps.publish.outputs.version }}
@@ -142,6 +150,10 @@ jobs:
           echo "version=${tag#v}" >> "$GITHUB_OUTPUT"
           echo "sha=$(git rev-parse HEAD)" >> "$GITHUB_OUTPUT"
         env:
+          # Used only for a package whose OIDC exchange fails: one with no
+          # trusted publisher on npmjs.com, or an expired one. Remove it once
+          # every published package has a valid trusted publisher. From
+          # January 2027, npm refuses a token that bypasses 2FA.
           NODE_AUTH_TOKEN: ${{ secrets.NPM_ACCESS_TOKEN }}
 
   # The metadata fetcher ships as a container too, so a library app can run
