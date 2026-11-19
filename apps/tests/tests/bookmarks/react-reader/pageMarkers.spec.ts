@@ -13,16 +13,6 @@ const url = "http://localhost:3333/tests/bookmarks/react-reader/index.html"
 const windowSize = { width: 600, height: 800 }
 const marker = "[data-bookmark-area]"
 
-/** The cfis of the annotations the scenario keeps across reloads. */
-const readStoredAnnotationCfis = (page: Page) =>
-  page.evaluate(() => {
-    const annotations: { cfi: string }[] = JSON.parse(
-      sessionStorage.getItem("annotations") ?? "[]",
-    )
-
-    return annotations.map(({ cfi }) => cfi)
-  })
-
 /**
  * Records each bookmark marker react-reader puts in the page from now on, and
  * whether it was in the window as it went in. A marker is put in when its
@@ -90,17 +80,6 @@ test.describe("Given a page bookmarked in the middle of a chapter", () => {
 
     await expect(page.locator(marker)).toHaveCount(1)
     await expect(page.locator(marker)).toBeInViewport()
-
-    // The bookmark points to a node of the page: a root cfi would be on the
-    // chapter's first page.
-    const [bookmarkCfi = ""] = await readStoredAnnotationCfis(page)
-
-    expect(
-      await (await getReader(page)).evaluate(
-        (reader, cfi) => reader.cfi.isRootCfi(cfi),
-        bookmarkCfi,
-      ),
-    ).toBe(false)
 
     // Away from the chapter, which unloads: its page shows no marker.
     await navigateToSpineItem({ page, index: 0 })

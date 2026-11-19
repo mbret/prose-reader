@@ -51,15 +51,16 @@ export const useBookmarkIdByItemPage = () => {
           for (const { resource, meta } of locatedPageBookmarks) {
             if (meta.itemPageIndex === undefined) continue
 
-            const bookmarkIdByPage =
-              bookmarkIdByItemPage.get(meta.itemIndex) ??
-              new Map<number, string>()
+            let bookmarkIdByPage = bookmarkIdByItemPage.get(meta.itemIndex)
+
+            if (!bookmarkIdByPage) {
+              bookmarkIdByPage = new Map()
+              bookmarkIdByItemPage.set(meta.itemIndex, bookmarkIdByPage)
+            }
 
             if (!bookmarkIdByPage.has(meta.itemPageIndex)) {
               bookmarkIdByPage.set(meta.itemPageIndex, resource.id)
             }
-
-            bookmarkIdByItemPage.set(meta.itemIndex, bookmarkIdByPage)
           }
 
           return bookmarkIdByItemPage

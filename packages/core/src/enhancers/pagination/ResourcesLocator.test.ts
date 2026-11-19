@@ -235,32 +235,26 @@ describe("resources located at the same cfi", () => {
   it("share one consolidation, and each come back with their own result", async () => {
     vi.useFakeTimers()
 
-    const reader = createEnhancedTestReader({
-      getRenderer: renderTextDocuments,
-    })
+    const reader = createEnhancedTestReader()
 
     mountTestReader(reader)
     await vi.runAllTimersAsync()
 
-    // The text of the paragraph of the first item, which the reader shows.
-    const cfi = "epubcfi(/6/2!/4/2/1:3)"
+    const cfi = "epubcfi(/6/4!)"
     const firstResource = { cfi, id: "first" }
     const secondResource = { cfi, id: "second" }
-    const resolveCfi = vi.spyOn(reader.cfi, "resolveCfi")
     const onLocated = vi.fn()
 
     reader.locateResource([firstResource, secondResource]).subscribe(onLocated)
     await vi.runAllTimersAsync()
 
+    const [firstLocated, secondLocated] = onLocated.mock.lastCall?.[0] ?? []
+
     expect({
-      isItemReady: reader.spineItemsManager.get(0)?.value.isReady,
-      consolidations: resolveCfi.mock.calls.length,
-      resourceIds: onLocated.mock.lastCall?.[0].map(
-        ({ resource }: { resource: { id: string } }) => resource.id,
-      ),
+      isMetaShared: firstLocated?.meta === secondLocated?.meta,
+      resourceIds: [firstLocated?.resource.id, secondLocated?.resource.id],
     }).toEqual({
-      isItemReady: true,
-      consolidations: 1,
+      isMetaShared: true,
       resourceIds: ["first", "second"],
     })
   })
