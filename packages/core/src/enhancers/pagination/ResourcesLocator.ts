@@ -8,7 +8,7 @@ import {
   of,
   shareReplay,
   startWith,
-  switchScan,
+  switchMap,
   takeUntil,
   withLatestFrom,
 } from "rxjs"
@@ -26,26 +26,25 @@ export type LocatableResource = SpineItem | CfiLocatableResource
 export type ConsolidatedResource = ReturnType<Reader["cfi"]["resolveCfi"]> &
   ProseParsedCfi &
   CfiLocatableResource & {
+    /**
+     * The page of its spine item the resource is on, once it is known: at
+     * once for a pre-paginated item and for a cfi that names only its item,
+     * otherwise while the item is loaded and laid out and the cfi resolves in
+     * it. It is `undefined` otherwise.
+     */
     itemPageIndex?: number
+    /** The page of the book the resource is on, known with `itemPageIndex`. */
     absolutePageIndex?: number
     startOffset?: number
     range?: Range | null
   }
 
-const toCfiLocatableResource = (
+/** A spine item is located at its start. */
+const getLocatableResourceCfi = (
   reader: Reader,
-  resource: LocatableResource | CfiLocatableResource,
-): ConsolidatedResource => {
-  if ("cfi" in resource) {
-    const { itemIndex, ...restParsedCfi } = reader.cfi.parseCfi(resource.cfi)
-
-    return {
-      ...resource,
-      ...restParsedCfi,
-      itemIndex,
-      node: null,
-    }
-  }
+  resource: LocatableResource,
+) => {
+  if ("cfi" in resource) return resource.cfi
 
   const item = reader.spineItemsManager.get(resource)
 
@@ -53,73 +52,88 @@ const toCfiLocatableResource = (
     throw new Error(`Spine item not found`)
   }
 
-  const cfi = reader.cfi.generateRootCfi(item.item)
-
-  const parsedCfi = reader.cfi.parseCfi(cfi)
-
-  return {
-    ...parsedCfi,
-    cfi,
-    itemIndex: item.index,
-    node: null,
-  }
+  return reader.cfi.generateRootCfi(item.item)
 }
 
-export const consolidate = (
-  resource: ConsolidatedResource,
+type CfiToLocate = {
+  cfi: string
+  parsedCfi: ReturnType<Reader["cfi"]["parseCfi"]>
+  isCfiOfItemStart: boolean
+}
+
+/**
+ * A pre-paginated item has one page, and a cfi naming only its item is at the
+ * item's start. Any other cfi is on the page of its node, which only the
+ * item's loaded document gives.
+ */
+const getItemPageIndex = ({
+  reader,
+  spineItem,
+  isCfiOfItemStart,
+  node,
+  startOffset,
+}: {
+  reader: Reader
+  spineItem: SpineItem
+  isCfiOfItemStart: boolean
+  node: Node | null
+  startOffset: number | undefined
+}) => {
+  if (spineItem.renditionLayout === `pre-paginated` || isCfiOfItemStart) {
+    return 0
+  }
+
+  if (!node) return undefined
+
+  return reader.spine.locator.getSpineItemPageIndexFromNode(
+    node,
+    startOffset ?? 0,
+    spineItem,
+  )
+}
+
+/**
+ * Reads only the cfi: a page found on an earlier layout may not be a page of
+ * the current one.
+ */
+const consolidate = (
+  { cfi, parsedCfi, isCfiOfItemStart }: CfiToLocate,
   reader: Reader,
 ): Observable<ConsolidatedResource> => {
-  let itemPageIndex = resource?.itemPageIndex
-  const { itemIndex, ...restParsedCfi } = reader.cfi.parseCfi(resource.cfi)
-  const spineItem = reader.spineItemsManager.get(itemIndex)
+  const spineItem = reader.spineItemsManager.get(parsedCfi.itemIndex)
 
-  if (!spineItem) return of({ ...resource, itemIndex, ...restParsedCfi })
+  if (!spineItem) return of({ ...parsedCfi, cfi, node: null })
 
   return idle().pipe(
     withLatestFrom(spineItem.isReady$),
-    map(([, isSpineItemReady]) => {
+    map(([, isSpineItemReady]): ConsolidatedResource => {
       const {
         node = null,
         offset: startOffset,
         range,
-      } = isSpineItemReady ? reader.cfi.resolveCfi({ cfi: resource.cfi }) : {}
-
-      const reflowableItemWithFoundNode =
-        spineItem.renditionLayout !== `pre-paginated` && node
-
-      if (reflowableItemWithFoundNode) {
-        itemPageIndex = reader.spine.locator.getSpineItemPageIndexFromNode(
-          node,
-          startOffset ?? 0,
-          spineItem,
-        )
-      }
-
-      let absolutePageIndex = resource?.absolutePageIndex
-
-      /**
-       * No itemPageIndex resolved from cfi.
-       * We fallback to 0.
-       */
-      if (itemPageIndex === undefined) {
-        itemPageIndex = 0
-      }
-
-      absolutePageIndex =
-        reader.spine.locator._getAbsolutePageIndexFromPageIndex({
-          pageIndex: itemPageIndex,
-          spineItemOrId: spineItem,
-        }) ?? resource?.absolutePageIndex
-
-      return {
-        ...resource,
-        ...restParsedCfi,
-        range,
-        itemIndex,
+      } = isSpineItemReady ? reader.cfi.resolveCfi({ cfi }) : {}
+      const itemPageIndex = getItemPageIndex({
+        reader,
+        spineItem,
+        isCfiOfItemStart,
         node,
         startOffset,
-        absolutePageIndex,
+      })
+
+      return {
+        ...parsedCfi,
+        cfi,
+        node,
+        startOffset,
+        range,
         itemPageIndex,
+        absolutePageIndex:
+          itemPageIndex === undefined
+            ? undefined
+            : reader.spine.locator._getAbsolutePageIndexFromPageIndex({
+                pageIndex: itemPageIndex,
+                spineItemOrId: spineItem,
+              }),
       }
     }),
   )
@@ -132,47 +146,51 @@ type Options = {
   mode?: "shallow" | "load"
 }
 
-/**
- * @todo optimize and share as much as possible when several same items are retrieved
- */
 export class ResourcesLocator {
   constructor(private reader: Reader) {}
 
-  private locatorsByKey = new Map<
+  /**
+   * One consolidation per cfi, shared by every resource located at that cfi
+   * while any of them is subscribed.
+   */
+  private consolidationsByCfi = new Map<
     string,
-    {
-      observerCount: number
-      consolidate$: Observable<{
-        resource: LocatableResource
-        meta: ConsolidatedResource
-      }>
-    }
+    Observable<ConsolidatedResource>
   >()
 
-  private deregisterMemoizedStream = (key: string) => {
-    const value = this.locatorsByKey.get(key)
+  private getOrCreateConsolidation = (cfiToLocate: CfiToLocate) => {
+    const { cfi } = cfiToLocate
+    const existingConsolidation$ = this.consolidationsByCfi.get(cfi)
 
-    if (!value) return
+    if (existingConsolidation$) return existingConsolidation$
 
-    value.observerCount--
+    const consolidation$ = this.reader.spine.layout$.pipe(
+      debounceTime(10),
+      startWith(null),
+      switchMap(() => consolidate(cfiToLocate, this.reader)),
+      finalize(() => this.consolidationsByCfi.delete(cfi)),
+      shareReplay({ refCount: true, bufferSize: 1 }),
+    )
 
-    if (value.observerCount === 0) {
-      this.locatorsByKey.delete(key)
-    }
+    this.consolidationsByCfi.set(cfi, consolidation$)
+
+    return consolidation$
   }
 
   locate = <T extends LocatableResource>(
     resource: T,
     options: Options,
   ): Observable<{ resource: T; meta: ConsolidatedResource }> => {
-    const initialConsolidatedValue = {
-      resource,
-      meta: toCfiLocatableResource(this.reader, resource),
+    const cfi = getLocatableResourceCfi(this.reader, resource)
+    const cfiToLocate: CfiToLocate = {
+      cfi,
+      parsedCfi: this.reader.cfi.parseCfi(cfi),
+      isCfiOfItemStart: this.reader.cfi.isRootCfi(cfi),
     }
 
     return deferIdle(() => {
       const item = this.reader.spineItemsManager.get(
-        initialConsolidatedValue.meta.itemIndex ?? 0,
+        cfiToLocate.parsedCfi.itemIndex,
       )
       const isReflowable = item?.renditionLayout === `reflowable`
 
@@ -185,65 +203,19 @@ export class ResourcesLocator {
           ? () => {}
           : this.reader.keepSpineItemLoaded(item)
 
-      const key = "cfi" in resource ? resource.cfi : undefined
-      const memoizedConsolidate$ = key ? this.locatorsByKey.get(key) : undefined
-
-      const withRelease = (
-        stream: Observable<{ resource: T; meta: ConsolidatedResource }>,
-      ) => {
-        return stream.pipe(
-          finalize(() => {
-            if (key) {
-              this.deregisterMemoizedStream(key)
-            }
-
-            /**
-             * Make sure we wait a bit so if the user re-locate right after
-             * we don't have a flicker of unload/load. It helps stabilize
-             * resubscribing.
-             */
-            setTimeout(() => {
-              release()
-            }, 1000)
-          }),
-        )
-      }
-
-      if (key && memoizedConsolidate$) {
-        memoizedConsolidate$.observerCount++
-
-        return withRelease(
-          memoizedConsolidate$.consolidate$.pipe(
-            map(({ resource, meta }) => ({
-              resource: resource as T,
-              meta: meta as ConsolidatedResource,
-            })),
-          ),
-        )
-      }
-
-      const consolidate$ = this.reader.spine.layout$.pipe(
-        debounceTime(10),
-        startWith(initialConsolidatedValue),
-        switchScan((acc) => {
-          return consolidate(acc.meta, this.reader).pipe(
-            map((consolidatedResource) => ({
-              ...acc,
-              meta: consolidatedResource,
-            })),
-          )
-        }, initialConsolidatedValue),
-        shareReplay({ refCount: true, bufferSize: 1 }),
+      return this.getOrCreateConsolidation(cfiToLocate).pipe(
+        map((meta) => ({ resource, meta })),
+        finalize(() => {
+          /**
+           * Make sure we wait a bit so if the user re-locate right after
+           * we don't have a flicker of unload/load. It helps stabilize
+           * resubscribing.
+           */
+          setTimeout(() => {
+            release()
+          }, 1000)
+        }),
       )
-
-      if (key) {
-        this.locatorsByKey.set(key, {
-          observerCount: 1,
-          consolidate$,
-        })
-      }
-
-      return withRelease(consolidate$)
     }).pipe(takeUntil(this.reader.$.destroy$))
   }
 

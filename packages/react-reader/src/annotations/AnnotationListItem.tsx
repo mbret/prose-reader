@@ -16,6 +16,9 @@ export const AnnotationListItem = ({
   const { data: annotation } = useAnnotation(id)
   const textContent =
     annotation?.meta.range?.toString() || annotation?.meta.node?.textContent
+  const absolutePageIndex = annotation?.meta.absolutePageIndex
+  const pageNumber =
+    absolutePageIndex === undefined ? undefined : absolutePageIndex + 1
 
   return (
     <List.Item>
@@ -43,18 +46,14 @@ export const AnnotationListItem = ({
             </Text>
           ) : (
             <Text lineClamp={2} fontSize="md" fontStyle="italic">
-              Page {(annotation?.meta.absolutePageIndex ?? 0) + 1}
+              Page {pageNumber ?? "unknown"}
             </Text>
           )}
           <Text
             fontStyle="italic"
             fontWeight="bold"
             fontSize="sm"
-          >{`Book page: ${
-            annotation?.meta?.absolutePageIndex !== undefined
-              ? annotation.meta.absolutePageIndex + 1
-              : "unknown (not loaded)"
-          }`}</Text>
+          >{`Book page: ${pageNumber ?? "unknown"}`}</Text>
         </Stack>
       </Link>
     </List.Item>
