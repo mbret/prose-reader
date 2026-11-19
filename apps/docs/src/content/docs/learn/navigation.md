@@ -173,7 +173,8 @@ const reader = createReader({
 `navigation$` emits every navigation as it happens, with its `triggeredBy`:
 
 - `"user"`: a navigation you or a gesture asked for, including the one to where
-  the reader opens.
+  the reader opens. In a book that scrolls, a scroll of the user's gives one at
+  each move, see [`navigation$`](/core-api/navigation#navigationusd).
 - `"restoration"`: the reader re-applying the current navigation, after the book
   was laid out again or when a pan ends. A restoration is emitted even when it
   lands where the navigation already was: what it tells is that the navigation
@@ -199,9 +200,9 @@ that moment wrong.
 A gesture that moves the page itself, a pan, has to keep the reader from moving
 it at the same time. `panNavigator` holds a lock for the pans it drives, from
 `start()` to `stop()`. The reader holds one while the user scrolls. A
-navigation made during the scroll ends the scroll, and the reader releases its
-lock. For a gesture of your own, take a `lock()` when it starts and release it
-when it ends:
+navigation that the scroll did not make ends the scroll, and the reader
+releases its lock. For a gesture of your own, take a `lock()` when it starts
+and release it when it ends:
 
 ```typescript
 const release = reader.navigation.lock()

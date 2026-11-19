@@ -115,5 +115,5 @@ suite installs its own browsers rather than using whatever a machine has. No CI
 job rewrites them. To change a baseline, run the spec with `--update-snapshots`
 on macOS with the pinned browsers, on the http project alone so that the blob
 one is still compared against it, and commit the result; or take the `-actual`
-image from the `playwright-report-<shard>` artifact CI uploads from the shard
+image from the `playwright-report-<engine>` artifact CI uploads from the job
 where a comparison failed.

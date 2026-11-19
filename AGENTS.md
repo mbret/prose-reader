@@ -108,12 +108,12 @@ pnpm gives each package only what its own manifest declares. Declare a dependenc
 
 `apps/tests` (`prose-reader-tests`) is a Playwright suite, and the root
 `pnpm test` runs it alongside the vitest suites. CI runs the two apart: the
-vitest suites on Linux, and every spec of this one, split across shards, on
-macOS, where its screenshot baselines are rendered, on Chromium, Firefox,
-WebKit and two mobile profiles, the desktop browsers once for each way a book
-reaches the reader (`apps/tests/AGENTS.md`, *Loading the book*). It needs the
-browser builds its Playwright version pins. Install them once per environment,
-the way CI does:
+vitest suites on Linux, and every spec of this one, in one job per browser
+engine, on macOS, where its screenshot baselines are rendered, on Chromium,
+Firefox, WebKit and two mobile profiles, the desktop browsers once for each
+way a book reaches the reader (`apps/tests/AGENTS.md`, *Loading the book*).
+It needs the browser builds its Playwright version pins. Install them once
+per environment, the way CI does:
 
 ```sh
 pnpm --filter prose-reader-tests exec playwright install --with-deps
@@ -138,6 +138,8 @@ pnpm --filter prose-reader-tests test --project=chromium tests/<path>.spec.ts
 ```
 
 `--project='chromium*'` runs it both ways, over http and from blobs.
+`BROWSER_ENGINE=webkit` runs what one CI job runs: every project whose device
+uses that engine, here `webkit`, `webkit-blob` and `Mobile Safari`.
 
 ## Internal `@prose-reader/*` ranges
 

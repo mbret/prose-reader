@@ -16,7 +16,8 @@ import { report } from "./report.ts"
 import { Settings } from "./Settings.ts"
 import type {
   AnnotateAbsolutePageParams,
-  AnnotateParams,
+  AnnotateSelectionParams,
+  Annotation,
   AnnotationsEnhancerAPI,
   AnnotationsEnhancerOptions,
 } from "./types.ts"
@@ -82,63 +83,50 @@ export const annotationsEnhancer =
       selectedAnnotationId$,
     )
 
-    const resolveItemInformation = (params: {
-      absolutePageIndex?: number
-      itemIndex?: number
-    }) => {
-      if (params.itemIndex !== undefined)
-        return { itemIndex: params.itemIndex, pageIndex: undefined }
-
-      if (params.absolutePageIndex !== undefined) {
-        return reader.spine.pages.fromAbsolutePageIndex(
-          params.absolutePageIndex,
-        )
-      }
-
-      return undefined
-    }
-
-    const createAnnotation = ({
+    const generateCfiForSelection = ({
+      itemIndex,
       selection,
-      ...rest
-    }: (AnnotateParams | AnnotateAbsolutePageParams) & {
-      absolutePageIndex?: number
-    }) => {
-      const { itemIndex, pageIndex = 0 } = resolveItemInformation(rest) ?? {}
+    }: AnnotateSelectionParams) => {
       const spineItem = reader.spineItemsManager.get(itemIndex)
-      const id = window.crypto.randomUUID()
 
       if (!spineItem) return undefined
 
-      const range = selection
-        ? reader.selection.createOrderedRangeFromSelection({
-            selection,
-            spineItem,
-          })
-        : undefined
-
-      const pageEntry = reader.spine.pages.fromSpineItemPageIndex(
+      const range = reader.selection.createOrderedRangeFromSelection({
+        selection,
         spineItem,
-        pageIndex,
-      )
+      })
 
-      const cfiWithRangeOrFirstNodeOrRoot = range
+      return range
         ? reader.cfi.generateCfiFromRange(range, spineItem.item)
-        : pageEntry?.firstVisibleNode
-          ? reader.cfi.generateCfiForSpineItemPage({
-              spineItem: spineItem.item,
-              pageNode: pageEntry.firstVisibleNode,
-            })
-          : reader.cfi.generateRootCfi(spineItem.item)
+        : undefined
+    }
 
-      const highlight = {
-        cfi: cfiWithRangeOrFirstNodeOrRoot,
-        itemIndex: spineItem.index,
-        id,
-        ...rest,
-      } satisfies RuntimeAnnotation
+    const generateCfiForAbsolutePage = ({
+      absolutePageIndex,
+    }: AnnotateAbsolutePageParams) => {
+      const pageEntry =
+        reader.spine.pages.fromAbsolutePageIndex(absolutePageIndex)
 
-      return highlight
+      if (!pageEntry) return undefined
+
+      const spineItem = reader.spineItemsManager.get(pageEntry.itemIndex)
+
+      return spineItem
+        ? reader.cfi.generateCfiForPage(spineItem.item, pageEntry)
+        : undefined
+    }
+
+    const createAnnotation = (
+      params: AnnotateSelectionParams | AnnotateAbsolutePageParams,
+    ): Pick<Annotation, "id" | "cfi"> | undefined => {
+      const cfi =
+        params.selection !== undefined
+          ? generateCfiForSelection(params)
+          : generateCfiForAbsolutePage(params)
+
+      return cfi === undefined
+        ? undefined
+        : { id: window.crypto.randomUUID(), cfi }
     }
 
     const renderAnnotations$ = merge(runtimeAnnotations$, reader.layout$).pipe(
