@@ -1,45 +1,17 @@
 // @vitest-environment jsdom
+import { BehaviorSubject, EMPTY, first, map, of, Subject } from "rxjs"
+import { describe, expect, it, onTestFinished, vi } from "vitest"
 import {
-  createReader,
-  DocumentRenderer,
-  type Manifest,
-} from "@prose-reader/core"
-import { BehaviorSubject, EMPTY, first, map, of } from "rxjs"
-import { afterEach, beforeAll, describe, expect, it, vi } from "vitest"
-import { annotationsEnhancer } from "./annotationsEnhancer.ts"
-import type { AnnotationsEnhancerAPI } from "./types.ts"
+  createCfiOfItem,
+  EmptyRenderer,
+  mountAnnotationsReader,
+  readHighlightedAnnotationIds,
+} from "./tests/readerHarness.ts"
+import type { Annotation, AnnotationsEnhancerAPI } from "./types.ts"
 
 type CreateAnnotationParams = Parameters<
   AnnotationsEnhancerAPI["annotations"]["createAnnotation"]
 >[0]
-
-/** jsdom has no layout, so every element reports this size. */
-const viewport = { width: 400, height: 600 }
-
-/** Renders each item as an empty element, so it is ready once loaded. */
-class EmptyRenderer extends DocumentRenderer {
-  onUnload() {}
-
-  onCreateDocument() {
-    return of(this.context.document.createElement("div"))
-  }
-
-  onLoadDocument() {
-    return EMPTY
-  }
-
-  onLayout() {
-    return of(undefined)
-  }
-
-  onRenderHeadless() {
-    return EMPTY
-  }
-
-  getDocumentFrame(): HTMLIFrameElement | undefined {
-    return undefined
-  }
-}
 
 /**
  * Renders each item as a text document in a frame, the way the html renderer
@@ -91,77 +63,6 @@ const createLayoutHold = () => {
   }
 }
 
-/** Two single pages, each a candidate once laid out. */
-const manifest: Manifest = {
-  filename: "test",
-  mediaType: "application/epub+zip",
-  title: "test",
-  readingDirection: "ltr",
-  renditionLayout: "pre-paginated",
-  renditionSpread: "none",
-  items: [],
-  spineItems: [0, 1].map((index) => ({
-    href: `/page_${index}.xhtml`,
-    containerUri: `page_${index}.xhtml`,
-    id: `${index}`,
-    index,
-    mediaType: "application/xhtml+xml",
-    progressionWeight: 0.5,
-    renditionLayout: "pre-paginated",
-  })),
-}
-
-/** jsdom has neither observer, and nothing here depends on what they report. */
-class InertObserver {
-  observe() {}
-  unobserve() {}
-  disconnect() {}
-}
-
-beforeAll(() => {
-  vi.stubGlobal("ResizeObserver", InertObserver)
-  vi.stubGlobal("IntersectionObserver", InertObserver)
-  Object.defineProperty(HTMLElement.prototype, "clientWidth", {
-    configurable: true,
-    get: () => viewport.width,
-  })
-  Object.defineProperty(HTMLElement.prototype, "clientHeight", {
-    configurable: true,
-    get: () => viewport.height,
-  })
-  vi.spyOn(HTMLElement.prototype, "getBoundingClientRect").mockReturnValue(
-    new DOMRect(0, 0, viewport.width, viewport.height),
-  )
-})
-
-const readers: { destroy: () => void }[] = []
-
-afterEach(() => {
-  for (const reader of readers.splice(0)) reader.destroy()
-  document.body.replaceChildren()
-  vi.useRealTimers()
-})
-
-const mountAnnotationsReader = async (
-  Renderer: typeof EmptyRenderer = EmptyRenderer,
-) => {
-  vi.useFakeTimers()
-
-  const reader = annotationsEnhancer(createReader)({
-    manifest,
-    getRenderer: () => (props) => new Renderer(props),
-    getResource: () => of(new Response("", { status: 200 })),
-  })
-  readers.push(reader)
-
-  const container = document.createElement("div")
-  document.body.appendChild(container)
-  reader.mount(container)
-  await vi.runAllTimersAsync()
-
-  return reader
-}
-
 /** Records what `candidates$` emits, from one subscription. */
 const observeCandidates = (
   reader: Awaited<ReturnType<typeof mountAnnotationsReader>>,
@@ -184,7 +85,9 @@ describe("candidates$", () => {
    */
   it("emits an empty array while the reader has published no pages, then one candidate per page", async () => {
     const layoutHold = createLayoutHold()
-    const reader = await mountAnnotationsReader(layoutHold.Renderer)
+    const reader = await mountAnnotationsReader({
+      Renderer: layoutHold.Renderer,
+    })
 
     expect(reader.spine.pages.value.pages).toEqual([])
 
@@ -202,6 +105,138 @@ describe("candidates$", () => {
     const reader = await mountAnnotationsReader()
 
     expect(observeCandidates(reader)).toEqual([[true, true]])
+  })
+})
+
+describe("highlights", () => {
+  const createAnnotationOfFirstItem = (id: string): Annotation => ({
+    id,
+    cfi: createCfiOfItem(0),
+    highlightColor: "red",
+  })
+
+  /**
+   * The highlights alive in the reader are the annotations of the list, at
+   * every step, whether or not anything subscribes to `highlightTap$`: an app
+   * that does not handle taps on highlights has no subscriber.
+   */
+  it.each([
+    { highlightTapSubscriber: "no subscriber" },
+    { highlightTapSubscriber: "a subscriber" },
+  ])(
+    "has one highlight per annotation of the list, with $highlightTapSubscriber to highlightTap$",
+    async ({ highlightTapSubscriber }) => {
+      const annotations$ = new BehaviorSubject<Annotation[]>([])
+      const reader = await mountAnnotationsReader({ annotations$ })
+
+      if (highlightTapSubscriber === "a subscriber") {
+        const highlightTapSubscription =
+          reader.annotations.highlightTap$.subscribe()
+
+        onTestFinished(() => highlightTapSubscription.unsubscribe())
+      }
+
+      expect(reader.spineItemsManager.get(0)?.value.loadStatus).toBe("loaded")
+
+      const listSteps = [
+        ["first", "second"],
+        ["second"],
+        ["second", "third"],
+        [],
+      ]
+
+      for (const ids of listSteps) {
+        annotations$.next(ids.map(createAnnotationOfFirstItem))
+        await vi.runAllTimersAsync()
+
+        expect(readHighlightedAnnotationIds()).toEqual(ids)
+      }
+    },
+  )
+
+  /**
+   * A highlight that stays keeps its drawing until the next one: a new
+   * highlight shows nothing until the enhancer draws it.
+   */
+  it("keeps the highlight of an annotation while its cfi is the same, and replaces it when its cfi changes", async () => {
+    const annotations$ = new BehaviorSubject<Annotation[]>([
+      createAnnotationOfFirstItem("first"),
+    ])
+    await mountAnnotationsReader({ annotations$ })
+
+    const readHighlightContainer = () =>
+      document.querySelector(`[data-highlight-container="first"]`)
+    const firstHighlightContainer = readHighlightContainer()
+
+    expect(firstHighlightContainer).not.toBeNull()
+
+    annotations$.next([
+      {
+        ...createAnnotationOfFirstItem("first"),
+        highlightColor: "blue",
+        notes: "A note",
+      },
+    ])
+    await vi.runAllTimersAsync()
+
+    expect(readHighlightContainer()).toBe(firstHighlightContainer)
+
+    annotations$.next([
+      {
+        ...createAnnotationOfFirstItem("first"),
+        cfi: createCfiOfItem(0, { elementIndex: 1 }),
+      },
+    ])
+    await vi.runAllTimersAsync()
+
+    expect(readHighlightedAnnotationIds()).toEqual(["first"])
+    expect(readHighlightContainer()).not.toBe(firstHighlightContainer)
+  })
+
+  it("reports a tap on a highlight with the latest data of its annotation", async () => {
+    const annotations$ = new BehaviorSubject<Annotation[]>([
+      createAnnotationOfFirstItem("first"),
+    ])
+    const reader = await mountAnnotationsReader({ annotations$ })
+    const tappedAnnotations: Annotation[] = []
+    const highlightTapSubscription = reader.annotations.highlightTap$.subscribe(
+      ({ highlight }) => tappedAnnotations.push(highlight),
+    )
+
+    annotations$.next([
+      { ...createAnnotationOfFirstItem("first"), highlightColor: "blue" },
+    ])
+    await vi.runAllTimersAsync()
+
+    document
+      .querySelector<HTMLElement>(`[data-highlight-container="first"]`)
+      ?.click()
+
+    expect(
+      tappedAnnotations.map(({ id, highlightColor }) => ({
+        id,
+        highlightColor,
+      })),
+    ).toEqual([{ id: "first", highlightColor: "blue" }])
+
+    reader.destroy()
+
+    expect(highlightTapSubscription.closed).toBe(true)
+  })
+
+  /**
+   * An app can give its annotations through a source that does not replay,
+   * once the reader exists. The documents load later, and need that list.
+   */
+  it("draws the annotations a source without replay gave before the documents loaded", async () => {
+    const annotations$ = new Subject<Annotation[]>()
+    const mountedReader = mountAnnotationsReader({ annotations$ })
+
+    annotations$.next([createAnnotationOfFirstItem("first")])
+    const reader = await mountedReader
+
+    expect(reader.spineItemsManager.get(0)?.value.loadStatus).toBe("loaded")
+    expect(readHighlightedAnnotationIds()).toEqual(["first"])
   })
 })
 
@@ -250,7 +285,9 @@ const selectTextAndRelease = async (
  */
 describe("createAnnotation", () => {
   it("annotates a selection with its id and a range cfi, and nothing of the selection itself", async () => {
-    const reader = await mountAnnotationsReader(TextDocumentRenderer)
+    const reader = await mountAnnotationsReader({
+      Renderer: TextDocumentRenderer,
+    })
     // The whole value the reader holds, event included, as an app may pass it.
     const selection = await selectTextAndRelease(reader, 0)
 
@@ -267,7 +304,9 @@ describe("createAnnotation", () => {
   })
 
   it("annotates a page with its id and the cfi of its item, and not the page index", async () => {
-    const reader = await mountAnnotationsReader(TextDocumentRenderer)
+    const reader = await mountAnnotationsReader({
+      Renderer: TextDocumentRenderer,
+    })
 
     const annotation = reader.annotations.createAnnotation({
       absolutePageIndex: 1,
@@ -307,7 +346,9 @@ describe("createAnnotation", () => {
   })
 
   it("annotates nothing when the selection holds no range", async () => {
-    const reader = await mountAnnotationsReader(TextDocumentRenderer)
+    const reader = await mountAnnotationsReader({
+      Renderer: TextDocumentRenderer,
+    })
     const selected = await selectTextAndRelease(reader, 0)
 
     selected.selection.removeAllRanges()
