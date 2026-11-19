@@ -33,13 +33,12 @@ export class SpineItemHighlight extends DestroyableClass {
     private spineItem: SpineItem,
     private containerElement: HTMLElement,
     private reader: Reader,
-    /** The annotation it draws, with the latest data its owner gave it. */
-    public annotation: RuntimeAnnotation,
+    private latestAnnotation: RuntimeAnnotation,
     private isSelected: Observable<boolean>,
   ) {
     super()
 
-    this.cfi = annotation.cfi
+    this.cfi = latestAnnotation.cfi
     this.container = this.containerElement.ownerDocument.createElement("div")
     this.container.dataset.highlightContainer = this.annotation.id
     this.containerElement.appendChild(this.container)
@@ -66,6 +65,28 @@ export class SpineItemHighlight extends DestroyableClass {
     merge(this.resolvedCfi$, updateStateOnSelection$)
       .pipe(takeUntil(this.destroy$))
       .subscribe()
+  }
+
+  /** The annotation it draws, with the latest data `updateAnnotation` gave. */
+  public get annotation() {
+    return this.latestAnnotation
+  }
+
+  /**
+   * Gives it the new data of its annotation, which the next render draws.
+   * The annotation keeps its id and its cfi, the one this highlight draws.
+   */
+  public updateAnnotation(annotation: RuntimeAnnotation) {
+    if (
+      annotation.id !== this.latestAnnotation.id ||
+      annotation.cfi !== this.cfi
+    ) {
+      throw new Error(
+        `The highlight of ${this.latestAnnotation.id} draws ${this.cfi}, so it cannot draw ${annotation.id} at ${annotation.cfi}`,
+      )
+    }
+
+    this.latestAnnotation = annotation
   }
 
   public updateStateOnSelection(isSelected: boolean) {
