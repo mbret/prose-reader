@@ -176,10 +176,6 @@ export const annotationsEnhancer =
     return {
       ...reader,
       __PROSE_READER_ENHANCER_ANNOTATIONS: true,
-      destroy: () => {
-        readerHighlights.destroy()
-        reader.destroy()
-      },
       annotations: {
         annotations$: runtimeAnnotations$,
         highlightTap$: readerHighlights.tap$,

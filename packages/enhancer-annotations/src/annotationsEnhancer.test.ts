@@ -196,9 +196,8 @@ describe("candidates$", () => {
 type AnnotationsReader = Awaited<ReturnType<typeof mountAnnotationsReader>>
 
 /**
- * Reads the highlight elements, which exist from their creation: these tests
- * draw no rect, because their annotations point to the root of a spine item,
- * which is not a range.
+ * Reads the highlight elements, which exist from their creation. The empty
+ * renderer gives no document to resolve a cfi into, so no rect is drawn here.
  */
 const getHighlightElements = (container: Element, annotationId?: string) =>
   Array.from(
@@ -253,6 +252,70 @@ const mountReaderWithAnnotationsSubject = async ({
   ).toEqual(["loaded", "loaded"])
 
   return { reader, annotations$ }
+}
+
+/**
+ * With no adjacent spine item preloaded, the reader holds the document of the
+ * spine item it shows and no other: the first one, once mounted.
+ */
+const mountReaderHoldingOneDocument = async ({
+  appObservesTaps,
+}: {
+  appObservesTaps: boolean
+}) => {
+  const annotations$ = new BehaviorSubject<Annotation[]>([])
+  const reader = await mountAnnotationsReader({
+    annotations$,
+    numberOfAdjacentSpineItemToPreLoad: 0,
+  })
+
+  if (appObservesTaps) {
+    subscriptions.push(reader.annotations.highlightTap$.subscribe())
+  }
+
+  expect(getLoadStatusOfEachSpineItem(reader)).toEqual(["loaded", "idle"])
+
+  return { reader, annotations$ }
+}
+
+const getLoadStatusOfEachSpineItem = (reader: AnnotationsReader) =>
+  reader.spineItemsManager.items.map((spineItem) => spineItem.value.loadStatus)
+
+const goToSpineItem = async (reader: AnnotationsReader, indexOrId: number) => {
+  reader.navigation.goToSpineItem({ indexOrId })
+  await vi.runAllTimersAsync()
+}
+
+/** The annotations that `highlightTap$` emits from now on. */
+const recordTappedAnnotations = (reader: AnnotationsReader) => {
+  const tappedAnnotations: Annotation[] = []
+
+  subscriptions.push(
+    reader.annotations.highlightTap$.subscribe(({ highlight }) => {
+      tappedAnnotations.push(highlight)
+    }),
+  )
+
+  return tappedAnnotations
+}
+
+const tapHighlight = (
+  reader: AnnotationsReader,
+  spineItemIndex: number,
+  annotationId: string,
+) => {
+  const [highlightElement] = getHighlightElements(
+    getSpineItem(reader, spineItemIndex).containerElement,
+    annotationId,
+  )
+
+  if (!highlightElement) {
+    throw new Error(
+      `no highlight of ${annotationId} in spine item ${spineItemIndex}`,
+    )
+  }
+
+  highlightElement.dispatchEvent(new MouseEvent("click", { bubbles: true }))
 }
 
 /**
@@ -349,29 +412,10 @@ describe.each([{ appObservesTaps: false }, { appObservesTaps: true }])(
       expect(highlightElementsAfterChange[0]).toBe(highlightElementBeforeChange)
     })
 
-    /**
-     * With no adjacent spine item preloaded, the reader holds the document of
-     * the spine item it shows and no other.
-     */
     it("removes the highlights of a spine item whose document unloads, and makes them from the latest list when it loads again", async () => {
-      const annotations$ = new BehaviorSubject<Annotation[]>([])
-      const reader = await mountAnnotationsReader({
-        annotations$,
-        numberOfAdjacentSpineItemToPreLoad: 0,
+      const { reader, annotations$ } = await mountReaderHoldingOneDocument({
+        appObservesTaps,
       })
-
-      if (appObservesTaps) {
-        subscriptions.push(reader.annotations.highlightTap$.subscribe())
-      }
-
-      const getLoadStatusOfEachSpineItem = () =>
-        reader.spineItemsManager.items.map(
-          (spineItem) => spineItem.value.loadStatus,
-        )
-      const goToSpineItem = async (indexOrId: number) => {
-        reader.navigation.goToSpineItem({ indexOrId })
-        await vi.runAllTimersAsync()
-      }
       const a0 = createAnnotationAtRootOfSpineItem(reader, 0, "a0")
       const b0 = createAnnotationAtRootOfSpineItem(reader, 0, "b0")
       const a1 = createAnnotationAtRootOfSpineItem(reader, 1, "a1")
@@ -379,15 +423,14 @@ describe.each([{ appObservesTaps: false }, { appObservesTaps: true }])(
       annotations$.next([a0, a1])
       await vi.runAllTimersAsync()
 
-      expect(getLoadStatusOfEachSpineItem()).toEqual(["loaded", "idle"])
       expect(getHighlightedAnnotationIdsBySpineItem(reader)).toEqual([
         ["a0"],
         [],
       ])
 
-      await goToSpineItem(1)
+      await goToSpineItem(reader, 1)
 
-      expect(getLoadStatusOfEachSpineItem()).toEqual(["idle", "loaded"])
+      expect(getLoadStatusOfEachSpineItem(reader)).toEqual(["idle", "loaded"])
       expect(getHighlightedAnnotationIdsBySpineItem(reader)).toEqual([
         [],
         ["a1"],
@@ -395,9 +438,9 @@ describe.each([{ appObservesTaps: false }, { appObservesTaps: true }])(
 
       annotations$.next([a0, b0, a1])
       await vi.runAllTimersAsync()
-      await goToSpineItem(0)
+      await goToSpineItem(reader, 0)
 
-      expect(getLoadStatusOfEachSpineItem()).toEqual(["loaded", "idle"])
+      expect(getLoadStatusOfEachSpineItem(reader)).toEqual(["loaded", "idle"])
       expect(getHighlightedAnnotationIdsBySpineItem(reader)).toEqual([
         ["a0", "b0"],
         [],
@@ -445,29 +488,69 @@ describe("highlightTap$", () => {
     const { reader, annotations$ } = await mountReaderWithAnnotationsSubject({
       appObservesTaps: false,
     })
-    const tappedAnnotations: Annotation[] = []
+    const tappedAnnotations = recordTappedAnnotations(reader)
     const a0 = createAnnotationAtRootOfSpineItem(reader, 0, "a0")
-
-    subscriptions.push(
-      reader.annotations.highlightTap$.subscribe(({ highlight }) => {
-        tappedAnnotations.push(highlight)
-      }),
-    )
 
     annotations$.next([a0])
     await vi.runAllTimersAsync()
     annotations$.next([{ ...a0, notes: "a note" }])
     await vi.runAllTimersAsync()
 
-    const [highlightElement] = getHighlightElements(
-      getSpineItem(reader, 0).containerElement,
-      "a0",
-    )
-
-    highlightElement?.dispatchEvent(new MouseEvent("click", { bubbles: true }))
+    tapHighlight(reader, 0, "a0")
 
     expect(tappedAnnotations).toEqual([
       { ...a0, notes: "a note", itemIndex: 0 },
+    ])
+  })
+
+  it("emits the last entry of an id that the list holds more than once", async () => {
+    const { reader, annotations$ } = await mountReaderWithAnnotationsSubject({
+      appObservesTaps: false,
+    })
+    const tappedAnnotations = recordTappedAnnotations(reader)
+    const a0 = createAnnotationAtRootOfSpineItem(reader, 0, "a0")
+
+    annotations$.next([
+      { ...a0, notes: "first entry" },
+      { ...a0, notes: "last entry" },
+    ])
+    await vi.runAllTimersAsync()
+
+    tapHighlight(reader, 0, "a0")
+
+    expect(tappedAnnotations).toEqual([
+      { ...a0, notes: "last entry", itemIndex: 0 },
+    ])
+  })
+
+  it("emits the taps on the highlights of a spine item whose document loads after the subscription", async () => {
+    const { reader, annotations$ } = await mountReaderHoldingOneDocument({
+      appObservesTaps: false,
+    })
+    const tappedAnnotations = recordTappedAnnotations(reader)
+    const a0 = createAnnotationAtRootOfSpineItem(reader, 0, "a0")
+    const b0 = createAnnotationAtRootOfSpineItem(reader, 0, "b0")
+    const a1 = createAnnotationAtRootOfSpineItem(reader, 1, "a1")
+
+    annotations$.next([a0, a1])
+    await vi.runAllTimersAsync()
+    await goToSpineItem(reader, 1)
+
+    expect(getLoadStatusOfEachSpineItem(reader)).toEqual(["idle", "loaded"])
+
+    tapHighlight(reader, 1, "a1")
+
+    annotations$.next([a0, b0, a1])
+    await vi.runAllTimersAsync()
+    await goToSpineItem(reader, 0)
+
+    expect(getLoadStatusOfEachSpineItem(reader)).toEqual(["loaded", "idle"])
+
+    tapHighlight(reader, 0, "b0")
+
+    expect(tappedAnnotations).toEqual([
+      { ...a1, itemIndex: 1 },
+      { ...b0, itemIndex: 0 },
     ])
   })
 })

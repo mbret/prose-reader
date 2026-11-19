@@ -27,7 +27,7 @@ export class SpineItemHighlight extends DestroyableClass {
     private containerElement: HTMLElement,
     private reader: Reader,
     annotation: RuntimeAnnotation,
-    private isSelected: Observable<boolean>,
+    private isSelected$: Observable<boolean>,
   ) {
     super()
 
@@ -43,7 +43,7 @@ export class SpineItemHighlight extends DestroyableClass {
       share(),
     )
 
-    this.isSelected
+    this.isSelected$
       .pipe(
         tap((isSelected) => {
           this.updateStateOnSelection(isSelected)
@@ -75,7 +75,7 @@ export class SpineItemHighlight extends DestroyableClass {
   }
 
   public render() {
-    return this.isSelected.pipe(
+    return this.isSelected$.pipe(
       take(1),
       map((isSelected) => {
         const { range } = this.reader.cfi.resolveCfi({

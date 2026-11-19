@@ -1,4 +1,4 @@
-import { DestroyableClass, type Reader } from "@prose-reader/core"
+import type { Reader } from "@prose-reader/core"
 import {
   BehaviorSubject,
   defaultIfEmpty,
@@ -15,7 +15,7 @@ import type { RuntimeAnnotation } from "./types.ts"
  * The highlights of the spine items whose document is loaded. The reader
  * unloads every document when it is destroyed, which destroys them.
  */
-export class ReaderHighlights extends DestroyableClass {
+export class ReaderHighlights {
   private spineItemHighlightsByItemId = new BehaviorSubject<
     ReadonlyMap<string, SpineItemHighlights>
   >(new Map())
@@ -27,8 +27,6 @@ export class ReaderHighlights extends DestroyableClass {
     private annotations$: Observable<RuntimeAnnotation[]>,
     private selectedAnnotationId$: Observable<string | undefined>,
   ) {
-    super()
-
     this.reader.hookManager.register(
       "item.onDocumentLoad",
       async ({ itemId }) => {

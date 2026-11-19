@@ -19,6 +19,7 @@ type HighlightsReader = Reader & AnnotationsEnhancerAPI
 
 const YELLOW = "rgb(255, 255, 0)"
 const RED = "rgb(255, 0, 0)"
+const TRANSPARENT = "rgba(0, 0, 0, 0)"
 
 const setAnnotations = (page: Page, annotations: Annotation[]) =>
   page.evaluate((annotations) => {
@@ -60,13 +61,14 @@ const createAnnotationOverStartOfParagraph = async (
     { spineItemIndex, paragraphIndex, id },
   )
 
+const locateFirstRectOfHighlight = (page: Page, annotationId: string) =>
+  page.locator(`[data-highlight-rect="${annotationId}"]`).first()
+
 const expectFirstRectOfHighlightToCoverStartOf = async (
   page: Page,
   annotation: Annotation,
 ) => {
-  const firstRectOfHighlight = page
-    .locator(`[data-highlight-rect="${annotation.id}"]`)
-    .first()
+  const firstRectOfHighlight = locateFirstRectOfHighlight(page, annotation.id)
 
   await expect(firstRectOfHighlight).toBeVisible()
 
@@ -85,17 +87,24 @@ const expectFirstRectOfHighlightToCoverStartOf = async (
   ).toBe(true)
 }
 
-test("draws the highlight of an annotation with nothing observing taps, draws it again when it changes, and removes it when it leaves the list", async ({
-  page,
-}) => {
+/** Opens the book at its first chapter, and resolves with its index. */
+const openFirstChapter = async (page: Page) => {
   await page.goto("http://localhost:3333/tests/highlights/index.html")
 
-  const reader = await getReader<HighlightsReader>(page)
   const chapterIndex = await getChapterIndex(page, "ch01.xhtml")
 
   await navigateToSpineItem({ page, index: chapterIndex })
   await waitForSpineItemReady(page, [chapterIndex])
   await waitForSettled(page)
+
+  return chapterIndex
+}
+
+test("draws the highlight of an annotation with nothing observing taps, draws it again when it changes, and removes it when it leaves the list", async ({
+  page,
+}) => {
+  const chapterIndex = await openFirstChapter(page)
+  const reader = await getReader<HighlightsReader>(page)
 
   const annotation = await createAnnotationOverStartOfParagraph(page, {
     spineItemIndex: chapterIndex,
@@ -136,9 +145,7 @@ test("draws the highlight of an annotation with nothing observing taps, draws it
       reader.spineItemsManager.get(spineItemIndex)?.loadedDocument,
     chapterIndex,
   )
-  const firstRectOfHighlight = page
-    .locator(`[data-highlight-rect="${annotation.id}"]`)
-    .first()
+  const firstRectOfHighlight = locateFirstRectOfHighlight(page, annotation.id)
 
   await setAnnotations(page, [annotation])
 
@@ -181,4 +188,55 @@ test("draws the highlight of an annotation with nothing observing taps, draws it
     ),
     "whether the chapter kept the document it had before the annotations changed",
   ).toBe(true)
+})
+
+test("draws a red dashed border on the first selected annotation of the list only", async ({
+  page,
+}) => {
+  const chapterIndex = await openFirstChapter(page)
+  const firstAnnotation = await createAnnotationOverStartOfParagraph(page, {
+    spineItemIndex: chapterIndex,
+    paragraphIndex: 0,
+    id: "first",
+  })
+  const secondAnnotation = await createAnnotationOverStartOfParagraph(page, {
+    spineItemIndex: chapterIndex,
+    paragraphIndex: 1,
+    id: "second",
+  })
+  const firstRectOfFirstHighlight = locateFirstRectOfHighlight(page, "first")
+  const firstRectOfSecondHighlight = locateFirstRectOfHighlight(page, "second")
+
+  await setAnnotations(page, [
+    { ...firstAnnotation, selected: true },
+    { ...secondAnnotation, selected: true },
+  ])
+
+  await expect(firstRectOfFirstHighlight).toHaveCSS("border-top-color", RED)
+  await expect(firstRectOfFirstHighlight).toHaveCSS(
+    "border-top-style",
+    "dashed",
+  )
+  await expect(firstRectOfSecondHighlight).toHaveCSS(
+    "border-top-color",
+    TRANSPARENT,
+  )
+
+  await setAnnotations(page, [
+    firstAnnotation,
+    { ...secondAnnotation, selected: true },
+  ])
+
+  await expect(firstRectOfSecondHighlight).toHaveCSS("border-top-color", RED)
+  await expect(firstRectOfFirstHighlight).toHaveCSS(
+    "border-top-color",
+    TRANSPARENT,
+  )
+
+  await setAnnotations(page, [firstAnnotation, secondAnnotation])
+
+  await expect(firstRectOfSecondHighlight).toHaveCSS(
+    "border-top-color",
+    TRANSPARENT,
+  )
 })
