@@ -5,13 +5,6 @@ sidebar:
   label: "Gestures"
 ---
 
-:::caution
-On Node, this package requires `>=22.12`. It recognizes gestures with
-[`gesturx`](https://www.npmjs.com/package/gesturx), which is ESM-only from version 2,
-so reaching this package through `require()` needs the `require(esm)` support that
-landed unflagged in Node 22.12. `import` and bundler builds are unaffected.
-:::
-
 This enhancer implements common gesture patterns using [https://github.com/mbret/gesturx](https://github.com/mbret/gesturx). Tap on edge  or swipe to turn pages, pinch to zoom, etc. It implements the most common gestures while trying to stay generic and configurable.
 
 ## Getting Started

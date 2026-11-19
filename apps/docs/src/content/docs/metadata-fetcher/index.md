@@ -4,10 +4,10 @@ description: "Look up a book in Google Books, Open Library and Project Gutenberg
 ---
 
 :::caution
-On Node, this package requires `>=22.12`. It parses XML with
-[`xmldoc`](https://www.npmjs.com/package/xmldoc), which is ESM-only from version 3,
-so reaching this package through `require()` needs the `require(esm)` support that
-landed unflagged in Node 22.12. `import` and bundler builds are unaffected.
+On Node, this package requires `>=22.12`. Like every `@prose-reader/*` package, it
+is published as an ES module only, so reaching it through `require()` needs the
+`require(esm)` support that landed unflagged in Node 22.12. `import` and bundler
+builds are unaffected. See [Installation](/get-started/getting-started#installation).
 :::
 
 :::tip

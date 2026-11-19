@@ -104,6 +104,7 @@ CI runs these on every pull request, and also builds the metadata fetcher API's 
 | Internal `@prose-reader/*` dependency ranges                   | `pnpm run check:internal-ranges`                                              |
 | `@prose-reader/react-native` against its Expo SDK              | `pnpm run check:expo-sdk`                                                     |
 | Types, after `pnpm run build`                                  | `pnpm run tsc`                                                                |
+| Published packages' types, after `pnpm run build:lib`          | `pnpm run check:packages`                                                     |
 | Documentation links and anchors                                | `pnpm --filter prose-reader-docs build`                                       |
 | Unit tests                                                     | `pnpm exec lerna run test --ignore prose-reader-tests`                        |
 | Browser tests, set up as described below                       | `pnpm --filter prose-reader-tests test`                                       |

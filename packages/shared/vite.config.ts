@@ -10,8 +10,8 @@ export default defineConfig(({ mode }) => {
         // Could also be a dictionary or array of multiple entry points
         entry: resolve(import.meta.dirname, `src/index.ts`),
         fileName: `index`,
-        // ESM + CJS only, no UMD (see config/vite-lib.mts for the rationale).
-        formats: [`es`, `cjs`],
+        // ES modules only, no UMD (see config/vite-lib.mts for the rationale).
+        formats: [`es`],
       },
       emptyOutDir: mode !== "development",
       sourcemap: true,

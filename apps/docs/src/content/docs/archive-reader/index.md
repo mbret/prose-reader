@@ -4,10 +4,10 @@ description: "Turn an EPUB, CBZ, CBR, PDF or text file into an archive, then res
 ---
 
 :::caution
-On Node, this package requires `>=22.12`. It parses XML with
-[`xmldoc`](https://www.npmjs.com/package/xmldoc), which is ESM-only from version 3,
-so reaching this package through `require()` needs the `require(esm)` support that
-landed unflagged in Node 22.12. `import` and bundler builds are unaffected.
+On Node, this package requires `>=22.12`. Like every `@prose-reader/*` package, it
+is published as an ES module only, so reaching it through `require()` needs the
+`require(esm)` support that landed unflagged in Node 22.12. `import` and bundler
+builds are unaffected. See [Installation](/get-started/getting-started#installation).
 :::
 
 **`@prose-reader/archive-reader`** is the "book container in → resolved publication out" package: a standalone library usable by any reading or library app, prose or not. An **archive** is its environment-agnostic view of a book's container (an EPUB zip, a CBZ, a folder of images, a PDF, a list of URLs…) — the `Archive` type, the `createArchiveFrom*` creators and the whole resolve layer live here. The [streamer](/learn/streamer) is one consumer among others: its `generateManifestFromArchive` is `resolveArchive` plus a mapping into serving space.
