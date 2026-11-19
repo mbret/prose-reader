@@ -1,78 +1,86 @@
 import {
   DestroyableClass,
   type Reader,
-  type SpineItem,
   setStylePropertyIfChanged,
 } from "@prose-reader/core"
 import {
-  first,
   fromEvent,
   map,
-  merge,
   type Observable,
   share,
-  shareReplay,
+  take,
   takeUntil,
   tap,
-  withLatestFrom,
 } from "rxjs"
 import type { RuntimeAnnotation } from "./types.ts"
 import { createElementForRange } from "./utils.ts"
 
 export class SpineItemHighlight extends DestroyableClass {
   private container: HTMLElement
+  private latestAnnotation: RuntimeAnnotation
+  /**
+   * The range the cfi of the annotation resolved to. The content of a loaded
+   * document does not change, so a cfi is resolved again only when it changes.
+   */
+  private resolvedCfi: { cfi: string; range: Range } | undefined
   public readonly tap$: Observable<{
     event: Event
     highlight: RuntimeAnnotation
   }>
-  /** Its cfi resolved into the item's document, while that is loaded. */
-  private resolvedCfi$: Observable<
-    ReturnType<Reader["cfi"]["resolveCfi"]> | undefined
-  >
 
   constructor(
-    private spineItem: SpineItem,
     private containerElement: HTMLElement,
     private reader: Reader,
-    public highlight: RuntimeAnnotation,
-    private isSelected: Observable<boolean>,
+    annotation: RuntimeAnnotation,
+    private isSelected$: Observable<boolean>,
   ) {
     super()
 
-    void this.spineItem
-    void this.reader
+    this.latestAnnotation = annotation
 
     this.container = this.containerElement.ownerDocument.createElement("div")
-    this.container.dataset.highlightContainer = this.highlight.id
+    this.container.dataset.highlightContainer = annotation.id
     this.containerElement.appendChild(this.container)
 
     this.tap$ = fromEvent(this.container, "click").pipe(
-      map((event) => ({ event, highlight: this.highlight })),
+      map((event) => ({ event, highlight: this.annotation })),
+      takeUntil(this.destroy$),
       share(),
     )
 
-    /**
-     * Resolved only into a loaded document: one being released would be
-     * kept, with the range into it, until the next load.
-     */
-    this.resolvedCfi$ = this.spineItem.watch("loadStatus").pipe(
-      map(() =>
-        this.spineItem.loadedDocument
-          ? this.reader.cfi.resolveCfi({ cfi: this.highlight.cfi })
-          : undefined,
-      ),
-      shareReplay({ refCount: true, bufferSize: 1 }),
-    )
-
-    const updateStateOnSelection$ = this.isSelected.pipe(
-      tap((isSelected) => {
-        this.updateStateOnSelection(isSelected)
-      }),
-    )
-
-    merge(this.resolvedCfi$, updateStateOnSelection$)
-      .pipe(takeUntil(this.destroy$))
+    this.isSelected$
+      .pipe(
+        tap((isSelected) => {
+          this.updateStateOnSelection(isSelected)
+        }),
+        takeUntil(this.destroy$),
+      )
       .subscribe()
+  }
+
+  public get annotation() {
+    return this.latestAnnotation
+  }
+
+  /** Does not draw: the next `render()` draws the new annotation. */
+  public update(annotation: RuntimeAnnotation) {
+    this.latestAnnotation = annotation
+  }
+
+  /**
+   * Keeps only a resolution that finds a range: the highlight is created while
+   * its document still loads, when no cfi resolves.
+   */
+  private getRangeOfAnnotation() {
+    const { cfi } = this.annotation
+
+    if (this.resolvedCfi?.cfi === cfi) return this.resolvedCfi.range
+
+    const { range } = this.reader.cfi.resolveCfi({ cfi })
+
+    this.resolvedCfi = range ? { cfi, range } : undefined
+
+    return range ?? undefined
   }
 
   public updateStateOnSelection(isSelected: boolean) {
@@ -88,42 +96,36 @@ export class SpineItemHighlight extends DestroyableClass {
   }
 
   public render() {
-    return this.resolvedCfi$.pipe(
-      first(),
-      withLatestFrom(this.isSelected),
-      map(([resolvedCfi, isSelected]) => {
-        if (!resolvedCfi?.isCfiRange) return undefined
+    return this.isSelected$.pipe(
+      take(1),
+      map((isSelected) => {
+        const range = this.getRangeOfAnnotation()
 
-        const range = resolvedCfi.range
-
-        this.container.innerHTML = ""
+        if (this.container.firstChild) this.container.replaceChildren()
 
         /**
-         * The nodes can be undefined if the cfi is not found.
-         * This can happens if the item is not loaded (legit) or if the cfi
-         * are just invalid.
+         * No range when the cfi is not a range, when the item has no loaded
+         * document, or when the cfi is invalid.
          */
-        if (!range) {
-          return
-        }
+        if (!range) return null
 
         const rectElements = createElementForRange(
           range,
           this.container,
-          this.highlight.highlightColor ?? "yellow",
+          this.annotation.highlightColor ?? "yellow",
         )
 
         rectElements.forEach((elt) => {
           elt.style.pointerEvents = "initial"
           elt.style.cursor = "pointer"
-          elt.dataset.highlightRect = this.highlight.id
+          elt.dataset.highlightRect = this.annotation.id
 
           this.container.appendChild(elt)
         })
 
         const firstElement = rectElements[0]
 
-        if (firstElement && this.highlight.notes) {
+        if (firstElement && this.annotation.notes) {
           const noteIcon = document.createElement("span")
           noteIcon.textContent = "📝"
           noteIcon.style.position = "absolute"
@@ -149,6 +151,7 @@ export class SpineItemHighlight extends DestroyableClass {
   public destroy() {
     super.destroy()
 
+    this.resolvedCfi = undefined
     this.container.remove()
   }
 }

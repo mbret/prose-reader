@@ -1,6 +1,6 @@
 ---
 title: "Annotations enhancer"
-description: "Install @prose-reader/enhancer-annotations, create annotations with createAnnotation and store them as they are, find the pages that can hold one with candidates$, and avoid the root CFI you get on a blank page."
+description: "Install @prose-reader/enhancer-annotations, create annotations with createAnnotation and store them as they are, show them as highlights, find the pages that can hold one with candidates$, and avoid the root CFI you get on a blank page."
 sidebar:
   label: "Annotations"
 ---
@@ -45,6 +45,61 @@ It returns `{ id, cfi }`: two strings and nothing else. Add the other fields of 
 - It returns `undefined` when the reader has no such spine item or page, or when the selection holds no range.
 
 Do not store a page index with an annotation: its page changes with the layout and the device. See [Danger of persisting weak references](/learn/annotations#danger-of-persisting-weak-references).
+
+## Showing highlights
+
+Give the enhancer your annotations as an observable. Each time they change,
+emit a new array, and put each changed annotation in it as a new object:
+
+```ts
+import { createReader } from "@prose-reader/core"
+import {
+  type Annotation,
+  annotationsEnhancer,
+} from "@prose-reader/enhancer-annotations"
+import { BehaviorSubject } from "rxjs"
+
+const annotations$ = new BehaviorSubject<Annotation[]>([])
+
+const reader = annotationsEnhancer(createReader)({
+  manifest,
+  annotations: { annotations$ },
+})
+
+// The user changed the color of an annotation.
+annotations$.next(
+  annotations$.value.map((annotation) =>
+    annotation.id === changedId
+      ? { ...annotation, highlightColor: "red" }
+      : annotation,
+  ),
+)
+
+// The user removed an annotation.
+annotations$.next(
+  annotations$.value.filter((annotation) => annotation.id !== removedId),
+)
+```
+
+The enhancer compares each entry with the previous one by reference. It ignores
+an array that holds the same objects as the previous one, so it does not draw
+again an annotation that you change in place.
+
+The enhancer draws a highlight for each annotation whose CFI is a range, over
+the text that range covers, while the document of its spine item is loaded:
+
+* in its `highlightColor`, or yellow when it has none, with a note icon when it
+  has `notes`;
+* with a red dashed border when it is the first annotation in the array whose
+  `selected` is `true`.
+
+The enhancer matches each highlight to its annotation by `id`, so give each
+annotation an `id` of its own. When an annotation changes, the enhancer draws
+its highlight again. When an annotation leaves the array, the enhancer removes
+its highlight at once.
+
+`reader.annotations.highlightTap$` emits `{ event, highlight }` for each tap on
+a highlight. `highlight` is the annotation of the tapped highlight.
 
 ## Blank pages and annotations
 

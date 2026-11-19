@@ -4,14 +4,13 @@ import {
   type SpineItem,
 } from "@prose-reader/core"
 import {
+  BehaviorSubject,
   defaultIfEmpty,
   distinctUntilChanged,
   forkJoin,
   map,
   merge,
   type Observable,
-  of,
-  shareReplay,
   switchMap,
   takeUntil,
 } from "rxjs"
@@ -19,17 +18,24 @@ import { SpineItemHighlight } from "./SpineItemHighlight.ts"
 import type { RuntimeAnnotation } from "./types.ts"
 import { createAnnotationLayer, layoutAnnotationLayer } from "./utils.ts"
 
+/**
+ * One highlight per annotation id, from the first list of `annotations$` that
+ * holds the id to the first list that does not. When a list holds an id more
+ * than once, its last entry wins.
+ */
 export class SpineItemHighlights extends DestroyableClass {
   private layer: HTMLElement
-  private highlights: SpineItemHighlight[] = []
+  private highlightsByAnnotationId = new BehaviorSubject<
+    ReadonlyMap<string, SpineItemHighlight>
+  >(new Map())
 
   public readonly tap$: SpineItemHighlight["tap$"]
 
   constructor(
-    private annotations$: Observable<RuntimeAnnotation[]>,
+    annotations$: Observable<RuntimeAnnotation[]>,
     private spineItem: SpineItem,
     private reader: Reader,
-    private selectedHighlight: Observable<string | undefined>,
+    private selectedAnnotationId$: Observable<string | undefined>,
   ) {
     super()
 
@@ -41,66 +47,68 @@ export class SpineItemHighlights extends DestroyableClass {
       firstLayerElement,
     )
 
-    const itemHighlights$ = this.annotations$.pipe(
-      switchMap((annotations) => {
-        const newAnnotations = annotations.filter(
-          (annotation) =>
-            !this.highlights.some(
-              (highlight) => highlight.highlight.id === annotation.id,
-            ),
-        )
-        const oldAnnotations = this.highlights.filter(
-          (highlight) =>
-            highlight.highlight.itemIndex !== this.spineItem.item.index,
-        )
-
-        this.highlights.forEach((highlight, index) => {
-          const existingAnnotation = annotations.find(
-            (annotation) => annotation.id === highlight.highlight.id,
-          )
-
-          if (oldAnnotations.includes(highlight)) {
-            highlight.destroy()
-            this.highlights = this.highlights.splice(index, 1)
-          }
-
-          if (existingAnnotation) {
-            highlight.highlight = existingAnnotation
-          }
-        })
-
-        newAnnotations.forEach((annotation) => {
-          if (annotation.itemIndex !== this.spineItem.item.index) return
-
-          const isSelected$ = this.selectedHighlight.pipe(
-            map((id) => id === annotation.id),
-            distinctUntilChanged(),
-          )
-
-          const spineItemHighlight = new SpineItemHighlight(
-            this.spineItem,
-            this.layer,
-            this.reader,
-            annotation,
-            isSelected$,
-          )
-
-          this.highlights.push(spineItemHighlight)
-        })
-
-        return of(this.highlights)
-      }),
-      shareReplay(1),
-      takeUntil(this.destroy$),
-    )
-
-    this.tap$ = itemHighlights$.pipe(
-      switchMap((highlights) =>
-        merge(...highlights.map((highlight) => highlight.tap$)),
+    this.tap$ = this.highlightsByAnnotationId.pipe(
+      switchMap((highlightsByAnnotationId) =>
+        merge(
+          ...Array.from(
+            highlightsByAnnotationId.values(),
+            (highlight) => highlight.tap$,
+          ),
+        ),
       ),
     )
 
-    annotations$.subscribe()
+    annotations$.pipe(takeUntil(this.destroy$)).subscribe((annotations) => {
+      this.highlightsByAnnotationId.next(
+        this.reconcileHighlightsWithAnnotations(annotations),
+      )
+    })
+  }
+
+  private reconcileHighlightsWithAnnotations(annotations: RuntimeAnnotation[]) {
+    const previousHighlightsByAnnotationId = this.highlightsByAnnotationId.value
+    const annotationsById = new Map(
+      annotations.map((annotation) => [annotation.id, annotation]),
+    )
+
+    for (const [annotationId, highlight] of previousHighlightsByAnnotationId) {
+      if (!annotationsById.has(annotationId)) highlight.destroy()
+    }
+
+    return new Map(
+      Array.from(
+        annotationsById,
+        ([annotationId, annotation]): [string, SpineItemHighlight] => {
+          const existingHighlight =
+            previousHighlightsByAnnotationId.get(annotationId)
+
+          existingHighlight?.update(annotation)
+
+          return [
+            annotationId,
+            existingHighlight ?? this.createHighlight(annotation),
+          ]
+        },
+      ),
+    )
+  }
+
+  private createHighlight(annotation: RuntimeAnnotation) {
+    const isSelected$ = this.selectedAnnotationId$.pipe(
+      map((id) => id === annotation.id),
+      distinctUntilChanged(),
+    )
+
+    return new SpineItemHighlight(
+      this.layer,
+      this.reader,
+      annotation,
+      isSelected$,
+    )
+  }
+
+  private get highlights() {
+    return Array.from(this.highlightsByAnnotationId.value.values())
   }
 
   layout() {
@@ -123,6 +131,10 @@ export class SpineItemHighlights extends DestroyableClass {
   destroy() {
     super.destroy()
 
+    for (const highlight of this.highlights) highlight.destroy()
+
+    this.highlightsByAnnotationId.next(new Map())
+    this.highlightsByAnnotationId.complete()
     this.layer.remove()
   }
 }
