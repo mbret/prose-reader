@@ -19,6 +19,13 @@ creates, so it shares that reader's copies rather than bringing its own.
 Give the enhancer your annotations as an observable, and it draws them:
 
 ```ts
+import { createReader } from "@prose-reader/core"
+import {
+  type Annotation,
+  annotationsEnhancer,
+} from "@prose-reader/enhancer-annotations"
+import { BehaviorSubject } from "rxjs"
+
 const annotations$ = new BehaviorSubject<Annotation[]>([])
 
 const reader = annotationsEnhancer(createReader)({
@@ -28,18 +35,21 @@ const reader = annotationsEnhancer(createReader)({
 ```
 
 Each list replaces the one before. The enhancer draws a highlight for each
-annotation whose CFI is a range, in the chapters whose document is loaded:
+annotation whose CFI is a range, in the spine items whose document is loaded:
 
 * in its `highlightColor`, or yellow when it has none;
 * with a note icon when it has `notes`;
-* with a dashed border when it is `selected`.
+* with a red dashed border when it is the first annotation of the list that
+  is `selected`.
 
-When an annotation leaves the list, its highlight goes. When its data changes,
-its highlight is drawn again.
+When an annotation leaves the list, its highlight goes. To change an
+annotation, give it as a new object: the enhancer ignores a list that holds
+the same objects as the one before. Its highlight is then drawn again with the
+new data.
 
 `reader.annotations.highlightTap$` emits `{ event, highlight }` when the user
-taps a highlight, with its annotation as `highlight`. The highlights do not
-depend on it: subscribe only to handle the taps.
+taps a highlight. `highlight` is a copy of its annotation that adds its
+`itemIndex`, so match it to yours by `id`.
 
 ## Blank pages and annotations
 
