@@ -29,6 +29,13 @@ export class SpineItemHighlights extends DestroyableClass {
     ReadonlyMap<string, SpineItemHighlight>
   >(new Map())
 
+  /**
+   * The highlights, each time they change to match the annotations. A draw
+   * that starts from it draws the current highlights.
+   */
+  public readonly highlightsByAnnotationId$ =
+    this.highlightsByAnnotationId.asObservable()
+
   public readonly tap$: SpineItemHighlight["tap$"]
 
   constructor(

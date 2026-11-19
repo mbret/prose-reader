@@ -20,6 +20,22 @@ export class ReaderHighlights {
     ReadonlyMap<string, SpineItemHighlights>
   >(new Map())
 
+  /**
+   * Emits the highlights of a spine item each time they change to match its
+   * annotations, and when its document starts to load.
+   */
+  public readonly highlightsChange$ = this.spineItemHighlightsByItemId.pipe(
+    switchMap((spineItemHighlightsByItemId) =>
+      merge(
+        ...Array.from(
+          spineItemHighlightsByItemId.values(),
+          (spineItemHighlights) =>
+            spineItemHighlights.highlightsByAnnotationId$,
+        ),
+      ),
+    ),
+  )
+
   public tap$: SpineItemHighlights["tap$"]
 
   constructor(

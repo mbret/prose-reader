@@ -11,6 +11,7 @@ import {
   map,
   type Observable,
   of,
+  Subject,
   type Subscription,
 } from "rxjs"
 import { afterEach, beforeAll, describe, expect, it, vi } from "vitest"
@@ -580,6 +581,23 @@ const getRectElementsOfHighlight = (
       `[data-highlight-rect="${annotationId}"]`,
     ),
   )
+
+/**
+ * An app can give its annotations through a source that does not replay, once
+ * the reader exists. The documents load later, and need that list.
+ */
+it("shows the annotations that a source with no replay gave before the documents loaded", async () => {
+  const annotations$ = new Subject<Annotation[]>()
+  const mountedReader = mountAnnotationsReader({ annotations$ })
+
+  // A cfi of the first spine item, written by hand: the reader that would
+  // make one is still mounting.
+  annotations$.next([{ id: "a0", cfi: "epubcfi(/6/2!/4/2)" }])
+
+  const reader = await mountedReader
+
+  expect(getHighlightedAnnotationIdsBySpineItem(reader)).toEqual([["a0"], []])
+})
 
 describe("drawing", () => {
   /** The content of a loaded document does not change. */
