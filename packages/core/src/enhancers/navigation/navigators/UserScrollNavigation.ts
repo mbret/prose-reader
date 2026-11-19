@@ -17,9 +17,9 @@ import {
   timer,
   withLatestFrom,
 } from "rxjs"
-import type { UserNavigationEntry } from "../../../navigation/types"
-import type { Reader } from "../../../reader"
-import { DestroyableClass } from "../../../utils/DestroyableClass"
+import type { UserNavigationEntry } from "../../../navigation/types.ts"
+import type { Reader } from "../../../reader.ts"
+import { DestroyableClass } from "../../../utils/DestroyableClass.ts"
 
 /** How long after its last scroll event a scroll of the user's is over. */
 const SCROLL_FINISHED_DEBOUNCE_TIMEOUT = 500

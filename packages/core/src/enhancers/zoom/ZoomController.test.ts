@@ -1,6 +1,6 @@
 import { describe, expect, it, vi } from "vitest"
-import type { Reader } from "../../reader"
-import { ZoomController } from "./ZoomController"
+import type { Reader } from "../../reader.ts"
+import { ZoomController } from "./ZoomController.ts"
 
 const createControlledReader = () => {
   const viewportElement = document.createElement("div")

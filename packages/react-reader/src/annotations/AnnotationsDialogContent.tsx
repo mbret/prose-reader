@@ -1,8 +1,8 @@
 import { Tabs } from "@chakra-ui/react"
 import { memo, useState } from "react"
 import { LuBookmark, LuNotebookPen } from "react-icons/lu"
-import { AnnotationsList } from "./AnnotationsList"
-import { BookmarksList } from "./bookmarks/BookmarksList"
+import { AnnotationsList } from "./AnnotationsList.tsx"
+import { BookmarksList } from "./bookmarks/BookmarksList.tsx"
 
 export const AnnotationsDialogContent = memo(
   ({

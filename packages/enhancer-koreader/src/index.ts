@@ -2,4 +2,4 @@ export {
   type KoreaderEnhancerOutput,
   type KoreaderProgressNavigationTarget,
   koreaderEnhancer,
-} from "./koreaderEnhancer"
+} from "./koreaderEnhancer.ts"

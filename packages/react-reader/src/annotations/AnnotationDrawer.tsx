@@ -8,19 +8,19 @@ import {
 } from "react"
 import { useSubscribe } from "reactjrx"
 import { tap } from "rxjs"
-import { truncateText } from "../common/utils"
+import { truncateText } from "../common/utils.ts"
 import {
   DrawerBackdrop,
   DrawerBody,
   DrawerContent,
   DrawerHeader,
   DrawerRoot,
-} from "../components/ui/drawer"
+} from "../components/ui/drawer.tsx"
 import {
   useReaderContext,
   useReaderContextValue,
-} from "../context/useReaderContext"
-import { useReaderWithAnnotations } from "./useReaderWithAnnotations"
+} from "../context/useReaderContext.ts"
+import { useReaderWithAnnotations } from "./useReaderWithAnnotations.ts"
 
 const HIGHLIGHT_COLORS = [
   "rgba(216, 191, 216, 1)", // Light purple

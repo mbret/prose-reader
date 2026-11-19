@@ -1,10 +1,10 @@
 import type { SpineItem as CoreSpineItem } from "@prose-reader/core"
 import { createPortal } from "react-dom"
 import { useObserve } from "reactjrx"
-import { useAudioReader } from "./useAudioReader"
-import { useAudioVisualizer } from "./useAudioVisualizer"
-import { useIsCurrentAudioTrack } from "./useIsCurrentAudioTrack"
-import { AudioWaveCanvas } from "./wave/AudioWaveCanvas"
+import { useAudioReader } from "./useAudioReader.ts"
+import { useAudioVisualizer } from "./useAudioVisualizer.ts"
+import { useIsCurrentAudioTrack } from "./useIsCurrentAudioTrack.ts"
+import { AudioWaveCanvas } from "./wave/AudioWaveCanvas.tsx"
 
 /**
  * Render only when there is a `renderer`. Meaning the item is loaded.

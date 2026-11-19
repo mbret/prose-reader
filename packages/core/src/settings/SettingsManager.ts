@@ -6,13 +6,13 @@ import {
   Subject,
   shareReplay,
 } from "rxjs"
-import { DestroyableClass } from "../utils/DestroyableClass"
-import { watchKeys } from "../utils/rxjs"
+import { DestroyableClass } from "../utils/DestroyableClass.ts"
+import { watchKeys } from "../utils/rxjs.ts"
 import type {
   ExtendedSettings,
   SettingsDefaults,
   SettingsInterface,
-} from "./SettingsInterface"
+} from "./SettingsInterface.ts"
 
 const mergeDefinedValuesIntoDeclaredSettings = <Settings extends object>(
   declaredSettings: Settings,

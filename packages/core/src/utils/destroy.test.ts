@@ -1,7 +1,7 @@
 import { Observable, takeUntil } from "rxjs"
 import { describe, expect, it, vi } from "vitest"
-import { DestroyableClass } from "./DestroyableClass"
-import { ReactiveEntity } from "./ReactiveEntity"
+import { DestroyableClass } from "./DestroyableClass.ts"
+import { ReactiveEntity } from "./ReactiveEntity.ts"
 
 const createRecordedSource = () => {
   const subscribeToSource = vi.fn()

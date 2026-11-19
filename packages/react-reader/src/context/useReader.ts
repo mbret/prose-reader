@@ -5,8 +5,8 @@ import type { AudioEnhancerAPI } from "@prose-reader/enhancer-audio"
 import type { GalleryEnhancerAPI } from "@prose-reader/enhancer-gallery"
 import type { RefitEnhancerAPI } from "@prose-reader/enhancer-refit"
 import type { SearchEnhancerAPI } from "@prose-reader/enhancer-search"
-import type { ReactReaderReader } from "./context"
-import { useReaderContextValue } from "./useReaderContext"
+import type { ReactReaderReader } from "./context.ts"
+import { useReaderContextValue } from "./useReaderContext.ts"
 
 /**
  * The reader of the `ReactReaderProvider` above. It is `undefined` before the

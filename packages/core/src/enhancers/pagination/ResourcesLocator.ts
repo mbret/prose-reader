@@ -12,10 +12,10 @@ import {
   takeUntil,
   withLatestFrom,
 } from "rxjs"
-import type { ProseParsedCfi } from "../../cfi"
-import type { Reader } from "../../reader"
-import type { SpineItem } from "../../spineItem/SpineItem"
-import { deferIdle, idle } from "../../utils/rxjs"
+import type { ProseParsedCfi } from "../../cfi/index.ts"
+import type { Reader } from "../../reader.ts"
+import type { SpineItem } from "../../spineItem/SpineItem.ts"
+import { deferIdle, idle } from "../../utils/rxjs.ts"
 
 type CfiLocatableResource = {
   cfi: string

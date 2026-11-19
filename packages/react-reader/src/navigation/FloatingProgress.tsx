@@ -1,6 +1,6 @@
 import { Box, Presence, Text } from "@chakra-ui/react"
-import { useReaderViewContext } from "../context/ReaderViewContext"
-import { usePagination } from "../pagination/usePagination"
+import { useReaderViewContext } from "../context/ReaderViewContext.ts"
+import { usePagination } from "../pagination/usePagination.ts"
 
 const ANIMATION_NAME_IN_OUT = { _open: "fade-in", _closed: "fade-out" }
 

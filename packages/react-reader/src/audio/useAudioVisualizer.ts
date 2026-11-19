@@ -1,6 +1,6 @@
 import type { AudioVisualizerState } from "@prose-reader/enhancer-audio"
 import { useObserve } from "reactjrx"
-import { useAudioReader } from "./useAudioReader"
+import { useAudioReader } from "./useAudioReader.ts"
 
 export const useAudioVisualizer = (enabled = true) => {
   const audioReader = useAudioReader()

@@ -1,13 +1,13 @@
 import { first, map, type Observable, of } from "rxjs"
-import type { CfiManager } from "../../cfi"
-import type { SpineLocator } from "../../spine/locator/SpineLocator"
-import type { Spine } from "../../spine/Spine"
-import type { SpineItemsManager } from "../../spine/SpineItemsManager"
-import { SpinePosition } from "../../spine/types"
-import { SpineItemPosition } from "../../spineItem/types"
-import { getSnappedPosition } from "../consolidation/withSnappedPosition"
-import type { NavigationResolver } from "../resolvers/NavigationResolver"
-import type { InternalNavigationEntry } from "../types"
+import type { CfiManager } from "../../cfi/index.ts"
+import type { SpineLocator } from "../../spine/locator/SpineLocator.ts"
+import type { Spine } from "../../spine/Spine.ts"
+import type { SpineItemsManager } from "../../spine/SpineItemsManager.ts"
+import { SpinePosition } from "../../spine/types.ts"
+import { SpineItemPosition } from "../../spineItem/types.ts"
+import { getSnappedPosition } from "../consolidation/withSnappedPosition.ts"
+import type { NavigationResolver } from "../resolvers/NavigationResolver.ts"
+import type { InternalNavigationEntry } from "../types.ts"
 
 export const restoreNavigationForControlledPageTurnMode = ({
   spineLocator,

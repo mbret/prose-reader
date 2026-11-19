@@ -29,9 +29,9 @@ import {
   tap,
   throwError,
 } from "rxjs"
-import { isPdfJsArchive } from "../createArchiveFromPdf"
+import { isPdfJsArchive } from "../createArchiveFromPdf.ts"
 import pdfFrameStyle from "./frame.css?inline"
-import { layoutCanvas, layoutContainer } from "./layout"
+import { layoutCanvas, layoutContainer } from "./layout.ts"
 
 const pdfScaleStyle = `:root {
   --scale-factor: 1;

@@ -1,6 +1,6 @@
 import type { ReadingPosition } from "@prose-reader/core"
 import { describe, expect, it, vi } from "vitest"
-import { createProseBridge } from "./useProseBridge"
+import { createProseBridge } from "./useProseBridge.ts"
 
 /**
  * `@webview-bridge/react-native` imports React Native, which cannot run under

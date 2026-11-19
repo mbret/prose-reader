@@ -7,7 +7,7 @@ import {
   ReplaySubject,
   takeUntil,
 } from "rxjs"
-import { watchKeys } from "./rxjs"
+import { watchKeys } from "./rxjs.ts"
 
 /**
  * Convenience class to manage reactive entities.

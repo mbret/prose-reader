@@ -12,11 +12,11 @@ import {
   of,
   switchMap,
 } from "rxjs"
-import { createArchiveLoader } from "./archiveLoader"
-import { generateManifestFromArchive } from "./generators/manifest"
-import { generateResourceFromArchive } from "./generators/resources"
-import type { StreamerHooks } from "./hooks"
-import { createRangeResponse } from "./utils/createRangeResponse"
+import { createArchiveLoader } from "./archiveLoader.ts"
+import { generateManifestFromArchive } from "./generators/manifest/index.ts"
+import { generateResourceFromArchive } from "./generators/resources/index.ts"
+import type { StreamerHooks } from "./hooks.ts"
+import { createRangeResponse } from "./utils/createRangeResponse.ts"
 
 type OnError = (error: unknown) => Response
 type OnManifestSuccess = (params: {

@@ -1,6 +1,6 @@
 import { useObserve } from "reactjrx"
 import { NEVER } from "rxjs"
-import { useSpineItem } from "./useSpineItem"
+import { useSpineItem } from "./useSpineItem.ts"
 
 export const useSpineItemReady = ({
   absolutePageIndex,

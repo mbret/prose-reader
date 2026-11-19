@@ -9,8 +9,8 @@ import {
   DialogHeader,
   DialogRoot,
   DialogTitle,
-} from "../components/ui/dialog"
-import { ThemeSection } from "./ThemeSection"
+} from "../components/ui/dialog.tsx"
+import { ThemeSection } from "./ThemeSection.tsx"
 
 export const ThemeDialog = memo(function ThemeDialog({
   open,

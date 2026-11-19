@@ -1,16 +1,19 @@
-import type { Context } from "../../../context/Context"
-import type { NavigationResolver } from "../../../navigation/resolvers/NavigationResolver"
-import type { SettingsInterface } from "../../../settings/SettingsInterface"
+import type { Context } from "../../../context/Context.ts"
+import type { NavigationResolver } from "../../../navigation/resolvers/NavigationResolver.ts"
+import type { SettingsInterface } from "../../../settings/SettingsInterface.ts"
 import type {
   ComputedCoreSettings,
   CoreInputSettings,
-} from "../../../settings/types"
-import type { SpineLocator } from "../../../spine/locator/SpineLocator"
-import type { SpineItemsManager } from "../../../spine/SpineItemsManager"
-import { type SpinePosition, UnboundSpinePosition } from "../../../spine/types"
-import type { SpineItem } from "../../../spineItem/SpineItem"
-import { SpineItemPosition } from "../../../spineItem/types"
-import type { Viewport } from "../../../viewport/Viewport"
+} from "../../../settings/types.ts"
+import type { SpineLocator } from "../../../spine/locator/SpineLocator.ts"
+import type { SpineItemsManager } from "../../../spine/SpineItemsManager.ts"
+import {
+  type SpinePosition,
+  UnboundSpinePosition,
+} from "../../../spine/types.ts"
+import type { SpineItem } from "../../../spineItem/SpineItem.ts"
+import { SpineItemPosition } from "../../../spineItem/types.ts"
+import type { Viewport } from "../../../viewport/Viewport.ts"
 
 export type PageTurnSide = "leftOrTop" | "rightOrBottom"
 

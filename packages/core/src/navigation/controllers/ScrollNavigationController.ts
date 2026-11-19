@@ -12,22 +12,22 @@ import {
   takeUntil,
   tap,
 } from "rxjs"
-import { HTML_PREFIX_SCROLL_NAVIGATOR } from "../../constants"
-import type { Context } from "../../context/Context"
-import type { HookManager } from "../../hooks/HookManager"
-import type { ReaderSettingsManager } from "../../settings/ReaderSettingsManager"
-import type { Spine } from "../../spine/Spine"
-import { type SpinePosition, UnboundSpinePosition } from "../../spine/types"
-import { AbstractPosition } from "../../types"
-import { setStylePropertyIfChanged } from "../../utils/dom"
-import { isDefined } from "../../utils/isDefined"
-import { ReactiveEntity } from "../../utils/ReactiveEntity"
-import { watchKeys } from "../../utils/rxjs"
-import type { Viewport } from "../../viewport/Viewport"
+import { HTML_PREFIX_SCROLL_NAVIGATOR } from "../../constants.ts"
+import type { Context } from "../../context/Context.ts"
+import type { HookManager } from "../../hooks/HookManager.ts"
+import type { ReaderSettingsManager } from "../../settings/ReaderSettingsManager.ts"
+import type { Spine } from "../../spine/Spine.ts"
+import { type SpinePosition, UnboundSpinePosition } from "../../spine/types.ts"
+import { AbstractPosition } from "../../types/index.ts"
+import { setStylePropertyIfChanged } from "../../utils/dom.ts"
+import { isDefined } from "../../utils/isDefined.ts"
+import { ReactiveEntity } from "../../utils/ReactiveEntity.ts"
+import { watchKeys } from "../../utils/rxjs.ts"
+import type { Viewport } from "../../viewport/Viewport.ts"
 import type {
   NavigationModeController,
   NavigationModeControllerNavigationEntry,
-} from "../types"
+} from "../types.ts"
 
 export class ScrollPosition extends AbstractPosition {}
 export class UnboundScrollPosition extends AbstractPosition {

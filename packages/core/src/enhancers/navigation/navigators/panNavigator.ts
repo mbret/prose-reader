@@ -1,7 +1,10 @@
-import type { Reader } from "../../../reader"
-import { SpinePosition, type UnboundSpinePosition } from "../../../spine/types"
-import { ReactiveEntity } from "../../../utils/ReactiveEntity"
-import { navigationReport } from "../report"
+import type { Reader } from "../../../reader.ts"
+import {
+  SpinePosition,
+  type UnboundSpinePosition,
+} from "../../../spine/types.ts"
+import { ReactiveEntity } from "../../../utils/ReactiveEntity.ts"
+import { navigationReport } from "../report.ts"
 export class PanNavigator extends ReactiveEntity<{
   lastDelta: { x: number; y: number }
   lastPosition: SpinePosition | UnboundSpinePosition

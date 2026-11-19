@@ -1,4 +1,4 @@
-import type { ParsedXPointer } from "./types"
+import type { ParsedXPointer } from "./types.ts"
 
 /**
  * Prints a pointer in the shape `toStringV2` (crengine/src/lvtinydom.cpp)

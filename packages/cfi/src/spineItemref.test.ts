@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest"
 import {
   getEpubCfiSpineItemref,
   updateEpubCfiSpineItemref,
-} from "./spineItemref"
+} from "./spineItemref.ts"
 
 describe("spine itemref helpers", () => {
   it("reads the spine itemref step from a CFI", () => {

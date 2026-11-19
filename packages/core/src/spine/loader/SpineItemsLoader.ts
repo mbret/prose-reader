@@ -14,16 +14,16 @@ import {
   takeUntil,
   withLatestFrom,
 } from "rxjs"
-import type { Context } from "../../context/Context"
-import type { NavigationAgainstCurrentLayout } from "../../navigation/types"
-import type { ReaderSettingsManager } from "../../settings/ReaderSettingsManager"
-import type { SpineItemReference } from "../../spineItem/SpineItem"
-import { DestroyableClass } from "../../utils/DestroyableClass"
-import { isDefined } from "../../utils/isDefined"
-import { runWhileSized } from "../../viewport/runWhileSized"
-import type { Viewport } from "../../viewport/Viewport"
-import { Spine } from "../Spine"
-import type { SpineItemsManager } from "../SpineItemsManager"
+import type { Context } from "../../context/Context.ts"
+import type { NavigationAgainstCurrentLayout } from "../../navigation/types.ts"
+import type { ReaderSettingsManager } from "../../settings/ReaderSettingsManager.ts"
+import type { SpineItemReference } from "../../spineItem/SpineItem.ts"
+import { DestroyableClass } from "../../utils/DestroyableClass.ts"
+import { isDefined } from "../../utils/isDefined.ts"
+import { runWhileSized } from "../../viewport/runWhileSized.ts"
+import type { Viewport } from "../../viewport/Viewport.ts"
+import { Spine } from "../Spine.ts"
+import type { SpineItemsManager } from "../SpineItemsManager.ts"
 
 type SpineItemHold = { readonly spineItemIndex: number }
 

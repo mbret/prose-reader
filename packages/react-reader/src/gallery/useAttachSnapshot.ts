@@ -14,8 +14,8 @@ import {
   switchMap,
   throttleTime,
 } from "rxjs"
-import type { UseMeasureRect } from "../common/useMeasure"
-import { hasGalleryEnhancer, useReader } from "../context/useReader"
+import type { UseMeasureRect } from "../common/useMeasure.ts"
+import { hasGalleryEnhancer, useReader } from "../context/useReader.ts"
 
 export const useAttachSnapshot = (
   element: Element | null,

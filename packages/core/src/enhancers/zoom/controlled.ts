@@ -1,4 +1,4 @@
-import { setStylePropertyIfChanged } from "../../utils/dom"
+import { setStylePropertyIfChanged } from "../../utils/dom.ts"
 
 export const applyViewportTransformForControlledMode = (
   scale: number,

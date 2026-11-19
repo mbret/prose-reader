@@ -1,5 +1,5 @@
 import type { Manifest } from "@prose-reader/shared"
-import { isDefined } from "../utils/isDefined"
+import { isDefined } from "../utils/isDefined.ts"
 
 /**
  * How much of the book each spine item holds, from 0 to 1 and adding up to 1.

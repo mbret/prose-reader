@@ -1,9 +1,9 @@
 import { afterEach, describe, expect, it, vi } from "vitest"
-import { Context } from "../context/Context"
-import { ReaderSettingsManager } from "../settings/ReaderSettingsManager"
-import { SpinePosition } from "../spine/types"
-import { createTestManifest, holdAnimationFrames } from "../tests/utils"
-import { Viewport } from "./Viewport"
+import { Context } from "../context/Context.ts"
+import { ReaderSettingsManager } from "../settings/ReaderSettingsManager.ts"
+import { SpinePosition } from "../spine/types.ts"
+import { createTestManifest, holdAnimationFrames } from "../tests/utils.ts"
+import { Viewport } from "./Viewport.ts"
 
 /** A viewport laid out at 100 px, whose element sizes the test controls. */
 const laidOutViewport = () => {

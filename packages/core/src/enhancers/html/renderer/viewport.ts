@@ -1,4 +1,4 @@
-import { getFrameViewportInfo } from "../../../utils/frames"
+import { getFrameViewportInfo } from "../../../utils/frames.ts"
 
 export const getViewPortInformation = ({
   pageHeight,

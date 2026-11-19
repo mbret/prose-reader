@@ -1,5 +1,5 @@
 import { expect, test } from "vitest"
-import { isShallowEqual } from "./objects"
+import { isShallowEqual } from "./objects.ts"
 
 test(`shallow comparision`, () => {
   const base = { a: 1, b: 2 }

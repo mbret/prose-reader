@@ -1,4 +1,4 @@
-import { SpinePosition } from "../../spine/types"
+import { SpinePosition } from "../../spine/types.ts"
 
 type SpinePositionLike = {
   x: number

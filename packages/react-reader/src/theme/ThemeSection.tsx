@@ -1,10 +1,10 @@
 import { Fieldset, Stack } from "@chakra-ui/react"
 import type { Theme } from "@prose-reader/core"
 import { memo } from "react"
-import { useReader } from "../context/useReader"
-import { SettingRadioGroup } from "../settings/SettingRadioGroup"
-import { SettingScopes } from "../settings/SettingScopes"
-import { useManagedSetting } from "../settings/useManagedSetting"
+import { useReader } from "../context/useReader.ts"
+import { SettingRadioGroup } from "../settings/SettingRadioGroup.tsx"
+import { SettingScopes } from "../settings/SettingScopes.tsx"
+import { useManagedSetting } from "../settings/useManagedSetting.ts"
 
 const THEME_LABELS: Record<Theme, string> = {
   bright: "Bright",

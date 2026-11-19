@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest"
-import type { KnownMetadataIdentifierScheme } from "../types/resolvedMetadata"
-import { inferIdentifierScheme } from "./inferIdentifierScheme"
+import type { KnownMetadataIdentifierScheme } from "../types/resolvedMetadata.ts"
+import { inferIdentifierScheme } from "./inferIdentifierScheme.ts"
 
 describe("inferIdentifierScheme", () => {
   it("reads an absolute http(s) link as a URL", () => {

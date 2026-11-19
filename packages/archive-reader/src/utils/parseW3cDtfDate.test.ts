@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest"
-import { parseW3cDtfDate } from "./parseW3cDtfDate"
+import { parseW3cDtfDate } from "./parseW3cDtfDate.ts"
 
 describe("parseW3cDtfDate", () => {
   it("returns undefined for undefined input", () => {

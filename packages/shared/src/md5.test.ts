@@ -1,6 +1,6 @@
 import { createHash } from "node:crypto"
 import { describe, expect, it } from "vitest"
-import { md5HexDigest } from "./md5"
+import { md5HexDigest } from "./md5.ts"
 
 const md5OfText = (text: string) =>
   md5HexDigest([new TextEncoder().encode(text)])

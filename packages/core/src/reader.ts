@@ -12,31 +12,31 @@ import {
   takeUntil,
   tap,
 } from "rxjs"
-import { CfiManager } from "./cfi"
+import { CfiManager } from "./cfi/index.ts"
 import {
   HTML_ATTRIBUTE_DATA_READER_ID,
   HTML_PREFIX,
   HTML_STYLE_PREFIX,
-} from "./constants"
-import { Context } from "./context/Context"
-import { Features } from "./features/Features"
-import { HookManager } from "./hooks/HookManager"
+} from "./constants.ts"
+import { Context } from "./context/Context.ts"
+import { Features } from "./features/Features.ts"
+import { HookManager } from "./hooks/HookManager.ts"
 import styles from "./index.scss?inline"
-import { createNavigator } from "./navigation/Navigator"
-import type { NavigationTarget } from "./navigation/types"
-import { Pagination } from "./pagination/Pagination"
-import { PaginationController } from "./pagination/PaginationController"
-import { Report } from "./report"
-import { ReaderSettingsManager } from "./settings/ReaderSettingsManager"
-import type { SettingsInterface } from "./settings/SettingsInterface"
-import type { CoreInputSettings } from "./settings/types"
-import { SpineItemsLoader } from "./spine/loader/SpineItemsLoader"
-import { Spine } from "./spine/Spine"
-import { SpineItemsManager } from "./spine/SpineItemsManager"
-import type { SpineItemReference } from "./spineItem/SpineItem"
-import { injectCSS, removeCSS, setAttributeIfChanged } from "./utils/dom"
-import { isDefined } from "./utils/isDefined"
-import { Viewport } from "./viewport/Viewport"
+import { createNavigator } from "./navigation/Navigator.ts"
+import type { NavigationTarget } from "./navigation/types.ts"
+import { Pagination } from "./pagination/Pagination.ts"
+import { PaginationController } from "./pagination/PaginationController.ts"
+import { Report } from "./report.ts"
+import { ReaderSettingsManager } from "./settings/ReaderSettingsManager.ts"
+import type { SettingsInterface } from "./settings/SettingsInterface.ts"
+import type { CoreInputSettings } from "./settings/types.ts"
+import { SpineItemsLoader } from "./spine/loader/SpineItemsLoader.ts"
+import { Spine } from "./spine/Spine.ts"
+import { SpineItemsManager } from "./spine/SpineItemsManager.ts"
+import type { SpineItemReference } from "./spineItem/SpineItem.ts"
+import { injectCSS, removeCSS, setAttributeIfChanged } from "./utils/dom.ts"
+import { isDefined } from "./utils/isDefined.ts"
+import { Viewport } from "./viewport/Viewport.ts"
 
 export type CreateReaderOptions = Partial<CoreInputSettings> & {
   /**

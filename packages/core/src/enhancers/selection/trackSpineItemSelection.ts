@@ -1,6 +1,6 @@
 import { distinctUntilChanged, finalize, map, merge, of, switchMap } from "rxjs"
-import type { SpineItem } from "../../spineItem/SpineItem"
-import { FrameSelectionTracker } from "./FrameSelectionTracker"
+import type { SpineItem } from "../../spineItem/SpineItem.ts"
+import { FrameSelectionTracker } from "./FrameSelectionTracker.ts"
 
 /**
  * The selection in the item's document while it is loaded, and `undefined`

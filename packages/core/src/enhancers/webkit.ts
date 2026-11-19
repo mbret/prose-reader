@@ -1,4 +1,4 @@
-import type { EnhancerOutput, RootEnhancer } from "./types/enhancer"
+import type { EnhancerOutput, RootEnhancer } from "./types/enhancer.ts"
 
 /**
  * Ideally we want to target all webkit browser but afaik there are no reliable way to do it.

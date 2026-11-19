@@ -1,2 +1,2 @@
-export * from "./createArchiveFromPdf"
-export * from "./pdfEnhancer"
+export * from "./createArchiveFromPdf.ts"
+export * from "./pdfEnhancer.ts"

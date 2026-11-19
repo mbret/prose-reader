@@ -1,11 +1,14 @@
 import { describe, expect, it } from "vitest"
-import type { Spine } from "../../spine/Spine"
+import type { Spine } from "../../spine/Spine.ts"
 import {
   SpineBoundingBox,
   SpinePosition,
   UnboundSpinePosition,
-} from "../../spine/types"
-import { clampRectInSpine, getBoundaryForRectInSpine } from "./clampRectInSpine"
+} from "../../spine/types.ts"
+import {
+  clampRectInSpine,
+  getBoundaryForRectInSpine,
+} from "./clampRectInSpine.ts"
 
 /** A spine whose items fill a box of these edges: the box the clamp reads. */
 const buildSpine = ({

@@ -1,2 +1,2 @@
-export * from "./theme"
-export * from "./types"
+export * from "./theme.ts"
+export * from "./types.ts"

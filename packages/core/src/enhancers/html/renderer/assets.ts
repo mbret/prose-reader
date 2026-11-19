@@ -19,10 +19,10 @@ import {
   throwError,
   timeout,
 } from "rxjs"
-import type { Context } from "../../../context/Context"
-import { Report } from "../../../report"
-import type { ReaderSettingsManager } from "../../../settings/ReaderSettingsManager"
-import { ResourceHandler } from "../../../spineItem/resources/ResourceHandler"
+import type { Context } from "../../../context/Context.ts"
+import { Report } from "../../../report.ts"
+import type { ReaderSettingsManager } from "../../../settings/ReaderSettingsManager.ts"
+import { ResourceHandler } from "../../../spineItem/resources/ResourceHandler.ts"
 
 /** Bounds a browser that never reports on an asset. */
 const ASSET_LOAD_TIMEOUT_MS = 5_000

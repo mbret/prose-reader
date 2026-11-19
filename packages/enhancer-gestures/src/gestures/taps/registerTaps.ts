@@ -18,18 +18,18 @@ import {
   take,
   withLatestFrom,
 } from "rxjs"
-import type { GesturesSettingsManager } from "../../SettingsManager"
+import type { GesturesSettingsManager } from "../../SettingsManager.ts"
 import type {
   BeforeTapGestureContext,
   GestureRecognizable,
   Hook,
-} from "../../types"
+} from "../../types.ts"
 import {
   getPositionRelativeToContainer,
   isNotLink,
   istMatchingSelectors,
-} from "../../utils"
-import { calculatePageTurnLinearMargin, isPositionInArea } from "./utils"
+} from "../../utils.ts"
+import { calculatePageTurnLinearMargin, isPositionInArea } from "./utils.ts"
 
 /** Given when no hook is registered. */
 const noVerdicts: boolean[] = []

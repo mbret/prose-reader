@@ -1,6 +1,6 @@
 import { useBridge } from "@webview-bridge/react-native"
-import type { BridgeState } from "../shared"
-import { useProseReaderContext } from "./ReaderProvider"
+import type { BridgeState } from "../shared/index.ts"
+import { useProseReaderContext } from "./ReaderProvider.tsx"
 
 export const useReaderState = <T = BridgeState>(
   selector: (state: BridgeState) => T,

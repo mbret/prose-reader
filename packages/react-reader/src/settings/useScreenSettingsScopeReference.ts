@@ -1,5 +1,5 @@
 import { useBreakpointValue } from "@chakra-ui/react"
-import type { ScreenSettingsScopeReference } from "./types"
+import type { ScreenSettingsScopeReference } from "./types.ts"
 
 /**
  * The screen the screen scope stands for here, from the window's width and the

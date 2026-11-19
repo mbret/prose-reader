@@ -1,5 +1,5 @@
 import type { Observable } from "rxjs"
-import type { ZoomController, ZoomControllerState } from "./ZoomController"
+import type { ZoomController, ZoomControllerState } from "./ZoomController.ts"
 
 export type ZoomPosition = { x: number; y: number }
 

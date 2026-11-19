@@ -18,25 +18,24 @@
     "directory": "packages/react-native"
   },
   "type": "module",
-  "main": "./dist/native/index.cjs",
-  "module": "./dist/native/index.js",
-  "react-native": "./dist/native/index.cjs",
+  "main": "./dist/native/index.js",
+  "types": "./dist/native/index.d.ts",
   "publishConfig": {
     "access": "public",
     "registry": "https://registry.npmjs.org/"
   },
   "exports": {
     ".": {
-      "import": "./dist/native/index.js",
-      "require": "./dist/native/index.cjs"
+      "types": "./dist/native/index.d.ts",
+      "default": "./dist/native/index.js"
     },
     "./web": {
-      "import": "./dist/web/index.js",
-      "require": "./dist/web/index.cjs"
+      "types": "./dist/web/index.d.ts",
+      "default": "./dist/web/index.js"
     },
     "./shared": {
-      "import": "./dist/shared/index.js",
-      "require": "./dist/shared/index.cjs"
+      "types": "./dist/shared/index.d.ts",
+      "default": "./dist/shared/index.js"
     }
   },
   "license": "MIT",
@@ -68,5 +67,8 @@
     "react": "19.x",
     "react-native-webview": "*",
     "rxjs": "^7.5.5"
+  },
+  "engines": {
+    "node": ">=22.12"
   }
 }

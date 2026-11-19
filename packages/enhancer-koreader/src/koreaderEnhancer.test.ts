@@ -13,7 +13,7 @@ import {
 } from "@prose-reader/core"
 import { generateManifestFromArchive } from "@prose-reader/streamer"
 import { afterEach, describe, expect, it } from "vitest"
-import { koreaderEnhancer } from "./koreaderEnhancer"
+import { koreaderEnhancer } from "./koreaderEnhancer.ts"
 
 /**
  * Drives the enhancer on a real reader, unmounted: converting a cfi needs the

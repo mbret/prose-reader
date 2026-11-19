@@ -1,7 +1,7 @@
 import { filter, fromEvent, switchMap, takeUntil, tap } from "rxjs"
-import { setAttributeIfChanged } from "../utils/dom"
-import { isDefined } from "../utils/isDefined"
-import type { EnhancerOutput, RootEnhancer } from "./types/enhancer"
+import { setAttributeIfChanged } from "../utils/dom.ts"
+import { isDefined } from "../utils/isDefined.ts"
+import type { EnhancerOutput, RootEnhancer } from "./types/enhancer.ts"
 
 /**
  * All fixes relative to chromes

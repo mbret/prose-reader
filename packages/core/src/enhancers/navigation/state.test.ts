@@ -1,20 +1,20 @@
 import type { Manifest } from "@prose-reader/shared"
 import { firstValueFrom } from "rxjs"
 import { describe, expect, it } from "vitest"
-import { Context } from "../../context/Context"
-import { HookManager } from "../../hooks/HookManager"
-import { createEmptyPaginationEdge } from "../../pagination/edges"
-import { Pagination } from "../../pagination/Pagination"
-import type { Reader } from "../../reader"
-import { ReaderSettingsManager } from "../../settings/ReaderSettingsManager"
-import type { CoreInputSettings } from "../../settings/types"
-import { SpineItemsManager } from "../../spine/SpineItemsManager"
+import { Context } from "../../context/Context.ts"
+import { HookManager } from "../../hooks/HookManager.ts"
+import { createEmptyPaginationEdge } from "../../pagination/edges.ts"
+import { Pagination } from "../../pagination/Pagination.ts"
+import type { Reader } from "../../reader.ts"
+import { ReaderSettingsManager } from "../../settings/ReaderSettingsManager.ts"
+import type { CoreInputSettings } from "../../settings/types.ts"
+import { SpineItemsManager } from "../../spine/SpineItemsManager.ts"
 import {
   createTestManifest,
   createTestManifestSpineItems,
-} from "../../tests/utils"
-import { Viewport } from "../../viewport/Viewport"
-import { observeState } from "./state"
+} from "../../tests/utils.ts"
+import { Viewport } from "../../viewport/Viewport.ts"
+import { observeState } from "./state.ts"
 
 type TestBook = {
   readingDirection: Manifest["readingDirection"]

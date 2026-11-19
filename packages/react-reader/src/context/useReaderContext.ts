@@ -1,7 +1,7 @@
 import { isShallowEqual, pick, watchKeys } from "@prose-reader/core"
 import { useContext } from "react"
 import { useObserve } from "reactjrx"
-import { ReaderContext, type ReaderContextType } from "./context"
+import { ReaderContext, type ReaderContextType } from "./context.ts"
 
 export const useReaderContext = () => {
   const context = useContext(ReaderContext)

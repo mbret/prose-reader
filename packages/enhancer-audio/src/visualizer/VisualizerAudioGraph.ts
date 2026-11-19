@@ -1,4 +1,4 @@
-import { getIdleVisualizerLevels, getVisualizerLevels } from "./levels"
+import { getIdleVisualizerLevels, getVisualizerLevels } from "./levels.ts"
 
 const AUDIO_VISUALIZER_FFT_SIZE = 256
 

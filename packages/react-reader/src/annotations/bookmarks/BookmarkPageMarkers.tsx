@@ -1,7 +1,7 @@
 import { memo } from "react"
 import { useObserve } from "reactjrx"
-import { useReader } from "../../context/useReader"
-import { BookmarkPageMarker } from "./BookmarkPageMarker"
+import { useReader } from "../../context/useReader.ts"
+import { BookmarkPageMarker } from "./BookmarkPageMarker.tsx"
 
 export const BookmarkPageMarkers = memo(() => {
   const reader = useReader()

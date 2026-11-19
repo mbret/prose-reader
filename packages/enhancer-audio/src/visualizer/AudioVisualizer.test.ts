@@ -1,10 +1,10 @@
 /* @vitest-environment happy-dom */
 
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
-import type { AudioTrack } from "../types"
+import type { AudioTrack } from "../types.ts"
 
-import { AudioVisualizer } from "./AudioVisualizer"
-import { getIdleVisualizerLevels } from "./levels"
+import { AudioVisualizer } from "./AudioVisualizer.ts"
+import { getIdleVisualizerLevels } from "./levels.ts"
 
 const createTrack = (id = `track-1`): AudioTrack => ({
   id,

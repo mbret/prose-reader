@@ -1,5 +1,5 @@
 import { describe, expect, it, onTestFinished, vi } from "vitest"
-import { DocumentFramePlacement } from "./DocumentFramePlacement"
+import { DocumentFramePlacement } from "./DocumentFramePlacement.ts"
 
 type RenderedBox = {
   left: number

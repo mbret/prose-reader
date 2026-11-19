@@ -1,6 +1,6 @@
 import { blobFileAccessors, createArchive } from "@prose-reader/archive-reader"
 import { describe, expect, it } from "vitest"
-import { generateResourceFromArchive } from "./index"
+import { generateResourceFromArchive } from "./index.ts"
 
 describe("generateResourceFromArchive", () => {
   it("should apply external hooks before archive fallback", async () => {

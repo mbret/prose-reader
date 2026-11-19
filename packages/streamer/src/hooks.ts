@@ -1,6 +1,6 @@
 import type { Archive } from "@prose-reader/archive-reader"
 import type { Manifest } from "@prose-reader/shared"
-import type { HookResource } from "./generators/resources/hooks/types"
+import type { HookResource } from "./generators/resources/hooks/types.ts"
 
 export type { HookResource }
 

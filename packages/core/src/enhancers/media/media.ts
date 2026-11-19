@@ -1,4 +1,4 @@
-import type { EnhancerOutput, RootEnhancer } from "../types/enhancer"
+import type { EnhancerOutput, RootEnhancer } from "../types/enhancer.ts"
 
 export const mediaEnhancer =
   <InheritOptions, InheritOutput extends EnhancerOutput<RootEnhancer>>(

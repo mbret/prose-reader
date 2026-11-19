@@ -19,17 +19,17 @@ import {
   takeUntil,
 } from "rxjs"
 import { name as packageName } from "../package.json"
-import { registerPan } from "./gestures/pan"
-import { registerPinch } from "./gestures/pinch"
-import { registerSwipe } from "./gestures/swipe"
-import { registerTaps } from "./gestures/taps/registerTaps"
-import { preventNativeDrag } from "./preventNativeDrag"
-import { GesturesSettingsManager } from "./SettingsManager"
+import { registerPan } from "./gestures/pan.ts"
+import { registerPinch } from "./gestures/pinch.ts"
+import { registerSwipe } from "./gestures/swipe.ts"
+import { registerTaps } from "./gestures/taps/registerTaps.ts"
+import { preventNativeDrag } from "./preventNativeDrag.ts"
+import { GesturesSettingsManager } from "./SettingsManager.ts"
 import styles from "./style.css?inline"
-import type { EnhancerAPI, Hook, InputSettings } from "./types"
+import type { EnhancerAPI, Hook, InputSettings } from "./types.ts"
 
-export { isPositionInArea } from "./gestures/taps/utils"
-export * from "./types"
+export { isPositionInArea } from "./gestures/taps/utils.ts"
+export * from "./types.ts"
 
 export const gesturesEnhancer =
   <InheritOptions, InheritOutput extends Reader>(

@@ -1,12 +1,12 @@
 import type { Manifest } from "@prose-reader/shared"
 import { tap } from "rxjs"
-import { HTML_PREFIX as HTML_PREFIX_CORE } from "../../constants"
-import type { Reader } from "../../reader"
+import { HTML_PREFIX as HTML_PREFIX_CORE } from "../../constants.ts"
+import type { Reader } from "../../reader.ts"
 import {
   isHtmlElement,
   setPropertyIfChanged,
   setStylePropertyIfChanged,
-} from "../../utils/dom"
+} from "../../utils/dom.ts"
 
 export const HTML_PREFIX = `${HTML_PREFIX_CORE}-enhancer-loading`
 export const CONTAINER_HTML_PREFIX = `${HTML_PREFIX}-container`

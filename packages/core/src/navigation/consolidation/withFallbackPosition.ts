@@ -1,10 +1,13 @@
 import { map, type Observable } from "rxjs"
-import type { ReaderSettingsManager } from "../../settings/ReaderSettingsManager"
-import type { SpineItemsManager } from "../../spine/SpineItemsManager"
-import { UnboundSpinePosition } from "../../spine/types"
-import type { Viewport } from "../../viewport/Viewport"
-import type { NavigationResolver } from "../resolvers/NavigationResolver"
-import type { InternalNavigationEntry, InternalNavigationInput } from "../types"
+import type { ReaderSettingsManager } from "../../settings/ReaderSettingsManager.ts"
+import type { SpineItemsManager } from "../../spine/SpineItemsManager.ts"
+import { UnboundSpinePosition } from "../../spine/types.ts"
+import type { Viewport } from "../../viewport/Viewport.ts"
+import type { NavigationResolver } from "../resolvers/NavigationResolver.ts"
+import type {
+  InternalNavigationEntry,
+  InternalNavigationInput,
+} from "../types.ts"
 
 export const withFallbackPosition =
   ({

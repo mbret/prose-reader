@@ -3,9 +3,9 @@ import type { Reader } from "@prose-reader/core"
 import type { PinchEvent, PinchRecognizer } from "gesturx"
 import { BehaviorSubject, Subject } from "rxjs"
 import { afterEach, describe, expect, it, vi } from "vitest"
-import { GesturesSettingsManager } from "../SettingsManager"
-import type { InputSettings } from "../types"
-import { registerPinch } from "./pinch"
+import { GesturesSettingsManager } from "../SettingsManager.ts"
+import type { InputSettings } from "../types.ts"
+import { registerPinch } from "./pinch.ts"
 
 const createPinchEvent = (
   type: PinchEvent["type"],

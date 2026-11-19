@@ -1,7 +1,7 @@
 // @vitest-environment jsdom
 import { first, firstValueFrom, skip } from "rxjs"
 import { describe, expect, it, vi } from "vitest"
-import { SpinePosition } from "../spine/types"
+import { SpinePosition } from "../spine/types.ts"
 import {
   createPrePaginatedManifest,
   createTestReader,
@@ -13,9 +13,9 @@ import {
   setTestViewport,
   settledOn,
   stubElementScrolling,
-} from "../tests/readerHarness"
-import { waitFor } from "../tests/utils"
-import type { Navigation } from "./types"
+} from "../tests/readerHarness.ts"
+import { waitFor } from "../tests/utils.ts"
+import type { Navigation } from "./types.ts"
 
 installReaderTestEnvironment()
 

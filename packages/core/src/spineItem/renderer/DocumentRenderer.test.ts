@@ -1,13 +1,16 @@
 import type { Manifest } from "@prose-reader/shared"
 import { EMPTY, of, Subject } from "rxjs"
 import { describe, expect, it } from "vitest"
-import { Context } from "../../context/Context"
-import { HookManager } from "../../hooks/HookManager"
-import { ReaderSettingsManager } from "../../settings/ReaderSettingsManager"
-import { createTestManifest, waitFor } from "../../tests/utils"
-import { Viewport } from "../../viewport/Viewport"
-import { ResourceHandler } from "../resources/ResourceHandler"
-import { type DocumentLoadStatus, DocumentRenderer } from "./DocumentRenderer"
+import { Context } from "../../context/Context.ts"
+import { HookManager } from "../../hooks/HookManager.ts"
+import { ReaderSettingsManager } from "../../settings/ReaderSettingsManager.ts"
+import { createTestManifest, waitFor } from "../../tests/utils.ts"
+import { Viewport } from "../../viewport/Viewport.ts"
+import { ResourceHandler } from "../resources/ResourceHandler.ts"
+import {
+  type DocumentLoadStatus,
+  DocumentRenderer,
+} from "./DocumentRenderer.ts"
 
 /**
  * Creates a new document each time, named by the order it was created in, and

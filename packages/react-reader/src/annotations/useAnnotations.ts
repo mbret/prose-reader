@@ -1,6 +1,6 @@
 import { useObserve } from "reactjrx"
 import { switchMap } from "rxjs"
-import { hasAnnotationsEnhancer, useReader } from "../context/useReader"
+import { hasAnnotationsEnhancer, useReader } from "../context/useReader.ts"
 
 export const useAnnotations = () => {
   const reader = useReader()

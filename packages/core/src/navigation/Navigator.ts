@@ -8,24 +8,24 @@ import {
   shareReplay,
   tap,
 } from "rxjs"
-import type { CfiManager } from "../cfi"
-import type { Context } from "../context/Context"
-import type { HookManager } from "../hooks/HookManager"
-import { Report } from "../report"
-import type { ReaderSettingsManager } from "../settings/ReaderSettingsManager"
-import type { Spine } from "../spine/Spine"
-import type { SpineItemsManager } from "../spine/SpineItemsManager"
-import type { Viewport } from "../viewport/Viewport"
-import { ControlledNavigationController } from "./controllers/ControlledNavigationController"
-import { ScrollNavigationController } from "./controllers/ScrollNavigationController"
-import { InternalNavigator } from "./InternalNavigator"
-import { Locker } from "./Locker"
-import { createNavigationResolver } from "./resolvers/NavigationResolver"
+import type { CfiManager } from "../cfi/index.ts"
+import type { Context } from "../context/Context.ts"
+import type { HookManager } from "../hooks/HookManager.ts"
+import { Report } from "../report.ts"
+import type { ReaderSettingsManager } from "../settings/ReaderSettingsManager.ts"
+import type { Spine } from "../spine/Spine.ts"
+import type { SpineItemsManager } from "../spine/SpineItemsManager.ts"
+import type { Viewport } from "../viewport/Viewport.ts"
+import { ControlledNavigationController } from "./controllers/ControlledNavigationController.ts"
+import { ScrollNavigationController } from "./controllers/ScrollNavigationController.ts"
+import { InternalNavigator } from "./InternalNavigator.ts"
+import { Locker } from "./Locker.ts"
+import { createNavigationResolver } from "./resolvers/NavigationResolver.ts"
 import type {
   NavigationModeController,
   NavigationTarget,
   UserNavigationEntry,
-} from "./types"
+} from "./types.ts"
 
 export const createNavigator = ({
   spineItemsManager,

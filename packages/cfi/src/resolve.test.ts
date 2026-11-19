@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, it } from "vitest"
-import { parse } from "./parse"
-import { resolve } from "./resolve"
+import { parse } from "./parse.ts"
+import { resolve } from "./resolve.ts"
 
 describe("EPUB CFI Resolve", () => {
   let _document: Document

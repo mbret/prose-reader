@@ -4,7 +4,7 @@ import {
   readArchiveOpf,
   toContainerUri,
 } from "@prose-reader/archive-reader"
-import type { HookResource } from "./types"
+import type { HookResource } from "./types.ts"
 
 /**
  * Resolves `contentType` from the package OPF when possible, else from the URI.

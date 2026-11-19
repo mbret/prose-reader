@@ -1,2 +1,2 @@
-export * from "./HookManager"
-export * from "./types"
+export * from "./HookManager.ts"
+export * from "./types.ts"

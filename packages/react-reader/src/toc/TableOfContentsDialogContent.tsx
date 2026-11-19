@@ -2,8 +2,8 @@ import { Link, List, Stack, Text } from "@chakra-ui/react"
 import React, { memo } from "react"
 import { LuCircleCheck } from "react-icons/lu"
 import { useObserve } from "reactjrx"
-import { useReader } from "../context/useReader"
-import { usePagination } from "../pagination/usePagination"
+import { useReader } from "../context/useReader.ts"
+import { usePagination } from "../pagination/usePagination.ts"
 
 export const TableOfContentsDialogContent = memo(
   ({ onNavigate }: { onNavigate: () => void }) => {

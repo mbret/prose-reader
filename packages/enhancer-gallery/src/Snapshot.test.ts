@@ -2,7 +2,7 @@
 import type { Reader, SpineItem } from "@prose-reader/core"
 import { BehaviorSubject } from "rxjs"
 import { describe, expect, it, vi } from "vitest"
-import { Snapshot } from "./Snapshot"
+import { Snapshot } from "./Snapshot.ts"
 
 const { deepCloneElement } = vi.hoisted(() => ({ deepCloneElement: vi.fn() }))
 

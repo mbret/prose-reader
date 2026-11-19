@@ -1,5 +1,5 @@
 import { detectMimeTypeFromUrl, parseContentType } from "@prose-reader/shared"
-import type { Manifest } from "../../.."
+import type { Manifest } from "../../../index.ts"
 
 /**
  * Raster images we wrap into a generated html page (viewport metadata,

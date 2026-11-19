@@ -22,8 +22,7 @@
   "files": [
     "/dist"
   ],
-  "main": "./dist/index.cjs",
-  "module": "./dist/index.js",
+  "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
   "publishConfig": {
     "access": "public",
@@ -32,8 +31,7 @@
   "exports": {
     ".": {
       "types": "./dist/index.d.ts",
-      "import": "./dist/index.js",
-      "require": "./dist/index.cjs"
+      "default": "./dist/index.js"
     }
   },
   "scripts": {
@@ -51,5 +49,8 @@
     "jszip": "^3.10.2",
     "typescript": "*",
     "vite": "^8.3.8"
+  },
+  "engines": {
+    "node": ">=22.12"
   }
 }

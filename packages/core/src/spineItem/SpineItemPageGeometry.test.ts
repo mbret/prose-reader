@@ -3,8 +3,8 @@ import {
   clampPositionInSpineItem,
   SpineItemPageGeometry,
   type SpineItemPageGeometryParams,
-} from "./SpineItemPageGeometry"
-import { SpineItemPosition } from "./types"
+} from "./SpineItemPageGeometry.ts"
+import { SpineItemPosition } from "./types.ts"
 
 const createGeometry = ({
   isUsingVerticalWriting = false,

@@ -1,8 +1,8 @@
 import type { Manifest } from "@prose-reader/shared"
-import { isFullyPrePaginated } from "../manifest/isFullyPrePaginated"
-import { isSpreadAllowedByBook } from "../manifest/isSpreadAllowedByBook"
-import { ReactiveEntity } from "../utils/ReactiveEntity"
-import { BridgeEvent } from "./BridgeEvent"
+import { isFullyPrePaginated } from "../manifest/isFullyPrePaginated.ts"
+import { isSpreadAllowedByBook } from "../manifest/isSpreadAllowedByBook.ts"
+import { ReactiveEntity } from "../utils/ReactiveEntity.ts"
+import { BridgeEvent } from "./BridgeEvent.ts"
 
 export type ContextState = {
   manifest: Manifest

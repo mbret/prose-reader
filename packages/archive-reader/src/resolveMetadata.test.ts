@@ -1,8 +1,8 @@
 import { describe, expect, it } from "vitest"
-import { parseComicInfo } from "./metadata/comicInfo/parse"
-import { parseOpf } from "./metadata/opf/parse"
-import { resolveMetadata } from "./resolveMetadata"
-import { mainTitle } from "./utils/mainTitle"
+import { parseComicInfo } from "./metadata/comicInfo/parse.ts"
+import { parseOpf } from "./metadata/opf/parse.ts"
+import { resolveMetadata } from "./resolveMetadata.ts"
+import { mainTitle } from "./utils/mainTitle.ts"
 
 const opfWrap = (metadata: string) =>
   `<?xml version="1.0"?>` +

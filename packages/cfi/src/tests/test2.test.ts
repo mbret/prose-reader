@@ -1,7 +1,7 @@
 import fs from "node:fs/promises"
 import { describe, expect, it } from "vitest"
-import { generate } from "../generate"
-import { resolve } from "../resolve"
+import { generate } from "../generate.ts"
+import { resolve } from "../resolve.ts"
 
 describe("test2.xhtml", () => {
   it("should correctly target img node", async () => {

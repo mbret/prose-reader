@@ -10,7 +10,7 @@ import {
   isCharacterData,
   isElement,
   isNode,
-} from "./utils"
+} from "./utils.ts"
 
 /**
  * Options for generating CFIs

@@ -3,7 +3,7 @@
 import { act } from "react"
 import { createRoot } from "react-dom/client"
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
-import { useFullscreen } from "./useFullscreen"
+import { useFullscreen } from "./useFullscreen.ts"
 
 const screenfullMock = vi.hoisted(() => ({
   exit: vi.fn(),

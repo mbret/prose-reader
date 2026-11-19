@@ -1,8 +1,8 @@
 import { deferIdle, type Reader } from "@prose-reader/core"
 import { catchError, defer, finalize, forkJoin, map, of, switchMap } from "rxjs"
-import { report } from "./report"
-import { searchTextRangesInNode } from "./search"
-import type { ResultItem, SearchEnhancerAPI, SearchResult } from "./types"
+import { report } from "./report.ts"
+import { searchTextRangesInNode } from "./search.ts"
+import type { ResultItem, SearchEnhancerAPI, SearchResult } from "./types.ts"
 
 export type { ResultItem, SearchEnhancerAPI, SearchResult }
 

@@ -1,5 +1,5 @@
-import type { Viewport } from "../../viewport/Viewport"
-import type { ZoomPosition } from "./types"
+import type { Viewport } from "../../viewport/Viewport.ts"
+import type { ZoomPosition } from "./types.ts"
 
 /**
  * Make sure to constraint position within viewport boundaries when zoomed.

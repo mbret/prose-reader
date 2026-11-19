@@ -1,6 +1,6 @@
 import { blobFileAccessors, createArchive } from "@prose-reader/archive-reader"
 import { describe, expect, it } from "vitest"
-import { calibreFixHook } from "./calibreFixHook"
+import { calibreFixHook } from "./calibreFixHook.ts"
 
 describe("Given a book from calibre", () => {
   it("should fix the responsive broken cover", async () => {

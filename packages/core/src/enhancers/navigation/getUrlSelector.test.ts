@@ -1,12 +1,12 @@
 import type { Manifest } from "@prose-reader/shared"
 import { describe, expect, it } from "vitest"
-import type { Reader } from "../../index"
+import type { Reader } from "../../index.ts"
 import type {
   NavigationTargetOf,
   UserNavigationEntry,
-} from "../../navigation/types"
-import type { createReader } from "../../reader"
-import { getUrlSelector } from "./getUrlSelector"
+} from "../../navigation/types.ts"
+import type { createReader } from "../../reader.ts"
+import { getUrlSelector } from "./getUrlSelector.ts"
 
 const manifestWith = (hrefs: string[]) => ({
   // Only the spine items' index and href are read.

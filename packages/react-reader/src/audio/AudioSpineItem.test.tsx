@@ -39,7 +39,7 @@ vi.mock("./wave/AudioWaveCanvas", () => ({
   AudioWaveCanvas: audioWaveCanvasMock,
 }))
 
-import { AudioSpineItem } from "./AudioSpineItem"
+import { AudioSpineItem } from "./AudioSpineItem.tsx"
 
 const createSpineItem = () => {
   const renderer = {

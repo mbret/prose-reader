@@ -2,22 +2,22 @@ import { useCallback } from "react"
 import {
   useReaderContext,
   useReaderContextValue,
-} from "../context/useReaderContext"
+} from "../context/useReaderContext.ts"
 import type {
   ManagedSettingName,
   ManagedSettingValues,
-} from "./managedSettings"
+} from "./managedSettings.ts"
 import {
   changeManagedSettingValue,
   getManagedSettingValuesForScope,
   getSettingScopeReferenceInEffect,
   MANAGED_SETTING_SOURCE_KEYS,
-} from "./settingValues"
+} from "./settingValues.ts"
 import type {
   ReactReaderSettingsScope,
   ReactReaderSettingsScopeReference,
-} from "./types"
-import { useScreenSettingsScopeReference } from "./useScreenSettingsScopeReference"
+} from "./types.ts"
+import { useScreenSettingsScopeReference } from "./useScreenSettingsScopeReference.ts"
 
 /**
  * What a menu needs to edit a setting react-reader manages: its scopes, each

@@ -7,8 +7,8 @@ import {
 } from "@prose-reader/archive-reader"
 import type { Manifest } from "@prose-reader/shared"
 import { createXmlSafeIdFactory, urlJoin } from "@prose-reader/shared"
-import { buildAudiobookToc } from "./audiobookToc"
-import { createManifestResourceHref } from "./createManifestResourceHref"
+import { buildAudiobookToc } from "./audiobookToc.ts"
+import { createManifestResourceHref } from "./createManifestResourceHref.ts"
 
 type TocItem = NonNullable<Manifest["nav"]>["toc"][number]
 type ManifestGuideEntry = NonNullable<Manifest["guide"]>[number]

@@ -1,8 +1,8 @@
 import { firstValueFrom, Subject, takeUntil } from "rxjs"
 import { describe, expect, it } from "vitest"
-import { recordUnhandledErrors, waitFor } from "../tests/utils"
-import { HookManager } from "./HookManager"
-import type { AsyncHookParams } from "./types"
+import { recordUnhandledErrors, waitFor } from "../tests/utils.ts"
+import { HookManager } from "./HookManager.ts"
+import type { AsyncHookParams } from "./types.ts"
 
 type TestHook =
   | {

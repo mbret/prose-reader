@@ -16,8 +16,8 @@ import {
   tap,
   withLatestFrom,
 } from "rxjs"
-import type { RuntimeAnnotation } from "./types"
-import { createElementForRange } from "./utils"
+import type { RuntimeAnnotation } from "./types.ts"
+import { createElementForRange } from "./utils.ts"
 
 export class SpineItemHighlight extends DestroyableClass {
   private container: HTMLElement

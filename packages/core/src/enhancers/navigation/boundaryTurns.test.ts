@@ -4,8 +4,8 @@ import {
   createTestReader,
   installReaderTestEnvironment,
   mountTestReader,
-} from "../../tests/readerHarness"
-import type { BoundaryReachedEvent } from "./boundary"
+} from "../../tests/readerHarness.ts"
+import type { BoundaryReachedEvent } from "./boundary.ts"
 
 installReaderTestEnvironment()
 

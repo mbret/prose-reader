@@ -1,6 +1,6 @@
 import { List } from "@chakra-ui/react"
-import { AnnotationListItem } from "../AnnotationListItem"
-import { useBookmarks } from "./useBookmarks"
+import { AnnotationListItem } from "../AnnotationListItem.tsx"
+import { useBookmarks } from "./useBookmarks.ts"
 
 export const BookmarksList = ({ onNavigate }: { onNavigate: () => void }) => {
   const { data: annotations } = useBookmarks()

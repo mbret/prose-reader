@@ -1,4 +1,4 @@
-import { useProseReaderContext } from "./ReaderProvider"
+import { useProseReaderContext } from "./ReaderProvider.tsx"
 
 export const useReader = () => {
   const { webviewBridge } = useProseReaderContext()

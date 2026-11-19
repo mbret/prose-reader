@@ -9,8 +9,8 @@ import {
   DialogHeader,
   DialogRoot,
   DialogTitle,
-} from "../components/ui/dialog"
-import { SpreadSection } from "./SpreadSection"
+} from "../components/ui/dialog.tsx"
+import { SpreadSection } from "./SpreadSection.tsx"
 
 /**
  * How the book is laid out on the screen. One dialog for every layout
