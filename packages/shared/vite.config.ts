@@ -1,7 +1,6 @@
 // vite.config.js
 import { resolve } from "node:path"
 import { defineConfig } from "vite"
-import { dtsPlugin } from "../../config/vite-lib.mts"
 
 export default defineConfig(({ mode }) => {
   return {
@@ -21,6 +20,5 @@ export default defineConfig(({ mode }) => {
         external: [`rxjs`],
       },
     },
-    plugins: [dtsPlugin()],
   }
 })

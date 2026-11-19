@@ -36,8 +36,8 @@
     "/dist"
   ],
   "scripts": {
-    "start": "vite build --watch --mode development",
-    "build": "tsc && vite build",
+    "start": "node ../../config/watchLibraryBuild.mjs",
+    "build": "tsc && vite build && tsc -p tsconfig.build.json",
     "test": "vitest run --coverage"
   },
   "devDependencies": {

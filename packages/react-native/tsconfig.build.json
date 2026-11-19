@@ -1,4 +1,4 @@
 {
-  "extends": "./tsconfig.rn.json",
-  "include": ["src"]
+  "extends": ["./tsconfig.rn.json", "../../config/tsconfig.declarations.json"],
+  "files": ["src/native/index.ts", "src/web/index.ts", "src/shared/index.ts"]
 }

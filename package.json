@@ -23,7 +23,7 @@
     "test": "lerna run test --parallel",
     "prepare": "husky",
     "check:internal-ranges": "node scripts/check-internal-ranges.mjs",
-    "check:packages": "pnpm -r --no-bail --filter \"./packages/*\" exec attw --pack . --profile esm-only",
+    "check:packages": "node scripts/check-package-files.mjs && pnpm -r --no-bail --filter \"./packages/*\" exec attw --pack . --profile esm-only",
     "check:expo-sdk": "CI=1 EXPO_OFFLINE=1 pnpm --filter @prose-reader/react-native exec expo install --check"
   },
   "devDependencies": {
@@ -40,7 +40,6 @@
     "rollup-plugin-node-externals": "^9.0.1",
     "typescript": "^6.0.3",
     "vite": "^8.3.8",
-    "vite-plugin-dts": "^5.1.2",
     "vitest": "^5.1.0"
   },
   "lint-staged": {

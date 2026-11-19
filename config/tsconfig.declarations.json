@@ -1,0 +1,12 @@
+{
+  "compilerOptions": {
+    "noEmit": false,
+    "declaration": true,
+    "emitDeclarationOnly": true,
+    "types": [],
+    "rootDir": "${configDir}/src",
+    "outDir": "${configDir}/dist"
+  },
+  "files": ["${configDir}/src/index.ts"],
+  "include": []
+}

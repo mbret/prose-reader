@@ -1,9 +1,6 @@
 import { resolve } from "node:path"
 import externals from "rollup-plugin-node-externals"
-import ts from "typescript"
 import { type ConfigEnv, mergeConfig, type UserConfig } from "vite"
-import dts, { type PluginOptions as DtsOptions } from "vite-plugin-dts"
-import { TEST_FILES } from "./testFiles.mts"
 
 type Entry = string | Record<string, string>
 
@@ -30,43 +27,7 @@ interface LibConfigOptions {
   preserveModules?: boolean
   /** Extra config deep-merged on top of the defaults (extra plugins, custom test config, etc.). */
   override?: UserConfig
-  /**
-   * Options for the declaration build, merged over {@link dtsPlugin}'s
-   * defaults. `false` emits no declarations.
-   */
-  dts?: false | DtsOptions
 }
-
-/**
- * The declaration build every package shares. Options merge over the
- * defaults, so a package adds `staticImport` or a `tsconfigPath` without
- * restating what is excluded.
- *
- * A declaration error fails the build. The plugin only logs one and writes
- * the rest, so a symbol whose type cannot be emitted simply goes missing from
- * `dist` — react-native once shipped a `useCreateReader` consumers saw as
- * `any`, with the build green. `tsc --noEmit` cannot catch that class: errors
- * like TS2883 only exist when declarations are emitted.
- */
-export const dtsPlugin = (options: DtsOptions = {}) =>
-  dts({
-    entryRoot: "src",
-    include: ["src/**/*"],
-    // The runtime bundle only carries what the entry reaches; the declarations
-    // must not carry more.
-    exclude: TEST_FILES,
-    afterDiagnostic: (diagnostics) => {
-      const errors = diagnostics.filter(
-        (diagnostic) => diagnostic.category === ts.DiagnosticCategory.Error,
-      )
-      if (errors.length > 0) {
-        throw new Error(
-          `${errors.length} declaration error(s); dist would be missing the declarations they belong to`,
-        )
-      }
-    },
-    ...options,
-  })
 
 type LibConfigInput = LibConfigOptions | ((env: ConfigEnv) => LibConfigOptions)
 
@@ -93,7 +54,6 @@ export const createLibConfig =
       target,
       preserveModules = false,
       override,
-      dts: dtsOptions = {},
     } = opts
 
     const minify =
@@ -130,10 +90,7 @@ export const createLibConfig =
         minify,
         ...(target ? { target } : {}),
       },
-      plugins: [
-        externals({ peerDeps: true, deps: true, devDeps: true }),
-        ...(dtsOptions === false ? [] : [dtsPlugin(dtsOptions)]),
-      ],
+      plugins: [externals({ peerDeps: true, deps: true, devDeps: true })],
     }
 
     return override ? mergeConfig(base, override) : base
