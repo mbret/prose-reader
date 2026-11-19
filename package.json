@@ -23,7 +23,7 @@
     "test": "lerna run test --parallel",
     "prepare": "husky",
     "check:internal-ranges": "node scripts/check-internal-ranges.mjs",
-    "check:packages": "pnpm -r --no-bail --filter \"./packages/*\" exec attw --pack . --profile esm-only",
+    "check:packages": "pnpm -r --filter \"./packages/*\" exec node -e \"require('node:fs').accessSync(require('./package.json').types)\" && pnpm -r --no-bail --filter \"./packages/*\" exec attw --pack . --profile esm-only",
     "check:expo-sdk": "CI=1 EXPO_OFFLINE=1 pnpm --filter @prose-reader/react-native exec expo install --check"
   },
   "devDependencies": {
