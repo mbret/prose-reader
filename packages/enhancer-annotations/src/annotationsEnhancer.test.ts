@@ -292,11 +292,14 @@ const mountReaderWithAnnotationsSubject = async ({
  */
 const mountReaderHoldingOneDocument = async ({
   appObservesTaps,
+  Renderer,
 }: {
   appObservesTaps: boolean
+  Renderer?: typeof EmptyRenderer
 }) => {
   const annotations$ = new BehaviorSubject<Annotation[]>([])
   const reader = await mountAnnotationsReader({
+    Renderer,
     annotations$,
     numberOfAdjacentSpineItemToPreLoad: 0,
   })
@@ -514,6 +517,190 @@ describe.each([{ appObservesTaps: false }, { appObservesTaps: true }])(
     })
   },
 )
+
+/**
+ * An annotation over characters of the paragraph of a spine item that the
+ * text renderer has loaded.
+ */
+const createAnnotationOverText = (
+  reader: AnnotationsReader,
+  {
+    spineItemIndex,
+    id,
+    start,
+    end,
+  }: { spineItemIndex: number; id: string; start: number; end: number },
+): Annotation => {
+  const spineItem = getSpineItem(reader, spineItemIndex)
+  const text = spineItem.loadedDocument?.querySelector("p")?.firstChild
+
+  if (!text) throw new Error(`spine item ${spineItemIndex} has no text`)
+
+  const range = text.ownerDocument?.createRange()
+
+  if (!range) throw new Error("the text has no document")
+
+  range.setStart(text, start)
+  range.setEnd(text, end)
+
+  return { id, cfi: reader.cfi.generateCfiFromRange(range, spineItem.item) }
+}
+
+/**
+ * jsdom has no layout, and its ranges have no `getClientRects`. Gives each
+ * range of the frame of a spine item one rect, so that a highlight draws.
+ */
+const giveRangesOfFrameOneRect = (
+  reader: AnnotationsReader,
+  spineItemIndex: number,
+) => {
+  const frameDocument = getSpineItem(
+    reader,
+    spineItemIndex,
+  ).renderer.getDocumentFrame()?.contentDocument
+
+  if (!frameDocument) {
+    throw new Error(`spine item ${spineItemIndex} has no frame`)
+  }
+
+  Object.defineProperty(
+    Object.getPrototypeOf(frameDocument.createRange()),
+    "getClientRects",
+    { configurable: true, value: () => [new DOMRect(0, 0, 10, 10)] },
+  )
+}
+
+const getRectElementsOfHighlight = (
+  reader: AnnotationsReader,
+  spineItemIndex: number,
+  annotationId: string,
+) =>
+  Array.from(
+    getSpineItem(reader, spineItemIndex).containerElement.querySelectorAll(
+      `[data-highlight-rect="${annotationId}"]`,
+    ),
+  )
+
+describe("drawing", () => {
+  /** The content of a loaded document does not change. */
+  it("resolves the cfi of a highlight once per document, and again only when the cfi changes", async () => {
+    const annotations$ = new BehaviorSubject<Annotation[]>([])
+    const reader = await mountAnnotationsReader({
+      Renderer: TextDocumentRenderer,
+      annotations$,
+    })
+
+    giveRangesOfFrameOneRect(reader, 0)
+
+    const resolveCfi = vi.spyOn(reader.cfi, "resolveCfi")
+    const countResolutionsOf = (cfi: string) =>
+      resolveCfi.mock.calls.filter(([params]) => params.cfi === cfi).length
+    const annotation = createAnnotationOverText(reader, {
+      spineItemIndex: 0,
+      id: "a0",
+      start: 2,
+      end: 11,
+    })
+    const annotationOverOtherText = createAnnotationOverText(reader, {
+      spineItemIndex: 0,
+      id: "a0",
+      start: 12,
+      end: 16,
+    })
+
+    annotations$.next([annotation])
+    await vi.runAllTimersAsync()
+
+    const [rectElementOfFirstRender] = getRectElementsOfHighlight(
+      reader,
+      0,
+      "a0",
+    )
+
+    expect(rectElementOfFirstRender).toBeDefined()
+
+    annotations$.next([{ ...annotation, highlightColor: "red" }])
+    await vi.runAllTimersAsync()
+    reader.layout()
+    await vi.runAllTimersAsync()
+
+    const [rectElementOfLastRender] = getRectElementsOfHighlight(
+      reader,
+      0,
+      "a0",
+    )
+
+    expect(
+      rectElementOfLastRender,
+      "the rect element of the last render, which draws a new one",
+    ).not.toBe(rectElementOfFirstRender)
+    expect(countResolutionsOf(annotation.cfi)).toBe(1)
+
+    annotations$.next([annotationOverOtherText])
+    await vi.runAllTimersAsync()
+
+    expect(countResolutionsOf(annotationOverOtherText.cfi)).toBe(1)
+    expect(getRectElementsOfHighlight(reader, 0, "a0")).toHaveLength(1)
+  })
+
+  /**
+   * The highlights of a spine item are created while its document loads,
+   * when no cfi resolves. A render in that time finds no range.
+   */
+  it("draws a highlight that rendered while its document loaded, once the document has loaded", async () => {
+    const { reader, annotations$ } = await mountReaderHoldingOneDocument({
+      appObservesTaps: false,
+      Renderer: TextDocumentRenderer,
+    })
+
+    // The cfi of a text of spine item 1 comes from its document.
+    await goToSpineItem(reader, 1)
+
+    const annotation = createAnnotationOverText(reader, {
+      spineItemIndex: 1,
+      id: "a1",
+      start: 2,
+      end: 11,
+    })
+
+    await goToSpineItem(reader, 0)
+
+    expect(getLoadStatusOfEachSpineItem(reader)).toEqual(["loaded", "idle"])
+
+    let letLoadFinish = () => {}
+    const loadMayFinish = new Promise<void>((resolve) => {
+      letLoadFinish = resolve
+    })
+
+    reader.hookManager.register("item.onDocumentLoad", async ({ itemId }) => {
+      if (itemId !== getSpineItem(reader, 1).item.id) return
+
+      giveRangesOfFrameOneRect(reader, 1)
+      await loadMayFinish
+    })
+
+    const resolveCfi = vi.spyOn(reader.cfi, "resolveCfi")
+
+    annotations$.next([annotation])
+    reader.navigation.goToSpineItem({ indexOrId: 1 })
+    await vi.runAllTimersAsync()
+    reader.layout()
+    await vi.runAllTimersAsync()
+
+    expect(getSpineItem(reader, 1).value.loadStatus).toBe("loading")
+    expect(
+      resolveCfi.mock.calls.some(([params]) => params.cfi === annotation.cfi),
+      "whether the highlight rendered while its document loaded",
+    ).toBe(true)
+    expect(getRectElementsOfHighlight(reader, 1, "a1")).toHaveLength(0)
+
+    letLoadFinish()
+    await vi.runAllTimersAsync()
+
+    expect(getSpineItem(reader, 1).value.loadStatus).toBe("loaded")
+    expect(getRectElementsOfHighlight(reader, 1, "a1")).toHaveLength(1)
+  })
+})
 
 describe("highlightTap$", () => {
   it("emits the annotation of the tapped highlight, as the latest list gives it", async () => {

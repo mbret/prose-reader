@@ -18,6 +18,11 @@ import { createElementForRange } from "./utils.ts"
 export class SpineItemHighlight extends DestroyableClass {
   private container: HTMLElement
   private latestAnnotation: RuntimeAnnotation
+  /**
+   * The range the cfi of the annotation resolved to. The content of a loaded
+   * document does not change, so a cfi is resolved again only when it changes.
+   */
+  private resolvedCfi: { cfi: string; range: Range } | undefined
   public readonly tap$: Observable<{
     event: Event
     highlight: RuntimeAnnotation
@@ -62,6 +67,22 @@ export class SpineItemHighlight extends DestroyableClass {
     this.latestAnnotation = annotation
   }
 
+  /**
+   * Keeps only a resolution that finds a range: the highlight is created while
+   * its document still loads, when no cfi resolves.
+   */
+  private getRangeOfAnnotation() {
+    const { cfi } = this.annotation
+
+    if (this.resolvedCfi?.cfi === cfi) return this.resolvedCfi.range
+
+    const { range } = this.reader.cfi.resolveCfi({ cfi })
+
+    this.resolvedCfi = range ? { cfi, range } : undefined
+
+    return range ?? undefined
+  }
+
   public updateStateOnSelection(isSelected: boolean) {
     Array.from(this.container.children).forEach((child) => {
       if (child instanceof HTMLElement) {
@@ -78,9 +99,7 @@ export class SpineItemHighlight extends DestroyableClass {
     return this.isSelected$.pipe(
       take(1),
       map((isSelected) => {
-        const { range } = this.reader.cfi.resolveCfi({
-          cfi: this.annotation.cfi,
-        })
+        const range = this.getRangeOfAnnotation()
 
         if (this.container.firstChild) this.container.replaceChildren()
 
@@ -132,6 +151,7 @@ export class SpineItemHighlight extends DestroyableClass {
   public destroy() {
     super.destroy()
 
+    this.resolvedCfi = undefined
     this.container.remove()
   }
 }
