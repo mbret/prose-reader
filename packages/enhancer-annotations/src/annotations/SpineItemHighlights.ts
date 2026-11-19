@@ -121,7 +121,7 @@ export class SpineItemHighlights extends DestroyableClass {
       }
 
       reusableHighlightByAnnotationId.delete(annotation.id)
-      previousHighlight.annotation = annotation
+      previousHighlight.updateAnnotation(annotation)
 
       return previousHighlight
     })
