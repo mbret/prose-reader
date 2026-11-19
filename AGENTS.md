@@ -109,10 +109,9 @@ pnpm gives each package only what its own manifest declares. Declare a dependenc
 `apps/tests` (`prose-reader-tests`) is a Playwright suite, and the root
 `pnpm test` runs it alongside the vitest suites. CI runs every spec of this
 one on Linux, in Playwright's Docker image, where its screenshot baselines are
-rendered, in one job per browser engine and two for WebKit, on Chromium,
-Firefox, WebKit and two mobile profiles, the desktop browsers once for each way
-a book reaches the reader (`apps/tests/AGENTS.md`, *Loading the book*). A
-scheduled workflow runs
+rendered, in two jobs per browser engine, on Chromium, Firefox, WebKit and two
+mobile profiles, the desktop browsers once for each way a book reaches the
+reader (`apps/tests/AGENTS.md`, *Loading the book*). A scheduled workflow runs
 it on macOS once a day, without the screenshot comparisons. The image's tag
 follows the version of `@playwright/test`: a change that upgrades Playwright
 updates the tag in `_test.yml` and `find_flaky_browser_tests.yml` too.
@@ -144,8 +143,8 @@ pnpm --filter prose-reader-tests test --project=chromium tests/<path>.spec.ts
 
 `--project='chromium*'` runs it both ways, over http and from blobs.
 `BROWSER_ENGINE=webkit` runs every project whose device uses that engine,
-here `webkit`, `webkit-blob` and `Mobile Safari`, as CI's WebKit jobs do
-together.
+here `webkit`, `webkit-blob` and `Mobile Safari`, as the two CI jobs of that
+engine do together.
 
 ## Internal `@prose-reader/*` ranges
 
