@@ -9,9 +9,6 @@ inputs:
       What to build once installed: `libs` for the @prose-reader/* packages,
       `all` for every project, empty for nothing.
     default: ""
-  registry-url:
-    description: Passed to setup-node, for the job that publishes.
-    default: ""
 
 runs:
   using: composite
@@ -24,7 +21,6 @@ runs:
       with:
         node-version-file: .nvmrc
         cache: pnpm
-        registry-url: ${{ inputs.registry-url }}
 
     - name: Install dependencies
       shell: bash
