@@ -315,6 +315,14 @@ export const serveBooks = (): Plugin => ({
             response.headers.forEach((value, name) => {
               res.setHeader(name, value)
             })
+            /**
+             * Lets the page cache each file of a book. The reader opens several
+             * spine items at once, and the frame of each one requests the same
+             * stylesheets and fonts: uncached, every frame waits for its own
+             * copy, which the streamer unzips again. A test starts with an
+             * empty cache, in a browser context of its own.
+             */
+            if (response.ok) res.setHeader("Cache-Control", "max-age=60")
             res.end(Buffer.from(await response.arrayBuffer()))
           } catch (error) {
             next(error)
