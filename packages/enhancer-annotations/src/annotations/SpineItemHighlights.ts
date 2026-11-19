@@ -9,11 +9,12 @@ import {
   distinctUntilChanged,
   endWith,
   forkJoin,
+  fromEvent,
   map,
-  merge,
+  mergeMap,
   type Observable,
   scan,
-  switchMap,
+  share,
   takeUntil,
 } from "rxjs"
 import { SpineItemHighlight } from "./SpineItemHighlight.ts"
@@ -34,7 +35,11 @@ export class SpineItemHighlights extends DestroyableClass {
    */
   public readonly highlights$ = this.highlights.asObservable()
 
-  public readonly tap$: SpineItemHighlight["tap$"]
+  /** The taps on the highlights, one per highlight under the tap. */
+  public readonly tap$: Observable<{
+    event: Event
+    highlight: RuntimeAnnotation
+  }>
 
   /**
    * @param annotations$ The annotations of this item, each list replacing the
@@ -56,11 +61,15 @@ export class SpineItemHighlights extends DestroyableClass {
       firstLayerElement,
     )
 
-    this.tap$ = this.highlights.pipe(
-      switchMap((highlights) =>
-        merge(...highlights.map((highlight) => highlight.tap$)),
+    this.tap$ = fromEvent(this.layer, "click").pipe(
+      mergeMap((event) =>
+        this.getHighlightsForTarget(event.target).map((highlight) => ({
+          event,
+          highlight: highlight.annotation,
+        })),
       ),
       takeUntil(this.destroy$),
+      share(),
     )
 
     /**
@@ -150,7 +159,7 @@ export class SpineItemHighlights extends DestroyableClass {
     ).pipe(defaultIfEmpty(null))
   }
 
-  getHighlightsForTarget(target: EventTarget) {
+  getHighlightsForTarget(target: EventTarget | null) {
     return this.highlights.value.filter(
       (highlight) => target instanceof Node && highlight.isWithinTarget(target),
     )

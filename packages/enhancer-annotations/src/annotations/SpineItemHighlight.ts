@@ -6,11 +6,9 @@ import {
 } from "@prose-reader/core"
 import {
   first,
-  fromEvent,
   map,
   merge,
   type Observable,
-  share,
   shareReplay,
   takeUntil,
   tap,
@@ -21,10 +19,6 @@ import { createElementForRange } from "./utils.ts"
 
 export class SpineItemHighlight extends DestroyableClass {
   private container: HTMLElement
-  public readonly tap$: Observable<{
-    event: Event
-    highlight: RuntimeAnnotation
-  }>
   /**
    * The cfi it draws, resolved once per load of the document. A new cfi
    * needs a new highlight.
@@ -49,12 +43,6 @@ export class SpineItemHighlight extends DestroyableClass {
     this.container = this.containerElement.ownerDocument.createElement("div")
     this.container.dataset.highlightContainer = this.annotation.id
     this.containerElement.appendChild(this.container)
-
-    this.tap$ = fromEvent(this.container, "click").pipe(
-      map((event) => ({ event, highlight: this.annotation })),
-      takeUntil(this.destroy$),
-      share(),
-    )
 
     /**
      * Resolved only into a loaded document: one being released would be
