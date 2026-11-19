@@ -9,8 +9,8 @@ export const BookmarksList = ({ onNavigate }: { onNavigate: () => void }) => {
     <List.Root overflowY="auto" gap={3} pt={4} variant="plain">
       {annotations?.map((item) => (
         <AnnotationListItem
-          key={item.resource.id}
-          id={item.resource.id}
+          key={item.id}
+          id={item.id}
           onNavigate={onNavigate}
           allowLeftIcon={false}
         />
