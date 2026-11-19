@@ -75,8 +75,8 @@ const ALL_PROJECTS: PlaywrightTestProject[] = [
 
 /**
  * `BROWSER_ENGINE` (`chromium`, `firefox` or `webkit`) keeps the projects
- * whose device runs on that engine, as CI's jobs do: one per engine, two for
- * WebKit. Unset, every project runs.
+ * whose device runs on that engine, as the two CI jobs of an engine do
+ * together. Unset, every project runs.
  */
 const BROWSER_ENGINE_TO_RUN = process.env.BROWSER_ENGINE
 
