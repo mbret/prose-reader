@@ -15,6 +15,7 @@ import {
   takeUntil,
   withLatestFrom,
 } from "rxjs"
+import { getSpineItemPageIndexOfCfi } from "../../cfi/getSpineItemPageIndexOfCfi.ts"
 import type { ProseParsedCfi } from "../../cfi/index.ts"
 import type { Reader } from "../../reader.ts"
 import type { SpineItem } from "../../spineItem/SpineItem.ts"
@@ -61,6 +62,7 @@ const getLocatableResourceCfi = (
 type CfiToLocate = {
   cfi: string
   parsedCfi: ReturnType<Reader["cfi"]["parseCfi"]>
+  isRootCfi: boolean
 }
 
 /**
@@ -68,7 +70,7 @@ type CfiToLocate = {
  * the current one.
  */
 const consolidate = (
-  { cfi, parsedCfi }: CfiToLocate,
+  { cfi, parsedCfi, isRootCfi }: CfiToLocate,
   reader: Reader,
 ): Observable<ConsolidatedResource> => {
   const spineItem = reader.spineItemsManager.get(parsedCfi.itemIndex)
@@ -83,7 +85,11 @@ const consolidate = (
         offset: startOffset,
         range,
       } = isSpineItemReady ? reader.cfi.resolveCfi({ cfi }) : {}
-      const itemPageIndex = reader.cfi.getSpineItemPageIndexFromCfi(cfi)
+      const itemPageIndex = getSpineItemPageIndexOfCfi({
+        spineItem,
+        isRootCfi,
+        resolveNode: () => ({ node, offset: startOffset }),
+      })
 
       return {
         ...parsedCfi,
@@ -162,6 +168,7 @@ export class ResourcesLocator {
     const cfiToLocate: CfiToLocate = {
       cfi,
       parsedCfi: this.reader.cfi.parseCfi(cfi),
+      isRootCfi: this.reader.cfi.isRootCfi(cfi),
     }
 
     return deferIdle(() => {

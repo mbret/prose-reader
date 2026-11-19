@@ -1,17 +1,13 @@
 import type { Reader } from "@prose-reader/core"
 import {
   BehaviorSubject,
-  combineLatest,
   defaultIfEmpty,
   forkJoin,
   map,
   merge,
   type Observable,
-  of,
-  shareReplay,
   switchMap,
 } from "rxjs"
-import type { AnnotationPage } from "../types.ts"
 import { SpineItemHighlights } from "./SpineItemHighlights.ts"
 import type { RuntimeAnnotation } from "./types.ts"
 
@@ -25,9 +21,6 @@ export class ReaderHighlights {
   >(new Map())
 
   public tap$: SpineItemHighlights["tap$"]
-
-  /** The pages of the annotations of every spine item whose document is loaded. */
-  public pageByAnnotationId$: Observable<ReadonlyMap<string, AnnotationPage>>
 
   constructor(
     private reader: Reader,
@@ -70,28 +63,6 @@ export class ReaderHighlights {
     this.reader.hookManager.register("item.onDocumentUnload", ({ itemId }) => {
       this.destroySpineItemHighlights(itemId)
     })
-
-    this.pageByAnnotationId$ = this.spineItemHighlightsByItemId.pipe(
-      switchMap((spineItemHighlightsByItemId) => {
-        const pageByAnnotationIdOfEachItem = Array.from(
-          spineItemHighlightsByItemId.values(),
-          (spineItemHighlights) => spineItemHighlights.pageByAnnotationId$,
-        )
-
-        return pageByAnnotationIdOfEachItem.length === 0
-          ? of([])
-          : combineLatest(pageByAnnotationIdOfEachItem)
-      }),
-      map(
-        (pageByAnnotationIdOfEachItem): ReadonlyMap<string, AnnotationPage> =>
-          new Map(
-            pageByAnnotationIdOfEachItem.flatMap((pageByAnnotationId) =>
-              Array.from(pageByAnnotationId),
-            ),
-          ),
-      ),
-      shareReplay({ refCount: true, bufferSize: 1 }),
-    )
 
     this.tap$ = this.spineItemHighlightsByItemId.pipe(
       switchMap((spineItemHighlightsByItemId) =>

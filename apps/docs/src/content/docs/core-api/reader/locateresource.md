@@ -61,13 +61,13 @@ locateResource(resource, options)
 `itemPageIndex` and `absolutePageIndex` are given only when the reader knows them:
 
 * A spine item, a CFI that names only its item, and a CFI of a pre-paginated item are on the first page of their item. Their page is known at once, loaded or not.
-* Any other CFI of a reflowable item is on the page of the node it points to. Its page is known while its item is loaded and laid out and the CFI resolves in it, and `undefined` otherwise.
-
-`reader.cfi.getSpineItemPageIndexFromCfi(cfi)` applies the same rule to one CFI, at once: it returns the page of its spine item, or `undefined`.
+* Any other CFI of a reflowable item is on the page of the node it points to. Its page is known while its item is loaded and laid out, is not being laid out again, and the CFI resolves in it. It is `undefined` otherwise.
 
 In the `shallow` mode, a CFI of a reflowable item that is not loaded therefore has no page. It gets one when its item loads, for example because the reader goes there, and loses it as soon as its item unloads. In the `load` mode, it has no page until its item has loaded.
 
-The values follow the last completed layout. While a new layout of the item is pending, after a resize or a change of font size for example, they are those of the layout before it, and the resource is located again once the layout completes. [`reader.spine.isLayoutCurrentFor()`](/core-api/spine#islayoutcurrentfor) tells whether a layout of the item is pending.
+The values follow the last completed layout. While a new layout of the item is pending, after a resize or a change of font size for example, they are those of the layout before it, and the resource is located again once the layout completes. A resource you locate while its item is being laid out gets its page once that layout completes. [`reader.spine.isLayoutCurrentFor()`](/core-api/spine#islayoutcurrentfor) tells whether a layout of the item is pending.
+
+`reader.cfi.getSpineItemPageIndexFromCfi(cfi)` gives the `itemPageIndex` of one CFI by the same rules, at once. It locates and loads nothing, and returns `undefined` when the page is not known.
 
 ### Returns
 

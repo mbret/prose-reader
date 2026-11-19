@@ -255,6 +255,71 @@ describe("a cfi located in a reflowable item that unloads while no layout can co
   })
 })
 
+describe("a cfi located while its reflowable item is being laid out", () => {
+  it("has no page until that layout completes", async () => {
+    vi.useFakeTimers()
+
+    const isLayoutHeld = new BehaviorSubject(false)
+
+    // A text document whose layouts complete only while they are not held.
+    class HeldLayoutTextRenderer extends TextDocumentRenderer {
+      onLayout() {
+        return isLayoutHeld.pipe(
+          first((isHeld) => !isHeld),
+          map(() => undefined),
+        )
+      }
+    }
+
+    const reader = createEnhancedTestReader({
+      manifest: createTestManifest({
+        renditionLayout: "reflowable",
+        spineItems: createTestManifestSpineItems(2),
+      }),
+      getRenderer: () => (props) => new HeldLayoutTextRenderer(props),
+      numberOfAdjacentSpineItemToPreLoad: 0,
+    })
+
+    mountTestReader(reader)
+    await vi.runAllTimersAsync()
+
+    const locatedItem = reader.spineItemsManager.get(0)
+
+    if (!locatedItem) throw new Error("the book has no first item")
+
+    isLayoutHeld.next(true)
+    reader.layout()
+    await vi.runAllTimersAsync()
+
+    const onLocated = vi.fn()
+
+    reader
+      // The text of the paragraph of the first item.
+      .locateResource({ cfi: "epubcfi(/6/2!/4/2/1:3)" }, { mode: "shallow" })
+      .subscribe(onLocated)
+    await vi.runAllTimersAsync()
+
+    const itemWhileLaidOut = {
+      isReady: locatedItem.value.isReady,
+      isDirty: locatedItem.value.isDirty,
+    }
+    const pageWhileLaidOut = onLocated.mock.lastCall?.[0].meta.itemPageIndex
+
+    isLayoutHeld.next(false)
+    await vi.runAllTimersAsync()
+
+    expect({
+      itemWhileLaidOut,
+      pageWhileLaidOut,
+      pageOnceLaidOut: onLocated.mock.lastCall?.[0].meta.itemPageIndex,
+    }).toEqual({
+      itemWhileLaidOut: { isReady: true, isDirty: true },
+      pageWhileLaidOut: undefined,
+      pageOnceLaidOut: 0,
+    })
+  })
+})
+
 describe("a resource located without loading its item", () => {
   it.each([
     [
