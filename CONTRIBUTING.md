@@ -109,8 +109,10 @@ for every package. npm takes a trusted publisher only for a package that
 exists, so publish the first version of a new package by hand, then add its
 trusted publisher.
 
-The release commit lands on `master` only. Merge `master` back into `develop`
-after it, so that the next pull requests start from the released versions.
+The release commit lands on `master` only, so `develop` keeps the versions and
+changelogs of an earlier release. Nothing reads them there: lerna finds the
+last release from the tags on `master`, and the packages reference each other
+with `workspace:^`.
 
 ## Commit messages
 
