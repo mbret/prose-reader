@@ -39,7 +39,9 @@ ways, and apps use both:
 
 - over http: the test app's server streams it on the page's origin, as an
   app's service worker or server does (`server/serveBooks.ts`), and the
-  reader loads each document straight from its url;
+  reader loads each document straight from its url. The server lets the page
+  cache each file, as an app's server can, so the frames of a book fetch a
+  stylesheet or a font once;
 - from blobs: the page streams it itself and hands the reader each resource as
   a `Response`, as the getting-started guide does, and the reader loads each
   document from a blob and resolves its assets itself.
