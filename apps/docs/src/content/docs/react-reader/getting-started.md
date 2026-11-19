@@ -12,10 +12,10 @@ npm install @prose-reader/react-reader @prose-reader/core @prose-reader/shared \
   @prose-reader/cbz @prose-reader/enhancer-annotations @prose-reader/enhancer-audio \
   @prose-reader/enhancer-gallery @prose-reader/enhancer-gestures \
   @prose-reader/enhancer-refit @prose-reader/enhancer-search \
-  @chakra-ui/react @emotion/react rc-slider react-icons reactjrx@6 rxjs screenfull
+  @chakra-ui/react @emotion/react rc-slider react-icons reactjrx@7 rxjs screenfull
 ```
 
-This package only uses peerDependencies, all of them required, so don't hesitate to use the library for the rest of your app. `react` and `react-dom` (19) are your app's own. react-reader needs reactjrx 6.
+This package only uses peerDependencies, all of them required, so don't hesitate to use the library for the rest of your app. `react` and `react-dom` (19) are your app's own. react-reader needs reactjrx 7.
 
 [https://github.com/mbret/reactjrx](https://github.com/mbret/reactjrx) is specifically very useful if you use `rxjs`.
 
