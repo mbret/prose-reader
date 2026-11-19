@@ -16,8 +16,8 @@ creates, so it shares that reader's copies rather than bringing its own.
 
 ## Showing highlights
 
-Give the enhancer your annotations as an observable, and emit a new array each
-time they change:
+Give the enhancer your annotations as an observable. Each time they change,
+emit a new array, and put each changed annotation in it as a new object:
 
 ```ts
 import { createReader } from "@prose-reader/core"
@@ -34,26 +34,40 @@ const reader = annotationsEnhancer(createReader)({
   annotations: { annotations$ },
 })
 
+// The user changed the color of an annotation.
+annotations$.next(
+  annotations$.value.map((annotation) =>
+    annotation.id === changedId
+      ? { ...annotation, highlightColor: "red" }
+      : annotation,
+  ),
+)
+
 // The user removed an annotation.
 annotations$.next(
   annotations$.value.filter((annotation) => annotation.id !== removedId),
 )
 ```
 
+The enhancer compares each entry with the previous one by reference. It ignores
+an array that holds the same objects as the previous one, so it does not draw
+again an annotation that you change in place.
+
 The enhancer draws a highlight for each annotation whose CFI is a range, over
 the text that range covers, while the document of its spine item is loaded:
 
 * in its `highlightColor`, or yellow when it has none, with a note icon when it
   has `notes`;
-* with a dashed border when it is `selected`.
+* with a red dashed border when it is the first annotation in the array whose
+  `selected` is `true`.
 
-It follows the array by `id`. When the entry of an annotation changes, the
-enhancer draws its highlight again. When an annotation leaves the array, its
-highlight goes at once.
+The enhancer matches each highlight to its annotation by `id`, so give each
+annotation an `id` of its own. When an annotation changes, the enhancer draws
+its highlight again. When an annotation leaves the array, the enhancer removes
+its highlight at once.
 
-`reader.annotations.highlightTap$` emits each tap on a highlight, with its
-annotation. Observe it only to react to taps: the enhancer draws the highlights
-without it.
+`reader.annotations.highlightTap$` emits `{ event, highlight }` for each tap on
+a highlight. `highlight` is the annotation of the tapped highlight.
 
 ## Blank pages and annotations
 

@@ -20,20 +20,15 @@ type HighlightsReader = Reader & AnnotationsEnhancerAPI
 const YELLOW = "rgb(255, 255, 0)"
 const RED = "rgb(255, 0, 0)"
 
-/** Gives the reader a new list of annotations, as an app does. */
 const setAnnotations = (page: Page, annotations: Annotation[]) =>
   page.evaluate((annotations) => {
-    // The page's window is untyped: the scenario's index.tsx sets the
-    // annotations it gives the reader.
+    // `annotations$` is not in the type of `window`: the scenario's index.tsx
+    // sets it.
     ;(
       window as unknown as { annotations$: BehaviorSubject<Annotation[]> }
     ).annotations$.next(annotations)
   }, annotations)
 
-/**
- * An annotation over the first characters of a paragraph of a spine item
- * whose document is loaded.
- */
 const createAnnotationOverStartOfParagraph = async (
   page: Page,
   {
@@ -65,10 +60,6 @@ const createAnnotationOverStartOfParagraph = async (
     { spineItemIndex, paragraphIndex, id },
   )
 
-/**
- * Expects the first rect of the highlight of an annotation to cover the first
- * character the annotation's cfi points to, where the page shows it.
- */
 const expectFirstRectOfHighlightToCoverStartOf = async (
   page: Page,
   annotation: Annotation,
@@ -94,7 +85,7 @@ const expectFirstRectOfHighlightToCoverStartOf = async (
   ).toBe(true)
 }
 
-test("draws the highlight of an annotation with nothing observing taps, draws it again as it changes, and removes it once it leaves the list", async ({
+test("draws the highlight of an annotation with nothing observing taps, draws it again when it changes, and removes it when it leaves the list", async ({
   page,
 }) => {
   await page.goto("http://localhost:3333/tests/highlights/index.html")
@@ -120,14 +111,25 @@ test("draws the highlight of an annotation with nothing observing taps, draws it
     highlightColor: RED,
     notes: "a note",
   }
+  const annotationAtRootOfChapter = await reader.evaluate(
+    (reader, { spineItemIndex, id }): Annotation => {
+      const spineItem = reader.spineItemsManager.get(spineItemIndex)
+
+      if (!spineItem) throw new Error(`no spine item ${spineItemIndex}`)
+
+      return { id, cfi: reader.cfi.generateRootCfi(spineItem.item) }
+    },
+    { spineItemIndex: chapterIndex, id: annotation.id },
+  )
 
   expect(
     await reader.evaluate(
-      (reader, cfi) => reader.cfi.resolveCfi({ cfi }).isCfiRange,
-      annotation.cfi,
+      (reader, cfis) =>
+        cfis.map((cfi) => reader.cfi.resolveCfi({ cfi }).isCfiRange ?? false),
+      [annotation.cfi, annotationAtRootOfChapter.cfi],
     ),
-    "whether the cfi of the annotation is a range",
-  ).toBe(true)
+    "whether the cfi of the annotation, then the root cfi of the chapter, is a range",
+  ).toEqual([true, false])
 
   const chapterDocument = await reader.evaluateHandle(
     (reader, spineItemIndex) =>
@@ -157,6 +159,15 @@ test("draws the highlight of an annotation with nothing observing taps, draws it
     page,
     annotationMovedToNextParagraph,
   )
+
+  await setAnnotations(page, [annotationAtRootOfChapter])
+
+  await expect(
+    page.locator(`[data-highlight-rect="${annotation.id}"]`),
+  ).toHaveCount(0)
+  await expect(
+    page.locator(`[data-highlight-container="${annotation.id}"]`),
+  ).toHaveCount(1)
 
   await setAnnotations(page, [])
 

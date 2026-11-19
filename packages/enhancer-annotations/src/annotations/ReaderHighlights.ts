@@ -11,23 +11,25 @@ import {
 import { SpineItemHighlights } from "./SpineItemHighlights.ts"
 import type { RuntimeAnnotation } from "./types.ts"
 
+/**
+ * The highlights of the spine items whose document is loaded. The reader
+ * unloads every document when it is destroyed, which destroys them.
+ */
 export class ReaderHighlights extends DestroyableClass {
-  /** The highlights of each spine item whose document is loaded, by item id. */
   private spineItemHighlightsByItemId = new BehaviorSubject<
     ReadonlyMap<string, SpineItemHighlights>
   >(new Map())
-  private deregisterHooks: (() => void)[]
 
   public tap$: SpineItemHighlights["tap$"]
 
   constructor(
     private reader: Reader,
-    private highlights: Observable<RuntimeAnnotation[]>,
-    private selectedHighlight: Observable<string | undefined>,
+    private annotations$: Observable<RuntimeAnnotation[]>,
+    private selectedAnnotationId$: Observable<string | undefined>,
   ) {
     super()
 
-    const deregisterDocumentLoadHook = this.reader.hookManager.register(
+    this.reader.hookManager.register(
       "item.onDocumentLoad",
       async ({ itemId }) => {
         this.destroySpineItemHighlights(itemId)
@@ -36,19 +38,19 @@ export class ReaderHighlights extends DestroyableClass {
 
         if (!spineItem) return
 
-        const spineItemHighlights$ = this.highlights.pipe(
-          map((highlights) =>
-            highlights.filter(
-              (highlight) => highlight.itemIndex === spineItem.item.index,
+        const spineItemAnnotations$ = this.annotations$.pipe(
+          map((annotations) =>
+            annotations.filter(
+              (annotation) => annotation.itemIndex === spineItem.item.index,
             ),
           ),
         )
 
         const spineItemHighlights = new SpineItemHighlights(
-          spineItemHighlights$,
+          spineItemAnnotations$,
           spineItem,
           reader,
-          this.selectedHighlight,
+          this.selectedAnnotationId$,
         )
 
         this.spineItemHighlightsByItemId.next(
@@ -60,17 +62,9 @@ export class ReaderHighlights extends DestroyableClass {
       },
     )
 
-    const deregisterDocumentUnloadHook = this.reader.hookManager.register(
-      "item.onDocumentUnload",
-      ({ itemId }) => {
-        this.destroySpineItemHighlights(itemId)
-      },
-    )
-
-    this.deregisterHooks = [
-      deregisterDocumentLoadHook,
-      deregisterDocumentUnloadHook,
-    ]
+    this.reader.hookManager.register("item.onDocumentUnload", ({ itemId }) => {
+      this.destroySpineItemHighlights(itemId)
+    })
 
     this.tap$ = this.spineItemHighlightsByItemId.pipe(
       switchMap((spineItemHighlightsByItemId) =>
@@ -121,17 +115,5 @@ export class ReaderHighlights extends DestroyableClass {
         spineItemHighlights.layout(),
       ),
     ).pipe(defaultIfEmpty(null))
-  }
-
-  public destroy() {
-    super.destroy()
-
-    for (const deregisterHook of this.deregisterHooks) deregisterHook()
-
-    for (const spineItemHighlights of this.allSpineItemHighlights) {
-      spineItemHighlights.destroy()
-    }
-
-    this.spineItemHighlightsByItemId.complete()
   }
 }

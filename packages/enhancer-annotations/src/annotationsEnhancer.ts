@@ -67,7 +67,7 @@ export const annotationsEnhancer =
       }),
     )
 
-    const selectedHighlight$ = runtimeAnnotations$.pipe(
+    const selectedAnnotationId$ = runtimeAnnotations$.pipe(
       map(
         (annotations) =>
           annotations.find((annotation) => annotation.selected)?.id,
@@ -79,7 +79,7 @@ export const annotationsEnhancer =
     const readerHighlights = new ReaderHighlights(
       reader,
       runtimeAnnotations$,
-      selectedHighlight$,
+      selectedAnnotationId$,
     )
 
     const resolveItemInformation = (params: {
@@ -167,6 +167,10 @@ export const annotationsEnhancer =
       ),
     )
 
+    /**
+     * Also keeps `runtimeAnnotations$` subscribed for the reader's whole life,
+     * so a spine item that loads later gets the latest list from its replay.
+     */
     renderAnnotations$.pipe(takeUntil(reader.$.destroy$)).subscribe()
 
     return {

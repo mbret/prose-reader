@@ -19,16 +19,12 @@ import type { RuntimeAnnotation } from "./types.ts"
 import { createAnnotationLayer, layoutAnnotationLayer } from "./utils.ts"
 
 /**
- * The highlights of the annotations of one spine item, while its document is
- * loaded: one highlight for each annotation of the item, from the moment its
- * id enters the list to the moment it leaves it.
+ * One highlight per annotation id, from the first list of `annotations$` that
+ * holds the id to the first list that does not. When a list holds an id more
+ * than once, its last entry wins.
  */
 export class SpineItemHighlights extends DestroyableClass {
   private layer: HTMLElement
-  /**
-   * The highlights by annotation id. Only the subscription to the item's
-   * annotations writes it, with each new list.
-   */
   private highlightsByAnnotationId = new BehaviorSubject<
     ReadonlyMap<string, SpineItemHighlight>
   >(new Map())
@@ -39,7 +35,7 @@ export class SpineItemHighlights extends DestroyableClass {
     annotations$: Observable<RuntimeAnnotation[]>,
     private spineItem: SpineItem,
     private reader: Reader,
-    private selectedHighlight: Observable<string | undefined>,
+    private selectedAnnotationId$: Observable<string | undefined>,
   ) {
     super()
 
@@ -69,44 +65,41 @@ export class SpineItemHighlights extends DestroyableClass {
     })
   }
 
-  /**
-   * Creates the highlights of the ids new to the list, gives the others their
-   * new annotation, and destroys the highlights whose id left the list.
-   */
   private reconcileHighlightsWithAnnotations(annotations: RuntimeAnnotation[]) {
     const previousHighlightsByAnnotationId = this.highlightsByAnnotationId.value
-    const highlightsByAnnotationId = new Map<string, SpineItemHighlight>()
-
-    for (const annotation of annotations) {
-      const existingHighlight =
-        highlightsByAnnotationId.get(annotation.id) ??
-        previousHighlightsByAnnotationId.get(annotation.id)
-
-      if (existingHighlight) {
-        existingHighlight.update(annotation)
-      }
-
-      highlightsByAnnotationId.set(
-        annotation.id,
-        existingHighlight ?? this.createHighlight(annotation),
-      )
-    }
+    const annotationsById = new Map(
+      annotations.map((annotation) => [annotation.id, annotation]),
+    )
 
     for (const [annotationId, highlight] of previousHighlightsByAnnotationId) {
-      if (!highlightsByAnnotationId.has(annotationId)) highlight.destroy()
+      if (!annotationsById.has(annotationId)) highlight.destroy()
     }
 
-    return highlightsByAnnotationId
+    return new Map(
+      Array.from(
+        annotationsById,
+        ([annotationId, annotation]): [string, SpineItemHighlight] => {
+          const existingHighlight =
+            previousHighlightsByAnnotationId.get(annotationId)
+
+          existingHighlight?.update(annotation)
+
+          return [
+            annotationId,
+            existingHighlight ?? this.createHighlight(annotation),
+          ]
+        },
+      ),
+    )
   }
 
   private createHighlight(annotation: RuntimeAnnotation) {
-    const isSelected$ = this.selectedHighlight.pipe(
+    const isSelected$ = this.selectedAnnotationId$.pipe(
       map((id) => id === annotation.id),
       distinctUntilChanged(),
     )
 
     return new SpineItemHighlight(
-      this.spineItem,
       this.layer,
       this.reader,
       annotation,
@@ -140,6 +133,7 @@ export class SpineItemHighlights extends DestroyableClass {
 
     for (const highlight of this.highlights) highlight.destroy()
 
+    this.highlightsByAnnotationId.next(new Map())
     this.highlightsByAnnotationId.complete()
     this.layer.remove()
   }

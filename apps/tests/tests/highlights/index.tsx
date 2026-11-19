@@ -20,8 +20,11 @@ async function run() {
     annotations: { annotations$ },
   })
 
-  // biome-ignore lint/style/noNonNullAssertion: TODO
-  reader.mount(document.getElementById(`app`)!)
+  const container = document.getElementById(`app`)
+
+  if (!container) throw new Error("the page has no app element")
+
+  reader.mount(container)
 
   // @ts-expect-error export for debug
   window.reader = reader
