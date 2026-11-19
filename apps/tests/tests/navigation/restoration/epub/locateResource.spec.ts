@@ -45,11 +45,10 @@ test.describe("Given a resource located on a reader destroyed right away", () =>
 })
 
 /**
- * A shallow locate loads nothing, so it can place a cfi of a reflowable
- * chapter on a page only while that chapter is loaded. Before, it gives no
- * page: the chapter's first page would be a page the cfi is not on, where a
- * bookmark marker would show from the moment the chapter is ready until the
- * locate catches up with its layout.
+ * A shallow locate loads nothing. Until the chapter is laid out, it gives the
+ * cfi no page: the chapter's first page would be a page the cfi is not on, and
+ * a bookmark marker would show there from the moment the chapter is ready
+ * until the locate catches up with its layout.
  */
 test.describe("Given a cfi past the first page of a chapter that is not loaded, located without loading it", () => {
   test("it gives no page until the chapter is laid out, then the page of the cfi", async ({
@@ -75,8 +74,8 @@ test.describe("Given a cfi past the first page of a chapter that is not loaded, 
       await readSettledPagination(page)
     const reader = await getReader(page)
 
-    // The cfi starts the third page shown or the one before it: either way it
-    // is not on the chapter's first page.
+    // The cfi of page 3's first visible node may start on page 2: not on the
+    // chapter's first page either way.
     expect({
       spineItemIndex,
       beginPageIndex,

@@ -126,7 +126,7 @@ describe("a reflowable item located away from the reading position", () => {
 })
 
 describe("a cfi of a reflowable item that is not loaded, located without loading it", () => {
-  it("has no page until its item is laid out, then the page of its node", async () => {
+  it("has no page until its item is laid out, then the page of its node until its item unloads", async () => {
     vi.useFakeTimers()
 
     const reader = createEnhancedTestReader({
@@ -165,6 +165,8 @@ describe("a cfi of a reflowable item that is not loaded, located without loading
 
     reader.navigation.goToSpineItem({ indexOrId: 2, animation: false })
     await vi.runAllTimersAsync()
+    reader.navigation.goToSpineItem({ indexOrId: 0, animation: false })
+    await vi.runAllTimersAsync()
 
     expect(locatedPages).toEqual([
       {
@@ -173,6 +175,11 @@ describe("a cfi of a reflowable item that is not loaded, located without loading
         absolutePageIndex: undefined,
       },
       { loadStatus: "loaded", itemPageIndex: 0, absolutePageIndex: 2 },
+      {
+        loadStatus: "idle",
+        itemPageIndex: undefined,
+        absolutePageIndex: undefined,
+      },
     ])
   })
 })
@@ -225,26 +232,36 @@ describe("a resource located without loading its item", () => {
 })
 
 describe("resources located at the same cfi", () => {
-  it("each come back with their own result", async () => {
+  it("share one consolidation, and each come back with their own result", async () => {
     vi.useFakeTimers()
 
-    const reader = createEnhancedTestReader()
+    const reader = createEnhancedTestReader({
+      getRenderer: renderTextDocuments,
+    })
 
     mountTestReader(reader)
     await vi.runAllTimersAsync()
 
-    const cfi = "epubcfi(/6/4!)"
+    // The text of the paragraph of the first item, which the reader shows.
+    const cfi = "epubcfi(/6/2!/4/2/1:3)"
     const firstResource = { cfi, id: "first" }
     const secondResource = { cfi, id: "second" }
+    const resolveCfi = vi.spyOn(reader.cfi, "resolveCfi")
     const onLocated = vi.fn()
 
     reader.locateResource([firstResource, secondResource]).subscribe(onLocated)
     await vi.runAllTimersAsync()
 
-    expect(
-      onLocated.mock.lastCall?.[0].map(
+    expect({
+      isItemReady: reader.spineItemsManager.get(0)?.value.isReady,
+      consolidations: resolveCfi.mock.calls.length,
+      resourceIds: onLocated.mock.lastCall?.[0].map(
         ({ resource }: { resource: { id: string } }) => resource.id,
       ),
-    ).toEqual(["first", "second"])
+    }).toEqual({
+      isItemReady: true,
+      consolidations: 1,
+      resourceIds: ["first", "second"],
+    })
   })
 })

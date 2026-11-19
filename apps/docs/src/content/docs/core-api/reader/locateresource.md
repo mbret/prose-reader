@@ -61,7 +61,7 @@ locateResource(resource, options)
 `itemPageIndex` and `absolutePageIndex` are given only when the reader knows them:
 
 * A spine item, a CFI that names only its item, and a CFI of a pre-paginated item are on the first page of their item. Their page is known at once, loaded or not.
-* Any other CFI of a reflowable item is on the page of the node it points to. Its page is known while its item is loaded and laid out, and `undefined` otherwise.
+* Any other CFI of a reflowable item is on the page of the node it points to. Its page is known while its item is loaded and laid out and the CFI resolves in it, and `undefined` otherwise.
 
 In the `shallow` mode, a CFI of a reflowable item that is not loaded therefore has no page. It gets one when its item loads, for example because the reader goes there, and loses it when its item unloads. In the `load` mode, it has no page until its item has loaded.
 
