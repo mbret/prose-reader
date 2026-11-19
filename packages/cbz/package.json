@@ -23,8 +23,7 @@
   "files": [
     "/dist"
   ],
-  "main": "./dist/index.cjs",
-  "module": "./dist/index.js",
+  "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
   "publishConfig": {
     "access": "public",
@@ -32,8 +31,8 @@
   },
   "exports": {
     ".": {
-      "import": "./dist/index.js",
-      "require": "./dist/index.cjs"
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
     }
   },
   "scripts": {
@@ -53,5 +52,8 @@
     "@prose-reader/core": "workspace:^",
     "@prose-reader/shared": "workspace:^",
     "@prose-reader/streamer": "workspace:^"
+  },
+  "engines": {
+    "node": ">=22.12"
   }
 }
