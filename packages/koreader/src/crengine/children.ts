@@ -3,8 +3,8 @@ import {
   getParentContext,
   isElement,
   type ParentContext,
-} from "./elements"
-import { isEmptySpace, splitTextPieces, type TextMode } from "./text"
+} from "./elements.ts"
+import { isEmptySpace, splitTextPieces, type TextMode } from "./text.ts"
 
 const TEXT_NODE = 3
 const CDATA_SECTION_NODE = 4

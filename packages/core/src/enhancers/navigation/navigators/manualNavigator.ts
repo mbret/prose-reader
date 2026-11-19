@@ -1,12 +1,12 @@
-import type { UserNavigationEntry } from "../../../navigation/types"
-import type { Reader } from "../../../reader"
-import { SpinePosition } from "../../../spine/types"
-import type { SpineItemReference } from "../../../spineItem/SpineItem"
-import { navigationReport } from "../report"
+import type { UserNavigationEntry } from "../../../navigation/types.ts"
+import type { Reader } from "../../../reader.ts"
+import { SpinePosition } from "../../../spine/types.ts"
+import type { SpineItemReference } from "../../../spineItem/SpineItem.ts"
+import { navigationReport } from "../report.ts"
 import {
   getNavigationForPageTurn,
   type PageTurnSide,
-} from "../resolvers/getNavigationForPageTurn"
+} from "../resolvers/getNavigationForPageTurn.ts"
 
 export class ManualNavigator {
   movingLastDelta = { x: 0, y: 0 }

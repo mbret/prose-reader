@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest"
-import { createManifestResourceHref } from "./createManifestResourceHref"
+import { createManifestResourceHref } from "./createManifestResourceHref.ts"
 
 describe("createManifestResourceHref", () => {
   it("should create encoded file hrefs without a base URL", () => {

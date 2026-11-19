@@ -1,7 +1,7 @@
 import { tap } from "rxjs"
-import type { Reader } from "../../reader"
-import { isHtmlTagElement } from "../../utils/dom"
-import type { HtmlEnhancerOutput } from "../html/enhancer"
+import type { Reader } from "../../reader.ts"
+import { isHtmlTagElement } from "../../utils/dom.ts"
+import type { HtmlEnhancerOutput } from "../html/enhancer.ts"
 
 const resolveHref = (href: string, base: string) => {
   try {

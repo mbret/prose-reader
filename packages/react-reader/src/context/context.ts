@@ -7,15 +7,15 @@ import type { EnhancerAPI as GesturesEnhancerAPI } from "@prose-reader/enhancer-
 import { createContext } from "react"
 import { type Signal, signal } from "reactjrx"
 import { Subject } from "rxjs"
-import type { ReaderNotification } from "../notifications/types"
+import type { ReaderNotification } from "../notifications/types.ts"
 import type {
   ManagedSettingName,
   ReactReaderSettings,
-} from "../settings/managedSettings"
+} from "../settings/managedSettings.ts"
 import type {
   ReactReaderSettingsScope,
   ReactReaderSettingsScopeReference,
-} from "../settings/types"
+} from "../settings/types.ts"
 
 /**
  * Add `reader` to this interface to declare the type of the reader your

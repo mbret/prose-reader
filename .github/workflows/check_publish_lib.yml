@@ -37,6 +37,14 @@ jobs:
   publish:
     needs: [lint, ts, ts_react_native_demo, tests, docker]
     runs-on: ubuntu-latest
+    # A job-level block replaces the default permissions, so it lists all
+    # that the job uses.
+    permissions:
+      # to push the release commit and its tag to master
+      contents: write
+      # for npm trusted publishing: for each package, the job's OIDC token is
+      # exchanged for an npm token, and lerna publishes it with provenance
+      id-token: write
     outputs:
       outcome: ${{ steps.publish.outputs.outcome }}
       version: ${{ steps.publish.outputs.version }}
@@ -50,8 +58,46 @@ jobs:
           fetch-depth: 0
 
       - uses: ./.github/actions/setup
-        with:
-          registry-url: "https://registry.npmjs.org"
+
+      # npm publishes each package only for a workflow it trusts: lerna
+      # exchanges the job's OIDC token for an npm token, one package at a
+      # time, and there is no token to fall back on. Exchanging it for every
+      # package first stops the run before anything is pushed when npm does
+      # not trust this workflow for one of them, instead of after the release
+      # is tagged on master. An exchange also validates a new trusted
+      # publisher, which npm otherwise expires after 48 hours, so packages
+      # that this release does not change are validated too.
+      #
+      # npm takes a trusted publisher only for a package that exists, so the
+      # first version of a new package is published by hand.
+      - name: Check that npm trusts this workflow for every package
+        shell: bash
+        run: |
+          untrusted=0
+          for manifest in packages/*/package.json; do
+            if [ "$(jq --raw-output '.private // false' "$manifest")" = true ]; then
+              continue
+            fi
+            name=$(jq --raw-output .name "$manifest")
+            # A new OIDC token for each exchange, as lerna requests one for
+            # each package, so npm never receives the same token twice.
+            id_token=$(curl --fail --silent --show-error \
+              --header "Authorization: Bearer ${ACTIONS_ID_TOKEN_REQUEST_TOKEN}" \
+              "${ACTIONS_ID_TOKEN_REQUEST_URL}&audience=npm:registry.npmjs.org" | jq --raw-output .value)
+            echo "::add-mask::${id_token}"
+            # The response holds an npm token, which is discarded unread.
+            status=$(curl --silent --output /dev/null --write-out '%{http_code}' --request POST \
+              --header "Authorization: Bearer ${id_token}" \
+              "https://registry.npmjs.org/-/npm/v1/oidc/token/exchange/package/${name/\//%2f}")
+            if [[ "$status" == 2* ]]; then
+              echo "${name}: trusted"
+            else
+              echo "::error title=npm does not trust this workflow for ${name}::npm answered ${status}. Add a trusted publisher on npmjs.com: GitHub Actions, mbret/prose-reader, check_publish_lib.yml, no environment, npm publish allowed."
+              untrusted=$((untrusted + 1))
+            fi
+          done
+
+          [ "$untrusted" -eq 0 ]
 
       # The bump comes from the commit messages rather than being hardcoded, so
       # a breaking change cannot ship as a minor. A merge that changes a
@@ -141,8 +187,6 @@ jobs:
           echo "outcome=released" >> "$GITHUB_OUTPUT"
           echo "version=${tag#v}" >> "$GITHUB_OUTPUT"
           echo "sha=$(git rev-parse HEAD)" >> "$GITHUB_OUTPUT"
-        env:
-          NODE_AUTH_TOKEN: ${{ secrets.NPM_ACCESS_TOKEN }}
 
   # The metadata fetcher ships as a container too, so a library app can run
   # lookups without depending on the npm package. Built from the commit the

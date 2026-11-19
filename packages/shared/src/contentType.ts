@@ -1,4 +1,4 @@
-import { getUriExtension } from "./uri"
+import { getUriExtension } from "./uri.ts"
 
 /**
  * The media type a file name or an archive path's extension registers. A `#`

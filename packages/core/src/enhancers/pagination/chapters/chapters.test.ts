@@ -2,7 +2,7 @@ import type { Manifest } from "@prose-reader/shared"
 import { describe, expect, it } from "vitest"
 import templateManifest from "../tests/chapters-template-a.json"
 import templateManifestB from "../tests/chapters-template-b.json"
-import { buildChaptersInfo } from "."
+import { buildChaptersInfo } from "./index.ts"
 
 const manifest = templateManifest as unknown as Manifest
 const manifestB = templateManifestB as unknown as Manifest

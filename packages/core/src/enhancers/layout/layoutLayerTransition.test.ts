@@ -5,7 +5,7 @@ import {
   installReaderTestEnvironment,
   mountTestReader,
   renderTextDocuments,
-} from "../../tests/readerHarness"
+} from "../../tests/readerHarness.ts"
 
 installReaderTestEnvironment()
 

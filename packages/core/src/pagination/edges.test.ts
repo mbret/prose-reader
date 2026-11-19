@@ -1,6 +1,6 @@
 import { isShallowEqual } from "@prose-reader/shared"
 import { describe, expect, it } from "vitest"
-import { createEmptyPaginationEdge, isSamePaginationResult } from "./edges"
+import { createEmptyPaginationEdge, isSamePaginationResult } from "./edges.ts"
 
 const buildResult = () => ({
   begin: { ...createEmptyPaginationEdge(), spineItemIndex: 0 },

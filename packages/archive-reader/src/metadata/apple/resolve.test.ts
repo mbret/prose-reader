@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest"
-import type { AppleDisplayOption, AppleMetadata } from "./parse"
-import { resolveApple } from "./resolve"
+import type { AppleDisplayOption, AppleMetadata } from "./parse.ts"
+import { resolveApple } from "./resolve.ts"
 
 const metadataWithOptions = (
   options: ReadonlyArray<AppleDisplayOption>,

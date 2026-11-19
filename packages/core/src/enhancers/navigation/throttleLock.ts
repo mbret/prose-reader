@@ -1,5 +1,5 @@
 import { finalize, type Observable, tap, throttleTime } from "rxjs"
-import type { Reader } from "../../reader"
+import type { Reader } from "../../reader.ts"
 
 export const throttleLock =
   ({ reader, duration }: { reader: Reader; duration: number }) =>

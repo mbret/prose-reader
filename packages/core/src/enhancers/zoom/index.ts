@@ -1,6 +1,6 @@
-import type { Reader } from "../../reader"
-import type { ZoomEnhancerOutput } from "./types"
-import { ZoomController } from "./ZoomController"
+import type { Reader } from "../../reader.ts"
+import type { ZoomEnhancerOutput } from "./types.ts"
+import { ZoomController } from "./ZoomController.ts"
 
 export const zoomEnhancer =
   <InheritOptions, InheritOutput extends Reader>(

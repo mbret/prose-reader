@@ -1,7 +1,7 @@
 import { vi } from "vitest"
-import type { Spine } from "../../spine/Spine"
-import type { SpineItemsManager } from "../../spine/SpineItemsManager"
-import { SpineBoundingBox, SpineItemSpineLayout } from "../../spine/types"
+import type { Spine } from "../../spine/Spine.ts"
+import type { SpineItemsManager } from "../../spine/SpineItemsManager.ts"
+import { SpineBoundingBox, SpineItemSpineLayout } from "../../spine/types.ts"
 
 /**
  * Mock the place of each spine item in the spine, by index, and the box of

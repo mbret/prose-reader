@@ -1,7 +1,7 @@
 import { injectCSS, type Reader } from "@prose-reader/core"
-import { Snapshot } from "./Snapshot"
+import { Snapshot } from "./Snapshot.ts"
 import styles from "./style.css?inline"
-import type { GalleryEnhancerAPI } from "./types"
+import type { GalleryEnhancerAPI } from "./types.ts"
 
 export type { GalleryEnhancerAPI }
 

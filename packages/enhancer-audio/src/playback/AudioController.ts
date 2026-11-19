@@ -21,12 +21,12 @@ import type {
   AudioEnhancerState,
   AudioTrack,
   SelectAudioTrackOptions,
-} from "../types"
-import { AudioVisualizer } from "../visualizer"
-import { AudioElementAdapter } from "./AudioElementAdapter"
-import { ResourcesResolver } from "./ResourcesResolver"
-import { createTrackStreams, getManifestAudioTracks } from "./trackStreams"
-import type { AudioControllerReader } from "./types"
+} from "../types.ts"
+import { AudioVisualizer } from "../visualizer/index.ts"
+import { AudioElementAdapter } from "./AudioElementAdapter.ts"
+import { ResourcesResolver } from "./ResourcesResolver.ts"
+import { createTrackStreams, getManifestAudioTracks } from "./trackStreams.ts"
+import type { AudioControllerReader } from "./types.ts"
 
 type SelectCommand = {
   trackId: string

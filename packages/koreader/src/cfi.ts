@@ -5,13 +5,13 @@ import {
   parse,
   resolve,
 } from "@prose-reader/cfi"
-import { isTextNode } from "./crengine/children"
-import { isElement } from "./crengine/elements"
-import { generateXPointer } from "./generate"
-import { parseXPointer } from "./parse"
-import { resolveXPointer } from "./resolve"
-import { serializeXPointer } from "./serialize"
-import type { DomPosition, ParsedXPointer } from "./types"
+import { isTextNode } from "./crengine/children.ts"
+import { isElement } from "./crengine/elements.ts"
+import { generateXPointer } from "./generate.ts"
+import { parseXPointer } from "./parse.ts"
+import { resolveXPointer } from "./resolve.ts"
+import { serializeXPointer } from "./serialize.ts"
+import type { DomPosition, ParsedXPointer } from "./types.ts"
 
 export type XPointerSpineItem = {
   /** The spine item's content document, parsed as XHTML (what prose renders in its frames). */

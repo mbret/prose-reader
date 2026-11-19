@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest"
-import { tokenizeXmlSpaceSeparatedList } from "./tokenizeXmlSpaceSeparatedList"
+import { tokenizeXmlSpaceSeparatedList } from "./tokenizeXmlSpaceSeparatedList.ts"
 
 describe("tokenizeXmlSpaceSeparatedList", () => {
   it("returns empty for undefined, blank, or whitespace-only", () => {

@@ -1,6 +1,6 @@
 import { useLayoutEffect } from "react"
-import type { ReactReaderReader } from "../context/context"
-import { useReaderContext } from "../context/useReaderContext"
+import type { ReactReaderReader } from "../context/context.ts"
+import { useReaderContext } from "../context/useReaderContext.ts"
 
 /**
  * Puts a reader in the context, where `ReactReaderProvider` puts the reader it

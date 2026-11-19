@@ -1,7 +1,7 @@
 import { Fieldset, HStack, Tabs } from "@chakra-ui/react"
 import { memo, type ReactNode, useEffect, useState } from "react"
 import { LuCheck } from "react-icons/lu"
-import { Radio, RadioGroup } from "../components/ui/radio"
+import { Radio, RadioGroup } from "../components/ui/radio.tsx"
 import {
   getScopeForReference,
   isSettingsScope,
@@ -10,7 +10,7 @@ import {
   type ReactReaderSettingsScopeReference,
   SETTINGS_SCOPE_REFERENCES,
   SETTINGS_SCOPES,
-} from "./types"
+} from "./types.ts"
 
 /**
  * The scopes of a setting react-reader manages: which one applies to this

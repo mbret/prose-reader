@@ -1,7 +1,7 @@
 import type { Directory } from "expo-file-system"
 import { describe, expect, it, vi } from "vitest"
-import { createArchiveFromExpoFileSystemNext } from "./createArchiveFromExpoFileSystemNext"
-import { ReactNativeStreamer } from "./ReactNativeStreamer"
+import { createArchiveFromExpoFileSystemNext } from "./createArchiveFromExpoFileSystemNext.ts"
+import { ReactNativeStreamer } from "./ReactNativeStreamer.ts"
 
 /**
  * expo-file-system is a native module, so it cannot run under vitest. These

@@ -1,5 +1,5 @@
 import { removeTrailingSlash } from "@prose-reader/shared"
-import { Streamer } from "./Streamer"
+import { Streamer } from "./Streamer.ts"
 
 type ConflictFreeWebWorkerFetchEvent = {
   readonly request: Request

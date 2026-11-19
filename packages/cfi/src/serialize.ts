@@ -1,5 +1,5 @@
-import type { CfiPart, ParsedCfi } from "./parse"
-import { cfiEscape } from "./utils"
+import type { CfiPart, ParsedCfi } from "./parse.ts"
+import { cfiEscape } from "./utils.ts"
 
 /**
  * Serialize a single CFI part into a string

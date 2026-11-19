@@ -3,7 +3,7 @@ import type {
   InternalNavigationEntry,
   InternalNavigationInput,
   UserNavigationEntry,
-} from "../types"
+} from "../types.ts"
 
 export const mapUserNavigationToInternal = (
   stream: Observable<[UserNavigationEntry, InternalNavigationEntry, boolean]>,

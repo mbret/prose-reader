@@ -1,5 +1,5 @@
-import { Report } from "../../report"
-import type { SpineItem } from "../../spineItem/SpineItem"
+import { Report } from "../../report.ts"
+import type { SpineItem } from "../../spineItem/SpineItem.ts"
 
 export const getRangeFromSelection = (
   anchor: { node: Node; offset?: number },

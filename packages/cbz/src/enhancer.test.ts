@@ -3,8 +3,8 @@ import type { Reader } from "@prose-reader/core"
 import type { Manifest } from "@prose-reader/shared"
 import { createXmlSafeId } from "@prose-reader/shared"
 import { describe, expect, it, vi } from "vitest"
-import { cbzEnhancer } from "./enhancer"
-import { buildVirtualPanoramaResourcePath } from "./panoramaSplitManifest"
+import { cbzEnhancer } from "./enhancer.ts"
+import { buildVirtualPanoramaResourcePath } from "./panoramaSplitManifest.ts"
 
 const VIRTUAL_SPINE_ID_EXTENSION = "vnd.prose-reader.cbz.virtual-spine-id"
 

@@ -5,9 +5,12 @@ import {
 } from "@prose-reader/core"
 import type { AudioVisualizerState } from "@prose-reader/enhancer-audio"
 import { useCallback, useEffect, useRef } from "react"
-import { FALLBACK_BOTTOM_COLOR, FALLBACK_TOP_COLOR } from "./constants"
-import { drawWave as drawWaveFrame } from "./drawWave"
-import { getNormalizedDisplayBarCount, resolveGradientColors } from "./shaping"
+import { FALLBACK_BOTTOM_COLOR, FALLBACK_TOP_COLOR } from "./constants.ts"
+import { drawWave as drawWaveFrame } from "./drawWave.ts"
+import {
+  getNormalizedDisplayBarCount,
+  resolveGradientColors,
+} from "./shaping.ts"
 
 const DEFAULT_VISUALIZER: AudioVisualizerState = {
   levels: [],

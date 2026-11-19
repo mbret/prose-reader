@@ -6,7 +6,7 @@ import {
 } from "@prose-reader/core"
 import { BehaviorSubject, EMPTY, first, map, of } from "rxjs"
 import { afterEach, beforeAll, describe, expect, it, vi } from "vitest"
-import { annotationsEnhancer } from "./annotationsEnhancer"
+import { annotationsEnhancer } from "./annotationsEnhancer.ts"
 
 /** jsdom has no layout, so every element reports this size. */
 const viewport = { width: 400, height: 600 }

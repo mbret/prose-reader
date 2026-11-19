@@ -1,4 +1,4 @@
-import type { CfiRange, ParsedCfi } from "./parse"
+import type { CfiRange, ParsedCfi } from "./parse.ts"
 
 /**
  * Get all ancestors of a node, including the node itself

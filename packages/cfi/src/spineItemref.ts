@@ -1,8 +1,8 @@
-import { EPUB_CFI_PACKAGE_SPINE_STEP_INDEX } from "./constants"
-import type { CfiPart, ParsedCfi } from "./parse"
-import { parse } from "./parse"
-import { serialize } from "./serialize"
-import { isParsedCfiRange } from "./utils"
+import { EPUB_CFI_PACKAGE_SPINE_STEP_INDEX } from "./constants.ts"
+import type { CfiPart, ParsedCfi } from "./parse.ts"
+import { parse } from "./parse.ts"
+import { serialize } from "./serialize.ts"
+import { isParsedCfiRange } from "./utils.ts"
 
 export type EpubCfiSpineItemref = {
   spineIndex: number

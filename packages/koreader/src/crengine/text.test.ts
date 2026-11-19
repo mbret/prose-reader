@@ -6,7 +6,7 @@ import {
   splitTextPieces,
   toCrengineOffset,
   toRawOffset,
-} from "./text"
+} from "./text.ts"
 
 const normal = { pre: false, stripsLeadingNewline: false }
 const pre = { pre: true, stripsLeadingNewline: false }

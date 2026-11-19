@@ -1,9 +1,9 @@
 export type {
   BookBoundaryReachedEvent,
   BookBoundaryReachedOptions,
-} from "./enhancers/navigation/bookBoundary"
-export { observeBookBoundaryReached } from "./enhancers/navigation/bookBoundary"
-export * from "./navigation/operators"
+} from "./enhancers/navigation/bookBoundary.ts"
+export { observeBookBoundaryReached } from "./enhancers/navigation/bookBoundary.ts"
+export * from "./navigation/operators.ts"
 export {
   injectCSS,
   isHtmlElement,
@@ -13,4 +13,4 @@ export {
   setAttributeIfChanged,
   setPropertyIfChanged,
   setStylePropertyIfChanged,
-} from "./utils/dom"
+} from "./utils/dom.ts"

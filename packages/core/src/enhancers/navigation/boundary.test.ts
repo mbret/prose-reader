@@ -1,30 +1,30 @@
 import { firstValueFrom } from "rxjs"
 import { describe, expect, it, vi } from "vitest"
-import { CfiManager } from "../../cfi"
-import { Context } from "../../context/Context"
-import { HookManager } from "../../hooks/HookManager"
-import { createNavigator } from "../../navigation/Navigator"
-import { observeSettledNavigation } from "../../navigation/operators"
+import { CfiManager } from "../../cfi/index.ts"
+import { Context } from "../../context/Context.ts"
+import { HookManager } from "../../hooks/HookManager.ts"
+import { createNavigator } from "../../navigation/Navigator.ts"
+import { observeSettledNavigation } from "../../navigation/operators.ts"
 import {
   mockSpineItemsLayout,
   mockSpineLayout,
-} from "../../navigation/tests/utils"
-import type { Reader } from "../../reader"
-import { ReaderSettingsManager } from "../../settings/ReaderSettingsManager"
-import { Spine } from "../../spine/Spine"
-import { SpineItemsManager } from "../../spine/SpineItemsManager"
+} from "../../navigation/tests/utils.ts"
+import type { Reader } from "../../reader.ts"
+import { ReaderSettingsManager } from "../../settings/ReaderSettingsManager.ts"
+import { Spine } from "../../spine/Spine.ts"
+import { SpineItemsManager } from "../../spine/SpineItemsManager.ts"
 import {
   SpineItemSpineLayout,
   SpinePosition,
   UnboundSpinePosition,
-} from "../../spine/types"
+} from "../../spine/types.ts"
 import {
   createTestManifest,
   createTestManifestSpineItems,
   waitFor,
-} from "../../tests/utils"
-import { Viewport } from "../../viewport/Viewport"
-import { type BoundaryReachedEvent, outOfSpineBoundary } from "./boundary"
+} from "../../tests/utils.ts"
+import { Viewport } from "../../viewport/Viewport.ts"
+import { type BoundaryReachedEvent, outOfSpineBoundary } from "./boundary.ts"
 
 const createTestReader = ({
   itemSize = 100,

@@ -1,18 +1,18 @@
 import { map, type Observable } from "rxjs"
-import type { CfiManager } from "../../cfi"
-import type { Context } from "../../context/Context"
+import type { CfiManager } from "../../cfi/index.ts"
+import type { Context } from "../../context/Context.ts"
 import {
   getPageStartProgression,
   getSpineItemProgression,
-} from "../../pagination/progression"
-import { PAGE_VISIBILITY_THRESHOLD } from "../../spine/Pages"
-import type { Spine } from "../../spine/Spine"
-import type { SpineItem } from "../../spineItem/SpineItem"
+} from "../../pagination/progression.ts"
+import { PAGE_VISIBILITY_THRESHOLD } from "../../spine/Pages.ts"
+import type { Spine } from "../../spine/Spine.ts"
+import type { SpineItem } from "../../spineItem/SpineItem.ts"
 import type {
   InternalNavigationAnchor,
   InternalNavigationEntry,
   InternalNavigationInput,
-} from "../types"
+} from "../types.ts"
 
 type Navigation = {
   navigation: InternalNavigationInput | InternalNavigationEntry

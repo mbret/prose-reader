@@ -1,6 +1,6 @@
 import type { Manifest } from "@prose-reader/shared"
 import { describe, expect, it } from "vitest"
-import { generateRootCfi } from "./generate"
+import { generateRootCfi } from "./generate.ts"
 
 describe("generateRootCfi", () => {
   it("should generate a root cfi", () => {

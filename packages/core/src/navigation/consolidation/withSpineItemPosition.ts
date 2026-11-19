@@ -1,9 +1,12 @@
 import { map, type Observable } from "rxjs"
-import type { ReaderSettingsManager } from "../../settings/ReaderSettingsManager"
-import type { SpineLocator } from "../../spine/locator/SpineLocator"
-import type { SpineItemsManager } from "../../spine/SpineItemsManager"
-import type { NavigationResolver } from "../resolvers/NavigationResolver"
-import type { InternalNavigationEntry, InternalNavigationInput } from "../types"
+import type { ReaderSettingsManager } from "../../settings/ReaderSettingsManager.ts"
+import type { SpineLocator } from "../../spine/locator/SpineLocator.ts"
+import type { SpineItemsManager } from "../../spine/SpineItemsManager.ts"
+import type { NavigationResolver } from "../resolvers/NavigationResolver.ts"
+import type {
+  InternalNavigationEntry,
+  InternalNavigationInput,
+} from "../types.ts"
 
 type Navigation = {
   navigation: InternalNavigationEntry | InternalNavigationInput

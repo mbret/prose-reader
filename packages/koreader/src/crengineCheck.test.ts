@@ -2,9 +2,9 @@ import { existsSync } from "node:fs"
 import { mkdir, readFile, writeFile } from "node:fs/promises"
 import { join } from "node:path"
 import { describe, expect, it } from "vitest"
-import { getCrengineChildren, isTextNode } from "./crengine/children"
-import { isElement } from "./crengine/elements"
-import { generateXPointer } from "./generate"
+import { getCrengineChildren, isTextNode } from "./crengine/children.ts"
+import { isElement } from "./crengine/elements.ts"
+import { generateXPointer } from "./generate.ts"
 import {
   FIXTURES,
   FIXTURES_DIR,
@@ -12,7 +12,7 @@ import {
   normalizeText,
   openFixtureBook,
   WHOLE_BOOK_TIMEOUT,
-} from "./tests/epub"
+} from "./tests/epub.ts"
 
 type Pair = { xp0: string; xp1: string | null; expected: string | null }
 

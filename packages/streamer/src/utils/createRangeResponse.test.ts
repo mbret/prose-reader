@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it, vi } from "vitest"
-import { createRangeResponse } from "./createRangeResponse"
+import { createRangeResponse } from "./createRangeResponse.ts"
 
 describe("createRangeResponse", () => {
   describe("when the body is a string", () => {

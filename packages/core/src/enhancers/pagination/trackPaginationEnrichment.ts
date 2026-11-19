@@ -8,22 +8,22 @@ import {
   shareReplay,
   switchMap,
 } from "rxjs"
-import { observeSettledNavigation } from "../../navigation/operators"
-import { isSamePaginationResult } from "../../pagination/edges"
-import type { PaginationEdge, PaginationInfo } from "../../pagination/types"
-import type { Reader } from "../../reader"
-import { Pages, type PagesState } from "../../spine/Pages"
-import type { SpineItem } from "../../spineItem/SpineItem"
-import type { LayoutEnhancerOutput } from "../layout/layoutEnhancer"
+import { observeSettledNavigation } from "../../navigation/operators.ts"
+import { isSamePaginationResult } from "../../pagination/edges.ts"
+import type { PaginationEdge, PaginationInfo } from "../../pagination/types.ts"
+import type { Reader } from "../../reader.ts"
+import { Pages, type PagesState } from "../../spine/Pages.ts"
+import type { SpineItem } from "../../spineItem/SpineItem.ts"
+import type { LayoutEnhancerOutput } from "../layout/layoutEnhancer.ts"
 import {
   buildStaticChaptersInfo,
   buildTocCandidatesBySpineHref,
   buildTocIndex,
   resolveChapterInfoFromVisibleNode,
   type TocCandidatesBySpineHref,
-} from "./chapters"
-import { getPercentageEstimate } from "./progression"
-import type { EnhancerPaginationEdge, ExtraPaginationInfo } from "./types"
+} from "./chapters/index.ts"
+import { getPercentageEstimate } from "./progression.ts"
+import type { EnhancerPaginationEdge, ExtraPaginationInfo } from "./types.ts"
 
 type ChaptersData = {
   tocCandidatesBySpineHref: TocCandidatesBySpineHref

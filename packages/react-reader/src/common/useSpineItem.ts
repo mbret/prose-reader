@@ -1,6 +1,6 @@
 import { useObserve } from "reactjrx"
 import { EMPTY, map, of } from "rxjs"
-import { useReader } from "../context/useReader"
+import { useReader } from "../context/useReader.ts"
 
 export const useSpineItem = ({
   absolutePageIndex,

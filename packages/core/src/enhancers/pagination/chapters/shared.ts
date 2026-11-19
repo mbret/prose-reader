@@ -4,7 +4,7 @@ import type {
   FlatTocEntry,
   TocCandidatesBySpineHref,
   TocPathEntry,
-} from "./types"
+} from "./types.ts"
 
 type Toc = NonNullable<Manifest["nav"]>["toc"]
 

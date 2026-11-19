@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest"
-import { resolveKobo } from "./resolve"
+import { resolveKobo } from "./resolve.ts"
 
 describe("resolveKobo", () => {
   it("renditionLayout with the kobo corner", () => {

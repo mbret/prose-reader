@@ -1,17 +1,17 @@
 import { filter, firstValueFrom, timeout } from "rxjs"
 import { describe, expect, it, vi } from "vitest"
-import type { SpineItem } from "../../spineItem/SpineItem"
+import type { SpineItem } from "../../spineItem/SpineItem.ts"
 import {
   createFullTestReader,
   installReaderTestEnvironment,
   mountTestReader,
   renderTextDocuments,
-} from "../../tests/readerHarness"
+} from "../../tests/readerHarness.ts"
 import {
   createTestManifest,
   createTestManifestSpineItems,
-} from "../../tests/utils"
-import type { EnhancerFontsInputSettings } from "./types"
+} from "../../tests/utils.ts"
+import type { EnhancerFontsInputSettings } from "./types.ts"
 
 installReaderTestEnvironment()
 

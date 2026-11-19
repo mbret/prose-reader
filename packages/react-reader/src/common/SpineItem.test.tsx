@@ -20,11 +20,11 @@ vi.mock("react-dom", async () => {
   }
 })
 
-vi.mock("../audio/AudioSpineItem", () => ({
+vi.mock("../audio/AudioSpineItem.tsx", () => ({
   AudioSpineItem: audioSpineItemMock,
 }))
 
-import { SpineItem } from "./SpineItem"
+import { SpineItem } from "./SpineItem.tsx"
 
 const createSpineItem = () => {
   return {

@@ -1,18 +1,18 @@
 import { firstValueFrom, of } from "rxjs"
 import { describe, expect, it } from "vitest"
-import type { CfiManager } from "../../cfi"
-import type { Context } from "../../context/Context"
-import type { Spine } from "../../spine/Spine"
-import type { DocumentLoadStatus } from "../../spineItem/renderer/DocumentRenderer"
+import type { CfiManager } from "../../cfi/index.ts"
+import type { Context } from "../../context/Context.ts"
+import type { Spine } from "../../spine/Spine.ts"
+import type { DocumentLoadStatus } from "../../spineItem/renderer/DocumentRenderer.ts"
 import {
   createTestManifest,
   createTestManifestSpineItems,
-} from "../../tests/utils"
+} from "../../tests/utils.ts"
 import type {
   InternalNavigationAnchor,
   InternalNavigationEntry,
-} from "../types"
-import { withAnchor } from "./withAnchor"
+} from "../types.ts"
+import { withAnchor } from "./withAnchor.ts"
 
 const itemStart = "epubcfi(/6/2[0]!)"
 const pageText = "epubcfi(/6/2[0]!/4/2/1:0)"

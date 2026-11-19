@@ -1,7 +1,7 @@
-import type { Context } from "../context/Context"
-import type { ReaderSettingsManager } from "../settings/ReaderSettingsManager"
-import type { Viewport } from "../viewport/Viewport"
-import { SpineItemPosition, UnboundSpineItemPagePosition } from "./types"
+import type { Context } from "../context/Context.ts"
+import type { ReaderSettingsManager } from "../settings/ReaderSettingsManager.ts"
+import type { Viewport } from "../viewport/Viewport.ts"
+import { SpineItemPosition, UnboundSpineItemPagePosition } from "./types.ts"
 
 type Size = { width: number; height: number }
 

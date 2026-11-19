@@ -1,8 +1,8 @@
 import type { Manifest } from "@prose-reader/shared"
 import { describe, expect, it } from "vitest"
-import { isSpreadAllowedByBook } from "../manifest/isSpreadAllowedByBook"
-import type { CoreInputSettings } from "../settings/types"
-import { shouldUseSpreadModeForViewport } from "./spreadMode"
+import { isSpreadAllowedByBook } from "../manifest/isSpreadAllowedByBook.ts"
+import type { CoreInputSettings } from "../settings/types.ts"
+import { shouldUseSpreadModeForViewport } from "./spreadMode.ts"
 
 const createManifest = (
   overrides: Partial<Pick<Manifest, "renditionFlow" | "renditionSpread">> = {},

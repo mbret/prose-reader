@@ -5,7 +5,7 @@ import {
   getDefaultValue,
   type ProviderContextType,
   ReaderContext,
-} from "./context"
+} from "./context.ts"
 
 export function ReaderContextProvider({
   children,

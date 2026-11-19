@@ -23,7 +23,7 @@ import {
   tap,
   timer,
 } from "rxjs"
-import { Report } from "./report"
+import { Report } from "./report.ts"
 
 class ArchiveEntry {
   state$ = new BehaviorSubject<{

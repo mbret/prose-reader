@@ -1,10 +1,10 @@
 import { describe, expect, it } from "vitest"
-import type { ReaderSettingsManager } from "../../settings/ReaderSettingsManager"
-import type { SpineLocator } from "../../spine/locator/SpineLocator"
-import type { SpineItemsManager } from "../../spine/SpineItemsManager"
-import { SpinePosition } from "../../spine/types"
-import type { InternalNavigationEntry } from "../types"
-import { guessDirection } from "./guessDirection"
+import type { ReaderSettingsManager } from "../../settings/ReaderSettingsManager.ts"
+import type { SpineLocator } from "../../spine/locator/SpineLocator.ts"
+import type { SpineItemsManager } from "../../spine/SpineItemsManager.ts"
+import { SpinePosition } from "../../spine/types.ts"
+import type { InternalNavigationEntry } from "../types.ts"
+import { guessDirection } from "./guessDirection.ts"
 
 type Direction = "forward" | "backward"
 

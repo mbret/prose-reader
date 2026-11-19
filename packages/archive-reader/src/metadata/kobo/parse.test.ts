@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest"
-import { parseKoboXml } from "./parse"
+import { parseKoboXml } from "./parse.ts"
 
 describe("parseKoboXml", () => {
   it("returns only kind for an unknown root element", () => {

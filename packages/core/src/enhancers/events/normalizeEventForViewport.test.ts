@@ -4,8 +4,8 @@
 // the prototype, where it copies none, so only jsdom copies an event the way a
 // browser does.
 import { afterEach, describe, expect, it } from "vitest"
-import type { SpineLocator } from "../../spine/locator/SpineLocator"
-import { normalizeEventForViewport } from "./normalizeEventForViewport"
+import type { SpineLocator } from "../../spine/locator/SpineLocator.ts"
+import { normalizeEventForViewport } from "./normalizeEventForViewport.ts"
 
 const FRAME_LEFT = 100
 const FRAME_TOP = 50

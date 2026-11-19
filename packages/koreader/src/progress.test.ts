@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest"
-import { getKoreaderProgressKind } from "./progress"
+import { getKoreaderProgressKind } from "./progress.ts"
 
 describe("getKoreaderProgressKind", () => {
   it.each([

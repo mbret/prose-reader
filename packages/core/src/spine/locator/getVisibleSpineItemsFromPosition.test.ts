@@ -1,18 +1,18 @@
 import { firstValueFrom } from "rxjs"
 import { describe, expect, it, vi } from "vitest"
-import { HookManager } from "../.."
-import { Context } from "../../context/Context"
-import { ReaderSettingsManager } from "../../settings/ReaderSettingsManager"
+import { Context } from "../../context/Context.ts"
+import { HookManager } from "../../hooks/HookManager.ts"
+import { ReaderSettingsManager } from "../../settings/ReaderSettingsManager.ts"
 import {
   createTestManifest,
   createTestManifestSpineItems,
-} from "../../tests/utils"
-import { Viewport } from "../../viewport/Viewport"
-import { SpineItemsManager } from "../SpineItemsManager"
-import { SpineItemsObserver } from "../SpineItemsObserver"
-import { SpineLayout } from "../SpineLayout"
-import { SpinePosition } from "../types"
-import { getVisibleSpineItemsFromPosition } from "./getVisibleSpineItemsFromPosition"
+} from "../../tests/utils.ts"
+import { Viewport } from "../../viewport/Viewport.ts"
+import { SpineItemsManager } from "../SpineItemsManager.ts"
+import { SpineItemsObserver } from "../SpineItemsObserver.ts"
+import { SpineLayout } from "../SpineLayout.ts"
+import { SpinePosition } from "../types.ts"
+import { getVisibleSpineItemsFromPosition } from "./getVisibleSpineItemsFromPosition.ts"
 
 const singlePageItems = [
   {

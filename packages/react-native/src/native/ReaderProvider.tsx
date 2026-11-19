@@ -1,5 +1,5 @@
 import { createContext, useContext } from "react"
-import type { useCreateReader } from "./useCreateReader"
+import type { useCreateReader } from "./useCreateReader.ts"
 
 export const ReaderContext = createContext<
   ReturnType<typeof useCreateReader> | undefined

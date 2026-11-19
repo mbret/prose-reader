@@ -18,8 +18,7 @@
     "directory": "packages/streamer"
   },
   "type": "module",
-  "main": "./dist/index/index.cjs",
-  "module": "./dist/index/index.js",
+  "main": "./dist/index/index.js",
   "publishConfig": {
     "access": "public",
     "registry": "https://registry.npmjs.org/"
@@ -27,8 +26,7 @@
   "exports": {
     ".": {
       "types": "./dist/index.d.ts",
-      "import": "./dist/index/index.js",
-      "require": "./dist/index/index.cjs"
+      "default": "./dist/index/index.js"
     }
   },
   "types": "./dist/index.d.ts",

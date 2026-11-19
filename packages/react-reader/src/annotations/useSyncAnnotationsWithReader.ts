@@ -1,8 +1,8 @@
 import { useCallback } from "react"
 import { useSubscribe } from "reactjrx"
 import { combineLatest, distinctUntilChanged, map } from "rxjs"
-import { useReaderContext } from "../context/useReaderContext"
-import { useReaderWithAnnotations } from "./useReaderWithAnnotations"
+import { useReaderContext } from "../context/useReaderContext.ts"
+import { useReaderWithAnnotations } from "./useReaderWithAnnotations.ts"
 
 export const useSyncAnnotationsWithReader = () => {
   const reader = useReaderWithAnnotations()

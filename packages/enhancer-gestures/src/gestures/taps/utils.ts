@@ -1,4 +1,4 @@
-import type { TapArea } from "./types"
+import type { TapArea } from "./types.ts"
 
 export const isPositionInArea = (
   position: { x: number; y: number },

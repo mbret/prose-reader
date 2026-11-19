@@ -1,5 +1,5 @@
-import type { SpineItemPosition } from "../../spineItem/types"
-import { SpinePosition } from "../types"
+import type { SpineItemPosition } from "../../spineItem/types.ts"
+import { SpinePosition } from "../types.ts"
 
 /**
  * Be careful when using with spread with RTL, this will return the position for one page size. This is in order to prevent wrong position when

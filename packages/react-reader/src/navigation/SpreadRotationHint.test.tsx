@@ -8,12 +8,12 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
 
 const { useReaderMock } = vi.hoisted(() => ({ useReaderMock: vi.fn() }))
 
-vi.mock("../context/useReader", async (importOriginal) => ({
-  ...(await importOriginal<typeof import("../context/useReader")>()),
+vi.mock("../context/useReader.ts", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("../context/useReader.ts")>()),
   useReader: useReaderMock,
 }))
 
-import { SpreadRotationHint } from "./SpreadRotationHint"
+import { SpreadRotationHint } from "./SpreadRotationHint.tsx"
 
 // The component's own timings, which these tests hold it to.
 const HINT_TARGET_DEBOUNCE_MS = 100

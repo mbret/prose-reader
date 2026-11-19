@@ -10,16 +10,16 @@ import {
   takeUntil,
   tap,
 } from "rxjs"
-import { ReaderHighlights } from "./annotations/ReaderHighlights"
-import type { RuntimeAnnotation } from "./annotations/types"
-import { report } from "./report"
-import { Settings } from "./Settings"
+import { ReaderHighlights } from "./annotations/ReaderHighlights.ts"
+import type { RuntimeAnnotation } from "./annotations/types.ts"
+import { report } from "./report.ts"
+import { Settings } from "./Settings.ts"
 import type {
   AnnotateAbsolutePageParams,
   AnnotateParams,
   AnnotationsEnhancerAPI,
   AnnotationsEnhancerOptions,
-} from "./types"
+} from "./types.ts"
 
 export type { AnnotationsEnhancerAPI }
 

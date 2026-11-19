@@ -4,8 +4,8 @@ import type { Archive } from "@prose-reader/archive-reader"
 import { createReader, type Manifest } from "@prose-reader/core"
 import { Observable, type Subscriber } from "rxjs"
 import { describe, expect, it, onTestFinished, vi } from "vitest"
-import { createArchiveFromPdf } from "./createArchiveFromPdf"
-import { pdfEnhancer } from "./pdfEnhancer"
+import { createArchiveFromPdf } from "./createArchiveFromPdf.ts"
+import { pdfEnhancer } from "./pdfEnhancer.ts"
 
 /**
  * The mocked pdf.js opens a one-page document whose page never arrives, so a

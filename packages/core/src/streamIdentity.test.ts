@@ -5,7 +5,7 @@ import {
   installReaderTestEnvironment,
   mountTestReader,
   settledOn,
-} from "./tests/readerHarness"
+} from "./tests/readerHarness.ts"
 
 installReaderTestEnvironment()
 

@@ -1,5 +1,5 @@
 import { afterEach, expect, it, vi } from "vitest"
-import { Report } from "./report"
+import { Report } from "./report.ts"
 
 afterEach(() => {
   vi.restoreAllMocks()
@@ -50,7 +50,7 @@ it("should auto-enable from globalThis.__PROSE_READER_DEBUG, including where win
     vi.resetModules()
     globalThis.__PROSE_READER_DEBUG = true
 
-    const { Report: FreshReport } = await import("./report")
+    const { Report: FreshReport } = await import("./report.ts")
     const report = FreshReport.namespace("auto-config-test")
 
     report.log("first")

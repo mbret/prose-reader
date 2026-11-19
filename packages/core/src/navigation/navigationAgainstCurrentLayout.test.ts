@@ -8,8 +8,8 @@ import {
   requestLayoutByUnloadingItem,
   setTestViewport,
   settledOn,
-} from "../tests/readerHarness"
-import type { Navigation, NavigationAgainstCurrentLayout } from "./types"
+} from "../tests/readerHarness.ts"
+import type { Navigation, NavigationAgainstCurrentLayout } from "./types.ts"
 
 installReaderTestEnvironment()
 

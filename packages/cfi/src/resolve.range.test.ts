@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest"
-import { generate } from "./generate"
-import { resolve } from "./resolve"
+import { generate } from "./generate.ts"
+import { resolve } from "./resolve.ts"
 
 describe("CFI Range handling", () => {
   it("should resolve a basic range CFI", () => {

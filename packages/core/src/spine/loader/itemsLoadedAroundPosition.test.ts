@@ -6,7 +6,7 @@ import {
   holdItemLayout,
   installReaderTestEnvironment,
   mountTestReader,
-} from "../../tests/readerHarness"
+} from "../../tests/readerHarness.ts"
 
 installReaderTestEnvironment()
 

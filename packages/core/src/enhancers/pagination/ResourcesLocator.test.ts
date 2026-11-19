@@ -4,11 +4,11 @@ import {
   createEnhancedTestReader,
   installReaderTestEnvironment,
   mountTestReader,
-} from "../../tests/readerHarness"
+} from "../../tests/readerHarness.ts"
 import {
   createTestManifest,
   createTestManifestSpineItems,
-} from "../../tests/utils"
+} from "../../tests/utils.ts"
 
 installReaderTestEnvironment()
 

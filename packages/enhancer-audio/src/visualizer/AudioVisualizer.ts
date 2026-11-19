@@ -13,9 +13,9 @@ import {
   Subscription,
   switchMap,
 } from "rxjs"
-import type { AudioTrack, AudioVisualizerState } from "../types"
-import { getIdleVisualizerLevels } from "./levels"
-import { VisualizerAudioGraph } from "./VisualizerAudioGraph"
+import type { AudioTrack, AudioVisualizerState } from "../types.ts"
+import { getIdleVisualizerLevels } from "./levels.ts"
+import { VisualizerAudioGraph } from "./VisualizerAudioGraph.ts"
 
 type AudioVisualizerPlaybackState = {
   trackId: string | undefined

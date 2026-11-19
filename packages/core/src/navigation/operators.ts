@@ -8,7 +8,7 @@ import {
   switchMap,
   takeUntil,
 } from "rxjs"
-import type { Navigation } from "./types"
+import type { Navigation } from "./types.ts"
 
 export type NavigationState = "busy" | "free"
 

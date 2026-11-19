@@ -1,22 +1,22 @@
 import { BehaviorSubject } from "rxjs"
 import { afterEach, describe, expect, it, vi } from "vitest"
-import { Context } from "../../context/Context"
+import { Context } from "../../context/Context.ts"
 import type {
   Navigation,
   NavigationAgainstCurrentLayout,
-} from "../../navigation/types"
-import { ReaderSettingsManager } from "../../settings/ReaderSettingsManager"
-import { createTestManifest, waitFor } from "../../tests/utils"
-import { ViewportSlicePosition } from "../../viewport/types"
-import { Viewport } from "../../viewport/Viewport"
-import type { Spine, SpineState } from "../Spine"
-import type { SpineItemsManager } from "../SpineItemsManager"
+} from "../../navigation/types.ts"
+import { ReaderSettingsManager } from "../../settings/ReaderSettingsManager.ts"
+import { createTestManifest, waitFor } from "../../tests/utils.ts"
+import { ViewportSlicePosition } from "../../viewport/types.ts"
+import { Viewport } from "../../viewport/Viewport.ts"
+import type { Spine, SpineState } from "../Spine.ts"
+import type { SpineItemsManager } from "../SpineItemsManager.ts"
 import {
   SpinePosition,
   type SpinePosition as SpinePositionType,
   type UnboundSpinePosition,
-} from "../types"
-import { SpineItemsLoader } from "./SpineItemsLoader"
+} from "../types.ts"
+import { SpineItemsLoader } from "./SpineItemsLoader.ts"
 
 type VisibleRange = { beginIndex: number; endIndex: number }
 

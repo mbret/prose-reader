@@ -6,14 +6,14 @@ import {
   EDGE_FADE_PORTION,
   MAX_BAR_HEIGHT_RATIO,
   MIN_BAR_HEIGHT,
-} from "./constants"
+} from "./constants.ts"
 import {
   clamp,
   getDefaultDisplayBars,
   getMirroredDisplayBars,
   hasMeaningfulLevels,
   smoothstep,
-} from "./shaping"
+} from "./shaping.ts"
 
 type WaveSize = {
   width: number

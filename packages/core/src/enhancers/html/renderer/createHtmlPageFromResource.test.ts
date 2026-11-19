@@ -1,6 +1,6 @@
 import type { Manifest } from "@prose-reader/shared"
 import { afterEach, expect, test, vi } from "vitest"
-import { createHtmlPageFromResource } from "./createHtmlPageFromResource"
+import { createHtmlPageFromResource } from "./createHtmlPageFromResource.ts"
 
 afterEach(() => {
   vi.unstubAllGlobals()

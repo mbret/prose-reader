@@ -1,7 +1,7 @@
 import { Presence, type PresenceProps } from "@chakra-ui/react"
 import { memo } from "react"
 import { useSignalValue } from "reactjrx"
-import { useReaderContextValue } from "../context/useReaderContext"
+import { useReaderContextValue } from "../context/useReaderContext.ts"
 
 const SAFE_MARGIN_FLOATING_BOTTOM_ELEMENTS = 24
 

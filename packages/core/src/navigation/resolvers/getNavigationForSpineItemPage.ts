@@ -1,10 +1,10 @@
-import type { SpineLocator } from "../../spine/locator/SpineLocator"
-import type { SpineItemsManager } from "../../spine/SpineItemsManager"
-import { SpinePosition } from "../../spine/types"
-import type { SpineItem } from "../../spineItem/SpineItem"
-import type { Viewport } from "../../viewport/Viewport"
-import { getAdjustedPositionForSpread } from "./getAdjustedPositionForSpread"
-import { getNavigationForPosition } from "./getNavigationForPosition"
+import type { SpineLocator } from "../../spine/locator/SpineLocator.ts"
+import type { SpineItemsManager } from "../../spine/SpineItemsManager.ts"
+import { SpinePosition } from "../../spine/types.ts"
+import type { SpineItem } from "../../spineItem/SpineItem.ts"
+import type { Viewport } from "../../viewport/Viewport.ts"
+import { getAdjustedPositionForSpread } from "./getAdjustedPositionForSpread.ts"
+import { getNavigationForPosition } from "./getNavigationForPosition.ts"
 
 export const getNavigationForSpineItemPage = ({
   pageIndex,

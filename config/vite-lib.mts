@@ -1,12 +1,7 @@
 import { resolve } from "node:path"
 import externals from "rollup-plugin-node-externals"
 import ts from "typescript"
-import {
-  type ConfigEnv,
-  type LibraryFormats,
-  mergeConfig,
-  type UserConfig,
-} from "vite"
+import { type ConfigEnv, mergeConfig, type UserConfig } from "vite"
 import dts, { type PluginOptions as DtsOptions } from "vite-plugin-dts"
 import { TEST_FILES } from "./testFiles.mts"
 
@@ -75,28 +70,16 @@ export const dtsPlugin = (options: DtsOptions = {}) =>
 
 type LibConfigInput = LibConfigOptions | ((env: ConfigEnv) => LibConfigOptions)
 
-// We only ship ESM + CJS — no UMD. This keeps `lib.name` unnecessary (Vite only
-// needs it for UMD/IIFE globals) and, crucially, avoids the trap where Vite's
-// default `['es', 'umd']` (used whenever `lib.name` is set) emits both `es` and
-// `umd` to the same file for object entries — the UMD write wins and the ESM
-// named exports vanish. `es` -> `.js`, `cjs` -> `.cjs`, and both filename
-// schemes below give the two formats distinct paths.
-const FORMATS: LibraryFormats[] = ["es", "cjs"]
-
-const extensionFor = (format: string) => (format === "cjs" ? "cjs" : "js")
-
 const buildFileNameFor = (entry: Entry, preserveModules: boolean) => {
   // Every preserved module is named after its path under `src/`, the entry
-  // included: `src/index.ts` still lands on `index.js` and `index.cjs`.
+  // included: `src/index.ts` lands on `index.js`.
   if (preserveModules) {
-    return (format: string, entryName: string) =>
-      `${entryName}.${extensionFor(format)}`
+    return (_format: string, entryName: string) => `${entryName}.js`
   }
 
   return typeof entry === "string"
     ? "index"
-    : (format: string, entryName: string) =>
-        `${entryName}/index.${extensionFor(format)}`
+    : (_format: string, entryName: string) => `${entryName}/index.js`
 }
 
 export const createLibConfig =
@@ -125,7 +108,12 @@ export const createLibConfig =
         lib: {
           entry,
           fileName: buildFileNameFor(entry, preserveModules),
-          formats: FORMATS,
+          // Naming the format keeps `lib.name` unnecessary (Vite only needs it
+          // for UMD/IIFE globals) and avoids the trap where Vite's default
+          // `['es', 'umd']` (used whenever `lib.name` is set) emits both `es`
+          // and `umd` to the same file for object entries: the UMD write wins,
+          // and the ESM named exports vanish.
+          formats: ["es"],
         },
         ...(preserveModules
           ? {
