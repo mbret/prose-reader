@@ -35,7 +35,10 @@ export class SpineItemHighlights extends DestroyableClass {
    */
   public readonly highlights$ = this.highlights.asObservable()
 
-  /** The taps on the highlights, one per highlight under the tap. */
+  /**
+   * The taps on the highlights. A tap reaches the highlight drawn on top, so
+   * where highlights overlap, it reports that one.
+   */
   public readonly tap$: Observable<{
     event: Event
     annotation: RuntimeAnnotation
