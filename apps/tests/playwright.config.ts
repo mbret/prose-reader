@@ -1,4 +1,8 @@
-import { defineConfig, devices, type Project } from "@playwright/test"
+import {
+  defineConfig,
+  devices,
+  type PlaywrightTestProject,
+} from "@playwright/test"
 import {
   createResourceLoadingStorageState,
   type ResourceLoading,
@@ -14,7 +18,7 @@ import {
 
 const TEST_APP_ORIGIN = "http://localhost:3333"
 
-type BrowserProfile = { name: string; use: Project["use"] }
+type BrowserProfile = { name: string; use: PlaywrightTestProject["use"] }
 
 const DESKTOP_PROFILES: BrowserProfile[] = [
   { name: "chromium", use: { ...devices["Desktop Chrome"] } },
@@ -40,7 +44,7 @@ const MOBILE_PROFILES: BrowserProfile[] = [
 const createProfileProject = (
   profile: BrowserProfile,
   resourceLoading: ResourceLoading,
-): Project => ({
+): PlaywrightTestProject => ({
   name:
     resourceLoading === "http"
       ? profile.name
@@ -55,6 +59,37 @@ const createProfileProject = (
     ),
   },
 })
+
+/**
+ * Every profile loads its books over http, and the desktop ones load them
+ * from blobs too. Running the mobile profiles both ways as well would make
+ * the suite too long for CI's few macOS runners.
+ */
+const ALL_PROJECTS: PlaywrightTestProject[] = [
+  ...[...DESKTOP_PROFILES, ...MOBILE_PROFILES].map((profile) =>
+    createProfileProject(profile, "http"),
+  ),
+  ...DESKTOP_PROFILES.map((profile) => createProfileProject(profile, "blob")),
+]
+
+/**
+ * `BROWSER_ENGINE` (`chromium`, `firefox` or `webkit`) keeps the projects
+ * whose device runs on that engine, as one CI job does. Unset, every project
+ * runs.
+ */
+const BROWSER_ENGINE_TO_RUN = process.env.BROWSER_ENGINE
+
+const PROJECTS_TO_RUN = ALL_PROJECTS.filter(
+  (project) =>
+    BROWSER_ENGINE_TO_RUN === undefined ||
+    project.use?.defaultBrowserType === BROWSER_ENGINE_TO_RUN,
+)
+
+if (PROJECTS_TO_RUN.length === 0) {
+  throw new Error(
+    `BROWSER_ENGINE=${BROWSER_ENGINE_TO_RUN} matches no project: use chromium, firefox or webkit`,
+  )
+}
 
 /**
  * See https://playwright.dev/docs/test-configuration.
@@ -85,17 +120,7 @@ export default defineConfig({
     trace: "on-first-retry",
   },
 
-  /*
-   * Every profile loads its books over http, and the desktop ones load them
-   * from blobs too. Running the mobile profiles both ways as well would make
-   * the suite too long for CI's few macOS runners.
-   */
-  projects: [
-    ...[...DESKTOP_PROFILES, ...MOBILE_PROFILES].map((profile) =>
-      createProfileProject(profile, "http"),
-    ),
-    ...DESKTOP_PROFILES.map((profile) => createProfileProject(profile, "blob")),
-  ],
+  projects: PROJECTS_TO_RUN,
 
   /* Run your local dev server before starting the tests */
   webServer: {

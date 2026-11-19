@@ -19,29 +19,33 @@ jobs:
         run: pnpm exec lerna run test --ignore prose-reader-tests
 
   # macOS: the committed screenshot baselines are rendered there (-darwin).
-  # Sharded, since one runner took over five minutes for the suite. Every
-  # shard occupies one of the few macOS runners an account gets at once,
-  # which is what bounds the count.
+  # One job per browser engine, each running every spec on the projects of
+  # its engine (BROWSER_ENGINE in playwright.config.ts). `--shard` would split
+  # by test count, and Firefox's tests take about 1.6 times as long as the
+  # others'. Every job occupies one of the few macOS runners an account gets
+  # at once.
   browser:
     runs-on: macos-latest
     strategy:
-      # a failure in one shard says nothing about the others: let them report
+      # a failure on one engine says nothing about the others: let them report
       fail-fast: false
       matrix:
-        shard: [1, 2, 3]
+        engine: [chromium, firefox, webkit]
     steps:
       - uses: actions/checkout@v6
       - uses: ./.github/actions/setup-browser-suite
 
       - name: Test
-        run: pnpm --filter prose-reader-tests test --shard=${{ matrix.shard }}/${{ strategy.job-total }}
+        env:
+          BROWSER_ENGINE: ${{ matrix.engine }}
+        run: pnpm --filter prose-reader-tests test
 
       - uses: actions/upload-artifact@v7
         if: ${{ !cancelled() }}
         with:
-          name: playwright-report-${{ matrix.shard }}
+          name: playwright-report-${{ matrix.engine }}
           path: apps/tests/test-results/
           retention-days: 15
           # Playwright only writes here for a failed or retried test, so a
-          # green shard has nothing to upload and nothing to warn about
+          # green job has nothing to upload and nothing to warn about
           if-no-files-found: ignore
