@@ -61,38 +61,6 @@ const getLocatableResourceCfi = (
 type CfiToLocate = {
   cfi: string
   parsedCfi: ReturnType<Reader["cfi"]["parseCfi"]>
-  isCfiOfItemStart: boolean
-}
-
-/**
- * A pre-paginated item has one page, and a cfi naming only its item is at the
- * item's start. Any other cfi is on the page of its node, which only the
- * item's loaded document gives.
- */
-const getItemPageIndex = ({
-  reader,
-  spineItem,
-  isCfiOfItemStart,
-  node,
-  startOffset,
-}: {
-  reader: Reader
-  spineItem: SpineItem
-  isCfiOfItemStart: boolean
-  node: Node | null
-  startOffset: number | undefined
-}) => {
-  if (spineItem.renditionLayout === `pre-paginated` || isCfiOfItemStart) {
-    return 0
-  }
-
-  if (!node) return undefined
-
-  return reader.spine.locator.getSpineItemPageIndexFromNode(
-    node,
-    startOffset ?? 0,
-    spineItem,
-  )
 }
 
 /**
@@ -100,7 +68,7 @@ const getItemPageIndex = ({
  * the current one.
  */
 const consolidate = (
-  { cfi, parsedCfi, isCfiOfItemStart }: CfiToLocate,
+  { cfi, parsedCfi }: CfiToLocate,
   reader: Reader,
 ): Observable<ConsolidatedResource> => {
   const spineItem = reader.spineItemsManager.get(parsedCfi.itemIndex)
@@ -115,13 +83,7 @@ const consolidate = (
         offset: startOffset,
         range,
       } = isSpineItemReady ? reader.cfi.resolveCfi({ cfi }) : {}
-      const itemPageIndex = getItemPageIndex({
-        reader,
-        spineItem,
-        isCfiOfItemStart,
-        node,
-        startOffset,
-      })
+      const itemPageIndex = reader.cfi.getSpineItemPageIndexFromCfi(cfi)
 
       return {
         ...parsedCfi,
@@ -200,7 +162,6 @@ export class ResourcesLocator {
     const cfiToLocate: CfiToLocate = {
       cfi,
       parsedCfi: this.reader.cfi.parseCfi(cfi),
-      isCfiOfItemStart: this.reader.cfi.isRootCfi(cfi),
     }
 
     return deferIdle(() => {

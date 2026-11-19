@@ -2,6 +2,7 @@ import type { Manifest } from "@prose-reader/shared"
 import type { HookManager } from "../hooks/HookManager.ts"
 import type { PageEntry } from "../spine/Pages.ts"
 import type { SpineItemsManager } from "../spine/SpineItemsManager.ts"
+import { getSpineItemPageIndexFromNode } from "../spineItem/nodeLocation.ts"
 import {
   generateCfiForSpineItemPage as generateBaseCfiForSpineItemPage,
   generateCfiFromRange as generateBaseCfiFromRange,
@@ -63,6 +64,31 @@ export class CfiManager {
 
   public isRootCfi = (cfi: string) => {
     return isRootCfi(cfi)
+  }
+
+  /**
+   * The page of its spine item a cfi is on, when it can be known now. A
+   * pre-paginated item has one page, and a cfi naming only its item is at the
+   * item's start: both are on page 0 at once. Any other cfi is on the page of
+   * the node it resolves to, while its item is loaded and laid out. It is
+   * `undefined` otherwise, as for a cfi that does not resolve in its item.
+   */
+  public getSpineItemPageIndexFromCfi = (cfi: string) => {
+    const spineItem = this.getSpineItemFromCfi(cfi)
+
+    if (!spineItem) return undefined
+
+    if (spineItem.renditionLayout === `pre-paginated` || this.isRootCfi(cfi)) {
+      return 0
+    }
+
+    if (!spineItem.value.isReady) return undefined
+
+    const { node, offset } = this.resolveCfi({ cfi })
+
+    return node
+      ? getSpineItemPageIndexFromNode(node, offset ?? 0, spineItem)
+      : undefined
   }
 
   public generateRootCfi = (item: Manifest["spineItems"][number]) => {
