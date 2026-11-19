@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest"
-import { renderPrePaginated } from "./renderPrePaginated"
+import { renderPrePaginated } from "./renderPrePaginated.ts"
 
 const createFrame = ({
   viewportHeight = 100,

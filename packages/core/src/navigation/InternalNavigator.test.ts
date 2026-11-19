@@ -1,21 +1,21 @@
 import { firstValueFrom, skip } from "rxjs"
 import { describe, expect, it, vi } from "vitest"
-import { CfiManager } from "../cfi"
-import { Context } from "../context/Context"
-import { HookManager } from "../hooks/HookManager"
-import { ReaderSettingsManager } from "../settings/ReaderSettingsManager"
-import { Spine } from "../spine/Spine"
-import { SpineItemsManager } from "../spine/SpineItemsManager"
-import { SpinePosition } from "../spine/types"
+import { CfiManager } from "../cfi/index.ts"
+import { Context } from "../context/Context.ts"
+import { HookManager } from "../hooks/HookManager.ts"
+import { ReaderSettingsManager } from "../settings/ReaderSettingsManager.ts"
+import { Spine } from "../spine/Spine.ts"
+import { SpineItemsManager } from "../spine/SpineItemsManager.ts"
+import { SpinePosition } from "../spine/types.ts"
 import {
   createTestManifest,
   createTestManifestSpineItems,
   waitFor,
-} from "../tests/utils"
-import { Viewport } from "../viewport/Viewport"
-import { createNavigator } from "./Navigator"
-import { mockSpineItemsLayout } from "./tests/utils"
-import type { InternalNavigationEntry } from "./types"
+} from "../tests/utils.ts"
+import { Viewport } from "../viewport/Viewport.ts"
+import { createNavigator } from "./Navigator.ts"
+import { mockSpineItemsLayout } from "./tests/utils.ts"
+import type { InternalNavigationEntry } from "./types.ts"
 
 const createNavigatorContext = (numberOfItems = 0) => {
   const context = new Context(

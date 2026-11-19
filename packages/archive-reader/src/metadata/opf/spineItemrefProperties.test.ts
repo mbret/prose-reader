@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest"
-import { layoutHintsFromItemrefProperties } from "./spineItemrefProperties"
+import { layoutHintsFromItemrefProperties } from "./spineItemrefProperties.ts"
 
 describe("layoutHintsFromItemrefProperties", () => {
   it("returns empty for undefined or blank", () => {

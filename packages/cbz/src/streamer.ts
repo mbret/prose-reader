@@ -2,9 +2,9 @@ import type {
   StreamerManifestHookFactory,
   StreamerResourceHookFactory,
 } from "@prose-reader/streamer"
-import { detectReadingDirectionManifest } from "./detectReadingDirectionManifest"
-import { panoramaSplit } from "./panoramaSplitManifest"
-import { panoramaSplitResourceHook } from "./panoramaSplitResource"
+import { detectReadingDirectionManifest } from "./detectReadingDirectionManifest.ts"
+import { panoramaSplit } from "./panoramaSplitManifest.ts"
+import { panoramaSplitResourceHook } from "./panoramaSplitResource.ts"
 
 export const streamerHooks: {
   manifest: StreamerManifestHookFactory[]
@@ -16,8 +16,8 @@ export const streamerHooks: {
   resource: [panoramaSplitResourceHook],
 }
 
-export { detectReadingDirectionManifest } from "./detectReadingDirectionManifest"
-export { CBZ_MIME_TYPES, isCbzArchive } from "./isCbzArchive"
+export { detectReadingDirectionManifest } from "./detectReadingDirectionManifest.ts"
+export { CBZ_MIME_TYPES, isCbzArchive } from "./isCbzArchive.ts"
 
 export {
   buildVirtualPanoramaResourcePath,
@@ -29,10 +29,10 @@ export {
   type PanoramaCropSide,
   panoramaSplit,
   type VirtualPanoramaResource,
-} from "./panoramaSplitManifest"
+} from "./panoramaSplitManifest.ts"
 
 export {
   createPanoramaSplitXhtml,
   panoramaSplitResourceHook,
   parseVirtualPanoramaResourcePath,
-} from "./panoramaSplitResource"
+} from "./panoramaSplitResource.ts"

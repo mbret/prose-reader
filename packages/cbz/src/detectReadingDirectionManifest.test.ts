@@ -5,7 +5,7 @@ import {
 } from "@prose-reader/archive-reader"
 import type { Manifest } from "@prose-reader/shared"
 import { describe, expect, it } from "vitest"
-import { detectReadingDirectionManifest } from "./detectReadingDirectionManifest"
+import { detectReadingDirectionManifest } from "./detectReadingDirectionManifest.ts"
 
 const fakeContent = blobFileAccessors(() => Promise.resolve(new Blob([])))
 

@@ -4,10 +4,10 @@ import {
   getCrengineBoxedChildren,
   getFragmentBody,
   visitCrengineChildren,
-} from "./crengine/children"
-import { toRawOffset } from "./crengine/text"
-import { parseXPointer } from "./parse"
-import type { DomPosition, ParsedXPointer, XPointerStep } from "./types"
+} from "./crengine/children.ts"
+import { toRawOffset } from "./crengine/text.ts"
+import { parseXPointer } from "./parse.ts"
+import type { DomPosition, ParsedXPointer, XPointerStep } from "./types.ts"
 
 type Current =
   | { kind: "parent"; node: Element }

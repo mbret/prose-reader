@@ -1,6 +1,6 @@
 import { memo } from "react"
-import { AppDialog } from "../components/AppDialog"
-import { SearchDialogContent } from "./SearchDialogContent"
+import { AppDialog } from "../components/AppDialog.tsx"
+import { SearchDialogContent } from "./SearchDialogContent.tsx"
 
 export const SearchDialog = memo(
   ({

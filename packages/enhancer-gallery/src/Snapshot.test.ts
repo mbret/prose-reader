@@ -2,13 +2,13 @@
 import type { Reader, SpineItem } from "@prose-reader/core"
 import { BehaviorSubject } from "rxjs"
 import { describe, expect, it, vi } from "vitest"
-import { Snapshot } from "./Snapshot"
+import { Snapshot } from "./Snapshot.ts"
 
 const { deepCloneElement } = vi.hoisted(() => ({ deepCloneElement: vi.fn() }))
 
-vi.mock("./utils/deepCloneElement", async (importOriginal) => {
+vi.mock("./utils/deepCloneElement.ts", async (importOriginal) => {
   const original =
-    await importOriginal<typeof import("./utils/deepCloneElement")>()
+    await importOriginal<typeof import("./utils/deepCloneElement.ts")>()
 
   deepCloneElement.mockImplementation(original.deepCloneElement)
 

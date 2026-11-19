@@ -1,7 +1,7 @@
 import { blobFileAccessors, createArchive } from "@prose-reader/archive-reader"
 import { describe, expect, it } from "vitest"
-import { generateManifestFromArchive } from "./generators/manifest"
-import { ServiceWorkerStreamer } from "./ServiceWorkerStreamer"
+import { generateManifestFromArchive } from "./generators/manifest/index.ts"
+import { ServiceWorkerStreamer } from "./ServiceWorkerStreamer.ts"
 
 const archiveResourceBody = `bar/foo.jpg`
 

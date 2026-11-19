@@ -7,9 +7,9 @@ import {
   pairwise,
   share,
 } from "rxjs"
-import type { DocumentLoadStatus } from "../spineItem/renderer/DocumentRenderer"
-import type { SpineItem, SpineItemState } from "../spineItem/SpineItem"
-import type { SpineItemsManager } from "./SpineItemsManager"
+import type { DocumentLoadStatus } from "../spineItem/renderer/DocumentRenderer.ts"
+import type { SpineItem, SpineItemState } from "../spineItem/SpineItem.ts"
+import type { SpineItemsManager } from "./SpineItemsManager.ts"
 
 /**
  * The states of every spine item, as streams shared by their subscribers.

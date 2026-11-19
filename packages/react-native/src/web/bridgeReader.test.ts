@@ -18,8 +18,8 @@ import {
   onTestFinished,
   vi,
 } from "vitest"
-import type { ReaderLoadOptions } from "../shared"
-import { bridgeReader, createReaderBridge } from "."
+import type { ReaderLoadOptions } from "../shared/index.ts"
+import { bridgeReader, createReaderBridge } from "./index.ts"
 
 /**
  * The webview side of the bridge, standing in for `@webview-bridge/web`,

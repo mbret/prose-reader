@@ -2,7 +2,7 @@ import { Heading, HStack, Kbd, Stack, Text } from "@chakra-ui/react"
 import { memo } from "react"
 import { LuArrowBigLeft, LuArrowBigRight } from "react-icons/lu"
 import { name, version } from "../../package.json"
-import { AppDialog } from "../components/AppDialog"
+import { AppDialog } from "../components/AppDialog.tsx"
 
 export const HelpDialog = memo(
   ({ open, setOpen }: { open: boolean; setOpen: (open: boolean) => void }) => {

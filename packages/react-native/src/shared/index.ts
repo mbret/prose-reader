@@ -74,4 +74,4 @@ export type ProsePostMessageSchema = {
   }
 }
 
-export { useLiveRef } from "./useLiveRef"
+export { useLiveRef } from "./useLiveRef.ts"

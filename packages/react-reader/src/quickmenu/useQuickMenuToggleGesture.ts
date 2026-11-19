@@ -1,8 +1,8 @@
 import { useCallback } from "react"
 import { useSubscribe } from "reactjrx"
 import { filter, tap, withLatestFrom } from "rxjs"
-import { useReaderViewContext } from "../context/ReaderViewContext"
-import { useReader } from "../context/useReader"
+import { useReaderViewContext } from "../context/ReaderViewContext.ts"
+import { useReader } from "../context/useReader.ts"
 
 export const useQuickMenuToggleGesture = () => {
   const { onQuickMenuOpenChange } = useReaderViewContext()

@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest"
-import { getPositionRelativeToNonTransformedElement } from "./coordinates"
+import { getPositionRelativeToNonTransformedElement } from "./coordinates.ts"
 
 /** An element laid out at `layout` and drawn at `rendered`, as a transform draws it. */
 const elementAt = ({

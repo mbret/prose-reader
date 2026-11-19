@@ -1,4 +1,4 @@
-import type { ViewportSlicePosition } from "../../viewport/types"
+import type { ViewportSlicePosition } from "../../viewport/types.ts"
 
 const isItemVisibleByThresholdForPosition = ({
   itemHeight,

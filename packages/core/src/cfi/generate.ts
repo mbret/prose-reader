@@ -1,7 +1,7 @@
 import { generate } from "@prose-reader/cfi"
 import type { Manifest } from "@prose-reader/shared"
-import type { PageEntry } from "../spine/Pages"
-import { isHtmlRange } from "../utils/dom"
+import type { PageEntry } from "../spine/Pages.ts"
+import { isHtmlRange } from "../utils/dom.ts"
 
 export const generateRootCfi = (item: Manifest["spineItems"][number]) => {
   return generate({

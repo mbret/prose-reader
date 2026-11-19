@@ -3,9 +3,9 @@ import type {
   EnhancerOptions,
   EnhancerOutput,
   RootEnhancer,
-} from "../types/enhancer"
-import { handleLinks } from "./links"
-import { HtmlRenderer } from "./renderer/HtmlRenderer"
+} from "../types/enhancer.ts"
+import { handleLinks } from "./links.ts"
+import { HtmlRenderer } from "./renderer/HtmlRenderer.ts"
 
 type HandleLinksReturnType = ReturnType<typeof handleLinks>
 

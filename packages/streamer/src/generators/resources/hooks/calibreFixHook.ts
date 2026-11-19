@@ -1,5 +1,5 @@
 import { XmlDocument } from "xmldoc"
-import { createTextResourceHook } from "./createTextResourceHook"
+import { createTextResourceHook } from "./createTextResourceHook.ts"
 
 const hasCalibreCoverMeta = (doc: XmlDocument) => {
   const metaElm = doc

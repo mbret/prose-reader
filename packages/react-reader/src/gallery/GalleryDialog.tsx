@@ -2,10 +2,10 @@ import { Box, Text } from "@chakra-ui/react"
 import type { SpineItem } from "@prose-reader/core"
 import { memo } from "react"
 import { useObserve } from "reactjrx"
-import { useMeasure } from "../common/useMeasure"
-import { AppDialog } from "../components/AppDialog"
-import { useReader } from "../context/useReader"
-import { useAttachSnapshot } from "./useAttachSnapshot"
+import { useMeasure } from "../common/useMeasure.ts"
+import { AppDialog } from "../components/AppDialog.tsx"
+import { useReader } from "../context/useReader.ts"
+import { useAttachSnapshot } from "./useAttachSnapshot.ts"
 
 const GalleryItem = memo(
   ({ item, onNavigated }: { item: SpineItem; onNavigated: () => void }) => {

@@ -1,4 +1,4 @@
-import { LayoutEntry } from "../spineItem/types"
+import { LayoutEntry } from "../spineItem/types.ts"
 
 /**
  * Position of an item relative to spine element.

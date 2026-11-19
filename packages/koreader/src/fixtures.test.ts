@@ -3,13 +3,13 @@ import {
   resolve as resolveCfi,
 } from "@prose-reader/cfi"
 import { beforeAll, describe, expect, it } from "vitest"
-import { cfiToXPointer, xPointerToCfi } from "./cfi"
-import { getCrengineChildren, isTextNode } from "./crengine/children"
-import { hasImproperTableChildren, isElement } from "./crengine/elements"
-import { generateXPointer } from "./generate"
-import { parseXPointer } from "./parse"
-import { resolveXPointer } from "./resolve"
-import { rangeText } from "./tests/dom"
+import { cfiToXPointer, xPointerToCfi } from "./cfi.ts"
+import { getCrengineChildren, isTextNode } from "./crengine/children.ts"
+import { hasImproperTableChildren, isElement } from "./crengine/elements.ts"
+import { generateXPointer } from "./generate.ts"
+import { parseXPointer } from "./parse.ts"
+import { resolveXPointer } from "./resolve.ts"
+import { rangeText } from "./tests/dom.ts"
 import {
   FIXTURES,
   type FixtureBook,
@@ -19,8 +19,8 @@ import {
   openFixtureBook,
   readOracle,
   WHOLE_BOOK_TIMEOUT,
-} from "./tests/epub"
-import type { DomPosition } from "./types"
+} from "./tests/epub.ts"
+import type { DomPosition } from "./types.ts"
 
 const books = new Map<string, FixtureBook>()
 const oracles = new Map<string, Oracle>()

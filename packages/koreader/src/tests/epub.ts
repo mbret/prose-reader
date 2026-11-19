@@ -1,7 +1,7 @@
 import { readFile } from "node:fs/promises"
 import { join } from "node:path"
 import JSZip from "jszip"
-import { parseSvgDocument, parseXhtml } from "./dom"
+import { parseSvgDocument, parseXhtml } from "./dom.ts"
 
 export const FIXTURES_DIR = join(__dirname, "fixtures")
 

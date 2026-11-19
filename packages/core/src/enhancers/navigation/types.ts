@@ -2,11 +2,11 @@ import type { Observable } from "rxjs"
 import type {
   NavigationTarget,
   UserNavigationEntry,
-} from "../../navigation/types"
-import type { outOfSpineBoundary } from "./boundary"
-import type { ManualNavigator } from "./navigators/manualNavigator"
-import type { PanNavigator } from "./navigators/panNavigator"
-import type { observeState } from "./state"
+} from "../../navigation/types.ts"
+import type { outOfSpineBoundary } from "./boundary.ts"
+import type { ManualNavigator } from "./navigators/manualNavigator.ts"
+import type { PanNavigator } from "./navigators/panNavigator.ts"
+import type { observeState } from "./state.ts"
 
 /** The url of a spine item, optionally with an element id as its fragment. */
 export type UrlNavigationTarget = { type: "url"; value: string | URL }

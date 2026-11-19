@@ -6,7 +6,7 @@ import type {
   ProsePostMessageSchema,
   ReaderLoadOptions,
   ReaderState,
-} from "../shared"
+} from "../shared/index.ts"
 
 // Annotated rather than inferred: `Reader` is a large enough type that
 // declaration emit gives up serialising the inferred shape (TS7056).

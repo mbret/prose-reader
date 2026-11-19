@@ -12,8 +12,8 @@ import {
   switchMap,
   timer,
 } from "rxjs"
-import { toaster } from "../components/ui/toaster"
-import { useReaderContextValue } from "../context/useReaderContext"
+import { toaster } from "../components/ui/toaster.tsx"
+import { useReaderContextValue } from "../context/useReaderContext.ts"
 
 export const useNotifications = () => {
   const { notificationsSubject } = useReaderContextValue([

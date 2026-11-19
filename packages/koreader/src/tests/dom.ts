@@ -1,4 +1,4 @@
-import { isTextNode } from "../crengine/children"
+import { isTextNode } from "../crengine/children.ts"
 
 /**
  * Test helpers: spine item documents parsed the way prose renders them (XML).

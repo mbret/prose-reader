@@ -1,5 +1,5 @@
-import type { EnhancerOutput, RootEnhancer } from "../types/enhancer"
-import { normalizeEventForViewport } from "./normalizeEventForViewport"
+import type { EnhancerOutput, RootEnhancer } from "../types/enhancer.ts"
+import { normalizeEventForViewport } from "./normalizeEventForViewport.ts"
 
 const pointerEvents = [
   `pointercancel` as const,

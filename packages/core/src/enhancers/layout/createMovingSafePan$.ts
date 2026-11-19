@@ -12,8 +12,8 @@ import {
   takeUntil,
   tap,
 } from "rxjs"
-import type { Reader } from "../../reader"
-import { setStylePropertyIfChanged } from "../../utils/dom"
+import type { Reader } from "../../reader.ts"
+import { setStylePropertyIfChanged } from "../../utils/dom.ts"
 
 /**
  * For some reason (bug / expected / engine layout optimization) when the viewport is being animated clicking inside iframe

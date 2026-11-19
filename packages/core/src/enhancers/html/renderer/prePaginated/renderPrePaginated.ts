@@ -1,4 +1,4 @@
-import { getViewPortInformation } from "../viewport"
+import { getViewPortInformation } from "../viewport.ts"
 
 /**
  * Base iframe positioning/sizing styles are renderer-owned for pre-paginated items.

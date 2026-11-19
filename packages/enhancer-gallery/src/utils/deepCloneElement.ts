@@ -1,10 +1,10 @@
 import { waitForFrameLoad } from "@prose-reader/core"
 import { combineLatest, defaultIfEmpty, from, of, switchMap } from "rxjs"
-import { redrawCanvas } from "./redrawCanvas"
+import { redrawCanvas } from "./redrawCanvas.ts"
 import {
   copyBlobAssetReferences,
   createSnapshotObjectUrlStore,
-} from "./snapshotBlobAssets"
+} from "./snapshotBlobAssets.ts"
 
 const copyIframeContents = (
   originalIframes: NodeListOf<HTMLIFrameElement>,

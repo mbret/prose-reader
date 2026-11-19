@@ -2,8 +2,11 @@ import { describe, expect, it } from "vitest"
 import {
   createTestManifest,
   createTestManifestSpineItems,
-} from "../tests/utils"
-import { getPageStartProgression, getSpineItemProgression } from "./progression"
+} from "../tests/utils.ts"
+import {
+  getPageStartProgression,
+  getSpineItemProgression,
+} from "./progression.ts"
 
 const createManifestWithWeights = (weights: (number | undefined)[]) =>
   createTestManifest({

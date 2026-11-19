@@ -1,6 +1,6 @@
-import type { CfiManager } from "../../cfi"
-import type { SpineItemsManager } from "../../spine/SpineItemsManager"
-import type { NavigationTarget } from "../types"
+import type { CfiManager } from "../../cfi/index.ts"
+import type { SpineItemsManager } from "../../spine/SpineItemsManager.ts"
+import type { NavigationTarget } from "../types.ts"
 
 /**
  * Whether a target names a place in the book. A position always does, once

@@ -1,4 +1,4 @@
-import type { CreateReaderParameters, ReaderInternal } from "../../reader"
+import type { CreateReaderParameters, ReaderInternal } from "../../reader.ts"
 
 // biome-ignore lint/suspicious/noExplicitAny: TODO
 export type EnhancerOutput<Enhancer extends (options: any) => any> = ReturnType<

@@ -4,7 +4,7 @@ import {
   getUriBasePath,
   getUriExtension,
   removeTrailingSlash,
-} from "./uri"
+} from "./uri.ts"
 
 describe("getUriBasename", () => {
   it("returns the file name for a nested file uri", () => {

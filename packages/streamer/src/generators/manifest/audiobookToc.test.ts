@@ -1,7 +1,7 @@
 import { blobFileAccessors, createArchive } from "@prose-reader/archive-reader"
 import { describe, expect, it } from "vitest"
-import { buildAudiobookToc, normalizeFilenameAsTitle } from "./audiobookToc"
-import { generateManifestFromArchive } from "./index"
+import { buildAudiobookToc, normalizeFilenameAsTitle } from "./audiobookToc.ts"
+import { generateManifestFromArchive } from "./index.ts"
 
 describe("normalizeFilenameAsTitle", () => {
   it.each([

@@ -2,9 +2,9 @@ import {
   getNextNodeInDocumentOrder,
   getRangeFromNode,
   isHtmlElement,
-} from "../utils/dom"
-import { DocumentFramePlacement } from "./DocumentFramePlacement"
-import type { SpineItem } from "./SpineItem"
+} from "../utils/dom.ts"
+import { DocumentFramePlacement } from "./DocumentFramePlacement.ts"
+import type { SpineItem } from "./SpineItem.ts"
 
 /**
  * The first box a node lays out, from `offset` on: where it starts, on the

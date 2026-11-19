@@ -1,8 +1,8 @@
 import { useEffect } from "react"
 import { map, withLatestFrom } from "rxjs"
-import { useReaderContext } from "../../context/useReaderContext"
-import { useAnnotations } from "../useAnnotations"
-import { useReaderWithAnnotations } from "../useReaderWithAnnotations"
+import { useReaderContext } from "../../context/useReaderContext.ts"
+import { useAnnotations } from "../useAnnotations.ts"
+import { useReaderWithAnnotations } from "../useReaderWithAnnotations.ts"
 
 const CONTINUE_TAP_GESTURE = true
 const BOOKMARK_CORNER_SIZE_PERCENT = 10

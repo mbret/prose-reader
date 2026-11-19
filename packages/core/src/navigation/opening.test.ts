@@ -1,15 +1,15 @@
 // @vitest-environment jsdom
 import { skip } from "rxjs"
 import { describe, expect, it, vi } from "vitest"
-import { SpinePosition } from "../spine/types"
+import { SpinePosition } from "../spine/types.ts"
 import {
   createTestReader,
   installReaderTestEnvironment,
   mountTestReader,
   renderTextDocuments,
   settledOn,
-} from "../tests/readerHarness"
-import type { ReadingPosition } from "./types"
+} from "../tests/readerHarness.ts"
+import type { ReadingPosition } from "./types.ts"
 
 installReaderTestEnvironment()
 

@@ -1,15 +1,15 @@
 import { isShallowEqual } from "@prose-reader/shared"
 import type { ObservedValueOf } from "rxjs"
 import { describe, expect, expectTypeOf, it, onTestFinished, vi } from "vitest"
-import { createReaderWithEnhancers } from "../createReaderWithEnhancer"
-import { createReader } from "../reader"
+import { createReaderWithEnhancers } from "../createReaderWithEnhancer.ts"
+import { createReader } from "../reader.ts"
 import {
   createFullTestReader,
   createPrePaginatedManifest,
   installReaderTestEnvironment,
   mountTestReader,
-} from "../tests/readerHarness"
-import type { ExtendedSettings, SettingsDefaults } from "./SettingsInterface"
+} from "../tests/readerHarness.ts"
+import type { ExtendedSettings, SettingsDefaults } from "./SettingsInterface.ts"
 
 installReaderTestEnvironment()
 

@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest"
-import { generate } from "./generate"
-import { parse } from "./parse"
+import { generate } from "./generate.ts"
+import { parse } from "./parse.ts"
 
 describe("range CFIs", () => {
   it("should generate a range CFI between two points", () => {

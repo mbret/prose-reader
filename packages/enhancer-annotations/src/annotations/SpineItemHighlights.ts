@@ -15,9 +15,9 @@ import {
   switchMap,
   takeUntil,
 } from "rxjs"
-import { SpineItemHighlight } from "./SpineItemHighlight"
-import type { RuntimeAnnotation } from "./types"
-import { createAnnotationLayer, layoutAnnotationLayer } from "./utils"
+import { SpineItemHighlight } from "./SpineItemHighlight.ts"
+import type { RuntimeAnnotation } from "./types.ts"
+import { createAnnotationLayer, layoutAnnotationLayer } from "./utils.ts"
 
 export class SpineItemHighlights extends DestroyableClass {
   private layer: HTMLElement

@@ -1,6 +1,6 @@
 import type { DocumentRenderer, Manifest, Reader } from "@prose-reader/core"
 import type { Observable } from "rxjs"
-import type { AudioRenderer } from "./renderer/AudioRenderer"
+import type { AudioRenderer } from "./renderer/AudioRenderer.ts"
 
 export type AudioTrack = Pick<
   Manifest["spineItems"][number],

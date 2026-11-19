@@ -140,3 +140,9 @@ element.hidden = nextHidden;
 - When you need to use `as`, always add a code comment explaining why it is required in that context.
 - Prefer type guards, runtime validation, and stricter data structures to ensure type safety and clarity instead of using type assertions.
 - Rationale: Overuse of `as` can hide bugs, undermine type safety, and reduce code maintainability and refactorability.
+
+## Imports
+
+- Write the file extension in every relative import: `./Spine.ts`, `./hooks/index.ts`, `./ReactReader.tsx`. The published declarations keep these paths, and a consumer whose TypeScript resolves modules like Node (`node16`, `nodenext`) cannot follow a path without its extension.
+- In `packages/*/src`, Biome's `useImportExtensions` rule reports a missing extension and fixes it. It does not read `vi.mock()` paths or `typeof import()` types, so write the extension there yourself.
+- Import a name from the module that defines it, not from the package's own `index.ts`. A sibling package's export comes from that package: `Manifest` from `@prose-reader/shared`.

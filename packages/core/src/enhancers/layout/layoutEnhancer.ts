@@ -12,23 +12,23 @@ import {
   takeUntil,
   tap,
 } from "rxjs"
-import type { ExtendedSettings } from "../../settings/SettingsInterface"
-import type { Pages } from "../../spine/Pages"
+import type { ExtendedSettings } from "../../settings/SettingsInterface.ts"
+import type { Pages } from "../../spine/Pages.ts"
 import {
   setAttributeIfChanged,
   setStylePropertyIfChanged,
-} from "../../utils/dom"
-import { upsertCSSToFrame } from "../../utils/frames"
-import { isDefined } from "../../utils/isDefined"
-import { observeResize } from "../../utils/rxjs"
-import type { EnhancerOutput, RootEnhancer } from "../types/enhancer"
-import { createCoordinatesApi } from "./coordinates"
-import { createMovingSafePan$ } from "./createMovingSafePan$"
-import { createPlaceholderPages } from "./createPlaceholderPages"
-import { fixIframeScrollbar } from "./fixIframeScrollbar"
-import { fixReflowable } from "./fixReflowable"
-import { flagSpineItems } from "./flagSpineItems"
-import type { EnhancerLayoutInputSettings } from "./types"
+} from "../../utils/dom.ts"
+import { upsertCSSToFrame } from "../../utils/frames.ts"
+import { isDefined } from "../../utils/isDefined.ts"
+import { observeResize } from "../../utils/rxjs.ts"
+import type { EnhancerOutput, RootEnhancer } from "../types/enhancer.ts"
+import { createCoordinatesApi } from "./coordinates.ts"
+import { createMovingSafePan$ } from "./createMovingSafePan$.ts"
+import { createPlaceholderPages } from "./createPlaceholderPages.ts"
+import { fixIframeScrollbar } from "./fixIframeScrollbar.ts"
+import { fixReflowable } from "./fixReflowable.ts"
+import { flagSpineItems } from "./flagSpineItems.ts"
+import type { EnhancerLayoutInputSettings } from "./types.ts"
 
 const defaultLayoutSettings: EnhancerLayoutInputSettings = {
   layoutAutoResize: `container`,

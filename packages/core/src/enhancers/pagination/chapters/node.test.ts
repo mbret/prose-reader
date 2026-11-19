@@ -1,14 +1,14 @@
 // @vitest-environment jsdom
 import type { Manifest } from "@prose-reader/shared"
 import { describe, expect, it } from "vitest"
-import type { PageEntry } from "../../../spine/Pages"
-import type { SpineItem } from "../../../spineItem/SpineItem"
-import { createTestManifest } from "../../../tests/utils"
+import type { PageEntry } from "../../../spine/Pages.ts"
+import type { SpineItem } from "../../../spineItem/SpineItem.ts"
+import { createTestManifest } from "../../../tests/utils.ts"
 import {
   buildTocCandidatesBySpineHref,
   buildTocIndex,
   resolveChapterInfoFromVisibleNode,
-} from "./index"
+} from "./index.ts"
 
 const BASE_MANIFEST = createTestManifest({
   filename: "",

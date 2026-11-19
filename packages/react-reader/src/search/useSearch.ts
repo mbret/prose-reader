@@ -8,7 +8,7 @@ import {
   switchMap,
   timer,
 } from "rxjs"
-import { hasSearchEnhancer, useReader } from "../context/useReader"
+import { hasSearchEnhancer, useReader } from "../context/useReader.ts"
 
 const DEBOUNCE_TIME = 500
 

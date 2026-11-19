@@ -1,5 +1,5 @@
 import { isShallowEqual } from "@prose-reader/shared"
-import type { PaginationEdge, VisibleRange } from "./types"
+import type { PaginationEdge, VisibleRange } from "./types.ts"
 
 export const createEmptyPaginationEdge = (): PaginationEdge => ({
   cfi: undefined,

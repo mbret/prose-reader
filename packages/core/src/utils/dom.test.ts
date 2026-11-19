@@ -1,5 +1,5 @@
 import { describe, expect, it, onTestFinished, vi } from "vitest"
-import { getFirstNodeInBox } from "./dom"
+import { getFirstNodeInBox } from "./dom.ts"
 
 type Rect = { x: number; y: number; width: number; height: number }
 

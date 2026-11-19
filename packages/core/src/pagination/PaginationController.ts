@@ -13,22 +13,22 @@ import {
   take,
   takeUntil,
 } from "rxjs"
-import type { CfiManager } from "../cfi"
-import type { Context } from "../context/Context"
-import type { NavigationAgainstCurrentLayout } from "../navigation/types"
-import { PAGE_VISIBILITY_THRESHOLD } from "../spine/Pages"
-import type { Spine } from "../spine/Spine"
-import type { SpineItemsManager } from "../spine/SpineItemsManager"
-import type { SpinePosition, UnboundSpinePosition } from "../spine/types"
-import type { SpineItem, SpineItemState } from "../spineItem/SpineItem"
-import { DestroyableClass } from "../utils/DestroyableClass"
-import { withoutSettlement } from "./edges"
-import type { Pagination } from "./Pagination"
+import type { CfiManager } from "../cfi/index.ts"
+import type { Context } from "../context/Context.ts"
+import type { NavigationAgainstCurrentLayout } from "../navigation/types.ts"
+import { PAGE_VISIBILITY_THRESHOLD } from "../spine/Pages.ts"
+import type { Spine } from "../spine/Spine.ts"
+import type { SpineItemsManager } from "../spine/SpineItemsManager.ts"
+import type { SpinePosition, UnboundSpinePosition } from "../spine/types.ts"
+import type { SpineItem, SpineItemState } from "../spineItem/SpineItem.ts"
+import { DestroyableClass } from "../utils/DestroyableClass.ts"
+import { withoutSettlement } from "./edges.ts"
+import type { Pagination } from "./Pagination.ts"
 import type {
   PaginationEdge,
   PaginationInfo,
   SettledPaginationEdge,
-} from "./types"
+} from "./types.ts"
 
 type ResolvedEdges = {
   begin: SettledPaginationEdge<PaginationEdge>

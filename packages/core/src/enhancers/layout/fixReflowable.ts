@@ -1,6 +1,6 @@
-import type { Reader } from "../../reader"
-import { isHtmlTagElement, setStylePropertyIfChanged } from "../../utils/dom"
-import { getFrameViewportInfo } from "../../utils/frames"
+import type { Reader } from "../../reader.ts"
+import { isHtmlTagElement, setStylePropertyIfChanged } from "../../utils/dom.ts"
+import { getFrameViewportInfo } from "../../utils/frames.ts"
 
 export const fixReflowable = (reader: Reader) => {
   /**

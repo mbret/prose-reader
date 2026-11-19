@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest"
-import { createArchive } from "../../archives/createArchive"
-import { blobFileAccessors } from "../../archives/fileAccessors"
-import { readArchiveComicInfo } from "./readArchiveComicInfo"
+import { createArchive } from "../../archives/createArchive.ts"
+import { blobFileAccessors } from "../../archives/fileAccessors.ts"
+import { readArchiveComicInfo } from "./readArchiveComicInfo.ts"
 
 const textRecord = (uri: string, content = ``) => ({
   dir: false,

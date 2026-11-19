@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest"
-import { parse } from "./parse"
+import { parse } from "./parse.ts"
 
 describe("EPUB CFI Parser", () => {
   describe("parse", () => {

@@ -1,7 +1,7 @@
 import type { Reader } from "@prose-reader/core"
 import type { PinchRecognizer } from "gesturx"
 import { filter, map, merge, switchMap, tap, withLatestFrom } from "rxjs"
-import type { GesturesSettingsManager } from "../SettingsManager"
+import type { GesturesSettingsManager } from "../SettingsManager.ts"
 
 export const registerPinch = ({
   reader,

@@ -1,10 +1,10 @@
 import { Stack } from "@chakra-ui/react"
 import { memo } from "react"
-import { Checkbox } from "../components/ui/checkbox"
-import { getInheritedChoiceLabel } from "../settings/getInheritedChoiceLabel"
-import { SettingScopes } from "../settings/SettingScopes"
-import { useManagedSetting } from "../settings/useManagedSetting"
-import { FontScaleSlider } from "./FontScaleSlider"
+import { Checkbox } from "../components/ui/checkbox.tsx"
+import { getInheritedChoiceLabel } from "../settings/getInheritedChoiceLabel.ts"
+import { SettingScopes } from "../settings/SettingScopes.tsx"
+import { useManagedSetting } from "../settings/useManagedSetting.ts"
+import { FontScaleSlider } from "./FontScaleSlider.tsx"
 
 const FONT_SCALE_SHOWN_WITHOUT_A_VALUE = 1
 

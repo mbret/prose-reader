@@ -21,17 +21,17 @@ import {
   tap,
   timer,
 } from "rxjs"
-import type { Context } from "../context/Context"
-import { reportRecoveredError } from "../report"
-import type { ReaderSettingsManager } from "../settings/ReaderSettingsManager"
-import type { DocumentLoadStatus } from "../spineItem/renderer/DocumentRenderer"
-import type { SpineItem } from "../spineItem/SpineItem"
-import type { SpineItemLayoutParams } from "../spineItem/SpineItemLayout"
-import { DestroyableClass } from "../utils/DestroyableClass"
-import type { Viewport } from "../viewport/Viewport"
-import type { SpineItemsManager } from "./SpineItemsManager"
-import type { SpineItemsObserver } from "./SpineItemsObserver"
-import { SpineBoundingBox, SpineItemSpineLayout } from "./types"
+import type { Context } from "../context/Context.ts"
+import { reportRecoveredError } from "../report.ts"
+import type { ReaderSettingsManager } from "../settings/ReaderSettingsManager.ts"
+import type { DocumentLoadStatus } from "../spineItem/renderer/DocumentRenderer.ts"
+import type { SpineItem } from "../spineItem/SpineItem.ts"
+import type { SpineItemLayoutParams } from "../spineItem/SpineItemLayout.ts"
+import { DestroyableClass } from "../utils/DestroyableClass.ts"
+import type { Viewport } from "../viewport/Viewport.ts"
+import type { SpineItemsManager } from "./SpineItemsManager.ts"
+import type { SpineItemsObserver } from "./SpineItemsObserver.ts"
+import { SpineBoundingBox, SpineItemSpineLayout } from "./types.ts"
 
 /**
  * Whether a change of an item's load status ends a load: its document

@@ -1,8 +1,8 @@
 import { copyFile, mkdir, open, readFile, writeFile } from "node:fs/promises"
 import { join } from "node:path"
 import { beforeAll, describe, expect, it } from "vitest"
-import { getKoreaderFileDigest, getKoreaderFileNameDigest } from "./digest"
-import { FIXTURES, FIXTURES_DIR } from "./tests/epub"
+import { getKoreaderFileDigest, getKoreaderFileNameDigest } from "./digest.ts"
+import { FIXTURES, FIXTURES_DIR } from "./tests/epub.ts"
 
 /**
  * What tools/document-digest.lua answered from KOReader itself: the

@@ -2,17 +2,17 @@ import { filter, finalize, map, merge, switchMap, takeUntil, tap } from "rxjs"
 import {
   CSS_VAR_THEME_BACKGROUND_COLOR,
   CSS_VAR_THEME_PLACEHOLDER_COLOR,
-} from "../../constants"
-import type { ExtendedSettings } from "../../settings/SettingsInterface"
-import type { SpineItem } from "../../spineItem/SpineItem"
+} from "../../constants.ts"
+import type { ExtendedSettings } from "../../settings/SettingsInterface.ts"
+import type { SpineItem } from "../../spineItem/SpineItem.ts"
 import {
   removeStylePropertyIfPresent,
   setStylePropertyIfChanged,
-} from "../../utils/dom"
-import { upsertCSSToFrame } from "../../utils/frames"
-import { isDefined } from "../../utils/isDefined"
-import type { EnhancerOutput, RootEnhancer } from "../types/enhancer"
-import type { EnhancerThemeInputSettings, Theme } from "./types"
+} from "../../utils/dom.ts"
+import { upsertCSSToFrame } from "../../utils/frames.ts"
+import { isDefined } from "../../utils/isDefined.ts"
+import type { EnhancerOutput, RootEnhancer } from "../types/enhancer.ts"
+import type { EnhancerThemeInputSettings, Theme } from "./types.ts"
 
 const defaultThemeSettings: EnhancerThemeInputSettings = {
   theme: `bright`,

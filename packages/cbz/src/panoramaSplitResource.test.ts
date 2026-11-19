@@ -5,8 +5,8 @@ import {
 } from "@prose-reader/archive-reader"
 import type { HookResource } from "@prose-reader/streamer"
 import { afterEach, describe, expect, it, vi } from "vitest"
-import { buildVirtualPanoramaResourcePath } from "./panoramaSplitManifest"
-import { panoramaSplitResourceHook } from "./panoramaSplitResource"
+import { buildVirtualPanoramaResourcePath } from "./panoramaSplitManifest.ts"
+import { panoramaSplitResourceHook } from "./panoramaSplitResource.ts"
 
 const generatePanoramaResource = (archive: Archive, resourcePath: string) =>
   panoramaSplitResourceHook({ archive, resourcePath })({

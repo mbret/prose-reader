@@ -2,9 +2,9 @@ import { Input, Stack, Text } from "@chakra-ui/react"
 import type React from "react"
 import { memo, useCallback } from "react"
 import { useObserve } from "reactjrx"
-import { useReader } from "../context/useReader"
-import { SearchListItem } from "./SearchListItem"
-import { useSearch } from "./useSearch"
+import { useReader } from "../context/useReader.ts"
+import { SearchListItem } from "./SearchListItem.tsx"
+import { useSearch } from "./useSearch.ts"
 
 export const SearchDialogContent = memo(
   ({ onNavigate }: { onNavigate: () => void }) => {

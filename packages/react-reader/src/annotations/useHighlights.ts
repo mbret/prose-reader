@@ -1,4 +1,4 @@
-import { useAnnotations } from "./useAnnotations"
+import { useAnnotations } from "./useAnnotations.ts"
 
 export const useHighlights = () => {
   const { data: annotations } = useAnnotations()

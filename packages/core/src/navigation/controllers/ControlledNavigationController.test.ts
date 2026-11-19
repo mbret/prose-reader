@@ -1,13 +1,13 @@
 import { describe, expect, it } from "vitest"
-import { Context } from "../../context/Context"
-import { HookManager } from "../../hooks/HookManager"
-import { ReaderSettingsManager } from "../../settings/ReaderSettingsManager"
-import { Spine } from "../../spine/Spine"
-import { SpineItemsManager } from "../../spine/SpineItemsManager"
-import { SpinePosition } from "../../spine/types"
-import { createTestManifest, waitFor } from "../../tests/utils"
-import { Viewport } from "../../viewport/Viewport"
-import { ControlledNavigationController } from "./ControlledNavigationController"
+import { Context } from "../../context/Context.ts"
+import { HookManager } from "../../hooks/HookManager.ts"
+import { ReaderSettingsManager } from "../../settings/ReaderSettingsManager.ts"
+import { Spine } from "../../spine/Spine.ts"
+import { SpineItemsManager } from "../../spine/SpineItemsManager.ts"
+import { SpinePosition } from "../../spine/types.ts"
+import { createTestManifest, waitFor } from "../../tests/utils.ts"
+import { Viewport } from "../../viewport/Viewport.ts"
+import { ControlledNavigationController } from "./ControlledNavigationController.ts"
 
 const createTestController = () => {
   const context = new Context(createTestManifest())

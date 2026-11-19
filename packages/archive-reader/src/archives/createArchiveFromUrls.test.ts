@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest"
-import { resolveArchiveReadingOrder } from "../readingOrder/resolveArchiveReadingOrder"
-import { createArchiveFromUrls } from "./createArchiveFromUrls"
-import { isFileRecord } from "./types"
+import { resolveArchiveReadingOrder } from "../readingOrder/resolveArchiveReadingOrder.ts"
+import { createArchiveFromUrls } from "./createArchiveFromUrls.ts"
+import { isFileRecord } from "./types.ts"
 
 describe(`Given urls with a query or a fragment`, () => {
   const urls = [

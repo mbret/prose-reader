@@ -8,9 +8,9 @@ import type {
 import type { Manifest } from "@prose-reader/shared"
 import { BehaviorSubject } from "rxjs"
 import { afterEach, describe, expect, it, vi } from "vitest"
-import type { AudioTrack } from "../types"
-import { AudioController } from "./AudioController"
-import { AudioElementAdapter } from "./AudioElementAdapter"
+import type { AudioTrack } from "../types.ts"
+import { AudioController } from "./AudioController.ts"
+import { AudioElementAdapter } from "./AudioElementAdapter.ts"
 
 const flush = async () => {
   await Promise.resolve()

@@ -1,5 +1,5 @@
-import { injectCSS, isHtmlElement } from "../utils/dom"
-import type { EnhancerOutput, RootEnhancer } from "./types/enhancer"
+import { injectCSS, isHtmlElement } from "../utils/dom.ts"
+import type { EnhancerOutput, RootEnhancer } from "./types/enhancer.ts"
 
 export const utilsEnhancer =
   <InheritOptions, InheritOutput extends EnhancerOutput<RootEnhancer>>(

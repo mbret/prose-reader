@@ -1,7 +1,7 @@
 import type { Reader } from "@prose-reader/core"
 import type { PanRecognizer } from "gesturx"
 import { filter, finalize, map, merge, of, switchMap, tap } from "rxjs"
-import type { GesturesSettingsManager } from "../SettingsManager"
+import type { GesturesSettingsManager } from "../SettingsManager.ts"
 
 export const registerPan = ({
   reader,

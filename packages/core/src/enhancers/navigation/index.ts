@@ -3,23 +3,23 @@ import { merge, takeUntil, tap } from "rxjs"
 import type {
   NavigationTarget,
   UserNavigationEntry,
-} from "../../navigation/types"
-import type { HtmlEnhancerOutput } from "../html/enhancer"
+} from "../../navigation/types.ts"
+import type { HtmlEnhancerOutput } from "../html/enhancer.ts"
 import type {
   EnhancerOptions,
   EnhancerOutput,
   RootEnhancer,
-} from "../types/enhancer"
-import { outOfSpineBoundary } from "./boundary"
-import { getUrlSelector } from "./getUrlSelector"
-import { handleLinksNavigation } from "./links"
-import { ManualNavigator } from "./navigators/manualNavigator"
-import { PanNavigator } from "./navigators/panNavigator"
-import { UserScrollNavigation } from "./navigators/UserScrollNavigation"
-import { navigationReport } from "./report"
-import { observeState } from "./state"
-import { throttleLock } from "./throttleLock"
-import type { NavigationEnhancerOutput, UrlNavigationTarget } from "./types"
+} from "../types/enhancer.ts"
+import { outOfSpineBoundary } from "./boundary.ts"
+import { getUrlSelector } from "./getUrlSelector.ts"
+import { handleLinksNavigation } from "./links.ts"
+import { ManualNavigator } from "./navigators/manualNavigator.ts"
+import { PanNavigator } from "./navigators/panNavigator.ts"
+import { UserScrollNavigation } from "./navigators/UserScrollNavigation.ts"
+import { navigationReport } from "./report.ts"
+import { observeState } from "./state.ts"
+import { throttleLock } from "./throttleLock.ts"
+import type { NavigationEnhancerOutput, UrlNavigationTarget } from "./types.ts"
 
 /** A url is translated into a selector, which finds its element once loaded. */
 const toSelector = (

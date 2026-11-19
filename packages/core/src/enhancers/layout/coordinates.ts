@@ -1,6 +1,6 @@
-import type { Reader } from "../../reader"
-import { UnboundSpinePosition } from "../../spine/types"
-import { getPositionRelativeToNonTransformedElement } from "../../utils/coordinates"
+import type { Reader } from "../../reader.ts"
+import { UnboundSpinePosition } from "../../spine/types.ts"
+import { getPositionRelativeToNonTransformedElement } from "../../utils/coordinates.ts"
 
 export const getSpinePositionFromClientPosition = (
   position: { x: number; y: number },

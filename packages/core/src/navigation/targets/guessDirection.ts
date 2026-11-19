@@ -1,6 +1,6 @@
-import type { ReaderSettingsManager } from "../../settings/ReaderSettingsManager"
-import type { SpinePosition, UnboundSpinePosition } from "../../spine/types"
-import type { InternalNavigationEntry } from "../types"
+import type { ReaderSettingsManager } from "../../settings/ReaderSettingsManager.ts"
+import type { SpinePosition, UnboundSpinePosition } from "../../spine/types.ts"
+import type { InternalNavigationEntry } from "../types.ts"
 
 /**
  * A target naming a place goes forward to it; a position can only be guessed.

@@ -3,12 +3,12 @@ import { FaEdit } from "react-icons/fa"
 import { LuNotebookPen } from "react-icons/lu"
 import { useObserve } from "reactjrx"
 import { EMPTY, map, startWith, switchMap } from "rxjs"
-import { FloatingMenu } from "../common/FloatingMenu"
+import { FloatingMenu } from "../common/FloatingMenu.tsx"
 import {
   useReaderContext,
   useReaderContextValue,
-} from "../context/useReaderContext"
-import { useReaderWithAnnotations } from "./useReaderWithAnnotations"
+} from "../context/useReaderContext.ts"
+import { useReaderWithAnnotations } from "./useReaderWithAnnotations.ts"
 
 export const AnnotateControls = () => {
   const reader = useReaderWithAnnotations()

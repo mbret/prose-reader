@@ -1,4 +1,4 @@
-import type { ReactReaderSettingsScopeReference } from "./types"
+import type { ReactReaderSettingsScopeReference } from "./types.ts"
 
 /**
  * The label of the choice that sets a scope back to the value it inherits,

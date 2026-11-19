@@ -13,8 +13,8 @@ import type {
   TapRecognizer,
 } from "gesturx"
 import type { Observable, ObservedValueOf } from "rxjs"
-import type { TapAreaGestureContext } from "./gestures/taps/types"
-import type { GesturesSettingsManager } from "./SettingsManager"
+import type { TapAreaGestureContext } from "./gestures/taps/types.ts"
+import type { GesturesSettingsManager } from "./SettingsManager.ts"
 
 /** What a `beforeTapGesture` hook is asked about: the tap, and its page. */
 export type BeforeTapGestureContext = {

@@ -1,10 +1,10 @@
 import fs from "node:fs"
 import path from "node:path"
 import { describe, expect, it } from "vitest"
-import { createArchive } from "../archives/createArchive"
-import { blobFileAccessors } from "../archives/fileAccessors"
-import { readArchiveOpf } from "../metadata/opf/readArchiveOpf"
-import { resolveArchiveToc } from "./resolveArchiveToc"
+import { createArchive } from "../archives/createArchive.ts"
+import { blobFileAccessors } from "../archives/fileAccessors.ts"
+import { readArchiveOpf } from "../metadata/opf/readArchiveOpf.ts"
+import { resolveArchiveToc } from "./resolveArchiveToc.ts"
 
 const textRecord = (uri: string, content = ``) => ({
   dir: false,

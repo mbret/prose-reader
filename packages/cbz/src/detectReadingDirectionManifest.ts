@@ -1,5 +1,5 @@
 import type { StreamerManifestHookFactory } from "@prose-reader/streamer"
-import { isCbzArchive } from "./isCbzArchive"
+import { isCbzArchive } from "./isCbzArchive.ts"
 
 export const detectReadingDirectionManifest: StreamerManifestHookFactory =
   ({ archive }) =>

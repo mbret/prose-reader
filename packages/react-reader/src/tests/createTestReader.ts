@@ -1,7 +1,7 @@
 import { BehaviorSubject } from "rxjs"
 import { vi } from "vitest"
-import type { ReactReaderReader } from "../context/context"
-import type { ManagedSettingValues } from "../settings/managedSettings"
+import type { ReactReaderReader } from "../context/context.ts"
+import type { ManagedSettingValues } from "../settings/managedSettings.ts"
 
 const READER_DEFAULT_SETTINGS: ManagedSettingValues = {
   fontScale: 1,

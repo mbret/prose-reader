@@ -1,6 +1,6 @@
 import type { Observable } from "rxjs"
-import type { ReaderHighlights } from "./annotations/ReaderHighlights"
-import type { RuntimeAnnotation } from "./annotations/types"
+import type { ReaderHighlights } from "./annotations/ReaderHighlights.ts"
+import type { RuntimeAnnotation } from "./annotations/types.ts"
 
 export interface Annotation {
   id: string

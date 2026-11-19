@@ -1,8 +1,8 @@
 import { Stack } from "@chakra-ui/react"
-import { isKeyOf } from "../common/utils"
-import { Radio, RadioGroup } from "../components/ui/radio"
-import { getInheritedChoiceLabel } from "./getInheritedChoiceLabel"
-import type { ReactReaderSettingsScopeReference } from "./types"
+import { isKeyOf } from "../common/utils.ts"
+import { Radio, RadioGroup } from "../components/ui/radio.tsx"
+import { getInheritedChoiceLabel } from "./getInheritedChoiceLabel.ts"
+import type { ReactReaderSettingsScopeReference } from "./types.ts"
 
 /** The radio value of the inherited choice, a value no setting takes. */
 const INHERITED_CHOICE_RADIO_VALUE = "inherited"

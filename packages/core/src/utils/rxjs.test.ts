@@ -1,6 +1,6 @@
 import { afterEach, describe, expect, it, vi } from "vitest"
-import { holdAnimationFrames } from "../tests/utils"
-import { observeResize } from "./rxjs"
+import { holdAnimationFrames } from "../tests/utils.ts"
+import { observeResize } from "./rxjs.ts"
 
 /**
  * A resize observer that counts the observers that are observing. It never

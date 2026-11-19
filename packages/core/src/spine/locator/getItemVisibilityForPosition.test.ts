@@ -1,11 +1,11 @@
 import { describe, expect, it, vi } from "vitest"
-import { Context } from "../../context/Context"
-import { ReaderSettingsManager } from "../../settings/ReaderSettingsManager"
-import { createTestManifest } from "../../tests/utils"
-import { ViewportSlicePosition } from "../../viewport/types"
-import { Viewport } from "../../viewport/Viewport"
-import { SpinePosition } from "../types"
-import { getItemVisibilityForPosition } from "./getItemVisibilityForPosition"
+import { Context } from "../../context/Context.ts"
+import { ReaderSettingsManager } from "../../settings/ReaderSettingsManager.ts"
+import { createTestManifest } from "../../tests/utils.ts"
+import { ViewportSlicePosition } from "../../viewport/types.ts"
+import { Viewport } from "../../viewport/Viewport.ts"
+import { SpinePosition } from "../types.ts"
+import { getItemVisibilityForPosition } from "./getItemVisibilityForPosition.ts"
 
 const context = new Context(createTestManifest())
 const settingsManager = new ReaderSettingsManager({}, context)

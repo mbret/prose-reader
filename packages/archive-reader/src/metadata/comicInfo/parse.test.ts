@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest"
-import { normalizeIsbn } from "../../utils/normalizeIsbn"
-import { parseComicInfo } from "./parse"
+import { normalizeIsbn } from "../../utils/normalizeIsbn.ts"
+import { parseComicInfo } from "./parse.ts"
 
 const minimalComicInfo = (body = "") =>
   `<?xml version="1.0" encoding="utf-8"?>` +

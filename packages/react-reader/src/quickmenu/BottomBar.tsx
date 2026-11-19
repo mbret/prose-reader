@@ -24,23 +24,23 @@ import {
 } from "react-icons/rx"
 import { useObserve } from "reactjrx"
 import { map } from "rxjs"
-import { AudioControlsSection } from "../audio/AudioControlsSection"
-import { useHasVisibleAudioTracks } from "../audio/useHasVisibleAudioTracks"
+import { AudioControlsSection } from "../audio/AudioControlsSection.tsx"
+import { useHasVisibleAudioTracks } from "../audio/useHasVisibleAudioTracks.ts"
 import {
   type ReaderViewProps,
   useReaderViewContext,
-} from "../context/ReaderViewContext"
+} from "../context/ReaderViewContext.ts"
 import {
   hasAnnotationsEnhancer,
   hasGalleryEnhancer,
   hasRefitEnhancer,
   hasSearchEnhancer,
   useReader,
-} from "../context/useReader"
-import { useReaderContextValue } from "../context/useReaderContext"
-import { PaginationInfoSection } from "./PaginationInfoSection"
-import { QuickBar } from "./QuickBar"
-import { Scrubber } from "./Scrubber"
+} from "../context/useReader.ts"
+import { useReaderContextValue } from "../context/useReaderContext.ts"
+import { PaginationInfoSection } from "./PaginationInfoSection.tsx"
+import { QuickBar } from "./QuickBar.tsx"
+import { Scrubber } from "./Scrubber.tsx"
 
 export const BottomBar = memo(
   ({

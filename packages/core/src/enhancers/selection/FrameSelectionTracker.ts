@@ -12,9 +12,9 @@ import {
   switchMap,
   takeUntil,
 } from "rxjs"
-import { DestroyableClass } from "../../utils/DestroyableClass"
-import { isDefined } from "../../utils/isDefined"
-import { observeMutation } from "../../utils/rxjs"
+import { DestroyableClass } from "../../utils/DestroyableClass.ts"
+import { isDefined } from "../../utils/isDefined.ts"
+import { observeMutation } from "../../utils/rxjs.ts"
 
 export class FrameSelectionTracker extends DestroyableClass {
   selectionChange$: Observable<Selection | null>

@@ -14,18 +14,18 @@ import {
   onTestFinished,
   vi,
 } from "vitest"
-import type { ReactReaderReader } from "../context/context"
-import { ReaderContextProvider } from "../context/ReaderContextProvider"
+import type { ReactReaderReader } from "../context/context.ts"
+import { ReaderContextProvider } from "../context/ReaderContextProvider.tsx"
 import {
   asProvidedReader,
   createTestReader,
   type TestReader,
-} from "../tests/createTestReader"
-import { ReaderInContext } from "../tests/ReaderInContext"
-import { setWindowWidth } from "../tests/setWindowWidth"
-import type { ManagedSettingName } from "./managedSettings"
-import { SyncReaderWithManagedSettings } from "./SyncReaderWithManagedSettings"
-import { useManagedSetting } from "./useManagedSetting"
+} from "../tests/createTestReader.ts"
+import { ReaderInContext } from "../tests/ReaderInContext.tsx"
+import { setWindowWidth } from "../tests/setWindowWidth.ts"
+import type { ManagedSettingName } from "./managedSettings.ts"
+import { SyncReaderWithManagedSettings } from "./SyncReaderWithManagedSettings.tsx"
+import { useManagedSetting } from "./useManagedSetting.ts"
 
 /** The context's props, and the reader the provider would have created. */
 type RenderProps = Omit<

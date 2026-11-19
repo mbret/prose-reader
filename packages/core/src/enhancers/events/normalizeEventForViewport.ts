@@ -1,6 +1,6 @@
-import type { SpineLocator } from "../../spine/locator/SpineLocator"
-import { isHtmlTagElement } from "../../utils/dom"
-import { translateFramePositionIntoPage } from "./translateFramePositionIntoPage"
+import type { SpineLocator } from "../../spine/locator/SpineLocator.ts"
+import { isHtmlTagElement } from "../../utils/dom.ts"
+import { translateFramePositionIntoPage } from "./translateFramePositionIntoPage.ts"
 
 /**
  * What a copy of a pointer event needs to describe the same input: the pointer,

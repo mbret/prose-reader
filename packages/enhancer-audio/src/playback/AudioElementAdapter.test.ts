@@ -1,7 +1,7 @@
 /* @vitest-environment happy-dom */
 
 import { afterEach, describe, expect, it, vi } from "vitest"
-import { AudioElementAdapter } from "./AudioElementAdapter"
+import { AudioElementAdapter } from "./AudioElementAdapter.ts"
 
 const flush = async () => {
   await Promise.resolve()

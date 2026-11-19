@@ -1,9 +1,9 @@
 import { isShallowEqual } from "@prose-reader/shared"
 import { combineLatest, distinctUntilChanged, map, takeUntil } from "rxjs"
-import type { Context } from "../context/Context"
-import type { ReaderSettingsManager } from "../settings/ReaderSettingsManager"
-import type { CoreInputSettings } from "../settings/types"
-import { ReactiveEntity } from "../utils/ReactiveEntity"
+import type { Context } from "../context/Context.ts"
+import type { ReaderSettingsManager } from "../settings/ReaderSettingsManager.ts"
+import type { CoreInputSettings } from "../settings/types.ts"
+import { ReactiveEntity } from "../utils/ReactiveEntity.ts"
 
 export type ContextSettings = Partial<CoreInputSettings>
 

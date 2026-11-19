@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest"
-import { escapeXmlAttributeValue } from "./xml"
+import { escapeXmlAttributeValue } from "./xml.ts"
 
 describe("escapeXmlAttributeValue", () => {
   it("should escape characters that are special in XML attributes", () => {

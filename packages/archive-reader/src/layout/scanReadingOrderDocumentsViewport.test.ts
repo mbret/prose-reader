@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest"
-import { createArchive } from "../archives/createArchive"
-import { blobFileAccessors } from "../archives/fileAccessors"
-import { readingOrderDocumentsAllHaveViewport } from "./scanReadingOrderDocumentsViewport"
+import { createArchive } from "../archives/createArchive.ts"
+import { blobFileAccessors } from "../archives/fileAccessors.ts"
+import { readingOrderDocumentsAllHaveViewport } from "./scanReadingOrderDocumentsViewport.ts"
 
 const xhtml = (viewport: boolean) =>
   `<?xml version="1.0"?>

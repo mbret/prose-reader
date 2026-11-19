@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest"
-import { isAudioSpineItem } from "./utils"
+import { isAudioSpineItem } from "./utils.ts"
 
 describe(`isAudioSpineItem`, () => {
   it(`detects audio from media type`, () => {

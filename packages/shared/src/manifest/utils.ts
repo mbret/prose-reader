@@ -1,4 +1,4 @@
-import type { Manifest } from "./Manifest"
+import type { Manifest } from "./Manifest.ts"
 
 export type SpreadPosition = "left" | "right" | "none"
 

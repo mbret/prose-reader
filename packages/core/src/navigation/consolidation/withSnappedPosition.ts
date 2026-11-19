@@ -1,12 +1,12 @@
 import { map, type Observable } from "rxjs"
-import type { ReaderSettingsManager } from "../../settings/ReaderSettingsManager"
-import type { SpineLocator } from "../../spine/locator/SpineLocator"
-import type { Spine } from "../../spine/Spine"
-import { SpinePosition } from "../../spine/types"
-import type { SpineItem } from "../../spineItem/SpineItem"
-import { createSpineItemPageGeometry } from "../../spineItem/SpineItemPageGeometry"
-import type { NavigationResolver } from "../resolvers/NavigationResolver"
-import type { InternalNavigationEntry } from "../types"
+import type { ReaderSettingsManager } from "../../settings/ReaderSettingsManager.ts"
+import type { SpineLocator } from "../../spine/locator/SpineLocator.ts"
+import type { Spine } from "../../spine/Spine.ts"
+import { SpinePosition } from "../../spine/types.ts"
+import type { SpineItem } from "../../spineItem/SpineItem.ts"
+import { createSpineItemPageGeometry } from "../../spineItem/SpineItemPageGeometry.ts"
+import type { NavigationResolver } from "../resolvers/NavigationResolver.ts"
+import type { InternalNavigationEntry } from "../types.ts"
 
 /**
  * The navigable position of the page a navigation is on.

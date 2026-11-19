@@ -1,5 +1,5 @@
 import { NEVER, type Observable, switchMap } from "rxjs"
-import type { Viewport } from "./Viewport"
+import type { Viewport } from "./Viewport.ts"
 
 /**
  * Runs `work$` while the viewport has a size, and gives its values. It starts

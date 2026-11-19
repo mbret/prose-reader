@@ -20,7 +20,7 @@ import {
   withLatestFrom,
 } from "rxjs"
 import { afterEach, beforeAll, describe, expect, it, vi } from "vitest"
-import { gesturesEnhancer } from "./index"
+import { gesturesEnhancer } from "./index.ts"
 
 /**
  * Drives the enhancer on a mounted reader with the pointer events a browser

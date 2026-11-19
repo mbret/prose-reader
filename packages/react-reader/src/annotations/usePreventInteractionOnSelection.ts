@@ -1,7 +1,7 @@
 import { useCallback } from "react"
 import { useSubscribe } from "reactjrx"
 import { map, withLatestFrom } from "rxjs"
-import { useReaderWithAnnotations } from "./useReaderWithAnnotations"
+import { useReaderWithAnnotations } from "./useReaderWithAnnotations.ts"
 
 export const usePreventInteractionOnSelection = () => {
   const reader = useReaderWithAnnotations()

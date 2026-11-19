@@ -1,8 +1,8 @@
-import type { SpinePosition, UnboundSpinePosition } from "../spine/types"
+import type { SpinePosition, UnboundSpinePosition } from "../spine/types.ts"
 import type {
   SpineItemPosition,
   UnboundSpineItemPagePosition,
-} from "../spineItem/types"
+} from "../spineItem/types.ts"
 
 export type SpineBoundary = "start" | "end"
 

@@ -8,7 +8,7 @@ import {
   mountTestReader,
   notifyResize,
   setTestViewport,
-} from "../tests/readerHarness"
+} from "../tests/readerHarness.ts"
 
 installReaderTestEnvironment()
 

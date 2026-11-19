@@ -1,7 +1,7 @@
 import { Link, List, Stack, Text } from "@chakra-ui/react"
 import { LuNotebookPen } from "react-icons/lu"
-import { useReader } from "../context/useReader"
-import { useAnnotation } from "./useAnnotation"
+import { useReader } from "../context/useReader.ts"
+import { useAnnotation } from "./useAnnotation.ts"
 
 export const AnnotationListItem = ({
   id,

@@ -2,8 +2,8 @@ import { memo } from "react"
 import {
   MANAGED_SETTING_NAMES,
   type ManagedSettingName,
-} from "./managedSettings"
-import { useSyncReaderSettingWithManagedValue } from "./useSyncReaderSettingWithManagedValue"
+} from "./managedSettings.ts"
+import { useSyncReaderSettingWithManagedValue } from "./useSyncReaderSettingWithManagedValue.ts"
 
 const SyncReaderSettingWithManagedValue = memo(
   function SyncReaderSettingWithManagedValue({

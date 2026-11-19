@@ -1,11 +1,11 @@
 // @vitest-environment jsdom
 import { EMPTY, filter, firstValueFrom, of, skip } from "rxjs"
 import { describe, expect, it, vi } from "vitest"
-import { getPageStartProgression } from "../pagination/progression"
-import { SpinePosition } from "../spine/types"
-import { DefaultRenderer } from "../spineItem/renderer/DefaultRenderer"
-import type { DocumentLoadStatus } from "../spineItem/renderer/DocumentRenderer"
-import { DocumentRenderer } from "../spineItem/renderer/DocumentRenderer"
+import { getPageStartProgression } from "../pagination/progression.ts"
+import { SpinePosition } from "../spine/types.ts"
+import { DefaultRenderer } from "../spineItem/renderer/DefaultRenderer.ts"
+import type { DocumentLoadStatus } from "../spineItem/renderer/DocumentRenderer.ts"
+import { DocumentRenderer } from "../spineItem/renderer/DocumentRenderer.ts"
 import {
   createEnhancedTestReader,
   createPrePaginatedManifest,
@@ -20,9 +20,9 @@ import {
   settledOn,
   stubElementScrolling,
   TextDocumentRenderer,
-} from "../tests/readerHarness"
-import { createTestManifest, waitFor } from "../tests/utils"
-import type { ReadingPosition } from "./types"
+} from "../tests/readerHarness.ts"
+import { createTestManifest, waitFor } from "../tests/utils.ts"
+import type { ReadingPosition } from "./types.ts"
 
 installReaderTestEnvironment()
 

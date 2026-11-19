@@ -12,7 +12,7 @@ import {
   toCfiPosition,
 } from "@prose-reader/koreader"
 import { type Manifest, Report } from "@prose-reader/shared"
-import { getKoreaderPages } from "./koreaderPages"
+import { getKoreaderPages } from "./koreaderPages.ts"
 
 const report = Report.namespace(`@prose-reader/enhancer-koreader`)
 

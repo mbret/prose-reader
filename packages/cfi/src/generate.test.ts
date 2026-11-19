@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest"
-import { generate } from "./generate"
-import { parse } from "./parse"
+import { generate } from "./generate.ts"
+import { parse } from "./parse.ts"
 
 describe("CFI Generation", () => {
   describe("basic generation", () => {

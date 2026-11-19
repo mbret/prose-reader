@@ -1,9 +1,9 @@
 import type { Observable } from "rxjs"
-import type { PaginationEdge, VisibleRange } from "../../pagination/types"
-import type { LayoutEnhancerOutput } from "../layout/layoutEnhancer"
-import type { EnhancerOutput, RootEnhancer } from "../types/enhancer"
-import type { ChapterInfo } from "./chapters"
-import type { ResourcesLocator } from "./ResourcesLocator"
+import type { PaginationEdge, VisibleRange } from "../../pagination/types.ts"
+import type { LayoutEnhancerOutput } from "../layout/layoutEnhancer.ts"
+import type { EnhancerOutput, RootEnhancer } from "../types/enhancer.ts"
+import type { ChapterInfo } from "./chapters/index.ts"
+import type { ResourcesLocator } from "./ResourcesLocator.ts"
 
 export type { ChapterInfo }
 

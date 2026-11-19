@@ -4,16 +4,16 @@ import {
   getFragmentBody,
   isTextNode,
   visitCrengineChildren,
-} from "./crengine/children"
+} from "./crengine/children.ts"
 import {
   crengineElementName,
   getParentContext,
   hasImproperTableChildren,
   isElement,
-} from "./crengine/elements"
-import { toCrengineOffset } from "./crengine/text"
-import { serializeXPointer } from "./serialize"
-import type { DomPosition, XPointerStep } from "./types"
+} from "./crengine/elements.ts"
+import { toCrengineOffset } from "./crengine/text.ts"
+import { serializeXPointer } from "./serialize.ts"
+import type { DomPosition, XPointerStep } from "./types.ts"
 
 const DOCUMENT_NODE = 9
 

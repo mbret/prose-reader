@@ -1,4 +1,4 @@
-import type { ParsedXPointer, XPointerStep } from "./types"
+import type { ParsedXPointer, XPointerStep } from "./types.ts"
 
 /**
  * Wrapper elements crengine inserts into its own DOM for layout
