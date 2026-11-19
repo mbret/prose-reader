@@ -3,7 +3,7 @@ import type { Observable } from "rxjs"
 import type {
   DocumentRenderer,
   DocumentRendererParams,
-} from "../spineItem/renderer/DocumentRenderer"
+} from "../spineItem/renderer/DocumentRenderer.ts"
 
 export type CoreInputSettings = {
   /**

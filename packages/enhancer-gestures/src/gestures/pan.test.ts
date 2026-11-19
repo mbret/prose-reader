@@ -2,9 +2,9 @@ import type { Reader } from "@prose-reader/core"
 import type { PanEvent, PanRecognizer } from "gesturx"
 import { BehaviorSubject, Subject } from "rxjs"
 import { describe, expect, it, vi } from "vitest"
-import type { GesturesSettingsManager } from "../SettingsManager"
-import type { OutputSettings } from "../types"
-import { registerPan } from "./pan"
+import type { GesturesSettingsManager } from "../SettingsManager.ts"
+import type { OutputSettings } from "../types.ts"
+import { registerPan } from "./pan.ts"
 
 const createPanEvent = (
   type: PanEvent["type"],

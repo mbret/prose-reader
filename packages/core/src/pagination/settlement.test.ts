@@ -10,7 +10,7 @@ import {
   timeout,
 } from "rxjs"
 import { describe, expect, it, vi } from "vitest"
-import { Spine } from "../spine/Spine"
+import { Spine } from "../spine/Spine.ts"
 import {
   createEnhancedTestReader,
   createTestReader,
@@ -21,9 +21,9 @@ import {
   requestLayoutByUnloadingItem,
   setTestViewport,
   settledOn,
-} from "../tests/readerHarness"
-import { waitFor } from "../tests/utils"
-import type { PaginationInfo } from "./types"
+} from "../tests/readerHarness.ts"
+import { waitFor } from "../tests/utils.ts"
+import type { PaginationInfo } from "./types.ts"
 
 installReaderTestEnvironment()
 

@@ -5,7 +5,7 @@ import {
 } from "@prose-reader/archive-reader"
 import { of } from "rxjs"
 import { describe, expect, it, vi } from "vitest"
-import { Streamer } from "."
+import { Streamer } from "./index.ts"
 
 const createArchiveWithOnePage = ({
   body,

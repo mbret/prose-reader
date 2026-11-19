@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest"
-import { normalizeGtin } from "./normalizeGtin"
+import { normalizeGtin } from "./normalizeGtin.ts"
 
 describe("normalizeGtin", () => {
   it("returns undefined for empty input", () => {

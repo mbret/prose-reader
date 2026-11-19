@@ -1,6 +1,9 @@
-import { removeAttributeIfPresent, setAttributeIfChanged } from "../utils/dom"
-import { upsertCSSToFrame } from "../utils/frames"
-import type { EnhancerOutput, RootEnhancer } from "./types/enhancer"
+import {
+  removeAttributeIfPresent,
+  setAttributeIfChanged,
+} from "../utils/dom.ts"
+import { upsertCSSToFrame } from "../utils/frames.ts"
+import type { EnhancerOutput, RootEnhancer } from "./types/enhancer.ts"
 
 /**
  *

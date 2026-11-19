@@ -2,9 +2,9 @@ import { HStack, IconButton, Stack, Text } from "@chakra-ui/react"
 import { memo } from "react"
 import { IoIosArrowBack, IoMdMore } from "react-icons/io"
 import { MdFullscreen, MdFullscreenExit } from "react-icons/md"
-import { useFullscreen } from "../common/useFullscreen"
-import { useReader } from "../context/useReader"
-import { QuickBar } from "./QuickBar"
+import { useFullscreen } from "../common/useFullscreen.ts"
+import { useReader } from "../context/useReader.ts"
+import { QuickBar } from "./QuickBar.tsx"
 
 export const TopBar = memo(
   ({

@@ -1,8 +1,8 @@
 import fs from "node:fs/promises"
 import { describe, expect, it } from "vitest"
-import { generate } from "../generate"
-import { parse } from "../parse"
-import { resolve } from "../resolve"
+import { generate } from "../generate.ts"
+import { parse } from "../parse.ts"
+import { resolve } from "../resolve.ts"
 
 describe("Given a pdf text layer document", () => {
   it("should resolve a range for a single text node", async () => {

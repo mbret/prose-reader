@@ -10,9 +10,9 @@ import {
   switchMap,
   timeout,
 } from "rxjs"
-import { takeUntilNextNavigationSettled } from "../../navigation/operators"
-import type { Reader } from "../../reader"
-import { type BoundaryReachedEvent, outOfSpineBoundary } from "./boundary"
+import { takeUntilNextNavigationSettled } from "../../navigation/operators.ts"
+import type { Reader } from "../../reader.ts"
+import { type BoundaryReachedEvent, outOfSpineBoundary } from "./boundary.ts"
 
 const DEFAULT_ITEM_READINESS_TIMEOUT_MS = 5_000
 

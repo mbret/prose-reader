@@ -1,8 +1,8 @@
 import { describe, expect, it } from "vitest"
-import { createArchive } from "./createArchive"
-import { blobFileAccessors } from "./fileAccessors"
-import { getArchiveImageRecords, isImageRecord } from "./images"
-import type { ArchiveRecord } from "./types"
+import { createArchive } from "./createArchive.ts"
+import { blobFileAccessors } from "./fileAccessors.ts"
+import { getArchiveImageRecords, isImageRecord } from "./images.ts"
+import type { ArchiveRecord } from "./types.ts"
 
 const fileRecord = (
   uri: string,

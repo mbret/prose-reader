@@ -4,7 +4,7 @@ import {
   DEFAULT_STATE_PEAK_LEVEL,
   DEFAULT_STATE_TEXTURE_AMOUNT,
   IDLE_LEVEL,
-} from "./constants"
+} from "./constants.ts"
 
 export const clamp = (value: number, min: number, max: number) =>
   Math.min(Math.max(value, min), max)

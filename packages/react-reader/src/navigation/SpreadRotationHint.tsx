@@ -14,8 +14,8 @@ import {
   shareReplay,
   switchMap,
 } from "rxjs"
-import { useTransientValue } from "../common/useTransientValue"
-import { hasCbzEnhancer, useReader } from "../context/useReader"
+import { useTransientValue } from "../common/useTransientValue.ts"
+import { hasCbzEnhancer, useReader } from "../context/useReader.ts"
 import styles from "./SpreadRotationHint.module.css"
 
 const HINT_TARGET_DEBOUNCE_MS = 100

@@ -1,2 +1,2 @@
-export * from "./enhancer"
-export * from "./streamer"
+export * from "./enhancer.ts"
+export * from "./streamer.ts"

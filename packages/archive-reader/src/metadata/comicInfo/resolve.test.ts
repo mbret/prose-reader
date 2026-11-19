@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest"
-import { parseComicInfo } from "./parse"
-import { resolveComicInfo } from "./resolve"
+import { parseComicInfo } from "./parse.ts"
+import { resolveComicInfo } from "./resolve.ts"
 
 const comicInfoWrap = (body: string) =>
   `<?xml version="1.0"?>` +

@@ -1,11 +1,11 @@
 import { memo } from "react"
 import { useObserve } from "reactjrx"
 import { animationFrameScheduler, map, throttleTime } from "rxjs"
-import { FloatingMenu } from "../common/FloatingMenu"
-import { Slider } from "../components/ui/slider"
-import { MAX_ZOOM_SCALE } from "../constants"
-import { useReader } from "../context/useReader"
-import { useReaderContextValue } from "../context/useReaderContext"
+import { FloatingMenu } from "../common/FloatingMenu.tsx"
+import { Slider } from "../components/ui/slider.tsx"
+import { MAX_ZOOM_SCALE } from "../constants.ts"
+import { useReader } from "../context/useReader.ts"
+import { useReaderContextValue } from "../context/useReaderContext.ts"
 
 const STEP = 0.5
 const MIN = 1

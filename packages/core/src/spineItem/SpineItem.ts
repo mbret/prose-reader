@@ -1,19 +1,22 @@
+import type { Manifest } from "@prose-reader/shared"
 import { defer, merge, type Observable, share, takeUntil, tap } from "rxjs"
-import type { Manifest } from ".."
-import { HTML_PREFIX_SPINE_ITEM } from "../constants"
-import type { Context } from "../context/Context"
-import type { HookManager } from "../hooks/HookManager"
-import type { ReaderSettingsManager } from "../settings/ReaderSettingsManager"
-import { ReactiveEntity } from "../utils/ReactiveEntity"
-import type { Viewport } from "../viewport/Viewport"
-import { DefaultRenderer } from "./renderer/DefaultRenderer"
+import { HTML_PREFIX_SPINE_ITEM } from "../constants.ts"
+import type { Context } from "../context/Context.ts"
+import type { HookManager } from "../hooks/HookManager.ts"
+import type { ReaderSettingsManager } from "../settings/ReaderSettingsManager.ts"
+import { ReactiveEntity } from "../utils/ReactiveEntity.ts"
+import type { Viewport } from "../viewport/Viewport.ts"
+import { DefaultRenderer } from "./renderer/DefaultRenderer.ts"
 import type {
   DocumentLoad,
   DocumentRenderer,
-} from "./renderer/DocumentRenderer"
-import { ResourceHandler } from "./resources/ResourceHandler"
-import { SpineItemLayout, type SpineItemLayoutParams } from "./SpineItemLayout"
-import { createSpineItemPageGeometry } from "./SpineItemPageGeometry"
+} from "./renderer/DocumentRenderer.ts"
+import { ResourceHandler } from "./resources/ResourceHandler.ts"
+import {
+  SpineItemLayout,
+  type SpineItemLayoutParams,
+} from "./SpineItemLayout.ts"
+import { createSpineItemPageGeometry } from "./SpineItemPageGeometry.ts"
 
 export type SpineItemReference = string | SpineItem | number
 

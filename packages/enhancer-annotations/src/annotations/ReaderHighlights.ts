@@ -8,8 +8,8 @@ import {
   type Observable,
   switchMap,
 } from "rxjs"
-import { SpineItemHighlights } from "./SpineItemHighlights"
-import type { RuntimeAnnotation } from "./types"
+import { SpineItemHighlights } from "./SpineItemHighlights.ts"
+import type { RuntimeAnnotation } from "./types.ts"
 
 export class ReaderHighlights extends DestroyableClass {
   private spineItemHighlights = new BehaviorSubject<SpineItemHighlights[]>([])

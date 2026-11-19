@@ -1,5 +1,5 @@
 import { combineLatest, Observable, of } from "rxjs"
-import { reportRecoveredError } from "../report"
+import { reportRecoveredError } from "../report.ts"
 import type {
   AsyncHookName,
   AsyncHookParams,
@@ -10,7 +10,7 @@ import type {
   HookParams,
   HookResult,
   SyncHookName,
-} from "./types"
+} from "./types.ts"
 
 // biome-ignore lint/suspicious/noExplicitAny: TODO
 export class HookManager<H extends Hook<any, any, any> = CoreHook> {

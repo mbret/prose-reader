@@ -4,7 +4,7 @@ import { afterEach, expect, test, vi } from "vitest"
 import {
   copyBlobAssetReferences,
   createSnapshotObjectUrlStore,
-} from "./snapshotBlobAssets"
+} from "./snapshotBlobAssets.ts"
 
 afterEach(() => {
   vi.unstubAllGlobals()

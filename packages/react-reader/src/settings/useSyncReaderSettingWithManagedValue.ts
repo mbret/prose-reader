@@ -4,15 +4,18 @@ import { distinctUntilChanged, filter, map } from "rxjs"
 import {
   useReaderContext,
   useReaderContextValue,
-} from "../context/useReaderContext"
-import type { ManagedSettingName, ReactReaderSettings } from "./managedSettings"
+} from "../context/useReaderContext.ts"
+import type {
+  ManagedSettingName,
+  ReactReaderSettings,
+} from "./managedSettings.ts"
 import {
   changeManagedSettingValue,
   getManagedSettingValuesForScope,
   getSettingScopeReferenceInEffect,
   MANAGED_SETTING_SOURCE_KEYS,
-} from "./settingValues"
-import { useScreenSettingsScopeReference } from "./useScreenSettingsScopeReference"
+} from "./settingValues.ts"
+import { useScreenSettingsScopeReference } from "./useScreenSettingsScopeReference.ts"
 
 /**
  * Keeps one of the reader's settings on the value in effect for this book.

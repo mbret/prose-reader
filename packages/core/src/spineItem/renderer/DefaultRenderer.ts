@@ -1,5 +1,5 @@
 import { EMPTY, of } from "rxjs"
-import { DocumentRenderer } from "./DocumentRenderer"
+import { DocumentRenderer } from "./DocumentRenderer.ts"
 
 export class DefaultRenderer extends DocumentRenderer {
   onUnload() {}

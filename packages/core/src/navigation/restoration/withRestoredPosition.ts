@@ -1,10 +1,10 @@
 import { map, type Observable, switchMap } from "rxjs"
-import type { CfiManager } from "../../cfi"
-import type { ReaderSettingsManager } from "../../settings/ReaderSettingsManager"
-import type { Spine } from "../../spine/Spine"
-import type { NavigationResolver } from "../resolvers/NavigationResolver"
-import type { InternalNavigationEntry } from "../types"
-import { restorePosition } from "./restorePosition"
+import type { CfiManager } from "../../cfi/index.ts"
+import type { ReaderSettingsManager } from "../../settings/ReaderSettingsManager.ts"
+import type { Spine } from "../../spine/Spine.ts"
+import type { NavigationResolver } from "../resolvers/NavigationResolver.ts"
+import type { InternalNavigationEntry } from "../types.ts"
+import { restorePosition } from "./restorePosition.ts"
 
 type Navigation = {
   navigation: InternalNavigationEntry

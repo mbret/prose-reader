@@ -10,13 +10,13 @@ import {
   parseContentType,
 } from "@prose-reader/shared"
 import { createManifestResourceHref } from "@prose-reader/streamer"
-import { alignSpineItemsForSpreadParity } from "./alignSpineItemsForSpreadParity"
-import { detectPanoramaFromBasename } from "./detectPanoramaFromBasename"
+import { alignSpineItemsForSpreadParity } from "./alignSpineItemsForSpreadParity.ts"
+import { detectPanoramaFromBasename } from "./detectPanoramaFromBasename.ts"
 
 export {
   type DetectedPanorama,
   detectPanoramaFromBasename,
-} from "./detectPanoramaFromBasename"
+} from "./detectPanoramaFromBasename.ts"
 
 export type PanoramaCropSide = "left" | "right"
 

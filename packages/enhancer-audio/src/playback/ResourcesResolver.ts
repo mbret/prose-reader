@@ -1,6 +1,6 @@
 import type { ResourceHandler } from "@prose-reader/core"
 import { from, map, of, switchMap } from "rxjs"
-import type { AudioTrack } from "../types"
+import type { AudioTrack } from "../types.ts"
 
 type CachedTrackSource = {
   url: string

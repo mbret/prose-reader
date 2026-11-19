@@ -1,15 +1,15 @@
 import type { Signal } from "reactjrx"
-import type { ReaderContextType } from "../context/context"
+import type { ReaderContextType } from "../context/context.ts"
 import {
   MANAGED_SETTING_NAMES,
   type ManagedSettingName,
   type ManagedSettingValues,
   type ReactReaderSettings,
-} from "./managedSettings"
+} from "./managedSettings.ts"
 import type {
   ReactReaderSettingsScopeReference,
   ScreenSettingsScopeReference,
-} from "./types"
+} from "./types.ts"
 
 export const MANAGED_SETTING_SOURCE_KEYS = [
   "reader",

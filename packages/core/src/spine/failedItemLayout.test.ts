@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
 import { describe, expect, it, vi } from "vitest"
-import type { DocumentRendererParams } from "../spineItem/renderer/DocumentRenderer"
+import type { DocumentRendererParams } from "../spineItem/renderer/DocumentRenderer.ts"
 import {
   createPrePaginatedManifest,
   createTestReader,
@@ -8,12 +8,12 @@ import {
   mountTestReader,
   settledOn,
   TextDocumentRenderer,
-} from "../tests/readerHarness"
+} from "../tests/readerHarness.ts"
 import {
   createTestManifest,
   createTestManifestSpineItems,
   recordUnhandledErrors,
-} from "../tests/utils"
+} from "../tests/utils.ts"
 
 installReaderTestEnvironment()
 

@@ -13,7 +13,7 @@ vi.mock("../context/useReader", async (importOriginal) => ({
   useReader: useReaderMock,
 }))
 
-import { SpreadRotationHint } from "./SpreadRotationHint"
+import { SpreadRotationHint } from "./SpreadRotationHint.tsx"
 
 // The component's own timings, which these tests hold it to.
 const HINT_TARGET_DEBOUNCE_MS = 100

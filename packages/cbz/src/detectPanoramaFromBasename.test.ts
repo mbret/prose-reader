@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest"
-import { detectPanoramaFromBasename } from "./detectPanoramaFromBasename"
+import { detectPanoramaFromBasename } from "./detectPanoramaFromBasename.ts"
 
 describe("detectPanoramaFromBasename", () => {
   it("should detect consecutive pages with an explicit p prefix", () => {

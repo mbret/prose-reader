@@ -3,9 +3,9 @@ import {
   ProgressBar,
   ProgressRoot,
   ProgressValueText,
-} from "../components/ui/progress"
-import { useNavigationContext } from "../navigation/useNavigationContext"
-import { usePagination } from "../pagination/usePagination"
+} from "../components/ui/progress.tsx"
+import { useNavigationContext } from "../navigation/useNavigationContext.ts"
+import { usePagination } from "../pagination/usePagination.ts"
 
 export const PaginationInfoSection = () => {
   const pagination = usePagination()

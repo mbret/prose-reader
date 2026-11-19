@@ -1,11 +1,11 @@
-import type { SpineItem } from "../../spineItem/SpineItem"
-import { ViewportSlicePosition } from "../../viewport/types"
-import type { Viewport } from "../../viewport/Viewport"
-import type { SpineItemsManager } from "../SpineItemsManager"
-import type { SpineLayout } from "../SpineLayout"
-import { type SpinePosition, UnboundSpinePosition } from "../types"
-import { getItemVisibilityForPosition } from "./getItemVisibilityForPosition"
-import { getSpineItemFromPosition } from "./getSpineItemFromPosition"
+import type { SpineItem } from "../../spineItem/SpineItem.ts"
+import { ViewportSlicePosition } from "../../viewport/types.ts"
+import type { Viewport } from "../../viewport/Viewport.ts"
+import type { SpineItemsManager } from "../SpineItemsManager.ts"
+import type { SpineLayout } from "../SpineLayout.ts"
+import { type SpinePosition, UnboundSpinePosition } from "../types.ts"
+import { getItemVisibilityForPosition } from "./getItemVisibilityForPosition.ts"
+import { getSpineItemFromPosition } from "./getSpineItemFromPosition.ts"
 
 /**
  * The first and last spine items a slice of the spine shows, each enough to

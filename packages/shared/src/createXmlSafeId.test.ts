@@ -3,7 +3,7 @@ import {
   createUniqueXmlSafeId,
   createXmlSafeId,
   createXmlSafeIdFactory,
-} from "./createXmlSafeId"
+} from "./createXmlSafeId.ts"
 
 const generatedIdPattern = /^[A-Za-z0-9_][A-Za-z0-9_.-]*$/
 

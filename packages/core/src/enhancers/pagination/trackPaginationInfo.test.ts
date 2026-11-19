@@ -6,8 +6,8 @@ import {
   installReaderTestEnvironment,
   mountTestReader,
   settledOn,
-} from "../../tests/readerHarness"
-import { createTestManifest } from "../../tests/utils"
+} from "../../tests/readerHarness.ts"
+import { createTestManifest } from "../../tests/utils.ts"
 
 installReaderTestEnvironment()
 

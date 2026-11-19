@@ -1,20 +1,20 @@
 import type { Manifest } from "@prose-reader/shared"
 import { EMPTY, firstValueFrom, of, Subject } from "rxjs"
 import { describe, expect, it, vi } from "vitest"
-import { Context } from "../context/Context"
-import { HookManager } from "../hooks/HookManager"
-import { ReaderSettingsManager } from "../settings/ReaderSettingsManager"
-import type { SpineItem } from "../spineItem/SpineItem"
+import { Context } from "../context/Context.ts"
+import { HookManager } from "../hooks/HookManager.ts"
+import { ReaderSettingsManager } from "../settings/ReaderSettingsManager.ts"
+import type { SpineItem } from "../spineItem/SpineItem.ts"
 import {
   createTestManifest,
   createTestManifestSpineItems,
   recordUnhandledErrors,
   waitFor,
-} from "../tests/utils"
-import { Viewport } from "../viewport/Viewport"
-import { SpineItemsManager } from "./SpineItemsManager"
-import { SpineItemsObserver } from "./SpineItemsObserver"
-import { SpineLayout } from "./SpineLayout"
+} from "../tests/utils.ts"
+import { Viewport } from "../viewport/Viewport.ts"
+import { SpineItemsManager } from "./SpineItemsManager.ts"
+import { SpineItemsObserver } from "./SpineItemsObserver.ts"
+import { SpineLayout } from "./SpineLayout.ts"
 
 /**
  * A spine layout of `items`, and what it is built on, in a viewport of

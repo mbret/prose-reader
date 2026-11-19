@@ -1,6 +1,6 @@
 import { List } from "@chakra-ui/react"
-import { AnnotationListItem } from "./AnnotationListItem"
-import { useHighlights } from "./useHighlights"
+import { AnnotationListItem } from "./AnnotationListItem.tsx"
+import { useHighlights } from "./useHighlights.ts"
 
 export const AnnotationsList = ({ onNavigate }: { onNavigate: () => void }) => {
   const { data: annotations } = useHighlights()

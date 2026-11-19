@@ -1,20 +1,20 @@
 import { EMPTY, merge, Subject, switchMap, takeUntil, tap, timer } from "rxjs"
-import { HTML_PREFIX } from "../../constants"
-import type { Reader } from "../../reader"
+import { HTML_PREFIX } from "../../constants.ts"
+import type { Reader } from "../../reader.ts"
 import {
   removeAttributeIfPresent,
   removeStylePropertyIfPresent,
   setAttributeIfChanged,
   setStylePropertyIfChanged,
-} from "../../utils/dom"
-import { ReactiveEntity } from "../../utils/ReactiveEntity"
-import { constrainPositionWithinViewport } from "./constraints"
+} from "../../utils/dom.ts"
+import { ReactiveEntity } from "../../utils/ReactiveEntity.ts"
+import { constrainPositionWithinViewport } from "./constraints.ts"
 import {
   applyViewportTransformForControlledMode,
   derivePositionFromScaleForControlledMode,
-} from "./controlled"
-import { applyScaleToViewportForScroll } from "./scrollable"
-import type { ZoomPosition } from "./types"
+} from "./controlled.ts"
+import { applyScaleToViewportForScroll } from "./scrollable.ts"
+import type { ZoomPosition } from "./types.ts"
 
 export type ZoomControllerState = {
   isZooming: boolean

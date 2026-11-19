@@ -1,16 +1,19 @@
 import { filter, map, merge, scan, skip, takeUntil, tap } from "rxjs"
-import { HTML_PREFIX } from "../constants"
-import type { Context } from "../context/Context"
-import type { ReaderSettingsManager } from "../settings/ReaderSettingsManager"
-import type { SpineItem } from "../spineItem/SpineItem"
-import { isDefined } from "../utils/isDefined"
-import { ReactiveEntity } from "../utils/ReactiveEntity"
-import type { Viewport } from "../viewport/Viewport"
-import { createSpineLocator, type SpineLocator } from "./locator/SpineLocator"
-import { Pages } from "./Pages"
-import type { SpineItemsManager } from "./SpineItemsManager"
-import { SpineItemsObserver } from "./SpineItemsObserver"
-import { SpineLayout, type SpineLayoutOptions } from "./SpineLayout"
+import { HTML_PREFIX } from "../constants.ts"
+import type { Context } from "../context/Context.ts"
+import type { ReaderSettingsManager } from "../settings/ReaderSettingsManager.ts"
+import type { SpineItem } from "../spineItem/SpineItem.ts"
+import { isDefined } from "../utils/isDefined.ts"
+import { ReactiveEntity } from "../utils/ReactiveEntity.ts"
+import type { Viewport } from "../viewport/Viewport.ts"
+import {
+  createSpineLocator,
+  type SpineLocator,
+} from "./locator/SpineLocator.ts"
+import { Pages } from "./Pages.ts"
+import type { SpineItemsManager } from "./SpineItemsManager.ts"
+import { SpineItemsObserver } from "./SpineItemsObserver.ts"
+import { SpineLayout, type SpineLayoutOptions } from "./SpineLayout.ts"
 
 export type SpineState = {
   /**

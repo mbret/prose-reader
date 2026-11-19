@@ -1,8 +1,8 @@
 import type { Archive } from "@prose-reader/archive-reader"
 import { resolveArchive } from "@prose-reader/archive-reader"
-import type { StreamerManifestHookFactory } from "../../hooks"
-import { Report } from "../../report"
-import { manifestFromResolvedArchive } from "./manifestFromResolvedArchive"
+import type { StreamerManifestHookFactory } from "../../hooks.ts"
+import { Report } from "../../report.ts"
+import { manifestFromResolvedArchive } from "./manifestFromResolvedArchive.ts"
 
 const normalizeBaseUrl = (baseUrl: string | undefined) => {
   if (!baseUrl) return ``

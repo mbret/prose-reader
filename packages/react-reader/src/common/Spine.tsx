@@ -1,8 +1,8 @@
 import { memo } from "react"
 import { createPortal } from "react-dom"
 import { useObserve } from "reactjrx"
-import { useReader } from "../context/useReader"
-import { SpineItem } from "./SpineItem"
+import { useReader } from "../context/useReader.ts"
+import { SpineItem } from "./SpineItem.tsx"
 
 export const Spine = memo(({ children }: { children: React.ReactNode }) => {
   const reader = useReader()

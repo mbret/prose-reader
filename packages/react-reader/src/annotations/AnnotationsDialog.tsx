@@ -1,6 +1,6 @@
 import { memo } from "react"
-import { AppDialog } from "../components/AppDialog"
-import { AnnotationsDialogContent } from "./AnnotationsDialogContent"
+import { AppDialog } from "../components/AppDialog.tsx"
+import { AnnotationsDialogContent } from "./AnnotationsDialogContent.tsx"
 
 export const AnnotationsDialog = memo(
   ({

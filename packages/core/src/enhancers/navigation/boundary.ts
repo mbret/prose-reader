@@ -1,6 +1,6 @@
 import { filter, map, type Observable, share } from "rxjs"
-import { waitForNavigationSettled } from "../../navigation/operators"
-import type { Reader } from "../../reader"
+import { waitForNavigationSettled } from "../../navigation/operators.ts"
+import type { Reader } from "../../reader.ts"
 
 export type BoundaryReachedEvent = { boundary: "start" | "end" }
 

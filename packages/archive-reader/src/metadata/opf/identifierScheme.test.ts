@@ -3,7 +3,7 @@ import {
   OPF_IDENTIFIER_SCHEME_ATTRIBUTES,
   opfIdentifierSchemeAttribute,
   opfIdentifierTypeScheme,
-} from "./identifierScheme"
+} from "./identifierScheme.ts"
 
 describe("opfIdentifierTypeScheme", () => {
   it("translates an ONIX codelist 5 code", () => {

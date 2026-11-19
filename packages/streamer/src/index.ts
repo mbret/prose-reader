@@ -1,8 +1,8 @@
 export type { Manifest } from "@prose-reader/shared"
-export { configure } from "./configure"
-export { generateManifestFromArchive } from "./generators/manifest"
-export { createManifestResourceHref } from "./generators/manifest/createManifestResourceHref"
-export { generateResourceFromArchive } from "./generators/resources"
+export { configure } from "./configure.ts"
+export { createManifestResourceHref } from "./generators/manifest/createManifestResourceHref.ts"
+export { generateManifestFromArchive } from "./generators/manifest/index.ts"
+export { generateResourceFromArchive } from "./generators/resources/index.ts"
 export type {
   HookResource,
   StreamerHooks,
@@ -12,6 +12,6 @@ export type {
   StreamerResourceHook,
   StreamerResourceHookContext,
   StreamerResourceHookFactory,
-} from "./hooks"
-export { ServiceWorkerStreamer } from "./ServiceWorkerStreamer"
-export { Streamer } from "./Streamer"
+} from "./hooks.ts"
+export { ServiceWorkerStreamer } from "./ServiceWorkerStreamer.ts"
+export { Streamer } from "./Streamer.ts"

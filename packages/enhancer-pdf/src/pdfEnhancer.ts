@@ -1,7 +1,7 @@
 import type { CreateReaderOptions, Reader } from "@prose-reader/core"
 import { defer } from "rxjs"
-import { PdfRenderer } from "./renderer/PdfRenderer"
-import type { EnhancerOptions } from "./types"
+import { PdfRenderer } from "./renderer/PdfRenderer.ts"
+import type { EnhancerOptions } from "./types.ts"
 
 export const pdfEnhancer =
   <

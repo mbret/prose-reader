@@ -1,8 +1,8 @@
-import type { Context } from "../../context/Context"
-import type { ReaderSettingsManager } from "../../settings/ReaderSettingsManager"
-import type { SpineItem } from "../../spineItem/SpineItem"
-import type { SpineItemsManager } from "../SpineItemsManager"
-import type { SpineLayout } from "../SpineLayout"
+import type { Context } from "../../context/Context.ts"
+import type { ReaderSettingsManager } from "../../settings/ReaderSettingsManager.ts"
+import type { SpineItem } from "../../spineItem/SpineItem.ts"
+import type { SpineItemsManager } from "../SpineItemsManager.ts"
+import type { SpineLayout } from "../SpineLayout.ts"
 
 /**
  * @deprecated use Pages

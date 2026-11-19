@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest"
-import { compare } from "./compare"
-import { parse } from "./parse"
+import { compare } from "./compare.ts"
+import { parse } from "./parse.ts"
 
 describe("EPUB CFI Sorting", () => {
   describe("Rule 3: Steps earlier in sequence are more important", () => {

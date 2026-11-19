@@ -2,13 +2,13 @@ import { map, type Observable } from "rxjs"
 import type {
   NavigationTargetResolvers,
   TargetResolverContext,
-} from "../targets/types"
+} from "../targets/types.ts"
 import type {
   InternalNavigationEntry,
   InternalNavigationInput,
   NavigationTarget,
   NavigationTargetType,
-} from "../types"
+} from "../types.ts"
 
 type Navigation = {
   navigation: InternalNavigationInput

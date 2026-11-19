@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest"
-import type { OpfMetadata } from "./parse"
-import { parseOpf } from "./parse"
+import type { OpfMetadata } from "./parse.ts"
+import { parseOpf } from "./parse.ts"
 
 const opfWrap = (body: string) =>
   `<?xml version="1.0"?>` +

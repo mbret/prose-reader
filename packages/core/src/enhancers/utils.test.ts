@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest"
 import {
   createFullTestReader,
   installReaderTestEnvironment,
-} from "../tests/readerHarness"
+} from "../tests/readerHarness.ts"
 
 installReaderTestEnvironment()
 

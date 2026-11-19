@@ -6,7 +6,7 @@ import type {
   StreamerResourceHook,
   StreamerResourceHookContext,
   StreamerResourceHookFactory,
-} from "../../../hooks"
+} from "../../../hooks.ts"
 
 /**
  * Shared scaffolding for resource hooks that rewrite the text body of a single

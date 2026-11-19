@@ -21,24 +21,24 @@ import {
   onTestFinished,
   vi,
 } from "vitest"
-import { createReaderWithEnhancers } from "../createReaderWithEnhancer"
-import { htmlEnhancer } from "../enhancers/html/enhancer"
-import { layoutEnhancer } from "../enhancers/layout/layoutEnhancer"
-import { navigationEnhancer } from "../enhancers/navigation"
-import { paginationEnhancer } from "../enhancers/pagination/enhancer"
-import { themeEnhancer } from "../enhancers/theme"
-import { zoomEnhancer } from "../enhancers/zoom"
-import type { HookManager } from "../hooks/HookManager"
-import { createReader } from "../reader"
-import type { Spine } from "../spine/Spine"
-import type { SpineItemsManager } from "../spine/SpineItemsManager"
-import { DefaultRenderer } from "../spineItem/renderer/DefaultRenderer"
+import { createReaderWithEnhancers } from "../createReaderWithEnhancer.ts"
+import { htmlEnhancer } from "../enhancers/html/enhancer.ts"
+import { layoutEnhancer } from "../enhancers/layout/layoutEnhancer.ts"
+import { navigationEnhancer } from "../enhancers/navigation/index.ts"
+import { paginationEnhancer } from "../enhancers/pagination/enhancer.ts"
+import { themeEnhancer } from "../enhancers/theme/index.ts"
+import { zoomEnhancer } from "../enhancers/zoom/index.ts"
+import type { HookManager } from "../hooks/HookManager.ts"
+import { createReader } from "../reader.ts"
+import type { Spine } from "../spine/Spine.ts"
+import type { SpineItemsManager } from "../spine/SpineItemsManager.ts"
+import { DefaultRenderer } from "../spineItem/renderer/DefaultRenderer.ts"
 import {
   DocumentRenderer,
   type DocumentRendererParams,
-} from "../spineItem/renderer/DocumentRenderer"
-import { isHtmlTagElement } from "../utils/dom"
-import { createTestManifest } from "./utils"
+} from "../spineItem/renderer/DocumentRenderer.ts"
+import { isHtmlTagElement } from "../utils/dom.ts"
+import { createTestManifest } from "./utils.ts"
 
 /**
  * Drives a real reader in jsdom, with the real renderer, for tests about the

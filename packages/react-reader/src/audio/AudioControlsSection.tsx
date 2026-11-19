@@ -3,9 +3,9 @@ import { type ComponentProps, useCallback, useState } from "react"
 import { LuPause, LuPlay } from "react-icons/lu"
 import { useConstant, useSubscribe } from "reactjrx"
 import { BehaviorSubject, map, tap } from "rxjs"
-import { ThemedSlider } from "../quickmenu/ThemedSlider"
-import { useAudioReader } from "./useAudioReader"
-import { useAudioState } from "./useAudioState"
+import { ThemedSlider } from "../quickmenu/ThemedSlider.tsx"
+import { useAudioReader } from "./useAudioReader.ts"
+import { useAudioState } from "./useAudioState.ts"
 
 const formatPlaybackTime = (value: number) => {
   if (!Number.isFinite(value) || value < 0) return `00:00`

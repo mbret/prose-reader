@@ -4,8 +4,13 @@ import {
   buildTocIndex,
   isPossibleTocItemCandidateForHref,
   stripAnchor,
-} from "./shared"
-import type { ChapterInfo, FlatTocEntry, TocIndex, TocPathEntry } from "./types"
+} from "./shared.ts"
+import type {
+  ChapterInfo,
+  FlatTocEntry,
+  TocIndex,
+  TocPathEntry,
+} from "./types.ts"
 
 const shouldSkipAnchorSubChapter = ({
   candidate,

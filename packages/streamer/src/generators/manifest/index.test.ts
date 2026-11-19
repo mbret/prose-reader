@@ -7,7 +7,7 @@ import {
 import type { Manifest } from "@prose-reader/shared"
 import { createXmlSafeId } from "@prose-reader/shared"
 import { describe, expect, it } from "vitest"
-import { generateManifestFromArchive } from "./index"
+import { generateManifestFromArchive } from "./index.ts"
 
 const fakeContent = blobFileAccessors(() => Promise.resolve(new Blob([])))
 

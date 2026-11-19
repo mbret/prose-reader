@@ -5,8 +5,8 @@ import type {
   ProsePostMessageSchema,
   ReaderLoadMessage,
   ReaderLoadOptions,
-} from "../shared"
-import { useProseBridge } from "./useProseBridge"
+} from "../shared/index.ts"
+import { useProseBridge } from "./useProseBridge.ts"
 
 export const appPostMessageSchema = postMessageSchema<ProsePostMessageSchema>({
   load: {

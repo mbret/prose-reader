@@ -1,5 +1,5 @@
 import { expect, it } from "vitest"
-import { sortByTitleComparator } from "./sortByTitleComparator"
+import { sortByTitleComparator } from "./sortByTitleComparator.ts"
 
 it(`should sort correctly`, () => {
   expect([].sort(sortByTitleComparator)).toEqual([])

@@ -1,6 +1,6 @@
 import { EMPTY, fromEvent, map, merge, switchMap, takeUntil } from "rxjs"
-import type { NavigationEnhancerOutput } from "./navigation/types"
-import type { EnhancerOutput, RootEnhancer } from "./types/enhancer"
+import type { NavigationEnhancerOutput } from "./navigation/types.ts"
+import type { EnhancerOutput, RootEnhancer } from "./types/enhancer.ts"
 
 export const hotkeysEnhancer =
   <

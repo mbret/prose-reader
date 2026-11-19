@@ -4,7 +4,7 @@ import {
   detectMimeTypeFromUrl,
   isMediaContentMimeType,
   parseContentType,
-} from "./contentType"
+} from "./contentType.ts"
 
 describe("parseContentType", () => {
   it("should keep mime type without parameters", () => {

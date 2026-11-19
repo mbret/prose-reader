@@ -1,18 +1,18 @@
 import type { Manifest } from "@prose-reader/shared"
-import type { HookManager } from "../hooks/HookManager"
-import type { PageEntry } from "../spine/Pages"
-import type { SpineItemsManager } from "../spine/SpineItemsManager"
+import type { HookManager } from "../hooks/HookManager.ts"
+import type { PageEntry } from "../spine/Pages.ts"
+import type { SpineItemsManager } from "../spine/SpineItemsManager.ts"
 import {
   generateCfiForSpineItemPage as generateBaseCfiForSpineItemPage,
   generateCfiFromRange as generateBaseCfiFromRange,
   generateRootCfi as generateBaseRootCfi,
-} from "./generate"
+} from "./generate.ts"
 import {
   isRootCfi,
   type ProseParsedCfi,
   parseCfi as parseBaseCfi,
-} from "./parse"
-import { resolveCfi as resolveBaseCfi } from "./resolve"
+} from "./parse.ts"
+import { resolveCfi as resolveBaseCfi } from "./resolve.ts"
 
 export type CfiGenerateHookParams = {
   cfi: string

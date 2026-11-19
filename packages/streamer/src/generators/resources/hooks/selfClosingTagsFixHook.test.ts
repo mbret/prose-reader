@@ -1,6 +1,6 @@
 import { blobFileAccessors, createArchive } from "@prose-reader/archive-reader"
 import { describe, expect, it } from "vitest"
-import { selfClosingTagsFixHook } from "./selfClosingTagsFixHook"
+import { selfClosingTagsFixHook } from "./selfClosingTagsFixHook.ts"
 
 describe("Given a book with invalid self closing tag", () => {
   it("should fix the self closing tag", async () => {

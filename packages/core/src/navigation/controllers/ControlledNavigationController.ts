@@ -18,26 +18,26 @@ import {
   tap,
   withLatestFrom,
 } from "rxjs"
-import { HTML_PREFIX } from "../../constants"
-import type { Context } from "../../context/Context"
-import type { HookManager } from "../../hooks/HookManager"
-import { Report } from "../../report"
-import type { ReaderSettingsManager } from "../../settings/ReaderSettingsManager"
-import type { Spine } from "../../spine/Spine"
-import { SpinePosition } from "../../spine/types"
-import { DestroyableClass } from "../../utils/DestroyableClass"
-import { setStylePropertyIfChanged } from "../../utils/dom"
-import { isDefined } from "../../utils/isDefined"
-import { isShallowEqual } from "../../utils/objects"
-import type { Viewport } from "../../viewport/Viewport"
+import { HTML_PREFIX } from "../../constants.ts"
+import type { Context } from "../../context/Context.ts"
+import type { HookManager } from "../../hooks/HookManager.ts"
+import { Report } from "../../report.ts"
+import type { ReaderSettingsManager } from "../../settings/ReaderSettingsManager.ts"
+import type { Spine } from "../../spine/Spine.ts"
+import { SpinePosition } from "../../spine/types.ts"
+import { DestroyableClass } from "../../utils/DestroyableClass.ts"
+import { setStylePropertyIfChanged } from "../../utils/dom.ts"
+import { isDefined } from "../../utils/isDefined.ts"
+import { isShallowEqual } from "../../utils/objects.ts"
+import type { Viewport } from "../../viewport/Viewport.ts"
 import type {
   NavigationModeController,
   NavigationModeControllerNavigationEntry,
-} from "../types"
+} from "../types.ts"
 import {
   spinePositionToTranslation,
   translationToSpinePosition,
-} from "./positions"
+} from "./positions.ts"
 
 const NAMESPACE = `navigation/ControlledNavigationController`
 

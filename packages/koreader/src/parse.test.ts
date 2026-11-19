@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest"
-import { parseXPointer } from "./parse"
-import { serializeXPointer } from "./serialize"
-import type { ParsedXPointer } from "./types"
+import { parseXPointer } from "./parse.ts"
+import { serializeXPointer } from "./serialize.ts"
+import type { ParsedXPointer } from "./types.ts"
 
 const element = (name: string, index?: number) => ({
   kind: "element" as const,

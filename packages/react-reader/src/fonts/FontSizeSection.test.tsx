@@ -4,14 +4,14 @@ import { ChakraProvider, defaultSystem } from "@chakra-ui/react"
 import { act, type ComponentProps } from "react"
 import { createRoot } from "react-dom/client"
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
-import { ReaderContextProvider } from "../context/ReaderContextProvider"
+import { ReaderContextProvider } from "../context/ReaderContextProvider.tsx"
 import {
   asProvidedReader,
   createTestReader,
   type TestReader,
-} from "../tests/createTestReader"
-import { ReaderInContext } from "../tests/ReaderInContext"
-import { FontSizeSection } from "./FontSizeSection"
+} from "../tests/createTestReader.ts"
+import { ReaderInContext } from "../tests/ReaderInContext.tsx"
+import { FontSizeSection } from "./FontSizeSection.tsx"
 
 type ReaderContextProviderProps = Omit<
   ComponentProps<typeof ReaderContextProvider>,

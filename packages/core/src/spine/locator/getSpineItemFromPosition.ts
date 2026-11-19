@@ -1,6 +1,6 @@
-import type { SpineItemsManager } from "../SpineItemsManager"
-import type { SpineLayout } from "../SpineLayout"
-import type { SpinePosition, UnboundSpinePosition } from "../types"
+import type { SpineItemsManager } from "../SpineItemsManager.ts"
+import type { SpineLayout } from "../SpineLayout.ts"
+import type { SpinePosition, UnboundSpinePosition } from "../types.ts"
 
 /**
  * Returns the first element that is within the given position.

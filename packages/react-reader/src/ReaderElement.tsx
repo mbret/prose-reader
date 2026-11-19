@@ -1,6 +1,6 @@
 import { Box } from "@chakra-ui/react"
 import { useEffect, useRef } from "react"
-import { useReaderContext } from "./context/useReaderContext"
+import { useReaderContext } from "./context/useReaderContext.ts"
 
 /**
  * The element the provider mounts the reader in. The provider keeps the reader

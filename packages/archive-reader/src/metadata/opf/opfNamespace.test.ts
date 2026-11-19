@@ -3,7 +3,7 @@ import {
   OPF_NAMESPACE,
   opfNamespacedAttribute,
   opfNamespacePrefixes,
-} from "./opfNamespace"
+} from "./opfNamespace.ts"
 
 const DC_NAMESPACE = "http://purl.org/dc/elements/1.1/"
 

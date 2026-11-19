@@ -1,10 +1,13 @@
 import { memo, type ReactNode } from "react"
-import { useSyncAnnotationsWithReader } from "./annotations/useSyncAnnotationsWithReader"
-import type { ProviderContextType, ReactReaderReader } from "./context/context"
-import { ReaderContextProvider } from "./context/ReaderContextProvider"
-import { ReaderLifecycle } from "./ReaderLifecycle"
-import { SyncReaderWithManagedSettings } from "./settings/SyncReaderWithManagedSettings"
-import { useZoomSettings } from "./zoom/useZoomSettings"
+import { useSyncAnnotationsWithReader } from "./annotations/useSyncAnnotationsWithReader.ts"
+import type {
+  ProviderContextType,
+  ReactReaderReader,
+} from "./context/context.ts"
+import { ReaderContextProvider } from "./context/ReaderContextProvider.tsx"
+import { ReaderLifecycle } from "./ReaderLifecycle.tsx"
+import { SyncReaderWithManagedSettings } from "./settings/SyncReaderWithManagedSettings.tsx"
+import { useZoomSettings } from "./zoom/useZoomSettings.ts"
 
 const ReaderEffects = memo(function ReaderEffects() {
   useZoomSettings()

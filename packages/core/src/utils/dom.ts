@@ -1,4 +1,4 @@
-import { Report } from "../report"
+import { Report } from "../report.ts"
 
 export function setAttributeIfChanged(
   element: Element,

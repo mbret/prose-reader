@@ -4,12 +4,15 @@ export {
   type XPointerSpineItem,
   type XPointerSpineItemLookup,
   xPointerToCfi,
-} from "./cfi"
-export { CRENGINE_TEXT_SPLIT_SIZE } from "./crengine/text"
-export { getKoreaderFileDigest, getKoreaderFileNameDigest } from "./digest"
-export { generateXPointer } from "./generate"
-export { parseXPointer, XPOINTER_BOXING_ELEMENT_NAMES } from "./parse"
-export { getKoreaderProgressKind, type KoreaderProgressKind } from "./progress"
-export { resolveXPointer } from "./resolve"
-export { serializeXPointer } from "./serialize"
-export type { DomPosition, ParsedXPointer, XPointerStep } from "./types"
+} from "./cfi.ts"
+export { CRENGINE_TEXT_SPLIT_SIZE } from "./crengine/text.ts"
+export { getKoreaderFileDigest, getKoreaderFileNameDigest } from "./digest.ts"
+export { generateXPointer } from "./generate.ts"
+export { parseXPointer, XPOINTER_BOXING_ELEMENT_NAMES } from "./parse.ts"
+export {
+  getKoreaderProgressKind,
+  type KoreaderProgressKind,
+} from "./progress.ts"
+export { resolveXPointer } from "./resolve.ts"
+export { serializeXPointer } from "./serialize.ts"
+export type { DomPosition, ParsedXPointer, XPointerStep } from "./types.ts"

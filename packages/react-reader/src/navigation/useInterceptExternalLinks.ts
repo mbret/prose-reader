@@ -1,7 +1,7 @@
 import { isHtmlTagElement } from "@prose-reader/core"
 import { useCallback } from "react"
 import { useSubscribe } from "reactjrx"
-import { useReader } from "../context/useReader"
+import { useReader } from "../context/useReader.ts"
 
 export const useInterceptExternalLinks = () => {
   const reader = useReader()

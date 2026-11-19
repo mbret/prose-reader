@@ -1,8 +1,8 @@
 import { describe, expect, it } from "vitest"
-import { createArchive } from "../archives/createArchive"
-import { blobFileAccessors } from "../archives/fileAccessors"
-import { readArchiveOpf } from "../metadata/opf/readArchiveOpf"
-import { resolveArchiveCover } from "./resolveArchiveCover"
+import { createArchive } from "../archives/createArchive.ts"
+import { blobFileAccessors } from "../archives/fileAccessors.ts"
+import { readArchiveOpf } from "../metadata/opf/readArchiveOpf.ts"
+import { resolveArchiveCover } from "./resolveArchiveCover.ts"
 
 const textRecord = (
   uri: string,

@@ -1,4 +1,4 @@
-import { usePagination } from "../pagination/usePagination"
+import { usePagination } from "../pagination/usePagination.ts"
 
 export const useNavigationContext = () => {
   const pagination = usePagination()

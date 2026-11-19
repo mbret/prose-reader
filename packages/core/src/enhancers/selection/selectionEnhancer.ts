@@ -13,11 +13,11 @@ import {
   tap,
   withLatestFrom,
 } from "rxjs"
-import type { SpineItem } from "../.."
-import { isDefined } from "../../utils/isDefined"
-import type { EnhancerOutput, RootEnhancer } from "../types/enhancer"
-import { createOrderedRangeFromSelection } from "./selection"
-import { trackSpineItemSelection } from "./trackSpineItemSelection"
+import type { SpineItem } from "../../index.ts"
+import { isDefined } from "../../utils/isDefined.ts"
+import type { EnhancerOutput, RootEnhancer } from "../types/enhancer.ts"
+import { createOrderedRangeFromSelection } from "./selection.ts"
+import { trackSpineItemSelection } from "./trackSpineItemSelection.ts"
 
 type SelectionChange = {
   itemIndex: number

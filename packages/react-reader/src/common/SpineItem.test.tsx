@@ -24,7 +24,7 @@ vi.mock("../audio/AudioSpineItem", () => ({
   AudioSpineItem: audioSpineItemMock,
 }))
 
-import { SpineItem } from "./SpineItem"
+import { SpineItem } from "./SpineItem.tsx"
 
 const createSpineItem = () => {
   return {

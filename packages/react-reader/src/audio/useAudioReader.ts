@@ -1,5 +1,5 @@
 import type { AudioEnhancedReader } from "@prose-reader/enhancer-audio"
-import { hasAudioEnhancer, useReader } from "../context/useReader"
+import { hasAudioEnhancer, useReader } from "../context/useReader.ts"
 
 export const useAudioReader = (): AudioEnhancedReader | undefined => {
   const reader = useReader()

@@ -17,15 +17,15 @@ import {
   switchMap,
   takeUntil,
 } from "rxjs"
-import type { Context } from "../../context/Context"
-import type { HookManager } from "../../hooks/HookManager"
-import { Report, reportRecoveredError } from "../../report"
-import type { ReaderSettingsManager } from "../../settings/ReaderSettingsManager"
-import { getFrameViewportInfo } from "../../utils/frames"
-import { ReactiveEntity } from "../../utils/ReactiveEntity"
-import { waitForSwitch } from "../../utils/rxjs"
-import type { Viewport } from "../../viewport/Viewport"
-import type { ResourceHandler } from "../resources/ResourceHandler"
+import type { Context } from "../../context/Context.ts"
+import type { HookManager } from "../../hooks/HookManager.ts"
+import { Report, reportRecoveredError } from "../../report.ts"
+import type { ReaderSettingsManager } from "../../settings/ReaderSettingsManager.ts"
+import { getFrameViewportInfo } from "../../utils/frames.ts"
+import { ReactiveEntity } from "../../utils/ReactiveEntity.ts"
+import { waitForSwitch } from "../../utils/rxjs.ts"
+import type { Viewport } from "../../viewport/Viewport.ts"
+import type { ResourceHandler } from "../resources/ResourceHandler.ts"
 
 export type DocumentRendererParams = {
   context: Context

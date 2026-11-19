@@ -1,14 +1,14 @@
 // @vitest-environment jsdom
 import { describe, expect, it, vi } from "vitest"
-import type { DocumentLoadStatus } from "../../spineItem/renderer/DocumentRenderer"
+import type { DocumentLoadStatus } from "../../spineItem/renderer/DocumentRenderer.ts"
 import {
   createTestReader,
   installReaderTestEnvironment,
   mountTestReader,
   renderTextDocuments,
   settledOn,
-} from "../../tests/readerHarness"
-import { trackSpineItemSelection } from "./trackSpineItemSelection"
+} from "../../tests/readerHarness.ts"
+import { trackSpineItemSelection } from "./trackSpineItemSelection.ts"
 
 installReaderTestEnvironment()
 

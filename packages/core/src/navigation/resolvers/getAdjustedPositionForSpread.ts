@@ -1,4 +1,4 @@
-import { SpinePosition, UnboundSpinePosition } from "../../spine/types"
+import { SpinePosition, UnboundSpinePosition } from "../../spine/types.ts"
 
 type Args<P extends SpinePosition | UnboundSpinePosition> = {
   position: P

@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
 import { describe, expect, it } from "vitest"
-import { searchTextRangesInNode } from "./search"
+import { searchTextRangesInNode } from "./search.ts"
 
 const createDocument = (bodyHtml: string) => {
   const doc = document.implementation.createHTMLDocument()

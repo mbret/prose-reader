@@ -1,8 +1,8 @@
 import { Box, Presence } from "@chakra-ui/react"
 import { memo } from "react"
-import { useSpineItemReady } from "../../common/useSpineItemReady"
-import { BOOKMARK_AREA_DATA_ATTRIBUTE } from "../../constants"
-import { useAnnotations } from "../useAnnotations"
+import { useSpineItemReady } from "../../common/useSpineItemReady.ts"
+import { BOOKMARK_AREA_DATA_ATTRIBUTE } from "../../constants.ts"
+import { useAnnotations } from "../useAnnotations.ts"
 
 export const BookmarkPageMarker = memo(
   ({

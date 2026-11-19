@@ -7,14 +7,14 @@ import {
   installReaderTestEnvironment,
   mountTestReader,
   renderTextDocuments,
-} from "../../tests/readerHarness"
+} from "../../tests/readerHarness.ts"
 import {
   createTestManifest,
   createTestManifestSpineItems,
-} from "../../tests/utils"
-import { CONTAINER_HTML_PREFIX as PLACEHOLDER_CLASS_NAME } from "../layout/createPlaceholderPages"
-import { getThemeBackgroundColor } from "./theme"
-import type { Theme } from "./types"
+} from "../../tests/utils.ts"
+import { CONTAINER_HTML_PREFIX as PLACEHOLDER_CLASS_NAME } from "../layout/createPlaceholderPages.ts"
+import { getThemeBackgroundColor } from "./theme.ts"
+import type { Theme } from "./types.ts"
 
 installReaderTestEnvironment()
 

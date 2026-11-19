@@ -9,9 +9,9 @@ import {
   DialogHeader,
   DialogRoot,
   DialogTitle,
-} from "../components/ui/dialog"
-import { useReaderViewContext } from "../context/ReaderViewContext"
-import { FontSizeSection } from "./FontSizeSection"
+} from "../components/ui/dialog.tsx"
+import { useReaderViewContext } from "../context/ReaderViewContext.ts"
+import { FontSizeSection } from "./FontSizeSection.tsx"
 
 export const FontSizeControlsDialog = memo(() => {
   const { fontSizeMenuOpen, onFontSizeMenuOpenChange } = useReaderViewContext()

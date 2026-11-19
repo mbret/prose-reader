@@ -1,5 +1,5 @@
 import { expect, it } from "vitest"
-import { parse } from "./parse"
+import { parse } from "./parse.ts"
 
 it("should parse a CFI with indirection", () => {
   const cfi = "epubcfi(/6/4[chap01ref]!/4[body01]/10[para05]/2:3)"

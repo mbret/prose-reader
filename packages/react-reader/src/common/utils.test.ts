@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest"
-import { isKeyOf, truncateText } from "./utils"
+import { isKeyOf, truncateText } from "./utils.ts"
 
 describe("truncateText", () => {
   it("returns the original text when it is within the limit", () => {
