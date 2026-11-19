@@ -5,6 +5,9 @@ import {
   setStylePropertyIfChanged,
 } from "@prose-reader/core"
 import {
+  BehaviorSubject,
+  combineLatest,
+  distinctUntilChanged,
   first,
   fromEvent,
   map,
@@ -19,8 +22,14 @@ import {
 import type { RuntimeAnnotation } from "./types.ts"
 import { createElementForRange } from "./utils.ts"
 
+/**
+ * The highlight of one annotation in the document of its spine item. It
+ * keeps its element from its creation to its destroy, and draws the
+ * annotation into it at each `render()`.
+ */
 export class SpineItemHighlight extends DestroyableClass {
   private container: HTMLElement
+  private annotationSubject: BehaviorSubject<RuntimeAnnotation>
   public readonly tap$: Observable<{
     event: Event
     highlight: RuntimeAnnotation
@@ -34,31 +43,39 @@ export class SpineItemHighlight extends DestroyableClass {
     private spineItem: SpineItem,
     private containerElement: HTMLElement,
     private reader: Reader,
-    public highlight: RuntimeAnnotation,
+    annotation: RuntimeAnnotation,
     private isSelected: Observable<boolean>,
   ) {
     super()
 
-    void this.spineItem
-    void this.reader
+    this.annotationSubject = new BehaviorSubject(annotation)
 
     this.container = this.containerElement.ownerDocument.createElement("div")
-    this.container.dataset.highlightContainer = this.highlight.id
+    this.container.dataset.highlightContainer = annotation.id
     this.containerElement.appendChild(this.container)
 
     this.tap$ = fromEvent(this.container, "click").pipe(
-      map((event) => ({ event, highlight: this.highlight })),
+      map((event) => ({ event, highlight: this.annotation })),
+      takeUntil(this.destroy$),
       share(),
+    )
+
+    const cfi$ = this.annotationSubject.pipe(
+      map(({ cfi }) => cfi),
+      distinctUntilChanged(),
     )
 
     /**
      * Resolved only into a loaded document: one being released would be
      * kept, with the range into it, until the next load.
      */
-    this.resolvedCfi$ = this.spineItem.watch("loadStatus").pipe(
-      map(() =>
+    this.resolvedCfi$ = combineLatest([
+      this.spineItem.watch("loadStatus"),
+      cfi$,
+    ]).pipe(
+      map(([, cfi]) =>
         this.spineItem.loadedDocument
-          ? this.reader.cfi.resolveCfi({ cfi: this.highlight.cfi })
+          ? this.reader.cfi.resolveCfi({ cfi })
           : undefined,
       ),
       shareReplay({ refCount: true, bufferSize: 1 }),
@@ -73,6 +90,19 @@ export class SpineItemHighlight extends DestroyableClass {
     merge(this.resolvedCfi$, updateStateOnSelection$)
       .pipe(takeUntil(this.destroy$))
       .subscribe()
+  }
+
+  /** The annotation as the latest list of annotations gave it. */
+  public get annotation() {
+    return this.annotationSubject.value
+  }
+
+  /**
+   * Gives the highlight what a new list of annotations says of its
+   * annotation. The next `render()` draws it.
+   */
+  public update(annotation: RuntimeAnnotation) {
+    this.annotationSubject.next(annotation)
   }
 
   public updateStateOnSelection(isSelected: boolean) {
@@ -110,20 +140,20 @@ export class SpineItemHighlight extends DestroyableClass {
         const rectElements = createElementForRange(
           range,
           this.container,
-          this.highlight.highlightColor ?? "yellow",
+          this.annotation.highlightColor ?? "yellow",
         )
 
         rectElements.forEach((elt) => {
           elt.style.pointerEvents = "initial"
           elt.style.cursor = "pointer"
-          elt.dataset.highlightRect = this.highlight.id
+          elt.dataset.highlightRect = this.annotation.id
 
           this.container.appendChild(elt)
         })
 
         const firstElement = rectElements[0]
 
-        if (firstElement && this.highlight.notes) {
+        if (firstElement && this.annotation.notes) {
           const noteIcon = document.createElement("span")
           noteIcon.textContent = "📝"
           noteIcon.style.position = "absolute"
@@ -149,6 +179,7 @@ export class SpineItemHighlight extends DestroyableClass {
   public destroy() {
     super.destroy()
 
+    this.annotationSubject.complete()
     this.container.remove()
   }
 }

@@ -4,9 +4,18 @@ import {
   DocumentRenderer,
   type Manifest,
 } from "@prose-reader/core"
-import { BehaviorSubject, EMPTY, first, map, of } from "rxjs"
+import {
+  BehaviorSubject,
+  EMPTY,
+  first,
+  map,
+  type Observable,
+  of,
+  type Subscription,
+} from "rxjs"
 import { afterEach, beforeAll, describe, expect, it, vi } from "vitest"
 import { annotationsEnhancer } from "./annotationsEnhancer.ts"
+import type { Annotation } from "./types.ts"
 
 /** jsdom has no layout, so every element reports this size. */
 const viewport = { width: 400, height: 600 }
@@ -102,22 +111,29 @@ beforeAll(() => {
 })
 
 const readers: { destroy: () => void }[] = []
+const subscriptions: Subscription[] = []
 
 afterEach(() => {
+  for (const subscription of subscriptions.splice(0)) subscription.unsubscribe()
   for (const reader of readers.splice(0)) reader.destroy()
   document.body.replaceChildren()
   vi.useRealTimers()
 })
 
-const mountAnnotationsReader = async (
-  Renderer: typeof EmptyRenderer = EmptyRenderer,
-) => {
+const mountAnnotationsReader = async ({
+  Renderer = EmptyRenderer,
+  annotations$,
+}: {
+  Renderer?: typeof EmptyRenderer
+  annotations$?: Observable<Annotation[]>
+} = {}) => {
   vi.useFakeTimers()
 
   const reader = annotationsEnhancer(createReader)({
     manifest,
     getRenderer: () => (props) => new Renderer(props),
     getResource: () => of(new Response("", { status: 200 })),
+    annotations: { annotations$ },
   })
   readers.push(reader)
 
@@ -151,7 +167,9 @@ describe("candidates$", () => {
    */
   it("emits an empty array while the reader has published no pages, then one candidate per page", async () => {
     const layoutHold = createLayoutHold()
-    const reader = await mountAnnotationsReader(layoutHold.Renderer)
+    const reader = await mountAnnotationsReader({
+      Renderer: layoutHold.Renderer,
+    })
 
     expect(reader.spine.pages.value.pages).toEqual([])
 
@@ -171,3 +189,127 @@ describe("candidates$", () => {
     expect(observeCandidates(reader)).toEqual([[true, true]])
   })
 })
+
+/**
+ * The ids of the annotations that have a highlight in each spine item, in
+ * the order of the items. A highlight has its element from its creation, so
+ * jsdom, which draws no rectangle, still shows it.
+ */
+const getHighlightedAnnotationIdsBySpineItem = (
+  reader: Awaited<ReturnType<typeof mountAnnotationsReader>>,
+) =>
+  reader.spineItemsManager.items.map((spineItem) =>
+    Array.from(
+      spineItem.containerElement.querySelectorAll<HTMLElement>(
+        "[data-highlight-container]",
+      ),
+      (highlightElement) => highlightElement.dataset.highlightContainer,
+    ),
+  )
+
+/** An annotation over the whole of a spine item. */
+const createAnnotationOfSpineItem = (
+  reader: Awaited<ReturnType<typeof mountAnnotationsReader>>,
+  spineItemIndex: number,
+  id: string,
+): Annotation => {
+  const spineItem = reader.spineItemsManager.get(spineItemIndex)
+
+  if (!spineItem) throw new Error(`no spine item ${spineItemIndex}`)
+
+  return { id, cfi: reader.cfi.generateRootCfi(spineItem.item) }
+}
+
+/**
+ * The highlights do not depend on whether the app observes the taps on them:
+ * react-reader does, an app that only shows highlights does not.
+ */
+describe.each([{ appObservesTaps: false }, { appObservesTaps: true }])(
+  "highlights, when the app observes taps: $appObservesTaps",
+  ({ appObservesTaps }) => {
+    /** A reader given no annotation, and the subject that gives it more. */
+    const mountReaderWithAnnotationsSubject = async () => {
+      const annotations$ = new BehaviorSubject<Annotation[]>([])
+      const reader = await mountAnnotationsReader({ annotations$ })
+
+      if (appObservesTaps) {
+        subscriptions.push(reader.annotations.highlightTap$.subscribe())
+      }
+
+      expect(
+        reader.spineItemsManager.items.map(
+          (spineItem) => spineItem.value.loadStatus,
+        ),
+        "the load status of each spine item",
+      ).toEqual(["loaded", "loaded"])
+
+      return { reader, annotations$ }
+    }
+
+    it("keeps one highlight for each annotation of a spine item, as the list of annotations changes", async () => {
+      const { reader, annotations$ } = await mountReaderWithAnnotationsSubject()
+      const firstOfItem0 = createAnnotationOfSpineItem(reader, 0, "first-of-0")
+      const secondOfItem0 = createAnnotationOfSpineItem(
+        reader,
+        0,
+        "second-of-0",
+      )
+      const firstOfItem1 = createAnnotationOfSpineItem(reader, 1, "first-of-1")
+
+      const successiveLists: Annotation[][] = [
+        [firstOfItem0],
+        [firstOfItem0, secondOfItem0, firstOfItem1],
+        [
+          { ...firstOfItem0, highlightColor: "red", notes: "a note" },
+          firstOfItem1,
+        ],
+        [firstOfItem1],
+        [],
+      ]
+
+      for (const annotations of successiveLists) {
+        annotations$.next(annotations)
+        await vi.runAllTimersAsync()
+
+        expect(
+          getHighlightedAnnotationIdsBySpineItem(reader),
+          `the highlights of each spine item, for the annotations ${annotations.map(({ id }) => id).join(", ") || "none"}`,
+        ).toEqual(
+          reader.spineItemsManager.items.map((spineItem) =>
+            annotations
+              .filter(
+                ({ cfi }) =>
+                  reader.cfi.parseCfi(cfi).itemIndex === spineItem.index,
+              )
+              .map(({ id }) => id),
+          ),
+        )
+      }
+    })
+
+    it("lets go of the annotations and removes every highlight once the reader is destroyed", async () => {
+      const { reader, annotations$ } = await mountReaderWithAnnotationsSubject()
+
+      annotations$.next([
+        createAnnotationOfSpineItem(reader, 0, "of-0"),
+        createAnnotationOfSpineItem(reader, 1, "of-1"),
+      ])
+      await vi.runAllTimersAsync()
+
+      expect(getHighlightedAnnotationIdsBySpineItem(reader)).toEqual([
+        ["of-0"],
+        ["of-1"],
+      ])
+
+      reader.destroy()
+
+      expect(
+        annotations$.observed,
+        "whether the reader still observes the annotations",
+      ).toBe(false)
+      expect(
+        document.querySelectorAll("[data-highlight-container]"),
+      ).toHaveLength(0)
+    })
+  },
+)

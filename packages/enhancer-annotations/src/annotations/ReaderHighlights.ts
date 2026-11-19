@@ -12,7 +12,11 @@ import { SpineItemHighlights } from "./SpineItemHighlights.ts"
 import type { RuntimeAnnotation } from "./types.ts"
 
 export class ReaderHighlights extends DestroyableClass {
-  private spineItemHighlights = new BehaviorSubject<SpineItemHighlights[]>([])
+  /** The highlights of each spine item whose document is loaded, by item id. */
+  private spineItemHighlightsByItemId = new BehaviorSubject<
+    ReadonlyMap<string, SpineItemHighlights>
+  >(new Map())
+  private deregisterHooks: (() => void)[]
 
   public tap$: SpineItemHighlights["tap$"]
 
@@ -23,13 +27,10 @@ export class ReaderHighlights extends DestroyableClass {
   ) {
     super()
 
-    const cleanupByItemId = new Map<string, () => void>()
-
-    this.reader.hookManager.register(
+    const deregisterDocumentLoadHook = this.reader.hookManager.register(
       "item.onDocumentLoad",
       async ({ itemId }) => {
-        cleanupByItemId.get(itemId)?.()
-        cleanupByItemId.delete(itemId)
+        this.destroySpineItemHighlights(itemId)
 
         const spineItem = reader.spineItemsManager.get(itemId)
 
@@ -50,40 +51,64 @@ export class ReaderHighlights extends DestroyableClass {
           this.selectedHighlight,
         )
 
-        this.spineItemHighlights.next([
-          ...this.spineItemHighlights.getValue(),
-          spineItemHighlights,
-        ])
-
-        const cleanup = () => {
-          this.spineItemHighlights.next(
-            this.spineItemHighlights
-              .getValue()
-              .filter((layer) => layer !== spineItemHighlights),
-          )
-
-          spineItemHighlights.destroy()
-        }
-
-        cleanupByItemId.set(itemId, cleanup)
+        this.spineItemHighlightsByItemId.next(
+          new Map(this.spineItemHighlightsByItemId.value).set(
+            itemId,
+            spineItemHighlights,
+          ),
+        )
       },
     )
 
-    this.reader.hookManager.register("item.onDocumentUnload", ({ itemId }) => {
-      cleanupByItemId.get(itemId)?.()
-      cleanupByItemId.delete(itemId)
-    })
+    const deregisterDocumentUnloadHook = this.reader.hookManager.register(
+      "item.onDocumentUnload",
+      ({ itemId }) => {
+        this.destroySpineItemHighlights(itemId)
+      },
+    )
 
-    this.tap$ = this.spineItemHighlights.pipe(
-      switchMap((layers) => merge(...layers.map((layer) => layer.tap$))),
+    this.deregisterHooks = [
+      deregisterDocumentLoadHook,
+      deregisterDocumentUnloadHook,
+    ]
+
+    this.tap$ = this.spineItemHighlightsByItemId.pipe(
+      switchMap((spineItemHighlightsByItemId) =>
+        merge(
+          ...Array.from(
+            spineItemHighlightsByItemId.values(),
+            (spineItemHighlights) => spineItemHighlights.tap$,
+          ),
+        ),
+      ),
     )
   }
 
+  private get allSpineItemHighlights() {
+    return Array.from(this.spineItemHighlightsByItemId.value.values())
+  }
+
+  private destroySpineItemHighlights(itemId: string) {
+    const spineItemHighlights =
+      this.spineItemHighlightsByItemId.value.get(itemId)
+
+    if (!spineItemHighlights) return
+
+    const spineItemHighlightsByItemId = new Map(
+      this.spineItemHighlightsByItemId.value,
+    )
+
+    spineItemHighlightsByItemId.delete(itemId)
+    this.spineItemHighlightsByItemId.next(spineItemHighlightsByItemId)
+    spineItemHighlights.destroy()
+  }
+
   getHighlightsForTarget = (target: EventTarget) => {
-    return this.spineItemHighlights
-      .getValue()
-      .flatMap((layer) => layer.getHighlightsForTarget(target))
-      .map((annotation) => annotation.highlight)
+    return this.allSpineItemHighlights
+      .flatMap((spineItemHighlights) =>
+        spineItemHighlights.getHighlightsForTarget(target),
+      )
+      .map((highlight) => highlight.annotation)
   }
 
   isTargetWithinHighlight = (target: EventTarget) => {
@@ -92,7 +117,21 @@ export class ReaderHighlights extends DestroyableClass {
 
   public layout() {
     return forkJoin(
-      this.spineItemHighlights.value.map((item) => item.layout()),
+      this.allSpineItemHighlights.map((spineItemHighlights) =>
+        spineItemHighlights.layout(),
+      ),
     ).pipe(defaultIfEmpty(null))
+  }
+
+  public destroy() {
+    super.destroy()
+
+    for (const deregisterHook of this.deregisterHooks) deregisterHook()
+
+    for (const spineItemHighlights of this.allSpineItemHighlights) {
+      spineItemHighlights.destroy()
+    }
+
+    this.spineItemHighlightsByItemId.complete()
   }
 }

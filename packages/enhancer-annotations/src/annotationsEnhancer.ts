@@ -167,9 +167,7 @@ export const annotationsEnhancer =
       ),
     )
 
-    merge(renderAnnotations$, annotations$)
-      .pipe(takeUntil(reader.$.destroy$))
-      .subscribe()
+    renderAnnotations$.pipe(takeUntil(reader.$.destroy$)).subscribe()
 
     return {
       ...reader,
