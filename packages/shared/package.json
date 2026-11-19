@@ -32,8 +32,8 @@
     "/dist"
   ],
   "scripts": {
-    "start": "vite build --watch --mode development",
-    "build": "tsc && vite build",
+    "start": "tsc -p tsconfig.build.json --watch --preserveWatchOutput & vite build --watch --mode development",
+    "build": "tsc && vite build && tsc -p tsconfig.build.json",
     "test": "vitest run --coverage"
   },
   "gitHead": "4601e14dcacf50b2295cb343582a7ef2c7e1eedc",
