@@ -252,21 +252,32 @@ export const holdItem = (
  * Lets a test stop the spine's layout pass at one item: while held, that item's
  * layout does not complete, so the pass has laid out the items before it and
  * waits. Layouts run normally until `hold` is called. `layoutsStarted` counts
- * the layouts of that item, which tells a test a pass has reached it.
+ * the layouts of that item, which tells a test a pass has reached it. Every
+ * item is rendered by `Renderer`, the one held included, which lays out once
+ * released.
  */
-export const holdItemLayout = (href: string) => {
+export const holdItemLayout = (
+  href: string,
+  Renderer: new (
+    props: DocumentRendererParams,
+  ) => DocumentRenderer = DefaultRenderer,
+) => {
   const isHeld = new BehaviorSubject(false)
   let layoutsStarted = 0
 
-  class HeldLayoutRenderer extends DefaultRenderer {
-    onLayout() {
+  const layOutOnceReleased = (renderer: DocumentRenderer) => {
+    const layOut = renderer.onLayout.bind(renderer)
+
+    renderer.onLayout = (params) => {
       layoutsStarted += 1
 
       return isHeld.pipe(
         first((held) => !held),
-        map(() => undefined),
+        switchMap(() => layOut(params)),
       )
     }
+
+    return renderer
   }
 
   return {
@@ -274,8 +285,8 @@ export const holdItemLayout = (href: string) => {
       (item: Manifest["spineItems"][number]) =>
       (props: DocumentRendererParams) =>
         item.href === href
-          ? new HeldLayoutRenderer(props)
-          : new DefaultRenderer(props),
+          ? layOutOnceReleased(new Renderer(props))
+          : new Renderer(props),
     hold: () => isHeld.next(true),
     release: () => isHeld.next(false),
     layoutsStarted: () => layoutsStarted,
@@ -421,6 +432,7 @@ export const renderTextDocumentsWithParagraphOnSetPage = () => {
   }
 
   return {
+    Renderer: ParagraphOnSetPageRenderer,
     getRenderer: () => (props: DocumentRendererParams) =>
       new ParagraphOnSetPageRenderer(props),
     setPageIndexOfParagraph: (pageIndex: number) => {
