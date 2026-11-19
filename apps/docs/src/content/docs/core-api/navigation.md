@@ -168,7 +168,8 @@ is clamped to the book, so it always names a place.
 
 `type` is `"api"` unless you give it. `"scroll"` is for a navigation that
 follows a scroll of the user's: the view is already at its position, and the
-reader does not move it. The reader makes those itself in a book that scrolls.
+reader does not move it. The reader makes those itself in a book that scrolls,
+see [`.navigation$`](#navigationusd).
 
 Enhancers can add target types: the
 reader `createReader` returns also takes `{ type: "url"; value: string | URL }`,
@@ -220,9 +221,9 @@ Observable<{
 Every navigation as it happens: a `"user"` one that you or a gesture asked for,
 the one to where the reader opens included, or a `"restoration"` of the current
 one onto a new layout or when a pan ends.
-The user's scroll of a book that scrolls gives a `"user"` one when it is over,
-and one as a layout starts during it: where the scroll has taken the user by
-then.
+The user's scroll of a book that scrolls gives a `"user"` one at each move,
+one as a layout starts during it, and one when the scrolling has stopped for
+half a second: where the scroll has taken the user by then.
 A restoration is emitted even when it lands where the navigation already was.
 
 A navigation asked for while a `lock()` is held is emitted as a `"user"` one
@@ -256,8 +257,10 @@ to another one is emitted before the one it answers.
 
 Use it to end something of your own when something else navigates. The reader
 does so for a scroll of the user's: a request that the scroll did not make ends
-the scroll at once, its lock is released, and the scroll makes no navigation of
-its own.
+the scroll at once, its lock is released, and the scroll makes no more
+navigations of its own. The requests that the scroll makes have the `type`
+`"scroll"`: one at each move, one as a layout starts during it, and one when
+the scrolling has stopped for half a second.
 
 ### `.navigationAgainstCurrentLayout$` { #navigationagainstcurrentlayoutusd }
 

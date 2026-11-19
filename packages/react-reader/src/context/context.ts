@@ -1,5 +1,6 @@
 import type { Reader } from "@prose-reader/core"
 import type {
+  AnnotateSelectionParams,
   Annotation,
   RuntimeAnnotation,
 } from "@prose-reader/enhancer-annotations"
@@ -68,10 +69,7 @@ export type PrivateContextType = {
   selectedHighlight:
     | {
         highlight?: RuntimeAnnotation
-        selection?: {
-          selection: Selection
-          itemIndex: number
-        }
+        selection?: AnnotateSelectionParams
       }
     | undefined
 }

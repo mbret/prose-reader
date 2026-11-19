@@ -1,5 +1,5 @@
 // @vitest-environment jsdom
-import { BehaviorSubject, first, map, Subject } from "rxjs"
+import { BehaviorSubject, EMPTY, first, map, of, Subject } from "rxjs"
 import { describe, expect, it, onTestFinished, vi } from "vitest"
 import {
   createCfiOfItem,
@@ -7,7 +7,39 @@ import {
   mountAnnotationsReader,
   readHighlightedAnnotationIds,
 } from "./tests/readerHarness.ts"
-import type { Annotation } from "./types.ts"
+import type { Annotation, AnnotationsEnhancerAPI } from "./types.ts"
+
+type CreateAnnotationParams = Parameters<
+  AnnotationsEnhancerAPI["annotations"]["createAnnotation"]
+>[0]
+
+/**
+ * Renders each item as a text document in a frame, the way the html renderer
+ * does, so that its text can be selected.
+ */
+class TextDocumentRenderer extends EmptyRenderer {
+  onCreateDocument() {
+    return of(this.context.document.createElement("iframe"))
+  }
+
+  onLoadDocument() {
+    this.attach()
+
+    const frameDocument = this.getDocumentFrame()?.contentDocument
+
+    if (!frameDocument) throw new Error("the frame has no document")
+
+    frameDocument.body.innerHTML = `<p>A paragraph of text.</p>`
+
+    return EMPTY
+  }
+
+  getDocumentFrame() {
+    const frame = this.documentContainer
+
+    return frame instanceof HTMLIFrameElement ? frame : undefined
+  }
+}
 
 /**
  * Holds every layout while held, so that the spine publishes no pages until
@@ -205,5 +237,122 @@ describe("highlights", () => {
 
     expect(reader.spineItemsManager.get(0)?.value.loadStatus).toBe("loaded")
     expect(readHighlightedAnnotationIds()).toEqual(["first"])
+  })
+})
+
+/**
+ * Selects text in the document of an item and releases the pointer, as a user
+ * does. The reader then holds the selection, the event that ended it and the
+ * item, in `reader.selection.getSelection()`.
+ */
+const selectTextAndRelease = async (
+  reader: Awaited<ReturnType<typeof mountAnnotationsReader>>,
+  itemIndex: number,
+) => {
+  const frameDocument = reader.spineItemsManager
+    .get(itemIndex)
+    ?.renderer.getDocumentFrame()?.contentDocument
+  const frameWindow = frameDocument?.defaultView
+  const text = frameDocument?.querySelector("p")?.firstChild
+
+  if (!frameDocument || !frameWindow || !text) {
+    throw new Error(`item ${itemIndex} has no text to select`)
+  }
+
+  frameDocument.getSelection()?.setBaseAndExtent(text, 2, text, 11)
+  frameDocument.dispatchEvent(new frameWindow.PointerEvent("pointerdown"))
+  frameDocument.dispatchEvent(new frameWindow.PointerEvent("pointerup"))
+  await vi.runAllTimersAsync()
+
+  const selection = reader.selection.getSelection()
+
+  if (selection?.type !== "over") {
+    throw new Error("the reader holds no released selection")
+  }
+
+  return selection
+}
+
+/**
+ * An app stores what `createAnnotation` returns, in IndexedDB or through
+ * `postMessage`, which copy a value with the structured clone algorithm. A
+ * browser cannot clone an event or a selection, so the result holds an id
+ * and a cfi only.
+ *
+ * The tests compare the keys of the result, not whether it clones: jsdom
+ * clones its events like plain objects, so a clone would succeed here with
+ * the event in the result.
+ */
+describe("createAnnotation", () => {
+  it("annotates a selection with its id and a range cfi, and nothing of the selection itself", async () => {
+    const reader = await mountAnnotationsReader({
+      Renderer: TextDocumentRenderer,
+    })
+    // The whole value the reader holds, event included, as an app may pass it.
+    const selection = await selectTextAndRelease(reader, 0)
+
+    const annotation = reader.annotations.createAnnotation(selection)
+
+    expect(annotation).toStrictEqual({
+      id: expect.any(String),
+      cfi: expect.any(String),
+    })
+    expect(reader.cfi.parseCfi(annotation?.cfi ?? "")).toMatchObject({
+      itemIndex: 0,
+      isCfiRange: true,
+    })
+  })
+
+  it("annotates a page with its id and the cfi of its item, and not the page index", async () => {
+    const reader = await mountAnnotationsReader({
+      Renderer: TextDocumentRenderer,
+    })
+
+    const annotation = reader.annotations.createAnnotation({
+      absolutePageIndex: 1,
+    })
+
+    expect(annotation).toStrictEqual({
+      id: expect.any(String),
+      cfi: expect.any(String),
+    })
+    expect(reader.cfi.parseCfi(annotation?.cfi ?? "")).toMatchObject({
+      itemIndex: 1,
+      isCfiRange: false,
+    })
+  })
+
+  /**
+   * The selection the reader holds is the live one of the document. The user
+   * can clear it before the app annotates it.
+   */
+  it("takes a selection with its spine item, or a page, and nothing between", () => {
+    const selection = document.getSelection()
+
+    if (!selection) throw new Error("the document has no selection")
+
+    const ofSelection: CreateAnnotationParams = { itemIndex: 0, selection }
+    const ofPage: CreateAnnotationParams = { absolutePageIndex: 0 }
+    // @ts-expect-error a page with a selection is neither form
+    const ofPageWithSelection: CreateAnnotationParams = {
+      absolutePageIndex: 0,
+      selection,
+    }
+    // @ts-expect-error a spine item with no selection is neither form
+    const ofItem: CreateAnnotationParams = { itemIndex: 0 }
+
+    // The type check is the test: the values only exist to be checked.
+    expect([ofSelection, ofPage, ofPageWithSelection, ofItem]).toHaveLength(4)
+  })
+
+  it("annotates nothing when the selection holds no range", async () => {
+    const reader = await mountAnnotationsReader({
+      Renderer: TextDocumentRenderer,
+    })
+    const selected = await selectTextAndRelease(reader, 0)
+
+    selected.selection.removeAllRanges()
+
+    expect(reader.annotations.createAnnotation(selected)).toBeUndefined()
   })
 })

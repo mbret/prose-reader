@@ -39,7 +39,7 @@ export class EmptyRenderer extends DocumentRenderer {
     return EMPTY
   }
 
-  getDocumentFrame() {
+  getDocumentFrame(): HTMLIFrameElement | undefined {
     return undefined
   }
 }
@@ -47,18 +47,18 @@ export class EmptyRenderer extends DocumentRenderer {
 /** Two single pages, each a candidate once laid out. */
 const manifest: Manifest = {
   filename: "test",
-  mediaType: "application/vnd.comicbook+zip",
+  mediaType: "application/epub+zip",
   title: "test",
   readingDirection: "ltr",
   renditionLayout: "pre-paginated",
   renditionSpread: "none",
   items: [],
   spineItems: [0, 1].map((index) => ({
-    href: `/page_${index}.jpg`,
-    containerUri: `page_${index}.jpg`,
+    href: `/page_${index}.xhtml`,
+    containerUri: `page_${index}.xhtml`,
     id: `${index}`,
     index,
-    mediaType: "image/jpeg",
+    mediaType: "application/xhtml+xml",
     progressionWeight: 0.5,
     renditionLayout: "pre-paginated",
   })),
