@@ -1,6 +1,6 @@
 ---
 title: "Annotations enhancer"
-description: "Install @prose-reader/enhancer-annotations, create annotations with createAnnotation and store them as they are, show them as highlights, find the pages that can hold one with candidates$, and avoid the root CFI you get on a blank page."
+description: "Install @prose-reader/enhancer-annotations, create annotations with createAnnotation and store them as they are, show them as highlights, find the page of each annotation with pageByAnnotationId$, find the pages that can hold one with candidates$, and avoid the root CFI you get on a blank page."
 sidebar:
   label: "Annotations"
 ---
@@ -100,6 +100,44 @@ its highlight at once.
 
 `reader.annotations.highlightTap$` emits `{ event, highlight }` for each tap on
 a highlight. `highlight` is the annotation of the tapped highlight.
+
+## Finding the page of an annotation
+
+`reader.annotations.pageByAnnotationId$` gives the page of each annotation whose
+spine item has its document loaded, by annotation `id`: its spine item
+(`itemIndex`) and its page in that item (`pageIndex`). An annotation of an item
+that is not loaded is not in it. A range is on the page where it starts.
+
+- A pre-paginated item has one page: its annotations are on page 0.
+- An annotation whose CFI names only its item is on the item's first page.
+- Any other annotation is on the page of the node its CFI points to, once its
+  item is laid out. One whose CFI does not resolve in its item has no page.
+
+The enhancer finds the pages on each loaded item, when the list changes and
+after each layout of the item. It loads no item to find them, so use it for
+what a reader can see, such as a mark on each annotated page:
+
+```typescript
+import { combineLatest, map } from "rxjs"
+
+const annotatedPages$ = combineLatest([
+  reader.annotations.annotations$,
+  reader.annotations.pageByAnnotationId$,
+]).pipe(
+  map(([annotations, pageByAnnotationId]) =>
+    annotations.flatMap((annotation) => {
+      const page = pageByAnnotationId.get(annotation.id)
+
+      return page ? [page] : []
+    }),
+  ),
+)
+```
+
+It emits once the annotations are known, then each time the list or the page of
+one of them changes. To locate an annotation whose item is not loaded, for a
+list of every annotation, use
+[`reader.locateResource()`](/core-api/reader/locateresource).
 
 ## Blank pages and annotations
 

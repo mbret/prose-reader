@@ -5,15 +5,19 @@ import {
 } from "@prose-reader/core"
 import {
   BehaviorSubject,
+  combineLatest,
   defaultIfEmpty,
   distinctUntilChanged,
   forkJoin,
   map,
   merge,
   type Observable,
+  shareReplay,
+  startWith,
   switchMap,
   takeUntil,
 } from "rxjs"
+import type { AnnotationPage } from "../types.ts"
 import { SpineItemHighlight } from "./SpineItemHighlight.ts"
 import type { RuntimeAnnotation } from "./types.ts"
 import { createAnnotationLayer, layoutAnnotationLayer } from "./utils.ts"
@@ -30,6 +34,14 @@ export class SpineItemHighlights extends DestroyableClass {
   >(new Map())
 
   public readonly tap$: SpineItemHighlight["tap$"]
+
+  /**
+   * The page of each annotation of the item whose page is known, found again
+   * when the list changes and after each layout of the item.
+   */
+  public readonly pageByAnnotationId$: Observable<
+    ReadonlyMap<string, AnnotationPage>
+  >
 
   constructor(
     annotations$: Observable<RuntimeAnnotation[]>,
@@ -56,6 +68,32 @@ export class SpineItemHighlights extends DestroyableClass {
           ),
         ),
       ),
+    )
+
+    this.pageByAnnotationId$ = combineLatest([
+      annotations$,
+      spineItem.didLayout$.pipe(startWith(null)),
+    ]).pipe(
+      map(([annotations]) => {
+        const pageByAnnotationId = new Map<string, AnnotationPage>()
+
+        for (const annotation of annotations) {
+          const pageIndex = reader.cfi.getSpineItemPageIndexFromCfi(
+            annotation.cfi,
+          )
+
+          if (pageIndex !== undefined) {
+            pageByAnnotationId.set(annotation.id, {
+              itemIndex: spineItem.index,
+              pageIndex,
+            })
+          }
+        }
+
+        return pageByAnnotationId
+      }),
+      takeUntil(this.destroy$),
+      shareReplay({ refCount: true, bufferSize: 1 }),
     )
 
     annotations$.pipe(takeUntil(this.destroy$)).subscribe((annotations) => {

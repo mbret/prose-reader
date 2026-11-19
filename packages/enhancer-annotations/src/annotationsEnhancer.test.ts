@@ -156,15 +156,17 @@ const mountAnnotationsReader = async ({
   Renderer = EmptyRenderer,
   annotations$,
   numberOfAdjacentSpineItemToPreLoad,
+  bookManifest = manifest,
 }: {
   Renderer?: typeof EmptyRenderer
   annotations$?: Observable<Annotation[]>
   numberOfAdjacentSpineItemToPreLoad?: number
+  bookManifest?: Manifest
 } = {}) => {
   vi.useFakeTimers()
 
   const reader = annotationsEnhancer(createReader)({
-    manifest,
+    manifest: bookManifest,
     getRenderer: () => (props) => new Renderer(props),
     getResource: () => of(new Response("", { status: 200 })),
     annotations: { annotations$ },
@@ -888,5 +890,149 @@ describe("createAnnotation", () => {
     selected.selection.removeAllRanges()
 
     expect(reader.annotations.createAnnotation(selected)).toBeUndefined()
+  })
+})
+
+/** Two reflowable chapters, each laid out on a single page here. */
+const reflowableManifest: Manifest = {
+  ...manifest,
+  renditionLayout: "reflowable",
+  spineItems: manifest.spineItems.map((spineItem) => ({
+    ...spineItem,
+    renditionLayout: "reflowable",
+  })),
+}
+
+/**
+ * A text document whose ranges measure like its elements: jsdom gives a range
+ * no measurement, and the page of a node is found from its measurement.
+ */
+class MeasuredTextDocumentRenderer extends TextDocumentRenderer {
+  onLoadDocument() {
+    const loadDocument = super.onLoadDocument()
+    const frameDocument = this.getDocumentFrame()?.contentDocument
+
+    if (!frameDocument) throw new Error("the frame has no document")
+
+    const { body } = frameDocument
+    const rangePrototype: Range = Object.getPrototypeOf(
+      frameDocument.createRange(),
+    )
+
+    rangePrototype.getClientRects = () => body.getClientRects()
+
+    return loadDocument
+  }
+}
+
+/**
+ * Subscribes to `pageByAnnotationId$` once, as an app does, until the test
+ * ends, and reads its latest value: a subscription made for each read would
+ * find the pages again on each read.
+ */
+const observePageByAnnotationId = (reader: AnnotationsReader) => {
+  let latestPageByAnnotationId: unknown
+
+  subscriptions.push(
+    reader.annotations.pageByAnnotationId$.subscribe((pageByAnnotationId) => {
+      latestPageByAnnotationId = Object.fromEntries(pageByAnnotationId)
+    }),
+  )
+
+  return () => latestPageByAnnotationId
+}
+
+describe("pageByAnnotationId$", () => {
+  it("gives the page of each annotation of a spine item whose document is loaded, and of no other", async () => {
+    const { reader, annotations$ } = await mountReaderHoldingOneDocument({
+      appObservesTaps: false,
+    })
+    const readPageByAnnotationId = observePageByAnnotationId(reader)
+
+    annotations$.next([
+      createAnnotationAtRootOfSpineItem(reader, 0, "first"),
+      createAnnotationAtRootOfSpineItem(reader, 1, "second"),
+    ])
+    await vi.runAllTimersAsync()
+    const pagesWithFirstSpineItemLoaded = readPageByAnnotationId()
+
+    await goToSpineItem(reader, 1)
+
+    expect({
+      pagesWithFirstSpineItemLoaded,
+      loadStatusOfEachSpineItem: getLoadStatusOfEachSpineItem(reader),
+      pagesWithSecondSpineItemLoaded: readPageByAnnotationId(),
+    }).toEqual({
+      pagesWithFirstSpineItemLoaded: {
+        first: { itemIndex: 0, pageIndex: 0 },
+      },
+      loadStatusOfEachSpineItem: ["idle", "loaded"],
+      pagesWithSecondSpineItemLoaded: {
+        second: { itemIndex: 1, pageIndex: 0 },
+      },
+    })
+  })
+
+  it("follows the annotations as they are added and removed", async () => {
+    const { reader, annotations$ } = await mountReaderHoldingOneDocument({
+      appObservesTaps: false,
+    })
+    const readPageByAnnotationId = observePageByAnnotationId(reader)
+    const first = createAnnotationAtRootOfSpineItem(reader, 0, "first")
+    const second = createAnnotationAtRootOfSpineItem(reader, 0, "second")
+
+    annotations$.next([first])
+    await vi.runAllTimersAsync()
+    const pagesWithFirst = readPageByAnnotationId()
+
+    annotations$.next([first, second])
+    await vi.runAllTimersAsync()
+    const pagesWithBoth = readPageByAnnotationId()
+
+    annotations$.next([second])
+    await vi.runAllTimersAsync()
+
+    expect({
+      pagesWithFirst,
+      pagesWithBoth,
+      pagesWithSecond: readPageByAnnotationId(),
+    }).toEqual({
+      pagesWithFirst: { first: { itemIndex: 0, pageIndex: 0 } },
+      pagesWithBoth: {
+        first: { itemIndex: 0, pageIndex: 0 },
+        second: { itemIndex: 0, pageIndex: 0 },
+      },
+      pagesWithSecond: { second: { itemIndex: 0, pageIndex: 0 } },
+    })
+  })
+
+  it("gives an annotation of a reflowable chapter the page of its node, once the chapter is laid out", async () => {
+    const annotations$ = new BehaviorSubject<Annotation[]>([
+      // The text of the paragraph of each chapter.
+      { id: "first", cfi: "epubcfi(/6/2!/4/2/1:3)" },
+      { id: "second", cfi: "epubcfi(/6/4!/4/2/1:3)" },
+    ])
+    const reader = await mountAnnotationsReader({
+      Renderer: MeasuredTextDocumentRenderer,
+      annotations$,
+      numberOfAdjacentSpineItemToPreLoad: 0,
+      bookManifest: reflowableManifest,
+    })
+
+    const readPageByAnnotationId = observePageByAnnotationId(reader)
+    const pagesWithFirstChapterLoaded = readPageByAnnotationId()
+
+    // The second chapter loads and is laid out while the app observes.
+    await goToSpineItem(reader, 1)
+
+    expect({
+      pagesWithFirstChapterLoaded,
+      loadStatusOfEachSpineItem: getLoadStatusOfEachSpineItem(reader),
+      pagesWithSecondChapterLoaded: readPageByAnnotationId(),
+    }).toEqual({
+      pagesWithFirstChapterLoaded: { first: { itemIndex: 0, pageIndex: 0 } },
+      loadStatusOfEachSpineItem: ["idle", "loaded"],
+      pagesWithSecondChapterLoaded: { second: { itemIndex: 1, pageIndex: 0 } },
+    })
   })
 })

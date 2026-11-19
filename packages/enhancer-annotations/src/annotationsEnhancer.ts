@@ -168,6 +168,7 @@ export const annotationsEnhancer =
         annotations$: runtimeAnnotations$,
         highlightTap$: readerHighlights.tap$,
         candidates$,
+        pageByAnnotationId$: readerHighlights.pageByAnnotationId$,
         isTargetWithinHighlight: readerHighlights.isTargetWithinHighlight,
         createAnnotation,
         update: settings.update.bind(settings),
