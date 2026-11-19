@@ -51,8 +51,8 @@ Ultimately it can be confusing for the user to have different things that can in
 
 What we recommend is to reduce confusion and have as few components as possible. This is why the [React Reader](/react-reader/introduction) make an opinionated decision and only assume two interfaces:
 
-* Page bookmark: a single unique annotation pointing to the first node of a page, no notes, no highlight color or anything.
-* Annotation: Everything else
+* Page bookmark: an annotation anchored to a page, not to a passage within it. Its CFI points to the first node of the page and has no range. It can carry a note.
+* Highlight: an annotation of a passage, whose CFI is a range.
 
 ## Danger of persisting `weak` references
 

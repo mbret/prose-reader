@@ -1,7 +1,7 @@
 import { useObserve } from "reactjrx"
 import { distinctUntilChanged, map, switchMap } from "rxjs"
+import { isBookmark } from "../isBookmark.ts"
 import { useReaderWithAnnotations } from "../useReaderWithAnnotations.ts"
-import { isBookmark } from "./isBookmark.ts"
 
 type PageBookmark = { id: string; cfi: string }
 

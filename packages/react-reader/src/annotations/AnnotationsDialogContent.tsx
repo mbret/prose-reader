@@ -2,7 +2,7 @@ import { Tabs } from "@chakra-ui/react"
 import { memo, useState } from "react"
 import { LuBookmark, LuNotebookPen } from "react-icons/lu"
 import { AnnotationsList } from "./AnnotationsList.tsx"
-import { BookmarksList } from "./bookmarks/BookmarksList.tsx"
+import { useAnnotationsByKind } from "./useAnnotationsByKind.ts"
 
 export const AnnotationsDialogContent = memo(
   ({
@@ -13,6 +13,7 @@ export const AnnotationsDialogContent = memo(
     defaultTab: "bookmarks" | "annotations" | undefined
   }) => {
     const [tab, setTab] = useState(defaultTab ?? "bookmarks")
+    const { data: annotationsByKind } = useAnnotationsByKind()
 
     return (
       <Tabs.Root
@@ -33,10 +34,16 @@ export const AnnotationsDialogContent = memo(
           <Tabs.Indicator />
         </Tabs.List>
         <Tabs.Content value="bookmarks">
-          <BookmarksList onNavigate={onNavigate} />
+          <AnnotationsList
+            annotations={annotationsByKind?.bookmarks}
+            onNavigate={onNavigate}
+          />
         </Tabs.Content>
         <Tabs.Content value="annotations">
-          <AnnotationsList onNavigate={onNavigate} />
+          <AnnotationsList
+            annotations={annotationsByKind?.highlights}
+            onNavigate={onNavigate}
+          />
         </Tabs.Content>
       </Tabs.Root>
     )

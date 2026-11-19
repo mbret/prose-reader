@@ -257,9 +257,13 @@ describe("the chapters react-reader loads for annotations", () => {
   })
 })
 
-describe("the Bookmarks list", () => {
-  it("lists every annotation whose cfi is not a range, with a note or without", async () => {
-    await openBook({
+describe("the tabs of the Annotations dialog", () => {
+  /**
+   * A row locates its annotation in the load mode, so the chapters loaded
+   * while a tab is open are those of the annotations it lists.
+   */
+  it("list each annotation once: a bookmark, with a note or without, under Bookmarks, and a highlight under Annotations", async () => {
+    const reader = await openBook({
       annotations: [
         createPageBookmark(5),
         { ...createPageBookmark(6), notes: "A note" },
@@ -271,7 +275,21 @@ describe("the Bookmarks list", () => {
       (button) => button.getAttribute(`aria-label`) === `Bookmarks`,
     )
     await letTimePass()
+    const loadedForBookmarks = getLoadedChapterIndexes(reader)
 
-    expect(document.querySelectorAll(`[role="dialog"] li`)).toHaveLength(2)
+    await clickButton(
+      (button) =>
+        button.getAttribute(`role`) === `tab` &&
+        button.textContent === `Annotations`,
+    )
+    await letTimePass()
+
+    expect({
+      loadedForBookmarks,
+      loadedForHighlights: getLoadedChapterIndexes(reader),
+    }).toEqual({
+      loadedForBookmarks: [0, 5, 6],
+      loadedForHighlights: [0, 7],
+    })
   })
 })
