@@ -85,48 +85,61 @@ test.describe("Given a book open on its sixth page", () => {
   }
 
   test.describe("When the user scrolls to another page, and the page turn mode becomes controlled before that scroll is over", () => {
-    test("Then the page the user scrolled to is the one on screen", async ({
-      page,
-    }) => {
-      await openOnSixthPage(page, "scrollable")
+    /**
+     * To the top of the page, and to a place where the page after it shows
+     * too, and the page the user scrolled to still shows the most.
+     */
+    for (const shareOfPageScrolledPast of [0, 0.4]) {
+      test(`Then the page the user scrolled to is the one on screen, with ${shareOfPageScrolledPast * 100}% of it scrolled past`, async ({
+        page,
+      }) => {
+        await openOnSixthPage(page, "scrollable")
 
-      const reader = await getReader(page)
+        const reader = await getReader(page)
 
-      await reader.evaluate(async (reader, pageIndex) => {
-        const scrollElement =
-          reader.navigation.scrollNavigationController.value.element
+        await reader.evaluate(
+          async (reader, { pageIndex, shareOfPageScrolledPast }) => {
+            const scrollElement =
+              reader.navigation.scrollNavigationController.value.element
 
-        if (!scrollElement) throw new Error("the reader has no scroll element")
+            if (!scrollElement)
+              throw new Error("the reader has no scroll element")
 
-        const { top } = reader.spine.getSpineItemSpineLayoutInfo(pageIndex)
-        let stopWatchingTheLock = () => {}
+            const { top: topOfPage, height } =
+              reader.spine.getSpineItemSpineLayoutInfo(pageIndex)
+            const top = topOfPage + shareOfPageScrolledPast * height
+            let stopWatchingTheLock = () => {}
 
-        /**
-         * The reader holds the navigation from the first event of a scroll
-         * it did not make until that scroll is over. The mode changes in the
-         * task the lock is taken in, so the scroll is still in progress.
-         */
-        await new Promise<void>((resolve) => {
-          const subscription = reader.navigation.isLocked$.subscribe(
-            (isLocked) => {
-              if (isLocked) resolve()
-            },
-          )
+            /**
+             * The reader holds the navigation from the first event of a
+             * scroll it did not make until that scroll is over. The mode
+             * changes in the task the lock is taken in, so the scroll is
+             * still in progress.
+             */
+            await new Promise<void>((resolve) => {
+              const subscription = reader.navigation.isLocked$.subscribe(
+                (isLocked) => {
+                  if (isLocked) resolve()
+                },
+              )
 
-          stopWatchingTheLock = () => subscription.unsubscribe()
-          scrollElement.scrollTo({ top })
-        })
-        stopWatchingTheLock()
+              stopWatchingTheLock = () => subscription.unsubscribe()
+              scrollElement.scrollTo({ top })
+            })
+            stopWatchingTheLock()
 
-        reader.settings.update({ pageTurnMode: "controlled" })
-      }, NINTH_PAGE)
+            reader.settings.update({ pageTurnMode: "controlled" })
+          },
+          { pageIndex: NINTH_PAGE, shareOfPageScrolledPast },
+        )
 
-      await expect
-        .poll(() => getSpineItemIndexesOnScreen(page))
-        .toEqual([NINTH_PAGE])
-      await waitForSettled(page)
-      expect(await getSpineItemIndexesOnScreen(page)).toEqual([NINTH_PAGE])
-    })
+        await expect
+          .poll(() => getSpineItemIndexesOnScreen(page))
+          .toEqual([NINTH_PAGE])
+        await waitForSettled(page)
+        expect(await getSpineItemIndexesOnScreen(page)).toEqual([NINTH_PAGE])
+      })
+    }
   })
 
   test.describe("When the page turn mode goes to scrollable and back, twice", () => {
