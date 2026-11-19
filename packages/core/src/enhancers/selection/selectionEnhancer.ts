@@ -13,7 +13,7 @@ import {
   tap,
   withLatestFrom,
 } from "rxjs"
-import type { SpineItem } from "../../index.ts"
+import type { SpineItem } from "../../spineItem/SpineItem.ts"
 import { isDefined } from "../../utils/isDefined.ts"
 import type { EnhancerOutput, RootEnhancer } from "../types/enhancer.ts"
 import { createOrderedRangeFromSelection } from "./selection.ts"

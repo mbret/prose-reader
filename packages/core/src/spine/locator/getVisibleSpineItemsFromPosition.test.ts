@@ -1,7 +1,7 @@
 import { firstValueFrom } from "rxjs"
 import { describe, expect, it, vi } from "vitest"
 import { Context } from "../../context/Context.ts"
-import { HookManager } from "../../index.ts"
+import { HookManager } from "../../hooks/HookManager.ts"
 import { ReaderSettingsManager } from "../../settings/ReaderSettingsManager.ts"
 import {
   createTestManifest,
