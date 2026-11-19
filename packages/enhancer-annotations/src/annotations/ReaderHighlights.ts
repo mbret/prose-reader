@@ -7,6 +7,7 @@ import {
   merge,
   type Observable,
   switchMap,
+  takeUntil,
 } from "rxjs"
 import { SpineItemHighlights } from "./SpineItemHighlights.ts"
 import type { RuntimeAnnotation } from "./types.ts"
@@ -19,6 +20,22 @@ export class ReaderHighlights {
   private spineItemHighlightsByItemId = new BehaviorSubject<
     ReadonlyMap<string, SpineItemHighlights>
   >(new Map())
+
+  /**
+   * Emits the highlights of a spine item each time they change to match its
+   * annotations, and when its document starts to load.
+   */
+  public readonly highlightsChange$ = this.spineItemHighlightsByItemId.pipe(
+    switchMap((spineItemHighlightsByItemId) =>
+      merge(
+        ...Array.from(
+          spineItemHighlightsByItemId.values(),
+          (spineItemHighlights) =>
+            spineItemHighlights.highlightsByAnnotationId$,
+        ),
+      ),
+    ),
+  )
 
   public tap$: SpineItemHighlights["tap$"]
 
@@ -73,6 +90,7 @@ export class ReaderHighlights {
           ),
         ),
       ),
+      takeUntil(this.reader.$.destroy$),
     )
   }
 

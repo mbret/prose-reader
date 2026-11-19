@@ -11,6 +11,7 @@ import {
   map,
   type Observable,
   of,
+  Subject,
   type Subscription,
 } from "rxjs"
 import { afterEach, beforeAll, describe, expect, it, vi } from "vitest"
@@ -126,9 +127,12 @@ class InertObserver {
   disconnect() {}
 }
 
-beforeAll(() => {
-  vi.stubGlobal("ResizeObserver", InertObserver)
-  vi.stubGlobal("IntersectionObserver", InertObserver)
+/** Gives every element of a window the size of the viewport. */
+const giveElementsTheViewportSize = (
+  windowOfElements: Window & typeof globalThis,
+) => {
+  const { HTMLElement } = windowOfElements
+
   Object.defineProperty(HTMLElement.prototype, "clientWidth", {
     configurable: true,
     get: () => viewport.width,
@@ -140,7 +144,34 @@ beforeAll(() => {
   vi.spyOn(HTMLElement.prototype, "getBoundingClientRect").mockReturnValue(
     new DOMRect(0, 0, viewport.width, viewport.height),
   )
+}
+
+beforeAll(() => {
+  vi.stubGlobal("ResizeObserver", InertObserver)
+  vi.stubGlobal("IntersectionObserver", InertObserver)
+  giveElementsTheViewportSize(window)
 })
+
+/**
+ * The document of a frame of the page: an app can mount the reader there,
+ * with `ownerDocument`. Its nodes are not instances of the page's `Node`.
+ */
+const createDocumentOfFrame = () => {
+  const frame = document.createElement("iframe")
+
+  document.body.appendChild(frame)
+
+  const frameWindow = frame.contentWindow
+  const frameDocument = frame.contentDocument
+
+  if (!frameWindow || !frameDocument)
+    throw new Error("the frame has no document")
+
+  // The window of a frame has the type of a window, not of `globalThis`.
+  giveElementsTheViewportSize(frameWindow as Window & typeof globalThis)
+
+  return frameDocument
+}
 
 const readers: { destroy: () => void }[] = []
 const subscriptions: Subscription[] = []
@@ -156,10 +187,12 @@ const mountAnnotationsReader = async ({
   Renderer = EmptyRenderer,
   annotations$,
   numberOfAdjacentSpineItemToPreLoad,
+  ownerDocument = document,
 }: {
   Renderer?: typeof EmptyRenderer
   annotations$?: Observable<Annotation[]>
   numberOfAdjacentSpineItemToPreLoad?: number
+  ownerDocument?: Document
 } = {}) => {
   vi.useFakeTimers()
 
@@ -169,11 +202,12 @@ const mountAnnotationsReader = async ({
     getResource: () => of(new Response("", { status: 200 })),
     annotations: { annotations$ },
     numberOfAdjacentSpineItemToPreLoad,
+    ownerDocument,
   })
   readers.push(reader)
 
-  const container = document.createElement("div")
-  document.body.appendChild(container)
+  const container = ownerDocument.createElement("div")
+  ownerDocument.body.appendChild(container)
   reader.mount(container)
   await vi.runAllTimersAsync()
 
@@ -326,8 +360,8 @@ const recordTappedAnnotations = (reader: AnnotationsReader) => {
   const tappedAnnotations: Annotation[] = []
 
   subscriptions.push(
-    reader.annotations.highlightTap$.subscribe(({ highlight }) => {
-      tappedAnnotations.push(highlight)
+    reader.annotations.highlightTap$.subscribe(({ annotation }) => {
+      tappedAnnotations.push(annotation)
     }),
   )
 
@@ -350,7 +384,13 @@ const tapHighlight = (
     )
   }
 
-  highlightElement.dispatchEvent(new MouseEvent("click", { bubbles: true }))
+  // An event of the realm of the element: a reader can be mounted in a frame.
+  const MouseEventOfElement =
+    highlightElement.ownerDocument.defaultView?.MouseEvent ?? MouseEvent
+
+  highlightElement.dispatchEvent(
+    new MouseEventOfElement("click", { bubbles: true }),
+  )
 }
 
 /**
@@ -581,6 +621,23 @@ const getRectElementsOfHighlight = (
     ),
   )
 
+/**
+ * An app can give its annotations through a source that does not replay, once
+ * the reader exists. The documents load later, and need that list.
+ */
+it("shows the annotations that a source with no replay gave before the documents loaded", async () => {
+  const annotations$ = new Subject<Annotation[]>()
+  const mountedReader = mountAnnotationsReader({ annotations$ })
+
+  // A cfi of the first spine item, written by hand: the reader that would
+  // make one is still mounting.
+  annotations$.next([{ id: "a0", cfi: "epubcfi(/6/2!/4/2)" }])
+
+  const reader = await mountedReader
+
+  expect(getHighlightedAnnotationIdsBySpineItem(reader)).toEqual([["a0"], []])
+})
+
 describe("drawing", () => {
   /** The content of a loaded document does not change. */
   it("resolves the cfi of a highlight once per document, and again only when the cfi changes", async () => {
@@ -703,6 +760,38 @@ describe("drawing", () => {
 })
 
 describe("highlightTap$", () => {
+  it("emits the taps of a reader mounted in the document of a frame", async () => {
+    const annotations$ = new BehaviorSubject<Annotation[]>([])
+    const reader = await mountAnnotationsReader({
+      annotations$,
+      ownerDocument: createDocumentOfFrame(),
+    })
+    const tappedAnnotations = recordTappedAnnotations(reader)
+    const a0 = createAnnotationAtRootOfSpineItem(reader, 0, "a0")
+
+    annotations$.next([a0])
+    await vi.runAllTimersAsync()
+
+    expect(getHighlightedAnnotationIdsBySpineItem(reader)).toEqual([["a0"], []])
+
+    tapHighlight(reader, 0, "a0")
+
+    expect(tappedAnnotations).toEqual([{ ...a0, itemIndex: 0 }])
+  })
+
+  it("completes when the reader is destroyed", async () => {
+    const { reader } = await mountReaderWithAnnotationsSubject({
+      appObservesTaps: false,
+    })
+    const highlightTapSubscription =
+      reader.annotations.highlightTap$.subscribe()
+
+    subscriptions.push(highlightTapSubscription)
+    reader.destroy()
+
+    expect(highlightTapSubscription.closed).toBe(true)
+  })
+
   it("emits the annotation of the tapped highlight, as the latest list gives it", async () => {
     const { reader, annotations$ } = await mountReaderWithAnnotationsSubject({
       appObservesTaps: false,

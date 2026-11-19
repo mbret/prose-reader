@@ -98,8 +98,10 @@ annotation an `id` of its own. When an annotation changes, the enhancer draws
 its highlight again. When an annotation leaves the array, the enhancer removes
 its highlight at once.
 
-`reader.annotations.highlightTap$` emits `{ event, highlight }` for each tap on
-a highlight. `highlight` is the annotation of the tapped highlight.
+`reader.annotations.highlightTap$` emits `{ event, annotation }` for each tap on
+a highlight. `annotation` is the annotation of the tapped highlight. Where
+highlights overlap, a tap reaches the highlight drawn on top, and the stream
+reports that one. It completes when the reader is destroyed.
 
 ## Blank pages and annotations
 

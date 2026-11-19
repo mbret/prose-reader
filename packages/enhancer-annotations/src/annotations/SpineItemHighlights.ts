@@ -8,10 +8,11 @@ import {
   defaultIfEmpty,
   distinctUntilChanged,
   forkJoin,
+  fromEvent,
   map,
-  merge,
+  mergeMap,
   type Observable,
-  switchMap,
+  share,
   takeUntil,
 } from "rxjs"
 import { SpineItemHighlight } from "./SpineItemHighlight.ts"
@@ -29,7 +30,21 @@ export class SpineItemHighlights extends DestroyableClass {
     ReadonlyMap<string, SpineItemHighlight>
   >(new Map())
 
-  public readonly tap$: SpineItemHighlight["tap$"]
+  /**
+   * The highlights, each time they change to match the annotations. A draw
+   * that starts from it draws the current highlights.
+   */
+  public readonly highlightsByAnnotationId$ =
+    this.highlightsByAnnotationId.asObservable()
+
+  /**
+   * The taps on the highlights. A tap reaches the highlight drawn on top, so
+   * where highlights overlap, it reports that one.
+   */
+  public readonly tap$: Observable<{
+    event: Event
+    annotation: RuntimeAnnotation
+  }>
 
   constructor(
     annotations$: Observable<RuntimeAnnotation[]>,
@@ -47,15 +62,15 @@ export class SpineItemHighlights extends DestroyableClass {
       firstLayerElement,
     )
 
-    this.tap$ = this.highlightsByAnnotationId.pipe(
-      switchMap((highlightsByAnnotationId) =>
-        merge(
-          ...Array.from(
-            highlightsByAnnotationId.values(),
-            (highlight) => highlight.tap$,
-          ),
-        ),
+    this.tap$ = fromEvent(this.layer, "click").pipe(
+      mergeMap((event) =>
+        this.getHighlightsForTarget(event.target).map((highlight) => ({
+          event,
+          annotation: highlight.annotation,
+        })),
       ),
+      takeUntil(this.destroy$),
+      share(),
     )
 
     annotations$.pipe(takeUntil(this.destroy$)).subscribe((annotations) => {
@@ -122,9 +137,20 @@ export class SpineItemHighlights extends DestroyableClass {
     ).pipe(defaultIfEmpty(null))
   }
 
-  getHighlightsForTarget(target: EventTarget) {
-    return this.highlights.filter(
-      (highlight) => target instanceof Node && highlight.isWithinTarget(target),
+  /**
+   * The highlights that contain `target`. The highlights are nodes of the
+   * reader's document, which can be a frame's, with a `Node` of its own: a
+   * node of any other document is in none of them.
+   */
+  getHighlightsForTarget(target: EventTarget | null) {
+    const NodeOfReaderDocument = this.layer.ownerDocument.defaultView?.Node
+
+    if (!NodeOfReaderDocument || !(target instanceof NodeOfReaderDocument)) {
+      return []
+    }
+
+    return this.highlights.filter((highlight) =>
+      highlight.isWithinTarget(target),
     )
   }
 
