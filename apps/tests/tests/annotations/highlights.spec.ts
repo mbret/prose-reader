@@ -274,8 +274,8 @@ test.describe("Given annotations with a range cfi in a displayed chapter", () =>
       await reader.evaluate((reader) => {
         const tappedAnnotationIds: string[] = []
 
-        reader.annotations.highlightTap$.subscribe(({ highlight }) => {
-          tappedAnnotationIds.push(highlight.id)
+        reader.annotations.highlightTap$.subscribe(({ annotation }) => {
+          tappedAnnotationIds.push(annotation.id)
         })
         // The page's window is untyped: the spec keeps what it records there.
         ;(window as unknown as ScenarioWindow).tappedAnnotationIds =

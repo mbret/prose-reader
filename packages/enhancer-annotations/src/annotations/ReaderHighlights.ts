@@ -29,8 +29,8 @@ export class ReaderHighlights extends DestroyableClass {
 
   constructor(
     private reader: Reader,
-    private highlights: Observable<RuntimeAnnotation[]>,
-    private selectedHighlight: Observable<string | undefined>,
+    private annotations$: Observable<RuntimeAnnotation[]>,
+    private selectedHighlightId$: Observable<string | undefined>,
   ) {
     super()
 
@@ -46,19 +46,19 @@ export class ReaderHighlights extends DestroyableClass {
 
         if (!spineItem) return
 
-        const spineItemHighlights$ = this.highlights.pipe(
-          map((highlights) =>
-            highlights.filter(
-              (highlight) => highlight.itemIndex === spineItem.item.index,
+        const annotationsOfItem$ = this.annotations$.pipe(
+          map((annotations) =>
+            annotations.filter(
+              (annotation) => annotation.itemIndex === spineItem.item.index,
             ),
           ),
         )
 
         const spineItemHighlights = new SpineItemHighlights(
-          spineItemHighlights$,
+          annotationsOfItem$,
           spineItem,
           reader,
-          this.selectedHighlight,
+          this.selectedHighlightId$,
         )
 
         this.spineItemHighlights.next([
@@ -91,15 +91,10 @@ export class ReaderHighlights extends DestroyableClass {
     )
   }
 
-  getHighlightsForTarget = (target: EventTarget) => {
+  isTargetWithinHighlight = (target: EventTarget) => {
     return this.spineItemHighlights
       .getValue()
-      .flatMap((layer) => layer.getHighlightsForTarget(target))
-      .map((highlight) => highlight.annotation)
-  }
-
-  isTargetWithinHighlight = (target: EventTarget) => {
-    return !!this.getHighlightsForTarget(target).length
+      .some((layer) => layer.getHighlightsForTarget(target).length > 0)
   }
 
   public layout() {

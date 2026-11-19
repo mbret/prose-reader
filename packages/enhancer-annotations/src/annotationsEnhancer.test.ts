@@ -200,7 +200,7 @@ describe("highlights", () => {
     const reader = await mountAnnotationsReader({ annotations$ })
     const tappedAnnotations: Annotation[] = []
     const highlightTapSubscription = reader.annotations.highlightTap$.subscribe(
-      ({ highlight }) => tappedAnnotations.push(highlight),
+      ({ annotation }) => tappedAnnotations.push(annotation),
     )
 
     annotations$.next([
