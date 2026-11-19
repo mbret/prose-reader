@@ -23,10 +23,12 @@ jobs:
   # Playwright names the tag it needs when they differ.
   #
   # One job per browser engine, each running every spec on the projects of
-  # its engine (BROWSER_ENGINE in playwright.config.ts). `--shard` would split
-  # by test count, and Firefox's tests take about 1.6 times as long as the
-  # others'.
+  # its engine (BROWSER_ENGINE in playwright.config.ts). `--shard` alone would
+  # split the whole suite by test count, and Firefox's tests take about 1.6
+  # times as long as the others'. WebKit's projects run in 2 jobs: on Linux
+  # its tests take the longest.
   browser:
+    name: browser (${{ matrix.engine }} ${{ matrix.shard }}/${{ matrix.shards }})
     runs-on: ubuntu-latest
     container:
       image: mcr.microsoft.com/playwright:v1.65.0-resolute
@@ -36,7 +38,11 @@ jobs:
       # a failure on one engine says nothing about the others: let them report
       fail-fast: false
       matrix:
-        engine: [chromium, firefox, webkit]
+        include:
+          - { engine: chromium, shard: 1, shards: 1 }
+          - { engine: firefox, shard: 1, shards: 1 }
+          - { engine: webkit, shard: 1, shards: 2 }
+          - { engine: webkit, shard: 2, shards: 2 }
     steps:
       - uses: actions/checkout@v6
       - uses: ./.github/actions/setup-browser-suite
@@ -46,12 +52,13 @@ jobs:
       - name: Test
         env:
           BROWSER_ENGINE: ${{ matrix.engine }}
-        run: pnpm --filter prose-reader-tests test
+          SHARD: ${{ matrix.shard }}/${{ matrix.shards }}
+        run: pnpm --filter prose-reader-tests test --shard="$SHARD"
 
       - uses: actions/upload-artifact@v7
         if: ${{ !cancelled() }}
         with:
-          name: playwright-report-${{ matrix.engine }}
+          name: playwright-report-${{ matrix.engine }}-${{ matrix.shard }}
           path: apps/tests/test-results/
           retention-days: 15
           # Playwright only writes here for a failed or retried test, so a
