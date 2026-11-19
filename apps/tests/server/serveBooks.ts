@@ -8,6 +8,7 @@ import type { Plugin } from "vite"
 import { LONG_COMIC_NUMBER_OF_PAGES } from "./longComic.ts"
 
 const BOOKS_DIRECTORY = resolve(import.meta.dirname, "../public/epubs")
+const FONTS_DIRECTORY = resolve(import.meta.dirname, "fonts")
 const BOOKS_PATH = "/epubs"
 const STREAMER_PATH = "/streamer"
 
@@ -45,6 +46,55 @@ const inOrder =
   async (bookZip) => {
     for (const rewrite of rewrites) await rewrite(bookZip)
   }
+
+/**
+ * The faces of Liberation Sans that `accessible_epub_3-liberation-sans.epub`
+ * embeds. The family keeps a name of its own, so that a font the machine has
+ * under the same name cannot stand in for it.
+ */
+const LIBERATION_SANS_FACES = [
+  { fontWeight: 400, file: "LiberationSans-Regular.ttf" },
+  { fontWeight: 700, file: "LiberationSans-Bold.ttf" },
+]
+const LIBERATION_SANS_FAMILY = "Embedded Liberation Sans"
+
+/**
+ * Adds the faces of Liberation Sans to `accessible_epub_3.epub`: the files,
+ * their items in the manifest, and their `@font-face` in the stylesheet every
+ * page links.
+ */
+const embedLiberationSans = async (bookZip: JSZip) => {
+  const [packageDocument] = bookZip.file(/\.opf$/)
+  const stylesheet = bookZip.file("EPUB/css/epub.css")
+
+  if (!packageDocument) throw new Error("the fixture has no package document")
+  if (!stylesheet) throw new Error("the fixture has no EPUB/css/epub.css")
+
+  let manifestItems = ""
+  let fontFaces = ""
+
+  for (const { fontWeight, file } of LIBERATION_SANS_FACES) {
+    bookZip.file(
+      `EPUB/fonts/${file}`,
+      await readFile(resolve(FONTS_DIRECTORY, file)),
+    )
+    manifestItems += `<item id="${file}" href="fonts/${file}" media-type="font/ttf"/>`
+    fontFaces += `@font-face { font-family: "${LIBERATION_SANS_FAMILY}"; font-weight: ${fontWeight}; src: url(../fonts/${file}); }\n`
+  }
+
+  bookZip.file(
+    packageDocument.name,
+    replaceInFixture(
+      await packageDocument.async("string"),
+      "</manifest>",
+      `${manifestItems}</manifest>`,
+    ),
+  )
+  bookZip.file(
+    stylesheet.name,
+    `${await stylesheet.async("string")}\n${fontFaces}`,
+  )
+}
 
 const makeSpineProgressRightToLeft = async (bookZip: JSZip) => {
   const [packageDocument] = bookZip.file(/\.opf$/)
@@ -104,17 +154,22 @@ const REWRITTEN_BOOKS = new Map<string, RewrittenBook>([
     },
   ],
   [
-    "accessible_epub_3-sans-serif.epub",
+    "accessible_epub_3-liberation-sans.epub",
     {
       fixture: "accessible_epub_3.epub",
       /**
-       * Sets the text in the system sans-serif font. Unlike the book's own
-       * font, it has a bold face, whose glyphs are wider.
+       * Sets the text in Liberation Sans, which the book embeds. Unlike the
+       * book's own font, it has a bold face, whose glyphs are wider, and it is
+       * the same font on every machine.
        */
-      rewrite: rewriteEachXhtmlPage((fixturePage) =>
-        fixturePage.replace(
-          "</head>",
-          "<style>body, body * { font-family: sans-serif !important; }</style></head>",
+      rewrite: inOrder(
+        embedLiberationSans,
+        rewriteEachXhtmlPage((fixturePage) =>
+          replaceInFixture(
+            fixturePage,
+            "</head>",
+            `<style>body, body * { font-family: "${LIBERATION_SANS_FAMILY}" !important; }</style></head>`,
+          ),
         ),
       ),
     },

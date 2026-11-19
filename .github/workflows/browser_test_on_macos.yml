@@ -1,0 +1,36 @@
+name: browser test on macOS
+
+# `check` runs the browser suite on Linux. This runs it on macOS once a day,
+# on the default branch: WebKit there is the closest CI has to Safari, and
+# macOS lays text out with its own fonts, so a regression that only shows on
+# macOS is found within a day. The screenshot baselines are rendered on Linux,
+# so this run skips the comparisons.
+on:
+  schedule:
+    - cron: "17 4 * * *"
+  workflow_dispatch:
+
+jobs:
+  # One job per browser engine, as in `check`.
+  browser:
+    runs-on: macos-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        engine: [chromium, firefox, webkit]
+    steps:
+      - uses: actions/checkout@v6
+      - uses: ./.github/actions/setup-browser-suite
+
+      - name: Test
+        env:
+          BROWSER_ENGINE: ${{ matrix.engine }}
+        run: pnpm --filter prose-reader-tests test --ignore-snapshots
+
+      - uses: actions/upload-artifact@v7
+        if: ${{ !cancelled() }}
+        with:
+          name: playwright-report-macos-${{ matrix.engine }}
+          path: apps/tests/test-results/
+          retention-days: 15
+          if-no-files-found: ignore

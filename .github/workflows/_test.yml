@@ -4,10 +4,8 @@ on:
   workflow_call:
 
 jobs:
-  # The vitest suites run in happy-dom or jsdom, with no layout engine, so
-  # nothing in them depends on the platform. Kept off the browser runners,
-  # they neither wait for a macOS runner nor compete with the browsers for
-  # its three cores.
+  # The vitest suites run in happy-dom or jsdom, with no browser, so they need
+  # none of the browser setup and run beside the browser jobs.
   unit:
     runs-on: ubuntu-latest
     steps:
@@ -18,14 +16,22 @@ jobs:
       - name: Test
         run: pnpm exec lerna run test --ignore prose-reader-tests
 
-  # macOS: the committed screenshot baselines are rendered there (-darwin).
+  # In Playwright's image, which holds the browser builds of its version and
+  # the system packages they need, so a job installs neither. Its fonts render
+  # the committed screenshot baselines (-linux). The image's tag follows the
+  # version of @playwright/test, here and in find_flaky_browser_tests.yml, and
+  # Playwright names the tag it needs when they differ.
+  #
   # One job per browser engine, each running every spec on the projects of
   # its engine (BROWSER_ENGINE in playwright.config.ts). `--shard` would split
   # by test count, and Firefox's tests take about 1.6 times as long as the
-  # others'. Every job occupies one of the few macOS runners an account gets
-  # at once.
+  # others'.
   browser:
-    runs-on: macos-latest
+    runs-on: ubuntu-latest
+    container:
+      image: mcr.microsoft.com/playwright:v1.65.0-resolute
+      # the runner's user, who owns the workspace and the home directory
+      options: --user 1001
     strategy:
       # a failure on one engine says nothing about the others: let them report
       fail-fast: false
@@ -34,6 +40,8 @@ jobs:
     steps:
       - uses: actions/checkout@v6
       - uses: ./.github/actions/setup-browser-suite
+        with:
+          install-browsers: false
 
       - name: Test
         env:

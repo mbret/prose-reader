@@ -1,3 +1,4 @@
+import { availableParallelism } from "node:os"
 import {
   defineConfig,
   devices,
@@ -39,7 +40,7 @@ const MOBILE_PROFILES: BrowserProfile[] = [
  *
  * A book renders the same however it is loaded, so the projects of a profile
  * compare their screenshots against the same baselines, named after the
- * profile: `text-Mobile-Chrome-darwin.png`.
+ * profile: `text-Mobile-Chrome-linux.png`.
  */
 const createProfileProject = (
   profile: BrowserProfile,
@@ -63,7 +64,7 @@ const createProfileProject = (
 /**
  * Every profile loads its books over http, and the desktop ones load them
  * from blobs too. Running the mobile profiles both ways as well would make
- * the suite too long for CI's few macOS runners.
+ * the suite about a fifth longer.
  */
 const ALL_PROJECTS: PlaywrightTestProject[] = [
   ...[...DESKTOP_PROFILES, ...MOBILE_PROFILES].map((profile) =>
@@ -103,12 +104,11 @@ export default defineConfig({
   /* Retry on CI only */
   retries: process.env.CI ? 2 : 0,
   /*
-   * The CI runner (macos-latest) has 3 cores, so Playwright's "50%" default
-   * floors to a single worker. Pin an explicit count instead: 2 workers give
-   * real parallelism while leaving a core for the Vite dev server + the
-   * orchestrator, keeping the screenshot tests stable under load.
+   * On CI, one core stays free for the Vite dev server and the test runner,
+   * which keeps the screenshot tests stable under load: 3 workers on a Linux
+   * runner's 4 cores, 2 on a macOS runner's 3.
    */
-  workers: process.env.CI ? 2 : undefined,
+  workers: process.env.CI ? Math.max(1, availableParallelism() - 1) : undefined,
   /* Reporter to use. See https://playwright.dev/docs/test-reporters */
   reporter: "html",
   /* Shared settings for all the projects below. See https://playwright.dev/docs/api/class-testoptions. */
