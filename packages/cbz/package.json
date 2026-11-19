@@ -37,7 +37,7 @@
   },
   "scripts": {
     "dev": "vite",
-    "start": "tsc -p tsconfig.build.json --watch --preserveWatchOutput & vite build --watch --mode development",
+    "start": "node ../../config/watchLibraryBuild.mjs",
     "build": "tsc && vite build && tsc -p tsconfig.build.json",
     "preview": "vite preview",
     "test": "vitest run"

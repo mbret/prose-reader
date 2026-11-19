@@ -37,7 +37,7 @@
     "/dist"
   ],
   "scripts": {
-    "start": "tsc -p tsconfig.build.json --watch --preserveWatchOutput & vite build --watch --mode development",
+    "start": "node ../../config/watchLibraryBuild.mjs",
     "build": "node ./scripts/check-enhancer-imports.mjs && tsc -b && vite build && tsc -p tsconfig.build.json",
     "check:enhancers": "node ./scripts/check-enhancers.mjs",
     "test": "vitest run --coverage"
