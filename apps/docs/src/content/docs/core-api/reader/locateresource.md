@@ -7,7 +7,7 @@ sidebar:
 
 Locate a given resource and give you extra information such as absolute page index, relevant nodes, offset etc. This is most useful when you want to locate resources such as CFI.
 
-This method is live, it will return an observable that emits every time the reader layout.
+This method is live. Once the browser is idle, it locates the resources again after each completed layout, and each time a spine item becomes ready or stops being ready, and emits the new values.
 
 ```typescript
 const consolidatedResource$ = reader.locateResource(resource, options)
@@ -52,7 +52,7 @@ locateResource(resource, options)
 
 ### Parameters
 
-* `resource`: An object or array of objects that extends `LocatableResource`. Resources at the same cfi share one consolidation, and each comes back with its own `resource`. A spine item is located at the cfi of its start.
+* `resource`: An object or array of objects that extends `LocatableResource`. Resources at the same cfi share one consolidation, and each comes back with its own `resource`. A spine item is located at the cfi of its start. An array is located again in one pass: each emission holds every resource located again, or none of them. When you locate a new array right after you unsubscribe from the previous one, as `switchMap` does when the array changes, a CFI that both arrays hold keeps its values and is not located again.
 * `options?` :
   * `mode?:`"shallow" | "load" : Default `load`. Shallow means that the item will not be loaded if needed. Load keeps a reflowable item loaded while you are subscribed, through [`keepSpineItemLoaded()`](/core-api/reader/keepspineitemloaded), and releases its hold a second after you unsubscribe. Neither mode loads a pre-paginated item: its page indexes need no document, and its `node`, `startOffset` and `range` resolve only while it is loaded for another reason, such as being around the reading position. By using shallow you avoid loading documents excessively but you will only get the values as precise as possible with the current reader state.
 
@@ -65,7 +65,7 @@ locateResource(resource, options)
 
 In the `shallow` mode, a CFI of a reflowable item that is not loaded therefore has no page. It gets one when its item loads, for example because the reader goes there, and loses it as soon as its item unloads. In the `load` mode, it has no page until its item has loaded.
 
-The values follow the last completed layout. While a new layout of the item is pending, after a resize or a change of font size for example, they are those of the layout before it, and the resource is located again once the layout completes. [`reader.spine.isLayoutCurrentFor()`](/core-api/spine#islayoutcurrentfor) tells whether a layout of the item is pending.
+The values follow the last completed layout of the item. From the moment a new layout of the item is requested, after a resize or a change of font size for example, until that layout completes, the item is dirty (see [Layout](/core-api/spine#layout)). In that time, a resource located on the last layout keeps its values. A resource located in that time has no page until the layout completes, and so has one whose item completed a layout since it was last located. Every resource is located again once the layout completes.
 
 ### Returns
 

@@ -6,6 +6,7 @@ import {
   waitForSpineItemUnloaded,
 } from "../../../utils"
 import {
+  layOutAndSettle,
   readSettledPagination,
   waitForSettled,
 } from "../../../utils/pagination"
@@ -15,8 +16,8 @@ import { test } from "../../../utils/test"
 const url = "http://localhost:3333/tests/navigation/restoration/epub/index.html"
 
 /**
- * The locator sets up once the browser is idle, so a reader destroyed right
- * after a resource is located is destroyed before the locator starts.
+ * A resource is located once the browser is idle, so a reader destroyed right
+ * after a resource is located is destroyed before it is located.
  */
 test.describe("Given a resource located on a reader destroyed right away", () => {
   test("its result completes as the reader is destroyed", async ({ page }) => {
@@ -151,5 +152,86 @@ test.describe("Given a cfi past the first page of a chapter that is not loaded, 
       pages.map(({ absolutePageIndex }) => absolutePageIndex === undefined),
       "no absolute page without a page in the chapter",
     ).toEqual(pages.map(({ itemPageIndex }) => itemPageIndex === undefined))
+  })
+})
+
+/**
+ * A larger font lays the chapter out again. Until that layout completes, the
+ * chapter's document may already differ from the layout its pages describe,
+ * and a page measured then would be neither the page before nor the one after.
+ */
+test.describe("Given a cfi located in a chapter that a change of font size lays out again", () => {
+  test("it gives the page the reader shows for the cfi before the change, then the one after it, and no other", async ({
+    page,
+  }) => {
+    await page.setViewportSize({ width: 536, height: 842 })
+    await page.goto(url)
+    await waitForSettled(page)
+
+    const chapterIndex = await getLongChapterIndex(page)
+    const reader = await getReader(page)
+
+    await navigateToSpineItem({ page, index: chapterIndex })
+    await waitForSettled(page)
+    await navigateToPageOfSpineItem({
+      page,
+      spineItemIndex: chapterIndex,
+      pageIndex: 3,
+    })
+
+    const { cfi } = await readSettledPagination(page)
+
+    // The page the reader shows for the cfi.
+    await reader.evaluate((reader, cfi) => reader.navigation.goToCfi(cfi), cfi)
+
+    const shownBefore = await readSettledPagination(page)
+    const locatedPages = await reader.evaluateHandle((reader, cfi) => {
+      const pages: (number | undefined)[] = []
+
+      reader
+        .locateResource({ cfi }, { mode: "shallow" })
+        .subscribe(({ meta: { itemPageIndex } }) => {
+          pages.push(itemPageIndex)
+        })
+
+      return pages
+    }, cfi)
+    const readLastLocatedPage = () =>
+      locatedPages.evaluate((pages) => pages[pages.length - 1])
+
+    await expect.poll(readLastLocatedPage).toBe(shownBefore.beginPageIndex)
+
+    await layOutAndSettle(page, { settings: { fontScale: 1.5 } })
+    await reader.evaluate((reader, cfi) => reader.navigation.goToCfi(cfi), cfi)
+
+    const shownAfter = await readSettledPagination(page)
+
+    expect({
+      spineItemIndex: shownAfter.spineItemIndex,
+      isRootCfi: await reader.evaluate(
+        (reader, cfi) => reader.cfi.isRootCfi(cfi),
+        cfi,
+      ),
+      hasPageOfCfiMoved:
+        shownAfter.beginPageIndex !== shownBefore.beginPageIndex,
+    }).toEqual({
+      spineItemIndex: chapterIndex,
+      isRootCfi: false,
+      hasPageOfCfiMoved: true,
+    })
+
+    await expect.poll(readLastLocatedPage).toBe(shownAfter.beginPageIndex)
+
+    const pages = await locatedPages.jsonValue()
+
+    expect(
+      pages.filter(
+        (itemPageIndex) =>
+          itemPageIndex !== undefined &&
+          itemPageIndex !== shownBefore.beginPageIndex &&
+          itemPageIndex !== shownAfter.beginPageIndex,
+      ),
+      `the pages given that are neither the page before the change nor the one after it, among ${JSON.stringify(pages)}`,
+    ).toEqual([])
   })
 })

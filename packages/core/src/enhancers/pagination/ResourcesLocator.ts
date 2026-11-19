@@ -1,24 +1,29 @@
 import {
+  asapScheduler,
   combineLatest,
   debounceTime,
   defaultIfEmpty,
+  defer,
+  distinctUntilChanged,
   EMPTY,
   finalize,
   map,
   merge,
   type Observable,
-  of,
-  shareReplay,
+  ReplaySubject,
+  scan,
+  share,
   skip,
   startWith,
   switchMap,
   takeUntil,
+  timer,
   withLatestFrom,
 } from "rxjs"
 import type { ProseParsedCfi } from "../../cfi/index.ts"
 import type { Reader } from "../../reader.ts"
 import type { SpineItem } from "../../spineItem/SpineItem.ts"
-import { deferIdle, idle } from "../../utils/rxjs.ts"
+import { idle } from "../../utils/rxjs.ts"
 
 type CfiLocatableResource = {
   cfi: string
@@ -33,7 +38,9 @@ export type ConsolidatedResource = ReturnType<Reader["cfi"]["resolveCfi"]> &
      * The page of its spine item the resource is on, once it is known: at
      * once for a pre-paginated item and for a cfi that names only its item,
      * otherwise while the item is loaded and laid out and the cfi resolves in
-     * it. It is `undefined` otherwise.
+     * it. While the item awaits a new layout, it stays the page the item's
+     * last layout gave, and is `undefined` for a resource that was not located
+     * on that layout. It is `undefined` otherwise.
      */
     itemPageIndex?: number
     /** The page of the book the resource is on, known with `itemPageIndex`. */
@@ -67,7 +74,9 @@ type CfiToLocate = {
 /**
  * A pre-paginated item has one page, and a cfi naming only its item is at the
  * item's start. Any other cfi is on the page of its node, which only the
- * item's loaded document gives.
+ * item's loaded document gives. The node is measured against the item's last
+ * layout, which its document matches only while the item awaits no new
+ * layout.
  */
 const getItemPageIndex = ({
   reader,
@@ -86,7 +95,7 @@ const getItemPageIndex = ({
     return 0
   }
 
-  if (!node) return undefined
+  if (!node || spineItem.value.isDirty) return undefined
 
   return reader.spine.locator.getSpineItemPageIndexFromNode(
     node,
@@ -95,51 +104,52 @@ const getItemPageIndex = ({
   )
 }
 
-/**
- * Reads only the cfi: a page found on an earlier layout may not be a page of
- * the current one.
- */
+/** Where a cfi is now. */
 const consolidate = (
   { cfi, parsedCfi, isCfiOfItemStart }: CfiToLocate,
   reader: Reader,
-): Observable<ConsolidatedResource> => {
+): ConsolidatedResource => {
   const spineItem = reader.spineItemsManager.get(parsedCfi.itemIndex)
 
-  if (!spineItem) return of({ ...parsedCfi, cfi, node: null })
+  if (!spineItem) return { ...parsedCfi, cfi, node: null }
 
-  return idle().pipe(
-    withLatestFrom(spineItem.isReady$),
-    map(([, isSpineItemReady]): ConsolidatedResource => {
-      const {
-        node = null,
-        offset: startOffset,
-        range,
-      } = isSpineItemReady ? reader.cfi.resolveCfi({ cfi }) : {}
-      const itemPageIndex = getItemPageIndex({
-        reader,
-        spineItem,
-        isCfiOfItemStart,
-        node,
-        startOffset,
-      })
+  const {
+    node = null,
+    offset: startOffset,
+    range,
+  } = spineItem.value.isReady ? reader.cfi.resolveCfi({ cfi }) : {}
+  const itemPageIndex = getItemPageIndex({
+    reader,
+    spineItem,
+    isCfiOfItemStart,
+    node,
+    startOffset,
+  })
 
-      return {
-        ...parsedCfi,
-        cfi,
-        node,
-        startOffset,
-        range,
-        itemPageIndex,
-        absolutePageIndex:
-          itemPageIndex === undefined
-            ? undefined
-            : reader.spine.locator._getAbsolutePageIndexFromPageIndex({
-                pageIndex: itemPageIndex,
-                spineItemOrId: spineItem,
-              }),
-      }
-    }),
-  )
+  return {
+    ...parsedCfi,
+    cfi,
+    node,
+    startOffset,
+    range,
+    itemPageIndex,
+    absolutePageIndex:
+      itemPageIndex === undefined
+        ? undefined
+        : reader.spine.locator._getAbsolutePageIndexFromPageIndex({
+            pageIndex: itemPageIndex,
+            spineItemOrId: spineItem,
+          }),
+  }
+}
+
+/**
+ * A consolidated resource, with the number of layouts its item had completed
+ * when it was consolidated, counted from the start of its consolidation.
+ */
+type Consolidation = {
+  resource: ConsolidatedResource
+  layoutsOfItem: number
 }
 
 type Options = {
@@ -150,16 +160,41 @@ type Options = {
 }
 
 export class ResourcesLocator {
-  constructor(private reader: Reader) {}
-
   /**
-   * One consolidation per cfi, shared by every resource located at that cfi
-   * while any of them is subscribed.
+   * One consolidation per cfi, shared by every resource located at that cfi.
+   * It outlives its last subscriber until the current task ends: a list
+   * located again at once, as a `switchMap` does when the list changes, keeps
+   * the consolidations of the cfis it still holds.
    */
   private consolidationsByCfi = new Map<
     string,
     Observable<ConsolidatedResource>
   >()
+
+  /** The next idle callback, shared by the consolidations created before it. */
+  private readonly nextIdle$ = defer(() => idle()).pipe(share())
+
+  /**
+   * Emits on an idle callback after anything that can move a located
+   * resource: a completed layout, or an item that becomes ready or stops being
+   * ready. An item that unloads loses its pages at once, without waiting for
+   * the layout its unload requests. Every consolidation reads again on the
+   * same callback, so a list is located again in one pass.
+   */
+  private readonly relocation$: Observable<unknown>
+
+  constructor(private reader: Reader) {
+    this.relocation$ = merge(
+      reader.spine.layout$,
+      ...reader.spineItemsManager.items.map((spineItem) =>
+        spineItem.isReady$.pipe(skip(1)),
+      ),
+    ).pipe(
+      debounceTime(10),
+      switchMap(() => idle()),
+      share(),
+    )
+  }
 
   private getOrCreateConsolidation = (cfiToLocate: CfiToLocate) => {
     const { cfi } = cfiToLocate
@@ -170,21 +205,41 @@ export class ResourcesLocator {
     const spineItem = this.reader.spineItemsManager.get(
       cfiToLocate.parsedCfi.itemIndex,
     )
+    const layoutsOfItem$ = (spineItem?.didLayout$ ?? EMPTY).pipe(
+      scan((layouts) => layouts + 1, 0),
+      startWith(0),
+    )
 
     /**
-     * A completed layout moves pages, and the item's readiness says whether
-     * its document can be read at all: an unloaded item loses its page at
-     * once, without waiting for the layout its unload requests.
+     * While its item awaits a new layout, its document may already differ
+     * from its last layout, which the published pages still describe. A
+     * consolidation made on that layout is kept until the new one completes.
      */
-    const consolidation$ = merge(
-      this.reader.spine.layout$,
-      spineItem?.isReady$.pipe(skip(1)) ?? EMPTY,
-    ).pipe(
-      debounceTime(10),
-      startWith(null),
-      switchMap(() => consolidate(cfiToLocate, this.reader)),
+    const consolidation$ = merge(this.nextIdle$, this.relocation$).pipe(
+      withLatestFrom(layoutsOfItem$),
+      scan<[unknown, number], Consolidation, undefined>(
+        (previous, [, layoutsOfItem]) => {
+          const awaitsLayout =
+            spineItem?.value.isReady === true && spineItem.value.isDirty
+
+          if (awaitsLayout && previous?.layoutsOfItem === layoutsOfItem) {
+            return previous
+          }
+
+          return {
+            resource: consolidate(cfiToLocate, this.reader),
+            layoutsOfItem,
+          }
+        },
+        undefined,
+      ),
+      map(({ resource }) => resource),
+      distinctUntilChanged(),
       finalize(() => this.consolidationsByCfi.delete(cfi)),
-      shareReplay({ refCount: true, bufferSize: 1 }),
+      share({
+        connector: () => new ReplaySubject(1),
+        resetOnRefCountZero: () => timer(0, asapScheduler),
+      }),
     )
 
     this.consolidationsByCfi.set(cfi, consolidation$)
@@ -203,7 +258,7 @@ export class ResourcesLocator {
       isCfiOfItemStart: this.reader.cfi.isRootCfi(cfi),
     }
 
-    return deferIdle(() => {
+    return defer(() => {
       const item = this.reader.spineItemsManager.get(
         cfiToLocate.parsedCfi.itemIndex,
       )
@@ -249,11 +304,14 @@ export class ResourcesLocator {
     | Observable<{ resource: T; meta: ConsolidatedResource }>
     | Observable<{ resource: T; meta: ConsolidatedResource }[]> {
     if (Array.isArray(resource)) {
-      return deferIdle(() =>
-        combineLatest(
-          resource.map((item) => this.locate(item, options ?? {})),
-        ).pipe(defaultIfEmpty([])),
-      ).pipe(takeUntil(this.reader.$.destroy$))
+      return combineLatest(
+        resource.map((item) => this.locate(item, options ?? {})),
+      ).pipe(
+        // Its consolidations read on the same callback: the list emits once.
+        debounceTime(0, asapScheduler),
+        defaultIfEmpty([]),
+        takeUntil(this.reader.$.destroy$),
+      )
     }
 
     return this.locate(resource, options ?? {})
