@@ -137,9 +137,20 @@ export class SpineItemHighlights extends DestroyableClass {
     ).pipe(defaultIfEmpty(null))
   }
 
+  /**
+   * The highlights that contain `target`. The highlights are nodes of the
+   * reader's document, which can be a frame's, with a `Node` of its own: a
+   * node of any other document is in none of them.
+   */
   getHighlightsForTarget(target: EventTarget | null) {
-    return this.highlights.filter(
-      (highlight) => target instanceof Node && highlight.isWithinTarget(target),
+    const NodeOfReaderDocument = this.layer.ownerDocument.defaultView?.Node
+
+    if (!NodeOfReaderDocument || !(target instanceof NodeOfReaderDocument)) {
+      return []
+    }
+
+    return this.highlights.filter((highlight) =>
+      highlight.isWithinTarget(target),
     )
   }
 
