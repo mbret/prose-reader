@@ -46,9 +46,8 @@ runs:
         BUILD: ${{ inputs.build }}
         # The step above saves .nx, so the cache must be there. Without a set
         # directory, nx 23 keeps its cache and its task database in
-        # ~/.nx/<workspace id> for a checkout with a git remote, and every run
-        # rebuilt every project. A set directory also keeps the database in
-        # .nx, in .nx/workspace-data.
+        # ~/.nx/<workspace id> for a checkout with a git remote. With one, it
+        # keeps the database in .nx/workspace-data.
         NX_CACHE_DIRECTORY: .nx/cache
         # Each run adds the outputs it rebuilt to what it restored, so without
         # a cap the cache only grows. Nx evicts the least recently used
