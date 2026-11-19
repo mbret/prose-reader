@@ -4,6 +4,7 @@ import {
   createEnhancedTestReader,
   installReaderTestEnvironment,
   mountTestReader,
+  renderTextDocuments,
 } from "../../tests/readerHarness.ts"
 import {
   createTestManifest,
@@ -121,5 +122,129 @@ describe("a reflowable item located away from the reading position", () => {
       loadStatusJustBeforeASecond: "loaded",
       loadStatusAfterASecond: "idle",
     })
+  })
+})
+
+describe("a cfi of a reflowable item that is not loaded, located without loading it", () => {
+  it("has no page until its item is laid out, then the page of its node", async () => {
+    vi.useFakeTimers()
+
+    const reader = createEnhancedTestReader({
+      manifest: createTestManifest({
+        renditionLayout: "reflowable",
+        spineItems: createTestManifestSpineItems(3),
+      }),
+      getRenderer: renderTextDocuments,
+      numberOfAdjacentSpineItemToPreLoad: 0,
+    })
+
+    mountTestReader(reader)
+    await vi.runAllTimersAsync()
+
+    const locatedItem = reader.spineItemsManager.get(2)
+
+    if (!locatedItem) throw new Error("the book has no third item")
+
+    const locatedPages: {
+      loadStatus: string
+      itemPageIndex: number | undefined
+      absolutePageIndex: number | undefined
+    }[] = []
+
+    reader
+      // The text of the paragraph of the third item.
+      .locateResource({ cfi: "epubcfi(/6/6!/4/2/1:3)" }, { mode: "shallow" })
+      .subscribe(({ meta: { itemPageIndex, absolutePageIndex } }) => {
+        locatedPages.push({
+          loadStatus: locatedItem.value.loadStatus,
+          itemPageIndex,
+          absolutePageIndex,
+        })
+      })
+    await vi.runAllTimersAsync()
+
+    reader.navigation.goToSpineItem({ indexOrId: 2, animation: false })
+    await vi.runAllTimersAsync()
+
+    expect(locatedPages).toEqual([
+      {
+        loadStatus: "idle",
+        itemPageIndex: undefined,
+        absolutePageIndex: undefined,
+      },
+      { loadStatus: "loaded", itemPageIndex: 0, absolutePageIndex: 2 },
+    ])
+  })
+})
+
+describe("a resource located without loading its item", () => {
+  it.each([
+    [
+      "a reflowable spine item",
+      (reader: ReturnType<typeof createEnhancedTestReader>) =>
+        reader.spineItemsManager.get(2),
+      "reflowable",
+    ],
+    [
+      "a cfi of a pre-paginated item",
+      () => ({ cfi: "epubcfi(/6/6!/4/2/1:3)" }),
+      "pre-paginated",
+    ],
+  ] as const)(
+    "is on the first page of its item, given %s",
+    async (_, getResource, renditionLayout) => {
+      vi.useFakeTimers()
+
+      const reader = createEnhancedTestReader({
+        manifest: createTestManifest({
+          renditionLayout,
+          spineItems: createTestManifestSpineItems(3),
+        }),
+        numberOfAdjacentSpineItemToPreLoad: 0,
+      })
+
+      mountTestReader(reader)
+      await vi.runAllTimersAsync()
+
+      const resource = getResource(reader)
+
+      if (!resource) throw new Error("the book has no third item")
+
+      const onLocated = vi.fn()
+
+      reader.locateResource(resource, { mode: "shallow" }).subscribe(onLocated)
+      await vi.runAllTimersAsync()
+
+      expect({
+        loadStatus: reader.spineItemsManager.get(2)?.value.loadStatus,
+        itemPageIndex: onLocated.mock.lastCall?.[0].meta.itemPageIndex,
+        absolutePageIndex: onLocated.mock.lastCall?.[0].meta.absolutePageIndex,
+      }).toEqual({ loadStatus: "idle", itemPageIndex: 0, absolutePageIndex: 2 })
+    },
+  )
+})
+
+describe("resources located at the same cfi", () => {
+  it("each come back with their own result", async () => {
+    vi.useFakeTimers()
+
+    const reader = createEnhancedTestReader()
+
+    mountTestReader(reader)
+    await vi.runAllTimersAsync()
+
+    const cfi = "epubcfi(/6/4!)"
+    const firstResource = { cfi, id: "first" }
+    const secondResource = { cfi, id: "second" }
+    const onLocated = vi.fn()
+
+    reader.locateResource([firstResource, secondResource]).subscribe(onLocated)
+    await vi.runAllTimersAsync()
+
+    expect(
+      onLocated.mock.lastCall?.[0].map(
+        ({ resource }: { resource: { id: string } }) => resource.id,
+      ),
+    ).toEqual(["first", "second"])
   })
 })
