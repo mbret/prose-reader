@@ -98,105 +98,105 @@ type AppReader = ReturnType<typeof createAppReader>
 /** happy-dom lays nothing out, so every element has this size. */
 const elementSize = { width: 600, height: 800 }
 
-describe("the chapters react-reader loads for annotations", () => {
-  let container: HTMLDivElement
-  let root: ReturnType<typeof createRoot>
+let container: HTMLDivElement
+let root: ReturnType<typeof createRoot>
 
-  beforeAll(() => {
-    Object.defineProperty(HTMLElement.prototype, "clientWidth", {
-      configurable: true,
-      get: () => elementSize.width,
-    })
-    Object.defineProperty(HTMLElement.prototype, "clientHeight", {
-      configurable: true,
-      get: () => elementSize.height,
-    })
+beforeAll(() => {
+  Object.defineProperty(HTMLElement.prototype, "clientWidth", {
+    configurable: true,
+    get: () => elementSize.width,
   })
-
-  afterAll(() => {
-    Reflect.deleteProperty(HTMLElement.prototype, "clientWidth")
-    Reflect.deleteProperty(HTMLElement.prototype, "clientHeight")
+  Object.defineProperty(HTMLElement.prototype, "clientHeight", {
+    configurable: true,
+    get: () => elementSize.height,
   })
+})
 
-  beforeEach(() => {
-    Object.assign(globalThis, { IS_REACT_ACT_ENVIRONMENT: true })
-    vi.useFakeTimers()
-    container = document.createElement(`div`)
-    document.body.appendChild(container)
-    root = createRoot(container)
+afterAll(() => {
+  Reflect.deleteProperty(HTMLElement.prototype, "clientWidth")
+  Reflect.deleteProperty(HTMLElement.prototype, "clientHeight")
+})
+
+beforeEach(() => {
+  Object.assign(globalThis, { IS_REACT_ACT_ENVIRONMENT: true })
+  vi.useFakeTimers()
+  container = document.createElement(`div`)
+  document.body.appendChild(container)
+  root = createRoot(container)
+})
+
+afterEach(async () => {
+  await act(async () => {
+    root.unmount()
   })
+  vi.useRealTimers()
+  Object.assign(globalThis, { IS_REACT_ACT_ENVIRONMENT: false })
+  container.remove()
+})
 
-  afterEach(async () => {
-    await act(async () => {
-      root.unmount()
+const openBook = async ({
+  numberOfChapters = 10,
+  annotations,
+}: {
+  numberOfChapters?: number
+  annotations: Annotation[]
+}) => {
+  let reader: AppReader | undefined
+
+  const createBookReader = () => {
+    reader = createAppReader({
+      manifest: createBook(numberOfChapters),
+      numberOfAdjacentSpineItemToPreLoad: 0,
+      getRenderer: () => (props) => new EmptyRenderer(props),
     })
-    vi.useRealTimers()
-    Object.assign(globalThis, { IS_REACT_ACT_ENVIRONMENT: false })
-    container.remove()
-  })
-
-  const openBook = async ({
-    numberOfChapters = 10,
-    annotations,
-  }: {
-    numberOfChapters?: number
-    annotations: Annotation[]
-  }) => {
-    let reader: AppReader | undefined
-
-    const createBookReader = () => {
-      reader = createAppReader({
-        manifest: createBook(numberOfChapters),
-        numberOfAdjacentSpineItemToPreLoad: 0,
-        getRenderer: () => (props) => new EmptyRenderer(props),
-      })
-      vi.spyOn(reader, "locateResource")
-
-      return reader
-    }
-
-    await act(async () => {
-      root.render(
-        <ChakraProvider value={defaultSystem}>
-          <ReactReaderProvider
-            createReader={createBookReader}
-            annotations={annotations}
-          >
-            <ReactReader quickMenuOpen />
-          </ReactReaderProvider>
-        </ChakraProvider>,
-      )
-    })
-    await letTimePass()
-
-    if (!reader) throw new Error("react-reader created no reader")
-
-    expect(reader.pagination.state.isSettled).toBe(true)
+    vi.spyOn(reader, "locateResource")
 
     return reader
   }
 
-  /**
-   * Advances the fake clock far enough for the reader's idle callbacks and
-   * debounces to run.
-   */
-  const letTimePass = () => act(() => vi.advanceTimersByTimeAsync(3000))
+  await act(async () => {
+    root.render(
+      <ChakraProvider value={defaultSystem}>
+        <ReactReaderProvider
+          createReader={createBookReader}
+          annotations={annotations}
+        >
+          <ReactReader quickMenuOpen />
+        </ReactReaderProvider>
+      </ChakraProvider>,
+    )
+  })
+  await letTimePass()
 
-  const getLoadedChapterIndexes = (reader: AppReader) =>
-    reader.spineItemsManager.items
-      .filter((item) => item.value.loadStatus !== "idle")
-      .map((item) => item.index)
+  if (!reader) throw new Error("react-reader created no reader")
 
-  const clickButton = async (isButton: (button: HTMLElement) => boolean) => {
-    const button = [...document.querySelectorAll(`button`)].find(isButton)
+  expect(reader.pagination.state.isSettled).toBe(true)
 
-    if (!button) throw new Error("no such button")
+  return reader
+}
 
-    await act(async () => {
-      button.click()
-    })
-  }
+/**
+ * Advances the fake clock far enough for the reader's idle callbacks and
+ * debounces to run.
+ */
+const letTimePass = () => act(() => vi.advanceTimersByTimeAsync(3000))
 
+const getLoadedChapterIndexes = (reader: AppReader) =>
+  reader.spineItemsManager.items
+    .filter((item) => item.value.loadStatus !== "idle")
+    .map((item) => item.index)
+
+const clickButton = async (isButton: (button: HTMLElement) => boolean) => {
+  const button = [...document.querySelectorAll(`button`)].find(isButton)
+
+  if (!button) throw new Error("no such button")
+
+  await act(async () => {
+    button.click()
+  })
+}
+
+describe("the chapters react-reader loads for annotations", () => {
   it("loads the same chapters with annotations away from the reading position as without", async () => {
     const loadedWithoutAnnotations = getLoadedChapterIndexes(
       await openBook({ annotations: [] }),
@@ -254,5 +254,24 @@ describe("the chapters react-reader loads for annotations", () => {
     const locateCallsForManyPages = await countLocateCalls(30)
 
     expect(locateCallsForManyPages).toBe(locateCallsForFewPages)
+  })
+})
+
+describe("the Bookmarks list", () => {
+  it("lists every annotation whose cfi is not a range, with a note or without", async () => {
+    await openBook({
+      annotations: [
+        createPageBookmark(5),
+        { ...createPageBookmark(6), notes: "A note" },
+        createHighlight(7),
+      ],
+    })
+
+    await clickButton(
+      (button) => button.getAttribute(`aria-label`) === `Bookmarks`,
+    )
+    await letTimePass()
+
+    expect(document.querySelectorAll(`[role="dialog"] li`)).toHaveLength(2)
   })
 })

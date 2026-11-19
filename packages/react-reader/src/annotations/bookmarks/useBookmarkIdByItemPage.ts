@@ -1,6 +1,7 @@
 import { useObserve } from "reactjrx"
 import { distinctUntilChanged, map, switchMap } from "rxjs"
 import { useReaderWithAnnotations } from "../useReaderWithAnnotations.ts"
+import { isBookmark } from "./isBookmark.ts"
 
 type PageBookmark = { id: string; cfi: string }
 
@@ -24,10 +25,10 @@ export type BookmarkIdByItemPage = ReadonlyMap<
 >
 
 /**
- * The bookmarks of the annotations whose cfi is not a range. They are located
- * without loading any chapter, so a bookmark inside a reflowable chapter has a
- * page only while the chapter is loaded and laid out. A page is keyed in its
- * item, so an earlier item that changes its number of pages moves no marker.
+ * The bookmarks, located without loading any chapter, so a bookmark inside a
+ * reflowable chapter has a page only while the chapter is loaded and laid out.
+ * A page is keyed in its item, so an earlier item that changes its number of
+ * pages moves no marker.
  */
 export const useBookmarkIdByItemPage = () => {
   const reader = useReaderWithAnnotations()
@@ -37,7 +38,7 @@ export const useBookmarkIdByItemPage = () => {
       reader?.annotations.annotations$.pipe(
         map((annotations) =>
           annotations
-            .filter(({ cfi }) => !reader.cfi.parseCfi(cfi).isCfiRange)
+            .filter((annotation) => isBookmark(reader, annotation))
             .map(({ id, cfi }) => ({ id, cfi })),
         ),
         // A change of the selection, a color or a note moves no bookmark.

@@ -1,6 +1,7 @@
 import { useObserve } from "reactjrx"
 import { map } from "rxjs"
 import { useReaderWithAnnotations } from "../useReaderWithAnnotations.ts"
+import { isBookmark } from "./isBookmark.ts"
 
 export const useBookmarks = () => {
   const reader = useReaderWithAnnotations()
@@ -9,11 +10,7 @@ export const useBookmarks = () => {
     () =>
       reader?.annotations.annotations$.pipe(
         map((annotations) =>
-          annotations.filter(
-            (annotation) =>
-              !reader.cfi.parseCfi(annotation.cfi).isCfiRange &&
-              !annotation.notes,
-          ),
+          annotations.filter((annotation) => isBookmark(reader, annotation)),
         ),
       ),
     [reader],
