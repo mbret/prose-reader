@@ -2,11 +2,14 @@ import {
   combineLatest,
   debounceTime,
   defaultIfEmpty,
+  EMPTY,
   finalize,
   map,
+  merge,
   type Observable,
   of,
   shareReplay,
+  skip,
   startWith,
   switchMap,
   takeUntil,
@@ -164,7 +167,19 @@ export class ResourcesLocator {
 
     if (existingConsolidation$) return existingConsolidation$
 
-    const consolidation$ = this.reader.spine.layout$.pipe(
+    const spineItem = this.reader.spineItemsManager.get(
+      cfiToLocate.parsedCfi.itemIndex,
+    )
+
+    /**
+     * A completed layout moves pages, and the item's readiness says whether
+     * its document can be read at all: an unloaded item loses its page at
+     * once, without waiting for the layout its unload requests.
+     */
+    const consolidation$ = merge(
+      this.reader.spine.layout$,
+      spineItem?.isReady$.pipe(skip(1)) ?? EMPTY,
+    ).pipe(
       debounceTime(10),
       startWith(null),
       switchMap(() => consolidate(cfiToLocate, this.reader)),
