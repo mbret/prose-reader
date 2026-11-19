@@ -39,7 +39,7 @@ const MOBILE_PROFILES: BrowserProfile[] = [
  *
  * A book renders the same however it is loaded, so the projects of a profile
  * compare their screenshots against the same baselines, named after the
- * profile: `text-Mobile-Chrome-darwin.png`.
+ * profile: `text-Mobile-Chrome-linux.png`.
  */
 const createProfileProject = (
   profile: BrowserProfile,
@@ -63,7 +63,7 @@ const createProfileProject = (
 /**
  * Every profile loads its books over http, and the desktop ones load them
  * from blobs too. Running the mobile profiles both ways as well would make
- * the suite too long for CI's few macOS runners.
+ * the suite about a fifth longer.
  */
 const ALL_PROJECTS: PlaywrightTestProject[] = [
   ...[...DESKTOP_PROFILES, ...MOBILE_PROFILES].map((profile) =>

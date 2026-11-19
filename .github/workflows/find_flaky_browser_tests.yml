@@ -24,19 +24,18 @@ on:
         default: ""
 
 jobs:
-  # macOS, with the browsers `check` runs, so that a result here holds for CI.
+  # On the runner `check` runs the suite on, so that a result here holds for
+  # CI.
   browser:
-    runs-on: macos-latest
-    # One run of the suite takes about 34 minutes on the 2 workers of one
-    # runner, so the default 20 runs take about 135 minutes on each of the 5
-    # shards, and the job holds about 34 runs.
+    runs-on: ubuntu-26.04
+    # One run of the suite takes about 24 minutes on the 2 workers of one
+    # Linux runner, so the default 20 runs take about 100 minutes on each of
+    # the 5 shards, and the job holds about 48 runs.
     timeout-minutes: 240
     strategy:
       fail-fast: false
       matrix:
-        # The number of macOS runners an account gets at once. `check` waits
-        # for its macOS runners until this run is over. The report job counts
-        # the shards too.
+        # The report job counts the shards too.
         shard: [1, 2, 3, 4, 5]
     steps:
       - uses: actions/checkout@v6

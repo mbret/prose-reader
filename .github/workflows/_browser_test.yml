@@ -1,0 +1,50 @@
+name: browser test
+
+on:
+  workflow_call:
+    inputs:
+      runs-on:
+        description: The runner of each job.
+        type: string
+        default: ubuntu-26.04
+      ignore-snapshots:
+        description: >
+          Skip the screenshot comparisons, on a platform the baselines were not
+          rendered on.
+        type: boolean
+        default: false
+
+jobs:
+  # One job per browser engine, each running every spec on the projects of
+  # its engine (BROWSER_ENGINE in playwright.config.ts). `--shard` would split
+  # by test count, and Firefox's tests take about 1.6 times as long as the
+  # others'.
+  browser:
+    runs-on: ${{ inputs.runs-on }}
+    strategy:
+      # a failure on one engine says nothing about the others: let them report
+      fail-fast: false
+      matrix:
+        engine: [chromium, firefox, webkit]
+    steps:
+      - uses: actions/checkout@v6
+      - uses: ./.github/actions/setup-browser-suite
+
+      - name: Test
+        env:
+          BROWSER_ENGINE: ${{ matrix.engine }}
+          IGNORE_SNAPSHOTS: ${{ inputs.ignore-snapshots }}
+        run: |
+          args=()
+          if [ "$IGNORE_SNAPSHOTS" = true ]; then args+=(--ignore-snapshots); fi
+          pnpm --filter prose-reader-tests test "${args[@]}"
+
+      - uses: actions/upload-artifact@v7
+        if: ${{ !cancelled() }}
+        with:
+          name: playwright-report-${{ matrix.engine }}
+          path: apps/tests/test-results/
+          retention-days: 15
+          # Playwright only writes here for a failed or retried test, so a
+          # green job has nothing to upload and nothing to warn about
+          if-no-files-found: ignore

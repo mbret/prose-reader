@@ -4,10 +4,8 @@ on:
   workflow_call:
 
 jobs:
-  # The vitest suites run in happy-dom or jsdom, with no layout engine, so
-  # nothing in them depends on the platform. Kept off the browser runners,
-  # they neither wait for a macOS runner nor compete with the browsers for
-  # its three cores.
+  # The vitest suites run in happy-dom or jsdom, with no browser, so they need
+  # none of the browser setup and run beside the browser jobs.
   unit:
     runs-on: ubuntu-latest
     steps:
@@ -18,34 +16,6 @@ jobs:
       - name: Test
         run: pnpm exec lerna run test --ignore prose-reader-tests
 
-  # macOS: the committed screenshot baselines are rendered there (-darwin).
-  # One job per browser engine, each running every spec on the projects of
-  # its engine (BROWSER_ENGINE in playwright.config.ts). `--shard` would split
-  # by test count, and Firefox's tests take about 1.6 times as long as the
-  # others'. Every job occupies one of the few macOS runners an account gets
-  # at once.
+  # On Linux, where the committed screenshot baselines are rendered (-linux).
   browser:
-    runs-on: macos-latest
-    strategy:
-      # a failure on one engine says nothing about the others: let them report
-      fail-fast: false
-      matrix:
-        engine: [chromium, firefox, webkit]
-    steps:
-      - uses: actions/checkout@v6
-      - uses: ./.github/actions/setup-browser-suite
-
-      - name: Test
-        env:
-          BROWSER_ENGINE: ${{ matrix.engine }}
-        run: pnpm --filter prose-reader-tests test
-
-      - uses: actions/upload-artifact@v7
-        if: ${{ !cancelled() }}
-        with:
-          name: playwright-report-${{ matrix.engine }}
-          path: apps/tests/test-results/
-          retention-days: 15
-          # Playwright only writes here for a failed or retried test, so a
-          # green job has nothing to upload and nothing to warn about
-          if-no-files-found: ignore
+    uses: ./.github/workflows/_browser_test.yml

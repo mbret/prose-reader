@@ -107,13 +107,14 @@ pnpm gives each package only what its own manifest declares. Declare a dependenc
 ## Browser tests
 
 `apps/tests` (`prose-reader-tests`) is a Playwright suite, and the root
-`pnpm test` runs it alongside the vitest suites. CI runs the two apart: the
-vitest suites on Linux, and every spec of this one, in one job per browser
-engine, on macOS, where its screenshot baselines are rendered, on Chromium,
-Firefox, WebKit and two mobile profiles, the desktop browsers once for each
-way a book reaches the reader (`apps/tests/AGENTS.md`, *Loading the book*).
-It needs the browser builds its Playwright version pins. Install them once
-per environment, the way CI does:
+`pnpm test` runs it alongside the vitest suites. CI runs every spec of this
+one on Linux, where its screenshot baselines are rendered, in one job per
+browser engine, on Chromium, Firefox, WebKit and two mobile profiles, the
+desktop browsers once for each way a book reaches the reader
+(`apps/tests/AGENTS.md`, *Loading the book*). A scheduled workflow runs it on
+macOS once a day, without the screenshot comparisons. It needs the browser
+builds its Playwright version pins. Install them once per environment, the
+way CI does:
 
 ```sh
 pnpm --filter prose-reader-tests exec playwright install --with-deps

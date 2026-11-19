@@ -133,7 +133,8 @@ pnpm --filter prose-reader-tests test --project=chromium tests/<path>.spec.ts
 
 - The suite imports `@prose-reader/*` from `dist/`. Rebuild the library you changed before you run a spec again.
 - Run it on the browsers Playwright installs, not on one your machine already has. A pass on another build is not a pass in CI.
-- CI runs the suite on Chromium, Firefox, WebKit and two mobile profiles, on macOS, where the screenshot baselines are rendered. On another OS, the specs that compare screenshots fail locally.
+- CI runs the suite on Chromium, Firefox, WebKit and two mobile profiles, on Linux, where the screenshot baselines are rendered. On another machine, the specs that compare screenshots can fail by a few pixels.
+- A scheduled workflow runs the suite on macOS once a day, without the screenshot comparisons.
 
 ## License
 
