@@ -11,8 +11,26 @@ on:
   workflow_dispatch:
 
 jobs:
+  # One job per browser engine, as in `check`.
   browser:
-    uses: ./.github/workflows/_browser_test.yml
-    with:
-      runs-on: macos-latest
-      ignore-snapshots: true
+    runs-on: macos-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        engine: [chromium, firefox, webkit]
+    steps:
+      - uses: actions/checkout@v6
+      - uses: ./.github/actions/setup-browser-suite
+
+      - name: Test
+        env:
+          BROWSER_ENGINE: ${{ matrix.engine }}
+        run: pnpm --filter prose-reader-tests test --ignore-snapshots
+
+      - uses: actions/upload-artifact@v7
+        if: ${{ !cancelled() }}
+        with:
+          name: playwright-report-macos-${{ matrix.engine }}
+          path: apps/tests/test-results/
+          retention-days: 15
+          if-no-files-found: ignore

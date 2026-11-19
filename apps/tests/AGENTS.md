@@ -106,14 +106,15 @@ then names the step that went wrong.
 ## Snapshots
 
 A `*-snapshots` folder holds one image per browser profile, suffixed with the
-platform it was rendered on; the committed ones are `-linux`, from CI's Linux
-runners. The projects of a profile compare against that one image, since a
-book renders the same however it reaches the reader: `chromium-blob` against
-`chromium`'s, and a blob render that differs from it fails. An image compares
-only against the same browser build with the same fonts, which is why the
-suite installs its own browsers rather than using whatever a machine has.
-Another Linux machine, such as an agent's container, has other fonts and can
-differ by a few pixels, so CI's runner is the one that renders the baselines.
+platform it was rendered on; the committed ones are `-linux`, rendered on CI
+in Playwright's Docker image. The projects of a profile compare against that
+one image, since a book renders the same however it reaches the reader:
+`chromium-blob` against `chromium`'s, and a blob render that differs from it
+fails. An image compares only against the same browser build with the same
+fonts, which is why the suite installs its own browsers rather than using
+whatever a machine has. Another Linux machine, such as an agent's container,
+has other fonts and can differ by a few pixels, so CI's image is the one that
+renders the baselines.
 
 On CI, a test whose baseline is missing fails, and no CI job rewrites one. To
 add or change a baseline, take the `-actual` image from the

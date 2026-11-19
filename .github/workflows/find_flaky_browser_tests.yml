@@ -24,10 +24,14 @@ on:
         default: ""
 
 jobs:
-  # On the runner `check` runs the suite on, so that a result here holds for
-  # CI.
+  # In the image `check` runs the suite in, so that a result here holds for
+  # CI. Its tag follows the version of @playwright/test.
   browser:
-    runs-on: ubuntu-26.04
+    runs-on: ubuntu-latest
+    container:
+      image: mcr.microsoft.com/playwright:v1.65.0-resolute
+      # the runner's user, who owns the workspace and the home directory
+      options: --user 1001
     # One run of the suite takes about 21 minutes on the 3 workers of one
     # Linux runner, so the default 20 runs take about 85 minutes on each of
     # the 5 shards, and the job holds about 55 runs.
@@ -40,6 +44,8 @@ jobs:
     steps:
       - uses: actions/checkout@v6
       - uses: ./.github/actions/setup-browser-suite
+        with:
+          install-browsers: false
 
       # Playwright stops itself 10 minutes before the job's limit, so that the
       # shard still writes the report of the tests it ran.

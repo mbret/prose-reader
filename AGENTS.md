@@ -108,13 +108,16 @@ pnpm gives each package only what its own manifest declares. Declare a dependenc
 
 `apps/tests` (`prose-reader-tests`) is a Playwright suite, and the root
 `pnpm test` runs it alongside the vitest suites. CI runs every spec of this
-one on Linux, where its screenshot baselines are rendered, in one job per
-browser engine, on Chromium, Firefox, WebKit and two mobile profiles, the
-desktop browsers once for each way a book reaches the reader
-(`apps/tests/AGENTS.md`, *Loading the book*). A scheduled workflow runs it on
-macOS once a day, without the screenshot comparisons. It needs the browser
-builds its Playwright version pins. Install them once per environment, the
-way CI does:
+one on Linux, in Playwright's Docker image, where its screenshot baselines are
+rendered, in one job per browser engine, on Chromium, Firefox, WebKit and two
+mobile profiles, the desktop browsers once for each way a book reaches the
+reader (`apps/tests/AGENTS.md`, *Loading the book*). A scheduled workflow runs
+it on macOS once a day, without the screenshot comparisons. The image's tag
+follows the version of `@playwright/test`: a change that upgrades Playwright
+updates the tag in `_test.yml` and `find_flaky_browser_tests.yml` too.
+
+The suite needs the browser builds its Playwright version pins. Install them
+once per environment:
 
 ```sh
 pnpm --filter prose-reader-tests exec playwright install --with-deps
