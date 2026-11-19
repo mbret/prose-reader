@@ -3,15 +3,7 @@ import {
   type Reader,
   setStylePropertyIfChanged,
 } from "@prose-reader/core"
-import {
-  fromEvent,
-  map,
-  type Observable,
-  share,
-  take,
-  takeUntil,
-  tap,
-} from "rxjs"
+import { map, type Observable, take, takeUntil, tap } from "rxjs"
 import type { RuntimeAnnotation } from "./types.ts"
 import { createElementForRange } from "./utils.ts"
 
@@ -23,10 +15,6 @@ export class SpineItemHighlight extends DestroyableClass {
    * document does not change, so a cfi is resolved again only when it changes.
    */
   private resolvedCfi: { cfi: string; range: Range } | undefined
-  public readonly tap$: Observable<{
-    event: Event
-    highlight: RuntimeAnnotation
-  }>
 
   constructor(
     private containerElement: HTMLElement,
@@ -41,12 +29,6 @@ export class SpineItemHighlight extends DestroyableClass {
     this.container = this.containerElement.ownerDocument.createElement("div")
     this.container.dataset.highlightContainer = annotation.id
     this.containerElement.appendChild(this.container)
-
-    this.tap$ = fromEvent(this.container, "click").pipe(
-      map((event) => ({ event, highlight: this.annotation })),
-      takeUntil(this.destroy$),
-      share(),
-    )
 
     this.isSelected$
       .pipe(

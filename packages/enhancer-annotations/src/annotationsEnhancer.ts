@@ -130,7 +130,14 @@ export const annotationsEnhancer =
         : { id: window.crypto.randomUUID(), cfi }
     }
 
-    const renderAnnotations$ = merge(runtimeAnnotations$, reader.layout$).pipe(
+    /**
+     * Starts from the highlights, not from the annotations: a draw then runs
+     * after the highlights have changed to match the annotations.
+     */
+    const renderAnnotations$ = merge(
+      readerHighlights.highlightsChange$,
+      reader.layout$,
+    ).pipe(
       debounceTime(50),
       switchMap(() => readerHighlights.layout()),
     )
@@ -157,10 +164,12 @@ export const annotationsEnhancer =
     )
 
     /**
-     * Also keeps `runtimeAnnotations$` subscribed for the reader's whole life,
-     * so a spine item that loads later gets the latest list from its replay.
+     * `runtimeAnnotations$` stays subscribed for the reader's whole life, so a
+     * spine item that loads later gets the latest list from its replay.
      */
-    renderAnnotations$.pipe(takeUntil(reader.$.destroy$)).subscribe()
+    merge(renderAnnotations$, runtimeAnnotations$)
+      .pipe(takeUntil(reader.$.destroy$))
+      .subscribe()
 
     return {
       ...reader,

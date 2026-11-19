@@ -345,3 +345,43 @@ test("gives an annotation the page the reader shows for its cfi while its chapte
     },
   })
 })
+
+test("reports the annotation of the highlight the user clicks through highlightTap$", async ({
+  page,
+}) => {
+  const chapterIndex = await openFirstChapter(page)
+  const reader = await getReader<HighlightsReader>(page)
+  const annotation = await createAnnotationOverStartOfParagraph(page, {
+    spineItemIndex: chapterIndex,
+    paragraphIndex: 0,
+    id: "highlight",
+  })
+
+  await setAnnotations(page, [annotation])
+  await expectFirstRectOfHighlightToCoverStartOf(page, annotation)
+
+  await reader.evaluate((reader) => {
+    const tappedAnnotationIds: string[] = []
+
+    reader.annotations.highlightTap$.subscribe(({ annotation }) => {
+      tappedAnnotationIds.push(annotation.id)
+    })
+    // `tappedAnnotationIds` is not in the type of `window`: this test keeps
+    // there what it records in the page.
+    ;(
+      window as unknown as { tappedAnnotationIds: string[] }
+    ).tappedAnnotationIds = tappedAnnotationIds
+  })
+
+  await locateFirstRectOfHighlight(page, annotation.id).click()
+
+  await expect
+    .poll(() =>
+      page.evaluate(
+        () =>
+          (window as unknown as { tappedAnnotationIds: string[] })
+            .tappedAnnotationIds,
+      ),
+    )
+    .toEqual([annotation.id])
+})

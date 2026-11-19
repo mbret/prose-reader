@@ -22,11 +22,13 @@ jobs:
   # version of @playwright/test, here and in find_flaky_browser_tests.yml, and
   # Playwright names the tag it needs when they differ.
   #
-  # One job per browser engine, each running every spec on the projects of
-  # its engine (BROWSER_ENGINE in playwright.config.ts). `--shard` would split
-  # by test count, and Firefox's tests take about 1.6 times as long as the
+  # The projects of each browser engine (BROWSER_ENGINE in
+  # playwright.config.ts) run in 2 jobs, through Playwright's `--shard`.
+  # Sharding the whole suite by test count would put engines of different
+  # speeds in one job: Firefox's tests take about 1.6 times as long as the
   # others'.
   browser:
+    name: browser (${{ matrix.engine }} ${{ matrix.shard }}/2)
     runs-on: ubuntu-latest
     container:
       image: mcr.microsoft.com/playwright:v1.65.0-resolute
@@ -37,6 +39,8 @@ jobs:
       fail-fast: false
       matrix:
         engine: [chromium, firefox, webkit]
+        # the jobs of an engine, as many as the `/2` of the test step says
+        shard: [1, 2]
     steps:
       - uses: actions/checkout@v6
       - uses: ./.github/actions/setup-browser-suite
@@ -46,12 +50,13 @@ jobs:
       - name: Test
         env:
           BROWSER_ENGINE: ${{ matrix.engine }}
-        run: pnpm --filter prose-reader-tests test
+          SHARD: ${{ matrix.shard }}/2
+        run: pnpm --filter prose-reader-tests test --shard="$SHARD"
 
       - uses: actions/upload-artifact@v7
         if: ${{ !cancelled() }}
         with:
-          name: playwright-report-${{ matrix.engine }}
+          name: playwright-report-${{ matrix.engine }}-${{ matrix.shard }}
           path: apps/tests/test-results/
           retention-days: 15
           # Playwright only writes here for a failed or retried test, so a

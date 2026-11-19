@@ -118,6 +118,6 @@ renders the baselines.
 
 On CI, a test whose baseline is missing fails, and no CI job rewrites one. To
 add or change a baseline, take the `-actual` image from the
-`playwright-report-<engine>` artifact that CI uploads from the job where the
-comparison failed, look at it, and commit it under the baseline's name. The
+`playwright-report-<engine>-<shard>` artifact that CI uploads from the job
+where the comparison failed, look at it, and commit it under the baseline's name. The
 daily macOS run skips the comparisons.
