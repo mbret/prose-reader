@@ -20,6 +20,8 @@ type HighlightsReader = Reader & AnnotationsEnhancerAPI
 /** The page's window, as the scenario's `index.tsx` fills it. */
 type ScenarioWindow = {
   annotations$: BehaviorSubject<Annotation[]>
+  /** Set by the spec: the ids of the annotations `highlightTap$` reports. */
+  tappedAnnotationIds?: string[]
 }
 
 const RED = "rgb(255, 0, 0)"
@@ -251,6 +253,44 @@ test.describe("Given annotations with a range cfi in a displayed chapter", () =>
         ),
         "the chapter kept the document it had",
       ).toBe(true)
+    })
+  })
+
+  test.describe("when the user taps one", () => {
+    test("should report its annotation through highlightTap$", async ({
+      page,
+    }) => {
+      const { reader, chapterIndex } = await openLongChapter(page)
+      const [cfi] = await createRangeCfisOfParagraphs(reader, {
+        chapterIndex,
+        count: 1,
+      })
+
+      if (!cfi) throw new Error("no cfi for the paragraph")
+
+      await setAnnotations(page, [{ id: "first", cfi, highlightColor: "red" }])
+      await expectHighlightOverText(reader, { annotationId: "first", cfi })
+
+      await reader.evaluate((reader) => {
+        const tappedAnnotationIds: string[] = []
+
+        reader.annotations.highlightTap$.subscribe(({ highlight }) => {
+          tappedAnnotationIds.push(highlight.id)
+        })
+        // The page's window is untyped: the spec keeps what it records there.
+        ;(window as unknown as ScenarioWindow).tappedAnnotationIds =
+          tappedAnnotationIds
+      })
+
+      await page.locator(`[data-highlight-rect="first"]`).first().click()
+
+      await expect
+        .poll(() =>
+          page.evaluate(
+            () => (window as unknown as ScenarioWindow).tappedAnnotationIds,
+          ),
+        )
+        .toEqual(["first"])
     })
   })
 
