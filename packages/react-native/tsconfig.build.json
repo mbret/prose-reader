@@ -1,12 +1,4 @@
 {
-  "extends": "./tsconfig.rn.json",
-  "compilerOptions": {
-    "noEmit": false,
-    "declaration": true,
-    "emitDeclarationOnly": true,
-    "rootDir": "src",
-    "outDir": "dist"
-  },
-  "files": ["src/native/index.ts", "src/web/index.ts", "src/shared/index.ts"],
-  "include": []
+  "extends": ["./tsconfig.rn.json", "../../config/tsconfig.declarations.json"],
+  "files": ["src/native/index.ts", "src/web/index.ts", "src/shared/index.ts"]
 }

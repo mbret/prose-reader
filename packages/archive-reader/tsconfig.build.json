@@ -1,12 +1,5 @@
 {
-  "extends": "./tsconfig.json",
-  "compilerOptions": {
-    "noEmit": false,
-    "declaration": true,
-    "emitDeclarationOnly": true,
-    "rootDir": "src",
-    "outDir": "dist"
-  },
+  "extends": ["./tsconfig.json", "../../config/tsconfig.declarations.json"],
   "files": [
     "src/index.ts",
     "src/archives/createArchiveFromJszip.ts",
@@ -14,6 +7,5 @@
     "src/archives/createArchiveFromUnzipper.ts",
     "src/archives/createArchiveFromNodeUnrarJs.ts",
     "src/archives/createArchiveFromZipJs.ts"
-  ],
-  "include": []
+  ]
 }
