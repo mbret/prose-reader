@@ -2,16 +2,17 @@ import { Box, Presence } from "@chakra-ui/react"
 import { memo } from "react"
 import { useSpineItemReady } from "../../common/useSpineItemReady.ts"
 import { BOOKMARK_AREA_DATA_ATTRIBUTE } from "../../constants.ts"
-import { useAnnotations } from "../useAnnotations.ts"
 
 export const BookmarkPageMarker = memo(
   ({
     absolutePageIndex,
+    isBookmarked,
     left,
     top,
     width,
   }: {
     absolutePageIndex: number
+    isBookmarked: boolean
     left: number
     top: number
     width: number
@@ -19,20 +20,11 @@ export const BookmarkPageMarker = memo(
     const { isReady: isItemReady } = useSpineItemReady({
       absolutePageIndex,
     })
-    const { data: bookmarks } = useAnnotations()
-    const bookmarkForPage = bookmarks?.find(
-      (bookmark) =>
-        bookmark?.meta?.absolutePageIndex === absolutePageIndex &&
-        !bookmark.meta.isCfiRange,
-    )
 
     /**
-     * Stale bookmarks means we cannot assert at the moment whether the page is marked or not.
-     * In this case we just hide the bookmark button. You may want to have different UX to handle
-     * this case.
-     *
-     * This also avoid having a flash where you show an non bookmarked icon and right away change it with
-     * a valid marked page icon.
+     * While its item is not ready, the page shows no content, and a bookmark
+     * located on it may date from before its item unloaded: whether the page
+     * is marked cannot be asserted, so the marker hides.
      */
     if (!isItemReady) return null
 
@@ -40,7 +32,7 @@ export const BookmarkPageMarker = memo(
 
     return (
       <Presence
-        present={!!bookmarkForPage}
+        present={isBookmarked}
         lazyMount
         animationName={{ _open: "fade-in", _closed: "fade-out" }}
         animationDuration="moderate"
