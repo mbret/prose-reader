@@ -1,5 +1,5 @@
 // @vitest-environment jsdom
-import { BehaviorSubject, first, map } from "rxjs"
+import { BehaviorSubject, first, map, Subject } from "rxjs"
 import { describe, expect, it, onTestFinished, vi } from "vitest"
 import {
   createCfiOfItem,
@@ -171,8 +171,6 @@ describe("highlights", () => {
       ({ highlight }) => tappedAnnotations.push(highlight),
     )
 
-    onTestFinished(() => highlightTapSubscription.unsubscribe())
-
     annotations$.next([
       { ...createAnnotationOfFirstItem("first"), highlightColor: "blue" },
     ])
@@ -188,5 +186,24 @@ describe("highlights", () => {
         highlightColor,
       })),
     ).toEqual([{ id: "first", highlightColor: "blue" }])
+
+    reader.destroy()
+
+    expect(highlightTapSubscription.closed).toBe(true)
+  })
+
+  /**
+   * An app can give its annotations through a source that does not replay,
+   * once the reader exists. The documents load later, and need that list.
+   */
+  it("draws the annotations a source without replay gave before the documents loaded", async () => {
+    const annotations$ = new Subject<Annotation[]>()
+    const mountedReader = mountAnnotationsReader({ annotations$ })
+
+    annotations$.next([createAnnotationOfFirstItem("first")])
+    const reader = await mountedReader
+
+    expect(reader.spineItemsManager.get(0)?.value.loadStatus).toBe("loaded")
+    expect(readHighlightedAnnotationIds()).toEqual(["first"])
   })
 })

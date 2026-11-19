@@ -170,7 +170,12 @@ export const annotationsEnhancer =
       ),
     )
 
-    merge(renderAnnotations$, annotations$)
+    /**
+     * `runtimeAnnotations$` stays subscribed for the reader's life, so that it
+     * keeps the latest list for the documents that load later and for the
+     * subscribers of `annotations$`, whatever source the app gives.
+     */
+    merge(renderAnnotations$, runtimeAnnotations$)
       .pipe(takeUntil(reader.$.destroy$))
       .subscribe()
 

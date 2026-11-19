@@ -16,8 +16,9 @@ export class ReaderHighlights extends DestroyableClass {
   private spineItemHighlights = new BehaviorSubject<SpineItemHighlights[]>([])
 
   /**
-   * Emits the highlights of a loaded item each time they change to match its
-   * annotations, and once when its document loads: they are ready to draw.
+   * Emits the highlights of an item each time they change to match its
+   * annotations, and once when its document starts to load. Each emission
+   * follows the change, so a draw it starts draws the current highlights.
    */
   public readonly highlightsChange$: SpineItemHighlights["highlights$"] =
     this.spineItemHighlights.pipe(
