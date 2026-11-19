@@ -27,9 +27,9 @@ jobs:
   # macOS, with the browsers `check` runs, so that a result here holds for CI.
   browser:
     runs-on: macos-latest
-    # One run of the suite takes about 22 minutes of shard time in `check`,
-    # so the default 20 runs take about 90 minutes on each of the 5 shards,
-    # and the job holds about 50 runs.
+    # One run of the suite takes about 34 minutes on the 2 workers of one
+    # runner, so the default 20 runs take about 135 minutes on each of the 5
+    # shards, and the job holds about 34 runs.
     timeout-minutes: 240
     strategy:
       fail-fast: false
