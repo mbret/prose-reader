@@ -15,16 +15,12 @@ const createAppReader = gesturesEnhancer(annotationsEnhancer(createReader))
 
 const ANNOTATIONS_STORAGE_KEY = "annotations"
 
-/** The annotations kept before the page reloaded, as an app keeps them. */
 const readStoredAnnotations = (): Annotation[] =>
   JSON.parse(sessionStorage.getItem(ANNOTATIONS_STORAGE_KEY) ?? "[]")
 
 /**
- * react-reader over a reflowable book, with no chapter preloaded around the
- * reading position. The annotations live in the app's state, as an app keeps
- * them: react-reader reports a created or deleted bookmark, and the app passes
- * the new list back. They outlive a reload of the page, which opens the book
- * again on its first page.
+ * No chapter is preloaded around the reading position. The annotations outlive
+ * a reload of the page, which opens the book again on its first page.
  */
 function App({
   book,

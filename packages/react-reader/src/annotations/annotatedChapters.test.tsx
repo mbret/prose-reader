@@ -85,7 +85,6 @@ const createHighlight = (chapterIndex: number): Annotation => ({
   highlightColor: "yellow",
 })
 
-/** Annotations of chapters 5, 6 and 7, away from the first chapter. */
 const annotationsAwayFromTheFirstChapter = [
   createPageBookmark(5),
   createPageBookmark(6),
@@ -136,11 +135,6 @@ describe("the chapters react-reader loads for annotations", () => {
     container.remove()
   })
 
-  /**
-   * Lets the reader open on its first chapter, with no chapter preloaded
-   * around it, and react-reader locate the annotations. Time is fake, so the
-   * idle callbacks and debounces of the reader all run.
-   */
   const openBook = async ({
     numberOfChapters = 10,
     annotations,
@@ -182,6 +176,10 @@ describe("the chapters react-reader loads for annotations", () => {
     return reader
   }
 
+  /**
+   * Advances the fake clock far enough for the reader's idle callbacks and
+   * debounces to run.
+   */
   const letTimePass = () => act(() => vi.advanceTimersByTimeAsync(3000))
 
   const getLoadedChapterIndexes = (reader: AppReader) =>

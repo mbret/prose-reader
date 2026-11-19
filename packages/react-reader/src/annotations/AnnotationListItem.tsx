@@ -53,7 +53,7 @@ export const AnnotationListItem = ({
             fontStyle="italic"
             fontWeight="bold"
             fontSize="sm"
-          >{`Book page: ${pageNumber ?? "unknown (not loaded)"}`}</Text>
+          >{`Book page: ${pageNumber ?? "unknown"}`}</Text>
         </Stack>
       </Link>
     </List.Item>

@@ -2,7 +2,7 @@ import { useEffect } from "react"
 import { map, withLatestFrom } from "rxjs"
 import { useReaderContext } from "../../context/useReaderContext.ts"
 import { useReaderWithAnnotations } from "../useReaderWithAnnotations.ts"
-import type { LocatedPageBookmark } from "./useLocatedPageBookmarks.ts"
+import type { BookmarkIdByItemPage } from "./useBookmarkIdByItemPage.ts"
 
 const CONTINUE_TAP_GESTURE = true
 const BOOKMARK_CORNER_SIZE_PERCENT = 10
@@ -32,11 +32,10 @@ const isTopRightCornerPosition = ({
 
 /**
  * A tap on the top right corner of a page removes the page's bookmark, or
- * bookmarks the page. `locatedPageBookmarks` are the bookmarks of pages, each
- * with the page it is on.
+ * bookmarks the page.
  */
 export const useBookmarkOnCornerTap = (
-  locatedPageBookmarks: LocatedPageBookmark[] | undefined,
+  bookmarkIdByItemPage: BookmarkIdByItemPage | undefined,
 ) => {
   const reader = useReaderWithAnnotations()
   const readerContext = useReaderContext()
@@ -65,7 +64,21 @@ export const useBookmarkOnCornerTap = (
               sizePercent: BOOKMARK_CORNER_SIZE_PERCENT,
             })
 
-            if (!hasTapOnTopRightCorner) return CONTINUE_TAP_GESTURE
+            // Until the bookmarks are located, a tap cannot tell whether the
+            // page has one.
+            if (!hasTapOnTopRightCorner || !bookmarkIdByItemPage) {
+              return CONTINUE_TAP_GESTURE
+            }
+
+            const bookmarkId = bookmarkIdByItemPage
+              .get(spineItem.index)
+              ?.get(spineItemPageIndex)
+
+            if (bookmarkId !== undefined) {
+              readerContext.value.onAnnotationDelete?.(bookmarkId)
+
+              return !CONTINUE_TAP_GESTURE
+            }
 
             const pageEntry = reader.spine.pages.fromSpineItemPageIndex(
               spineItem,
@@ -73,19 +86,6 @@ export const useBookmarkOnCornerTap = (
             )
 
             if (!pageEntry) return CONTINUE_TAP_GESTURE
-
-            const bookmarkForPage = locatedPageBookmarks?.find(
-              ({ meta }) =>
-                meta.absolutePageIndex === pageEntry.absolutePageIndex,
-            )
-
-            if (bookmarkForPage) {
-              readerContext.value.onAnnotationDelete?.(
-                bookmarkForPage.resource.id,
-              )
-
-              return !CONTINUE_TAP_GESTURE
-            }
 
             const canBookmarkPage = candidates[pageEntry.absolutePageIndex]
 
@@ -107,5 +107,5 @@ export const useBookmarkOnCornerTap = (
     )
 
     return unSub
-  }, [reader, locatedPageBookmarks, readerContext])
+  }, [reader, bookmarkIdByItemPage, readerContext])
 }

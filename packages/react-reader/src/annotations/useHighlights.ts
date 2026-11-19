@@ -2,7 +2,6 @@ import { useObserve } from "reactjrx"
 import { map } from "rxjs"
 import { useReaderWithAnnotations } from "./useReaderWithAnnotations.ts"
 
-/** The annotations whose cfi is a range: the highlighted text. */
 export const useHighlights = () => {
   const reader = useReaderWithAnnotations()
 

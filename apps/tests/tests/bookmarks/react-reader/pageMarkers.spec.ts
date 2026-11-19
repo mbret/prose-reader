@@ -6,11 +6,22 @@ import {
   waitForSpineItemUnloaded,
 } from "../../utils"
 import { readSettledPagination, waitForSettled } from "../../utils/pagination"
+import { getReader } from "../../utils/reader"
 import { test } from "../../utils/test"
 
 const url = "http://localhost:3333/tests/bookmarks/react-reader/index.html"
 const windowSize = { width: 600, height: 800 }
 const marker = "[data-bookmark-area]"
+
+/** The cfis of the annotations the scenario keeps across reloads. */
+const readStoredAnnotationCfis = (page: Page) =>
+  page.evaluate(() => {
+    const annotations: { cfi: string }[] = JSON.parse(
+      sessionStorage.getItem("annotations") ?? "[]",
+    )
+
+    return annotations.map(({ cfi }) => cfi)
+  })
 
 /**
  * Records each bookmark marker react-reader puts in the page from now on, and
@@ -52,7 +63,7 @@ const recordMarkersPutIn = (page: Page) =>
   }, marker)
 
 test.describe("Given a page bookmarked in the middle of a chapter", () => {
-  test("its marker shows on that page only, also once the book opens again away from it", async ({
+  test("its marker shows on that page only, also once the book opens again away from it, until a tap removes it", async ({
     page,
   }) => {
     await page.setViewportSize(windowSize)
@@ -80,6 +91,17 @@ test.describe("Given a page bookmarked in the middle of a chapter", () => {
     await expect(page.locator(marker)).toHaveCount(1)
     await expect(page.locator(marker)).toBeInViewport()
 
+    // The bookmark points to a node of the page: a root cfi would be on the
+    // chapter's first page.
+    const [bookmarkCfi = ""] = await readStoredAnnotationCfis(page)
+
+    expect(
+      await (await getReader(page)).evaluate(
+        (reader, cfi) => reader.cfi.isRootCfi(cfi),
+        bookmarkCfi,
+      ),
+    ).toBe(false)
+
     // Away from the chapter, which unloads: its page shows no marker.
     await navigateToSpineItem({ page, index: 0 })
     await waitForSettled(page)
@@ -95,6 +117,13 @@ test.describe("Given a page bookmarked in the middle of a chapter", () => {
     expect(await readSettledPagination(page)).toMatchObject({
       spineItemIndex: 0,
     })
+    expect(
+      await (await getReader(page)).evaluate(
+        (reader, chapterIndex) =>
+          reader.spineItemsManager.get(chapterIndex)?.value.loadStatus,
+        chapterIndex,
+      ),
+    ).toBe("idle")
     await expect(page.locator(marker)).toHaveCount(0)
 
     const markersPutIn = await recordMarkersPutIn(page)
@@ -126,5 +155,10 @@ test.describe("Given a page bookmarked in the middle of a chapter", () => {
 
     await expect(page.locator(marker)).toHaveCount(1)
     await expect(page.locator(marker)).toBeInViewport()
+
+    // A second tap on the corner removes the bookmark.
+    await page.mouse.click(windowSize.width - 10, 10)
+
+    await expect(page.locator(marker)).toBeHidden()
   })
 })
