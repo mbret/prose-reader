@@ -42,7 +42,7 @@
     "react-dropzone": "^20.2.0",
     "react-icons": "^5.7.0",
     "react-router": "^8.5.1",
-    "reactjrx": "^6.0.0",
+    "reactjrx": "^7.0.0",
     "rxjs": "^7.8.2",
     "screenfull": "^6.0.2"
   },
