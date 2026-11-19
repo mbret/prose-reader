@@ -127,7 +127,7 @@ soon as its chapter unloads. A chapter that is being laid out at that time
 gives its annotations no page until its layout completes. A change of an
 annotation's selection, color or note finds no page again. The observable
 emits once the annotations are known, then only when a page in the map
-changes.
+changes. It completes when the reader is destroyed.
 
 Use it for what the reader shows, such as a mark on each annotated page:
 

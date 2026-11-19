@@ -8,6 +8,7 @@ import {
   shareReplay,
   skip,
   startWith,
+  takeUntil,
 } from "rxjs"
 import type { Annotation } from "../types.ts"
 
@@ -83,6 +84,7 @@ export const createPageByAnnotationId = (
       return pageByAnnotationId
     }),
     distinctUntilChanged(isSamePageByAnnotationId),
+    takeUntil(reader.$.destroy$),
     shareReplay({ refCount: true, bufferSize: 1 }),
   )
 }

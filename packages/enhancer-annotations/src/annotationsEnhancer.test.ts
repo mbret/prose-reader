@@ -1053,6 +1053,19 @@ const recordPageByAnnotationId = (reader: AnnotationsReader) => {
 }
 
 describe("pageByAnnotationId$", () => {
+  it("completes when the reader is destroyed", async () => {
+    const { reader } = await mountReaderHoldingOneDocument({
+      appObservesTaps: false,
+    })
+    const pageByAnnotationIdSubscription =
+      reader.annotations.pageByAnnotationId$.subscribe()
+
+    subscriptions.push(pageByAnnotationIdSubscription)
+    reader.destroy()
+
+    expect(pageByAnnotationIdSubscription.closed).toBe(true)
+  })
+
   it("gives an annotation of a pre-paginated item its page at once, whether its item is loaded or not", async () => {
     const { reader, annotations$ } = await mountReaderHoldingOneDocument({
       appObservesTaps: false,

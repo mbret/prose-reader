@@ -63,7 +63,7 @@ export type AnnotationsEnhancerAPI = {
      * of an annotation's selection, color or note finds no page again.
      *
      * It emits once the annotations are known, then only when a page in it
-     * changes.
+     * changes. It completes when the reader is destroyed.
      */
     pageByAnnotationId$: Observable<
       ReadonlyMap<string, Pick<PageEntry, "itemIndex" | "pageIndex">>
