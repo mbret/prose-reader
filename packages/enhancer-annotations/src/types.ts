@@ -10,16 +10,22 @@ export interface Annotation {
   selected?: boolean
 }
 
-type AnnotationSharedParams = Omit<Annotation, "id" | "cfi"> & {
-  selection?: Selection
-}
-
-export type AnnotateParams = AnnotationSharedParams & {
+/**
+ * Text a user selected in a spine item, as `reader.selection.getSelection()`
+ * gives it. `selection` must be in the document of the spine item at
+ * `itemIndex`.
+ */
+export type AnnotateSelectionParams = {
   itemIndex: number
+  selection: Selection
+  absolutePageIndex?: never
 }
 
-export type AnnotateAbsolutePageParams = AnnotationSharedParams & {
+/** A page, by its absolute index, as for a bookmark. */
+export type AnnotateAbsolutePageParams = {
   absolutePageIndex: number
+  itemIndex?: never
+  selection?: never
 }
 
 export type AnnotationsEnhancerOptions = {
@@ -33,9 +39,22 @@ export type AnnotationsEnhancerAPI = {
     annotations$: Observable<RuntimeAnnotation[]>
     highlightTap$: ReaderHighlights["tap$"]
     candidates$: Observable<boolean[]>
+    /**
+     * Gives a new annotation of a selection, or of a page, its `id` and its
+     * `cfi`: two strings and nothing else, so that the result can be stored
+     * as it is. Add the other fields of your annotation to it, such as
+     * `highlightColor` or `notes`.
+     *
+     * - For a selection, the `cfi` is the range of the selection.
+     * - For a page, the `cfi` points to the first visible node of the page,
+     *   or to the root of its spine item when the page has none.
+     *
+     * It returns `undefined` when the reader has no such spine item or page,
+     * or when the selection holds no range.
+     */
     createAnnotation: (
-      params: AnnotateParams | AnnotateAbsolutePageParams,
-    ) => Annotation | undefined
+      params: AnnotateSelectionParams | AnnotateAbsolutePageParams,
+    ) => Pick<Annotation, "id" | "cfi"> | undefined
     isTargetWithinHighlight: (target: EventTarget) => boolean
   }
 }
