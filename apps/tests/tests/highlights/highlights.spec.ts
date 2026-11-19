@@ -13,7 +13,11 @@ import {
   waitForSpineItemReady,
   waitForSpineItemUnloaded,
 } from "../utils"
-import { readSettledPagination, waitForSettled } from "../utils/pagination"
+import {
+  layOutAndSettle,
+  readSettledPagination,
+  waitForSettled,
+} from "../utils/pagination"
 import { getReader } from "../utils/reader"
 import { test } from "../utils/test"
 import { readCfiPositionInWindow } from "../utils/visibility"
@@ -260,7 +264,7 @@ const observePageByAnnotationId = async (page: Page) =>
     return latest
   })
 
-test("gives an annotation the page the reader shows for its cfi, while its chapter is loaded", async ({
+test("gives an annotation the page the reader shows for its cfi while its chapter is loaded, and its new page after a relayout", async ({
   page,
 }) => {
   await page.setViewportSize({ width: 536, height: 842 })
@@ -322,4 +326,22 @@ test("gives an annotation the page the reader shows for its cfi, while its chapt
   await waitForSettled(page)
 
   await expect.poll(readPageByAnnotationId).toEqual(pageOfBookmark)
+
+  // A larger font moves the text of the bookmark to a later page.
+  await layOutAndSettle(page, { settings: { fontScale: 1.5 } })
+  await reader.evaluate((reader, cfi) => reader.navigation.goToCfi(cfi), cfi)
+
+  const shownAfterRelayout = await readSettledPagination(page)
+
+  expect({
+    spineItemIndex: shownAfterRelayout.spineItemIndex,
+    isPageOfBookmarkMoved: shownAfterRelayout.beginPageIndex !== beginPageIndex,
+  }).toEqual({ spineItemIndex: chapterIndex, isPageOfBookmarkMoved: true })
+
+  await expect.poll(readPageByAnnotationId).toEqual({
+    bookmark: {
+      itemIndex: chapterIndex,
+      pageIndex: shownAfterRelayout.beginPageIndex,
+    },
+  })
 })

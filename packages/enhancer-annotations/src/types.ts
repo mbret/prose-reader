@@ -1,3 +1,4 @@
+import type { PageEntry } from "@prose-reader/core"
 import type { Observable } from "rxjs"
 import type { ReaderHighlights } from "./annotations/ReaderHighlights.ts"
 import type { RuntimeAnnotation } from "./annotations/types.ts"
@@ -21,12 +22,6 @@ export type AnnotateSelectionParams = {
   absolutePageIndex?: never
 }
 
-/** Where an annotation is: its spine item, and its page in that item. */
-export type AnnotationPage = {
-  itemIndex: number
-  pageIndex: number
-}
-
 /** A page, by its absolute index, as for a bookmark. */
 export type AnnotateAbsolutePageParams = {
   absolutePageIndex: number
@@ -46,22 +41,28 @@ export type AnnotationsEnhancerAPI = {
     highlightTap$: ReaderHighlights["tap$"]
     candidates$: Observable<boolean[]>
     /**
-     * The page of each annotation whose spine item has its document loaded,
-     * by annotation id. It is found on the item's document as it is laid out,
-     * and found again after each of its layouts, so it holds no annotation of
-     * an item that is not loaded. A range is on the page where it starts.
+     * The page of each annotation whose page is known, by annotation id: its
+     * spine item and its page in that item, as
+     * `reader.cfi.getSpineItemPageIndexFromCfi()` gives it. A range is on the
+     * page where it starts. When the list holds an id more than once, its
+     * last entry wins.
      *
-     * - A pre-paginated item has one page: its annotations are on page 0.
-     * - An annotation whose cfi names only its item is on the item's first
-     *   page.
-     * - Any other annotation is on the page of the node its cfi points to,
-     *   once its item is laid out. One whose cfi does not resolve in its
-     *   item has no page.
+     * An annotation of a pre-paginated item, or whose cfi names only its
+     * item, has its page at once. Any other has one while its chapter is
+     * loaded and laid out, so the map follows the chapters around the reading
+     * position.
      *
-     * It emits once the annotations are known, then each time the list or
-     * the page of one of them changes.
+     * The pages are found again when the list changes, when a layout pass
+     * completes, and when a chapter becomes ready or unloads. A chapter that
+     * is being laid out at that time gives its annotations no page. A change
+     * of an annotation's selection, color or note finds no page again.
+     *
+     * It emits once the annotations are known, then only when a page in it
+     * changes.
      */
-    pageByAnnotationId$: Observable<ReadonlyMap<string, AnnotationPage>>
+    pageByAnnotationId$: Observable<
+      ReadonlyMap<string, Pick<PageEntry, "itemIndex" | "pageIndex">>
+    >
     /**
      * Gives a new annotation of a selection, or of a page, its `id` and its
      * `cfi`: two strings and nothing else, so that the result can be stored

@@ -10,6 +10,7 @@ import {
   takeUntil,
   tap,
 } from "rxjs"
+import { createPageByAnnotationId } from "./annotations/createPageByAnnotationId.ts"
 import { ReaderHighlights } from "./annotations/ReaderHighlights.ts"
 import type { RuntimeAnnotation } from "./annotations/types.ts"
 import { report } from "./report.ts"
@@ -168,7 +169,10 @@ export const annotationsEnhancer =
         annotations$: runtimeAnnotations$,
         highlightTap$: readerHighlights.tap$,
         candidates$,
-        pageByAnnotationId$: readerHighlights.pageByAnnotationId$,
+        pageByAnnotationId$: createPageByAnnotationId(
+          reader,
+          runtimeAnnotations$,
+        ),
         isTargetWithinHighlight: readerHighlights.isTargetWithinHighlight,
         createAnnotation,
         update: settings.update.bind(settings),

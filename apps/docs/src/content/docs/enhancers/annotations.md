@@ -104,40 +104,43 @@ a highlight. `highlight` is the annotation of the tapped highlight.
 ## Finding the page of an annotation
 
 `reader.annotations.pageByAnnotationId$` gives the page of each annotation whose
-spine item has its document loaded, by annotation `id`: its spine item
-(`itemIndex`) and its page in that item (`pageIndex`). An annotation of an item
-that is not loaded is not in it. A range is on the page where it starts.
+page is known, by annotation `id`: its spine item (`itemIndex`) and its page in
+that item (`pageIndex`). A range is on the page where it starts. When the list
+holds an `id` more than once, its last entry wins.
 
-- A pre-paginated item has one page: its annotations are on page 0.
-- An annotation whose CFI names only its item is on the item's first page.
-- Any other annotation is on the page of the node its CFI points to, once its
-  item is laid out. One whose CFI does not resolve in its item has no page.
+It follows the rules of
+[`locateResource()`](/core-api/reader/locateresource#page-indexes), and loads
+nothing:
 
-The enhancer finds the pages on each loaded item, when the list changes and
-after each layout of the item. It loads no item to find them, so use it for
-what a reader can see, such as a mark on each annotated page:
+- An annotation of a pre-paginated item, or whose CFI names only its item, has
+  its page at once, whether its item is loaded or not.
+- Any other annotation is on the page of the node its CFI points to. It has a
+  page while its chapter is loaded and laid out, so the map follows the
+  chapters around the reading position. One whose CFI does not resolve in its
+  chapter has no page.
+
+The pages are found again when the list changes, when a layout pass completes,
+and when a chapter becomes ready or unloads: an annotation loses its page as
+soon as its chapter unloads. A chapter that is being laid out at that time
+gives its annotations no page until its layout completes. A change of an
+annotation's selection, color or note finds no page again. The observable
+emits once the annotations are known, then only when a page in the map
+changes.
+
+Use it for what the reader shows, such as a mark on each annotated page:
 
 ```typescript
-import { combineLatest, map } from "rxjs"
+import { map } from "rxjs"
 
-const annotatedPages$ = combineLatest([
-  reader.annotations.annotations$,
-  reader.annotations.pageByAnnotationId$,
-]).pipe(
-  map(([annotations, pageByAnnotationId]) =>
-    annotations.flatMap((annotation) => {
-      const page = pageByAnnotationId.get(annotation.id)
-
-      return page ? [page] : []
-    }),
-  ),
+const annotatedPages$ = reader.annotations.pageByAnnotationId$.pipe(
+  map((pageByAnnotationId) => Array.from(pageByAnnotationId.values())),
 )
 ```
 
-It emits once the annotations are known, then each time the list or the page of
-one of them changes. To locate an annotation whose item is not loaded, for a
+To find the page of an annotation whose chapter is not loaded, for example in a
 list of every annotation, use
-[`reader.locateResource()`](/core-api/reader/locateresource).
+[`reader.locateResource()`](/core-api/reader/locateresource) in its `load`
+mode.
 
 ## Blank pages and annotations
 
