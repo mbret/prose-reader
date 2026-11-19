@@ -12,8 +12,8 @@ import type { RuntimeAnnotation } from "./types.ts"
 describe("SpineItemHighlights", () => {
   /**
    * The highlights of an item live as long as its document is loaded. A
-   * document is loaded and released many times in a reading session, so what
-   * one of them holds after `destroy()` adds up.
+   * document is loaded and released many times in a reading session, so
+   * whatever a destroyed `SpineItemHighlights` still holds adds up.
    */
   it("holds no subscription and no element once destroyed", async () => {
     const reader = await mountAnnotationsReader()

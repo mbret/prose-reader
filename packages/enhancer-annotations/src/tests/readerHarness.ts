@@ -64,9 +64,10 @@ const manifest: Manifest = {
   })),
 }
 
-/** A cfi into the item at `itemIndex` of the test book. */
-export const createCfiOfItem = (itemIndex: number) =>
-  `epubcfi(/6/${(itemIndex + 1) * 2}!/4/2)`
+export const createCfiOfItem = (
+  itemIndex: number,
+  { elementIndex = 0 }: { elementIndex?: number } = {},
+) => `epubcfi(/6/${(itemIndex + 1) * 2}!/4/${(elementIndex + 1) * 2})`
 
 /** jsdom has neither observer, and nothing here depends on what they report. */
 class InertObserver {

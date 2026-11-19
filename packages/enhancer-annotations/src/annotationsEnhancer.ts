@@ -141,7 +141,10 @@ export const annotationsEnhancer =
       return highlight
     }
 
-    const renderAnnotations$ = merge(runtimeAnnotations$, reader.layout$).pipe(
+    const renderAnnotations$ = merge(
+      readerHighlights.highlightsChange$,
+      reader.layout$,
+    ).pipe(
       debounceTime(50),
       switchMap(() => readerHighlights.layout()),
     )

@@ -25,6 +25,11 @@ export class SpineItemHighlight extends DestroyableClass {
     event: Event
     highlight: RuntimeAnnotation
   }>
+  /**
+   * The cfi it draws, resolved once per load of the document. A new cfi
+   * needs a new highlight.
+   */
+  public readonly cfi: string
   /** Its cfi resolved into the item's document, while that is loaded. */
   private resolvedCfi$: Observable<
     ReturnType<Reader["cfi"]["resolveCfi"]> | undefined
@@ -34,16 +39,13 @@ export class SpineItemHighlight extends DestroyableClass {
     private spineItem: SpineItem,
     private containerElement: HTMLElement,
     private reader: Reader,
-    /**
-     * The annotation it draws, which its owner replaces when the annotation's
-     * data changes. Its cfi stays the same: the cfi is resolved once per load
-     * of the document, so a new cfi needs a new highlight.
-     */
+    /** The annotation it draws, with the latest data its owner gave it. */
     public annotation: RuntimeAnnotation,
     private isSelected: Observable<boolean>,
   ) {
     super()
 
+    this.cfi = annotation.cfi
     this.container = this.containerElement.ownerDocument.createElement("div")
     this.container.dataset.highlightContainer = this.annotation.id
     this.containerElement.appendChild(this.container)
@@ -61,7 +63,7 @@ export class SpineItemHighlight extends DestroyableClass {
     this.resolvedCfi$ = this.spineItem.watch("loadStatus").pipe(
       map(() =>
         this.spineItem.loadedDocument
-          ? this.reader.cfi.resolveCfi({ cfi: this.annotation.cfi })
+          ? this.reader.cfi.resolveCfi({ cfi: this.cfi })
           : undefined,
       ),
       shareReplay({ refCount: true, bufferSize: 1 }),

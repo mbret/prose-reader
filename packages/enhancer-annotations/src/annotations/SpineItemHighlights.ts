@@ -7,6 +7,7 @@ import {
   BehaviorSubject,
   defaultIfEmpty,
   distinctUntilChanged,
+  endWith,
   forkJoin,
   map,
   merge,
@@ -20,13 +21,18 @@ import type { RuntimeAnnotation } from "./types.ts"
 import { createAnnotationLayer, layoutAnnotationLayer } from "./utils.ts"
 
 /**
- * The highlights of a spine item's loaded document, in a layer over it: one
- * per annotation of the item, from its creation until `destroy()`.
+ * The highlights of a spine item's loaded document, one per annotation of
+ * the item, in a layer over it.
  */
 export class SpineItemHighlights extends DestroyableClass {
   private readonly layer: HTMLElement
-  /** One highlight per annotation of the item, in the order of the list. */
   private readonly highlights = new BehaviorSubject<SpineItemHighlight[]>([])
+
+  /**
+   * The highlights each time they change to match the annotations, ready to
+   * draw. Completes on `destroy()`.
+   */
+  public readonly highlights$ = this.highlights.asObservable()
 
   public readonly tap$: SpineItemHighlight["tap$"]
 
@@ -38,7 +44,7 @@ export class SpineItemHighlights extends DestroyableClass {
     annotations$: Observable<RuntimeAnnotation[]>,
     private readonly spineItem: SpineItem,
     private readonly reader: Reader,
-    private readonly selectedHighlight: Observable<string | undefined>,
+    private readonly selectedHighlightId$: Observable<string | undefined>,
   ) {
     super()
 
@@ -57,8 +63,14 @@ export class SpineItemHighlights extends DestroyableClass {
       takeUntil(this.destroy$),
     )
 
+    /**
+     * On `destroy()`, an empty list ends the pipeline, and its reconciliation
+     * destroys every highlight.
+     */
     annotations$
       .pipe(
+        takeUntil(this.destroy$),
+        endWith([]),
         scan<RuntimeAnnotation[], SpineItemHighlight[]>(
           (previousHighlights, annotations) =>
             this.reconcileHighlightsWithAnnotations(
@@ -67,18 +79,14 @@ export class SpineItemHighlights extends DestroyableClass {
             ),
           [],
         ),
-        takeUntil(this.destroy$),
       )
-      .subscribe((highlights) => {
-        this.highlights.next(highlights)
-      })
+      .subscribe(this.highlights)
   }
 
   /**
    * The highlights of `annotations`, one per id. An annotation keeps its
-   * highlight, given its new data, as long as its cfi is the same: the
-   * highlight resolved that cfi in the document. Every other highlight of
-   * `previousHighlights` is destroyed.
+   * highlight, given its new data, while its cfi is the same. Every other
+   * highlight of `previousHighlights` is destroyed.
    */
   private reconcileHighlightsWithAnnotations(
     previousHighlights: SpineItemHighlight[],
@@ -99,7 +107,7 @@ export class SpineItemHighlights extends DestroyableClass {
         annotation.id,
       )
 
-      if (previousHighlight?.annotation.cfi !== annotation.cfi) {
+      if (previousHighlight?.cfi !== annotation.cfi) {
         return this.createHighlight(annotation)
       }
 
@@ -117,7 +125,7 @@ export class SpineItemHighlights extends DestroyableClass {
   }
 
   private createHighlight(annotation: RuntimeAnnotation) {
-    const isSelected$ = this.selectedHighlight.pipe(
+    const isSelected$ = this.selectedHighlightId$.pipe(
       map((id) => id === annotation.id),
       distinctUntilChanged(),
     )
@@ -150,14 +158,6 @@ export class SpineItemHighlights extends DestroyableClass {
 
   destroy() {
     super.destroy()
-
-    const highlights = this.highlights.value
-
-    this.highlights.next([])
-
-    for (const highlight of highlights) {
-      highlight.destroy()
-    }
 
     this.layer.remove()
   }

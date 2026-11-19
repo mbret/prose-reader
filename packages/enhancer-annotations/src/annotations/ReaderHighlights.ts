@@ -7,12 +7,22 @@ import {
   merge,
   type Observable,
   switchMap,
+  takeUntil,
 } from "rxjs"
 import { SpineItemHighlights } from "./SpineItemHighlights.ts"
 import type { RuntimeAnnotation } from "./types.ts"
 
 export class ReaderHighlights extends DestroyableClass {
   private spineItemHighlights = new BehaviorSubject<SpineItemHighlights[]>([])
+
+  /**
+   * Emits the highlights of a loaded item each time they change to match its
+   * annotations, and once when its document loads: they are ready to draw.
+   */
+  public readonly highlightsChange$: SpineItemHighlights["highlights$"] =
+    this.spineItemHighlights.pipe(
+      switchMap((layers) => merge(...layers.map((layer) => layer.highlights$))),
+    )
 
   public tap$: SpineItemHighlights["tap$"]
 
@@ -76,6 +86,7 @@ export class ReaderHighlights extends DestroyableClass {
 
     this.tap$ = this.spineItemHighlights.pipe(
       switchMap((layers) => merge(...layers.map((layer) => layer.tap$))),
+      takeUntil(this.destroy$),
     )
   }
 

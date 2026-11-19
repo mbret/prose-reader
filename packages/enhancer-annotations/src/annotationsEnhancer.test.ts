@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
 import { BehaviorSubject, first, map } from "rxjs"
-import { describe, expect, it, vi } from "vitest"
+import { describe, expect, it, onTestFinished, vi } from "vitest"
 import {
   createCfiOfItem,
   EmptyRenderer,
@@ -85,9 +85,8 @@ describe("highlights", () => {
 
   /**
    * The highlights alive in the reader are the annotations of the list, at
-   * every step. An app that does not handle taps on highlights does not
-   * subscribe to `highlightTap$`, and one that does, does: neither changes
-   * which highlights exist.
+   * every step, whether or not anything subscribes to `highlightTap$`: an app
+   * that does not handle taps on highlights has no subscriber.
    */
   it.each([
     { highlightTapSubscriber: "no subscriber" },
@@ -99,7 +98,10 @@ describe("highlights", () => {
       const reader = await mountAnnotationsReader({ annotations$ })
 
       if (highlightTapSubscriber === "a subscriber") {
-        reader.annotations.highlightTap$.subscribe()
+        const highlightTapSubscription =
+          reader.annotations.highlightTap$.subscribe()
+
+        onTestFinished(() => highlightTapSubscription.unsubscribe())
       }
 
       expect(reader.spineItemsManager.get(0)?.value.loadStatus).toBe("loaded")
@@ -120,22 +122,71 @@ describe("highlights", () => {
     },
   )
 
-  it("keeps one highlight per annotation when the list gives its data again", async () => {
+  /**
+   * A highlight that stays keeps its drawing until the next one: a new
+   * highlight shows nothing until the enhancer draws it.
+   */
+  it("keeps the highlight of an annotation while its cfi is the same, and replaces it when its cfi changes", async () => {
     const annotations$ = new BehaviorSubject<Annotation[]>([
       createAnnotationOfFirstItem("first"),
     ])
     await mountAnnotationsReader({ annotations$ })
+
+    const readHighlightContainer = () =>
+      document.querySelector(`[data-highlight-container="first"]`)
+    const firstHighlightContainer = readHighlightContainer()
+
+    expect(firstHighlightContainer).not.toBeNull()
+
+    annotations$.next([
+      {
+        ...createAnnotationOfFirstItem("first"),
+        highlightColor: "blue",
+        notes: "A note",
+      },
+    ])
+    await vi.runAllTimersAsync()
+
+    expect(readHighlightContainer()).toBe(firstHighlightContainer)
+
+    annotations$.next([
+      {
+        ...createAnnotationOfFirstItem("first"),
+        cfi: createCfiOfItem(0, { elementIndex: 1 }),
+      },
+    ])
+    await vi.runAllTimersAsync()
+
+    expect(readHighlightedAnnotationIds()).toEqual(["first"])
+    expect(readHighlightContainer()).not.toBe(firstHighlightContainer)
+  })
+
+  it("reports a tap on a highlight with the latest data of its annotation", async () => {
+    const annotations$ = new BehaviorSubject<Annotation[]>([
+      createAnnotationOfFirstItem("first"),
+    ])
+    const reader = await mountAnnotationsReader({ annotations$ })
+    const tappedAnnotations: Annotation[] = []
+    const highlightTapSubscription = reader.annotations.highlightTap$.subscribe(
+      ({ highlight }) => tappedAnnotations.push(highlight),
+    )
+
+    onTestFinished(() => highlightTapSubscription.unsubscribe())
 
     annotations$.next([
       { ...createAnnotationOfFirstItem("first"), highlightColor: "blue" },
     ])
     await vi.runAllTimersAsync()
 
-    annotations$.next([
-      { ...createAnnotationOfFirstItem("first"), notes: "A note" },
-    ])
-    await vi.runAllTimersAsync()
+    document
+      .querySelector<HTMLElement>(`[data-highlight-container="first"]`)
+      ?.click()
 
-    expect(readHighlightedAnnotationIds()).toEqual(["first"])
+    expect(
+      tappedAnnotations.map(({ id, highlightColor }) => ({
+        id,
+        highlightColor,
+      })),
+    ).toEqual([{ id: "first", highlightColor: "blue" }])
   })
 })

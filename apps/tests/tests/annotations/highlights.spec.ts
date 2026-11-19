@@ -17,10 +17,7 @@ import { test } from "../utils/test"
 
 type HighlightsReader = Reader & AnnotationsEnhancerAPI
 
-/**
- * The page's window, as the scenario's `index.tsx` fills it. The page
- * functions cast to it, since the window's own type knows none of it.
- */
+/** The page's window, as the scenario's `index.tsx` fills it. */
 type ScenarioWindow = {
   annotations$: BehaviorSubject<Annotation[]>
 }
@@ -45,8 +42,8 @@ const openLongChapter = async (page: Page) => {
 }
 
 /**
- * Range cfis over the start of the first `count` paragraphs of the chapter,
- * one per paragraph.
+ * Range cfis over the first 20 characters of the first `count` paragraphs
+ * that open with more than 40 characters of text, one per paragraph.
  */
 const createRangeCfisOfParagraphs = (
   reader: JSHandle<HighlightsReader>,
@@ -97,6 +94,7 @@ const createRangeCfisOfParagraphs = (
 
 const setAnnotations = (page: Page, annotations: Annotation[]) =>
   page.evaluate((annotations) => {
+    // The page's window is untyped: this scenario's index.tsx sets annotations$.
     ;(window as unknown as ScenarioWindow).annotations$.next(annotations)
   }, annotations)
 
