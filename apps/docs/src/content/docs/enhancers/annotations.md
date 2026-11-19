@@ -1,6 +1,6 @@
 ---
 title: "Annotations enhancer"
-description: "Install @prose-reader/enhancer-annotations, create annotations with createAnnotation and store them as they are, find the pages that can hold one with candidates$, and avoid the root CFI you get on a blank page."
+description: "Install @prose-reader/enhancer-annotations, draw highlights from your annotations, create annotations with createAnnotation and store them as they are, find the pages that can hold one with candidates$, and avoid the root CFI you get on a blank page."
 sidebar:
   label: "Annotations"
 ---
@@ -13,6 +13,43 @@ npm install @prose-reader/enhancer-annotations @prose-reader/core @prose-reader/
 
 All three are peer dependencies: the enhancer runs against the reader your app
 creates, so it shares that reader's copies rather than bringing its own.
+
+## Highlights
+
+Give the enhancer your annotations as an observable, and it draws them:
+
+```ts
+import { createReader } from "@prose-reader/core"
+import {
+  type Annotation,
+  annotationsEnhancer,
+} from "@prose-reader/enhancer-annotations"
+import { BehaviorSubject } from "rxjs"
+
+const annotations$ = new BehaviorSubject<Annotation[]>([])
+
+const reader = annotationsEnhancer(createReader)({
+  manifest,
+  annotations: { annotations$ },
+})
+```
+
+Each list replaces the one before. The enhancer draws a highlight for each
+annotation whose CFI is a range, in the spine items whose document is loaded:
+
+* in its `highlightColor`, or yellow when it has none;
+* with a note icon when it has `notes`;
+* with a red dashed border when it is the first annotation of the list that
+  is `selected`.
+
+When an annotation leaves the list, its highlight goes. To change an
+annotation, give it as a new object: the enhancer ignores a list that holds
+the same objects as the one before. Its highlight is then drawn again with the
+new data.
+
+`reader.annotations.highlightTap$` emits `{ event, highlight }` when the user
+taps a highlight. `highlight` is a copy of its annotation that adds its
+`itemIndex`, so match it to yours by `id`.
 
 ## Creating an annotation
 
