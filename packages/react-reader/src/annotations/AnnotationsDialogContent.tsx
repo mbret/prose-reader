@@ -16,6 +16,8 @@ export const AnnotationsDialogContent = memo(
 
     return (
       <Tabs.Root
+        lazyMount
+        unmountOnExit
         value={tab}
         onValueChange={(e) => setTab(e.value as "bookmarks" | "annotations")}
       >

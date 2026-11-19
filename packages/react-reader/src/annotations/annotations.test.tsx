@@ -186,6 +186,16 @@ const getLoadedChapterIndexes = (reader: AppReader) =>
     .filter((item) => item.value.loadStatus !== "idle")
     .map((item) => item.index)
 
+const clickButton = async (isButton: (button: HTMLElement) => boolean) => {
+  const button = [...document.querySelectorAll(`button`)].find(isButton)
+
+  if (!button) throw new Error("no such button")
+
+  await act(async () => {
+    button.click()
+  })
+}
+
 describe("the chapters react-reader loads for annotations", () => {
   it("loads the same chapters with annotations away from the reading position as without", async () => {
     const loadedWithoutAnnotations = getLoadedChapterIndexes(
@@ -198,6 +208,33 @@ describe("the chapters react-reader loads for annotations", () => {
     expect({ loadedWithoutAnnotations, loadedWithAnnotations }).toEqual({
       loadedWithoutAnnotations: [0],
       loadedWithAnnotations: [0],
+    })
+  })
+
+  it("loads the chapters of the bookmarks the Annotations dialog lists while it is open, and releases them once it closes", async () => {
+    const reader = await openBook({
+      annotations: annotationsAwayFromTheFirstChapter,
+    })
+    const loadedBeforeOpening = getLoadedChapterIndexes(reader)
+
+    await clickButton(
+      (button) => button.getAttribute(`aria-label`) === `Bookmarks`,
+    )
+    await letTimePass()
+    const loadedWhileOpen = getLoadedChapterIndexes(reader)
+
+    await clickButton((button) => button.textContent === `Cancel`)
+    await letTimePass()
+
+    expect({
+      loadedBeforeOpening,
+      loadedWhileOpen,
+      loadedAfterClosing: getLoadedChapterIndexes(reader),
+    }).toEqual({
+      loadedBeforeOpening: [0],
+      // The highlight of chapter 7 is on the other tab.
+      loadedWhileOpen: [0, 5, 6],
+      loadedAfterClosing: [0],
     })
   })
 
