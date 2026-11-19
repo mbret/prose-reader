@@ -721,6 +721,19 @@ describe("drawing", () => {
 })
 
 describe("highlightTap$", () => {
+  it("completes when the reader is destroyed", async () => {
+    const { reader } = await mountReaderWithAnnotationsSubject({
+      appObservesTaps: false,
+    })
+    const highlightTapSubscription =
+      reader.annotations.highlightTap$.subscribe()
+
+    subscriptions.push(highlightTapSubscription)
+    reader.destroy()
+
+    expect(highlightTapSubscription.closed).toBe(true)
+  })
+
   it("emits the annotation of the tapped highlight, as the latest list gives it", async () => {
     const { reader, annotations$ } = await mountReaderWithAnnotationsSubject({
       appObservesTaps: false,

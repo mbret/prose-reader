@@ -39,7 +39,8 @@ export type AnnotationsEnhancerAPI = {
     annotations$: Observable<RuntimeAnnotation[]>
     /**
      * Emits `{ event, annotation }` when the user taps a highlight. Where
-     * highlights overlap, it reports the one drawn on top.
+     * highlights overlap, it reports the one drawn on top. Completes when the
+     * reader is destroyed.
      */
     highlightTap$: ReaderHighlights["tap$"]
     candidates$: Observable<boolean[]>

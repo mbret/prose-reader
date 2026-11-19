@@ -101,7 +101,7 @@ its highlight at once.
 `reader.annotations.highlightTap$` emits `{ event, annotation }` for each tap on
 a highlight. `annotation` is the annotation of the tapped highlight. Where
 highlights overlap, a tap reaches the highlight drawn on top, and the stream
-reports that one.
+reports that one. It completes when the reader is destroyed.
 
 ## Blank pages and annotations
 

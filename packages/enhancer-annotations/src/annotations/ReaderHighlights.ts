@@ -7,6 +7,7 @@ import {
   merge,
   type Observable,
   switchMap,
+  takeUntil,
 } from "rxjs"
 import { SpineItemHighlights } from "./SpineItemHighlights.ts"
 import type { RuntimeAnnotation } from "./types.ts"
@@ -89,6 +90,7 @@ export class ReaderHighlights {
           ),
         ),
       ),
+      takeUntil(this.reader.$.destroy$),
     )
   }
 
