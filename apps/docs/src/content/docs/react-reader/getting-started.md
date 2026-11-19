@@ -202,13 +202,14 @@ See [Search](/enhancers/search) to install enhancer
 See [Annotations](/enhancers/annotations) to install enhancer
 
 * Bookmarking a page is done by tapping the top right corner of the page.
+* `onAnnotationCreate` receives the bookmark: an `Annotation` with only an `id` and a `cfi`.
 
 ### Annotations
 
 See [Annotations](/enhancers/annotations) to install enhancer
 
-* Pass your annotations to `ReactReaderProvider` as `annotations`, and keep them up to date from `onAnnotationCreate`, `onAnnotationUpdate` and `onAnnotationDelete`.
-* `onAnnotationCreate` receives an `Annotation` you can store as it is: its `id` and `cfi`, and for a highlight its `highlightColor` and `notes`. A bookmark has only an `id` and a `cfi`.
+* Pass your annotations to `ReactReaderProvider` as `annotations`. Add the one that `onAnnotationCreate` reports. Merge what `onAnnotationUpdate` reports into the annotation with that `id`. Remove the annotation whose `id` `onAnnotationDelete` reports.
+* `onAnnotationCreate` receives an `Annotation` you can store as it is. For a highlight, it has an `id`, a `cfi`, a `highlightColor` and `notes`.
 
 ### Audio / Audiobooks { #audio-audiobooks }
 

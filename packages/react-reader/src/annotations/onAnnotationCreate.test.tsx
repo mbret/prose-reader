@@ -29,23 +29,12 @@ import { AnnotateControls } from "./AnnotateControls.tsx"
 import { AnnotationDrawer } from "./AnnotationDrawer.tsx"
 import { useBookmarkOnCornerTap } from "./bookmarks/useBookmarkOnCornerTap.ts"
 
-/**
- * An app stores what `onAnnotationCreate` reports, in a database or through a
- * message, which copy a value with the structured clone algorithm. A browser
- * cannot clone an event or a selection. react-reader reports an `Annotation`:
- * the id and the cfi the reader gives it, and the color and the notes of a
- * highlight.
- *
- * The tests compare the keys of what is reported, not whether it clones:
- * jsdom clones its events like plain objects.
- */
-
 /** jsdom has no layout, so every element reports this size. */
 const viewport = { width: 400, height: 600 }
 
 /**
  * Renders each item as a text document in a frame, the way the html renderer
- * does, so that its text can be selected. Its body holds one paragraph.
+ * does, so that its text can be selected.
  */
 class TextDocumentRenderer extends DocumentRenderer {
   onCreateDocument() {
@@ -144,6 +133,14 @@ function BookmarkOnCornerTap() {
 const waitForInAct = <Result,>(assertion: () => Result) =>
   act(() => vi.waitFor(assertion))
 
+/**
+ * An app stores what `onAnnotationCreate` reports, in IndexedDB or through
+ * `postMessage`, which copy a value with the structured clone algorithm. A
+ * browser cannot clone an event or a selection.
+ *
+ * The tests compare the keys of what is reported, not whether it clones:
+ * jsdom clones its events like plain objects.
+ */
 describe("onAnnotationCreate", () => {
   let container: HTMLDivElement
   let root: ReturnType<typeof createRoot>
@@ -238,6 +235,28 @@ describe("onAnnotationCreate", () => {
     })
   }
 
+  /** Types `notes` in the Annotation field of the drawer, as a user does. */
+  const typeNotes = async (notes: string) => {
+    const field = await waitForInAct(() => {
+      const found = document.querySelector("textarea")
+
+      if (!found) throw new Error("the drawer has no Annotation field")
+
+      return found
+    })
+    // React reads the value through the setter of the prototype, not the
+    // one of the element, which it overrides to track changes.
+    const setValue = Object.getOwnPropertyDescriptor(
+      HTMLTextAreaElement.prototype,
+      "value",
+    )?.set
+
+    await act(async () => {
+      setValue?.call(field, notes)
+      field.dispatchEvent(new Event("input", { bubbles: true }))
+    })
+  }
+
   /** Taps the top right corner of the first page, with the mouse. */
   const tapTopRightCorner = async () => {
     const target = reader.context.value.rootElement
@@ -279,21 +298,27 @@ describe("onAnnotationCreate", () => {
     Object.assign(globalThis, { IS_REACT_ACT_ENVIRONMENT: false })
   })
 
-  it("reports a highlight made from the drawer with its id, cfi, color and notes, and nothing of the selection", async () => {
+  it("reports a highlight made from the drawer with its id, the range of the selection, its color and notes, and nothing of the selection", async () => {
     const { onAnnotationCreate } = await renderAnnotationCreation()
 
     await selectTextAndRelease()
     await clickButton("Annotate")
+    await typeNotes("A note")
     await clickButton("Highlight")
 
     await waitForInAct(() =>
       expect(onAnnotationCreate).toHaveBeenCalledTimes(1),
     )
-    expect(onAnnotationCreate.mock.calls[0]?.[0]).toStrictEqual({
+    const reported = onAnnotationCreate.mock.calls[0]?.[0]
+    expect(reported).toStrictEqual({
       id: expect.any(String),
       cfi: expect.any(String),
       highlightColor: "rgba(216, 191, 216, 1)",
-      notes: "",
+      notes: "A note",
+    })
+    expect(reader.cfi.parseCfi(reported?.cfi ?? "")).toMatchObject({
+      itemIndex: 0,
+      isCfiRange: true,
     })
   })
 

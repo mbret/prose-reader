@@ -1,6 +1,6 @@
 ---
 title: "Annotations enhancer"
-description: "Install @prose-reader/enhancer-annotations, create annotations you can store as they are with createAnnotation, find the pages that can hold one with candidates$, and avoid the root CFI you get on a blank page."
+description: "Install @prose-reader/enhancer-annotations, create annotations with createAnnotation and store them as they are, find the pages that can hold one with candidates$, and avoid the root CFI you get on a blank page."
 sidebar:
   label: "Annotations"
 ---
@@ -16,34 +16,35 @@ creates, so it shares that reader's copies rather than bringing its own.
 
 ## Creating an annotation
 
-`reader.annotations.createAnnotation()` gives a new annotation its `id` and its `cfi`. Pass it a selection with the index of its spine item, or the absolute index of a page:
+`reader.annotations.createAnnotation()` gives a new annotation its `id` and its `cfi`. Pass it one of two things:
+
+- a selection and the index of its spine item, as `reader.selection.getSelection()` gives them, for a highlight;
+- the absolute index of a page, for a bookmark.
 
 ```typescript
-// A highlight of what the user selected
-const selection = reader.selection.getSelection()
+const currentSelection = reader.selection.getSelection()
 
-if (selection) {
-  const annotation = reader.annotations.createAnnotation({
-    itemIndex: selection.itemIndex,
-    selection: selection.selection,
+if (currentSelection) {
+  const highlight = reader.annotations.createAnnotation({
+    itemIndex: currentSelection.itemIndex,
+    selection: currentSelection.selection,
   })
 
-  if (annotation) {
-    saveAnnotation({ ...annotation, highlightColor: "yellow", notes: "" })
+  if (highlight) {
+    saveAnnotation({ ...highlight, highlightColor: "yellow", notes: "" })
   }
 }
 
-// A bookmark of a page
 const bookmark = reader.annotations.createAnnotation({ absolutePageIndex })
 ```
 
-It returns `{ id, cfi }` and nothing else, whatever else the parameter holds, so you can store the result as it is, in IndexedDB for example. Add the other fields of your annotation to it, such as `highlightColor` and `notes`.
+It returns `{ id, cfi }`: two strings and nothing else. Add the other fields of your annotation to it, such as `highlightColor` and `notes`, and store the result as it is: in IndexedDB, for example.
 
 - For a selection, the CFI is the range of the selection.
-- For a page, the CFI is the first visible node of the page, or the root of its spine item when the page has none: see [Blank pages and annotations](#blank-pages-and-annotations).
-- It returns `undefined` when the reader has no such spine item or page.
+- For a page, the CFI points to the first visible node of the page, or to the root of its spine item when the page has none: see [Blank pages and annotations](#blank-pages-and-annotations).
+- It returns `undefined` when the reader has no such spine item or page, or when the selection holds no range.
 
-The result holds no page index, because the page of an annotation changes with the layout: see [Danger of persisting weak references](/learn/annotations#danger-of-persisting-weak-references).
+Do not store a page index with an annotation: its page changes with the layout and the device. See [Danger of persisting weak references](/learn/annotations#danger-of-persisting-weak-references).
 
 ## Blank pages and annotations
 

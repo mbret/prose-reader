@@ -145,15 +145,12 @@ export const AnnotationDrawer = memo(() => {
               onClick={() => {
                 onClose()
 
-                const annotation = reader?.annotations.createAnnotation({
-                  itemIndex: selection.itemIndex,
-                  selection: selection.selection,
-                })
+                const annotation =
+                  reader?.annotations.createAnnotation(selection)
 
                 if (annotation) {
                   onAnnotationCreate?.({
-                    id: annotation.id,
-                    cfi: annotation.cfi,
+                    ...annotation,
                     highlightColor: selectedColor,
                     notes: contents,
                   })

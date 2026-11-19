@@ -38,7 +38,7 @@ class EmptyRenderer extends DocumentRenderer {
 
 /**
  * Renders each item as a text document in a frame, the way the html renderer
- * does, so that its text can be selected. Its body holds one paragraph.
+ * does, so that its text can be selected.
  */
 class TextDocumentRenderer extends EmptyRenderer {
   onCreateDocument() {
@@ -89,18 +89,18 @@ const createLayoutHold = () => {
 /** Two single pages, each a candidate once laid out. */
 const manifest: Manifest = {
   filename: "test",
-  mediaType: "application/vnd.comicbook+zip",
+  mediaType: "application/epub+zip",
   title: "test",
   readingDirection: "ltr",
   renditionLayout: "pre-paginated",
   renditionSpread: "none",
   items: [],
   spineItems: [0, 1].map((index) => ({
-    href: `/page_${index}.jpg`,
-    containerUri: `page_${index}.jpg`,
+    href: `/page_${index}.xhtml`,
+    containerUri: `page_${index}.xhtml`,
     id: `${index}`,
     index,
-    mediaType: "image/jpeg",
+    mediaType: "application/xhtml+xml",
     progressionWeight: 0.5,
     renditionLayout: "pre-paginated",
   })),
@@ -234,21 +234,19 @@ const selectTextAndRelease = async (
 }
 
 /**
- * An app stores what `createAnnotation` returns, in a database or through a
- * message, which copy a value with the structured clone algorithm. A browser
- * cannot clone an event or a selection. The result is an `Annotation`, an id
- * and a cfi, whatever else the parameter holds. What the app adds, such as a
- * highlight color, it adds to that result.
+ * An app stores what `createAnnotation` returns, in IndexedDB or through
+ * `postMessage`, which copy a value with the structured clone algorithm. A
+ * browser cannot clone an event or a selection, so the result holds an id
+ * and a cfi only.
  *
  * The tests compare the keys of the result, not whether it clones: jsdom
- * clones its events like plain objects, so a clone would succeed here with the
- * event in the result.
+ * clones its events like plain objects, so a clone would succeed here with
+ * the event in the result.
  */
 describe("createAnnotation", () => {
   it("annotates a selection with its id and a range cfi, and nothing of the selection itself", async () => {
     const reader = await mountAnnotationsReader(TextDocumentRenderer)
-    // What react-reader passes: the value the reader holds for a selection,
-    // which carries the event that ended it.
+    // The whole value the reader holds, event included, as an app may pass it.
     const selection = await selectTextAndRelease(reader, 0)
 
     const annotation = reader.annotations.createAnnotation(selection)
@@ -278,5 +276,18 @@ describe("createAnnotation", () => {
       itemIndex: 1,
       isCfiRange: false,
     })
+  })
+
+  /**
+   * The selection the reader holds is the live one of the document. The user
+   * can clear it before the app annotates it.
+   */
+  it("annotates nothing when the selection holds no range", async () => {
+    const reader = await mountAnnotationsReader(TextDocumentRenderer)
+    const selected = await selectTextAndRelease(reader, 0)
+
+    selected.selection.removeAllRanges()
+
+    expect(reader.annotations.createAnnotation(selected)).toBeUndefined()
   })
 })
