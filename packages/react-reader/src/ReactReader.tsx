@@ -15,8 +15,7 @@ import {
 import { AnnotateControls } from "./annotations/AnnotateControls.tsx"
 import { AnnotationDrawer } from "./annotations/AnnotationDrawer.tsx"
 import { AnnotationsDialog } from "./annotations/AnnotationsDialog.tsx"
-import { BookmarkPageMarkers } from "./annotations/bookmarks/BookmarkPageMarkers.tsx"
-import { useBookmarkOnCornerTap } from "./annotations/bookmarks/useBookmarkOnCornerTap.ts"
+import { PageBookmarks } from "./annotations/bookmarks/PageBookmarks.tsx"
 import { usePreventInteractionOnSelection } from "./annotations/usePreventInteractionOnSelection.ts"
 import { Spine } from "./common/Spine.tsx"
 import { Toaster } from "./components/ui/toaster.tsx"
@@ -46,20 +45,13 @@ import { ZoomControls } from "./zoom/ZoomControls.tsx"
 
 const ANIMATION_NAME_IN_OUT = { _open: "fade-in", _closed: "fade-out" }
 
-const BookmarksEffects = memo(() => {
-  // Intensive
-  useBookmarkOnCornerTap()
-
-  return null
-})
-
 const Effects = memo(() => {
   useInterceptExternalLinks()
   useNotifications()
   useQuickMenuToggleGesture()
   usePreventInteractionOnSelection()
 
-  return <BookmarksEffects />
+  return null
 })
 
 const InnerReactReader = memo(
@@ -133,7 +125,7 @@ const InnerReactReader = memo(
         >
           {children}
           <Spine>
-            <BookmarkPageMarkers />
+            <PageBookmarks />
           </Spine>
           <FloatingProgress />
           <SpreadRotationHint />

@@ -27,6 +27,7 @@ import { ReaderContextProvider } from "../context/ReaderContextProvider.tsx"
 import { ReaderInContext } from "../tests/ReaderInContext.tsx"
 import { AnnotateControls } from "./AnnotateControls.tsx"
 import { AnnotationDrawer } from "./AnnotationDrawer.tsx"
+import type { BookmarkIdByItemPage } from "./bookmarks/useBookmarkIdByItemPage.ts"
 import { useBookmarkOnCornerTap } from "./bookmarks/useBookmarkOnCornerTap.ts"
 
 /** jsdom has no layout, so every element reports this size. */
@@ -120,8 +121,11 @@ const createAppReader = gesturesEnhancer(annotationsEnhancer(createReader))
 
 type AppReader = ReturnType<typeof createAppReader>
 
+/** No page has a bookmark yet. */
+const noBookmarks: BookmarkIdByItemPage = new Map()
+
 function BookmarkOnCornerTap() {
-  useBookmarkOnCornerTap()
+  useBookmarkOnCornerTap(noBookmarks)
 
   return null
 }
