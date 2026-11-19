@@ -7,6 +7,11 @@ import {
 import { BehaviorSubject, EMPTY, first, map, of } from "rxjs"
 import { afterEach, beforeAll, describe, expect, it, vi } from "vitest"
 import { annotationsEnhancer } from "./annotationsEnhancer.ts"
+import type { AnnotationsEnhancerAPI } from "./types.ts"
+
+type CreateAnnotationParams = Parameters<
+  AnnotationsEnhancerAPI["annotations"]["createAnnotation"]
+>[0]
 
 /** jsdom has no layout, so every element reports this size. */
 const viewport = { width: 400, height: 600 }
@@ -282,6 +287,25 @@ describe("createAnnotation", () => {
    * The selection the reader holds is the live one of the document. The user
    * can clear it before the app annotates it.
    */
+  it("takes a selection with its spine item, or a page, and nothing between", () => {
+    const selection = document.getSelection()
+
+    if (!selection) throw new Error("the document has no selection")
+
+    const ofSelection: CreateAnnotationParams = { itemIndex: 0, selection }
+    const ofPage: CreateAnnotationParams = { absolutePageIndex: 0 }
+    // @ts-expect-error a page with a selection is neither form
+    const ofPageWithSelection: CreateAnnotationParams = {
+      absolutePageIndex: 0,
+      selection,
+    }
+    // @ts-expect-error a spine item with no selection is neither form
+    const ofItem: CreateAnnotationParams = { itemIndex: 0 }
+
+    // The type check is the test: the values only exist to be checked.
+    expect([ofSelection, ofPage, ofPageWithSelection, ofItem]).toHaveLength(4)
+  })
+
   it("annotates nothing when the selection holds no range", async () => {
     const reader = await mountAnnotationsReader(TextDocumentRenderer)
     const selected = await selectTextAndRelease(reader, 0)

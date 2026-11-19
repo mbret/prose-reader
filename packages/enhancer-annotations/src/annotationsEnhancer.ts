@@ -106,23 +106,21 @@ export const annotationsEnhancer =
     }: AnnotateAbsolutePageParams) => {
       const pageEntry =
         reader.spine.pages.fromAbsolutePageIndex(absolutePageIndex)
-      const spineItem = reader.spineItemsManager.get(pageEntry?.itemIndex)
 
-      if (!pageEntry || !spineItem) return undefined
+      if (!pageEntry) return undefined
 
-      return pageEntry.firstVisibleNode
-        ? reader.cfi.generateCfiForSpineItemPage({
-            spineItem: spineItem.item,
-            pageNode: pageEntry.firstVisibleNode,
-          })
-        : reader.cfi.generateRootCfi(spineItem.item)
+      const spineItem = reader.spineItemsManager.get(pageEntry.itemIndex)
+
+      return spineItem
+        ? reader.cfi.generateCfiForPage(spineItem.item, pageEntry)
+        : undefined
     }
 
     const createAnnotation = (
       params: AnnotateSelectionParams | AnnotateAbsolutePageParams,
     ): Pick<Annotation, "id" | "cfi"> | undefined => {
       const cfi =
-        "selection" in params
+        params.selection !== undefined
           ? generateCfiForSelection(params)
           : generateCfiForAbsolutePage(params)
 

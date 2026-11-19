@@ -12,16 +12,20 @@ export interface Annotation {
 
 /**
  * Text a user selected in a spine item, as `reader.selection.getSelection()`
- * gives it.
+ * gives it. `selection` must be in the document of the spine item at
+ * `itemIndex`.
  */
 export type AnnotateSelectionParams = {
   itemIndex: number
   selection: Selection
+  absolutePageIndex?: never
 }
 
 /** A page, by its absolute index, as for a bookmark. */
 export type AnnotateAbsolutePageParams = {
   absolutePageIndex: number
+  itemIndex?: never
+  selection?: never
 }
 
 export type AnnotationsEnhancerOptions = {

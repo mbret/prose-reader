@@ -76,7 +76,7 @@ class TextDocumentRenderer extends DocumentRenderer {
  */
 const manifest: Manifest = {
   filename: "test",
-  mediaType: "application/vnd.comicbook+zip",
+  mediaType: "application/epub+zip",
   title: "test",
   readingDirection: "ltr",
   renditionLayout: "pre-paginated",
