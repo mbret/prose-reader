@@ -8,7 +8,7 @@ import { defineConfig } from "vite"
 export default defineConfig(({ mode }) => ({
   build: {
     lib: {
-      entry: resolve(import.meta.dirname, "src/bundleEntry.ts"),
+      entry: resolve(import.meta.dirname, "src/index.ts"),
       fileName: `index`,
       // ES modules only, no UMD (see config/vite-lib.mts for the rationale).
       formats: ["es"],
