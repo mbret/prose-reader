@@ -47,9 +47,9 @@ annotation, give it as a new object: the enhancer ignores a list that holds
 the same objects as the one before. Its highlight is then drawn again with the
 new data.
 
-`reader.annotations.highlightTap$` emits `{ event, highlight }` when the user
-taps a highlight. `highlight` is a copy of its annotation that adds its
-`itemIndex`, so match it to yours by `id`.
+`reader.annotations.highlightTap$` emits `{ event, annotation }` when the user
+taps a highlight. `annotation` is a copy of yours that adds its `itemIndex`, so
+match it to yours by `id`. The stream completes when the reader is destroyed.
 
 ## Blank pages and annotations
 

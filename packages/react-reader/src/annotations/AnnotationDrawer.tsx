@@ -92,11 +92,11 @@ export const AnnotationDrawer = memo(() => {
   const onOpenDrawerOnTap = useCallback(
     function openDrawerOnTap() {
       return reader?.annotations.highlightTap$.pipe(
-        tap(({ highlight }) => {
+        tap(({ annotation }) => {
           context.update((state) => ({
             ...state,
             selectedHighlight: {
-              highlight,
+              highlight: annotation,
             },
           }))
         }),

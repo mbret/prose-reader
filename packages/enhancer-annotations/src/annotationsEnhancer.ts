@@ -67,7 +67,7 @@ export const annotationsEnhancer =
       }),
     )
 
-    const selectedHighlight$ = runtimeAnnotations$.pipe(
+    const selectedHighlightId$ = runtimeAnnotations$.pipe(
       map(
         (annotations) =>
           annotations.find((annotation) => annotation.selected)?.id,
@@ -79,7 +79,7 @@ export const annotationsEnhancer =
     const readerHighlights = new ReaderHighlights(
       reader,
       runtimeAnnotations$,
-      selectedHighlight$,
+      selectedHighlightId$,
     )
 
     const resolveItemInformation = (params: {

@@ -38,7 +38,7 @@ export class SpineItemHighlights extends DestroyableClass {
   /** The taps on the highlights, one per highlight under the tap. */
   public readonly tap$: Observable<{
     event: Event
-    highlight: RuntimeAnnotation
+    annotation: RuntimeAnnotation
   }>
 
   /**
@@ -65,7 +65,7 @@ export class SpineItemHighlights extends DestroyableClass {
       mergeMap((event) =>
         this.getHighlightsForTarget(event.target).map((highlight) => ({
           event,
-          highlight: highlight.annotation,
+          annotation: highlight.annotation,
         })),
       ),
       takeUntil(this.destroy$),

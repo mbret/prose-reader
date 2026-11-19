@@ -31,6 +31,10 @@ export type AnnotationsEnhancerAPI = {
   annotations: {
     update: (settings: Partial<AnnotationsEnhancerOptions>) => void
     annotations$: Observable<RuntimeAnnotation[]>
+    /**
+     * Emits `{ event, annotation }` when the user taps a highlight, once per
+     * highlight under the tap. Completes when the reader is destroyed.
+     */
     highlightTap$: ReaderHighlights["tap$"]
     candidates$: Observable<boolean[]>
     createAnnotation: (
