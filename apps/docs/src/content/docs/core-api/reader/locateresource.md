@@ -32,7 +32,9 @@ type ProseParsedCfi = {
 export type LocatableResource = SpineItem | CfiLocatableResource
 
 export type ConsolidatedResource = CfiLocatableResource & ProseParsedCfi & {
+  // The page of its spine item the resource is on, once it is known.
   itemPageIndex?: number
+  // The page of the book the resource is on, known with itemPageIndex.
   absolutePageIndex?: number
   // The node the CFI points to, while its item is loaded.
   node: Node | null
@@ -50,9 +52,20 @@ locateResource(resource, options)
 
 ### Parameters
 
-* `resource`: An object or array of objects that extends `LocatableResource`. When using a cfi, all resources sharing the same cfi will share the same consolidation stream.
+* `resource`: An object or array of objects that extends `LocatableResource`. Resources at the same cfi share one consolidation, and each comes back with its own `resource`. A spine item is located at the cfi of its start.
 * `options?` :
   * `mode?:`"shallow" | "load" : Default `load`. Shallow means that the item will not be loaded if needed. Load keeps a reflowable item loaded while you are subscribed, through [`keepSpineItemLoaded()`](/core-api/reader/keepspineitemloaded), and releases its hold a second after you unsubscribe. Neither mode loads a pre-paginated item: its page indexes need no document, and its `node`, `startOffset` and `range` resolve only while it is loaded for another reason, such as being around the reading position. By using shallow you avoid loading documents excessively but you will only get the values as precise as possible with the current reader state.
+
+### Page indexes
+
+`itemPageIndex` and `absolutePageIndex` are given only when the reader knows them:
+
+* A spine item, a CFI that names only its item, and a CFI of a pre-paginated item are on the first page of their item. Their page is known at once, loaded or not.
+* Any other CFI of a reflowable item is on the page of the node it points to. Its page is known while its item is loaded and laid out and the CFI resolves in it, and `undefined` otherwise.
+
+In the `shallow` mode, a CFI of a reflowable item that is not loaded therefore has no page. It gets one when its item loads, for example because the reader goes there, and loses it as soon as its item unloads. In the `load` mode, it has no page until its item has loaded.
+
+The values follow the last completed layout. While a new layout of the item is pending, after a resize or a change of font size for example, they are those of the layout before it, and the resource is located again once the layout completes. [`reader.spine.isLayoutCurrentFor()`](/core-api/spine#islayoutcurrentfor) tells whether a layout of the item is pending.
 
 ### Returns
 
