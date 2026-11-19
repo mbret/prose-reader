@@ -201,7 +201,8 @@ See [Search](/enhancers/search) to install enhancer
 
 See [Annotations](/enhancers/annotations) to install enhancer
 
-* Bookmarking a page is done by tapping the top right corner of the page.
+* Bookmarking a page is done by tapping the top right corner of the page. A second tap there removes the bookmark, with its note if it has one.
+* The Bookmarks tab of the Annotations dialog lists the page bookmarks, and the Annotations tab lists the highlights. See [Annotations](/learn/annotations#avoid-user-confusion-or-frustration).
 * `onAnnotationCreate` receives the bookmark: an `Annotation` with only an `id` and a `cfi`.
 
 ### Annotations
