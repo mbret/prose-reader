@@ -73,17 +73,18 @@ jobs:
       - name: Check that npm trusts this workflow for every package
         shell: bash
         run: |
-          id_token=$(curl --fail --silent --show-error \
-            --header "Authorization: Bearer ${ACTIONS_ID_TOKEN_REQUEST_TOKEN}" \
-            "${ACTIONS_ID_TOKEN_REQUEST_URL}&audience=npm:registry.npmjs.org" | jq --raw-output .value)
-          echo "::add-mask::${id_token}"
-
           untrusted=0
           for manifest in packages/*/package.json; do
             if [ "$(jq --raw-output '.private // false' "$manifest")" = true ]; then
               continue
             fi
             name=$(jq --raw-output .name "$manifest")
+            # A new OIDC token for each exchange, as lerna requests one for
+            # each package, so npm never receives the same token twice.
+            id_token=$(curl --fail --silent --show-error \
+              --header "Authorization: Bearer ${ACTIONS_ID_TOKEN_REQUEST_TOKEN}" \
+              "${ACTIONS_ID_TOKEN_REQUEST_URL}&audience=npm:registry.npmjs.org" | jq --raw-output .value)
+            echo "::add-mask::${id_token}"
             # The response holds an npm token, which is discarded unread.
             status=$(curl --silent --output /dev/null --write-out '%{http_code}' --request POST \
               --header "Authorization: Bearer ${id_token}" \
