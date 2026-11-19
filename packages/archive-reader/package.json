@@ -21,8 +21,7 @@
     "directory": "packages/archive-reader"
   },
   "type": "module",
-  "main": "./dist/index/index.cjs",
-  "module": "./dist/index/index.js",
+  "main": "./dist/index/index.js",
   "publishConfig": {
     "access": "public",
     "registry": "https://registry.npmjs.org/"
@@ -31,38 +30,32 @@
     ".": {
       "prose-source": "./src/index.ts",
       "types": "./dist/index.d.ts",
-      "import": "./dist/index/index.js",
-      "require": "./dist/index/index.cjs"
+      "default": "./dist/index/index.js"
     },
     "./archives/createArchiveFromJszip": {
       "prose-source": "./src/archives/createArchiveFromJszip.ts",
       "types": "./dist/archives/createArchiveFromJszip.d.ts",
-      "import": "./dist/archives/createArchiveFromJszip/index.js",
-      "require": "./dist/archives/createArchiveFromJszip/index.cjs"
+      "default": "./dist/archives/createArchiveFromJszip/index.js"
     },
     "./archives/createArchiveFromLibArchive": {
       "prose-source": "./src/archives/createArchiveFromLibArchive.ts",
       "types": "./dist/archives/createArchiveFromLibArchive.d.ts",
-      "import": "./dist/archives/createArchiveFromLibArchive/index.js",
-      "require": "./dist/archives/createArchiveFromLibArchive/index.cjs"
+      "default": "./dist/archives/createArchiveFromLibArchive/index.js"
     },
     "./archives/createArchiveFromUnzipper": {
       "prose-source": "./src/archives/createArchiveFromUnzipper.ts",
       "types": "./dist/archives/createArchiveFromUnzipper.d.ts",
-      "import": "./dist/archives/createArchiveFromUnzipper/index.js",
-      "require": "./dist/archives/createArchiveFromUnzipper/index.cjs"
+      "default": "./dist/archives/createArchiveFromUnzipper/index.js"
     },
     "./archives/createArchiveFromNodeUnrarJs": {
       "prose-source": "./src/archives/createArchiveFromNodeUnrarJs.ts",
       "types": "./dist/archives/createArchiveFromNodeUnrarJs.d.ts",
-      "import": "./dist/archives/createArchiveFromNodeUnrarJs/index.js",
-      "require": "./dist/archives/createArchiveFromNodeUnrarJs/index.cjs"
+      "default": "./dist/archives/createArchiveFromNodeUnrarJs/index.js"
     },
     "./archives/createArchiveFromZipJs": {
       "prose-source": "./src/archives/createArchiveFromZipJs.ts",
       "types": "./dist/archives/createArchiveFromZipJs.d.ts",
-      "import": "./dist/archives/createArchiveFromZipJs/index.js",
-      "require": "./dist/archives/createArchiveFromZipJs/index.cjs"
+      "default": "./dist/archives/createArchiveFromZipJs/index.js"
     }
   },
   "types": "./dist/index.d.ts",

@@ -11,6 +11,8 @@ npm install @prose-reader/core @prose-reader/streamer @prose-reader/archive-read
 
 You don’t absolutely need `@prose-reader/streamer` and `@prose-reader/archive-reader` installed to run the reader, but they are very useful to standardize and feed books to the engine (`archive-reader` turns your source into an archive, `streamer` serves it).  `rxjs` is a peer-dependency of prose-reader and needs to be installed alongside, at 7.5.5 or any later 7.x (`^7.5.5`). 7.5.5 is the first rxjs whose `exports` include its type declarations, which TypeScript needs to resolve them with `bundler`, `node16` or `nodenext` module resolution.
 
+Every `@prose-reader/*` package is published as an ES module only. `import` and bundlers, Metro included, load it directly. On Node, `require()` needs the `require(esm)` support that landed unflagged in Node 22.12, so the packages require `>=22.12`. TypeScript 5.0 or later resolves their types with `bundler`, `node16` or `nodenext` module resolution.
+
 ## Create your reader & load your book { #create-your-reader-and-load-your-book }
 
 On your html file you need to define a container for the reader. We will be using a full screen reader but you can have any dimensions.

@@ -19,13 +19,17 @@
     "directory": "packages/react-reader"
   },
   "type": "module",
+  "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
   "publishConfig": {
     "access": "public",
     "registry": "https://registry.npmjs.org/"
   },
   "exports": {
-    ".": "./dist/index.js",
+    ".": {
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
+    },
     "./index.css": "./dist/index.css"
   },
   "license": "MIT",
@@ -68,5 +72,8 @@
     "reactjrx": "6.x",
     "rxjs": "^7.5.5",
     "screenfull": "^6.0.2"
+  },
+  "engines": {
+    "node": ">=22.12"
   }
 }
