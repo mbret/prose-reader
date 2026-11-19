@@ -327,8 +327,8 @@ const recordTappedAnnotations = (reader: AnnotationsReader) => {
   const tappedAnnotations: Annotation[] = []
 
   subscriptions.push(
-    reader.annotations.highlightTap$.subscribe(({ highlight }) => {
-      tappedAnnotations.push(highlight)
+    reader.annotations.highlightTap$.subscribe(({ annotation }) => {
+      tappedAnnotations.push(annotation)
     }),
   )
 
