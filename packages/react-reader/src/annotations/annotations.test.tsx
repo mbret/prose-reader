@@ -159,25 +159,29 @@ const openBook = async ({
     return reader
   }
 
-  await act(async () => {
-    root.render(
-      <ChakraProvider value={defaultSystem}>
-        <ReactReaderProvider
-          createReader={createBookReader}
-          annotations={annotations}
-        >
-          <ReactReader quickMenuOpen />
-        </ReactReaderProvider>
-      </ChakraProvider>,
-    )
-  })
+  /** Renders the app with these annotations, as an app does when they change. */
+  const setAnnotations = (annotations: Annotation[]) =>
+    act(async () => {
+      root.render(
+        <ChakraProvider value={defaultSystem}>
+          <ReactReaderProvider
+            createReader={createBookReader}
+            annotations={annotations}
+          >
+            <ReactReader quickMenuOpen />
+          </ReactReaderProvider>
+        </ChakraProvider>,
+      )
+    })
+
+  await setAnnotations(annotations)
   await letTimePass()
 
   if (!reader) throw new Error("react-reader created no reader")
 
   expect(reader.pagination.state.isSettled).toBe(true)
 
-  return reader
+  return { reader, setAnnotations }
 }
 
 /**
@@ -204,10 +208,11 @@ const clickButton = async (isButton: (button: HTMLElement) => boolean) => {
 describe("the chapters react-reader loads for annotations", () => {
   it("loads the same chapters with annotations away from the reading position as without", async () => {
     const loadedWithoutAnnotations = getLoadedChapterIndexes(
-      await openBook({ annotations: [] }),
+      (await openBook({ annotations: [] })).reader,
     )
     const loadedWithAnnotations = getLoadedChapterIndexes(
-      await openBook({ annotations: annotationsAwayFromTheFirstChapter }),
+      (await openBook({ annotations: annotationsAwayFromTheFirstChapter }))
+        .reader,
     )
 
     expect({ loadedWithoutAnnotations, loadedWithAnnotations }).toEqual({
@@ -217,7 +222,7 @@ describe("the chapters react-reader loads for annotations", () => {
   })
 
   it("loads the chapters of the bookmarks the Annotations dialog lists while it is open, and releases them once it closes", async () => {
-    const reader = await openBook({
+    const { reader } = await openBook({
       annotations: annotationsAwayFromTheFirstChapter,
     })
     const loadedBeforeOpening = getLoadedChapterIndexes(reader)
@@ -245,7 +250,7 @@ describe("the chapters react-reader loads for annotations", () => {
 
   it("locates as many times for a book of many pages as for a book of few", async () => {
     const countLocateCalls = async (numberOfChapters: number) => {
-      const reader = await openBook({
+      const { reader } = await openBook({
         numberOfChapters,
         annotations: annotationsAwayFromTheFirstChapter,
       })
@@ -296,7 +301,7 @@ describe("the tabs of the Annotations dialog", () => {
    * while a tab is open are those of the annotations it lists.
    */
   it("list a bookmark, with a note or without, under Bookmarks, and a highlight under Annotations, each once", async () => {
-    const reader = await openBook({
+    const { reader } = await openBook({
       annotations: [
         createPageBookmark(5),
         { ...createPageBookmark(6), notes: "A note" },
@@ -329,6 +334,44 @@ describe("the tabs of the Annotations dialog", () => {
       bookmarkRows: 2,
       loadedForHighlights: [0, 7],
       highlightRows: 1,
+    })
+  })
+})
+
+describe("a row of the Annotations dialog", () => {
+  it("shows the note of its annotation, and navigates to its cfi, before the annotation is located", async () => {
+    const bookmark = { ...createPageBookmark(5), notes: "A note" }
+    const { reader, setAnnotations } = await openBook({ annotations: [] })
+    const goToCfi = vi.spyOn(reader.navigation, "goToCfi")
+
+    /**
+     * The app adds a bookmark, and the clock stands still: the idle callback
+     * its first location waits for does not run before the click.
+     */
+    await setAnnotations([bookmark])
+    await clickButton(
+      (button) => button.getAttribute(`aria-label`) === `Bookmarks`,
+    )
+
+    const link = document.querySelector<HTMLElement>(`[role="tabpanel"] li a`)
+    const noteIndicator = link?.querySelector(`svg`)
+
+    if (!link || !noteIndicator) {
+      throw new Error("the Bookmarks tab lists no row with a note indicator")
+    }
+
+    const noteIndicatorVisibility = getComputedStyle(noteIndicator).visibility
+
+    await act(async () => {
+      link.click()
+    })
+
+    expect({
+      noteIndicatorVisibility,
+      navigatedTo: goToCfi.mock.calls,
+    }).toEqual({
+      noteIndicatorVisibility: "visible",
+      navigatedTo: [[bookmark.cfi]],
     })
   })
 })
