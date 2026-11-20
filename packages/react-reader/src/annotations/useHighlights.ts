@@ -1,9 +1,19 @@
-import { useAnnotations } from "./useAnnotations.ts"
+import { useObserve } from "reactjrx"
+import { map } from "rxjs"
+import { useReaderWithAnnotations } from "./useReaderWithAnnotations.ts"
 
 export const useHighlights = () => {
-  const { data: annotations } = useAnnotations()
+  const reader = useReaderWithAnnotations()
 
-  return {
-    data: annotations?.filter((annotation) => annotation.meta.isCfiRange),
-  }
+  return useObserve(
+    () =>
+      reader?.annotations.annotations$.pipe(
+        map((annotations) =>
+          annotations.filter(
+            (annotation) => reader.cfi.parseCfi(annotation.cfi).isCfiRange,
+          ),
+        ),
+      ),
+    [reader],
+  )
 }
