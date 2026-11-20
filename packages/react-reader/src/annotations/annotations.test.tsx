@@ -55,11 +55,14 @@ class EmptyRenderer extends DocumentRenderer {
   }
 }
 
-const createBook = (numberOfChapters: number): Manifest => ({
+const createBook = (
+  numberOfChapters: number,
+  renditionLayout: Manifest["renditionLayout"] = "reflowable",
+): Manifest => ({
   filename: "book.epub",
   mediaType: "application/epub+zip",
   title: "Book",
-  renditionLayout: "reflowable",
+  renditionLayout,
   renditionSpread: undefined,
   readingDirection: "ltr",
   items: [],
@@ -136,16 +139,18 @@ afterEach(async () => {
 
 const openBook = async ({
   numberOfChapters = 10,
+  renditionLayout,
   annotations,
 }: {
   numberOfChapters?: number
+  renditionLayout?: Manifest["renditionLayout"]
   annotations: Annotation[]
 }) => {
   let reader: AppReader | undefined
 
   const createBookReader = () => {
     reader = createAppReader({
-      manifest: createBook(numberOfChapters),
+      manifest: createBook(numberOfChapters, renditionLayout),
       numberOfAdjacentSpineItemToPreLoad: 0,
       getRenderer: () => (props) => new EmptyRenderer(props),
     })
@@ -254,6 +259,34 @@ describe("the chapters react-reader loads for annotations", () => {
     const locateCallsForManyPages = await countLocateCalls(30)
 
     expect(locateCallsForManyPages).toBe(locateCallsForFewPages)
+  })
+})
+
+describe("the bookmark markers", () => {
+  /**
+   * A pre-paginated book gives every annotation its page at once. Only a
+   * chapter that is ready shows a marker: the first one, which the reader
+   * shows.
+   */
+  it("mark a page that holds a bookmark, also after a highlight, and not a page that holds a highlight only", async () => {
+    const countMarkersWith = async (annotations: Annotation[]) => {
+      await openBook({ renditionLayout: "pre-paginated", annotations })
+
+      return document.querySelectorAll(`[data-bookmark-area]`).length
+    }
+
+    expect({
+      markersWithABookmark: await countMarkersWith([createPageBookmark(0)]),
+      markersWithAHighlightThenABookmark: await countMarkersWith([
+        createHighlight(0),
+        createPageBookmark(0),
+      ]),
+      markersWithAHighlight: await countMarkersWith([createHighlight(0)]),
+    }).toEqual({
+      markersWithABookmark: 1,
+      markersWithAHighlightThenABookmark: 1,
+      markersWithAHighlight: 0,
+    })
   })
 })
 

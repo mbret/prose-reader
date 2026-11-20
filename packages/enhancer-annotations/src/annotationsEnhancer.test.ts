@@ -1,156 +1,28 @@
 // @vitest-environment jsdom
+import { BehaviorSubject, Subject } from "rxjs"
+import { describe, expect, it, vi } from "vitest"
 import {
-  createReader,
-  DocumentRenderer,
-  type Manifest,
-} from "@prose-reader/core"
-import {
-  BehaviorSubject,
-  EMPTY,
-  first,
-  map,
-  type Observable,
-  of,
-  Subject,
-  type Subscription,
-} from "rxjs"
-import { afterEach, beforeAll, describe, expect, it, vi } from "vitest"
-import { annotationsEnhancer } from "./annotationsEnhancer.ts"
+  type AnnotationsReader,
+  createAnnotationAtRootOfSpineItem,
+  createLayoutHold,
+  getLoadStatusOfEachSpineItem,
+  getSpineItem,
+  giveElementsTheViewportSize,
+  giveRangesOfFrameOneRect,
+  goToSpineItem,
+  installAnnotationsReaderTestEnvironment,
+  mountAnnotationsReader,
+  mountReaderHoldingOneDocument,
+  subscriptions,
+  TextDocumentRenderer,
+} from "./tests/annotationsReader.ts"
 import type { Annotation, AnnotationsEnhancerAPI } from "./types.ts"
+
+installAnnotationsReaderTestEnvironment()
 
 type CreateAnnotationParams = Parameters<
   AnnotationsEnhancerAPI["annotations"]["createAnnotation"]
 >[0]
-
-/** jsdom has no layout, so every element reports this size. */
-const viewport = { width: 400, height: 600 }
-
-/** Renders each item as an empty element, so it is ready once loaded. */
-class EmptyRenderer extends DocumentRenderer {
-  onUnload() {}
-
-  onCreateDocument() {
-    return of(this.context.document.createElement("div"))
-  }
-
-  onLoadDocument() {
-    return EMPTY
-  }
-
-  onLayout() {
-    return of(undefined)
-  }
-
-  onRenderHeadless() {
-    return EMPTY
-  }
-
-  getDocumentFrame(): HTMLIFrameElement | undefined {
-    return undefined
-  }
-}
-
-/**
- * Renders each item as a text document in a frame, the way the html renderer
- * does, so that its text can be selected.
- */
-class TextDocumentRenderer extends EmptyRenderer {
-  onCreateDocument() {
-    return of(this.context.document.createElement("iframe"))
-  }
-
-  onLoadDocument() {
-    this.attach()
-
-    const frameDocument = this.getDocumentFrame()?.contentDocument
-
-    if (!frameDocument) throw new Error("the frame has no document")
-
-    frameDocument.body.innerHTML = `<p>A paragraph of text.</p>`
-
-    return EMPTY
-  }
-
-  getDocumentFrame() {
-    const frame = this.documentContainer
-
-    return frame instanceof HTMLIFrameElement ? frame : undefined
-  }
-}
-
-/**
- * Holds every layout while held, so that the spine publishes no pages until
- * it is released.
- */
-const createLayoutHold = () => {
-  const isLayoutHeld = new BehaviorSubject(true)
-
-  class HeldLayoutRenderer extends EmptyRenderer {
-    onLayout() {
-      return isLayoutHeld.pipe(
-        first((isHeld) => !isHeld),
-        map(() => undefined),
-      )
-    }
-  }
-
-  return {
-    Renderer: HeldLayoutRenderer,
-    release: () => isLayoutHeld.next(false),
-  }
-}
-
-/** Two single pages, each a candidate once laid out. */
-const manifest: Manifest = {
-  filename: "test",
-  mediaType: "application/epub+zip",
-  title: "test",
-  readingDirection: "ltr",
-  renditionLayout: "pre-paginated",
-  renditionSpread: "none",
-  items: [],
-  spineItems: [0, 1].map((index) => ({
-    href: `/page_${index}.xhtml`,
-    containerUri: `page_${index}.xhtml`,
-    id: `${index}`,
-    index,
-    mediaType: "application/xhtml+xml",
-    progressionWeight: 0.5,
-    renditionLayout: "pre-paginated",
-  })),
-}
-
-/** jsdom has neither observer, and nothing here depends on what they report. */
-class InertObserver {
-  observe() {}
-  unobserve() {}
-  disconnect() {}
-}
-
-/** Gives every element of a window the size of the viewport. */
-const giveElementsTheViewportSize = (
-  windowOfElements: Window & typeof globalThis,
-) => {
-  const { HTMLElement } = windowOfElements
-
-  Object.defineProperty(HTMLElement.prototype, "clientWidth", {
-    configurable: true,
-    get: () => viewport.width,
-  })
-  Object.defineProperty(HTMLElement.prototype, "clientHeight", {
-    configurable: true,
-    get: () => viewport.height,
-  })
-  vi.spyOn(HTMLElement.prototype, "getBoundingClientRect").mockReturnValue(
-    new DOMRect(0, 0, viewport.width, viewport.height),
-  )
-}
-
-beforeAll(() => {
-  vi.stubGlobal("ResizeObserver", InertObserver)
-  vi.stubGlobal("IntersectionObserver", InertObserver)
-  giveElementsTheViewportSize(window)
-})
 
 /**
  * The document of a frame of the page: an app can mount the reader there,
@@ -171,47 +43,6 @@ const createDocumentOfFrame = () => {
   giveElementsTheViewportSize(frameWindow as Window & typeof globalThis)
 
   return frameDocument
-}
-
-const readers: { destroy: () => void }[] = []
-const subscriptions: Subscription[] = []
-
-afterEach(() => {
-  for (const subscription of subscriptions.splice(0)) subscription.unsubscribe()
-  for (const reader of readers.splice(0)) reader.destroy()
-  document.body.replaceChildren()
-  vi.useRealTimers()
-})
-
-const mountAnnotationsReader = async ({
-  Renderer = EmptyRenderer,
-  annotations$,
-  numberOfAdjacentSpineItemToPreLoad,
-  ownerDocument = document,
-}: {
-  Renderer?: typeof EmptyRenderer
-  annotations$?: Observable<Annotation[]>
-  numberOfAdjacentSpineItemToPreLoad?: number
-  ownerDocument?: Document
-} = {}) => {
-  vi.useFakeTimers()
-
-  const reader = annotationsEnhancer(createReader)({
-    manifest,
-    getRenderer: () => (props) => new Renderer(props),
-    getResource: () => of(new Response("", { status: 200 })),
-    annotations: { annotations$ },
-    numberOfAdjacentSpineItemToPreLoad,
-    ownerDocument,
-  })
-  readers.push(reader)
-
-  const container = ownerDocument.createElement("div")
-  ownerDocument.body.appendChild(container)
-  reader.mount(container)
-  await vi.runAllTimersAsync()
-
-  return reader
 }
 
 /** Records what `candidates$` emits, from one subscription. */
@@ -259,8 +90,6 @@ describe("candidates$", () => {
   })
 })
 
-type AnnotationsReader = Awaited<ReturnType<typeof mountAnnotationsReader>>
-
 /**
  * Reads the highlight elements, which exist from their creation. The empty
  * renderer gives no document to resolve a cfi into, so no rect is drawn here.
@@ -280,23 +109,6 @@ const getHighlightedAnnotationIdsBySpineItem = (reader: AnnotationsReader) =>
       .map((highlightElement) => highlightElement.dataset.highlightContainer)
       .sort(),
   )
-
-const getSpineItem = (reader: AnnotationsReader, spineItemIndex: number) => {
-  const spineItem = reader.spineItemsManager.get(spineItemIndex)
-
-  if (!spineItem) throw new Error(`no spine item ${spineItemIndex}`)
-
-  return spineItem
-}
-
-const createAnnotationAtRootOfSpineItem = (
-  reader: AnnotationsReader,
-  spineItemIndex: number,
-  id: string,
-): Annotation => ({
-  id,
-  cfi: reader.cfi.generateRootCfi(getSpineItem(reader, spineItemIndex).item),
-})
 
 const mountReaderWithAnnotationsSubject = async ({
   appObservesTaps,
@@ -318,41 +130,6 @@ const mountReaderWithAnnotationsSubject = async ({
   ).toEqual(["loaded", "loaded"])
 
   return { reader, annotations$ }
-}
-
-/**
- * With no adjacent spine item preloaded, the reader holds the document of the
- * spine item it shows and no other: the first one, once mounted.
- */
-const mountReaderHoldingOneDocument = async ({
-  appObservesTaps,
-  Renderer,
-}: {
-  appObservesTaps: boolean
-  Renderer?: typeof EmptyRenderer
-}) => {
-  const annotations$ = new BehaviorSubject<Annotation[]>([])
-  const reader = await mountAnnotationsReader({
-    Renderer,
-    annotations$,
-    numberOfAdjacentSpineItemToPreLoad: 0,
-  })
-
-  if (appObservesTaps) {
-    subscriptions.push(reader.annotations.highlightTap$.subscribe())
-  }
-
-  expect(getLoadStatusOfEachSpineItem(reader)).toEqual(["loaded", "idle"])
-
-  return { reader, annotations$ }
-}
-
-const getLoadStatusOfEachSpineItem = (reader: AnnotationsReader) =>
-  reader.spineItemsManager.items.map((spineItem) => spineItem.value.loadStatus)
-
-const goToSpineItem = async (reader: AnnotationsReader, indexOrId: number) => {
-  reader.navigation.goToSpineItem({ indexOrId })
-  await vi.runAllTimersAsync()
 }
 
 /** The annotations that `highlightTap$` emits from now on. */
@@ -584,30 +361,6 @@ const createAnnotationOverText = (
   range.setEnd(text, end)
 
   return { id, cfi: reader.cfi.generateCfiFromRange(range, spineItem.item) }
-}
-
-/**
- * jsdom has no layout, and its ranges have no `getClientRects`. Gives each
- * range of the frame of a spine item one rect, so that a highlight draws.
- */
-const giveRangesOfFrameOneRect = (
-  reader: AnnotationsReader,
-  spineItemIndex: number,
-) => {
-  const frameDocument = getSpineItem(
-    reader,
-    spineItemIndex,
-  ).renderer.getDocumentFrame()?.contentDocument
-
-  if (!frameDocument) {
-    throw new Error(`spine item ${spineItemIndex} has no frame`)
-  }
-
-  Object.defineProperty(
-    Object.getPrototypeOf(frameDocument.createRange()),
-    "getClientRects",
-    { configurable: true, value: () => [new DOMRect(0, 0, 10, 10)] },
-  )
 }
 
 const getRectElementsOfHighlight = (

@@ -2,6 +2,15 @@ import type { Observable } from "rxjs"
 import type { ReaderHighlights } from "./annotations/ReaderHighlights.ts"
 import type { RuntimeAnnotation } from "./annotations/types.ts"
 
+/**
+ * The annotations of each page, by spine item index, then by page index in
+ * the item, in the order of the list.
+ */
+export type AnnotationsByItemPage = ReadonlyMap<
+  number,
+  ReadonlyMap<number, readonly RuntimeAnnotation[]>
+>
+
 export interface Annotation {
   id: string
   cfi: string
@@ -44,6 +53,23 @@ export type AnnotationsEnhancerAPI = {
      */
     highlightTap$: ReaderHighlights["tap$"]
     candidates$: Observable<boolean[]>
+    /**
+     * The annotations whose page is known, by spine item and page: what a
+     * page-level interface reads, such as a mark on each annotated page. A
+     * range is on the page where it starts. It locates the annotations with
+     * `reader.locateResource()` in its shallow mode, so it loads nothing and
+     * follows its rules: an annotation of a pre-paginated item, or at the
+     * root of its item, has its page at once. Any other has one once its
+     * chapter is loaded and laid out and its cfi resolves in it, and none
+     * once the chapter unloads. While a layout of the chapter is pending, it
+     * keeps its page, and one added in that time has none until the
+     * layout's pages are published.
+     *
+     * It emits once the annotations are located, then each time an
+     * annotation of a page moves to another page, comes, goes or changes. It
+     * completes when the reader is destroyed.
+     */
+    annotationsByItemPage$: Observable<AnnotationsByItemPage>
     /**
      * Gives a new annotation of a selection, or of a page, its `id` and its
      * `cfi`: two strings and nothing else, so that the result can be stored
