@@ -118,10 +118,10 @@ reader.search
 ```
 
 `locateResource()` loads each reflowable item it locates, to find the page of
-the match, and emits again after every layout. With many results, locate the
-ones you display, or pass `{ mode: "shallow" }` to locate them without loading
-items: a result in a reflowable item that is not loaded then has no
-`itemPageIndex` and no `absolutePageIndex`
+the match, and emits again each time the reader publishes pages. With many
+results, locate the ones you display, or pass `{ mode: "shallow" }` to locate
+them without loading items: a result in a reflowable item that is not loaded
+then has no `itemPageIndex` and no `absolutePageIndex`
 ([Page indexes](/core-api/reader/locateresource#page-indexes)).
 
 Go to a result with
