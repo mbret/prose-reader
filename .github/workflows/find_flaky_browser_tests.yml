@@ -50,6 +50,9 @@ jobs:
       # Playwright stops itself 10 minutes before the job's limit, so that the
       # shard still writes the report of the tests it ran.
       - name: Test
+        # a container job runs its steps in sh unless told otherwise, and
+        # this one reads its arguments into a bash array
+        shell: bash
         env:
           REPEAT_EACH: ${{ inputs.repeat-each }}
           PROJECT: ${{ inputs.project }}
