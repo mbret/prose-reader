@@ -13,7 +13,7 @@ import {
 import { gesturesEnhancer } from "@prose-reader/enhancer-gestures"
 import { act } from "react"
 import { createRoot } from "react-dom/client"
-import { EMPTY, of } from "rxjs"
+import { EMPTY, NEVER, of } from "rxjs"
 import {
   afterAll,
   afterEach,
@@ -295,6 +295,29 @@ describe("the tabs of the Annotations dialog", () => {
    * A row locates its annotation in the load mode, so the chapters loaded
    * while a tab is open are those of the annotations it lists.
    */
+  it("navigates to the cfi of an annotation clicked before it is located", async () => {
+    const bookmark = createPageBookmark(5)
+    const reader = await openBook({ annotations: [bookmark] })
+    const goToCfi = vi.spyOn(reader.navigation, "goToCfi")
+
+    // The rows are not located yet, as while a busy browser has no idle time.
+    vi.mocked(reader.locateResource).mockReturnValue(NEVER)
+
+    await clickButton(
+      (button) => button.getAttribute(`aria-label`) === `Bookmarks`,
+    )
+
+    const link = document.querySelector<HTMLElement>(`[role="tabpanel"] li a`)
+
+    if (!link) throw new Error("the Bookmarks tab lists no row")
+
+    await act(async () => {
+      link.click()
+    })
+
+    expect(goToCfi.mock.calls).toEqual([[bookmark.cfi]])
+  })
+
   it("list a bookmark, with a note or without, under Bookmarks, and a highlight under Annotations, each once", async () => {
     const reader = await openBook({
       annotations: [

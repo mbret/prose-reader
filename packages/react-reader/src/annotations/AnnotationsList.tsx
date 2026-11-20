@@ -13,7 +13,7 @@ export const AnnotationsList = ({
     {annotations?.map((annotation) => (
       <AnnotationListItem
         key={annotation.id}
-        id={annotation.id}
+        annotation={annotation}
         onNavigate={onNavigate}
       />
     ))}
