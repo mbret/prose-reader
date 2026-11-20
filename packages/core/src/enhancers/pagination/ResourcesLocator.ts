@@ -35,9 +35,11 @@ export type ConsolidatedResource = ReturnType<Reader["cfi"]["resolveCfi"]> &
     /**
      * The page of its spine item the resource is on, once it is known: at
      * once for a pre-paginated item and for a cfi that names only its item.
-     * Any other cfi has one while its item is loaded and laid out, the
-     * published pages describe the item as its latest layout lays it out, and
-     * the cfi resolves in it. It is `undefined` otherwise.
+     * Any other cfi has one when it is located while its item is loaded and
+     * laid out, the published pages describe the item as its latest layout
+     * lays it out, and the cfi resolves in it. It keeps that page while a
+     * layout that can change the item is pending, until the next pages are
+     * published. It is `undefined` otherwise.
      */
     itemPageIndex?: number
     /**
@@ -69,6 +71,7 @@ type CfiToLocate = {
   cfi: string
   parsedCfi: ReturnType<Reader["cfi"]["parseCfi"]>
   isCfiOfItemStart: boolean
+  spineItem: SpineItem | undefined
 }
 
 /**
@@ -105,8 +108,7 @@ const getItemPageIndex = ({
 }
 
 const readCfi = (
-  { cfi, parsedCfi, isCfiOfItemStart }: CfiToLocate,
-  spineItem: SpineItem | undefined,
+  { cfi, parsedCfi, isCfiOfItemStart, spineItem }: CfiToLocate,
   reader: Reader,
 ): ConsolidatedResource => {
   if (!spineItem) return { ...parsedCfi, cfi, node: null }
@@ -145,8 +147,8 @@ const readCfi = (
  * reading the cfi again gives the same values.
  */
 type CfiReading = {
-  resource: ConsolidatedResource
-  pages: PagesState
+  meta: ConsolidatedResource
+  publishedPages: PagesState
   document: Document | undefined
 }
 
@@ -206,14 +208,10 @@ export class ResourcesLocator {
   }
 
   private getOrCreateConsolidation = (cfiToLocate: CfiToLocate) => {
-    const { cfi } = cfiToLocate
+    const { cfi, spineItem } = cfiToLocate
     const existingConsolidation$ = this.consolidationsByCfi.get(cfi)
 
     if (existingConsolidation$) return existingConsolidation$
-
-    const spineItem = this.reader.spineItemsManager.get(
-      cfiToLocate.parsedCfi.itemIndex,
-    )
 
     /**
      * A reading stays while its pages and its item's document do. While a
@@ -222,20 +220,23 @@ export class ResourcesLocator {
      */
     const consolidation$ = merge(this.nextIdle$, this.relocation$).pipe(
       scan<unknown, CfiReading, undefined>((previous) => {
-        const pages = this.reader.spine.pages.value
+        const publishedPages = this.reader.spine.pages.value
         const document = getReadableDocument(spineItem)
 
-        if (previous?.pages === pages && previous.document === document) {
+        if (
+          previous?.publishedPages === publishedPages &&
+          previous.document === document
+        ) {
           return previous
         }
 
         return {
-          resource: readCfi(cfiToLocate, spineItem, this.reader),
-          pages,
+          meta: readCfi(cfiToLocate, this.reader),
+          publishedPages,
           document,
         }
       }, undefined),
-      map(({ resource }) => resource),
+      map(({ meta }) => meta),
       // A reading that stays emits nothing.
       distinctUntilChanged(),
       finalize(() => this.consolidationsByCfi.delete(cfi)),
@@ -255,16 +256,16 @@ export class ResourcesLocator {
     options: Options,
   ): Observable<{ resource: T; meta: ConsolidatedResource }> => {
     const cfi = getLocatableResourceCfi(this.reader, resource)
+    const parsedCfi = this.reader.cfi.parseCfi(cfi)
+    const item = this.reader.spineItemsManager.get(parsedCfi.itemIndex)
     const cfiToLocate: CfiToLocate = {
       cfi,
-      parsedCfi: this.reader.cfi.parseCfi(cfi),
+      parsedCfi,
       isCfiOfItemStart: this.reader.cfi.isRootCfi(cfi),
+      spineItem: item,
     }
 
     return defer(() => {
-      const item = this.reader.spineItemsManager.get(
-        cfiToLocate.parsedCfi.itemIndex,
-      )
       const isReflowable = item?.renditionLayout === `reflowable`
 
       /**

@@ -7,7 +7,7 @@ sidebar:
 
 Locate a given resource and give you extra information such as absolute page index, relevant nodes, offset etc. This is most useful when you want to locate resources such as CFI.
 
-This method is live. Each time the reader publishes pages, and each time a loaded spine item starts to unload, it locates the resources again once the browser is idle, and emits the values that changed. The values follow the published pages, see [Page indexes](#page-indexes).
+This method is live. Each time the reader publishes pages, and each time a loaded spine item starts to unload, it locates the resources again once the browser is idle, and emits. A resource whose published pages and item's document did not change since it was last located is not located again, and emits nothing. The values follow the published pages, see [Page indexes](#page-indexes).
 
 ```typescript
 const consolidatedResource$ = reader.locateResource(resource, options)
@@ -34,7 +34,8 @@ export type LocatableResource = SpineItem | CfiLocatableResource
 export type ConsolidatedResource = CfiLocatableResource & ProseParsedCfi & {
   // The page of its spine item the resource is on, once it is known.
   itemPageIndex?: number
-  // The page of the book the resource is on, known with itemPageIndex.
+  // The page of the book the resource is on, as the published pages give it:
+  // known with itemPageIndex once pages are published.
   absolutePageIndex?: number
   // The node the CFI points to, while its item is loaded.
   node: Node | null
@@ -60,8 +61,8 @@ locateResource(resource, options)
 
 `itemPageIndex` and `absolutePageIndex` are given only when the reader knows them:
 
-* A spine item, a CFI that names only its item, and a CFI of a pre-paginated item are on the first page of their item. Their page is known at once, loaded or not.
-* Any other CFI of a reflowable item is on the page of the node it points to. Its page is known while its item is loaded and laid out, the published pages describe the item as its latest layout lays it out, and the CFI resolves in it. It is `undefined` otherwise.
+* A spine item, a CFI that names only its item, and a CFI of a pre-paginated item are on the first page of their item. Their `itemPageIndex` is known at once, loaded or not, and their `absolutePageIndex` once pages are published.
+* Any other CFI of a reflowable item is on the page of the node it points to. Its page is known when it is located while its item is loaded and laid out, the published pages describe the item as its latest layout lays it out, and the CFI resolves in it. It keeps that page while a layout that can change the item is pending, until the next pages are published. It is `undefined` otherwise.
 
 In the `shallow` mode, a CFI of a reflowable item that is not loaded therefore has no page. It gets one when its item loads, for example because the reader goes there, and loses it as soon as its item unloads. In the `load` mode, it has no page until its item has loaded.
 

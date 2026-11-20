@@ -281,6 +281,7 @@ describe("a cfi located on the published pages, while a layout that can change i
     await vi.runAllTimersAsync()
 
     const onLocatedMeanwhile = vi.fn()
+    const numberOfReadingsBeforeTheUnload = onLocatedBefore.mock.calls.length
 
     reader
       .locateResource({ cfi: otherCfiInFirstItem }, { mode: "shallow" })
@@ -294,6 +295,8 @@ describe("a cfi located on the published pages, while a layout that can change i
       isFirstItemReady: firstItem.value.isReady,
       isFirstItemLayoutCurrent: reader.spine.isLayoutCurrentFor(firstItem),
       isSecondItemReady: secondItem.value.isReady,
+      hasCfiLocatedBeforeEmitted:
+        onLocatedBefore.mock.calls.length > numberOfReadingsBeforeTheUnload,
       pageOfCfiLocatedBefore:
         onLocatedBefore.mock.lastCall?.[0].meta.itemPageIndex,
       pageOfCfiLocatedMeanwhile:
@@ -318,6 +321,7 @@ describe("a cfi located on the published pages, while a layout that can change i
         isFirstItemReady: true,
         isFirstItemLayoutCurrent: false,
         isSecondItemReady: false,
+        hasCfiLocatedBeforeEmitted: false,
         pageOfCfiLocatedBefore: 1,
         pageOfCfiLocatedMeanwhile: undefined,
       },
@@ -378,27 +382,28 @@ describe("a cfi located on pages published since, while a layout that can change
 })
 
 describe("a cfi located from a subscriber of the first reading of another one", () => {
-  it("is located on that same idle callback", async () => {
+  it("is read on that same idle callback, as it subscribes", async () => {
     vi.useFakeTimers()
 
     const { reader } = await mountReaderWithParagraphOnSetPage()
-    const onLocated = vi.fn()
+    const readings: { itemPageIndex?: number; isInFirstReading: boolean }[] = []
+    let isInFirstReading = false
 
     reader
       .locateResource({ cfi: cfiInFirstItem }, { mode: "shallow" })
-      .pipe(
-        first(),
-        switchMap(() =>
-          reader.locateResource(
-            { cfi: otherCfiInFirstItem },
-            { mode: "shallow" },
-          ),
-        ),
-      )
-      .subscribe(onLocated)
+      .pipe(first())
+      .subscribe(() => {
+        isInFirstReading = true
+        reader
+          .locateResource({ cfi: otherCfiInFirstItem }, { mode: "shallow" })
+          .subscribe(({ meta: { itemPageIndex } }) => {
+            readings.push({ itemPageIndex, isInFirstReading })
+          })
+        isInFirstReading = false
+      })
     await vi.runAllTimersAsync()
 
-    expect(onLocated.mock.lastCall?.[0].meta.itemPageIndex).toBe(1)
+    expect(readings).toEqual([{ itemPageIndex: 1, isInFirstReading: true }])
   })
 })
 

@@ -163,7 +163,7 @@ test.describe("Given a cfi past the first page of a chapter that is not loaded, 
  * one after.
  */
 test.describe("Given cfis of a chapter that a change of font size lays out again", () => {
-  test("a cfi located before keeps the page the reader shows for it until the new pages are published, and one located meanwhile has a page only once they are", async ({
+  test("each one has the page the reader shows for it once the new pages are published, and before that only a page kept from the pages published before", async ({
     page,
   }) => {
     await page.setViewportSize({ width: 536, height: 842 })
@@ -283,9 +283,26 @@ test.describe("Given cfis of a chapter that a change of font size lays out again
       .toBe(shownForCfiLocatedMeanwhile.beginPageIndex)
 
     const located = await locatedPages.jsonValue()
-    const pagesOfCfiLocatedBefore = located.before
-      .map(({ itemPageIndex }) => itemPageIndex)
-      .filter((pageIndex, index, pages) => pageIndex !== pages[index - 1])
+
+    /**
+     * A page given while the published pages do not describe the chapter's
+     * latest layout is one kept from a reading made while they did.
+     */
+    const getPagesNotKeptFromACurrentReading = (
+      pages: { itemPageIndex?: number; isChapterLayoutCurrent: boolean }[],
+    ) =>
+      pages.filter(
+        ({ itemPageIndex, isChapterLayoutCurrent }, index) =>
+          itemPageIndex !== undefined &&
+          !isChapterLayoutCurrent &&
+          !pages
+            .slice(0, index)
+            .some(
+              (earlier) =>
+                earlier.isChapterLayoutCurrent &&
+                earlier.itemPageIndex === itemPageIndex,
+            ),
+      )
 
     expect({
       spineItemIndex: shownAfter.spineItemIndex,
@@ -304,15 +321,11 @@ test.describe("Given cfis of a chapter that a change of font size lays out again
       isChapterLayoutCurrentAsLocatedMeanwhile: false,
     })
     expect(
-      pagesOfCfiLocatedBefore,
-      "the pages of the cfi located before the change, as they changed",
-    ).toEqual([shownBefore.beginPageIndex, shownAfter.beginPageIndex])
-    expect(
-      located.meanwhile.filter(
-        ({ itemPageIndex, isChapterLayoutCurrent }) =>
-          itemPageIndex !== undefined && !isChapterLayoutCurrent,
-      ),
-      "the pages given to the cfi located meanwhile while the published pages did not describe the chapter's latest layout",
-    ).toEqual([])
+      {
+        locatedBefore: getPagesNotKeptFromACurrentReading(located.before),
+        locatedMeanwhile: getPagesNotKeptFromACurrentReading(located.meanwhile),
+      },
+      "the pages given while the published pages did not describe the chapter's latest layout, and not kept from a reading made while they did",
+    ).toEqual({ locatedBefore: [], locatedMeanwhile: [] })
   })
 })
