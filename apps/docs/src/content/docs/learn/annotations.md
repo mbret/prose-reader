@@ -49,9 +49,9 @@ Notes can be defined by a bookmark with a user content, meaning no text selectio
 
 Ultimately it can be confusing for the user to have different things that can intertwine. What happens when the user bookmarks a word, is it a highlight without color ? what if they wanted to later put a color on this word bookmark ? Does it become an annotation ?
 
-What we recommend is to reduce confusion and have as few components as possible. This is why the [React Reader](/react-reader/introduction) make an opinionated decision and only assume two interfaces:
+What we recommend is to reduce confusion and have as few components as possible. This is why the [annotations enhancer](/enhancers/annotations#bookmarks-and-highlights) gives each annotation one of two kinds, which the [React Reader](/react-reader/introduction) shows as two interfaces:
 
-* Page bookmark: an annotation anchored to a page, not to a passage within it. Its CFI points to the first node of the page and has no range. It can carry a note: React Reader treats a note without a range, as described above, as a page bookmark.
+* Page bookmark: an annotation anchored to a page, not to a passage within it. Its CFI points to the first node of the page and has no range. It can carry a note: a note without a range, as described above, is a page bookmark.
 * Highlight: an annotation of a passage, whose CFI is a range. It can carry a color and a note.
 
 ## Danger of persisting `weak` references

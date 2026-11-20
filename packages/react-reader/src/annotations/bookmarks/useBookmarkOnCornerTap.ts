@@ -1,8 +1,8 @@
+import type { BookmarksByItemPage } from "@prose-reader/enhancer-annotations"
 import { useEffect } from "react"
 import { map, withLatestFrom } from "rxjs"
 import { useReaderContext } from "../../context/useReaderContext.ts"
 import { useReaderWithAnnotations } from "../useReaderWithAnnotations.ts"
-import type { BookmarkIdByItemPage } from "./useBookmarkIdByItemPage.ts"
 
 const CONTINUE_TAP_GESTURE = true
 const BOOKMARK_CORNER_SIZE_PERCENT = 10
@@ -35,7 +35,7 @@ const isTopRightCornerPosition = ({
  * bookmarks the page.
  */
 export const useBookmarkOnCornerTap = (
-  bookmarkIdByItemPage: BookmarkIdByItemPage | undefined,
+  bookmarksByItemPage: BookmarksByItemPage | undefined,
 ) => {
   const reader = useReaderWithAnnotations()
   const readerContext = useReaderContext()
@@ -66,13 +66,13 @@ export const useBookmarkOnCornerTap = (
 
             // Until the bookmarks are located, a tap cannot tell whether the
             // page has one.
-            if (!hasTapOnTopRightCorner || !bookmarkIdByItemPage) {
+            if (!hasTapOnTopRightCorner || !bookmarksByItemPage) {
               return CONTINUE_TAP_GESTURE
             }
 
-            const bookmarkId = bookmarkIdByItemPage
+            const bookmarkId = bookmarksByItemPage
               .get(spineItem.index)
-              ?.get(spineItemPageIndex)
+              ?.get(spineItemPageIndex)?.[0]?.id
 
             if (bookmarkId !== undefined) {
               readerContext.value.onAnnotationDelete?.(bookmarkId)
@@ -107,5 +107,5 @@ export const useBookmarkOnCornerTap = (
     )
 
     return unSub
-  }, [reader, bookmarkIdByItemPage, readerContext])
+  }, [reader, bookmarksByItemPage, readerContext])
 }

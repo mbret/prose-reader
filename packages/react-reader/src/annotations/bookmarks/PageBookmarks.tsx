@@ -1,16 +1,21 @@
 import { memo } from "react"
+import { useObserve } from "reactjrx"
+import { useReaderWithAnnotations } from "../useReaderWithAnnotations.ts"
 import { BookmarkPageMarkers } from "./BookmarkPageMarkers.tsx"
-import { useBookmarkIdByItemPage } from "./useBookmarkIdByItemPage.ts"
 import { useBookmarkOnCornerTap } from "./useBookmarkOnCornerTap.ts"
 
 /**
- * The markers and the corner tap read the same located bookmarks, so a tap
- * acts on what the markers show.
+ * The markers and the corner tap read the same bookmarks, so a tap acts on
+ * what the markers show.
  */
 export const PageBookmarks = memo(() => {
-  const { data: bookmarkIdByItemPage } = useBookmarkIdByItemPage()
+  const reader = useReaderWithAnnotations()
+  const { data: bookmarksByItemPage } = useObserve(
+    () => reader?.annotations.bookmarksByItemPage$,
+    [reader],
+  )
 
-  useBookmarkOnCornerTap(bookmarkIdByItemPage)
+  useBookmarkOnCornerTap(bookmarksByItemPage)
 
-  return <BookmarkPageMarkers bookmarkIdByItemPage={bookmarkIdByItemPage} />
+  return <BookmarkPageMarkers bookmarksByItemPage={bookmarksByItemPage} />
 })

@@ -1,7 +1,6 @@
 import type { RuntimeAnnotation } from "@prose-reader/enhancer-annotations"
 import { useObserve } from "reactjrx"
 import { map } from "rxjs"
-import { isBookmark } from "./isBookmark.ts"
 import { useReaderWithAnnotations } from "./useReaderWithAnnotations.ts"
 
 /**
@@ -19,7 +18,7 @@ export const useAnnotationsByKind = () => {
           const highlights: RuntimeAnnotation[] = []
 
           for (const annotation of annotations) {
-            if (isBookmark(reader, annotation)) {
+            if (annotation.kind === "bookmark") {
               bookmarks.push(annotation)
             } else {
               highlights.push(annotation)

@@ -33,20 +33,15 @@ function Bookmarks({
     () => reader.pagination.state$,
     [reader],
   )
-  const { data: bookmarks } = useObserve(
-    () => reader.annotations.annotations$,
+  const { data: bookmarksByItemPage } = useObserve(
+    () => reader.annotations.bookmarksByItemPage$,
     [reader],
   )
-
-  const { data: consolidatedBookmarks } = useObserve(
-    () => reader.locateResource(bookmarks ?? []),
-    [reader, bookmarks],
-  )
-
-  const bookmarkForPage = consolidatedBookmarks?.find(
-    (bookmark) =>
-      bookmark.meta?.absolutePageIndex === pagination?.begin.absolutePageIndex,
-  )
+  const { spineItemIndex, pageIndexInSpineItem } = pagination?.begin ?? {}
+  const bookmarkForPage =
+    spineItemIndex === undefined || pageIndexInSpineItem === undefined
+      ? undefined
+      : bookmarksByItemPage?.get(spineItemIndex)?.get(pageIndexInSpineItem)?.[0]
 
   return (
     <button
@@ -66,7 +61,7 @@ function Bookmarks({
         if (bookmarkForPage) {
           annotations$.next(
             annotations$.value.filter(
-              (annotation) => annotation.id !== bookmarkForPage.resource.id,
+              (annotation) => annotation.id !== bookmarkForPage.id,
             ),
           )
         } else {
