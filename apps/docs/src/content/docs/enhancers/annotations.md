@@ -1,6 +1,6 @@
 ---
 title: "Annotations enhancer"
-description: "Install @prose-reader/enhancer-annotations, create annotations with createAnnotation and store them as they are, show them as highlights, find the pages that can hold one with candidates$, and avoid the root CFI you get on a blank page."
+description: "Install @prose-reader/enhancer-annotations, create annotations with createAnnotation and store them as they are, show them as highlights, find the annotations of each page with annotationsByItemPage$, find the pages that can hold one with candidates$, and avoid the root CFI you get on a blank page."
 sidebar:
   label: "Annotations"
 ---
@@ -102,6 +102,36 @@ its highlight at once.
 a highlight. `annotation` is the annotation of the tapped highlight. Where
 highlights overlap, a tap reaches the highlight drawn on top, and the stream
 reports that one. It completes when the reader is destroyed.
+
+## Finding the annotations of a page
+
+`reader.annotations.annotationsByItemPage$` emits the annotations whose page is
+known, by spine item index, then by page index in the item, in the order of the
+array. A range is on the page where it starts. Read it for anything shown per
+page, such as a mark on each annotated page:
+
+```typescript
+reader.annotations.annotationsByItemPage$.subscribe((annotationsByItemPage) => {
+  const annotationsOfPage =
+    annotationsByItemPage.get(itemIndex)?.get(pageIndex) ?? []
+})
+```
+
+It locates the annotations with
+[`reader.locateResource()`](/core-api/reader/locateresource) in its `shallow`
+mode, so it loads no chapter, and an annotation has a page as the
+[Page indexes](/core-api/reader/locateresource#page-indexes) rules give it. An
+annotation in a reflowable chapter that is not loaded has none, and neither has
+one added while a layout of its chapter is pending, until that layout's pages
+are published.
+
+It emits once the annotations are located, then each time an annotation moves
+to another page, comes, goes or changes. It completes when the reader is
+destroyed.
+
+The enhancer does not tell bookmarks from highlights: what each kind of
+annotation means is up to your app. React Reader, for example, takes the
+annotations of a page whose CFI is not a range as the bookmarks of that page.
 
 ## Blank pages and annotations
 
