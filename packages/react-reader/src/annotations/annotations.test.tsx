@@ -55,11 +55,14 @@ class EmptyRenderer extends DocumentRenderer {
   }
 }
 
-const createBook = (numberOfChapters: number): Manifest => ({
+const createBook = (
+  numberOfChapters: number,
+  renditionLayout: Manifest["renditionLayout"] = "reflowable",
+): Manifest => ({
   filename: "book.epub",
   mediaType: "application/epub+zip",
   title: "Book",
-  renditionLayout: "reflowable",
+  renditionLayout,
   renditionSpread: undefined,
   readingDirection: "ltr",
   items: [],
@@ -136,20 +139,21 @@ afterEach(async () => {
 
 const openBook = async ({
   numberOfChapters = 10,
+  renditionLayout,
   annotations,
 }: {
   numberOfChapters?: number
+  renditionLayout?: Manifest["renditionLayout"]
   annotations: Annotation[]
 }) => {
   let reader: AppReader | undefined
 
   const createBookReader = () => {
     reader = createAppReader({
-      manifest: createBook(numberOfChapters),
+      manifest: createBook(numberOfChapters, renditionLayout),
       numberOfAdjacentSpineItemToPreLoad: 0,
       getRenderer: () => (props) => new EmptyRenderer(props),
     })
-    vi.spyOn(reader, "locateResource")
 
     return reader
   }
@@ -237,23 +241,24 @@ describe("the chapters react-reader loads for annotations", () => {
       loadedAfterClosing: [0],
     })
   })
+})
 
-  it("locates as many times for a book of many pages as for a book of few", async () => {
-    const countLocateCalls = async (numberOfChapters: number) => {
-      const reader = await openBook({
-        numberOfChapters,
-        annotations: annotationsAwayFromTheFirstChapter,
-      })
+describe("the bookmark markers", () => {
+  /**
+   * A pre-paginated book gives every annotation of the first chapter, which
+   * the reader shows, its first page at once.
+   */
+  it("mark a page that holds a bookmark, and not a page that holds a highlight only", async () => {
+    const countMarkersWith = async (annotations: Annotation[]) => {
+      await openBook({ renditionLayout: "pre-paginated", annotations })
 
-      expect(reader.spine.pages.value.pages).toHaveLength(numberOfChapters)
-
-      return vi.mocked(reader.locateResource).mock.calls.length
+      return document.querySelectorAll(`[data-bookmark-area]`).length
     }
 
-    const locateCallsForFewPages = await countLocateCalls(8)
-    const locateCallsForManyPages = await countLocateCalls(30)
-
-    expect(locateCallsForManyPages).toBe(locateCallsForFewPages)
+    expect({
+      markersWithABookmark: await countMarkersWith([createPageBookmark(0)]),
+      markersWithAHighlight: await countMarkersWith([createHighlight(0)]),
+    }).toEqual({ markersWithABookmark: 1, markersWithAHighlight: 0 })
   })
 })
 
