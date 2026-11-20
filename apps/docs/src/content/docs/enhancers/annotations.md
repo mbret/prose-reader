@@ -1,6 +1,6 @@
 ---
 title: "Annotations enhancer"
-description: "Install @prose-reader/enhancer-annotations, create annotations with createAnnotation and store them as they are, show them as highlights, find the pages that can hold one with candidates$, and avoid the root CFI you get on a blank page."
+description: "Install @prose-reader/enhancer-annotations, create annotations with createAnnotation and store them as they are, show them as highlights, find the bookmarks of each page with bookmarksByItemPage$, find the pages that can hold one with candidates$, and avoid the root CFI you get on a blank page."
 sidebar:
   label: "Annotations"
 ---
@@ -102,6 +102,43 @@ its highlight at once.
 a highlight. `annotation` is the annotation of the tapped highlight. Where
 highlights overlap, a tap reaches the highlight drawn on top, and the stream
 reports that one. It completes when the reader is destroyed.
+
+## Bookmarks and highlights
+
+`reader.annotations.annotations$` gives each annotation a `kind`:
+
+- `"highlight"`: its CFI is a range. It covers a passage, and the enhancer
+  draws it.
+- `"bookmark"`: its CFI points to one place, such as the first visible node of
+  a page that `createAnnotation({ absolutePageIndex })` gives, or the root of a
+  spine item. It marks a page, and nothing is drawn for it.
+
+Both can carry a note.
+
+## Finding the bookmarks of a page
+
+`reader.annotations.bookmarksByItemPage$` emits the bookmarks whose page is
+known, by spine item index, then by page index in the item, in the order of
+the array:
+
+```typescript
+reader.annotations.bookmarksByItemPage$.subscribe((bookmarksByItemPage) => {
+  const bookmarksOfPage =
+    bookmarksByItemPage.get(itemIndex)?.get(pageIndex) ?? []
+})
+```
+
+It locates the bookmarks with
+[`reader.locateResource()`](/core-api/reader/locateresource) in its `shallow`
+mode, so it loads no chapter, and a bookmark has a page as the
+[Page indexes](/core-api/reader/locateresource#page-indexes) rules give it. A
+bookmark in a reflowable chapter that is not loaded has none, and neither has
+one added while a layout of its chapter is pending, until that layout's pages
+are published.
+
+It emits once the bookmarks are located, then each time a bookmark moves to
+another page, comes, goes or changes. A change of a highlight emits nothing.
+It completes when the reader is destroyed.
 
 ## Blank pages and annotations
 

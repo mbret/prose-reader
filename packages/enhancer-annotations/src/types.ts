@@ -2,6 +2,15 @@ import type { Observable } from "rxjs"
 import type { ReaderHighlights } from "./annotations/ReaderHighlights.ts"
 import type { RuntimeAnnotation } from "./annotations/types.ts"
 
+/**
+ * The bookmarks of each page, by spine item index, then by page index in the
+ * item, in the order of the list.
+ */
+export type BookmarksByItemPage = ReadonlyMap<
+  number,
+  ReadonlyMap<number, readonly RuntimeAnnotation[]>
+>
+
 export interface Annotation {
   id: string
   cfi: string
@@ -44,6 +53,21 @@ export type AnnotationsEnhancerAPI = {
      */
     highlightTap$: ReaderHighlights["tap$"]
     candidates$: Observable<boolean[]>
+    /**
+     * The bookmarks whose page is known, by spine item and page. It locates
+     * them with `reader.locateResource()` in its shallow mode, so it loads
+     * nothing and follows its rules: a bookmark of a pre-paginated item, or
+     * at the root of its item, has its page at once, and any other has one
+     * once its chapter is loaded and laid out and its cfi resolves in it, and
+     * none once the chapter unloads. While a layout of the chapter is
+     * pending, a bookmark keeps its page, and one added in that time has none
+     * until the layout's pages are published.
+     *
+     * It emits once the bookmarks are located, then each time a bookmark
+     * moves, comes or goes, or changes: a change of a highlight emits
+     * nothing. It completes when the reader is destroyed.
+     */
+    bookmarksByItemPage$: Observable<BookmarksByItemPage>
     /**
      * Gives a new annotation of a selection, or of a page, its `id` and its
      * `cfi`: two strings and nothing else, so that the result can be stored

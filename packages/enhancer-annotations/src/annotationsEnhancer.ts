@@ -10,6 +10,7 @@ import {
   takeUntil,
   tap,
 } from "rxjs"
+import { createBookmarksByItemPage$ } from "./annotations/createBookmarksByItemPage.ts"
 import { ReaderHighlights } from "./annotations/ReaderHighlights.ts"
 import type { RuntimeAnnotation } from "./annotations/types.ts"
 import { report } from "./report.ts"
@@ -46,14 +47,15 @@ export const annotationsEnhancer =
       map((annotations) => {
         const runtimeAnnotations: RuntimeAnnotation[] = annotations.map(
           (annotation) => {
-            const { itemIndex = 0 } = reader.cfi.parseCfi(annotation.cfi ?? "")
+            const { itemIndex = 0, isCfiRange } = reader.cfi.parseCfi(
+              annotation.cfi ?? "",
+            )
 
-            const highlight = {
+            return {
               ...annotation,
               itemIndex,
+              kind: isCfiRange ? "highlight" : "bookmark",
             } satisfies RuntimeAnnotation
-
-            return highlight
           },
         )
 
@@ -177,6 +179,10 @@ export const annotationsEnhancer =
         annotations$: runtimeAnnotations$,
         highlightTap$: readerHighlights.tap$,
         candidates$,
+        bookmarksByItemPage$: createBookmarksByItemPage$(
+          reader,
+          runtimeAnnotations$,
+        ),
         isTargetWithinHighlight: readerHighlights.isTargetWithinHighlight,
         createAnnotation,
         update: settings.update.bind(settings),
