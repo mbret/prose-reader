@@ -92,7 +92,7 @@ describe("annotationsByItemPage$", () => {
     })
   })
 
-  it("emits an annotation that changes, and nothing for a list of equal annotations or for pages that move no annotation", async () => {
+  it("emits an annotation that changes, and nothing for a list of equal annotations, for an annotation without a page, or for pages that move no annotation", async () => {
     const { reader, annotations$ } = await mountReaderHoldingOneDocument({
       appObservesTaps: false,
     })
@@ -113,6 +113,13 @@ describe("annotationsByItemPage$", () => {
 
     // New objects, equal to the ones before.
     annotations$.next([{ ...annotation }, { ...rangeInSecondItem }])
+    await vi.runAllTimersAsync()
+    // An annotation of a spine item the book does not have: it has no page.
+    annotations$.next([
+      annotation,
+      rangeInSecondItem,
+      { id: "inNoItem", cfi: "epubcfi(/6/8!)" },
+    ])
     await vi.runAllTimersAsync()
     reader.layout()
     await vi.runAllTimersAsync()

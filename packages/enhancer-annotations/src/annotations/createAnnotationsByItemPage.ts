@@ -33,8 +33,8 @@ const isSameAnnotationsByItemPage = (
 
         return (
           previousAnnotations?.length === annotations.length &&
-          annotations.every(
-            (annotation, index) => annotation === previousAnnotations[index],
+          annotations.every((annotation, index) =>
+            isShallowEqual(annotation, previousAnnotations[index]),
           )
         )
       })

@@ -120,13 +120,13 @@ reader.annotations.annotationsByItemPage$.subscribe((annotationsByItemPage) => {
 It locates the annotations with
 [`reader.locateResource()`](/core-api/reader/locateresource) in its `shallow`
 mode, so it loads no chapter, and an annotation has a page as the
-[Page indexes](/core-api/reader/locateresource#page-indexes) rules give it. An
-annotation in a reflowable chapter that is not loaded has none, and neither has
-one added while a layout of its chapter is pending, until that layout's pages
-are published.
+[Page indexes](/core-api/reader/locateresource#page-indexes) rules give it.
+Unless its CFI names only its chapter, an annotation in a reflowable chapter
+that is not loaded has none, and neither has one added while a layout of its
+chapter is pending, until that layout's pages are published.
 
-It emits once the annotations are located, then each time an annotation moves
-to another page, comes, goes or changes. It completes when the reader is
+It emits once the annotations are located, then each time an annotation of a
+page moves to another page, comes, goes or changes. It completes when the reader is
 destroyed.
 
 The enhancer does not tell bookmarks from highlights: what each kind of

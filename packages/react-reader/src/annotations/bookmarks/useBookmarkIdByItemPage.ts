@@ -1,4 +1,3 @@
-import type { AnnotationsByItemPage } from "@prose-reader/enhancer-annotations"
 import { useObserve } from "reactjrx"
 import { distinctUntilChanged, map } from "rxjs"
 import { isBookmark } from "../isBookmark.ts"
@@ -32,8 +31,9 @@ const isSameBookmarkIdByItemPage = (
 
 /**
  * The first bookmark of each page, from the annotations of each page that
- * the annotations enhancer gives. A bookmark inside a reflowable chapter has a
- * page only while the chapter is loaded and laid out.
+ * the annotations enhancer gives, which follow the rules of
+ * `locateResource()`: a bookmark inside a reflowable chapter that is not
+ * loaded has no page, unless its cfi names only its chapter.
  */
 export const useBookmarkIdByItemPage = () => {
   const reader = useReaderWithAnnotations()
@@ -41,7 +41,7 @@ export const useBookmarkIdByItemPage = () => {
   return useObserve(
     () =>
       reader?.annotations.annotationsByItemPage$.pipe(
-        map((annotationsByItemPage: AnnotationsByItemPage) => {
+        map((annotationsByItemPage) => {
           const bookmarkIdByItemPage = new Map<number, Map<number, string>>()
 
           for (const [itemIndex, annotationsByPage] of annotationsByItemPage) {

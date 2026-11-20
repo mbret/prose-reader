@@ -154,6 +154,7 @@ const openBook = async ({
       numberOfAdjacentSpineItemToPreLoad: 0,
       getRenderer: () => (props) => new EmptyRenderer(props),
     })
+    vi.spyOn(reader, "locateResource")
 
     return reader
   }
@@ -241,14 +242,33 @@ describe("the chapters react-reader loads for annotations", () => {
       loadedAfterClosing: [0],
     })
   })
+
+  it("locates as many times for a book of many pages as for a book of few", async () => {
+    const countLocateCalls = async (numberOfChapters: number) => {
+      const reader = await openBook({
+        numberOfChapters,
+        annotations: annotationsAwayFromTheFirstChapter,
+      })
+
+      expect(reader.spine.pages.value.pages).toHaveLength(numberOfChapters)
+
+      return vi.mocked(reader.locateResource).mock.calls.length
+    }
+
+    const locateCallsForFewPages = await countLocateCalls(8)
+    const locateCallsForManyPages = await countLocateCalls(30)
+
+    expect(locateCallsForManyPages).toBe(locateCallsForFewPages)
+  })
 })
 
 describe("the bookmark markers", () => {
   /**
-   * A pre-paginated book gives every annotation of the first chapter, which
-   * the reader shows, its first page at once.
+   * A pre-paginated book gives every annotation its page at once. Only a
+   * chapter that is ready shows a marker: the first one, which the reader
+   * shows.
    */
-  it("mark a page that holds a bookmark, and not a page that holds a highlight only", async () => {
+  it("mark a page that holds a bookmark, also after a highlight, and not a page that holds a highlight only", async () => {
     const countMarkersWith = async (annotations: Annotation[]) => {
       await openBook({ renditionLayout: "pre-paginated", annotations })
 
@@ -257,8 +277,16 @@ describe("the bookmark markers", () => {
 
     expect({
       markersWithABookmark: await countMarkersWith([createPageBookmark(0)]),
+      markersWithAHighlightThenABookmark: await countMarkersWith([
+        createHighlight(0),
+        createPageBookmark(0),
+      ]),
       markersWithAHighlight: await countMarkersWith([createHighlight(0)]),
-    }).toEqual({ markersWithABookmark: 1, markersWithAHighlight: 0 })
+    }).toEqual({
+      markersWithABookmark: 1,
+      markersWithAHighlightThenABookmark: 1,
+      markersWithAHighlight: 0,
+    })
   })
 })
 
