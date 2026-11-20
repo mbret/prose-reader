@@ -75,9 +75,7 @@ export class Spine extends ReactiveEntity<SpineState> {
     )
 
     this.locator = createSpineLocator({
-      context,
       spineItemsManager,
-      settings,
       spineLayout: this.spineLayout,
       viewport,
     })

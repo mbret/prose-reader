@@ -1,11 +1,13 @@
 // @vitest-environment jsdom
-import { BehaviorSubject, first, map } from "rxjs"
+import { asapScheduler, BehaviorSubject, first, switchMap } from "rxjs"
 import { describe, expect, it, vi } from "vitest"
 import {
   createEnhancedTestReader,
+  holdItemLayout,
   installReaderTestEnvironment,
   mountTestReader,
   renderTextDocuments,
+  renderTextDocumentsWithParagraphOnSetPage,
   TextDocumentRenderer,
 } from "../../tests/readerHarness.ts"
 import {
@@ -15,36 +17,7 @@ import {
 
 installReaderTestEnvironment()
 
-describe("a resource located on a reader destroyed while it consolidates", () => {
-  it("completes without the metadata it was still consolidating", async () => {
-    vi.useFakeTimers()
-
-    const reader = createEnhancedTestReader()
-
-    mountTestReader(reader)
-    await vi.runAllTimersAsync()
-
-    const item = reader.spineItemsManager.get(1)
-
-    if (!item) throw new Error("the book has no second item")
-
-    const onLocated = vi.fn()
-    const onComplete = vi.fn()
-
-    reader
-      .locateResource(item)
-      .subscribe({ next: onLocated, complete: onComplete })
-    // The locator sets up on an idle callback, then consolidates on another.
-    await vi.advanceTimersByTimeAsync(1)
-    reader.destroy()
-    await vi.runAllTimersAsync()
-
-    expect(onLocated).not.toHaveBeenCalled()
-    expect(onComplete).toHaveBeenCalled()
-  })
-})
-
-describe("a resource located on a reader destroyed before the locator sets up", () => {
+describe("a resource located on a reader destroyed before it is consolidated", () => {
   it.each([
     ["one resource", false],
     ["a list of resources", true],
@@ -148,7 +121,7 @@ describe("a cfi of a reflowable item that is not loaded, located without loading
     if (!locatedItem) throw new Error("the book has no third item")
 
     const locatedPages: {
-      loadStatus: string
+      isItemReady: boolean
       itemPageIndex: number | undefined
       absolutePageIndex: number | undefined
     }[] = []
@@ -158,7 +131,7 @@ describe("a cfi of a reflowable item that is not loaded, located without loading
       .locateResource({ cfi: "epubcfi(/6/6!/4/2/1:3)" }, { mode: "shallow" })
       .subscribe(({ meta: { itemPageIndex, absolutePageIndex } }) => {
         locatedPages.push({
-          loadStatus: locatedItem.value.loadStatus,
+          isItemReady: locatedItem.value.isReady,
           itemPageIndex,
           absolutePageIndex,
         })
@@ -170,25 +143,30 @@ describe("a cfi of a reflowable item that is not loaded, located without loading
     reader.navigation.goToSpineItem({ indexOrId: 0, animation: false })
     await vi.runAllTimersAsync()
 
-    // A layout and a change of readiness can each locate it again.
-    const locatedStates = locatedPages.filter(
-      (located, index) =>
-        JSON.stringify(located) !== JSON.stringify(locatedPages[index - 1]),
+    // A layout and a change of readiness of any item can locate it again.
+    const pages = locatedPages.map(({ itemPageIndex, absolutePageIndex }) => ({
+      itemPageIndex,
+      absolutePageIndex,
+    }))
+    const pagesAsTheyChanged = pages.filter(
+      (page, index) =>
+        JSON.stringify(page) !== JSON.stringify(pages[index - 1]),
     )
 
-    expect(locatedStates).toEqual([
-      {
-        loadStatus: "idle",
-        itemPageIndex: undefined,
-        absolutePageIndex: undefined,
-      },
-      { loadStatus: "loaded", itemPageIndex: 0, absolutePageIndex: 2 },
-      {
-        loadStatus: "idle",
-        itemPageIndex: undefined,
-        absolutePageIndex: undefined,
-      },
-    ])
+    expect({
+      pagesAsTheyChanged,
+      hasHadAPageWhileItsItemWasNotReady: locatedPages.some(
+        ({ isItemReady, itemPageIndex }) =>
+          !isItemReady && itemPageIndex !== undefined,
+      ),
+    }).toEqual({
+      pagesAsTheyChanged: [
+        { itemPageIndex: undefined, absolutePageIndex: undefined },
+        { itemPageIndex: 0, absolutePageIndex: 2 },
+        { itemPageIndex: undefined, absolutePageIndex: undefined },
+      ],
+      hasHadAPageWhileItsItemWasNotReady: false,
+    })
   })
 })
 
@@ -196,24 +174,14 @@ describe("a cfi located in a reflowable item that unloads while no layout can co
   it("loses its page as its item unloads, without waiting for the layout", async () => {
     vi.useFakeTimers()
 
-    const isLayoutHeld = new BehaviorSubject(false)
-
-    // A text document whose layouts complete only while they are not held.
-    class HeldLayoutTextRenderer extends TextDocumentRenderer {
-      onLayout() {
-        return isLayoutHeld.pipe(
-          first((isHeld) => !isHeld),
-          map(() => undefined),
-        )
-      }
-    }
-
+    // The reader goes back to the first item, whose layout then holds the pass.
+    const firstItemLayout = holdItemLayout("item-0.xhtml", TextDocumentRenderer)
     const reader = createEnhancedTestReader({
       manifest: createTestManifest({
         renditionLayout: "reflowable",
         spineItems: createTestManifestSpineItems(3),
       }),
-      getRenderer: () => (props) => new HeldLayoutTextRenderer(props),
+      getRenderer: firstItemLayout.getRenderer,
       numberOfAdjacentSpineItemToPreLoad: 0,
     })
 
@@ -235,7 +203,7 @@ describe("a cfi located in a reflowable item that unloads while no layout can co
 
     const pageWhileLoaded = onLocated.mock.lastCall?.[0].meta.itemPageIndex
 
-    isLayoutHeld.next(true)
+    firstItemLayout.hold()
     reader.navigation.goToSpineItem({ indexOrId: 0, animation: false })
     await vi.runAllTimersAsync()
 
@@ -251,6 +219,259 @@ describe("a cfi located in a reflowable item that unloads while no layout can co
       isLayoutCurrent: false,
       pageOnceUnloaded: undefined,
       nodeOnceUnloaded: null,
+    })
+  })
+})
+
+/**
+ * Two reflowable items, both loaded, each three pages wide with its paragraph
+ * on its second page until the test moves it. The test can hold the first
+ * item's layouts.
+ */
+const mountReaderWithParagraphOnSetPage = async () => {
+  const paragraph = renderTextDocumentsWithParagraphOnSetPage()
+  const firstItemLayout = holdItemLayout("item-0.xhtml", paragraph.Renderer)
+  const reader = createEnhancedTestReader({
+    manifest: createTestManifest({
+      renditionLayout: "reflowable",
+      spineItems: createTestManifestSpineItems(2),
+    }),
+    getRenderer: firstItemLayout.getRenderer,
+    numberOfAdjacentSpineItemToPreLoad: 1,
+  })
+
+  paragraph.setPageIndexOfParagraph(1)
+  mountTestReader(reader)
+  await vi.runAllTimersAsync()
+
+  const firstItem = reader.spineItemsManager.get(0)
+  const secondItem = reader.spineItemsManager.get(1)
+
+  if (!firstItem || !secondItem) throw new Error("the book has no two items")
+
+  return { reader, paragraph, firstItemLayout, firstItem, secondItem }
+}
+
+/** Text of the paragraph of the first item. */
+const cfiInFirstItem = "epubcfi(/6/2!/4/2/1:3)"
+const otherCfiInFirstItem = "epubcfi(/6/2!/4/2/1:5)"
+const thirdCfiInFirstItem = "epubcfi(/6/2!/4/2/1:7)"
+
+describe("a cfi located on the published pages, while a layout that can change its item is pending", () => {
+  it("keeps the page they give it, while a cfi located meanwhile has none, until the next pages are published", async () => {
+    vi.useFakeTimers()
+
+    const { reader, paragraph, firstItemLayout, firstItem, secondItem } =
+      await mountReaderWithParagraphOnSetPage()
+    const onLocatedBefore = vi.fn()
+
+    reader
+      .locateResource({ cfi: cfiInFirstItem }, { mode: "shallow" })
+      .subscribe(onLocatedBefore)
+    await vi.runAllTimersAsync()
+
+    const pageOnLastLayout =
+      onLocatedBefore.mock.lastCall?.[0].meta.itemPageIndex
+
+    // The paragraph moves to the third page now; only the item's next layout
+    // gives that page.
+    paragraph.setPageIndexOfParagraph(2)
+    firstItemLayout.hold()
+    reader.layout()
+    await vi.runAllTimersAsync()
+
+    const onLocatedMeanwhile = vi.fn()
+
+    reader
+      .locateResource({ cfi: otherCfiInFirstItem }, { mode: "shallow" })
+      .subscribe(onLocatedMeanwhile)
+    // The second item stops being ready, which runs every consolidation again
+    // while the first item awaits its layout.
+    secondItem.unload()
+    await vi.runAllTimersAsync()
+
+    const whileAwaitingLayout = {
+      isFirstItemReady: firstItem.value.isReady,
+      isFirstItemLayoutCurrent: reader.spine.isLayoutCurrentFor(firstItem),
+      isSecondItemReady: secondItem.value.isReady,
+      pageOfCfiLocatedBefore:
+        onLocatedBefore.mock.lastCall?.[0].meta.itemPageIndex,
+      pageOfCfiLocatedMeanwhile:
+        onLocatedMeanwhile.mock.lastCall?.[0].meta.itemPageIndex,
+    }
+
+    firstItemLayout.release()
+    await vi.runAllTimersAsync()
+
+    expect({
+      pageOnLastLayout,
+      whileAwaitingLayout,
+      onceLaidOut: {
+        pageOfCfiLocatedBefore:
+          onLocatedBefore.mock.lastCall?.[0].meta.itemPageIndex,
+        pageOfCfiLocatedMeanwhile:
+          onLocatedMeanwhile.mock.lastCall?.[0].meta.itemPageIndex,
+      },
+    }).toEqual({
+      pageOnLastLayout: 1,
+      whileAwaitingLayout: {
+        isFirstItemReady: true,
+        isFirstItemLayoutCurrent: false,
+        isSecondItemReady: false,
+        pageOfCfiLocatedBefore: 1,
+        pageOfCfiLocatedMeanwhile: undefined,
+      },
+      onceLaidOut: {
+        pageOfCfiLocatedBefore: 2,
+        pageOfCfiLocatedMeanwhile: 2,
+      },
+    })
+  })
+})
+
+describe("a cfi located on pages published since, while a layout that can change its item is pending", () => {
+  it("has no page until the next pages are published", async () => {
+    vi.useFakeTimers()
+
+    const { reader, paragraph, firstItemLayout, firstItem } =
+      await mountReaderWithParagraphOnSetPage()
+    const onLocated = vi.fn()
+
+    reader
+      .locateResource({ cfi: cfiInFirstItem }, { mode: "shallow" })
+      .subscribe(onLocated)
+    await vi.runAllTimersAsync()
+
+    const pageOnFirstLayout = onLocated.mock.lastCall?.[0].meta.itemPageIndex
+
+    // The paragraph moves to the third page. Another layout is requested as
+    // soon as the pages of the next one are published, before the cfi is
+    // located again.
+    paragraph.setPageIndexOfParagraph(2)
+    reader.spine.layout$.pipe(first()).subscribe(() => {
+      asapScheduler.schedule(() => {
+        firstItemLayout.hold()
+        reader.layout()
+      })
+    })
+    reader.layout()
+    await vi.runAllTimersAsync()
+
+    const whileAwaitingLayout = {
+      isFirstItemLayoutCurrent: reader.spine.isLayoutCurrentFor(firstItem),
+      page: onLocated.mock.lastCall?.[0].meta.itemPageIndex,
+    }
+
+    firstItemLayout.release()
+    await vi.runAllTimersAsync()
+
+    expect({
+      pageOnFirstLayout,
+      whileAwaitingLayout,
+      pageOnceLaidOut: onLocated.mock.lastCall?.[0].meta.itemPageIndex,
+    }).toEqual({
+      pageOnFirstLayout: 1,
+      whileAwaitingLayout: { isFirstItemLayoutCurrent: false, page: undefined },
+      pageOnceLaidOut: 2,
+    })
+  })
+})
+
+describe("a cfi located from a subscriber of the first reading of another one", () => {
+  it("is located on that same idle callback", async () => {
+    vi.useFakeTimers()
+
+    const { reader } = await mountReaderWithParagraphOnSetPage()
+    const onLocated = vi.fn()
+
+    reader
+      .locateResource({ cfi: cfiInFirstItem }, { mode: "shallow" })
+      .pipe(
+        first(),
+        switchMap(() =>
+          reader.locateResource(
+            { cfi: otherCfiInFirstItem },
+            { mode: "shallow" },
+          ),
+        ),
+      )
+      .subscribe(onLocated)
+    await vi.runAllTimersAsync()
+
+    expect(onLocated.mock.lastCall?.[0].meta.itemPageIndex).toBe(1)
+  })
+})
+
+describe("a list of resources", () => {
+  it("emits once each time its resources are located again, not once for each", async () => {
+    vi.useFakeTimers()
+
+    const { reader } = await mountReaderWithParagraphOnSetPage()
+    const emissions: { meta: object }[][] = []
+
+    reader
+      .locateResource(
+        [
+          { cfi: cfiInFirstItem },
+          { cfi: otherCfiInFirstItem },
+          { cfi: thirdCfiInFirstItem },
+        ],
+        { mode: "shallow" },
+      )
+      .subscribe((located) => emissions.push(located))
+    await vi.runAllTimersAsync()
+    reader.layout()
+    await vi.runAllTimersAsync()
+
+    const numberOfResourcesLocatedAgainByEmission = emissions
+      .slice(1)
+      .map(
+        (located, emissionIndex) =>
+          located.filter(
+            ({ meta }, index) =>
+              meta !== emissions[emissionIndex]?.[index]?.meta,
+          ).length,
+      )
+
+    expect({
+      hasEmittedSinceTheLayout: emissions.length > 1,
+      numberOfResourcesLocatedAgainByEmission: [
+        ...new Set(numberOfResourcesLocatedAgainByEmission),
+      ],
+    }).toEqual({
+      hasEmittedSinceTheLayout: true,
+      numberOfResourcesLocatedAgainByEmission: [3],
+    })
+  })
+
+  it("located again at once, as a switchMap does when the list changes, keeps the location of each cfi it still holds", async () => {
+    vi.useFakeTimers()
+
+    const { reader } = await mountReaderWithParagraphOnSetPage()
+    const list$ = new BehaviorSubject([
+      { cfi: cfiInFirstItem },
+      { cfi: otherCfiInFirstItem },
+    ])
+    const emissions: { resource: { cfi: string }; meta: object }[][] = []
+
+    list$
+      .pipe(
+        switchMap((list) => reader.locateResource(list, { mode: "shallow" })),
+      )
+      .subscribe((located) => emissions.push(located))
+    await vi.runAllTimersAsync()
+
+    const locationOnFirstList = emissions.at(-1)?.[0]?.meta
+
+    list$.next([{ cfi: cfiInFirstItem }, { cfi: thirdCfiInFirstItem }])
+    await vi.runAllTimersAsync()
+
+    expect({
+      cfis: emissions.at(-1)?.map(({ resource }) => resource.cfi),
+      isLocationKept: emissions.at(-1)?.[0]?.meta === locationOnFirstList,
+    }).toEqual({
+      cfis: [cfiInFirstItem, thirdCfiInFirstItem],
+      isLocationKept: true,
     })
   })
 })
