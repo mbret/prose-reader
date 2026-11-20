@@ -256,3 +256,46 @@ describe("the chapters react-reader loads for annotations", () => {
     expect(locateCallsForManyPages).toBe(locateCallsForFewPages)
   })
 })
+
+describe("the tabs of the Annotations dialog", () => {
+  /**
+   * A row locates its annotation in the load mode, so the chapters loaded
+   * while a tab is open are those of the annotations it lists.
+   */
+  it("list a bookmark, with a note or without, under Bookmarks, and a highlight under Annotations, each once", async () => {
+    const reader = await openBook({
+      annotations: [
+        createPageBookmark(5),
+        { ...createPageBookmark(6), notes: "A note" },
+        createHighlight(7),
+      ],
+    })
+
+    await clickButton(
+      (button) => button.getAttribute(`aria-label`) === `Bookmarks`,
+    )
+    await letTimePass()
+    const loadedForBookmarks = getLoadedChapterIndexes(reader)
+    const bookmarkRows =
+      document.querySelectorAll(`[role="tabpanel"] li`).length
+
+    await clickButton(
+      (button) =>
+        button.getAttribute(`role`) === `tab` &&
+        button.textContent === `Annotations`,
+    )
+    await letTimePass()
+
+    expect({
+      loadedForBookmarks,
+      bookmarkRows,
+      loadedForHighlights: getLoadedChapterIndexes(reader),
+      highlightRows: document.querySelectorAll(`[role="tabpanel"] li`).length,
+    }).toEqual({
+      loadedForBookmarks: [0, 5, 6],
+      bookmarkRows: 2,
+      loadedForHighlights: [0, 7],
+      highlightRows: 1,
+    })
+  })
+})

@@ -6,11 +6,9 @@ import { useAnnotation } from "./useAnnotation.ts"
 export const AnnotationListItem = ({
   id,
   onNavigate,
-  allowLeftIcon = true,
 }: {
   id: string
   onNavigate: () => void
-  allowLeftIcon?: boolean
 }) => {
   const reader = useReader()
   const { data: annotation } = useAnnotation(id)
@@ -30,15 +28,12 @@ export const AnnotationListItem = ({
           reader?.navigation.goToCfi(annotation?.meta.cfi ?? "")
         }}
       >
-        {annotation?.resource?.notes ? (
-          <List.Indicator asChild>
-            <LuNotebookPen />
-          </List.Indicator>
-        ) : allowLeftIcon ? (
-          <List.Indicator asChild visibility="hidden">
-            <LuNotebookPen />
-          </List.Indicator>
-        ) : null}
+        <List.Indicator
+          asChild
+          visibility={annotation?.resource?.notes ? "visible" : "hidden"}
+        >
+          <LuNotebookPen />
+        </List.Indicator>
         <Stack gap={0}>
           {textContent ? (
             <Text lineClamp={2} fontSize="md">
