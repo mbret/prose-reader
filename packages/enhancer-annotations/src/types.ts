@@ -1,6 +1,10 @@
+import type { PageEntry } from "@prose-reader/core"
 import type { Observable } from "rxjs"
 import type { ReaderHighlights } from "./annotations/ReaderHighlights.ts"
 import type { RuntimeAnnotation } from "./annotations/types.ts"
+
+/** Where an annotation is: its spine item, and its page in that item. */
+export type AnnotationPage = Pick<PageEntry, "itemIndex" | "pageIndex">
 
 export interface Annotation {
   id: string
@@ -44,6 +48,22 @@ export type AnnotationsEnhancerAPI = {
      */
     highlightTap$: ReaderHighlights["tap$"]
     candidates$: Observable<boolean[]>
+    /**
+     * The page of each annotation whose page is known, by annotation id. It
+     * locates the annotations with `reader.locateResource()` in its shallow
+     * mode, so it loads nothing and follows its rules: an annotation of a
+     * pre-paginated item, or whose cfi names only its item, has its page at
+     * once, and any other has one once its chapter is loaded and laid out,
+     * and none once the chapter unloads. While a layout of the chapter is
+     * pending, it keeps the page the published pages give it. A range is on
+     * the page where it starts. When the list holds an id more than once, its
+     * last entry wins.
+     *
+     * It emits once the annotations are located, then only when the map
+     * changes: a change of the selection, color or note of an annotation
+     * emits nothing. It completes when the reader is destroyed.
+     */
+    pageByAnnotationId$: Observable<ReadonlyMap<string, AnnotationPage>>
     /**
      * Gives a new annotation of a selection, or of a page, its `id` and its
      * `cfi`: two strings and nothing else, so that the result can be stored

@@ -7,10 +7,17 @@ import type {
 import type { BehaviorSubject } from "rxjs"
 import {
   getChapterIndex,
+  getLongChapterIndex,
+  navigateToPageOfSpineItem,
   navigateToSpineItem,
   waitForSpineItemReady,
+  waitForSpineItemUnloaded,
 } from "../utils"
-import { waitForSettled } from "../utils/pagination"
+import {
+  layOutAndSettle,
+  readSettledPagination,
+  waitForSettled,
+} from "../utils/pagination"
 import { getReader } from "../utils/reader"
 import { test } from "../utils/test"
 import { readCfiPositionInWindow } from "../utils/visibility"
@@ -239,6 +246,104 @@ test("draws a red dashed border on the first selected annotation of the list onl
     "border-top-color",
     TRANSPARENT,
   )
+})
+
+/**
+ * Subscribes to `pageByAnnotationId$` once, as an app does, and gives a
+ * handle to its latest value: a subscription made for each read would find
+ * the pages again on each read.
+ */
+const observePageByAnnotationId = async (page: Page) =>
+  (await getReader<HighlightsReader>(page)).evaluateHandle((reader) => {
+    const latest = { pageByAnnotationId: {} }
+
+    reader.annotations.pageByAnnotationId$.subscribe((pageByAnnotationId) => {
+      latest.pageByAnnotationId = Object.fromEntries(pageByAnnotationId)
+    })
+
+    return latest
+  })
+
+test("gives an annotation the page the reader shows for its cfi while its chapter is loaded, and its new page after a relayout", async ({
+  page,
+}) => {
+  await page.setViewportSize({ width: 536, height: 842 })
+  await page.goto("http://localhost:3333/tests/highlights/index.html")
+  await waitForSettled(page)
+
+  const chapterIndex = await getLongChapterIndex(page)
+  const reader = await getReader<HighlightsReader>(page)
+
+  await navigateToSpineItem({ page, index: chapterIndex })
+  await waitForSettled(page)
+  await navigateToPageOfSpineItem({
+    page,
+    spineItemIndex: chapterIndex,
+    pageIndex: 3,
+  })
+
+  const { cfi } = await readSettledPagination(page)
+
+  // The page the reader shows for the cfi, past the chapter's first page.
+  await reader.evaluate((reader, cfi) => reader.navigation.goToCfi(cfi), cfi)
+
+  const { spineItemIndex, beginPageIndex } = await readSettledPagination(page)
+
+  expect({
+    spineItemIndex,
+    isPastFirstPage: beginPageIndex !== undefined && beginPageIndex > 0,
+    isRootCfi: await reader.evaluate(
+      (reader, cfi) => reader.cfi.isRootCfi(cfi),
+      cfi,
+    ),
+  }).toEqual({
+    spineItemIndex: chapterIndex,
+    isPastFirstPage: true,
+    isRootCfi: false,
+  })
+
+  const pageOfBookmark = {
+    bookmark: { itemIndex: chapterIndex, pageIndex: beginPageIndex },
+  }
+
+  const observedPages = await observePageByAnnotationId(page)
+  const readPageByAnnotationId = () =>
+    observedPages.evaluate(({ pageByAnnotationId }) => pageByAnnotationId)
+
+  await setAnnotations(page, [{ id: "bookmark", cfi }])
+
+  await expect.poll(readPageByAnnotationId).toEqual(pageOfBookmark)
+
+  // Away from the chapter, which unloads.
+  await navigateToSpineItem({ page, index: 0 })
+  await waitForSettled(page)
+  await waitForSpineItemUnloaded(page, [chapterIndex])
+
+  await expect.poll(readPageByAnnotationId).toEqual({})
+
+  // Back on the chapter, laid out again.
+  await navigateToSpineItem({ page, index: chapterIndex })
+  await waitForSettled(page)
+
+  await expect.poll(readPageByAnnotationId).toEqual(pageOfBookmark)
+
+  // A larger font moves the text of the bookmark to a later page.
+  await layOutAndSettle(page, { settings: { fontScale: 1.5 } })
+  await reader.evaluate((reader, cfi) => reader.navigation.goToCfi(cfi), cfi)
+
+  const shownAfterRelayout = await readSettledPagination(page)
+
+  expect({
+    spineItemIndex: shownAfterRelayout.spineItemIndex,
+    isPageOfBookmarkMoved: shownAfterRelayout.beginPageIndex !== beginPageIndex,
+  }).toEqual({ spineItemIndex: chapterIndex, isPageOfBookmarkMoved: true })
+
+  await expect.poll(readPageByAnnotationId).toEqual({
+    bookmark: {
+      itemIndex: chapterIndex,
+      pageIndex: shownAfterRelayout.beginPageIndex,
+    },
+  })
 })
 
 test("reports the annotation of the highlight the user clicks through highlightTap$", async ({

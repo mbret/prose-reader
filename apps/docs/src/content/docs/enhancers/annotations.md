@@ -1,6 +1,6 @@
 ---
 title: "Annotations enhancer"
-description: "Install @prose-reader/enhancer-annotations, create annotations with createAnnotation and store them as they are, show them as highlights, find the pages that can hold one with candidates$, and avoid the root CFI you get on a blank page."
+description: "Install @prose-reader/enhancer-annotations, create annotations with createAnnotation and store them as they are, show them as highlights, find the page of each annotation with pageByAnnotationId$, find the pages that can hold one with candidates$, and avoid the root CFI you get on a blank page."
 sidebar:
   label: "Annotations"
 ---
@@ -102,6 +102,43 @@ its highlight at once.
 a highlight. `annotation` is the annotation of the tapped highlight. Where
 highlights overlap, a tap reaches the highlight drawn on top, and the stream
 reports that one. It completes when the reader is destroyed.
+
+## Finding the page of an annotation
+
+`reader.annotations.pageByAnnotationId$` emits a `ReadonlyMap` from annotation
+`id` to the page of each annotation whose page is known: its spine item
+(`itemIndex`) and its page in that item (`pageIndex`). A range is on the page
+where it starts. When the array holds an `id` more than once, its last entry
+wins.
+
+It locates the annotations with
+[`reader.locateResource()`](/core-api/reader/locateresource) in its `shallow`
+mode, so it loads nothing and follows the rules of
+[Page indexes](/core-api/reader/locateresource#page-indexes):
+
+- An annotation of a pre-paginated item, or whose CFI names only its item, has
+  its page at once, whether its item is loaded or not.
+- Any other annotation has a page once its chapter is loaded and laid out, and
+  none once the chapter unloads. While a layout of the chapter is pending,
+  after a resize or a change of font size for example, it keeps the page the
+  published pages give it.
+
+It emits once the annotations are located, then only when the map changes: a
+change of the selection, color or note of an annotation emits nothing. It
+completes when the reader is destroyed.
+
+Use it for what the reader shows, such as a mark on each annotated page:
+
+```typescript
+import { map } from "rxjs"
+
+const annotatedPages$ = reader.annotations.pageByAnnotationId$.pipe(
+  map((pageByAnnotationId) => Array.from(pageByAnnotationId.values())),
+)
+```
+
+To find the page of an annotation whose chapter is not loaded, for example in a
+list of every annotation, use `reader.locateResource()` in its `load` mode.
 
 ## Blank pages and annotations
 

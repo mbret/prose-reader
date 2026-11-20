@@ -8,15 +8,19 @@ import {
   BehaviorSubject,
   EMPTY,
   first,
-  map,
   type Observable,
   of,
   Subject,
   type Subscription,
+  switchMap,
 } from "rxjs"
 import { afterEach, beforeAll, describe, expect, it, vi } from "vitest"
 import { annotationsEnhancer } from "./annotationsEnhancer.ts"
-import type { Annotation, AnnotationsEnhancerAPI } from "./types.ts"
+import type {
+  Annotation,
+  AnnotationPage,
+  AnnotationsEnhancerAPI,
+} from "./types.ts"
 
 type CreateAnnotationParams = Parameters<
   AnnotationsEnhancerAPI["annotations"]["createAnnotation"]
@@ -37,7 +41,7 @@ class EmptyRenderer extends DocumentRenderer {
     return EMPTY
   }
 
-  onLayout() {
+  onLayout(): Observable<{ width: number; height: number } | undefined> {
     return of(undefined)
   }
 
@@ -79,23 +83,31 @@ class TextDocumentRenderer extends EmptyRenderer {
 }
 
 /**
- * Holds every layout while held, so that the spine publishes no pages until
- * it is released.
+ * Holds every layout of the items `Renderer` renders while held, so that the
+ * spine publishes no pages until it is released. It starts held unless told
+ * otherwise.
  */
-const createLayoutHold = () => {
-  const isLayoutHeld = new BehaviorSubject(true)
+const createLayoutHold = ({
+  Renderer = EmptyRenderer,
+  isHeld = true,
+}: {
+  Renderer?: typeof EmptyRenderer
+  isHeld?: boolean
+} = {}) => {
+  const isLayoutHeld = new BehaviorSubject(isHeld)
 
-  class HeldLayoutRenderer extends EmptyRenderer {
+  class HeldLayoutRenderer extends Renderer {
     onLayout() {
       return isLayoutHeld.pipe(
         first((isHeld) => !isHeld),
-        map(() => undefined),
+        switchMap(() => super.onLayout()),
       )
     }
   }
 
   return {
     Renderer: HeldLayoutRenderer,
+    hold: () => isLayoutHeld.next(true),
     release: () => isLayoutHeld.next(false),
   }
 }
@@ -188,16 +200,18 @@ const mountAnnotationsReader = async ({
   annotations$,
   numberOfAdjacentSpineItemToPreLoad,
   ownerDocument = document,
+  bookManifest = manifest,
 }: {
   Renderer?: typeof EmptyRenderer
   annotations$?: Observable<Annotation[]>
   numberOfAdjacentSpineItemToPreLoad?: number
   ownerDocument?: Document
+  bookManifest?: Manifest
 } = {}) => {
   vi.useFakeTimers()
 
   const reader = annotationsEnhancer(createReader)({
-    manifest,
+    manifest: bookManifest,
     getRenderer: () => (props) => new Renderer(props),
     getResource: () => of(new Response("", { status: 200 })),
     annotations: { annotations$ },
@@ -593,6 +607,7 @@ const createAnnotationOverText = (
 const giveRangesOfFrameOneRect = (
   reader: AnnotationsReader,
   spineItemIndex: number,
+  rect = new DOMRect(0, 0, 10, 10),
 ) => {
   const frameDocument = getSpineItem(
     reader,
@@ -606,7 +621,7 @@ const giveRangesOfFrameOneRect = (
   Object.defineProperty(
     Object.getPrototypeOf(frameDocument.createRange()),
     "getClientRects",
-    { configurable: true, value: () => [new DOMRect(0, 0, 10, 10)] },
+    { configurable: true, value: () => [rect] },
   )
 }
 
@@ -977,5 +992,232 @@ describe("createAnnotation", () => {
     selected.selection.removeAllRanges()
 
     expect(reader.annotations.createAnnotation(selected)).toBeUndefined()
+  })
+})
+
+/** Two reflowable chapters. */
+const reflowableManifest: Manifest = {
+  ...manifest,
+  renditionLayout: "reflowable",
+  spineItems: manifest.spineItems.map((spineItem) => ({
+    ...spineItem,
+    renditionLayout: "reflowable",
+  })),
+}
+
+/** Lays each chapter out two pages wide. */
+class TwoPageTextDocumentRenderer extends TextDocumentRenderer {
+  onLayout() {
+    return of({ width: viewport.width * 2, height: viewport.height })
+  }
+}
+
+/**
+ * Records what `pageByAnnotationId$` emits, from one subscription held until
+ * the test ends, as an app holds it.
+ */
+const recordPageByAnnotationId = (reader: AnnotationsReader) => {
+  const emissions: Record<string, AnnotationPage>[] = []
+
+  subscriptions.push(
+    reader.annotations.pageByAnnotationId$.subscribe((pageByAnnotationId) => {
+      emissions.push(Object.fromEntries(pageByAnnotationId))
+    }),
+  )
+
+  return emissions
+}
+
+describe("pageByAnnotationId$", () => {
+  it("completes when the reader is destroyed", async () => {
+    const { reader } = await mountReaderHoldingOneDocument({
+      appObservesTaps: false,
+    })
+    const pageByAnnotationIdSubscription =
+      reader.annotations.pageByAnnotationId$.subscribe()
+
+    subscriptions.push(pageByAnnotationIdSubscription)
+    reader.destroy()
+
+    expect(pageByAnnotationIdSubscription.closed).toBe(true)
+  })
+
+  it("gives an annotation of a pre-paginated item its page at once, whether its item is loaded or not", async () => {
+    const { reader, annotations$ } = await mountReaderHoldingOneDocument({
+      appObservesTaps: false,
+    })
+    const emissions = recordPageByAnnotationId(reader)
+
+    annotations$.next([
+      createAnnotationAtRootOfSpineItem(reader, 0, "atRootOfLoadedItem"),
+      createAnnotationAtRootOfSpineItem(reader, 1, "atRootOfIdleItem"),
+      // Text of the second item, which has no document to resolve it in.
+      { id: "inIdleItem", cfi: "epubcfi(/6/4!/4/2/1:3)" },
+    ])
+    await vi.runAllTimersAsync()
+
+    expect({
+      loadStatusOfEachSpineItem: getLoadStatusOfEachSpineItem(reader),
+      pageByAnnotationId: emissions.at(-1),
+    }).toEqual({
+      loadStatusOfEachSpineItem: ["loaded", "idle"],
+      pageByAnnotationId: {
+        atRootOfLoadedItem: { itemIndex: 0, pageIndex: 0 },
+        atRootOfIdleItem: { itemIndex: 1, pageIndex: 0 },
+        inIdleItem: { itemIndex: 1, pageIndex: 0 },
+      },
+    })
+  })
+
+  it("follows the annotations as they are added, moved and removed, and keeps the last entry of an id", async () => {
+    const { reader, annotations$ } = await mountReaderHoldingOneDocument({
+      appObservesTaps: false,
+    })
+    const emissions = recordPageByAnnotationId(reader)
+    const first = createAnnotationAtRootOfSpineItem(reader, 0, "first")
+    const second = createAnnotationAtRootOfSpineItem(reader, 0, "second")
+    const secondMovedToSecondItem = createAnnotationAtRootOfSpineItem(
+      reader,
+      1,
+      "second",
+    )
+
+    for (const annotations of [
+      [first],
+      [first, second],
+      [first, second, secondMovedToSecondItem],
+      [secondMovedToSecondItem],
+    ]) {
+      annotations$.next(annotations)
+      await vi.runAllTimersAsync()
+    }
+
+    expect(emissions).toEqual([
+      {},
+      { first: { itemIndex: 0, pageIndex: 0 } },
+      {
+        first: { itemIndex: 0, pageIndex: 0 },
+        second: { itemIndex: 0, pageIndex: 0 },
+      },
+      {
+        first: { itemIndex: 0, pageIndex: 0 },
+        second: { itemIndex: 1, pageIndex: 0 },
+      },
+      { second: { itemIndex: 1, pageIndex: 0 } },
+    ])
+  })
+
+  it("emits nothing when the selection, color or note of an annotation changes, or when pages that move no annotation are published", async () => {
+    const { reader, annotations$ } = await mountReaderHoldingOneDocument({
+      appObservesTaps: false,
+    })
+    const annotation = createAnnotationAtRootOfSpineItem(reader, 0, "first")
+
+    annotations$.next([annotation])
+    await vi.runAllTimersAsync()
+
+    const emissions = recordPageByAnnotationId(reader)
+    let numberOfPublishedPages = 0
+
+    subscriptions.push(
+      reader.spine.layout$.subscribe(() => {
+        numberOfPublishedPages++
+      }),
+    )
+
+    annotations$.next([
+      { ...annotation, selected: true, highlightColor: "red", notes: "note" },
+    ])
+    await vi.runAllTimersAsync()
+    reader.layout()
+    await vi.runAllTimersAsync()
+
+    expect({ numberOfPublishedPages, emissions }).toEqual({
+      numberOfPublishedPages: 1,
+      emissions: [{ first: { itemIndex: 0, pageIndex: 0 } }],
+    })
+  })
+
+  it("gives an annotation of a reflowable chapter the page of its text, keeps it while the list changes during a pending layout, and drops it once the chapter unloads", async () => {
+    const chapterLayout = createLayoutHold({
+      Renderer: TwoPageTextDocumentRenderer,
+      isHeld: false,
+    })
+    const inFirstChapter = {
+      id: "inFirstChapter",
+      // The text of the paragraph.
+      cfi: "epubcfi(/6/2!/4/2/1:3)",
+    }
+    const atRootOfSecondChapter = {
+      id: "atRootOfSecondChapter",
+      cfi: "epubcfi(/6/4!)",
+    }
+    const annotations$ = new BehaviorSubject<Annotation[]>([
+      inFirstChapter,
+      atRootOfSecondChapter,
+    ])
+    const reader = await mountAnnotationsReader({
+      Renderer: chapterLayout.Renderer,
+      annotations$,
+      numberOfAdjacentSpineItemToPreLoad: 0,
+      bookManifest: reflowableManifest,
+    })
+    const firstChapter = getSpineItem(reader, 0)
+
+    // jsdom has no layout: the text measures where the second page starts.
+    giveRangesOfFrameOneRect(reader, 0, new DOMRect(viewport.width, 0, 10, 10))
+
+    const emissions = recordPageByAnnotationId(reader)
+
+    await vi.runAllTimersAsync()
+
+    chapterLayout.hold()
+    reader.layout()
+    await vi.runAllTimersAsync()
+
+    const isFirstChapterLayoutCurrentWhileHeld =
+      reader.spine.isLayoutCurrentFor(firstChapter)
+
+    // The app adds an annotation while the layout is pending, as a tap on the
+    // corner of a page does.
+    annotations$.next([
+      inFirstChapter,
+      atRootOfSecondChapter,
+      { id: "addedWhileHeld", cfi: "epubcfi(/6/4!)" },
+    ])
+    await vi.runAllTimersAsync()
+
+    chapterLayout.release()
+    await vi.runAllTimersAsync()
+
+    // The first chapter unloads while no layout can complete.
+    chapterLayout.hold()
+    await goToSpineItem(reader, 1)
+
+    expect({
+      numberOfPagesOfFirstChapter: firstChapter.pageGeometry.numberOfPages,
+      isFirstChapterLayoutCurrentWhileHeld,
+      loadStatusOfFirstChapter: firstChapter.value.loadStatus,
+      emissions,
+    }).toEqual({
+      numberOfPagesOfFirstChapter: 2,
+      isFirstChapterLayoutCurrentWhileHeld: false,
+      loadStatusOfFirstChapter: "idle",
+      emissions: [
+        {
+          inFirstChapter: { itemIndex: 0, pageIndex: 1 },
+          atRootOfSecondChapter: { itemIndex: 1, pageIndex: 0 },
+        },
+        {
+          inFirstChapter: { itemIndex: 0, pageIndex: 1 },
+          atRootOfSecondChapter: { itemIndex: 1, pageIndex: 0 },
+          addedWhileHeld: { itemIndex: 1, pageIndex: 0 },
+        },
+        {
+          atRootOfSecondChapter: { itemIndex: 1, pageIndex: 0 },
+          addedWhileHeld: { itemIndex: 1, pageIndex: 0 },
+        },
+      ],
+    })
   })
 })
