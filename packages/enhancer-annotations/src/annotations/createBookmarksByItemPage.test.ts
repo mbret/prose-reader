@@ -128,10 +128,39 @@ describe("bookmarksByItemPage$", () => {
     })
   })
 
+  it("emits when a layout moves a bookmark to another page", async () => {
+    const reader = await mountAnnotationsReader({
+      Renderer: TwoPageTextDocumentRenderer,
+      annotations$: new BehaviorSubject<Annotation[]>([
+        // A place in the text of the paragraph of the first chapter.
+        { id: "inFirstChapter", cfi: "epubcfi(/6/2!/4/2/1:3)" },
+      ]),
+      numberOfAdjacentSpineItemToPreLoad: 0,
+      bookManifest: reflowableManifest,
+    })
+
+    // jsdom has no layout: the text measures where the second page starts.
+    giveRangesOfFrameOneRect(reader, 0, new DOMRect(viewport.width, 0, 10, 10))
+
+    const emissions = recordBookmarksByItemPage(reader)
+
+    await vi.runAllTimersAsync()
+
+    // The text moves to the first page, which the next layout gives.
+    giveRangesOfFrameOneRect(reader, 0, new DOMRect(0, 0, 10, 10))
+    reader.layout()
+    await vi.runAllTimersAsync()
+
+    expect(emissions.map(toBookmarkIds)).toEqual([
+      { 0: { 1: ["inFirstChapter"] } },
+      { 0: { 0: ["inFirstChapter"] } },
+    ])
+  })
+
   it("gives a bookmark of a reflowable chapter the page of its text, keeps it while a layout of the chapter is pending, gives one added in that time a page once the layout completes, and drops them once the chapter unloads", async () => {
     const chapterLayout = createLayoutHold({
       Renderer: TwoPageTextDocumentRenderer,
-      isHeld: false,
+      startsHeld: false,
     })
     const inFirstChapter = {
       id: "inFirstChapter",

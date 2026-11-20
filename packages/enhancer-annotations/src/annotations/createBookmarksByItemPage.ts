@@ -1,4 +1,5 @@
-import { isShallowEqual, type Reader } from "@prose-reader/core"
+import type { Reader } from "@prose-reader/core"
+import { isShallowEqual } from "@prose-reader/shared"
 import {
   distinctUntilChanged,
   map,
@@ -10,7 +11,10 @@ import {
 import type { BookmarksByItemPage } from "../types.ts"
 import type { RuntimeAnnotation } from "./types.ts"
 
-const isSameList = (previous: RuntimeAnnotation[], next: RuntimeAnnotation[]) =>
+const isSameBookmarkList = (
+  previous: RuntimeAnnotation[],
+  next: RuntimeAnnotation[],
+) =>
   previous.length === next.length &&
   previous.every((annotation, index) => isShallowEqual(annotation, next[index]))
 
@@ -47,7 +51,7 @@ export const createBookmarksByItemPage$ = (
 ): Observable<BookmarksByItemPage> =>
   annotations$.pipe(
     map((annotations) => annotations.filter(({ kind }) => kind === "bookmark")),
-    distinctUntilChanged(isSameList),
+    distinctUntilChanged(isSameBookmarkList),
     switchMap((bookmarks) =>
       reader.locateResource(bookmarks, { mode: "shallow" }),
     ),

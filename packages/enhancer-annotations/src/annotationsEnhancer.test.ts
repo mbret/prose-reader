@@ -651,16 +651,6 @@ const selectTextAndRelease = async (
   return selection
 }
 
-/**
- * An app stores what `createAnnotation` returns, in IndexedDB or through
- * `postMessage`, which copy a value with the structured clone algorithm. A
- * browser cannot clone an event or a selection, so the result holds an id
- * and a cfi only.
- *
- * The tests compare the keys of the result, not whether it clones: jsdom
- * clones its events like plain objects, so a clone would succeed here with
- * the event in the result.
- */
 describe("annotations$", () => {
   it("gives an annotation whose cfi is a range the kind of a highlight, and any other the kind of a bookmark", async () => {
     const reader = await mountAnnotationsReader({
@@ -682,6 +672,16 @@ describe("annotations$", () => {
   })
 })
 
+/**
+ * An app stores what `createAnnotation` returns, in IndexedDB or through
+ * `postMessage`, which copy a value with the structured clone algorithm. A
+ * browser cannot clone an event or a selection, so the result holds an id
+ * and a cfi only.
+ *
+ * The tests compare the keys of the result, not whether it clones: jsdom
+ * clones its events like plain objects, so a clone would succeed here with
+ * the event in the result.
+ */
 describe("createAnnotation", () => {
   it("annotates a selection with its id and a range cfi, and nothing of the selection itself", async () => {
     const reader = await mountAnnotationsReader({

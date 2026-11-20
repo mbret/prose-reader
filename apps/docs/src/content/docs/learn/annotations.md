@@ -35,7 +35,7 @@ Here is a couple of suggestion as to how mentally define your different componen
 
 ### Bookmark
 
-A bookmark can be defined as an annotation which does not have a note nor a range. It is simply a marker on a specific node in a document. Usually you want only one bookmark per page but if your reading system allows users to define more bookmarks per page you may want to add more metadata to differentiate what is an entire page bookmark (usually the tap top right action) vs a specific page location bookmark (user wanting to bookmark a specific text).
+A bookmark is an annotation whose CFI has no range. It is a marker on one place of a document, such as the first visible node of a page, and the [annotations enhancer](/enhancers/annotations#bookmarks-and-highlights) gives it the kind `"bookmark"`. It can carry a note. Usually you want only one bookmark per page, but if your reading system allows users to define more bookmarks per page you may want to add more metadata to differentiate what is an entire page bookmark (usually the tap top right action) vs a specific page location bookmark (user wanting to bookmark a specific text).
 
 ### Highlight
 
@@ -43,7 +43,7 @@ Defined by an annotation which contains a range (or text selection) and an highl
 
 ### Notes
 
-Notes can be defined by a bookmark with a user content, meaning no text selection (or range). This is a good idea to differentiate them from bookmarks since the user could want to have several notes for the same page.
+A note is user content on an annotation. On a range, it is a highlight with a note. Without a range, it is a bookmark with a note. If your app shows such notes apart from bookmarks, for example because the user could want to have several notes for the same page, tell them apart by their `notes`.
 
 ## Avoid user confusion or frustration
 

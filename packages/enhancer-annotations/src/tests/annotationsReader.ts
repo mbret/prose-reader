@@ -76,20 +76,20 @@ export class TextDocumentRenderer extends EmptyRenderer {
 /**
  * Gives a renderer, extending `Renderer`, whose layouts wait while held, so
  * that the spine publishes no pages until it is released. It starts held
- * unless `isHeld` is false.
+ * unless `startsHeld` is false.
  */
 export const createLayoutHold = ({
   Renderer = EmptyRenderer,
-  isHeld = true,
+  startsHeld = true,
 }: {
   Renderer?: typeof EmptyRenderer
-  isHeld?: boolean
+  startsHeld?: boolean
 } = {}): {
   Renderer: typeof EmptyRenderer
   hold: () => void
   release: () => void
 } => {
-  const isLayoutHeld = new BehaviorSubject(isHeld)
+  const isLayoutHeld = new BehaviorSubject(startsHeld)
 
   class HeldLayoutRenderer extends Renderer {
     onLayout() {
