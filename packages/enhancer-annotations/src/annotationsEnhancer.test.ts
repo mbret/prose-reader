@@ -651,16 +651,8 @@ const selectTextAndRelease = async (
 
 /** Renders each item as two paragraphs, with nothing between them. */
 class TwoParagraphsTextDocumentRenderer extends TextDocumentRenderer {
-  onLoadDocument() {
-    const loaded = super.onLoadDocument()
-    const frameBody = this.getDocumentFrame()?.contentDocument?.body
-
-    if (!frameBody) throw new Error("the frame has no body")
-
-    frameBody.innerHTML = `<p>First paragraph.</p><p>Second paragraph.</p>`
-
-    return loaded
-  }
+  protected readonly documentBodyHtml =
+    `<p>First paragraph.</p><p>Second paragraph.</p>`
 }
 
 /**
