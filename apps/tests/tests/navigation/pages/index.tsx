@@ -2,17 +2,12 @@ import { createReader } from "@prose-reader/core"
 import { gesturesEnhancer } from "@prose-reader/enhancer-gestures"
 import { map, tap } from "rxjs"
 import { openFixtureBook } from "../../fixtureBook"
-import { isScenarioBook, SCENARIO_BOOKS, type TappedPage } from "./books"
+import { getFileOfRequestedScenarioBook } from "../../utils/scenarioBooks"
+import type { TappedPage } from "./tappedPage"
 
 async function run() {
-  const requestedBook = new URLSearchParams(window.location.search).get("book")
-  const book = requestedBook ?? "ltr"
-
-  if (!isScenarioBook(book))
-    throw new Error(`this scenario has no ${book} book`)
-
   const reader = gesturesEnhancer(createReader)({
-    ...(await openFixtureBook(SCENARIO_BOOKS[book])),
+    ...(await openFixtureBook(getFileOfRequestedScenarioBook())),
     pageTurnAnimation: "none",
     layoutLayerTransition: false,
   })

@@ -2,7 +2,8 @@ import { expect, type Page } from "@playwright/test"
 import { getLongChapterIndex, navigateToSpineItem } from "../../utils"
 import { readSettledPagination } from "../../utils/pagination"
 import { getReader } from "../../utils/reader"
-import type { ScenarioBook, TappedPage } from "./books"
+import type { ScenarioBook } from "../../utils/scenarioBooks"
+import type { TappedPage } from "./tappedPage"
 
 export type ScenarioWindow = {
   size: { width: number; height: number }

@@ -50,6 +50,8 @@ export class EmptyRenderer extends DocumentRenderer {
  * does, so that its text can be selected.
  */
 export class TextDocumentRenderer extends EmptyRenderer {
+  protected readonly documentBodyHtml: string = `<p>A paragraph of text.</p>`
+
   onCreateDocument() {
     return of(this.context.document.createElement("iframe"))
   }
@@ -61,7 +63,7 @@ export class TextDocumentRenderer extends EmptyRenderer {
 
     if (!frameDocument) throw new Error("the frame has no document")
 
-    frameDocument.body.innerHTML = `<p>A paragraph of text.</p>`
+    frameDocument.body.innerHTML = this.documentBodyHtml
 
     return EMPTY
   }

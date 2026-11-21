@@ -1,125 +1,24 @@
 /* @vitest-environment jsdom */
 
 import { ChakraProvider, defaultSystem } from "@chakra-ui/react"
-import {
-  createReader,
-  DocumentRenderer,
-  type Manifest,
-} from "@prose-reader/core"
-import {
-  type Annotation,
-  annotationsEnhancer,
-} from "@prose-reader/enhancer-annotations"
-import { gesturesEnhancer } from "@prose-reader/enhancer-gestures"
+import type { Annotation } from "@prose-reader/enhancer-annotations"
 import { act } from "react"
 import { createRoot } from "react-dom/client"
-import { EMPTY, of } from "rxjs"
-import {
-  afterEach,
-  beforeAll,
-  beforeEach,
-  describe,
-  expect,
-  it,
-  vi,
-} from "vitest"
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
 import { ReaderContextProvider } from "../context/ReaderContextProvider.tsx"
 import { ReaderInContext } from "../tests/ReaderInContext.tsx"
+import {
+  installJsdomLayout,
+  mountTextDocumentReader,
+  type TextDocumentReader,
+  viewport,
+} from "../tests/textDocumentReader.ts"
 import { AnnotateControls } from "./AnnotateControls.tsx"
 import { AnnotationDrawer } from "./AnnotationDrawer.tsx"
 import type { BookmarkIdByItemPage } from "./bookmarks/useBookmarkIdByItemPage.ts"
 import { useBookmarkOnCornerTap } from "./bookmarks/useBookmarkOnCornerTap.ts"
 
-/** jsdom has no layout, so every element reports this size. */
-const viewport = { width: 400, height: 600 }
-
-/**
- * Renders each item as a text document in a frame, the way the html renderer
- * does, so that its text can be selected.
- */
-class TextDocumentRenderer extends DocumentRenderer {
-  onCreateDocument() {
-    return of(this.context.document.createElement("iframe"))
-  }
-
-  onLoadDocument() {
-    this.attach()
-
-    const frameDocument = this.getDocumentFrame()?.contentDocument
-
-    if (!frameDocument) throw new Error("the frame has no document")
-
-    frameDocument.body.innerHTML = `<p>A paragraph of text.</p>`
-
-    return EMPTY
-  }
-
-  onUnload() {}
-
-  onLayout() {
-    return of(undefined)
-  }
-
-  onRenderHeadless() {
-    return EMPTY
-  }
-
-  getDocumentFrame() {
-    const frame = this.documentContainer
-
-    return frame instanceof HTMLIFrameElement ? frame : undefined
-  }
-}
-
-/**
- * Two single pages, each a candidate for a bookmark once laid out, since a
- * pre-paginated page always is.
- */
-const manifest: Manifest = {
-  filename: "test",
-  mediaType: "application/epub+zip",
-  title: "test",
-  readingDirection: "ltr",
-  renditionLayout: "pre-paginated",
-  renditionSpread: "none",
-  items: [],
-  spineItems: [0, 1].map((index) => ({
-    href: `/page_${index}.xhtml`,
-    containerUri: `page_${index}.xhtml`,
-    id: `${index}`,
-    index,
-    mediaType: "application/xhtml+xml",
-    progressionWeight: 0.5,
-    renditionLayout: "pre-paginated",
-  })),
-}
-
-/** jsdom has neither observer, and nothing here depends on what they report. */
-class InertObserver {
-  observe() {}
-  unobserve() {}
-  disconnect() {}
-}
-
-beforeAll(() => {
-  vi.stubGlobal("ResizeObserver", InertObserver)
-  vi.stubGlobal("IntersectionObserver", InertObserver)
-  Object.defineProperty(HTMLElement.prototype, "clientWidth", {
-    configurable: true,
-    get: () => viewport.width,
-  })
-  Object.defineProperty(HTMLElement.prototype, "clientHeight", {
-    configurable: true,
-    get: () => viewport.height,
-  })
-  vi.spyOn(HTMLElement.prototype, "getBoundingClientRect").mockReturnValue(
-    new DOMRect(0, 0, viewport.width, viewport.height),
-  )
-})
-
-const createAppReader = gesturesEnhancer(annotationsEnhancer(createReader))
-
-type AppReader = ReturnType<typeof createAppReader>
+installJsdomLayout()
 
 /** No page has a bookmark yet. */
 const noBookmarks: BookmarkIdByItemPage = new Map()
@@ -148,7 +47,7 @@ const waitForInAct = <Result,>(assertion: () => Result) =>
 describe("onAnnotationCreate", () => {
   let container: HTMLDivElement
   let root: ReturnType<typeof createRoot>
-  let reader: AppReader
+  let reader: TextDocumentReader
 
   /**
    * A mounted reader, with what react-reader renders to create an annotation:
@@ -158,19 +57,7 @@ describe("onAnnotationCreate", () => {
   const renderAnnotationCreation = async () => {
     const onAnnotationCreate = vi.fn<(annotation: Annotation) => void>()
 
-    reader = createAppReader({
-      manifest,
-      getRenderer: () => (props) => new TextDocumentRenderer(props),
-      getResource: () => of(new Response("", { status: 200 })),
-    })
-
-    const readerElement = document.createElement("div")
-    document.body.appendChild(readerElement)
-    reader.mount(readerElement)
-
-    await vi.waitFor(() =>
-      expect(reader.spineItemsManager.get(0)?.value.isReady).toBe(true),
-    )
+    reader = await mountTextDocumentReader()
 
     await act(async () => {
       root.render(
@@ -302,7 +189,7 @@ describe("onAnnotationCreate", () => {
     Object.assign(globalThis, { IS_REACT_ACT_ENVIRONMENT: false })
   })
 
-  it("reports a highlight made from the drawer with its id, the range of the selection, its color and notes, and nothing of the selection", async () => {
+  it("reports a highlight made from the drawer with its id, the range of the selection, the selected text, its color and notes, and nothing of the selection", async () => {
     const { onAnnotationCreate } = await renderAnnotationCreation()
 
     await selectTextAndRelease()
@@ -317,6 +204,7 @@ describe("onAnnotationCreate", () => {
     expect(reported).toStrictEqual({
       id: expect.any(String),
       cfi: expect.any(String),
+      highlightedText: "paragraph",
       highlightColor: "rgba(216, 191, 216, 1)",
       notes: "A note",
     })

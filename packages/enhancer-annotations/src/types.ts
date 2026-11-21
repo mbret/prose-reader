@@ -14,6 +14,14 @@ export type AnnotationsByItemPage = ReadonlyMap<
 export interface Annotation {
   id: string
   cfi: string
+  /**
+   * The text of the range that `cfi` points to, as `Range.toString()` gives
+   * it: the text nodes of the document joined, with their whitespace as the
+   * document holds it and nothing added between two paragraphs. It does not
+   * depend on CSS, the layout or the browser. `createAnnotation` gives it for
+   * a selection. An annotation of a page has none.
+   */
+  highlightedText?: string
   highlightColor?: string
   notes?: string
   selected?: boolean
@@ -71,21 +79,23 @@ export type AnnotationsEnhancerAPI = {
      */
     annotationsByItemPage$: Observable<AnnotationsByItemPage>
     /**
-     * Gives a new annotation of a selection, or of a page, its `id` and its
-     * `cfi`: two strings and nothing else, so that the result can be stored
-     * as it is. Add the other fields of your annotation to it, such as
-     * `highlightColor` or `notes`.
+     * Gives a new annotation of a selection, or of a page, its `id`, its
+     * `cfi` and, for a selection, its `highlightedText`: strings and nothing
+     * else, so that the result can be stored as it is. Add the other fields
+     * of your annotation to it, such as `highlightColor` or `notes`.
      *
-     * - For a selection, the `cfi` is the range of the selection.
+     * - For a selection, the `cfi` is the range of the selection, and
+     *   `highlightedText` is the text of that range.
      * - For a page, the `cfi` points to the first visible node of the page,
-     *   or to the root of its spine item when the page has none.
+     *   or to the root of its spine item when the page has none. The result
+     *   has no `highlightedText`.
      *
      * It returns `undefined` when the reader has no such spine item or page,
      * or when the selection holds no range.
      */
     createAnnotation: (
       params: AnnotateSelectionParams | AnnotateAbsolutePageParams,
-    ) => Pick<Annotation, "id" | "cfi"> | undefined
+    ) => Pick<Annotation, "id" | "cfi" | "highlightedText"> | undefined
     isTargetWithinHighlight: (target: EventTarget) => boolean
   }
 }

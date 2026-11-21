@@ -18,7 +18,8 @@ export const AnnotationListItem = ({
     [reader, cfi],
   )
   const textContent =
-    locatedAnnotation?.meta.range?.toString() ||
+    annotation.highlightedText ??
+    locatedAnnotation?.meta.range?.toString() ??
     locatedAnnotation?.meta.node?.textContent
   const absolutePageIndex = locatedAnnotation?.meta.absolutePageIndex
   const pageNumber =

@@ -25,6 +25,7 @@ type Annotation {
   id: string
   meta: {
     isPageBookmark: boolean
+    highlightedText: string
     highlightColor: string
     notes: string
   }
@@ -60,7 +61,7 @@ You might be tempted to persist your annotations to your DB together with the te
 
 This is because the same CFI can return different runtime information for a different device with a different screen or reader configuration. If the user open a book on its tablet the pages will be much bigger and therefore your page 12 bookmark may now be on the page 6.
 
-Persisting the text selection is okay since the document should not have its structure altered but page information is usually discouraged.
+Persisting the text of a highlight is okay since the document should not have its structure altered, but page information is usually discouraged. The [Annotations](/enhancers/annotations#the-text-of-a-highlight) enhancer gives that text as `highlightedText`: the text of the document, not the text as a device renders it.
 
 There is nothing wrong in persisting pagination or runtime information but just remember that they might be different from a session to another. Most of the time, a user will open a same book on a same device but that's an assumption only you can decide.
 
