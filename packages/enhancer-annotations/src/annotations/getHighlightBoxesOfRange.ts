@@ -17,7 +17,7 @@ const ELEMENTS_PAINTED_BY_THEIR_BOX = new Set([
   "video",
 ])
 
-type HighlightBox = {
+export type HighlightBox = {
   left: number
   top: number
   right: number
@@ -125,21 +125,6 @@ const measureContentOfRange = (range: Range) => {
   return contentBoxes
 }
 
-const getLineAxesOfRange = ({ commonAncestorContainer }: Range) => {
-  const element = isElement(commonAncestorContainer)
-    ? commonAncestorContainer
-    : commonAncestorContainer.parentElement
-
-  if (!element) return HORIZONTAL_LINE_AXES
-
-  const writingMode =
-    element.ownerDocument.defaultView?.getComputedStyle(element).writingMode
-
-  return writingMode?.startsWith("vertical")
-    ? VERTICAL_LINE_AXES
-    : HORIZONTAL_LINE_AXES
-}
-
 const getLengthOfSpan = ({ start, end }: Span) => end - start
 
 /** Negative when the spans do not meet: minus the gap between them. */
@@ -203,8 +188,13 @@ const getBoxAroundBoth = (
  * space beside its lines
  * (https://drafts.csswg.org/cssom-view/#dom-range-getclientrects).
  */
-export const getHighlightBoxesOfRange = (range: Range) => {
-  const lineAxes = getLineAxesOfRange(range)
+export const getHighlightBoxesOfRange = (
+  range: Range,
+  { isUsingVerticalWriting }: { isUsingVerticalWriting: boolean },
+) => {
+  const lineAxes = isUsingVerticalWriting
+    ? VERTICAL_LINE_AXES
+    : HORIZONTAL_LINE_AXES
   const contentBoxes = measureContentOfRange(range)
   const highlightBoxes: HighlightBox[] = []
 

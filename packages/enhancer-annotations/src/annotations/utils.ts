@@ -2,14 +2,14 @@ import {
   setPropertyIfChanged,
   setStylePropertyIfChanged,
 } from "@prose-reader/core"
-import { getHighlightBoxesOfRange } from "./getHighlightBoxesOfRange.ts"
+import type { HighlightBox } from "./getHighlightBoxesOfRange.ts"
 
-export const createElementsForRange = (
-  range: Range,
+export const createElementsForBoxes = (
+  boxes: HighlightBox[],
   container: HTMLElement,
   color: string,
 ) =>
-  getHighlightBoxesOfRange(range).map(({ left, top, right, bottom }) => {
+  boxes.map(({ left, top, right, bottom }) => {
     const rectEltContainer = container.ownerDocument.createElement("div")
     const rectElt = container.ownerDocument.createElement("div")
     rectEltContainer.style.cssText = `

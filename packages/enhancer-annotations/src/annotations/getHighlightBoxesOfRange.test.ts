@@ -95,7 +95,6 @@ afterEach(() => {
   Reflect.deleteProperty(Range.prototype, "getClientRects")
   fakeTextLayouts.clear()
   document.body.innerHTML = ""
-  document.body.removeAttribute("style")
 })
 
 describe("getHighlightBoxesOfRange", () => {
@@ -114,6 +113,7 @@ describe("getHighlightBoxesOfRange", () => {
     expect(
       getHighlightBoxesOfRange(
         createRange([firstTextOf("#first"), 4], [firstTextOf("#last"), 6]),
+        { isUsingVerticalWriting: false },
       ),
     ).toEqual([
       { left: 40, top: 0, right: 100, bottom: 20 },
@@ -134,6 +134,7 @@ describe("getHighlightBoxesOfRange", () => {
     expect(
       getHighlightBoxesOfRange(
         createRange([firstTextOf("#before"), 5], [firstTextOf("#after"), 5]),
+        { isUsingVerticalWriting: false },
       ),
     ).toEqual([
       { left: 50, top: 0, right: 100, bottom: 20 },
@@ -155,6 +156,7 @@ describe("getHighlightBoxesOfRange", () => {
           [firstTextOf("#before"), 5],
           [firstTextOf("#drawing text"), 2],
         ),
+        { isUsingVerticalWriting: false },
       ),
     ).toEqual([
       { left: 50, top: 0, right: 100, bottom: 20 },
@@ -177,6 +179,7 @@ describe("getHighlightBoxesOfRange", () => {
           [firstTextOf("#paragraph"), 0],
           [firstTextOf("#paragraph code"), 4],
         ),
+        { isUsingVerticalWriting: false },
       ),
     ).toEqual([{ left: 0, top: 0, right: 84, bottom: 20 }])
   })
@@ -189,6 +192,7 @@ describe("getHighlightBoxesOfRange", () => {
     expect(
       getHighlightBoxesOfRange(
         createRange([firstTextOf("#first"), 0], [firstTextOf("#next"), 10]),
+        { isUsingVerticalWriting: false },
       ),
     ).toEqual([
       { left: 0, top: 0, right: 100, bottom: 20 },
@@ -198,7 +202,6 @@ describe("getHighlightBoxesOfRange", () => {
 
   it("paints each vertical line of the text in one box, when the lines run down", () => {
     document.body.innerHTML = `<p id="first">aaaa<em>bbbb</em></p><p id="next">cccc</p>`
-    document.body.style.writingMode = "vertical-rl"
     layOutText(firstTextOf("#first"), { left: 100, top: 0, isVertical: true })
     layOutText(firstTextOf("#first em"), {
       left: 100,
@@ -210,6 +213,7 @@ describe("getHighlightBoxesOfRange", () => {
     expect(
       getHighlightBoxesOfRange(
         createRange([firstTextOf("#first"), 0], [firstTextOf("#next"), 4]),
+        { isUsingVerticalWriting: true },
       ),
     ).toEqual([
       { left: 100, top: 0, right: 120, bottom: 80 },
@@ -229,6 +233,7 @@ describe("getHighlightBoxesOfRange", () => {
           [firstTextOf("#paragraph"), 0],
           [elementOf("#paragraph")?.lastChild, 4],
         ),
+        { isUsingVerticalWriting: false },
       ),
     ).toEqual([
       { left: 0, top: 0, right: 40, bottom: 20 },
@@ -238,6 +243,7 @@ describe("getHighlightBoxesOfRange", () => {
     expect(
       getHighlightBoxesOfRange(
         createRange([elementOf("#paragraph"), 1], [elementOf("#paragraph"), 2]),
+        { isUsingVerticalWriting: false },
       ),
     ).toEqual([{ left: 40, top: -2, right: 64, bottom: 22 }])
   })
@@ -257,6 +263,7 @@ describe("getHighlightBoxesOfRange", () => {
           [firstTextOf("#drop-cap"), 0],
           [elementOf("#paragraph")?.lastChild, 4],
         ),
+        { isUsingVerticalWriting: false },
       ),
     ).toEqual([
       { left: 0, top: 0, right: 10, bottom: 64 },
@@ -274,12 +281,14 @@ describe("getHighlightBoxesOfRange", () => {
     expect(
       getHighlightBoxesOfRange(
         createRange([document.body, 1], [document.body, 2]),
+        { isUsingVerticalWriting: false },
       ),
       "the boxes of a range over the second paragraph of the body",
     ).toEqual([{ left: 0, top: 20, right: 100, bottom: 40 }])
     expect(
       getHighlightBoxesOfRange(
         createRange([firstTextOf("#first"), 5], [elementOf("#last"), 0]),
+        { isUsingVerticalWriting: false },
       ),
       "the boxes of a range that ends at the start of the last paragraph",
     ).toEqual([
@@ -289,6 +298,7 @@ describe("getHighlightBoxesOfRange", () => {
     expect(
       getHighlightBoxesOfRange(
         createRange([firstTextOf("#first"), 5], [elementOf("#middle"), 1]),
+        { isUsingVerticalWriting: false },
       ),
       "the boxes of a range that ends after the last child of the middle paragraph",
     ).toEqual([
@@ -298,6 +308,7 @@ describe("getHighlightBoxesOfRange", () => {
     expect(
       getHighlightBoxesOfRange(
         createRange([elementOf("#first"), 1], [firstTextOf("#last"), 6]),
+        { isUsingVerticalWriting: false },
       ),
       "the boxes of a range that starts after the last child of the first paragraph",
     ).toEqual([
