@@ -63,20 +63,26 @@ const layOutElement = (selector: string, box: DOMRect) => {
   Object.defineProperty(element, "getClientRects", { value: () => [box] })
 }
 
+type BoundaryPoint = [Node | null | undefined, number]
+
 const createRange = (
-  [startNode, startOffset]: [ChildNode | null | undefined, number],
-  [endNode, endOffset]: [ChildNode | null | undefined, number],
+  [startNode, startOffset]: BoundaryPoint,
+  [endNode, endOffset]: BoundaryPoint,
 ) => {
+  if (!startNode || !endNode) throw new Error("no node for the range")
+
   const range = document.createRange()
 
-  range.setStart(getText(startNode), startOffset)
-  range.setEnd(getText(endNode), endOffset)
+  range.setStart(startNode, startOffset)
+  range.setEnd(endNode, endOffset)
 
   return range
 }
 
 const firstTextOf = (selector: string) =>
   document.querySelector(selector)?.firstChild
+
+const elementOf = (selector: string) => document.querySelector(selector)
 
 beforeEach(() => {
   Object.defineProperty(Range.prototype, "getClientRects", {
@@ -208,6 +214,86 @@ describe("getHighlightBoxesOfRange", () => {
     ).toEqual([
       { left: 100, top: 0, right: 120, bottom: 80 },
       { left: 80, top: 0, right: 100, bottom: 40 },
+    ])
+  })
+
+  it("paints an image on a line by its own box, apart from the text around it", () => {
+    document.body.innerHTML = `<p id="paragraph">aaaa<img id="icon" />bbbb</p>`
+    layOutText(firstTextOf("#paragraph"), { left: 0, top: 0 })
+    layOutElement("#icon", new DOMRect(40, -2, 24, 24))
+    layOutText(elementOf("#paragraph")?.lastChild, { left: 64, top: 0 })
+
+    expect(
+      getHighlightBoxesOfRange(
+        createRange(
+          [firstTextOf("#paragraph"), 0],
+          [elementOf("#paragraph")?.lastChild, 4],
+        ),
+      ),
+    ).toEqual([
+      { left: 0, top: 0, right: 40, bottom: 20 },
+      { left: 40, top: -2, right: 64, bottom: 22 },
+      { left: 64, top: 0, right: 104, bottom: 20 },
+    ])
+    expect(
+      getHighlightBoxesOfRange(
+        createRange([elementOf("#paragraph"), 1], [elementOf("#paragraph"), 2]),
+      ),
+    ).toEqual([{ left: 40, top: -2, right: 64, bottom: 22 }])
+  })
+
+  it("keeps a drop cap apart from the lines of text beside it", () => {
+    document.body.innerHTML = `<p id="paragraph"><span id="drop-cap">T</span>he story<br />goes on</p>`
+    layOutText(firstTextOf("#drop-cap"), { left: 0, top: 0, thickness: 64 })
+    layOutText(elementOf("#paragraph")?.childNodes.item(1), {
+      left: 12,
+      top: 0,
+    })
+    layOutText(elementOf("#paragraph")?.lastChild, { left: 12, top: 20 })
+
+    expect(
+      getHighlightBoxesOfRange(
+        createRange(
+          [firstTextOf("#drop-cap"), 0],
+          [elementOf("#paragraph")?.lastChild, 4],
+        ),
+      ),
+    ).toEqual([
+      { left: 0, top: 0, right: 10, bottom: 64 },
+      { left: 12, top: 0, right: 92, bottom: 20 },
+      { left: 12, top: 20, right: 52, bottom: 40 },
+    ])
+  })
+
+  it("paints the content between the boundaries of a range that are in elements", () => {
+    document.body.innerHTML = `<p id="first">0123456789</p><p id="middle">abcdefghij</p><p id="last">0123456789</p>`
+    layOutText(firstTextOf("#first"), { left: 0, top: 0 })
+    layOutText(firstTextOf("#middle"), { left: 0, top: 20 })
+    layOutText(firstTextOf("#last"), { left: 0, top: 40 })
+
+    expect(
+      getHighlightBoxesOfRange(
+        createRange([document.body, 1], [document.body, 2]),
+      ),
+      "the boxes of a range over the second paragraph of the body",
+    ).toEqual([{ left: 0, top: 20, right: 100, bottom: 40 }])
+    expect(
+      getHighlightBoxesOfRange(
+        createRange([firstTextOf("#first"), 5], [elementOf("#last"), 0]),
+      ),
+      "the boxes of a range that ends at the start of the last paragraph",
+    ).toEqual([
+      { left: 50, top: 0, right: 100, bottom: 20 },
+      { left: 0, top: 20, right: 100, bottom: 40 },
+    ])
+    expect(
+      getHighlightBoxesOfRange(
+        createRange([firstTextOf("#first"), 5], [elementOf("#middle"), 1]),
+      ),
+      "the boxes of a range that ends after the last child of the middle paragraph",
+    ).toEqual([
+      { left: 50, top: 0, right: 100, bottom: 20 },
+      { left: 0, top: 20, right: 100, bottom: 40 },
     ])
   })
 })

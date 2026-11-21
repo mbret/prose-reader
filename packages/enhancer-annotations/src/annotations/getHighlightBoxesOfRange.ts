@@ -1,8 +1,9 @@
-import { getNextNodeInDocumentOrder, isHtmlElement } from "@prose-reader/core"
+import { getNextNodeInDocumentOrder } from "@prose-reader/core"
 
 /**
- * The elements a highlight paints by their own box: what they show is not
- * text, so it has no line to paint.
+ * The elements a highlight paints by their own box rather than line by line,
+ * when the range selects them whole. An `svg` or a `math` that holds text is
+ * one too: that text is part of a drawing, not of the lines around it.
  */
 const ELEMENTS_PAINTED_BY_THEIR_BOX = new Set([
   "audio",
@@ -10,6 +11,7 @@ const ELEMENTS_PAINTED_BY_THEIR_BOX = new Set([
   "embed",
   "iframe",
   "img",
+  "math",
   "object",
   "svg",
   "video",
@@ -22,13 +24,31 @@ type HighlightBox = {
   bottom: number
 }
 
-type ContentBox = { box: HighlightBox; isText: boolean }
+type ContentBox = { kind: "text" | "element"; box: HighlightBox }
 
 type Span = { start: number; end: number }
+
+type LineAxes = {
+  across: (box: HighlightBox) => Span
+  along: (box: HighlightBox) => Span
+}
+
+const HORIZONTAL_LINE_AXES: LineAxes = {
+  across: ({ top, bottom }) => ({ start: top, end: bottom }),
+  along: ({ left, right }) => ({ start: left, end: right }),
+}
+
+const VERTICAL_LINE_AXES: LineAxes = {
+  across: ({ left, right }) => ({ start: left, end: right }),
+  along: ({ top, bottom }) => ({ start: top, end: bottom }),
+}
 
 /** A `CDATASection` is a `Text` node too, and lays out its text the same. */
 const isTextNode = (node: Node): node is Text =>
   node.nodeType === Node.TEXT_NODE || node.nodeType === Node.CDATA_SECTION_NODE
+
+const isElement = (node: Node): node is Element =>
+  node.nodeType === Node.ELEMENT_NODE
 
 const getFirstNodeOfRange = ({ startContainer, startOffset }: Range) =>
   isTextNode(startContainer)
@@ -43,28 +63,25 @@ const getFirstNodeAfterRange = ({ endContainer, endOffset }: Range) =>
 
 /** `node`, when the highlight of `range` paints it whole by its box. */
 const getElementPaintedWhole = (node: Node, range: Range) => {
-  if (
-    !isHtmlElement(node) ||
-    !ELEMENTS_PAINTED_BY_THEIR_BOX.has(node.localName)
-  )
+  if (!isElement(node) || !ELEMENTS_PAINTED_BY_THEIR_BOX.has(node.localName))
     return undefined
 
   /**
-   * The walk starts after the start of the range, so only its end can be
-   * inside an element that the walk reaches.
+   * The walk of `measureContentOfRange` reaches no element that holds the
+   * start of `range`, so only its end can be inside `node`.
    */
   const isSelectedWhole = !node.contains(range.endContainer)
 
   return isSelectedWhole ? node : undefined
 }
 
-const toContentBoxes = (rects: DOMRectList, isText: boolean) =>
+const toContentBoxes = (kind: ContentBox["kind"], rects: DOMRectList) =>
   Array.from(rects)
     .filter((rect) => rect.width > 0 && rect.height > 0)
     .map(
       ({ left, top, right, bottom }): ContentBox => ({
+        kind,
         box: { left, top, right, bottom },
-        isText,
       }),
     )
 
@@ -89,14 +106,14 @@ const measureContentOfRange = (range: Range) => {
         node,
         node === range.endContainer ? range.endOffset : node.length,
       )
-      contentBoxes.push(...toContentBoxes(textRange.getClientRects(), true))
+      contentBoxes.push(...toContentBoxes("text", textRange.getClientRects()))
     }
 
     const elementPaintedWhole = getElementPaintedWhole(node, range)
 
     if (elementPaintedWhole) {
       contentBoxes.push(
-        ...toContentBoxes(elementPaintedWhole.getClientRects(), false),
+        ...toContentBoxes("element", elementPaintedWhole.getClientRects()),
       )
     }
 
@@ -108,65 +125,58 @@ const measureContentOfRange = (range: Range) => {
   return contentBoxes
 }
 
-/**
- * Whether the lines of `range` run down, as in a vertical writing mode,
- * rather than across.
- */
-const isRangeInVerticalLines = ({ commonAncestorContainer }: Range) => {
-  const element = isHtmlElement(commonAncestorContainer)
+const getLineAxesOfRange = ({ commonAncestorContainer }: Range) => {
+  const element = isElement(commonAncestorContainer)
     ? commonAncestorContainer
     : commonAncestorContainer.parentElement
 
-  if (!element) return false
+  if (!element) return HORIZONTAL_LINE_AXES
 
   const writingMode =
-    element.ownerDocument.defaultView?.getComputedStyle(element).writingMode ??
-    ""
+    element.ownerDocument.defaultView?.getComputedStyle(element).writingMode
 
-  return (
-    writingMode.startsWith("vertical") || writingMode.startsWith("sideways")
-  )
+  return writingMode?.startsWith("vertical")
+    ? VERTICAL_LINE_AXES
+    : HORIZONTAL_LINE_AXES
 }
 
-const getSpanAcrossLine = (box: HighlightBox, isLineVertical: boolean) =>
-  isLineVertical
-    ? { start: box.left, end: box.right }
-    : { start: box.top, end: box.bottom }
-
-const getSpanAlongLine = (box: HighlightBox, isLineVertical: boolean) =>
-  isLineVertical
-    ? { start: box.top, end: box.bottom }
-    : { start: box.left, end: box.right }
+const getLengthOfSpan = ({ start, end }: Span) => end - start
 
 /** Negative when the spans do not meet: minus the gap between them. */
 const getOverlapOfSpans = (first: Span, second: Span) =>
   Math.min(first.end, second.end) - Math.max(first.start, second.start)
 
 /**
- * Whether `textBox` continues the line of text that `lineBox` paints. The
- * next line never overlaps it by half its thickness. Along the line, a gap
- * no wider than the line is thick is the padding or margin of an inline
- * element, which the box of the line covers. A wider gap separates two
- * columns, whose lines can be at the same height.
+ * Whether `textBox` continues the line of `previousTextBox`, the text box
+ * before it in the document.
+ *
+ * Across the line, the two overlap by half the thicker one at least. A drop
+ * cap, several lines thick, stays apart from the lines beside it.
+ *
+ * Along the line, a gap no wider than the thinner one is the padding or margin
+ * of an inline element, which the box of the line covers. A wider gap is the
+ * gap between two columns, where the text can go on at the same height. That
+ * holds while the page margins keep the gap between columns wider than a line.
  */
 const isContinuingLineOfText = (
-  lineBox: HighlightBox,
+  previousTextBox: HighlightBox,
   textBox: HighlightBox,
-  isLineVertical: boolean,
+  lineAxes: LineAxes,
 ) => {
-  const lineSpanAcross = getSpanAcrossLine(lineBox, isLineVertical)
-  const textSpanAcross = getSpanAcrossLine(textBox, isLineVertical)
-  const thicknessOfLine = Math.min(
-    lineSpanAcross.end - lineSpanAcross.start,
-    textSpanAcross.end - textSpanAcross.start,
-  )
+  const previousSpanAcross = lineAxes.across(previousTextBox)
+  const spanAcross = lineAxes.across(textBox)
+  const thicknesses = [
+    getLengthOfSpan(previousSpanAcross),
+    getLengthOfSpan(spanAcross),
+  ]
   const isOnSameLine =
-    getOverlapOfSpans(lineSpanAcross, textSpanAcross) >= thicknessOfLine / 2
+    getOverlapOfSpans(previousSpanAcross, spanAcross) >=
+    Math.max(...thicknesses) / 2
   const isInSameColumn =
     getOverlapOfSpans(
-      getSpanAlongLine(lineBox, isLineVertical),
-      getSpanAlongLine(textBox, isLineVertical),
-    ) >= -thicknessOfLine
+      lineAxes.along(previousTextBox),
+      lineAxes.along(textBox),
+    ) >= -Math.min(...thicknesses)
 
   return isOnSameLine && isInSameColumn
 }
@@ -182,11 +192,11 @@ const getBoxAroundBoth = (
 })
 
 /**
- * The boxes a highlight of `range` paints, in the coordinates of the range's
- * document: one for each line of the text it covers, from its first to its
- * last character there, and one for each image, or other element that shows
- * no text, that it selects whole. No two of them overlap, as long as the
- * lines of the text do not.
+ * The boxes a highlight of `range` paints, in the coordinates of its
+ * document's own viewport, as `getClientRects()` measures them: one for each
+ * line of the text it covers, from its first to its last character there, and
+ * one for each element of `ELEMENTS_PAINTED_BY_THEIR_BOX` that it selects
+ * whole. No two of them overlap, as long as the lines of the text do not.
  *
  * `Range.getClientRects()` cannot give them: it also gives the box of each
  * element that the range selects whole, such as a paragraph, with the blank
@@ -194,29 +204,27 @@ const getBoxAroundBoth = (
  * (https://drafts.csswg.org/cssom-view/#dom-range-getclientrects).
  */
 export const getHighlightBoxesOfRange = (range: Range) => {
-  const isLineVertical = isRangeInVerticalLines(range)
-  const highlightBoxes: ContentBox[] = []
+  const lineAxes = getLineAxesOfRange(range)
+  const contentBoxes = measureContentOfRange(range)
+  const highlightBoxes: HighlightBox[] = []
 
-  for (const contentBox of measureContentOfRange(range)) {
+  for (const [index, contentBox] of contentBoxes.entries()) {
+    const previousContentBox = contentBoxes[index - 1]
     const lastHighlightBox = highlightBoxes.at(-1)
-    const isJoiningLastLine =
-      !!lastHighlightBox?.isText &&
-      contentBox.isText &&
-      isContinuingLineOfText(
-        lastHighlightBox.box,
-        contentBox.box,
-        isLineVertical,
-      )
+    const isJoiningLineOfText =
+      contentBox.kind === "text" &&
+      previousContentBox?.kind === "text" &&
+      isContinuingLineOfText(previousContentBox.box, contentBox.box, lineAxes)
 
-    if (lastHighlightBox && isJoiningLastLine) {
-      lastHighlightBox.box = getBoxAroundBoth(
-        lastHighlightBox.box,
+    if (lastHighlightBox && isJoiningLineOfText) {
+      highlightBoxes[highlightBoxes.length - 1] = getBoxAroundBoth(
+        lastHighlightBox,
         contentBox.box,
       )
     } else {
-      highlightBoxes.push({ ...contentBox })
+      highlightBoxes.push(contentBox.box)
     }
   }
 
-  return highlightBoxes.map(({ box }) => box)
+  return highlightBoxes
 }
