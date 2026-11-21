@@ -16,7 +16,7 @@ creates, so it shares that reader's copies rather than bringing its own.
 
 ## Creating an annotation
 
-`reader.annotations.createAnnotation()` gives a new annotation its `id`, its `cfi` and, for a selection, its `highlightedText`. Pass it one of two things:
+`reader.annotations.createAnnotation()` gives a new annotation its `cfi` and, for a selection, its `highlightedText`. Pass it one of two things:
 
 - a selection and the index of its spine item, as `reader.selection.getSelection()` gives them, for a highlight;
 - the absolute index of a page, for a bookmark.
@@ -31,18 +31,25 @@ if (currentSelection) {
   })
 
   if (highlight) {
-    saveAnnotation({ ...highlight, highlightColor: "yellow", notes: "" })
+    saveAnnotation({
+      ...highlight,
+      id: crypto.randomUUID(),
+      highlightColor: "yellow",
+      notes: "",
+    })
   }
 }
 
 const bookmark = reader.annotations.createAnnotation({ absolutePageIndex })
 ```
 
-It returns `{ id, cfi, highlightedText }` for a selection and `{ id, cfi }` for a page: strings and nothing else. Add the other fields of your annotation to it, such as `highlightColor` and `notes`, and store the result as it is: in IndexedDB, for example.
+It returns `{ cfi, highlightedText }` for a selection and `{ cfi }` for a page: strings and nothing else. Add an `id` of your own and the other fields of your annotation to it, such as `highlightColor` and `notes`, and store the result as it is: in IndexedDB, for example. The type of an annotation without its `id` is `NewAnnotation`.
 
 - For a selection, the CFI is the range of the selection, and `highlightedText` is the text of that range: see [The text of a highlight](#the-text-of-a-highlight).
 - For a page, the CFI points to the first visible node of the page, or to the root of its spine item when the page has none: see [Blank pages and annotations](#blank-pages-and-annotations). The result has no `highlightedText`.
 - It returns `undefined` when the reader has no such spine item or page, or when the selection holds no range.
+
+The reader only needs each `id` to be unique among the annotations you give it, so your ids can take the form your store uses.
 
 Do not store a page index with an annotation: its page changes with the layout and the device. See [Danger of persisting weak references](/learn/annotations#danger-of-persisting-weak-references).
 

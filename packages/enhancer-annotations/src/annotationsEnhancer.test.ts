@@ -658,14 +658,14 @@ class TwoParagraphsTextDocumentRenderer extends TextDocumentRenderer {
  * An app stores what `createAnnotation` returns, in IndexedDB or through
  * `postMessage`, which copy a value with the structured clone algorithm. A
  * browser cannot clone an event or a selection, so the result holds strings
- * only: an id, a cfi and, for a selection, its text.
+ * only: a cfi and, for a selection, its text. The app gives it its id.
  *
  * The tests compare the keys of the result, not whether it clones: jsdom
  * clones its events like plain objects, so a clone would succeed here with
  * the event in the result.
  */
 describe("createAnnotation", () => {
-  it("annotates a selection with its id, a range cfi and the selected text, and nothing of the selection itself", async () => {
+  it("annotates a selection with a range cfi and the selected text, and neither an id nor anything of the selection itself", async () => {
     const reader = await mountAnnotationsReader({
       Renderer: TextDocumentRenderer,
     })
@@ -675,7 +675,6 @@ describe("createAnnotation", () => {
     const annotation = reader.annotations.createAnnotation(selection)
 
     expect(annotation).toStrictEqual({
-      id: expect.any(String),
       cfi: expect.any(String),
       highlightedText: "paragraph",
     })
@@ -724,7 +723,7 @@ describe("createAnnotation", () => {
     })
   })
 
-  it("annotates a page with its id and the cfi of its item, and neither a text nor the page index", async () => {
+  it("annotates a page with the cfi of its item, and neither an id, a text nor the page index", async () => {
     const reader = await mountAnnotationsReader({
       Renderer: TextDocumentRenderer,
     })
@@ -734,7 +733,6 @@ describe("createAnnotation", () => {
     })
 
     expect(annotation).toStrictEqual({
-      id: expect.any(String),
       cfi: expect.any(String),
     })
     expect(reader.cfi.parseCfi(annotation?.cfi ?? "")).toMatchObject({

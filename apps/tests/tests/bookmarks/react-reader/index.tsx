@@ -53,7 +53,10 @@ function App({
         createReader={createBookReader}
         annotations={annotations}
         onAnnotationCreate={(annotation) => {
-          setAnnotations((previous) => [...previous, annotation])
+          setAnnotations((previous) => [
+            ...previous,
+            { ...annotation, id: crypto.randomUUID() },
+          ])
         }}
         onAnnotationDelete={(id) => {
           setAnnotations((previous) =>
