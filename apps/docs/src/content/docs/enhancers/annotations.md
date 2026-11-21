@@ -1,6 +1,6 @@
 ---
 title: "Annotations enhancer"
-description: "Install @prose-reader/enhancer-annotations, create annotations with createAnnotation and store them as they are, show them as highlights, find the annotations of each page with annotationsByItemPage$, find the pages that can hold one with candidates$, and avoid the root CFI you get on a blank page."
+description: "Install @prose-reader/enhancer-annotations, create annotations with createAnnotation and give each one an id of your own before you store it, show them as highlights, find the annotations of each page with annotationsByItemPage$, find the pages that can hold one with candidates$, and avoid the root CFI you get on a blank page."
 sidebar:
   label: "Annotations"
 ---
