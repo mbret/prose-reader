@@ -97,8 +97,13 @@ The enhancer compares each entry with the previous one by reference. It ignores
 an array that holds the same objects as the previous one, so it does not draw
 again an annotation that you change in place.
 
-The enhancer draws a highlight for each annotation whose CFI is a range, over
-the text that range covers, while the document of its spine item is loaded:
+The enhancer draws a highlight for each annotation whose CFI is a range, while
+the document of its spine item is loaded. The highlight covers each line of the
+text that the range covers, from the line's first selected character to its
+last. It covers the box of each `img`, `svg`, `math`, `video`, `audio`,
+`canvas`, `iframe`, `object` or `embed` element that the range covers whole,
+even one that holds text. It does not cover the blank space beside a line. It
+is drawn:
 
 * in its `highlightColor`, or yellow when it has none, with a note icon when it
   has `notes`;

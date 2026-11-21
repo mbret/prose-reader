@@ -2,38 +2,20 @@ import {
   setPropertyIfChanged,
   setStylePropertyIfChanged,
 } from "@prose-reader/core"
+import type { HighlightBox } from "./getHighlightBoxesOfRange.ts"
 
-export const createElementForRange = (
-  range: Range,
+export const createElementsForBoxes = (
+  boxes: HighlightBox[],
   container: HTMLElement,
   color: string,
-) => {
-  // Get all rects and group them by line (based on vertical position)
-  const rects = Array.from(range.getClientRects())
-  const lineGroups = new Map<number, DOMRect[]>()
-
-  rects.forEach((rect) => {
-    const lineY = Math.round(rect.top) // Round to handle minor pixel differences
-    if (!lineGroups.has(lineY)) {
-      lineGroups.set(lineY, [])
-    }
-    lineGroups.get(lineY)?.push(rect)
-  })
-
-  // Create one highlight element per line
-  return Array.from(lineGroups.values()).map((lineRects) => {
-    // Find the leftmost and rightmost points
-    const left = Math.min(...lineRects.map((r) => r.left))
-    const right = Math.max(...lineRects.map((r) => r.right))
-    const top = lineRects[0]?.top
-    const height = lineRects[0]?.height
-
+) =>
+  boxes.map(({ left, top, right, bottom }) => {
     const rectEltContainer = container.ownerDocument.createElement("div")
     const rectElt = container.ownerDocument.createElement("div")
     rectEltContainer.style.cssText = `
         position: absolute;
         width: ${right - left}px;
-        height: ${height}px;
+        height: ${bottom - top}px;
         top: ${top}px;
         left: ${left}px;
         box-sizing: border-box;
@@ -50,7 +32,6 @@ export const createElementForRange = (
 
     return rectEltContainer
   })
-}
 
 export const copyPositionStyle = (source: HTMLElement, target: HTMLElement) => {
   setPropertyIfChanged(target.style, `cssText`, source.style.cssText)

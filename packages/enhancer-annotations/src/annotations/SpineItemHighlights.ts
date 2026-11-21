@@ -117,6 +117,7 @@ export class SpineItemHighlights extends DestroyableClass {
     return new SpineItemHighlight(
       this.layer,
       this.reader,
+      this.spineItem,
       annotation,
       isSelected$,
     )

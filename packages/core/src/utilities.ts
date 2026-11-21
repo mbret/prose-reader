@@ -5,6 +5,7 @@ export type {
 export { observeBookBoundaryReached } from "./enhancers/navigation/bookBoundary.ts"
 export * from "./navigation/operators.ts"
 export {
+  getNextNodeInDocumentOrder,
   injectCSS,
   isHtmlElement,
   isHtmlTagElement,

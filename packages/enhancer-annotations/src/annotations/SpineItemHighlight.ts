@@ -1,11 +1,13 @@
 import {
   DestroyableClass,
   type Reader,
+  type SpineItem,
   setStylePropertyIfChanged,
 } from "@prose-reader/core"
 import { map, type Observable, take, takeUntil, tap } from "rxjs"
+import { getHighlightBoxesOfRange } from "./getHighlightBoxesOfRange.ts"
 import type { RuntimeAnnotation } from "./types.ts"
-import { createElementForRange } from "./utils.ts"
+import { createElementsForBoxes } from "./utils.ts"
 
 export class SpineItemHighlight extends DestroyableClass {
   private container: HTMLElement
@@ -19,6 +21,7 @@ export class SpineItemHighlight extends DestroyableClass {
   constructor(
     private containerElement: HTMLElement,
     private reader: Reader,
+    private spineItem: SpineItem,
     annotation: RuntimeAnnotation,
     private isSelected$: Observable<boolean>,
   ) {
@@ -91,8 +94,10 @@ export class SpineItemHighlight extends DestroyableClass {
          */
         if (!range) return null
 
-        const rectElements = createElementForRange(
-          range,
+        const rectElements = createElementsForBoxes(
+          getHighlightBoxesOfRange(range, {
+            isUsingVerticalWriting: this.spineItem.isUsingVerticalWriting(),
+          }),
           this.container,
           this.annotation.highlightColor ?? "yellow",
         )
