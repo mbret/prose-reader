@@ -1,6 +1,6 @@
 import { type Reader, SettingsManager } from "@prose-reader/core"
 import { takeUntil, tap } from "rxjs"
-import type { InputSettings, OutputSettings } from "./types"
+import type { InputSettings, OutputSettings } from "./types.ts"
 
 export class GesturesSettingsManager extends SettingsManager<
   InputSettings,

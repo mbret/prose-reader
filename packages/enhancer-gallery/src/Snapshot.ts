@@ -5,7 +5,7 @@ import {
   type SpineItem,
 } from "@prose-reader/core"
 import { filter, finalize, first, Observable, switchMap } from "rxjs"
-import { deepCloneElement } from "./utils/deepCloneElement"
+import { deepCloneElement } from "./utils/deepCloneElement.ts"
 
 const SNAPSHOT_CLASS = "prose-reader-enhancer-gallery-snapshot"
 const SNAPSHOT_MASK_CLASS = "prose-reader-enhancer-gallery-snapshot-mask"

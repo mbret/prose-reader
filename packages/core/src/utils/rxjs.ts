@@ -8,7 +8,7 @@ import {
   type OperatorFunction,
   switchMap,
 } from "rxjs"
-import { pick } from "./objects"
+import { pick } from "./objects.ts"
 
 export const mapKeysTo = <R extends Record<string, unknown>, K extends keyof R>(
   keys: K[],

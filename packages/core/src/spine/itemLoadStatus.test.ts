@@ -5,15 +5,15 @@ import { describe, expect, it, vi } from "vitest"
 import type {
   DocumentLoadStatus,
   DocumentRendererParams,
-} from "../spineItem/renderer/DocumentRenderer"
+} from "../spineItem/renderer/DocumentRenderer.ts"
 import {
   createTestReader,
   installReaderTestEnvironment,
   mountTestReader,
   settledOn,
   TextDocumentRenderer,
-} from "../tests/readerHarness"
-import { isDefined } from "../utils/isDefined"
+} from "../tests/readerHarness.ts"
+import { isDefined } from "../utils/isDefined.ts"
 
 installReaderTestEnvironment()
 

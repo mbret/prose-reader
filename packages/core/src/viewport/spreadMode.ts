@@ -1,6 +1,6 @@
 import type { Manifest } from "@prose-reader/shared"
-import { isSpreadAllowedByBook } from "../manifest/isSpreadAllowedByBook"
-import type { CoreInputSettings } from "../settings/types"
+import { isSpreadAllowedByBook } from "../manifest/isSpreadAllowedByBook.ts"
+import type { CoreInputSettings } from "../settings/types.ts"
 
 type ViewportDimensions = {
   height: number

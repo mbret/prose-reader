@@ -14,7 +14,7 @@ import {
 import {
   injectCSS as injectCSSToDocument,
   removeCSS as removeCSSToDocument,
-} from "./dom"
+} from "./dom.ts"
 
 const getAttributeTokenFromString = (string: string, key: string) => {
   const regExp = new RegExp(`${key}\\s*=\\s*([^,\\s]+)`, `i`)

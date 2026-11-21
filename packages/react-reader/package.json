@@ -19,13 +19,17 @@
     "directory": "packages/react-reader"
   },
   "type": "module",
+  "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
   "publishConfig": {
     "access": "public",
     "registry": "https://registry.npmjs.org/"
   },
   "exports": {
-    ".": "./dist/index.js",
+    ".": {
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
+    },
     "./index.css": "./dist/index.css"
   },
   "license": "MIT",
@@ -33,8 +37,8 @@
     "/dist"
   ],
   "scripts": {
-    "start": "vite build --watch --mode development",
-    "build": "node ./scripts/check-enhancer-imports.mjs && tsc -b && vite build",
+    "start": "node ../../config/watchLibraryBuild.mjs",
+    "build": "node ./scripts/check-enhancer-imports.mjs && tsc -b && vite build && tsc -p tsconfig.build.json",
     "check:enhancers": "node ./scripts/check-enhancers.mjs",
     "test": "vitest run --coverage"
   },
@@ -65,8 +69,11 @@
     "react": "19.x",
     "react-dom": "19.x",
     "react-icons": "^5.4.0",
-    "reactjrx": "6.x",
+    "reactjrx": "^7.0.0",
     "rxjs": "^7.5.5",
     "screenfull": "^6.0.2"
+  },
+  "engines": {
+    "node": ">=22.12"
   }
 }

@@ -2,14 +2,14 @@ import type { Manifest } from "@prose-reader/shared"
 import {
   removeStylePropertyIfPresent,
   setStylePropertyIfChanged,
-} from "../../../../utils/dom"
-import { upsertCSSToFrame } from "../../../../utils/frames"
-import { getViewPortInformation } from "../viewport"
+} from "../../../../utils/dom.ts"
+import { upsertCSSToFrame } from "../../../../utils/frames.ts"
+import { getViewPortInformation } from "../viewport.ts"
 import {
   buildStyleForReflowableImageOnly,
   buildStyleForViewportFrame,
   buildStyleWithMultiColumn,
-} from "./styles"
+} from "./styles.ts"
 
 const getDimensionsForReflowableContent = ({
   isUsingVerticalWriting,

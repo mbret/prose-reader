@@ -102,18 +102,22 @@ pnpm exec lerna run build --stream --scope "@prose-reader/*"
 
 `nvm install`/`nvm use` read `.nvmrc` from the repo root, and CI reads the same `.nvmrc` and `packageManager`, so both follow whatever is pinned — no version numbers to keep in sync. Regenerate `pnpm-lock.yaml` only with that pinned pnpm: another major can rewrite the lockfile's format.
 
-pnpm gives each package only what its own manifest declares. Declare a dependency in the package that imports it: anything the published code or its types import in `dependencies` or `peerDependencies`, a test-only import in `devDependencies`. Build tooling shared by every package (vite, vitest, the dts and externals plugins) is declared once at the root. That includes happy-dom and jsdom: vitest loads the test environment through its own peer, which pnpm resolves at the root, so a package's declaration does not choose the version its tests run in. A package declares one only when a test imports it. The React Native demo is the exception to the workspace: it is not a member, and installs with npm from its own lockfile, the way an app consuming the libraries would.
+pnpm gives each package only what its own manifest declares. Declare a dependency in the package that imports it: anything the published code or its types import in `dependencies` or `peerDependencies`, a test-only import in `devDependencies`. Build tooling shared by every package (vite, vitest and the externals plugin) is declared once at the root. That includes happy-dom and jsdom: vitest loads the test environment through its own peer, which pnpm resolves at the root, so a package's declaration does not choose the version its tests run in. A package declares one only when a test imports it. The React Native demo is the exception to the workspace: it is not a member, and installs with npm from its own lockfile, the way an app consuming the libraries would.
 
 ## Browser tests
 
 `apps/tests` (`prose-reader-tests`) is a Playwright suite, and the root
-`pnpm test` runs it alongside the vitest suites. CI runs the two apart: the
-vitest suites on Linux, and every spec of this one, split across shards, on
-macOS, where its screenshot baselines are rendered, on Chromium, Firefox,
-WebKit and two mobile profiles, the desktop browsers once for each way a book
-reaches the reader (`apps/tests/AGENTS.md`, *Loading the book*). It needs the
-browser builds its Playwright version pins. Install them once per environment,
-the way CI does:
+`pnpm test` runs it alongside the vitest suites. CI runs every spec of this
+one on Linux, in Playwright's Docker image, where its screenshot baselines are
+rendered, in two jobs per browser engine, on Chromium, Firefox, WebKit and two
+mobile profiles, the desktop browsers once for each way a book reaches the
+reader (`apps/tests/AGENTS.md`, *Loading the book*). A scheduled workflow runs
+it on macOS once a day, without the screenshot comparisons. The image's tag
+follows the version of `@playwright/test`: a change that upgrades Playwright
+updates the tag in `_test.yml` and `find_flaky_browser_tests.yml` too.
+
+The suite needs the browser builds its Playwright version pins. Install them
+once per environment:
 
 ```sh
 pnpm --filter prose-reader-tests exec playwright install --with-deps
@@ -138,6 +142,9 @@ pnpm --filter prose-reader-tests test --project=chromium tests/<path>.spec.ts
 ```
 
 `--project='chromium*'` runs it both ways, over http and from blobs.
+`BROWSER_ENGINE=webkit` runs every project whose device uses that engine,
+here `webkit`, `webkit-blob` and `Mobile Safari`, as the two CI jobs of that
+engine do together.
 
 ## Internal `@prose-reader/*` ranges
 

@@ -1,4 +1,4 @@
-import { getRenderedScale } from "../../utils/coordinates"
+import { getRenderedScale } from "../../utils/coordinates.ts"
 
 /**
  * Take the relative position of the event in the iframe and translate

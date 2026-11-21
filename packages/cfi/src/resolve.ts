@@ -1,4 +1,4 @@
-import { type CfiPart, type CfiRange, type ParsedCfi, parse } from "./parse"
+import { type CfiPart, type CfiRange, type ParsedCfi, parse } from "./parse.ts"
 import {
   findCharacterDataChunk,
   isCharacterData,
@@ -6,7 +6,7 @@ import {
   isNode,
   isParsedCfiRange,
   locateInCharacterDataChunk,
-} from "./utils"
+} from "./utils.ts"
 
 /**
  * Options for resolving a CFI

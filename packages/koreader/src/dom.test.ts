@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest"
-import { generateXPointer } from "./generate"
-import { resolveXPointer } from "./resolve"
+import { generateXPointer } from "./generate.ts"
+import { resolveXPointer } from "./resolve.ts"
 import {
   childOf,
   documentWithBody,
@@ -10,7 +10,7 @@ import {
   parseSvgDocument,
   rangeText,
   textNodeOf,
-} from "./tests/dom"
+} from "./tests/dom.ts"
 
 const prefix = "/body/DocFragment[1]/body"
 

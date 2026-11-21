@@ -1,4 +1,9 @@
-import { defineConfig, devices, type Project } from "@playwright/test"
+import { availableParallelism } from "node:os"
+import {
+  defineConfig,
+  devices,
+  type PlaywrightTestProject,
+} from "@playwright/test"
 import {
   createResourceLoadingStorageState,
   type ResourceLoading,
@@ -14,7 +19,7 @@ import {
 
 const TEST_APP_ORIGIN = "http://localhost:3333"
 
-type BrowserProfile = { name: string; use: Project["use"] }
+type BrowserProfile = { name: string; use: PlaywrightTestProject["use"] }
 
 const DESKTOP_PROFILES: BrowserProfile[] = [
   { name: "chromium", use: { ...devices["Desktop Chrome"] } },
@@ -35,12 +40,12 @@ const MOBILE_PROFILES: BrowserProfile[] = [
  *
  * A book renders the same however it is loaded, so the projects of a profile
  * compare their screenshots against the same baselines, named after the
- * profile: `text-Mobile-Chrome-darwin.png`.
+ * profile: `text-Mobile-Chrome-linux.png`.
  */
 const createProfileProject = (
   profile: BrowserProfile,
   resourceLoading: ResourceLoading,
-): Project => ({
+): PlaywrightTestProject => ({
   name:
     resourceLoading === "http"
       ? profile.name
@@ -57,6 +62,37 @@ const createProfileProject = (
 })
 
 /**
+ * Every profile loads its books over http, and the desktop ones load them
+ * from blobs too. Running the mobile profiles both ways as well would make
+ * the suite about a fifth longer.
+ */
+const ALL_PROJECTS: PlaywrightTestProject[] = [
+  ...[...DESKTOP_PROFILES, ...MOBILE_PROFILES].map((profile) =>
+    createProfileProject(profile, "http"),
+  ),
+  ...DESKTOP_PROFILES.map((profile) => createProfileProject(profile, "blob")),
+]
+
+/**
+ * `BROWSER_ENGINE` (`chromium`, `firefox` or `webkit`) keeps the projects
+ * whose device runs on that engine, as the two CI jobs of an engine do
+ * together. Unset, every project runs.
+ */
+const BROWSER_ENGINE_TO_RUN = process.env.BROWSER_ENGINE
+
+const PROJECTS_TO_RUN = ALL_PROJECTS.filter(
+  (project) =>
+    BROWSER_ENGINE_TO_RUN === undefined ||
+    project.use?.defaultBrowserType === BROWSER_ENGINE_TO_RUN,
+)
+
+if (PROJECTS_TO_RUN.length === 0) {
+  throw new Error(
+    `BROWSER_ENGINE=${BROWSER_ENGINE_TO_RUN} matches no project: use chromium, firefox or webkit`,
+  )
+}
+
+/**
  * See https://playwright.dev/docs/test-configuration.
  */
 export default defineConfig({
@@ -68,12 +104,11 @@ export default defineConfig({
   /* Retry on CI only */
   retries: process.env.CI ? 2 : 0,
   /*
-   * The CI runner (macos-latest) has 3 cores, so Playwright's "50%" default
-   * floors to a single worker. Pin an explicit count instead: 2 workers give
-   * real parallelism while leaving a core for the Vite dev server + the
-   * orchestrator, keeping the screenshot tests stable under load.
+   * On CI, one core stays free for the Vite dev server and the test runner,
+   * which keeps the screenshot tests stable under load: 3 workers on a Linux
+   * runner's 4 cores, 2 on a macOS runner's 3.
    */
-  workers: process.env.CI ? 2 : undefined,
+  workers: process.env.CI ? Math.max(1, availableParallelism() - 1) : undefined,
   /* Reporter to use. See https://playwright.dev/docs/test-reporters */
   reporter: "html",
   /* Shared settings for all the projects below. See https://playwright.dev/docs/api/class-testoptions. */
@@ -85,17 +120,7 @@ export default defineConfig({
     trace: "on-first-retry",
   },
 
-  /*
-   * Every profile loads its books over http, and the desktop ones load them
-   * from blobs too. Running the mobile profiles both ways as well would make
-   * the suite too long for CI's few macOS runners.
-   */
-  projects: [
-    ...[...DESKTOP_PROFILES, ...MOBILE_PROFILES].map((profile) =>
-      createProfileProject(profile, "http"),
-    ),
-    ...DESKTOP_PROFILES.map((profile) => createProfileProject(profile, "blob")),
-  ],
+  projects: PROJECTS_TO_RUN,
 
   /* Run your local dev server before starting the tests */
   webServer: {

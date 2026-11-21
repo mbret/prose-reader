@@ -1,20 +1,20 @@
 import { detectMimeTypeFromUrl } from "@prose-reader/shared"
 import { filter, from, map, of, switchMap, tap } from "rxjs"
-import { DocumentRenderer } from "../../../spineItem/renderer/DocumentRenderer"
-import { isHtmlTagElement, setAttributeIfChanged } from "../../../utils/dom"
+import { DocumentRenderer } from "../../../spineItem/renderer/DocumentRenderer.ts"
+import { isHtmlTagElement, setAttributeIfChanged } from "../../../utils/dom.ts"
 import {
   upsertCSSToFrame,
   waitForFrameLoad,
   waitForFrameReady,
-} from "../../../utils/frames"
-import { waitForSwitch } from "../../../utils/rxjs"
-import { loadAssets, unloadAssets } from "./assets"
-import { attachFrameSrc, revokeFrameObjectUrl } from "./attachFrameSrc"
-import { createFrameElement } from "./createFrameElement"
+} from "../../../utils/frames.ts"
+import { waitForSwitch } from "../../../utils/rxjs.ts"
+import { loadAssets, unloadAssets } from "./assets.ts"
+import { attachFrameSrc, revokeFrameObjectUrl } from "./attachFrameSrc.ts"
+import { createFrameElement } from "./createFrameElement.ts"
 import prePaginatedStyle from "./prePaginated/pre-paginated.css?inline"
-import { renderPrePaginated } from "./prePaginated/renderPrePaginated"
+import { renderPrePaginated } from "./prePaginated/renderPrePaginated.ts"
 // import reflowableImageStyle from "./reflowable/reflowable-image.css?inline"
-import { renderReflowable } from "./reflowable/renderReflowable"
+import { renderReflowable } from "./reflowable/renderReflowable.ts"
 
 export class HtmlRenderer extends DocumentRenderer {
   onCreateDocument() {

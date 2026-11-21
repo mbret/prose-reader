@@ -1,7 +1,7 @@
-import type { PageEntry } from "../../../spine/Pages"
-import type { SpineItem } from "../../../spineItem/SpineItem"
-import { buildChapterInfoFromChain, safeDecode } from "./shared"
-import type { ChapterInfo, FlatTocEntry, TocPathEntry } from "./types"
+import type { PageEntry } from "../../../spine/Pages.ts"
+import type { SpineItem } from "../../../spineItem/SpineItem.ts"
+import { buildChapterInfoFromChain, safeDecode } from "./shared.ts"
+import type { ChapterInfo, FlatTocEntry, TocPathEntry } from "./types.ts"
 
 const createCollapsedRangeFromNode = ({
   doc,

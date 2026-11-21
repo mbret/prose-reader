@@ -1,8 +1,8 @@
 import type { Reader } from "@prose-reader/core"
 import type { SwipeEvent } from "gesturx"
 import { EMPTY, filter, map, switchMap, tap } from "rxjs"
-import type { GesturesSettingsManager } from "../SettingsManager"
-import type { GestureEvent, GestureRecognizable } from "../types"
+import type { GesturesSettingsManager } from "../SettingsManager.ts"
+import type { GestureEvent, GestureRecognizable } from "../types.ts"
 
 const isSwipeEvent = (event: GestureEvent["event"]): event is SwipeEvent =>
   event.type === "swipe"

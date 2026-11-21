@@ -7,12 +7,12 @@
     "strict": true,
     "allowJs": false,
     "moduleResolution": "Bundler",
+    "allowImportingTsExtensions": true,
     "allowSyntheticDefaultImports": true,
     "noUncheckedIndexedAccess": true,
     "noEmit": true,
     "declaration": true,
     "isolatedModules": true,
-    "stripInternal": true,
     "skipLibCheck": true,
     "types": ["node"]
   },

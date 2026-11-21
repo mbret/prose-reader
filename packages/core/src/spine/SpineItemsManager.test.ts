@@ -1,13 +1,13 @@
 import { describe, expect, it } from "vitest"
-import { Context } from "../context/Context"
-import { HookManager } from "../hooks/HookManager"
-import { ReaderSettingsManager } from "../settings/ReaderSettingsManager"
+import { Context } from "../context/Context.ts"
+import { HookManager } from "../hooks/HookManager.ts"
+import { ReaderSettingsManager } from "../settings/ReaderSettingsManager.ts"
 import {
   createTestManifest,
   createTestManifestSpineItems,
-} from "../tests/utils"
-import { Viewport } from "../viewport/Viewport"
-import { SpineItemsManager } from "./SpineItemsManager"
+} from "../tests/utils.ts"
+import { Viewport } from "../viewport/Viewport.ts"
+import { SpineItemsManager } from "./SpineItemsManager.ts"
 
 const createManager = (numberOfItems: number, ownerDocument?: Document) => {
   const context = new Context(

@@ -2,8 +2,8 @@ import { Link, List, Stack, Text } from "@chakra-ui/react"
 import React, { memo } from "react"
 import { LuCircleCheck } from "react-icons/lu"
 import { useObserve } from "reactjrx"
-import { useReader } from "../context/useReader"
-import { usePagination } from "../pagination/usePagination"
+import { useReader } from "../context/useReader.ts"
+import { usePagination } from "../pagination/usePagination.ts"
 
 export const TableOfContentsDialogContent = memo(
   ({ onNavigate }: { onNavigate: () => void }) => {
@@ -34,35 +34,40 @@ export const TableOfContentsDialogContent = memo(
             alignItems: "center",
           }}
         >
-          <Link
-            onClick={() => {
-              onNavigate()
+          <Link asChild textAlign="start">
+            <button
+              type="button"
+              onClick={() => {
+                onNavigate()
 
-              reader?.navigation.goToUrl(tocItem.href)
-            }}
-            href="#"
-          >
-            {currentSubChapter?.path === tocItem.path && (
-              <List.Indicator asChild>
-                <LuCircleCheck />
-              </List.Indicator>
-            )}
-            {currentSubChapter?.path !== tocItem.path && (
-              <List.Indicator asChild visibility="hidden">
-                <LuCircleCheck />
-              </List.Indicator>
-            )}
-            <Stack gap={0}>
-              <Text fontSize="md">{tocItem.title || tocItem.path}</Text>
-              {currentSubChapter?.path === tocItem.path &&
-                absolutePageIndex !== undefined && (
-                  <Text
-                    fontStyle="italic"
-                    fontWeight="bold"
-                    fontSize="sm"
-                  >{`Currently on page ${absolutePageIndex + 1}`}</Text>
-                )}
-            </Stack>
+                reader?.navigation.goToUrl(tocItem.href)
+              }}
+            >
+              {currentSubChapter?.path === tocItem.path && (
+                <List.Indicator asChild>
+                  <LuCircleCheck />
+                </List.Indicator>
+              )}
+              {currentSubChapter?.path !== tocItem.path && (
+                <List.Indicator asChild visibility="hidden">
+                  <LuCircleCheck />
+                </List.Indicator>
+              )}
+              <Stack as="span" gap={0}>
+                <Text as="span" fontSize="md">
+                  {tocItem.title || tocItem.path}
+                </Text>
+                {currentSubChapter?.path === tocItem.path &&
+                  absolutePageIndex !== undefined && (
+                    <Text
+                      as="span"
+                      fontStyle="italic"
+                      fontWeight="bold"
+                      fontSize="sm"
+                    >{`Currently on page ${absolutePageIndex + 1}`}</Text>
+                  )}
+              </Stack>
+            </button>
           </Link>
         </List.Item>
         {tocItem.contents.length > 0 && (

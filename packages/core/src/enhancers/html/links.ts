@@ -1,5 +1,5 @@
 import { fromEvent, merge, NEVER, share, switchMap, tap } from "rxjs"
-import type { Reader } from "../../reader"
+import type { Reader } from "../../reader.ts"
 
 export const handleLinks = (reader: Reader) => {
   return merge(

@@ -1,4 +1,4 @@
-import type { SpinePosition, UnboundSpinePosition } from "../spine/types"
+import type { SpinePosition, UnboundSpinePosition } from "../spine/types.ts"
 
 /**
  * This correspond to a visible slice of the viewport

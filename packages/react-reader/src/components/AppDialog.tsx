@@ -9,7 +9,7 @@ import {
   DialogHeader,
   DialogRoot,
   DialogTitle,
-} from "./ui/dialog"
+} from "./ui/dialog.tsx"
 
 /**
  * Shared shell for the reader's centered dialogs (search, table of contents,

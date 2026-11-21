@@ -7,8 +7,8 @@ import {
   type Observable,
   shareReplay,
 } from "rxjs"
-import type { AudioEnhancerState, AudioTrack } from "../types"
-import { isAudioSpineItem } from "../utils"
+import type { AudioEnhancerState, AudioTrack } from "../types.ts"
+import { isAudioSpineItem } from "../utils.ts"
 
 type PaginationTrackWindow = {
   beginSpineItemIndex: number | undefined

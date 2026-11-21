@@ -1,8 +1,8 @@
-import type { SpinePosition, UnboundSpinePosition } from "../spine/types"
+import type { SpinePosition, UnboundSpinePosition } from "../spine/types.ts"
 import type {
   SpineItemPosition,
   UnboundSpineItemPagePosition,
-} from "../spineItem/types"
+} from "../spineItem/types.ts"
 
 export type SpineBoundary = "start" | "end"
 
@@ -108,7 +108,8 @@ export type NavigationConsolidation = {
    *
    * @backward : We will try to restore position starting from end of item.
    * Only a position target can be backward, guessed from the previous
-   * navigation.
+   * navigation: from its position where the pages turn, and from its spine
+   * item in a book that scrolls, see `guessDirection`.
    */
   directionFromLastNavigation?: "forward" | "backward"
 }

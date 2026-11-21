@@ -1,6 +1,6 @@
 import { Box } from "@chakra-ui/react"
 import { memo } from "react"
-import { TimeIndicator } from "../quickmenu/TimeIndicator"
+import { TimeIndicator } from "../quickmenu/TimeIndicator.tsx"
 
 export const FloatingTime = memo(() => {
   return (

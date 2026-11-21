@@ -2,7 +2,7 @@
 
 import { firstValueFrom } from "rxjs"
 import { afterEach, expect, test, vi } from "vitest"
-import { deepCloneElement } from "./deepCloneElement"
+import { deepCloneElement } from "./deepCloneElement.ts"
 
 afterEach(() => {
   vi.unstubAllGlobals()

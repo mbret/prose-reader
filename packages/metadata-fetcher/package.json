@@ -19,8 +19,7 @@
   },
   "type": "module",
   "sideEffects": false,
-  "main": "./dist/index.cjs",
-  "module": "./dist/index.js",
+  "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
   "publishConfig": {
     "access": "public",
@@ -30,8 +29,7 @@
     ".": {
       "prose-source": "./src/index.ts",
       "types": "./dist/index.d.ts",
-      "import": "./dist/index.js",
-      "require": "./dist/index.cjs"
+      "default": "./dist/index.js"
     }
   },
   "license": "MIT",
@@ -39,8 +37,8 @@
     "/dist"
   ],
   "scripts": {
-    "start": "vite build --watch --mode development",
-    "build": "tsc && vite build",
+    "start": "node ../../config/watchLibraryBuild.mjs",
+    "build": "tsc && vite build && tsc -p tsconfig.build.json",
     "test": "vitest run --coverage",
     "tsc": "tsc",
     "test:watch": "vitest watch"

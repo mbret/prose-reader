@@ -20,31 +20,31 @@ import {
   tap,
   withLatestFrom,
 } from "rxjs"
-import type { CfiManager } from "../cfi"
-import type { Context } from "../context/Context"
-import { Report } from "../report"
-import type { ReaderSettingsManager } from "../settings/ReaderSettingsManager"
-import { Spine, type SpineState } from "../spine/Spine"
-import { SpinePosition } from "../spine/types"
-import { DestroyableClass } from "../utils/DestroyableClass"
-import { isDefined } from "../utils/isDefined"
-import type { Viewport } from "../viewport/Viewport"
-import { mapUserNavigationToInternal } from "./consolidation/mapUserNavigationToInternal"
-import { withAnchor } from "./consolidation/withAnchor"
-import { withFallbackPosition } from "./consolidation/withFallbackPosition"
+import type { CfiManager } from "../cfi/index.ts"
+import type { Context } from "../context/Context.ts"
+import { Report } from "../report.ts"
+import type { ReaderSettingsManager } from "../settings/ReaderSettingsManager.ts"
+import { Spine, type SpineState } from "../spine/Spine.ts"
+import { SpinePosition } from "../spine/types.ts"
+import { DestroyableClass } from "../utils/DestroyableClass.ts"
+import { isDefined } from "../utils/isDefined.ts"
+import type { Viewport } from "../viewport/Viewport.ts"
+import { mapUserNavigationToInternal } from "./consolidation/mapUserNavigationToInternal.ts"
+import { withAnchor } from "./consolidation/withAnchor.ts"
+import { withFallbackPosition } from "./consolidation/withFallbackPosition.ts"
 import {
   withAnchorFromTarget,
   withResolvedTarget,
-} from "./consolidation/withResolvedTarget"
-import { withSnappedPosition } from "./consolidation/withSnappedPosition"
-import { withSpineItem } from "./consolidation/withSpineItem"
-import { withSpineItemLayoutInfo } from "./consolidation/withSpineItemLayoutInfo"
-import { withSpineItemPosition } from "./consolidation/withSpineItemPosition"
-import { Locker } from "./Locker"
-import type { createNavigationResolver } from "./resolvers/NavigationResolver"
-import { withRestoredPosition } from "./restoration/withRestoredPosition"
-import { createTargetResolvers } from "./targets/createTargetResolvers"
-import { isTargetInBook } from "./targets/isTargetInBook"
+} from "./consolidation/withResolvedTarget.ts"
+import { withSnappedPosition } from "./consolidation/withSnappedPosition.ts"
+import { withSpineItem } from "./consolidation/withSpineItem.ts"
+import { withSpineItemLayoutInfo } from "./consolidation/withSpineItemLayoutInfo.ts"
+import { withSpineItemPosition } from "./consolidation/withSpineItemPosition.ts"
+import { Locker } from "./Locker.ts"
+import type { createNavigationResolver } from "./resolvers/NavigationResolver.ts"
+import { withRestoredPosition } from "./restoration/withRestoredPosition.ts"
+import { createTargetResolvers } from "./targets/createTargetResolvers.ts"
+import { isTargetInBook } from "./targets/isTargetInBook.ts"
 import type {
   InternalNavigationAnchor,
   InternalNavigationEntry,
@@ -54,7 +54,7 @@ import type {
   NavigationTarget,
   ReadingPosition,
   UserNavigationEntry,
-} from "./types"
+} from "./types.ts"
 
 const NAMESPACE = `navigation/InternalNavigator`
 
@@ -303,6 +303,7 @@ export class InternalNavigator extends DestroyableClass {
       cfi: cfiManager,
       settings,
       spineItemsManager: spine.spineItemsManager,
+      spineLocator: spine.locator,
       context,
       getNavigationVisibleArea,
     })

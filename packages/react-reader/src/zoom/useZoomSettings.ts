@@ -1,7 +1,7 @@
 import { useEffect } from "react"
-import { MAX_ZOOM_SCALE } from "../constants"
-import { useReader } from "../context/useReader"
-import { useReaderContextValue } from "../context/useReaderContext"
+import { MAX_ZOOM_SCALE } from "../constants.ts"
+import { useReader } from "../context/useReader.ts"
+import { useReaderContextValue } from "../context/useReaderContext.ts"
 
 export const useZoomSettings = () => {
   const reader = useReader()

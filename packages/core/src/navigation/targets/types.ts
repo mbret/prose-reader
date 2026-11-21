@@ -1,11 +1,11 @@
-import type { SpinePosition, UnboundSpinePosition } from "../../spine/types"
+import type { SpinePosition, UnboundSpinePosition } from "../../spine/types.ts"
 import type {
   InternalNavigationAnchor,
   InternalNavigationEntry,
   NavigationTargetType,
   NavigationTargetValues,
   NavigationVisibleArea,
-} from "../types"
+} from "../types.ts"
 
 /**
  * What a target tells of where its navigation goes. The steps after it fill

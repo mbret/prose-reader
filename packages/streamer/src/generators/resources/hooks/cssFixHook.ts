@@ -1,4 +1,4 @@
-import { createTextResourceHook } from "./createTextResourceHook"
+import { createTextResourceHook } from "./createTextResourceHook.ts"
 
 export const cssFixHook = createTextResourceHook(".css", (body) =>
   /**

@@ -1,7 +1,7 @@
-import type { Spine } from "../../spine/Spine"
-import type { SpinePosition } from "../../spine/types"
-import { UnboundSpinePosition } from "../../spine/types"
-import type { NavigationVisibleArea, SpineBoundary } from "../types"
+import type { Spine } from "../../spine/Spine.ts"
+import type { SpinePosition } from "../../spine/types.ts"
+import { UnboundSpinePosition } from "../../spine/types.ts"
+import type { NavigationVisibleArea, SpineBoundary } from "../types.ts"
 
 export type ClampRectInSpineParams = {
   position: SpinePosition | UnboundSpinePosition

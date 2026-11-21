@@ -1,61 +1,64 @@
 import { Link, List, Stack, Text } from "@chakra-ui/react"
+import type { RuntimeAnnotation } from "@prose-reader/enhancer-annotations"
 import { LuNotebookPen } from "react-icons/lu"
-import { useReader } from "../context/useReader"
-import { useAnnotation } from "./useAnnotation"
+import { useObserve } from "reactjrx"
+import { useReader } from "../context/useReader.ts"
 
 export const AnnotationListItem = ({
-  id,
+  annotation,
   onNavigate,
-  allowLeftIcon = true,
 }: {
-  id: string
+  annotation: RuntimeAnnotation
   onNavigate: () => void
-  allowLeftIcon?: boolean
 }) => {
   const reader = useReader()
-  const { data: annotation } = useAnnotation(id)
+  const { cfi } = annotation
+  const { data: locatedAnnotation } = useObserve(
+    () => reader?.locateResource({ cfi }),
+    [reader, cfi],
+  )
   const textContent =
-    annotation?.meta.range?.toString() || annotation?.meta.node?.textContent
+    locatedAnnotation?.meta.range?.toString() ||
+    locatedAnnotation?.meta.node?.textContent
+  const absolutePageIndex = locatedAnnotation?.meta.absolutePageIndex
+  const pageNumber =
+    absolutePageIndex === undefined ? undefined : absolutePageIndex + 1
 
   return (
     <List.Item>
-      <Link
-        href="#"
-        onClick={() => {
-          onNavigate()
+      <Link asChild textAlign="start">
+        <button
+          type="button"
+          onClick={() => {
+            onNavigate()
 
-          reader?.navigation.goToCfi(annotation?.meta.cfi ?? "")
-        }}
-      >
-        {annotation?.resource?.notes ? (
-          <List.Indicator asChild>
+            reader?.navigation.goToCfi(cfi)
+          }}
+        >
+          <List.Indicator
+            asChild
+            visibility={annotation.notes ? "visible" : "hidden"}
+          >
             <LuNotebookPen />
           </List.Indicator>
-        ) : allowLeftIcon ? (
-          <List.Indicator asChild visibility="hidden">
-            <LuNotebookPen />
-          </List.Indicator>
-        ) : null}
-        <Stack gap={0}>
-          {textContent ? (
-            <Text lineClamp={2} fontSize="md">
-              {textContent}
-            </Text>
-          ) : (
-            <Text lineClamp={2} fontSize="md" fontStyle="italic">
-              Page {(annotation?.meta.absolutePageIndex ?? 0) + 1}
-            </Text>
-          )}
-          <Text
-            fontStyle="italic"
-            fontWeight="bold"
-            fontSize="sm"
-          >{`Book page: ${
-            annotation?.meta?.absolutePageIndex !== undefined
-              ? annotation.meta.absolutePageIndex + 1
-              : "unknown (not loaded)"
-          }`}</Text>
-        </Stack>
+          <Stack as="span" gap={0}>
+            {textContent ? (
+              <Text as="span" lineClamp={2} fontSize="md">
+                {textContent}
+              </Text>
+            ) : (
+              <Text as="span" lineClamp={2} fontSize="md" fontStyle="italic">
+                Page {pageNumber ?? "unknown"}
+              </Text>
+            )}
+            <Text
+              as="span"
+              fontStyle="italic"
+              fontWeight="bold"
+              fontSize="sm"
+            >{`Book page: ${pageNumber ?? "unknown"}`}</Text>
+          </Stack>
+        </button>
       </Link>
     </List.Item>
   )

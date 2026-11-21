@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest"
-import { xmlNamespaceScope } from "./xmlNamespaceScope"
+import { xmlNamespaceScope } from "./xmlNamespaceScope.ts"
 
 const OPF_NAMESPACE = "http://www.idpf.org/2007/opf"
 const DC_NAMESPACE = "http://purl.org/dc/elements/1.1/"

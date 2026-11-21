@@ -1,4 +1,4 @@
-import { createTextResourceHook } from "./createTextResourceHook"
+import { createTextResourceHook } from "./createTextResourceHook.ts"
 
 const invalidSelfClosingTags = [
   "div",

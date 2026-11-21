@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest"
-import { COMIC_INFO_MANGA_VALUES, isComicInfoManga } from "./manga"
+import { COMIC_INFO_MANGA_VALUES, isComicInfoManga } from "./manga.ts"
 
 describe("isComicInfoManga", () => {
   it.each(COMIC_INFO_MANGA_VALUES)("accepts schema value %s", (value) => {

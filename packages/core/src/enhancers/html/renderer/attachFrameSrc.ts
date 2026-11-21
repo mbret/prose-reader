@@ -8,13 +8,13 @@ import {
   switchMap,
   tap,
 } from "rxjs"
-import { Report } from "../../../report"
-import type { ReaderSettingsManager } from "../../../settings/ReaderSettingsManager"
-import type { ResourceHandler } from "../../../spineItem/resources/ResourceHandler"
+import { Report } from "../../../report.ts"
+import type { ReaderSettingsManager } from "../../../settings/ReaderSettingsManager.ts"
+import type { ResourceHandler } from "../../../spineItem/resources/ResourceHandler.ts"
 import {
   createHtmlPageFromResource,
   IMAGE_MEDIA_TYPES_REQUIRING_TRANSFORM,
-} from "./createHtmlPageFromResource"
+} from "./createHtmlPageFromResource.ts"
 
 /**
  * For these resources, we want to digest and wrap them into custom html pages.

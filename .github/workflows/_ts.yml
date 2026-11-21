@@ -13,3 +13,5 @@ jobs:
           build: all
       - name: Check
         run: pnpm run tsc
+      - name: Check the published packages
+        run: pnpm run check:packages

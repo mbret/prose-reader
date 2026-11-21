@@ -8,9 +8,9 @@ import {
   mountTestReader,
   renderTextDocuments,
   settledOn,
-} from "../tests/readerHarness"
-import type { DocumentLoadStatus } from "./renderer/DocumentRenderer"
-import type { SpineItemState } from "./SpineItem"
+} from "../tests/readerHarness.ts"
+import type { DocumentLoadStatus } from "./renderer/DocumentRenderer.ts"
+import type { SpineItemState } from "./SpineItem.ts"
 
 installReaderTestEnvironment()
 

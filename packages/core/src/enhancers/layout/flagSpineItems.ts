@@ -1,5 +1,5 @@
 import { tap } from "rxjs"
-import type { Reader } from "../../reader"
+import type { Reader } from "../../reader.ts"
 
 export const flagSpineItems = (reader: Reader) => {
   return reader.spineItemsObserver.itemStateChange$.pipe(

@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest"
-import { isRootCfi } from "../cfi/parse"
+import { isRootCfi } from "../cfi/parse.ts"
 
 describe("isRootCfi", () => {
   it("should return false for a non-root CFI", () => {

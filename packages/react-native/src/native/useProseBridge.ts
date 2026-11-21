@@ -5,7 +5,7 @@ import {
   type BridgeState,
   type ReaderState,
   useLiveRef,
-} from "../shared"
+} from "../shared/index.ts"
 
 const noReaderState: ReaderState = {
   pagination: null,

@@ -1,34 +1,27 @@
-import type { Context } from "../../context/Context"
-import type { ReaderSettingsManager } from "../../settings/ReaderSettingsManager"
-import * as nodeLocation from "../../spineItem/nodeLocation"
-import type { SpineItem } from "../../spineItem/SpineItem"
-import { SpineItemPosition } from "../../spineItem/types"
-import { ViewportSlicePosition } from "../../viewport/types"
-import type { Viewport } from "../../viewport/Viewport"
-import type { SpineItemsManager } from "../SpineItemsManager"
-import type { SpineLayout } from "../SpineLayout"
-import type { SpinePosition, UnboundSpinePosition } from "../types"
-import { getAbsolutePageIndexFromPageIndex } from "./getAbsolutePageIndexFromPageIndex"
-import { getItemVisibilityForPosition } from "./getItemVisibilityForPosition"
-import { getSpineItemFromPosition } from "./getSpineItemFromPosition"
-import { getSpinePositionFromSpineItemPosition } from "./getSpinePositionFromSpineItemPosition"
+import * as nodeLocation from "../../spineItem/nodeLocation.ts"
+import type { SpineItem } from "../../spineItem/SpineItem.ts"
+import { SpineItemPosition } from "../../spineItem/types.ts"
+import { ViewportSlicePosition } from "../../viewport/types.ts"
+import type { Viewport } from "../../viewport/Viewport.ts"
+import type { SpineItemsManager } from "../SpineItemsManager.ts"
+import type { SpineLayout } from "../SpineLayout.ts"
+import type { SpinePosition, UnboundSpinePosition } from "../types.ts"
+import { getItemVisibilityForPosition } from "./getItemVisibilityForPosition.ts"
+import { getSpineItemFromPosition } from "./getSpineItemFromPosition.ts"
+import { getSpinePositionFromSpineItemPosition } from "./getSpinePositionFromSpineItemPosition.ts"
 import {
   getVisibleSpineItemsFromPosition,
   getVisibleSpineItemsFromSlice,
-} from "./getVisibleSpineItemsFromPosition"
+} from "./getVisibleSpineItemsFromPosition.ts"
 
 export type SpineLocator = ReturnType<typeof createSpineLocator>
 
 export const createSpineLocator = ({
   spineItemsManager,
-  context,
-  settings,
   spineLayout,
   viewport,
 }: {
   spineItemsManager: SpineItemsManager
-  context: Context
-  settings: ReaderSettingsManager
   spineLayout: SpineLayout
   viewport: Viewport
 }) => {
@@ -255,22 +248,6 @@ export const createSpineLocator = ({
         spineItemPosition,
       })
     },
-    /**
-     * @deprecated use Pages
-     */
-    _getAbsolutePageIndexFromPageIndex: (
-      params: Omit<
-        Parameters<typeof getAbsolutePageIndexFromPageIndex>[0],
-        "context" | "settings" | "spineLayout" | "spineItemsManager"
-      >,
-    ) =>
-      getAbsolutePageIndexFromPageIndex({
-        ...params,
-        context,
-        settings,
-        spineItemsManager,
-        spineLayout,
-      }),
     getSpineItemPagePositionFromSpinePosition,
     getSpinePositionFromSpineItem,
     getSpineItemPositionFromSpinePosition,

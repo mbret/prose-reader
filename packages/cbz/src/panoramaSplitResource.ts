@@ -6,7 +6,7 @@ import {
   PANORAMA_SPLIT_DOCUMENT_MEDIA_TYPE,
   type PanoramaCropSide,
   type VirtualPanoramaResource,
-} from "./panoramaSplitManifest"
+} from "./panoramaSplitManifest.ts"
 
 type CropRect = {
   x: number

@@ -10,16 +10,18 @@ import {
   takeUntil,
   tap,
 } from "rxjs"
-import { ReaderHighlights } from "./annotations/ReaderHighlights"
-import type { RuntimeAnnotation } from "./annotations/types"
-import { report } from "./report"
-import { Settings } from "./Settings"
+import { createAnnotationsByItemPage$ } from "./annotations/createAnnotationsByItemPage.ts"
+import { ReaderHighlights } from "./annotations/ReaderHighlights.ts"
+import type { RuntimeAnnotation } from "./annotations/types.ts"
+import { report } from "./report.ts"
+import { Settings } from "./Settings.ts"
 import type {
   AnnotateAbsolutePageParams,
-  AnnotateParams,
+  AnnotateSelectionParams,
+  Annotation,
   AnnotationsEnhancerAPI,
   AnnotationsEnhancerOptions,
-} from "./types"
+} from "./types.ts"
 
 export type { AnnotationsEnhancerAPI }
 
@@ -67,7 +69,7 @@ export const annotationsEnhancer =
       }),
     )
 
-    const selectedHighlight$ = runtimeAnnotations$.pipe(
+    const selectedAnnotationId$ = runtimeAnnotations$.pipe(
       map(
         (annotations) =>
           annotations.find((annotation) => annotation.selected)?.id,
@@ -79,69 +81,63 @@ export const annotationsEnhancer =
     const readerHighlights = new ReaderHighlights(
       reader,
       runtimeAnnotations$,
-      selectedHighlight$,
+      selectedAnnotationId$,
     )
 
-    const resolveItemInformation = (params: {
-      absolutePageIndex?: number
-      itemIndex?: number
-    }) => {
-      if (params.itemIndex !== undefined)
-        return { itemIndex: params.itemIndex, pageIndex: undefined }
-
-      if (params.absolutePageIndex !== undefined) {
-        return reader.spine.pages.fromAbsolutePageIndex(
-          params.absolutePageIndex,
-        )
-      }
-
-      return undefined
-    }
-
-    const createAnnotation = ({
+    const generateCfiForSelection = ({
+      itemIndex,
       selection,
-      ...rest
-    }: (AnnotateParams | AnnotateAbsolutePageParams) & {
-      absolutePageIndex?: number
-    }) => {
-      const { itemIndex, pageIndex = 0 } = resolveItemInformation(rest) ?? {}
+    }: AnnotateSelectionParams) => {
       const spineItem = reader.spineItemsManager.get(itemIndex)
-      const id = window.crypto.randomUUID()
 
       if (!spineItem) return undefined
 
-      const range = selection
-        ? reader.selection.createOrderedRangeFromSelection({
-            selection,
-            spineItem,
-          })
-        : undefined
-
-      const pageEntry = reader.spine.pages.fromSpineItemPageIndex(
+      const range = reader.selection.createOrderedRangeFromSelection({
+        selection,
         spineItem,
-        pageIndex,
-      )
+      })
 
-      const cfiWithRangeOrFirstNodeOrRoot = range
+      return range
         ? reader.cfi.generateCfiFromRange(range, spineItem.item)
-        : pageEntry?.firstVisibleNode
-          ? reader.cfi.generateCfiForSpineItemPage({
-              spineItem: spineItem.item,
-              pageNode: pageEntry.firstVisibleNode,
-            })
-          : reader.cfi.generateRootCfi(spineItem.item)
-
-      const highlight = {
-        cfi: cfiWithRangeOrFirstNodeOrRoot,
-        itemIndex: spineItem.index,
-        id,
-        ...rest,
-      } satisfies RuntimeAnnotation
-
-      return highlight
+        : undefined
     }
 
-    const renderAnnotations$ = merge(runtimeAnnotations$, reader.layout$).pipe(
+    const generateCfiForAbsolutePage = ({
+      absolutePageIndex,
+    }: AnnotateAbsolutePageParams) => {
+      const pageEntry =
+        reader.spine.pages.fromAbsolutePageIndex(absolutePageIndex)
+
+      if (!pageEntry) return undefined
+
+      const spineItem = reader.spineItemsManager.get(pageEntry.itemIndex)
+
+      return spineItem
+        ? reader.cfi.generateCfiForPage(spineItem.item, pageEntry)
+        : undefined
+    }
+
+    const createAnnotation = (
+      params: AnnotateSelectionParams | AnnotateAbsolutePageParams,
+    ): Pick<Annotation, "id" | "cfi"> | undefined => {
+      const cfi =
+        params.selection !== undefined
+          ? generateCfiForSelection(params)
+          : generateCfiForAbsolutePage(params)
+
+      return cfi === undefined
+        ? undefined
+        : { id: window.crypto.randomUUID(), cfi }
+    }
+
+    /**
+     * Starts from the highlights, not from the annotations: a draw then runs
+     * after the highlights have changed to match the annotations.
+     */
+    const renderAnnotations$ = merge(
+      readerHighlights.highlightsChange$,
+      reader.layout$,
+    ).pipe(
       debounceTime(50),
       switchMap(() => readerHighlights.layout()),
     )
@@ -167,21 +163,25 @@ export const annotationsEnhancer =
       ),
     )
 
-    merge(renderAnnotations$, annotations$)
+    /**
+     * `runtimeAnnotations$` stays subscribed for the reader's whole life, so a
+     * spine item that loads later gets the latest list from its replay.
+     */
+    merge(renderAnnotations$, runtimeAnnotations$)
       .pipe(takeUntil(reader.$.destroy$))
       .subscribe()
 
     return {
       ...reader,
       __PROSE_READER_ENHANCER_ANNOTATIONS: true,
-      destroy: () => {
-        readerHighlights.destroy()
-        reader.destroy()
-      },
       annotations: {
         annotations$: runtimeAnnotations$,
         highlightTap$: readerHighlights.tap$,
         candidates$,
+        annotationsByItemPage$: createAnnotationsByItemPage$(
+          reader,
+          runtimeAnnotations$,
+        ),
         isTargetWithinHighlight: readerHighlights.isTargetWithinHighlight,
         createAnnotation,
         update: settings.update.bind(settings),

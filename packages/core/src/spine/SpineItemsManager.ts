@@ -1,9 +1,9 @@
-import type { Context } from "../context/Context"
-import type { HookManager } from "../hooks/HookManager"
-import type { ReaderSettingsManager } from "../settings/ReaderSettingsManager"
-import { SpineItem, type SpineItemReference } from "../spineItem/SpineItem"
-import { DestroyableClass } from "../utils/DestroyableClass"
-import type { Viewport } from "../viewport/Viewport"
+import type { Context } from "../context/Context.ts"
+import type { HookManager } from "../hooks/HookManager.ts"
+import type { ReaderSettingsManager } from "../settings/ReaderSettingsManager.ts"
+import { SpineItem, type SpineItemReference } from "../spineItem/SpineItem.ts"
+import { DestroyableClass } from "../utils/DestroyableClass.ts"
+import type { Viewport } from "../viewport/Viewport.ts"
 
 export class SpineItemsManager extends DestroyableClass {
   /**

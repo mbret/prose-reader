@@ -13,23 +13,23 @@ import {
   switchMap,
   tap,
 } from "rxjs"
-import { isSamePaginationResult } from "../../pagination/edges"
-import type { PaginationEdge } from "../../pagination/types"
-import { Report } from "../../report"
-import type { LayoutEnhancerOutput } from "../layout/layoutEnhancer"
-import type { EnhancerOutput, RootEnhancer } from "../types/enhancer"
-import { ResourcesLocator } from "./ResourcesLocator"
+import { isSamePaginationResult } from "../../pagination/edges.ts"
+import type { PaginationEdge } from "../../pagination/types.ts"
+import { Report } from "../../report.ts"
+import type { LayoutEnhancerOutput } from "../layout/layoutEnhancer.ts"
+import type { EnhancerOutput, RootEnhancer } from "../types/enhancer.ts"
+import { ResourcesLocator } from "./ResourcesLocator.ts"
 import {
   type PaginationEnrichment,
   trackPaginationEnrichment,
-} from "./trackPaginationEnrichment"
+} from "./trackPaginationEnrichment.ts"
 import type {
   EnhancerPaginationEdge,
   EnhancerPaginationInfo,
   PaginationEnhancerAPI,
-} from "./types"
+} from "./types.ts"
 
-export type { EnhancerPaginationInfo, PaginationEnhancerAPI } from "./types"
+export type { EnhancerPaginationInfo, PaginationEnhancerAPI } from "./types.ts"
 
 /**
  * Two returns rather than one spread: the settled variant types each edge's

@@ -24,27 +24,35 @@ on:
         default: ""
 
 jobs:
-  # macOS, with the browsers `check` runs, so that a result here holds for CI.
+  # In the image `check` runs the suite in, so that a result here holds for
+  # CI. Its tag follows the version of @playwright/test.
   browser:
-    runs-on: macos-latest
-    # One run of the suite takes about 22 minutes of shard time in `check`,
-    # so the default 20 runs take about 90 minutes on each of the 5 shards,
-    # and the job holds about 50 runs.
+    runs-on: ubuntu-latest
+    container:
+      image: mcr.microsoft.com/playwright:v1.65.0-resolute
+      # the runner's user, who owns the workspace and the home directory
+      options: --user 1001
+    # One run of the suite takes about 21 minutes on the 3 workers of one
+    # Linux runner, so the default 20 runs take about 85 minutes on each of
+    # the 5 shards, and the job holds about 55 runs.
     timeout-minutes: 240
     strategy:
       fail-fast: false
       matrix:
-        # The number of macOS runners an account gets at once. `check` waits
-        # for its macOS runners until this run is over. The report job counts
-        # the shards too.
+        # The report job counts the shards too.
         shard: [1, 2, 3, 4, 5]
     steps:
       - uses: actions/checkout@v6
       - uses: ./.github/actions/setup-browser-suite
+        with:
+          install-browsers: false
 
       # Playwright stops itself 10 minutes before the job's limit, so that the
       # shard still writes the report of the tests it ran.
       - name: Test
+        # a container job runs its steps in sh unless told otherwise, and
+        # this one reads its arguments into a bash array
+        shell: bash
         env:
           REPEAT_EACH: ${{ inputs.repeat-each }}
           PROJECT: ${{ inputs.project }}

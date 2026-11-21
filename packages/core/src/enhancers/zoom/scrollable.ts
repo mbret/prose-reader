@@ -1,11 +1,11 @@
-import { HTML_PREFIX } from "../../constants"
-import { UnboundScrollPosition } from "../../navigation/controllers/ScrollNavigationController"
-import type { Reader } from "../../reader"
+import { HTML_PREFIX } from "../../constants.ts"
+import { UnboundScrollPosition } from "../../navigation/controllers/ScrollNavigationController.ts"
+import type { Reader } from "../../reader.ts"
 import {
   noopElement,
   setAttributeIfChanged,
   setStylePropertyIfChanged,
-} from "../../utils/dom"
+} from "../../utils/dom.ts"
 
 export const adjustScrollToKeepContentCentered = (
   scrollContainer: HTMLElement,

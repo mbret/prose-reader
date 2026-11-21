@@ -1,3 +1,3 @@
-export * from "./enhancer"
-export * from "./ResourcesLocator"
-export * from "./types"
+export * from "./enhancer.ts"
+export * from "./ResourcesLocator.ts"
+export * from "./types.ts"

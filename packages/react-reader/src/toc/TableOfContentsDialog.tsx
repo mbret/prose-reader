@@ -1,6 +1,6 @@
 import { memo } from "react"
-import { AppDialog } from "../components/AppDialog"
-import { TableOfContentsDialogContent } from "./TableOfContentsDialogContent"
+import { AppDialog } from "../components/AppDialog.tsx"
+import { TableOfContentsDialogContent } from "./TableOfContentsDialogContent.tsx"
 
 export const TableOfContentsDialog = memo(
   ({

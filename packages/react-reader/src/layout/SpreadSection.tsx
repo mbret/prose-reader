@@ -3,10 +3,10 @@ import type { CoreInputSettings } from "@prose-reader/core"
 import { memo } from "react"
 import { useObserve } from "reactjrx"
 import { combineLatest, map, NEVER } from "rxjs"
-import { useReader } from "../context/useReader"
-import { SettingRadioGroup } from "../settings/SettingRadioGroup"
-import { SettingScopes } from "../settings/SettingScopes"
-import { useManagedSetting } from "../settings/useManagedSetting"
+import { useReader } from "../context/useReader.ts"
+import { SettingRadioGroup } from "../settings/SettingRadioGroup.tsx"
+import { SettingScopes } from "../settings/SettingScopes.tsx"
+import { useManagedSetting } from "../settings/useManagedSetting.ts"
 
 const SPREAD_MODE_LABELS: Record<CoreInputSettings["spreadMode"], string> = {
   auto: "Automatic, from the screen and the book",

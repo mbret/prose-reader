@@ -14,13 +14,13 @@ import {
   it,
   vi,
 } from "vitest"
-import { Context } from "../../../context/Context"
-import { HookManager } from "../../../hooks/HookManager"
-import { ReaderSettingsManager } from "../../../settings/ReaderSettingsManager"
-import { ResourceHandler } from "../../../spineItem/resources/ResourceHandler"
-import { createTestManifest } from "../../../tests/utils"
-import { Viewport } from "../../../viewport/Viewport"
-import { HtmlRenderer } from "./HtmlRenderer"
+import { Context } from "../../../context/Context.ts"
+import { HookManager } from "../../../hooks/HookManager.ts"
+import { ReaderSettingsManager } from "../../../settings/ReaderSettingsManager.ts"
+import { ResourceHandler } from "../../../spineItem/resources/ResourceHandler.ts"
+import { createTestManifest } from "../../../tests/utils.ts"
+import { Viewport } from "../../../viewport/Viewport.ts"
+import { HtmlRenderer } from "./HtmlRenderer.ts"
 
 const isHappyDOMWindow = (value: object): value is HappyDOMWindow =>
   `happyDOM` in value

@@ -15,9 +15,9 @@ import {
   HTML_PREFIX,
   HTML_PREFIX_SCROLL_NAVIGATOR,
   HTML_STYLE_PREFIX,
-} from "./constants"
-import { createReader } from "./reader"
-import { createTestManifest, waitFor } from "./tests/utils"
+} from "./constants.ts"
+import { createReader } from "./reader.ts"
+import { createTestManifest, waitFor } from "./tests/utils.ts"
 
 window.__PROSE_READER_DEBUG = false
 

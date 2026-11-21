@@ -8,19 +8,19 @@ import {
 } from "react"
 import { useSubscribe } from "reactjrx"
 import { tap } from "rxjs"
-import { truncateText } from "../common/utils"
+import { truncateText } from "../common/utils.ts"
 import {
   DrawerBackdrop,
   DrawerBody,
   DrawerContent,
   DrawerHeader,
   DrawerRoot,
-} from "../components/ui/drawer"
+} from "../components/ui/drawer.tsx"
 import {
   useReaderContext,
   useReaderContextValue,
-} from "../context/useReaderContext"
-import { useReaderWithAnnotations } from "./useReaderWithAnnotations"
+} from "../context/useReaderContext.ts"
+import { useReaderWithAnnotations } from "./useReaderWithAnnotations.ts"
 
 const HIGHLIGHT_COLORS = [
   "rgba(216, 191, 216, 1)", // Light purple
@@ -92,11 +92,11 @@ export const AnnotationDrawer = memo(() => {
   const onOpenDrawerOnTap = useCallback(
     function openDrawerOnTap() {
       return reader?.annotations.highlightTap$.pipe(
-        tap(({ highlight }) => {
+        tap(({ annotation }) => {
           context.update((state) => ({
             ...state,
             selectedHighlight: {
-              highlight,
+              highlight: annotation,
             },
           }))
         }),
@@ -145,14 +145,15 @@ export const AnnotationDrawer = memo(() => {
               onClick={() => {
                 onClose()
 
-                const annotation = reader?.annotations.createAnnotation({
-                  ...selection,
-                  highlightColor: selectedColor,
-                  notes: contents,
-                })
+                const annotation =
+                  reader?.annotations.createAnnotation(selection)
 
                 if (annotation) {
-                  onAnnotationCreate?.(annotation)
+                  onAnnotationCreate?.({
+                    ...annotation,
+                    highlightColor: selectedColor,
+                    notes: contents,
+                  })
                 }
               }}
             >

@@ -1,9 +1,9 @@
 import { describe, expect, expectTypeOf, it } from "vitest"
-import { createArchive } from "./archives/createArchive"
-import { createArchiveFromUrls } from "./archives/createArchiveFromUrls"
-import { blobFileAccessors } from "./archives/fileAccessors"
-import type { ResolvedArchive } from "./resolveArchive"
-import { resolveArchive } from "./resolveArchive"
+import { createArchive } from "./archives/createArchive.ts"
+import { createArchiveFromUrls } from "./archives/createArchiveFromUrls.ts"
+import { blobFileAccessors } from "./archives/fileAccessors.ts"
+import type { ResolvedArchive } from "./resolveArchive.ts"
+import { resolveArchive } from "./resolveArchive.ts"
 
 const textRecord = (
   uri: string,

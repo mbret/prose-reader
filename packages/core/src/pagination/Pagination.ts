@@ -1,8 +1,8 @@
-import type { Context } from "../context/Context"
-import type { SpineItemsManager } from "../spine/SpineItemsManager"
-import { ReactiveEntity } from "../utils/ReactiveEntity"
-import { createEmptyPaginationEdge, isSamePaginationResult } from "./edges"
-import type { PaginationInfo } from "./types"
+import type { Context } from "../context/Context.ts"
+import type { SpineItemsManager } from "../spine/SpineItemsManager.ts"
+import { ReactiveEntity } from "../utils/ReactiveEntity.ts"
+import { createEmptyPaginationEdge, isSamePaginationResult } from "./edges.ts"
+import type { PaginationInfo } from "./types.ts"
 
 export class Pagination extends ReactiveEntity<PaginationInfo> {
   constructor(

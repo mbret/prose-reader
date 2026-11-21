@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest"
-import { ReactiveEntity } from "./ReactiveEntity"
+import { ReactiveEntity } from "./ReactiveEntity.ts"
 
 type TestState = {
   element: HTMLElement | undefined

@@ -11,7 +11,7 @@ import {
   resizeObservers,
   setTestViewport,
   settledOn,
-} from "../tests/readerHarness"
+} from "../tests/readerHarness.ts"
 
 installReaderTestEnvironment()
 

@@ -1,25 +1,25 @@
 import { describe, expect, it, vi } from "vitest"
-import { CfiManager } from "../../../cfi"
-import { Context } from "../../../context/Context"
-import { HookManager } from "../../../hooks/HookManager"
-import { createNavigationResolver } from "../../../navigation/resolvers/NavigationResolver"
-import { mockSpineLayout } from "../../../navigation/tests/utils"
-import { ReaderSettingsManager } from "../../../settings/ReaderSettingsManager"
-import { Spine } from "../../../spine/Spine"
-import { SpineItemsManager } from "../../../spine/SpineItemsManager"
+import { CfiManager } from "../../../cfi/index.ts"
+import { Context } from "../../../context/Context.ts"
+import { HookManager } from "../../../hooks/HookManager.ts"
+import { createNavigationResolver } from "../../../navigation/resolvers/NavigationResolver.ts"
+import { mockSpineLayout } from "../../../navigation/tests/utils.ts"
+import { ReaderSettingsManager } from "../../../settings/ReaderSettingsManager.ts"
+import { Spine } from "../../../spine/Spine.ts"
+import { SpineItemsManager } from "../../../spine/SpineItemsManager.ts"
 import {
   SpineItemSpineLayout,
   UnboundSpinePosition,
-} from "../../../spine/types"
+} from "../../../spine/types.ts"
 import {
   createTestManifest,
   createTestManifestSpineItems,
-} from "../../../tests/utils"
-import { Viewport } from "../../../viewport/Viewport"
+} from "../../../tests/utils.ts"
+import { Viewport } from "../../../viewport/Viewport.ts"
 import {
   getNavigationForPageTurn,
   type PageTurnSide,
-} from "./getNavigationForPageTurn"
+} from "./getNavigationForPageTurn.ts"
 
 /**
  * One spine item at the origin of the spine. Its size and how its text is

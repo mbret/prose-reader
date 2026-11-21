@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest"
-import { parseAppleDisplayOptionsXml } from "./parse"
+import { parseAppleDisplayOptionsXml } from "./parse.ts"
 
 describe("parseAppleDisplayOptionsXml", () => {
   it("returns only kind for an unknown root element", () => {

@@ -11,9 +11,9 @@ import {
   throwError,
 } from "rxjs"
 import { afterEach, describe, expect, it, vi } from "vitest"
-import type { GesturesSettingsManager } from "../../SettingsManager"
-import type { GestureRecognizable, Hook, OutputSettings } from "../../types"
-import { registerTaps } from "./registerTaps"
+import type { GesturesSettingsManager } from "../../SettingsManager.ts"
+import type { GestureRecognizable, Hook, OutputSettings } from "../../types.ts"
+import { registerTaps } from "./registerTaps.ts"
 
 const CONTAINER_WIDTH = 1000
 const CONTAINER_HEIGHT = 800

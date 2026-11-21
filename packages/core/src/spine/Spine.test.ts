@@ -6,7 +6,7 @@ import {
   installReaderTestEnvironment,
   mountTestReader,
   resizeObservers,
-} from "../tests/readerHarness"
+} from "../tests/readerHarness.ts"
 
 installReaderTestEnvironment()
 

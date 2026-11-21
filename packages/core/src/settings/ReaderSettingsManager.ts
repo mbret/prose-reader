@@ -1,13 +1,13 @@
 import { takeUntil, tap } from "rxjs"
-import type { Context } from "../context/Context"
-import { Report } from "../report"
-import type { SettingsInterface } from "./SettingsInterface"
-import { SettingsManager } from "./SettingsManager"
+import type { Context } from "../context/Context.ts"
+import { Report } from "../report.ts"
+import type { SettingsInterface } from "./SettingsInterface.ts"
+import { SettingsManager } from "./SettingsManager.ts"
 import type {
   ComputedCoreSettings,
   CoreInputSettings,
   CoreOutputSettings,
-} from "./types"
+} from "./types.ts"
 
 /**
  * @important If a settings needs to be derived from a sub component, it needs to live next to the said

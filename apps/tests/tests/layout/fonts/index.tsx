@@ -3,14 +3,14 @@ import { openFixtureBook } from "../../fixtureBook"
 
 /**
  * A reflowable book, so a spec can change the settings that decide how many
- * pages a chapter takes. With `sansSerif` in the URL, its text is set in the
- * system sans-serif font (see `server/serveBooks.ts`).
+ * pages a chapter takes. With `liberationSans` in the URL, its text is set in
+ * Liberation Sans, which the book embeds (see `server/serveBooks.ts`).
  */
 async function run() {
   const query = new URLSearchParams(window.location.search)
   const book = await openFixtureBook(
-    query.has("sansSerif")
-      ? "accessible_epub_3-sans-serif.epub"
+    query.has("liberationSans")
+      ? "accessible_epub_3-liberation-sans.epub"
       : "accessible_epub_3.epub",
   )
 

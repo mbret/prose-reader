@@ -1,13 +1,14 @@
-import type { CfiManager } from "../../cfi"
-import type { Context } from "../../context/Context"
-import { getSpineItemProgression } from "../../pagination/progression"
-import { Report } from "../../report"
-import type { ReaderSettingsManager } from "../../settings/ReaderSettingsManager"
-import type { SpineItemsManager } from "../../spine/SpineItemsManager"
-import type { NavigationResolver } from "../resolvers/NavigationResolver"
-import type { NavigationTargetValues, NavigationVisibleArea } from "../types"
-import { guessDirection } from "./guessDirection"
-import type { NavigationTargetResolvers } from "./types"
+import type { CfiManager } from "../../cfi/index.ts"
+import type { Context } from "../../context/Context.ts"
+import { getSpineItemProgression } from "../../pagination/progression.ts"
+import { Report } from "../../report.ts"
+import type { ReaderSettingsManager } from "../../settings/ReaderSettingsManager.ts"
+import type { SpineLocator } from "../../spine/locator/SpineLocator.ts"
+import type { SpineItemsManager } from "../../spine/SpineItemsManager.ts"
+import type { NavigationResolver } from "../resolvers/NavigationResolver.ts"
+import type { NavigationTargetValues, NavigationVisibleArea } from "../types.ts"
+import { guessDirection } from "./guessDirection.ts"
+import type { NavigationTargetResolvers } from "./types.ts"
 
 const report = Report.namespace(`navigation/targets`)
 
@@ -30,6 +31,7 @@ export const createTargetResolvers = ({
   cfi,
   settings,
   spineItemsManager,
+  spineLocator,
   // The resolvers' own `context` is the navigation's.
   context: readerContext,
   getNavigationVisibleArea,
@@ -38,6 +40,7 @@ export const createTargetResolvers = ({
   cfi: CfiManager
   settings: ReaderSettingsManager
   spineItemsManager: SpineItemsManager
+  spineLocator: SpineLocator
   context: Context
   getNavigationVisibleArea: () => NavigationVisibleArea
 }): NavigationTargetResolvers => {
@@ -61,6 +64,8 @@ export const createTargetResolvers = ({
           position,
           previousNavigation,
           settings,
+          spineItemsManager,
+          spineLocator,
         }),
         snapToPage: true,
         awaitsDocument: false,

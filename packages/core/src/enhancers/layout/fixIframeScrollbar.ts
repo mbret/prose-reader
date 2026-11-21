@@ -1,5 +1,5 @@
-import type { Reader } from "../../reader"
-import { setAttributeIfChanged } from "../../utils/dom"
+import type { Reader } from "../../reader.ts"
+import { setAttributeIfChanged } from "../../utils/dom.ts"
 
 export const fixIframeScrollbar = (reader: Reader) => {
   /**

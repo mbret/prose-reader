@@ -1,6 +1,6 @@
 import { useObserve } from "reactjrx"
 import { distinctUntilChanged, map } from "rxjs"
-import { useAudioReader } from "./useAudioReader"
+import { useAudioReader } from "./useAudioReader.ts"
 
 export const useHasVisibleAudioTracks = () => {
   const audioReader = useAudioReader()

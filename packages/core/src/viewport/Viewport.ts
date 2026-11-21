@@ -12,24 +12,24 @@ import {
   CSS_VAR_ABSOLUTE_VIEWPORT_HEIGHT,
   CSS_VAR_ABSOLUTE_VIEWPORT_WIDTH,
   HTML_PREFIX_VIEWPORT,
-} from "../constants"
-import type { Context } from "../context/Context"
-import type { ReaderSettingsManager } from "../settings/ReaderSettingsManager"
-import type { SpinePosition, UnboundSpinePosition } from "../spine/types"
-import { getRenderedScale } from "../utils/coordinates"
+} from "../constants.ts"
+import type { Context } from "../context/Context.ts"
+import type { ReaderSettingsManager } from "../settings/ReaderSettingsManager.ts"
+import type { SpinePosition, UnboundSpinePosition } from "../spine/types.ts"
+import { getRenderedScale } from "../utils/coordinates.ts"
 import {
   removeStylePropertyIfPresent,
   setStylePropertyIfChanged,
-} from "../utils/dom"
-import { isShallowEqual } from "../utils/objects"
-import { ReactiveEntity } from "../utils/ReactiveEntity"
-import { observeResize } from "../utils/rxjs"
-import { shouldUseSpreadModeForViewport } from "./spreadMode"
+} from "../utils/dom.ts"
+import { isShallowEqual } from "../utils/objects.ts"
+import { ReactiveEntity } from "../utils/ReactiveEntity.ts"
+import { observeResize } from "../utils/rxjs.ts"
+import { shouldUseSpreadModeForViewport } from "./spreadMode.ts"
 import {
   AbsoluteViewport,
   RelativeViewport,
   ViewportSlicePosition,
-} from "./types"
+} from "./types.ts"
 
 type State = {
   element: HTMLElement

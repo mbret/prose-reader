@@ -5,17 +5,17 @@ import {
   type SpreadPosition,
 } from "@prose-reader/shared"
 import { catchError, defer, map, type Observable, of, Subject, tap } from "rxjs"
-import type { Context } from "../context/Context"
-import type { HookManager } from "../hooks/HookManager"
-import { reportRecoveredError } from "../report"
-import type { ReaderSettingsManager } from "../settings/ReaderSettingsManager"
-import { DestroyableClass } from "../utils/DestroyableClass"
+import type { Context } from "../context/Context.ts"
+import type { HookManager } from "../hooks/HookManager.ts"
+import { reportRecoveredError } from "../report.ts"
+import type { ReaderSettingsManager } from "../settings/ReaderSettingsManager.ts"
+import { DestroyableClass } from "../utils/DestroyableClass.ts"
 import {
   removeStylePropertyIfPresent,
   setStylePropertyIfChanged,
-} from "../utils/dom"
-import type { Viewport } from "../viewport/Viewport"
-import type { DocumentRenderer } from "./renderer/DocumentRenderer"
+} from "../utils/dom.ts"
+import type { Viewport } from "../viewport/Viewport.ts"
+import type { DocumentRenderer } from "./renderer/DocumentRenderer.ts"
 
 /** Where the spine lays an item out, which `SpineItem.layout` takes. */
 export type SpineItemLayoutParams = {

@@ -2,10 +2,10 @@ import { memo } from "react"
 import {
   type ReaderViewProps,
   useReaderViewContext,
-} from "../context/ReaderViewContext"
-import { useReaderContextValue } from "../context/useReaderContext"
-import { BottomBar } from "./BottomBar"
-import { TopBar } from "./TopBar"
+} from "../context/ReaderViewContext.ts"
+import { useReaderContextValue } from "../context/useReaderContext.ts"
+import { BottomBar } from "./BottomBar.tsx"
+import { TopBar } from "./TopBar.tsx"
 
 export const QuickMenu = memo(
   ({

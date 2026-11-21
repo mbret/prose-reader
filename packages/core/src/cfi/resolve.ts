@@ -1,8 +1,8 @@
 import { resolve } from "@prose-reader/cfi"
-import { Report } from "../report"
-import type { SpineItemsManager } from "../spine/SpineItemsManager"
-import type { SpineItem } from "../spineItem/SpineItem"
-import { parseCfi } from "./parse"
+import { Report } from "../report.ts"
+import type { SpineItemsManager } from "../spine/SpineItemsManager.ts"
+import type { SpineItem } from "../spineItem/SpineItem.ts"
+import { parseCfi } from "./parse.ts"
 
 /**
  * Returns the node and offset for the given cfi.

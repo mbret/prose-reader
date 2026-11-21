@@ -50,12 +50,12 @@ const cases = [
   {
     /**
      * The book's own font has no bold face, so a bolder weight may keep the
-     * width of its glyphs. This case opens the book rewritten in the system
-     * sans-serif font, which has a bold face with wider glyphs.
+     * width of its glyphs. This case opens the book rewritten in Liberation
+     * Sans, which it embeds with a bold face whose glyphs are wider.
      */
     name: "its font weight grows",
     settings: { fontWeight: 900 },
-    query: "?sansSerif",
+    query: "?liberationSans",
     precondition: async (page: Page, chapterIndex: number) => {
       expect(
         await isBoldWiderInBodyFont(page, chapterIndex),

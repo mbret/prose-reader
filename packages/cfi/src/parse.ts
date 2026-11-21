@@ -3,7 +3,7 @@
  * Based on the EPUB CFI 1.1 specification: https://idpf.org/epub/linking/cfi/epub-cfi.html
  */
 
-import { isCFI } from "./utils"
+import { isCFI } from "./utils.ts"
 
 /**
  * Interface for a parsed CFI part

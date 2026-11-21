@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest"
-import { generate } from "./generate"
-import { resolve } from "./resolve"
-import { isCharacterData } from "./utils"
+import { generate } from "./generate.ts"
+import { resolve } from "./resolve.ts"
+import { isCharacterData } from "./utils.ts"
 
 /**
  * EPUB CFI 3.1.1: the character data between two element children forms one

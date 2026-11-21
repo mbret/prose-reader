@@ -1,4 +1,4 @@
-import { type CfiPart, type ParsedCfi, parse } from "./parse"
+import { type CfiPart, type ParsedCfi, parse } from "./parse.ts"
 
 /**
  * Collapses a parsed CFI to a single path (private helper for compare)

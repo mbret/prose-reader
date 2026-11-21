@@ -1,6 +1,6 @@
 import fs from "node:fs/promises"
 import { describe, expect, it } from "vitest"
-import { resolve } from "../resolve"
+import { resolve } from "../resolve.ts"
 
 describe("Given a document with whitespace nodes", () => {
   it("should correctly target a node in a document which contains whitespace child nodes", async () => {

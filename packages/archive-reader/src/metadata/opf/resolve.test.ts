@@ -1,8 +1,8 @@
 import { describe, expect, it } from "vitest"
-import { identifierValue } from "../../utils/identifierValues"
-import { mainTitle } from "../../utils/mainTitle"
-import type { OpfMetadata } from "./parse"
-import { resolveOpf } from "./resolve"
+import { identifierValue } from "../../utils/identifierValues.ts"
+import { mainTitle } from "../../utils/mainTitle.ts"
+import type { OpfMetadata } from "./parse.ts"
+import { resolveOpf } from "./resolve.ts"
 
 const emptyOpf = (): OpfMetadata => ({
   kind: "opf",

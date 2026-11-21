@@ -15,15 +15,15 @@ import {
   onTestFinished,
   vi,
 } from "vitest"
-import { MAX_ZOOM_SCALE } from "./constants"
-import { useReaderViewContext } from "./context/ReaderViewContext"
-import { useReader } from "./context/useReader"
-import { useReaderContext } from "./context/useReaderContext"
-import { ReactReader } from "./ReactReader"
-import { ReactReaderProvider } from "./ReactReaderProvider"
-import type { ReactReaderSettings } from "./settings/managedSettings"
-import { useManagedSetting } from "./settings/useManagedSetting"
-import { setWindowWidth } from "./tests/setWindowWidth"
+import { MAX_ZOOM_SCALE } from "./constants.ts"
+import { useReaderViewContext } from "./context/ReaderViewContext.ts"
+import { useReader } from "./context/useReader.ts"
+import { useReaderContext } from "./context/useReaderContext.ts"
+import { ReactReader } from "./ReactReader.tsx"
+import { ReactReaderProvider } from "./ReactReaderProvider.tsx"
+import type { ReactReaderSettings } from "./settings/managedSettings.ts"
+import { useManagedSetting } from "./settings/useManagedSetting.ts"
+import { setWindowWidth } from "./tests/setWindowWidth.ts"
 
 const ONE_PAGE_MANIFEST: Manifest = {
   filename: `comic`,

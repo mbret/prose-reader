@@ -3,12 +3,12 @@ import { FaEdit } from "react-icons/fa"
 import { LuNotebookPen } from "react-icons/lu"
 import { useObserve } from "reactjrx"
 import { EMPTY, map, startWith, switchMap } from "rxjs"
-import { FloatingMenu } from "../common/FloatingMenu"
+import { FloatingMenu } from "../common/FloatingMenu.tsx"
 import {
   useReaderContext,
   useReaderContextValue,
-} from "../context/useReaderContext"
-import { useReaderWithAnnotations } from "./useReaderWithAnnotations"
+} from "../context/useReaderContext.ts"
+import { useReaderWithAnnotations } from "./useReaderWithAnnotations.ts"
 
 export const AnnotateControls = () => {
   const reader = useReaderWithAnnotations()
@@ -34,14 +34,17 @@ export const AnnotateControls = () => {
         variant="outline"
         size="sm"
         onClick={() => {
-          const selection = reader?.selection.getSelection()
+          const selectionToAnnotate = reader?.selection.getSelection()
 
-          if (!selection) return
+          if (!selectionToAnnotate) return
 
           context.update((state) => ({
             ...state,
             selectedHighlight: {
-              selection,
+              selection: {
+                selection: selectionToAnnotate.selection,
+                itemIndex: selectionToAnnotate.itemIndex,
+              },
             },
           }))
         }}

@@ -79,6 +79,16 @@
   },
   "overrides": [
     {
+      "includes": ["packages/*/src/**"],
+      "linter": {
+        "rules": {
+          "correctness": {
+            "useImportExtensions": "error"
+          }
+        }
+      }
+    },
+    {
       "includes": ["**/*.svg"],
       "linter": {
         "rules": {

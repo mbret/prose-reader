@@ -10,7 +10,7 @@ import {
   isPanoramaSplitSupportedArchiveRecord,
   PANORAMA_SPLIT_DOCUMENT_MEDIA_TYPE,
   panoramaSplit,
-} from "./panoramaSplitManifest"
+} from "./panoramaSplitManifest.ts"
 
 const fakeContent = blobFileAccessors(() => Promise.resolve(new Blob([])))
 

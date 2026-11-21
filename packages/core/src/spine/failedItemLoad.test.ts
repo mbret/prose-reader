@@ -1,16 +1,16 @@
 // @vitest-environment jsdom
 import { filter, firstValueFrom, throwError } from "rxjs"
 import { describe, expect, it, vi } from "vitest"
-import type { ReadingPosition } from "../navigation/types"
-import type { DocumentRendererParams } from "../spineItem/renderer/DocumentRenderer"
+import type { ReadingPosition } from "../navigation/types.ts"
+import type { DocumentRendererParams } from "../spineItem/renderer/DocumentRenderer.ts"
 import {
   createTestReader,
   installReaderTestEnvironment,
   mountTestReader,
   settledOn,
   TextDocumentRenderer,
-} from "../tests/readerHarness"
-import { waitFor } from "../tests/utils"
+} from "../tests/readerHarness.ts"
+import { waitFor } from "../tests/utils.ts"
 
 installReaderTestEnvironment()
 

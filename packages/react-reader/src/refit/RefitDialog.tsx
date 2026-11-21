@@ -11,12 +11,12 @@ import {
   DialogHeader,
   DialogRoot,
   DialogTitle,
-} from "../components/ui/dialog"
-import { Field } from "../components/ui/field"
-import { Radio, RadioGroup } from "../components/ui/radio"
-import { Slider } from "../components/ui/slider"
-import { useReaderViewContext } from "../context/ReaderViewContext"
-import { hasRefitEnhancer, useReader } from "../context/useReader"
+} from "../components/ui/dialog.tsx"
+import { Field } from "../components/ui/field.tsx"
+import { Radio, RadioGroup } from "../components/ui/radio.tsx"
+import { Slider } from "../components/ui/slider.tsx"
+import { useReaderViewContext } from "../context/ReaderViewContext.ts"
+import { hasRefitEnhancer, useReader } from "../context/useReader.ts"
 
 type OptionValue = RefitEnhancerOptions["viewportFit"]
 

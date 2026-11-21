@@ -1,5 +1,5 @@
 import { memo, useRef, useState } from "react"
-import { Slider } from "../components/ui/slider"
+import { Slider } from "../components/ui/slider.tsx"
 
 const FONT_SCALE_MIN = 0.2
 const FONT_SCALE_MAX = 5

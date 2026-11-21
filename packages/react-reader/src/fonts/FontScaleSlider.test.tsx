@@ -3,7 +3,7 @@
 import { act, type ComponentProps, useState } from "react"
 import { createRoot } from "react-dom/client"
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
-import type { Slider } from "../components/ui/slider"
+import type { Slider } from "../components/ui/slider.tsx"
 
 type SliderProps = ComponentProps<typeof Slider>
 
@@ -14,7 +14,7 @@ const { sliderRenders } = vi.hoisted(() => {
   return { sliderRenders }
 })
 
-vi.mock("../components/ui/slider", () => ({
+vi.mock("../components/ui/slider.tsx", () => ({
   Slider: (props: SliderProps) => {
     sliderRenders.push(props)
 
@@ -22,7 +22,7 @@ vi.mock("../components/ui/slider", () => ({
   },
 }))
 
-import { FontScaleSlider } from "./FontScaleSlider"
+import { FontScaleSlider } from "./FontScaleSlider.tsx"
 
 /** An app that saves the font scale the slider changes and passes it back. */
 const AppSavingFontScale = ({

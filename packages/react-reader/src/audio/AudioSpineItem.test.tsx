@@ -27,7 +27,7 @@ vi.mock("reactjrx", () => ({
   useObserve: useObserveMock,
 }))
 
-vi.mock("../context/useReader", () => ({
+vi.mock("../context/useReader.ts", () => ({
   hasAudioEnhancer: (reader: unknown) =>
     !!reader &&
     typeof reader === `object` &&
@@ -35,11 +35,11 @@ vi.mock("../context/useReader", () => ({
   useReader: useReaderMock,
 }))
 
-vi.mock("./wave/AudioWaveCanvas", () => ({
+vi.mock("./wave/AudioWaveCanvas.tsx", () => ({
   AudioWaveCanvas: audioWaveCanvasMock,
 }))
 
-import { AudioSpineItem } from "./AudioSpineItem"
+import { AudioSpineItem } from "./AudioSpineItem.tsx"
 
 const createSpineItem = () => {
   const renderer = {

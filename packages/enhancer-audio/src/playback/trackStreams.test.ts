@@ -4,8 +4,8 @@ import type { PaginationEdge, PaginationInfo } from "@prose-reader/core"
 import type { Manifest } from "@prose-reader/shared"
 import { BehaviorSubject, firstValueFrom } from "rxjs"
 import { describe, expect, it } from "vitest"
-import type { AudioEnhancerState, AudioTrack } from "../types"
-import { createTrackStreams, getManifestAudioTracks } from "./trackStreams"
+import type { AudioEnhancerState, AudioTrack } from "../types.ts"
+import { createTrackStreams, getManifestAudioTracks } from "./trackStreams.ts"
 
 const createSpineItem = ({
   id,

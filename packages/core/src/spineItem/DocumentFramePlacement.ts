@@ -1,6 +1,6 @@
-import { getRenderedScale } from "../utils/coordinates"
-import type { Box } from "../utils/dom"
-import { SpineItemPosition } from "./types"
+import { getRenderedScale } from "../utils/coordinates.ts"
+import type { Box } from "../utils/dom.ts"
+import { SpineItemPosition } from "./types.ts"
 
 /**
  * The layout size of an element, before any transform, from its computed

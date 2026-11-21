@@ -1,2 +1,2 @@
-export * from "./fonts"
-export * from "./types"
+export * from "./fonts.ts"
+export * from "./types.ts"

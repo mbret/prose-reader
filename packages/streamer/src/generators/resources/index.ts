@@ -1,12 +1,12 @@
 import type { Archive } from "@prose-reader/archive-reader"
 import { getArchiveFileRecordByUri } from "@prose-reader/archive-reader"
-import type { StreamerResourceHookFactory } from "../../hooks"
-import { Report } from "../../report"
-import { calibreFixHook } from "./hooks/calibreFixHook"
-import { cssFixHook } from "./hooks/cssFixHook"
-import { defaultHook } from "./hooks/defaultHook"
-import { selfClosingTagsFixHook } from "./hooks/selfClosingTagsFixHook"
-import type { HookResource } from "./hooks/types"
+import type { StreamerResourceHookFactory } from "../../hooks.ts"
+import { Report } from "../../report.ts"
+import { calibreFixHook } from "./hooks/calibreFixHook.ts"
+import { cssFixHook } from "./hooks/cssFixHook.ts"
+import { defaultHook } from "./hooks/defaultHook.ts"
+import { selfClosingTagsFixHook } from "./hooks/selfClosingTagsFixHook.ts"
+import type { HookResource } from "./hooks/types.ts"
 
 /**
  * Builds one streamed asset from `archive` (hot path: typically once per

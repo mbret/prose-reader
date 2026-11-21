@@ -6,8 +6,8 @@ import {
   installReaderTestEnvironment,
   mountTestReader,
   settledOn,
-} from "../tests/readerHarness"
-import type { NavigationTarget, ReadingPosition } from "./types"
+} from "../tests/readerHarness.ts"
+import type { NavigationTarget, ReadingPosition } from "./types.ts"
 
 installReaderTestEnvironment()
 

@@ -1,12 +1,12 @@
 import { useEffect } from "react"
 import { useLiveRef } from "reactjrx"
-import type { ReactReaderReader } from "./context/context"
+import type { ReactReaderReader } from "./context/context.ts"
 import {
   useReaderContext,
   useReaderContextValue,
-} from "./context/useReaderContext"
-import { getManagedSettingValuesInEffect } from "./settings/settingValues"
-import { useScreenSettingsScopeReference } from "./settings/useScreenSettingsScopeReference"
+} from "./context/useReaderContext.ts"
+import { getManagedSettingValuesInEffect } from "./settings/settingValues.ts"
+import { useScreenSettingsScopeReference } from "./settings/useScreenSettingsScopeReference.ts"
 
 export function ReaderLifecycle({
   createReader,

@@ -1,4 +1,8 @@
-export { resolveChapterInfoFromVisibleNode } from "./node"
-export { buildTocCandidatesBySpineHref, buildTocIndex } from "./shared"
-export { buildChaptersInfo, buildStaticChaptersInfo } from "./static"
-export type { ChapterInfo, TocCandidatesBySpineHref, TocIndex } from "./types"
+export { resolveChapterInfoFromVisibleNode } from "./node.ts"
+export { buildTocCandidatesBySpineHref, buildTocIndex } from "./shared.ts"
+export { buildChaptersInfo, buildStaticChaptersInfo } from "./static.ts"
+export type {
+  ChapterInfo,
+  TocCandidatesBySpineHref,
+  TocIndex,
+} from "./types.ts"

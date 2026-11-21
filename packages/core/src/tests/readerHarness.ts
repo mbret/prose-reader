@@ -21,24 +21,24 @@ import {
   onTestFinished,
   vi,
 } from "vitest"
-import { createReaderWithEnhancers } from "../createReaderWithEnhancer"
-import { htmlEnhancer } from "../enhancers/html/enhancer"
-import { layoutEnhancer } from "../enhancers/layout/layoutEnhancer"
-import { navigationEnhancer } from "../enhancers/navigation"
-import { paginationEnhancer } from "../enhancers/pagination/enhancer"
-import { themeEnhancer } from "../enhancers/theme"
-import { zoomEnhancer } from "../enhancers/zoom"
-import type { HookManager } from "../hooks/HookManager"
-import { createReader } from "../reader"
-import type { Spine } from "../spine/Spine"
-import type { SpineItemsManager } from "../spine/SpineItemsManager"
-import { DefaultRenderer } from "../spineItem/renderer/DefaultRenderer"
+import { createReaderWithEnhancers } from "../createReaderWithEnhancer.ts"
+import { htmlEnhancer } from "../enhancers/html/enhancer.ts"
+import { layoutEnhancer } from "../enhancers/layout/layoutEnhancer.ts"
+import { navigationEnhancer } from "../enhancers/navigation/index.ts"
+import { paginationEnhancer } from "../enhancers/pagination/enhancer.ts"
+import { themeEnhancer } from "../enhancers/theme/index.ts"
+import { zoomEnhancer } from "../enhancers/zoom/index.ts"
+import type { HookManager } from "../hooks/HookManager.ts"
+import { createReader } from "../reader.ts"
+import type { Spine } from "../spine/Spine.ts"
+import type { SpineItemsManager } from "../spine/SpineItemsManager.ts"
+import { DefaultRenderer } from "../spineItem/renderer/DefaultRenderer.ts"
 import {
   DocumentRenderer,
   type DocumentRendererParams,
-} from "../spineItem/renderer/DocumentRenderer"
-import { isHtmlTagElement } from "../utils/dom"
-import { createTestManifest } from "./utils"
+} from "../spineItem/renderer/DocumentRenderer.ts"
+import { isHtmlTagElement } from "../utils/dom.ts"
+import { createTestManifest } from "./utils.ts"
 
 /**
  * Drives a real reader in jsdom, with the real renderer, for tests about the
@@ -252,21 +252,32 @@ export const holdItem = (
  * Lets a test stop the spine's layout pass at one item: while held, that item's
  * layout does not complete, so the pass has laid out the items before it and
  * waits. Layouts run normally until `hold` is called. `layoutsStarted` counts
- * the layouts of that item, which tells a test a pass has reached it.
+ * the layouts of that item, which tells a test a pass has reached it. Every
+ * item is rendered by `Renderer`, the one held included, which lays out once
+ * released.
  */
-export const holdItemLayout = (href: string) => {
+export const holdItemLayout = (
+  href: string,
+  Renderer: new (
+    props: DocumentRendererParams,
+  ) => DocumentRenderer = DefaultRenderer,
+) => {
   const isHeld = new BehaviorSubject(false)
   let layoutsStarted = 0
 
-  class HeldLayoutRenderer extends DefaultRenderer {
-    onLayout() {
+  const layOutOnceReleased = (renderer: DocumentRenderer) => {
+    const layOut = renderer.onLayout.bind(renderer)
+
+    renderer.onLayout = (params) => {
       layoutsStarted += 1
 
       return isHeld.pipe(
         first((held) => !held),
-        map(() => undefined),
+        switchMap(() => layOut(params)),
       )
     }
+
+    return renderer
   }
 
   return {
@@ -274,8 +285,8 @@ export const holdItemLayout = (href: string) => {
       (item: Manifest["spineItems"][number]) =>
       (props: DocumentRendererParams) =>
         item.href === href
-          ? new HeldLayoutRenderer(props)
-          : new DefaultRenderer(props),
+          ? layOutOnceReleased(new Renderer(props))
+          : new Renderer(props),
     hold: () => isHeld.next(true),
     release: () => isHeld.next(false),
     layoutsStarted: () => layoutsStarted,
@@ -287,9 +298,17 @@ export const holdItemLayout = (href: string) => {
  * then. jsdom lays nothing out, and the spine places its items by their
  * sizes. A new size shows at the next layout, the way an item that loads
  * takes its size.
+ *
+ * A test can also stop the spine's layout pass at one item, as
+ * `holdItemLayout` does: while held, that item's layout does not complete, so
+ * the pass has laid out the items before it and waits.
  */
 export const renderItemsOfSetSizes = () => {
   const sizeOfItemIndex = new Map<number, { width?: number; height?: number }>()
+  const itemIndexesWithLayoutHeld = new BehaviorSubject<ReadonlySet<number>>(
+    new Set(),
+  )
+  const numberOfLayoutsStartedOfItemIndex = new Map<number, number>()
 
   class SetSizeRenderer extends DocumentRenderer {
     onCreateDocument() {
@@ -303,12 +322,24 @@ export const renderItemsOfSetSizes = () => {
     onUnload() {}
 
     onLayout() {
-      const { width, height } = sizeOfItemIndex.get(this.item.index) ?? {}
+      const { index } = this.item
 
-      return of({
-        width: width ?? viewport.width,
-        height: height ?? viewport.height,
-      })
+      numberOfLayoutsStartedOfItemIndex.set(
+        index,
+        (numberOfLayoutsStartedOfItemIndex.get(index) ?? 0) + 1,
+      )
+
+      return itemIndexesWithLayoutHeld.pipe(
+        first((itemIndexes) => !itemIndexes.has(index)),
+        map(() => {
+          const { width, height } = sizeOfItemIndex.get(index) ?? {}
+
+          return {
+            width: width ?? viewport.width,
+            height: height ?? viewport.height,
+          }
+        }),
+      )
     }
 
     onRenderHeadless() {
@@ -329,6 +360,25 @@ export const renderItemsOfSetSizes = () => {
     ) => {
       sizeOfItemIndex.set(spineItemIndex, size)
     },
+    /** Holds the layout of an item, and returns its release. */
+    holdLayoutOfItem: (spineItemIndex: number) => {
+      itemIndexesWithLayoutHeld.next(
+        new Set([...itemIndexesWithLayoutHeld.value, spineItemIndex]),
+      )
+
+      return () => {
+        itemIndexesWithLayoutHeld.next(
+          new Set(
+            [...itemIndexesWithLayoutHeld.value].filter(
+              (itemIndex) => itemIndex !== spineItemIndex,
+            ),
+          ),
+        )
+      }
+    },
+    /** How many layouts of an item have started: a pass has reached it. */
+    getNumberOfLayoutsStartedOfItem: (spineItemIndex: number) =>
+      numberOfLayoutsStartedOfItemIndex.get(spineItemIndex) ?? 0,
   }
 }
 
@@ -382,6 +432,7 @@ export const renderTextDocumentsWithParagraphOnSetPage = () => {
   }
 
   return {
+    Renderer: ParagraphOnSetPageRenderer,
     getRenderer: () => (props: DocumentRendererParams) =>
       new ParagraphOnSetPageRenderer(props),
     setPageIndexOfParagraph: (pageIndex: number) => {

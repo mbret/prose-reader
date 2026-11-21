@@ -1,8 +1,8 @@
 import type { CreateReaderOptions, Reader } from "@prose-reader/core"
-import { AudioController } from "./playback/AudioController"
-import { AudioRenderer } from "./renderer/AudioRenderer"
-import type { AudioEnhancerAPI } from "./types"
-import { isAudioSpineItem } from "./utils"
+import { AudioController } from "./playback/AudioController.ts"
+import { AudioRenderer } from "./renderer/AudioRenderer.ts"
+import type { AudioEnhancerAPI } from "./types.ts"
+import { isAudioSpineItem } from "./utils.ts"
 
 export const audioEnhancer =
   <

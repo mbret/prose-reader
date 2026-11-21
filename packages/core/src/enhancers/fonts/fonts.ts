@@ -1,9 +1,9 @@
 import { skip, takeUntil, tap } from "rxjs"
-import type { ExtendedSettings } from "../../settings/SettingsInterface"
-import type { SpineItem } from "../../spineItem/SpineItem"
-import { upsertCSSToFrame } from "../../utils/frames"
-import type { EnhancerOutput, RootEnhancer } from "../types/enhancer"
-import type { EnhancerFontsInputSettings } from "./types"
+import type { ExtendedSettings } from "../../settings/SettingsInterface.ts"
+import type { SpineItem } from "../../spineItem/SpineItem.ts"
+import { upsertCSSToFrame } from "../../utils/frames.ts"
+import type { EnhancerOutput, RootEnhancer } from "../types/enhancer.ts"
+import type { EnhancerFontsInputSettings } from "./types.ts"
 
 const FONTS_STYLESHEET_ID = `prose-reader-fonts`
 

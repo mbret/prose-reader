@@ -1,10 +1,10 @@
 import { Box } from "@chakra-ui/react"
 import { type ComponentProps, useCallback, useEffect } from "react"
 import { signal, useObserve, useSignalState, useSubscribe } from "reactjrx"
-import { useReader } from "../context/useReader"
-import { useNavigationContext } from "../navigation/useNavigationContext"
-import { usePagination } from "../pagination/usePagination"
-import { ThemedSlider } from "./ThemedSlider"
+import { useReader } from "../context/useReader.ts"
+import { useNavigationContext } from "../navigation/useNavigationContext.ts"
+import { usePagination } from "../pagination/usePagination.ts"
+import { ThemedSlider } from "./ThemedSlider.tsx"
 
 const useSliderValues = () => {
   const pagination = usePagination()

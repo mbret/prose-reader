@@ -1,2 +1,2 @@
-export * from "./AudioVisualizer"
-export * from "./levels"
+export * from "./AudioVisualizer.ts"
+export * from "./levels.ts"

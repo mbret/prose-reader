@@ -19,7 +19,7 @@ import {
 import {
   type KoreaderProgressNavigationTarget,
   koreaderEnhancer,
-} from "./koreaderEnhancer"
+} from "./koreaderEnhancer.ts"
 
 /**
  * Drives a mounted reader built with the enhancer, the way core's own

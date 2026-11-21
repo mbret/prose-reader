@@ -1,5 +1,5 @@
 import type { Manifest } from "@prose-reader/shared"
-import type { NavigationTarget } from "../../navigation/types"
+import type { NavigationTarget } from "../../navigation/types.ts"
 
 const parseUrl = (url: string | URL) => {
   try {

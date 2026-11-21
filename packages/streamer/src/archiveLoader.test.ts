@@ -1,6 +1,6 @@
 import { type Archive, createArchive } from "@prose-reader/archive-reader"
 import { afterEach, beforeEach, describe, expect, it, vitest } from "vitest"
-import { createArchiveLoader } from "./archiveLoader"
+import { createArchiveLoader } from "./archiveLoader.ts"
 
 /**
  * Time only moves when a test moves it. On real timers, a wait meant to stop
