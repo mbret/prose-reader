@@ -211,7 +211,7 @@ See [Annotations](/enhancers/annotations) to install enhancer
 
 * Pass your annotations to `ReactReaderProvider` as `annotations`. Add the one that `onAnnotationCreate` reports. Merge what `onAnnotationUpdate` reports into the annotation with that `id`. Remove the annotation whose `id` `onAnnotationDelete` reports.
 * `onAnnotationCreate` receives an `Annotation` you can store as it is. For a highlight, it has an `id`, a `cfi`, a `highlightedText`, a `highlightColor` and `notes`. See [The text of a highlight](/enhancers/annotations#the-text-of-a-highlight).
-* The Annotations tab of the Annotations dialog shows the `highlightedText` of each highlight. For a highlight without one, it shows the text at its CFI once the document of its chapter is loaded and the CFI resolves in it.
+* The Annotations tab of the Annotations dialog shows the `highlightedText` of each highlight. For a highlight without one, it shows the text at its CFI once the document of its chapter is loaded and the CFI resolves in it. When that text is empty, as for a highlight of an image, the row shows the page of the highlight.
 
 ### Audio / Audiobooks { #audio-audiobooks }
 
