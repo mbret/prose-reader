@@ -339,6 +339,39 @@ describe("the tabs of the Annotations dialog", () => {
 })
 
 describe("a row of the Annotations dialog", () => {
+  const getFirstRowOfTheOpenTab = () => {
+    const row = document.querySelector<HTMLElement>(
+      `[role="tabpanel"] li button`,
+    )
+
+    if (!row) throw new Error("the open tab lists no row")
+
+    return row
+  }
+
+  it("navigates the reader, and leaves the URL of the page as it was", async () => {
+    const bookmark = createPageBookmark(5)
+    const { reader } = await openBook({ annotations: [bookmark] })
+    const goToCfi = vi.spyOn(reader.navigation, "goToCfi")
+    const pageUrlBeforeTheClick = window.location.href
+
+    await clickButton(
+      (button) => button.getAttribute(`aria-label`) === `Bookmarks`,
+    )
+    const row = getFirstRowOfTheOpenTab()
+    await act(async () => {
+      row.click()
+    })
+
+    expect({
+      navigatedTo: goToCfi.mock.calls,
+      pageUrl: window.location.href,
+    }).toEqual({
+      navigatedTo: [[bookmark.cfi]],
+      pageUrl: pageUrlBeforeTheClick,
+    })
+  })
+
   it("shows the note of its annotation, and navigates to its cfi, before the annotation is located", async () => {
     const bookmark = { ...createPageBookmark(5), notes: "A note" }
     const { reader, setAnnotations } = await openBook({ annotations: [] })
@@ -353,17 +386,15 @@ describe("a row of the Annotations dialog", () => {
       (button) => button.getAttribute(`aria-label`) === `Bookmarks`,
     )
 
-    const link = document.querySelector<HTMLElement>(`[role="tabpanel"] li a`)
-    const noteIndicator = link?.querySelector(`svg`)
+    const row = getFirstRowOfTheOpenTab()
+    const noteIndicator = row.querySelector(`svg`)
 
-    if (!link || !noteIndicator) {
-      throw new Error("the Bookmarks tab lists no row with a note indicator")
-    }
+    if (!noteIndicator) throw new Error("the row has no note indicator")
 
     const noteIndicatorVisibility = getComputedStyle(noteIndicator).visibility
 
     await act(async () => {
-      link.click()
+      row.click()
     })
 
     expect({

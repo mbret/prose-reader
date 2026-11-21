@@ -62,7 +62,6 @@ export const SearchDialogContent = memo(
                         result.meta?.range?.startContainer.parentElement
                           ?.textContent ?? ""
                       }
-                      pageIndex={result.meta?.itemPageIndex}
                       startOffset={result.meta?.range?.startOffset ?? 0}
                       text={searchValue}
                       cfi={result.meta.cfi}

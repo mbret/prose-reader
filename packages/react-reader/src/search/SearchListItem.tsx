@@ -6,16 +6,15 @@ export const SearchListItem = memo(
     contextText = "",
     startOffset = 0,
     text,
-    cfi = "#",
+    cfi,
     onClick,
     absolutePageIndex,
   }: {
-    pageIndex: number | undefined
     absolutePageIndex?: number
     contextText?: string
     startOffset?: number
     text: string
-    cfi?: string
+    cfi: string
     onClick: (cfi: string) => void
   }) => {
     const charsAroundText = 15
@@ -33,26 +32,29 @@ export const SearchListItem = memo(
 
     return (
       <Link
-        href={cfi}
+        asChild
+        textAlign="start"
         style={{ margin: 5, overflow: "hidden" }}
-        onClick={(e) => {
-          e.preventDefault()
-
-          onClick(cfi)
-        }}
         display="flex"
         flexDirection="column"
         alignItems="flex-start"
         gap={0}
       >
-        <Text lineClamp={1} as="cite" style={{ display: "block" }}>
-          "{before}
-          <b>{text}</b>
-          {after}"
-        </Text>
-        <Text fontSize="sm" color="gray.500" style={{ textDecoration: "none" }}>
-          {`Book page: ${absolutePageIndex !== undefined ? absolutePageIndex + 1 : "unknown (not loaded)"}`}
-        </Text>
+        <button type="button" onClick={() => onClick(cfi)}>
+          <Text lineClamp={1} as="cite" style={{ display: "block" }}>
+            "{before}
+            <b>{text}</b>
+            {after}"
+          </Text>
+          <Text
+            as="span"
+            fontSize="sm"
+            color="gray.500"
+            style={{ textDecoration: "none" }}
+          >
+            {`Book page: ${absolutePageIndex !== undefined ? absolutePageIndex + 1 : "unknown (not loaded)"}`}
+          </Text>
+        </button>
       </Link>
     )
   },

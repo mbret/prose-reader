@@ -26,36 +26,39 @@ export const AnnotationListItem = ({
 
   return (
     <List.Item>
-      <Link
-        href="#"
-        onClick={() => {
-          onNavigate()
+      <Link asChild textAlign="start">
+        <button
+          type="button"
+          onClick={() => {
+            onNavigate()
 
-          reader?.navigation.goToCfi(cfi)
-        }}
-      >
-        <List.Indicator
-          asChild
-          visibility={annotation.notes ? "visible" : "hidden"}
+            reader?.navigation.goToCfi(cfi)
+          }}
         >
-          <LuNotebookPen />
-        </List.Indicator>
-        <Stack gap={0}>
-          {textContent ? (
-            <Text lineClamp={2} fontSize="md">
-              {textContent}
-            </Text>
-          ) : (
-            <Text lineClamp={2} fontSize="md" fontStyle="italic">
-              Page {pageNumber ?? "unknown"}
-            </Text>
-          )}
-          <Text
-            fontStyle="italic"
-            fontWeight="bold"
-            fontSize="sm"
-          >{`Book page: ${pageNumber ?? "unknown"}`}</Text>
-        </Stack>
+          <List.Indicator
+            asChild
+            visibility={annotation.notes ? "visible" : "hidden"}
+          >
+            <LuNotebookPen />
+          </List.Indicator>
+          <Stack as="span" gap={0}>
+            {textContent ? (
+              <Text as="span" lineClamp={2} fontSize="md">
+                {textContent}
+              </Text>
+            ) : (
+              <Text as="span" lineClamp={2} fontSize="md" fontStyle="italic">
+                Page {pageNumber ?? "unknown"}
+              </Text>
+            )}
+            <Text
+              as="span"
+              fontStyle="italic"
+              fontWeight="bold"
+              fontSize="sm"
+            >{`Book page: ${pageNumber ?? "unknown"}`}</Text>
+          </Stack>
+        </button>
       </Link>
     </List.Item>
   )
