@@ -295,5 +295,14 @@ describe("getHighlightBoxesOfRange", () => {
       { left: 50, top: 0, right: 100, bottom: 20 },
       { left: 0, top: 20, right: 100, bottom: 40 },
     ])
+    expect(
+      getHighlightBoxesOfRange(
+        createRange([elementOf("#first"), 1], [firstTextOf("#last"), 6]),
+      ),
+      "the boxes of a range that starts after the last child of the first paragraph",
+    ).toEqual([
+      { left: 0, top: 20, right: 100, bottom: 40 },
+      { left: 0, top: 40, right: 60, bottom: 60 },
+    ])
   })
 })
