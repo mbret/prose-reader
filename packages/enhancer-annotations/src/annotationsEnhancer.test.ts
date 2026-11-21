@@ -649,7 +649,6 @@ const selectTextAndRelease = async (
   return selection
 }
 
-/** Renders each item as two paragraphs, with nothing between them. */
 class TwoParagraphsTextDocumentRenderer extends TextDocumentRenderer {
   protected readonly documentBodyHtml =
     `<p>First paragraph.</p><p>Second paragraph.</p>`
@@ -688,9 +687,9 @@ describe("createAnnotation", () => {
 
   /**
    * An app that compares the text it stored with the passage at the cfi
-   * reads that passage with `range.toString()`. A browser's
-   * `Selection.toString()` follows the rendering instead, and puts line
-   * breaks between two paragraphs.
+   * reads that passage with `range.toString()`. jsdom gives a selection the
+   * same text, so `tests/highlights` in `apps/tests` checks in browsers that
+   * the text is not the selection's.
    */
   it("gives the text of the range that its cfi resolves to, with nothing added between two paragraphs", async () => {
     const reader = await mountAnnotationsReader({
