@@ -88,9 +88,10 @@ again an annotation that you change in place.
 The enhancer draws a highlight for each annotation whose CFI is a range, while
 the document of its spine item is loaded. The highlight covers each line of the
 text that the range covers, from the line's first selected character to its
-last, and each element with no text that the range covers whole, such as an
-`img`, an `svg` or a `video`. It does not cover the blank space beside a line.
-It is drawn:
+last, with the padding of the inline elements between them. It covers the box
+of each `img`, `svg`, `math`, `video`, `audio`, `canvas`, `iframe`, `object`
+or `embed` element that the range covers whole, even one that holds text. It
+does not cover the blank space beside a line. It is drawn:
 
 * in its `highlightColor`, or yellow when it has none, with a note icon when it
   has `notes`;
@@ -103,10 +104,9 @@ its highlight again. When an annotation leaves the array, the enhancer removes
 its highlight at once.
 
 `reader.annotations.highlightTap$` emits `{ event, annotation }` for each tap on
-what a highlight covers, and not for a tap beside it. `annotation` is the
-annotation of the tapped highlight. Where highlights overlap, a tap reaches the
-highlight drawn on top, and the stream reports that one. It completes when the
-reader is destroyed.
+a highlight. `annotation` is the annotation of the tapped highlight. Where
+highlights overlap, a tap reaches the highlight drawn on top, and the stream
+reports that one. It completes when the reader is destroyed.
 
 ## Finding the annotations of a page
 
