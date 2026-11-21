@@ -134,7 +134,10 @@ export const ReaderScreen = memo(() => {
         {...reactReaderSettingsProps}
         annotations={annotations}
         onAnnotationCreate={(annotation) => {
-          annotationsSignal.update([...annotations, annotation])
+          annotationsSignal.update([
+            ...annotations,
+            { ...annotation, id: crypto.randomUUID() },
+          ])
         }}
         onAnnotationUpdate={(annotation) => {
           annotationsSignal.update((state) =>
