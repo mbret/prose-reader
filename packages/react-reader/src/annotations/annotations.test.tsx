@@ -273,11 +273,13 @@ describe("the bookmark markers", () => {
    * chapter that is ready shows a marker: the first one, which the reader
    * shows.
    */
-  it("mark a page that holds a bookmark, also after a highlight, and not a page that holds a highlight only", async () => {
+  it("mark a page that holds a bookmark with an image named Bookmarked page, also after a highlight, and not a page that holds a highlight only", async () => {
     const countMarkersWith = async (annotations: Annotation[]) => {
       await openBook({ renditionLayout: "pre-paginated", annotations })
 
-      return document.querySelectorAll(`[data-bookmark-area]`).length
+      return document.querySelectorAll(
+        `[role="img"][aria-label="Bookmarked page"]`,
+      ).length
     }
 
     expect({
