@@ -1,7 +1,7 @@
 /* @vitest-environment jsdom */
 
 import { ChakraProvider, defaultSystem } from "@chakra-ui/react"
-import type { Annotation } from "@prose-reader/enhancer-annotations"
+import type { NewAnnotation } from "@prose-reader/enhancer-annotations"
 import { act } from "react"
 import { createRoot } from "react-dom/client"
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
@@ -39,7 +39,8 @@ const waitForInAct = <Result,>(assertion: () => Result) =>
 /**
  * An app stores what `onAnnotationCreate` reports, in IndexedDB or through
  * `postMessage`, which copy a value with the structured clone algorithm. A
- * browser cannot clone an event or a selection.
+ * browser cannot clone an event or a selection. The app gives the annotation
+ * its id.
  *
  * The tests compare the keys of what is reported, not whether it clones:
  * jsdom clones its events like plain objects.
@@ -55,7 +56,7 @@ describe("onAnnotationCreate", () => {
    * of a tap in the top right corner of a page.
    */
   const renderAnnotationCreation = async () => {
-    const onAnnotationCreate = vi.fn<(annotation: Annotation) => void>()
+    const onAnnotationCreate = vi.fn<(annotation: NewAnnotation) => void>()
 
     reader = await mountTextDocumentReader()
 
@@ -189,7 +190,7 @@ describe("onAnnotationCreate", () => {
     Object.assign(globalThis, { IS_REACT_ACT_ENVIRONMENT: false })
   })
 
-  it("reports a highlight made from the drawer with its id, the range of the selection, the selected text, its color and notes, and nothing of the selection", async () => {
+  it("reports a highlight made from the drawer with the range of the selection, the selected text, its color and notes, and neither an id nor anything of the selection", async () => {
     const { onAnnotationCreate } = await renderAnnotationCreation()
 
     await selectTextAndRelease()
@@ -202,7 +203,6 @@ describe("onAnnotationCreate", () => {
     )
     const reported = onAnnotationCreate.mock.calls[0]?.[0]
     expect(reported).toStrictEqual({
-      id: expect.any(String),
       cfi: expect.any(String),
       highlightedText: "paragraph",
       highlightColor: "rgba(216, 191, 216, 1)",
@@ -214,7 +214,7 @@ describe("onAnnotationCreate", () => {
     })
   })
 
-  it("reports a bookmark made by a tap in the corner of a page with its id and cfi, and not the page index", async () => {
+  it("reports a bookmark made by a tap in the corner of a page with its cfi, and neither an id nor the page index", async () => {
     const { onAnnotationCreate } = await renderAnnotationCreation()
 
     await tapTopRightCorner()
@@ -223,7 +223,6 @@ describe("onAnnotationCreate", () => {
       expect(onAnnotationCreate).toHaveBeenCalledTimes(1),
     )
     expect(onAnnotationCreate.mock.calls[0]?.[0]).toStrictEqual({
-      id: expect.any(String),
       cfi: expect.any(String),
     })
   })

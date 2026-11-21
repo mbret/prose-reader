@@ -38,6 +38,8 @@ export const BookmarkPageMarker = memo(
         animationDuration="moderate"
       >
         <Box
+          role="img"
+          aria-label="Bookmarked page"
           data-bookmark-area={BOOKMARK_AREA_DATA_ATTRIBUTE}
           position="absolute"
           left={left + width}

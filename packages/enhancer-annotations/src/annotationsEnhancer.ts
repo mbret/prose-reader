@@ -124,16 +124,10 @@ export const annotationsEnhancer =
 
     const createAnnotation = (
       params: AnnotateSelectionParams | AnnotateAbsolutePageParams,
-    ): Pick<Annotation, "id" | "cfi" | "highlightedText"> | undefined => {
-      const annotationTarget =
-        params.selection !== undefined
-          ? getAnnotationTargetOfSelection(params)
-          : getAnnotationTargetOfAbsolutePage(params)
-
-      return annotationTarget === undefined
-        ? undefined
-        : { id: window.crypto.randomUUID(), ...annotationTarget }
-    }
+    ) =>
+      params.selection !== undefined
+        ? getAnnotationTargetOfSelection(params)
+        : getAnnotationTargetOfAbsolutePage(params)
 
     /**
      * Starts from the highlights, not from the annotations: a draw then runs

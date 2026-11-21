@@ -73,7 +73,10 @@ function Bookmarks({
           })
 
           if (annotation) {
-            annotations$.next([...annotations$.value, annotation])
+            annotations$.next([
+              ...annotations$.value,
+              { ...annotation, id: crypto.randomUUID() },
+            ])
           }
         }
       }}
