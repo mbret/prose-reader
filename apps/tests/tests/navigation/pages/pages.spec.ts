@@ -1,12 +1,12 @@
 import { expect, type Page } from "@playwright/test"
 import { navigateToPageOfSpineItem, turnLeft, turnRight } from "../../utils"
 import { layOutAndSettle, readSettledPagination } from "../../utils/pagination"
+import type { ScenarioBook } from "../../utils/scenarioBooks"
 import { test } from "../../utils/test"
 import {
   isCfiPositionVisible,
   readCfiPositionInWindow,
 } from "../../utils/visibility"
-import type { ScenarioBook } from "./books"
 import {
   addSpacersAroundTextOfShownChapter,
   getScreenOfPage,

@@ -2,7 +2,8 @@ import { createReader } from "@prose-reader/core"
 import { gesturesEnhancer } from "@prose-reader/enhancer-gestures"
 import { map, tap } from "rxjs"
 import { openFixtureBook } from "../../fixtureBook"
-import { isScenarioBook, SCENARIO_BOOKS, type TappedPage } from "./books"
+import { isScenarioBook, SCENARIO_BOOKS } from "../../utils/scenarioBooks"
+import type { TappedPage } from "./books"
 
 async function run() {
   const requestedBook = new URLSearchParams(window.location.search).get("book")
