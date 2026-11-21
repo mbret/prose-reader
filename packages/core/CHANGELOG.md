@@ -3,6 +3,53 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## [46.0.0](https://github.com/mbret/prose-reader/compare/v45.0.0...v46.0.0) (2026-11-21)
+
+### ⚠ BREAKING CHANGES
+
+* **core:** `locateResource()` gives no page to a cfi of a reflowable
+  item, other than one that names only its item, while a layout that can
+  change its item is pending, unless the cfi was located on the published
+  pages. `absolutePageIndex` is the page the published pages give, and is
+  `undefined` until the first pages are published.
+  `spine.locator._getAbsolutePageIndexFromPageIndex` is removed, and
+  `ResourcesLocator.locate` is private.
+
+  Part of [#718](https://github.com/mbret/prose-reader/issues/718), 5.2. Part of [#835](https://github.com/mbret/prose-reader/issues/835), defect 4.
+* **core:** `reader.navigation.scrollNavigationController.scrollPositionKnownToReader$` is removed. The end of a scroll of the user's was its one reader and no longer needs it. Commit d8afac2 removed it without this note.
+* **core:** a located cfi of a reflowable item that is not loaded has
+  no `itemPageIndex` and no `absolutePageIndex`, where it had the first page
+  of its item. `meta` no longer holds the fields of the located resource.
+  `consolidate` is no longer exported.
+
+  Part of [#718](https://github.com/mbret/prose-reader/issues/718), 5.2. Part of [#835](https://github.com/mbret/prose-reader/issues/835), defect 4.
+* every `@prose-reader/*` package is published as an ES module only. The CommonJS builds (`dist/**/*.cjs`) are removed, and every package declares `engines.node >=22.12`.
+
+  - With `import` or a bundler, Metro included, no change is necessary.
+  - On Node.js 22.12 or later, `require()` loads the ES module build.
+  - On an older Node.js, use `await import()`, or convert the file to an ES module.
+  - In TypeScript, an ES module file resolves the types from TypeScript 5.0, with `bundler`, `node16` or `nodenext` resolution. A CommonJS file needs `"module": "nodenext"` and TypeScript 5.8 or later. Under `node16`, use `await import()`, or convert the file to an ES module.
+  - If a test runner loads modules with its own CommonJS loader, for example Jest without ES module support, transform `@prose-reader/*` or enable ES module support in the runner.
+  - The `module` field, and the `react-native` field of `@prose-reader/react-native`, are removed. Both named the same file as `main`, which tools read instead.
+
+### Bug Fixes
+
+* **core:** begin no user scroll before the spine items are first laid out ([803d7b8](https://github.com/mbret/prose-reader/commit/803d7b8bdce5aea7e2b4db28c21a42254bb363bb))
+* **core:** give a located resource a page only when the reader knows it ([cfded12](https://github.com/mbret/prose-reader/commit/cfded123853c3613416aa299ba3d0266f8da2b0a)), references [#718](https://github.com/mbret/prose-reader/issues/718) [#835](https://github.com/mbret/prose-reader/issues/835)
+* **core:** keep the page of a scroll when the page turn mode changes ([d8afac2](https://github.com/mbret/prose-reader/commit/d8afac2d5996f4155f6c5ce7a61ff56204852010))
+* **core:** locate resources on the published pages ([407d965](https://github.com/mbret/prose-reader/commit/407d96556735419f7d70db61987b7a1542f1f6a4)), references [#718](https://github.com/mbret/prose-reader/issues/718) [#835](https://github.com/mbret/prose-reader/issues/835)
+* **core:** navigate at each move of a user scroll ([fafaaf3](https://github.com/mbret/prose-reader/commit/fafaaf3d0b0a9825b32539d0c325c95c854f1b45)), closes [#779](https://github.com/mbret/prose-reader/issues/779)
+* **core:** open at the target when the user scrolls before the first layout ([cb3c6c7](https://github.com/mbret/prose-reader/commit/cb3c6c7ed1114b9aa3290b9eca827a14e0e5cc35))
+* **core:** tell by which end a scroll came into its spine item ([0ea5eb5](https://github.com/mbret/prose-reader/commit/0ea5eb552df302798cd636de0f62696dbd30cda2))
+* **core:** withdraw a located page as soon as its item unloads ([8a73d0b](https://github.com/mbret/prose-reader/commit/8a73d0b99edf5275c997fc776253165d5d7aef0f)), references [#718](https://github.com/mbret/prose-reader/issues/718) [#835](https://github.com/mbret/prose-reader/issues/835)
+* ship ES modules only, and check every published package's types ([88122a6](https://github.com/mbret/prose-reader/commit/88122a6393a41e8b55b775c5507443a0c0ca72e7))
+* ship the doc comments in the published declarations ([a25eefe](https://github.com/mbret/prose-reader/commit/a25eefe318ecc277931fc6c2e23fd4b933d7b6a3))
+
+### Tests
+
+* **core:** hold the direction of a position in a table ([50513bd](https://github.com/mbret/prose-reader/commit/50513bdfe7b322ea738199fbe2e39ad0e2bf9953))
+
+
 ## [45.0.0](https://github.com/mbret/prose-reader/compare/v44.0.0...v45.0.0) (2026-11-16)
 
 ### ⚠ BREAKING CHANGES

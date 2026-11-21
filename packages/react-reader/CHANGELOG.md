@@ -3,6 +3,62 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## [46.0.0](https://github.com/mbret/prose-reader/compare/v45.0.0...v46.0.0) (2026-11-21)
+
+### ⚠ BREAKING CHANGES
+
+* **react-reader:** @prose-reader/react-reader declares reactjrx 7 as a peer dependency. Install it with `npm install reactjrx@7`. reactjrx 7 publishes ES modules only, and its types need TypeScript 5.0 or later.
+* **enhancer-annotations:** `AnnotateParams` is renamed `AnnotateSelectionParams`,
+  and its `selection` is required. `AnnotateAbsolutePageParams` no longer
+  takes a `selection`. `createAnnotation` returns `undefined` for a
+  selection that holds no range.
+* **enhancer-annotations:** `createAnnotation` no longer takes `highlightColor`,
+  `notes` or `selected`. It returns `{ id, cfi }`, typed
+  `Pick<Annotation, "id" | "cfi">`. Add your other fields, such as
+  `highlightColor` and `notes`, to the result. The result no longer holds
+  `itemIndex` or any other property of the parameter. react-reader's
+  `onAnnotationCreate` no longer receives `itemIndex`, `type`, `event` or
+  `absolutePageIndex`.
+* **enhancer-annotations:** `reader.annotations.highlightTap$` emits
+  `{ event, annotation }` in place of `{ event, highlight }`. Read
+  `annotation` where you read `highlight`.
+
+  Part of [#835](https://github.com/mbret/prose-reader/issues/835), defects 1 and 2.
+* **core:** a located cfi of a reflowable item that is not loaded has
+  no `itemPageIndex` and no `absolutePageIndex`, where it had the first page
+  of its item. `meta` no longer holds the fields of the located resource.
+  `consolidate` is no longer exported.
+
+  Part of [#718](https://github.com/mbret/prose-reader/issues/718), 5.2. Part of [#835](https://github.com/mbret/prose-reader/issues/835), defect 4.
+* every `@prose-reader/*` package is published as an ES module only. The CommonJS builds (`dist/**/*.cjs`) are removed, and every package declares `engines.node >=22.12`.
+
+  - With `import` or a bundler, Metro included, no change is necessary.
+  - On Node.js 22.12 or later, `require()` loads the ES module build.
+  - On an older Node.js, use `await import()`, or convert the file to an ES module.
+  - In TypeScript, an ES module file resolves the types from TypeScript 5.0, with `bundler`, `node16` or `nodenext` resolution. A CommonJS file needs `"module": "nodenext"` and TypeScript 5.8 or later. Under `node16`, use `await import()`, or convert the file to an ES module.
+  - If a test runner loads modules with its own CommonJS loader, for example Jest without ES module support, transform `@prose-reader/*` or enable ES module support in the runner.
+  - The `module` field, and the `react-native` field of `@prose-reader/react-native`, are removed. Both named the same file as `main`, which tools read instead.
+
+### Bug Fixes
+
+* compare annotations by content in the pages stream, and test a highlight before a bookmark ([6da6718](https://github.com/mbret/prose-reader/commit/6da67186c494671a31f7ab1c8a2c95b223ea67b9)), references [#718](https://github.com/mbret/prose-reader/issues/718) [#835](https://github.com/mbret/prose-reader/issues/835)
+* **core:** give a located resource a page only when the reader knows it ([cfded12](https://github.com/mbret/prose-reader/commit/cfded123853c3613416aa299ba3d0266f8da2b0a)), references [#718](https://github.com/mbret/prose-reader/issues/718) [#835](https://github.com/mbret/prose-reader/issues/835)
+* **enhancer-annotations:** annotate a selection or a page, and nothing without a range ([0ece142](https://github.com/mbret/prose-reader/commit/0ece142f4524ad9467bedb17a4f0b843459c3aec)), references [#835](https://github.com/mbret/prose-reader/issues/835)
+* **enhancer-annotations:** keep the two forms of createAnnotation apart ([b77a123](https://github.com/mbret/prose-reader/commit/b77a123b5870891bff79e9030b3aad26f0905abf)), references [#835](https://github.com/mbret/prose-reader/issues/835)
+* **enhancer-annotations:** return only the id and cfi from createAnnotation ([2a3febe](https://github.com/mbret/prose-reader/commit/2a3febe7187e5d08e5323b0d7f16551ad49e79f7)), references [#835](https://github.com/mbret/prose-reader/issues/835) [#718](https://github.com/mbret/prose-reader/issues/718)
+* **react-reader:** keep the chapters of bookmarks unloaded for the page markers ([2f91257](https://github.com/mbret/prose-reader/commit/2f912579f8bb515dc00735c564c8338ce3b3af7d)), references [#718](https://github.com/mbret/prose-reader/issues/718) [#835](https://github.com/mbret/prose-reader/issues/835)
+* **react-reader:** locate in the Annotations dialog only the rows of the open tab ([598338b](https://github.com/mbret/prose-reader/commit/598338b7b7438e358450aaaac657e8f852e060da)), references [#718](https://github.com/mbret/prose-reader/issues/718) [#835](https://github.com/mbret/prose-reader/issues/835)
+* **react-reader:** make the rows of the dialogs buttons, so a click leaves the page's URL alone ([d6d547f](https://github.com/mbret/prose-reader/commit/d6d547fe94fbc08196fdecf2437c1eda012565bf))
+* **react-reader:** navigate from a dialog row clicked before its annotation is located ([6cc2f95](https://github.com/mbret/prose-reader/commit/6cc2f954a0a22ab8465f72344b3d97e329113c9e))
+* **react-reader:** require reactjrx 7 ([c657256](https://github.com/mbret/prose-reader/commit/c657256b878128235ad66d588ff1ea093e35c343)), closes [#832](https://github.com/mbret/prose-reader/issues/832)
+* **react-reader:** tell a bookmark from a highlight by one rule ([f4d3f34](https://github.com/mbret/prose-reader/commit/f4d3f340498c4191defe5bc9c4f446fe97818f0b)), references [#718](https://github.com/mbret/prose-reader/issues/718) [#835](https://github.com/mbret/prose-reader/issues/835)
+* ship ES modules only, and check every published package's types ([88122a6](https://github.com/mbret/prose-reader/commit/88122a6393a41e8b55b775c5507443a0c0ca72e7))
+
+### Code Refactoring
+
+* **enhancer-annotations:** report the taps on highlights from their layer, as `annotation` ([29e2a65](https://github.com/mbret/prose-reader/commit/29e2a659b463039cd5e09bc076a47c6f083edeed)), references [#835](https://github.com/mbret/prose-reader/issues/835)
+
+
 ## [45.0.0](https://github.com/mbret/prose-reader/compare/v44.0.0...v45.0.0) (2026-11-16)
 
 **Note:** Version bump only for package @prose-reader/react-reader

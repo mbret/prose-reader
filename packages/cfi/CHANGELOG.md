@@ -3,6 +3,24 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## [46.0.0](https://github.com/mbret/prose-reader/compare/v45.0.0...v46.0.0) (2026-11-21)
+
+### ⚠ BREAKING CHANGES
+
+* every `@prose-reader/*` package is published as an ES module only. The CommonJS builds (`dist/**/*.cjs`) are removed, and every package declares `engines.node >=22.12`.
+
+  - With `import` or a bundler, Metro included, no change is necessary.
+  - On Node.js 22.12 or later, `require()` loads the ES module build.
+  - On an older Node.js, use `await import()`, or convert the file to an ES module.
+  - In TypeScript, an ES module file resolves the types from TypeScript 5.0, with `bundler`, `node16` or `nodenext` resolution. A CommonJS file needs `"module": "nodenext"` and TypeScript 5.8 or later. Under `node16`, use `await import()`, or convert the file to an ES module.
+  - If a test runner loads modules with its own CommonJS loader, for example Jest without ES module support, transform `@prose-reader/*` or enable ES module support in the runner.
+  - The `module` field, and the `react-native` field of `@prose-reader/react-native`, are removed. Both named the same file as `main`, which tools read instead.
+
+### Bug Fixes
+
+* ship ES modules only, and check every published package's types ([88122a6](https://github.com/mbret/prose-reader/commit/88122a6393a41e8b55b775c5507443a0c0ca72e7))
+
+
 ## [45.0.0](https://github.com/mbret/prose-reader/compare/v44.0.0...v45.0.0) (2026-11-16)
 
 **Note:** Version bump only for package @prose-reader/cfi
