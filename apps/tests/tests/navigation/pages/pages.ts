@@ -3,7 +3,7 @@ import { getLongChapterIndex, navigateToSpineItem } from "../../utils"
 import { readSettledPagination } from "../../utils/pagination"
 import { getReader } from "../../utils/reader"
 import type { ScenarioBook } from "../../utils/scenarioBooks"
-import type { TappedPage } from "./books"
+import type { TappedPage } from "./tappedPage"
 
 export type ScenarioWindow = {
   size: { width: number; height: number }

@@ -10,5 +10,16 @@ export const SCENARIO_BOOKS = {
 
 export type ScenarioBook = keyof typeof SCENARIO_BOOKS
 
-export const isScenarioBook = (value: string): value is ScenarioBook =>
+const isScenarioBook = (value: string): value is ScenarioBook =>
   Object.keys(SCENARIO_BOOKS).includes(value)
+
+/** The file of the book that the scenario's URL asks for with `?book=`. */
+export const getFileOfRequestedScenarioBook = () => {
+  const book = new URLSearchParams(window.location.search).get("book") ?? "ltr"
+
+  if (!isScenarioBook(book)) {
+    throw new Error(`this scenario has no ${book} book`)
+  }
+
+  return SCENARIO_BOOKS[book]
+}
