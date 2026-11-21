@@ -5,7 +5,7 @@ import {
 } from "@prose-reader/core"
 import { map, type Observable, take, takeUntil, tap } from "rxjs"
 import type { RuntimeAnnotation } from "./types.ts"
-import { createElementForRange } from "./utils.ts"
+import { createElementsForRange } from "./utils.ts"
 
 export class SpineItemHighlight extends DestroyableClass {
   private container: HTMLElement
@@ -91,7 +91,7 @@ export class SpineItemHighlight extends DestroyableClass {
          */
         if (!range) return null
 
-        const rectElements = createElementForRange(
+        const rectElements = createElementsForRange(
           range,
           this.container,
           this.annotation.highlightColor ?? "yellow",
