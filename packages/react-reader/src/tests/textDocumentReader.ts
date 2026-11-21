@@ -2,9 +2,16 @@ import {
   createReader,
   DocumentRenderer,
   type Manifest,
+  type Reader,
 } from "@prose-reader/core"
-import { annotationsEnhancer } from "@prose-reader/enhancer-annotations"
-import { gesturesEnhancer } from "@prose-reader/enhancer-gestures"
+import {
+  type AnnotationsEnhancerAPI,
+  annotationsEnhancer,
+} from "@prose-reader/enhancer-annotations"
+import {
+  type EnhancerAPI as GesturesEnhancerAPI,
+  gesturesEnhancer,
+} from "@prose-reader/enhancer-gestures"
 import { EMPTY, of } from "rxjs"
 import { beforeAll, expect, vi } from "vitest"
 
@@ -98,9 +105,9 @@ export const installJsdomLayout = () => {
   })
 }
 
-const createAppReader = gesturesEnhancer(annotationsEnhancer(createReader))
-
-export type TextDocumentReader = ReturnType<typeof createAppReader>
+export type TextDocumentReader = Reader &
+  AnnotationsEnhancerAPI &
+  GesturesEnhancerAPI
 
 /**
  * Mounts a reader of the two text pages, and resolves once it shows the
@@ -108,7 +115,7 @@ export type TextDocumentReader = ReturnType<typeof createAppReader>
  */
 export const mountTextDocumentReader =
   async (): Promise<TextDocumentReader> => {
-    const reader = createAppReader({
+    const reader = gesturesEnhancer(annotationsEnhancer(createReader))({
       manifest,
       getRenderer: () => (props) => new TextDocumentRenderer(props),
       getResource: () => of(new Response("", { status: 200 })),
