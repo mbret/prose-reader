@@ -698,3 +698,58 @@ test("paints an image that a highlight covers whole with the boxes of the image"
     )
     .toBe(true)
 })
+
+test("gives a new annotation of a selection the text of the range its cfi resolves to, and not the selection as the browser renders it", async ({
+  page,
+}) => {
+  const chapterIndex = await openChapter(page, "ch01.xhtml")
+  const reader = await getReader<HighlightsReader>(page)
+
+  const { firstParagraphEnd, secondParagraphStart, ...texts } =
+    await reader.evaluate((reader, spineItemIndex) => {
+      const loadedDocument =
+        reader.spineItemsManager.get(spineItemIndex)?.loadedDocument
+      const [firstText, secondText] = [
+        ...(loadedDocument?.querySelectorAll("p") ?? []),
+      ].map((paragraph) => paragraph.firstChild)
+      const selection = loadedDocument?.getSelection()
+
+      if (
+        firstText?.nodeType !== Node.TEXT_NODE ||
+        secondText?.nodeType !== Node.TEXT_NODE ||
+        !selection
+      ) {
+        throw new Error(
+          `no two paragraphs of text in spine item ${spineItemIndex}`,
+        )
+      }
+
+      selection.setBaseAndExtent(firstText, 10, secondText, 20)
+
+      const annotation = reader.annotations.createAnnotation({
+        itemIndex: spineItemIndex,
+        selection,
+      })
+
+      return {
+        firstParagraphEnd: firstText.textContent?.slice(10) ?? "",
+        secondParagraphStart: secondText.textContent?.slice(0, 20) ?? "",
+        highlightedText: annotation?.highlightedText,
+        textOfRangeAtCfi: reader.cfi
+          .resolveCfi({ cfi: annotation?.cfi ?? "" })
+          .range?.toString(),
+        textOfSelection: selection.toString(),
+      }
+    }, chapterIndex)
+
+  expect(
+    texts.textOfRangeAtCfi?.startsWith(firstParagraphEnd) &&
+      texts.textOfRangeAtCfi.endsWith(secondParagraphStart),
+    `whether the cfi resolves to the selected text, from the end of the first paragraph to the start of the second: ${JSON.stringify(texts.textOfRangeAtCfi)}`,
+  ).toBe(true)
+  expect(
+    texts.textOfSelection,
+    "the selection as the browser renders it, which differs from the text of its range",
+  ).not.toBe(texts.textOfRangeAtCfi)
+  expect(texts.highlightedText).toBe(texts.textOfRangeAtCfi)
+})

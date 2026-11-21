@@ -16,7 +16,7 @@ creates, so it shares that reader's copies rather than bringing its own.
 
 ## Creating an annotation
 
-`reader.annotations.createAnnotation()` gives a new annotation its `id` and its `cfi`. Pass it one of two things:
+`reader.annotations.createAnnotation()` gives a new annotation its `id`, its `cfi` and, for a selection, its `highlightedText`. Pass it one of two things:
 
 - a selection and the index of its spine item, as `reader.selection.getSelection()` gives them, for a highlight;
 - the absolute index of a page, for a bookmark.
@@ -38,13 +38,25 @@ if (currentSelection) {
 const bookmark = reader.annotations.createAnnotation({ absolutePageIndex })
 ```
 
-It returns `{ id, cfi }`: two strings and nothing else. Add the other fields of your annotation to it, such as `highlightColor` and `notes`, and store the result as it is: in IndexedDB, for example.
+It returns `{ id, cfi, highlightedText }` for a selection and `{ id, cfi }` for a page: strings and nothing else. Add the other fields of your annotation to it, such as `highlightColor` and `notes`, and store the result as it is: in IndexedDB, for example.
 
-- For a selection, the CFI is the range of the selection.
-- For a page, the CFI points to the first visible node of the page, or to the root of its spine item when the page has none: see [Blank pages and annotations](#blank-pages-and-annotations).
+- For a selection, the CFI is the range of the selection, and `highlightedText` is the text of that range: see [The text of a highlight](#the-text-of-a-highlight).
+- For a page, the CFI points to the first visible node of the page, or to the root of its spine item when the page has none: see [Blank pages and annotations](#blank-pages-and-annotations). The result has no `highlightedText`.
 - It returns `undefined` when the reader has no such spine item or page, or when the selection holds no range.
 
 Do not store a page index with an annotation: its page changes with the layout and the device. See [Danger of persisting weak references](/learn/annotations#danger-of-persisting-weak-references).
+
+### The text of a highlight
+
+`highlightedText` is the text of the range, as [`Range.toString()`](https://developer.mozilla.org/en-US/docs/Web/API/Range/toString) gives it: the text nodes of the document, joined.
+
+- It keeps the whitespace that the document holds, such as the line breaks and tabs of its source.
+- It adds nothing between two paragraphs.
+- It does not depend on CSS, the layout or the browser, so it is the same on every device.
+
+It is not the text of the selection as the browser renders it, which `Selection.toString()` gives and which differs between browsers.
+
+Store it to list, export or search highlights without the book. To find out whether the passage at a stored CFI still holds that text, read the passage the same way: `range.toString()` of the range that the CFI resolves to, such as the `range` that [`reader.locateResource()`](/core-api/reader/locateresource) gives. To show it outside of HTML, collapse its whitespace, as HTML does when it renders text.
 
 ## Showing highlights
 

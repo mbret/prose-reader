@@ -84,10 +84,12 @@ export const annotationsEnhancer =
       selectedAnnotationId$,
     )
 
-    const generateCfiForSelection = ({
+    const getAnnotationTargetOfSelection = ({
       itemIndex,
       selection,
-    }: AnnotateSelectionParams) => {
+    }: AnnotateSelectionParams):
+      | Pick<Annotation, "cfi" | "highlightedText">
+      | undefined => {
       const spineItem = reader.spineItemsManager.get(itemIndex)
 
       if (!spineItem) return undefined
@@ -98,13 +100,16 @@ export const annotationsEnhancer =
       })
 
       return range
-        ? reader.cfi.generateCfiFromRange(range, spineItem.item)
+        ? {
+            cfi: reader.cfi.generateCfiFromRange(range, spineItem.item),
+            highlightedText: range.toString(),
+          }
         : undefined
     }
 
-    const generateCfiForAbsolutePage = ({
+    const getAnnotationTargetOfAbsolutePage = ({
       absolutePageIndex,
-    }: AnnotateAbsolutePageParams) => {
+    }: AnnotateAbsolutePageParams): Pick<Annotation, "cfi"> | undefined => {
       const pageEntry =
         reader.spine.pages.fromAbsolutePageIndex(absolutePageIndex)
 
@@ -113,21 +118,21 @@ export const annotationsEnhancer =
       const spineItem = reader.spineItemsManager.get(pageEntry.itemIndex)
 
       return spineItem
-        ? reader.cfi.generateCfiForPage(spineItem.item, pageEntry)
+        ? { cfi: reader.cfi.generateCfiForPage(spineItem.item, pageEntry) }
         : undefined
     }
 
     const createAnnotation = (
       params: AnnotateSelectionParams | AnnotateAbsolutePageParams,
-    ): Pick<Annotation, "id" | "cfi"> | undefined => {
-      const cfi =
+    ): Pick<Annotation, "id" | "cfi" | "highlightedText"> | undefined => {
+      const annotationTarget =
         params.selection !== undefined
-          ? generateCfiForSelection(params)
-          : generateCfiForAbsolutePage(params)
+          ? getAnnotationTargetOfSelection(params)
+          : getAnnotationTargetOfAbsolutePage(params)
 
-      return cfi === undefined
+      return annotationTarget === undefined
         ? undefined
-        : { id: window.crypto.randomUUID(), cfi }
+        : { id: window.crypto.randomUUID(), ...annotationTarget }
     }
 
     /**
