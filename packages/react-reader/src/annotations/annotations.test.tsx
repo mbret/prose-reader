@@ -372,6 +372,32 @@ describe("a row of the Annotations dialog", () => {
     })
   })
 
+  /**
+   * No cfi resolves in the documents of this book, so the row can show only
+   * the text its annotation holds.
+   */
+  it("shows the text of its highlight before the highlight is located", async () => {
+    const highlight = {
+      ...createHighlight(7),
+      highlightedText: "The highlighted text",
+    }
+    const { setAnnotations } = await openBook({ annotations: [] })
+
+    await setAnnotations([highlight])
+    await clickButton(
+      (button) => button.getAttribute(`aria-label`) === `Bookmarks`,
+    )
+    await clickButton(
+      (button) =>
+        button.getAttribute(`role`) === `tab` &&
+        button.textContent === `Annotations`,
+    )
+
+    expect(getFirstRowOfTheOpenTab().textContent).toContain(
+      highlight.highlightedText,
+    )
+  })
+
   it("shows the note of its annotation, and navigates to its cfi, before the annotation is located", async () => {
     const bookmark = { ...createPageBookmark(5), notes: "A note" }
     const { reader, setAnnotations } = await openBook({ annotations: [] })
