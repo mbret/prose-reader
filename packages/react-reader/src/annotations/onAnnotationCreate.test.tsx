@@ -302,7 +302,7 @@ describe("onAnnotationCreate", () => {
     Object.assign(globalThis, { IS_REACT_ACT_ENVIRONMENT: false })
   })
 
-  it("reports a highlight made from the drawer with its id, the range of the selection, its color and notes, and nothing of the selection", async () => {
+  it("reports a highlight made from the drawer with its id, the range of the selection, the selected text, its color and notes, and nothing of the selection", async () => {
     const { onAnnotationCreate } = await renderAnnotationCreation()
 
     await selectTextAndRelease()
@@ -317,6 +317,7 @@ describe("onAnnotationCreate", () => {
     expect(reported).toStrictEqual({
       id: expect.any(String),
       cfi: expect.any(String),
+      highlightedText: "paragraph",
       highlightColor: "rgba(216, 191, 216, 1)",
       notes: "A note",
     })
