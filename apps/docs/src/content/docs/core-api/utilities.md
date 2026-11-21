@@ -15,13 +15,18 @@ observeBookBoundaryReached(reader)
 
 #### `getNextNodeInDocumentOrder(node, { skipDescendants })`
 
-The node after `node` in document order: its first child, or, with `skipDescendants` or when it has none, the next sibling of `node` or of its closest ancestor that has one. It never returns an ancestor of `node`, and returns `null` past the end of the document. An enhancer that walks the nodes of a range steps with it.
+The node after `node` in document order: its first child, or, with `skipDescendants` or when it has none, the next sibling of `node` or of its closest ancestor that has one. It never returns an ancestor of `node`, and returns `null` past the end of the document. An enhancer steps with it through the nodes of an element or of a range.
 
 ```typescript
-let node: Node | null = range.startContainer
+const readDescendants = (element: Element, read: (node: Node) => void) => {
+  const nodeAfterElement = getNextNodeInDocumentOrder(element, {
+    skipDescendants: true,
+  })
+  let node = getNextNodeInDocumentOrder(element, { skipDescendants: false })
 
-while (node && node !== nodeAfterRange) {
-  // read `node`
-  node = getNextNodeInDocumentOrder(node, { skipDescendants: false })
+  while (node && node !== nodeAfterElement) {
+    read(node)
+    node = getNextNodeInDocumentOrder(node, { skipDescendants: false })
+  }
 }
 ```
