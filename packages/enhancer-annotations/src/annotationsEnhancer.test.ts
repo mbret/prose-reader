@@ -649,18 +649,32 @@ const selectTextAndRelease = async (
   return selection
 }
 
+/** Renders each item as two paragraphs, with nothing between them. */
+class TwoParagraphsTextDocumentRenderer extends TextDocumentRenderer {
+  onLoadDocument() {
+    const loaded = super.onLoadDocument()
+    const frameBody = this.getDocumentFrame()?.contentDocument?.body
+
+    if (!frameBody) throw new Error("the frame has no body")
+
+    frameBody.innerHTML = `<p>First paragraph.</p><p>Second paragraph.</p>`
+
+    return loaded
+  }
+}
+
 /**
  * An app stores what `createAnnotation` returns, in IndexedDB or through
  * `postMessage`, which copy a value with the structured clone algorithm. A
- * browser cannot clone an event or a selection, so the result holds an id
- * and a cfi only.
+ * browser cannot clone an event or a selection, so the result holds strings
+ * only: an id, a cfi and, for a selection, its text.
  *
  * The tests compare the keys of the result, not whether it clones: jsdom
  * clones its events like plain objects, so a clone would succeed here with
  * the event in the result.
  */
 describe("createAnnotation", () => {
-  it("annotates a selection with its id and a range cfi, and nothing of the selection itself", async () => {
+  it("annotates a selection with its id, a range cfi and the selected text, and nothing of the selection itself", async () => {
     const reader = await mountAnnotationsReader({
       Renderer: TextDocumentRenderer,
     })
@@ -672,6 +686,7 @@ describe("createAnnotation", () => {
     expect(annotation).toStrictEqual({
       id: expect.any(String),
       cfi: expect.any(String),
+      highlightedText: "paragraph",
     })
     expect(reader.cfi.parseCfi(annotation?.cfi ?? "")).toMatchObject({
       itemIndex: 0,
@@ -679,7 +694,46 @@ describe("createAnnotation", () => {
     })
   })
 
-  it("annotates a page with its id and the cfi of its item, and not the page index", async () => {
+  /**
+   * An app that compares the text it stored with the passage at the cfi
+   * reads that passage with `range.toString()`. A browser's
+   * `Selection.toString()` follows the rendering instead, and puts line
+   * breaks between two paragraphs.
+   */
+  it("gives the text of the range that its cfi resolves to, with nothing added between two paragraphs", async () => {
+    const reader = await mountAnnotationsReader({
+      Renderer: TwoParagraphsTextDocumentRenderer,
+    })
+    const frameDocument = getSpineItem(reader, 0).renderer.getDocumentFrame()
+      ?.contentDocument
+    const [firstText, secondText] = [
+      ...(frameDocument?.querySelectorAll("p") ?? []),
+    ].map((paragraph) => paragraph.firstChild)
+    const selection = frameDocument?.getSelection()
+
+    if (!firstText || !secondText || !selection) {
+      throw new Error("the first item has no two paragraphs to select")
+    }
+
+    selection.setBaseAndExtent(firstText, 6, secondText, 6)
+
+    const annotation = reader.annotations.createAnnotation({
+      itemIndex: 0,
+      selection,
+    })
+
+    expect({
+      highlightedText: annotation?.highlightedText,
+      textOfRangeAtCfi: reader.cfi
+        .resolveCfi({ cfi: annotation?.cfi ?? "" })
+        .range?.toString(),
+    }).toEqual({
+      highlightedText: "paragraph.Second",
+      textOfRangeAtCfi: "paragraph.Second",
+    })
+  })
+
+  it("annotates a page with its id and the cfi of its item, and neither a text nor the page index", async () => {
     const reader = await mountAnnotationsReader({
       Renderer: TextDocumentRenderer,
     })
