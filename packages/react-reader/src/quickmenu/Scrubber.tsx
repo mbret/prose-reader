@@ -46,10 +46,9 @@ export const Scrubber = (props: ComponentProps<typeof ThemedSlider>) => {
     useObserve(() => reader?.context, [reader]) ?? {}
   const reverse = manifest?.readingDirection === "rtl"
   const isUsingSpread = pagination?.isUsingSpread
-  const { totalApproximatePages = 0, isBeginWithinChapter } =
-    useNavigationContext()
+  const isScrubbingPagesOfChapter = pagination?.hasChapters ?? false
+  const { totalApproximatePages = 0 } = useNavigationContext()
   const step = 1
-  const isScrubberWithinChapter = isBeginWithinChapter
   const { value, valueSignal, min, max } = useSliderValues()
 
   const onChange: NonNullable<ComponentProps<typeof ThemedSlider>["onChange"]> =
@@ -63,20 +62,20 @@ export const Scrubber = (props: ComponentProps<typeof ThemedSlider>) => {
           ? Math.floor(value) * 2
           : Math.floor(value)
 
-        if (!isScrubberWithinChapter) {
-          reader?.navigation.goToAbsolutePageIndex({
-            absolutePageIndex: pageIndex,
-            animation: false,
-          })
-        } else {
+        if (isScrubbingPagesOfChapter) {
           reader?.navigation.goToPageOfSpineItem({
             pageIndex,
             spineItemId: reader.pagination.state.begin.spineItemIndex ?? 0,
             animation: false,
           })
+        } else {
+          reader?.navigation.goToAbsolutePageIndex({
+            absolutePageIndex: pageIndex,
+            animation: false,
+          })
         }
       },
-      [reader, isUsingSpread, valueSignal, isScrubberWithinChapter],
+      [reader, isUsingSpread, valueSignal, isScrubbingPagesOfChapter],
     )
 
   /**
@@ -95,20 +94,9 @@ export const Scrubber = (props: ComponentProps<typeof ThemedSlider>) => {
 
   useSubscribe(throttleLock)
 
-  // const marks =
-  //   max > 1
-  //     ? Array.from({ length: max + 1 }, (_, i) => i).reduce(
-  //         (acc: number[], val) => [...acc, val],
-  //         [],
-  //       )
-  //     : []
-
   const disabled =
     totalApproximatePages === 1 ||
     (isUsingSpread && totalApproximatePages === 2)
-
-  // @tmp not available yet in chakra
-  // if (reverse) return null
 
   if (disabled) return <Box style={props.style} />
 
@@ -123,19 +111,4 @@ export const Scrubber = (props: ComponentProps<typeof ThemedSlider>) => {
       {...props}
     />
   )
-  // return (
-  //   <Slider
-  //     value={[value]}
-  //     max={max}
-  //     min={min}
-  //     marks={marks}
-  //     onChange={e => {
-  //       debugger
-  //     }}
-  //     onValueChange={onChange}
-  //     // reverse={reverse}
-  //     orientation="horizontal"
-  //     step={step}
-  //   />
-  // )
 }

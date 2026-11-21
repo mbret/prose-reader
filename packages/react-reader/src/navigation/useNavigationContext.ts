@@ -4,11 +4,6 @@ export const useNavigationContext = () => {
   const pagination = usePagination()
   const hasOnlyOnePage = pagination?.numberOfTotalPages === 1
 
-  const isBeginWithinChapter =
-    (pagination?.begin.numberOfPagesInSpineItem ?? 0) > 1
-
-  const isEndWithinChapter = (pagination?.end.numberOfPagesInSpineItem ?? 0) > 1
-
   const beginPageIndex =
     (pagination?.hasChapters
       ? pagination?.begin.pageIndexInSpineItem
@@ -36,8 +31,6 @@ export const useNavigationContext = () => {
     hasOnlyOnePage,
     beginPageIndex,
     endPageIndex,
-    isBeginWithinChapter,
-    isEndWithinChapter,
     beginAndEndAreDifferent,
     totalApproximatePages,
     leftPageIndex,
