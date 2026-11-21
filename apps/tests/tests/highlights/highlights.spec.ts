@@ -13,6 +13,7 @@ import {
 } from "../utils"
 import { waitForSettled } from "../utils/pagination"
 import { getReader } from "../utils/reader"
+import type { ScenarioBook } from "../utils/scenarioBooks"
 import { test } from "../utils/test"
 import { readCfiPositionInWindow } from "../utils/visibility"
 
@@ -134,7 +135,34 @@ const expectFirstRectOfHighlightToCoverStartOf = async (
 
 type BoxInWindow = { left: number; top: number; right: number; bottom: number }
 
-/** The boxes of the elements drawn for a highlight, in the window. */
+type EdgeOfBox = keyof BoxInWindow
+
+/**
+ * Where the lines of a book run in the window: across in the ltr book, down in
+ * the vertical-rl one.
+ */
+type LineAxes = {
+  across: readonly [EdgeOfBox, EdgeOfBox]
+  along: readonly [EdgeOfBox, EdgeOfBox]
+  toPoint: (position: { along: number; across: number }) => {
+    x: number
+    y: number
+  }
+}
+
+const LINE_AXES_OF_BOOK: Record<"ltr" | "vertical-rl", LineAxes> = {
+  ltr: {
+    across: ["top", "bottom"],
+    along: ["left", "right"],
+    toPoint: ({ along, across }) => ({ x: along, y: across }),
+  },
+  "vertical-rl": {
+    across: ["left", "right"],
+    along: ["top", "bottom"],
+    toPoint: ({ along, across }) => ({ x: across, y: along }),
+  },
+}
+
 const readBoxesOfHighlight = (page: Page, annotationId: string) =>
   page.evaluate(
     (annotationId) =>
@@ -149,8 +177,10 @@ const readBoxesOfHighlight = (page: Page, annotationId: string) =>
     annotationId,
   )
 
-/** Whether a click at a point of the window reaches a highlight. */
-const isHighlightAt = (page: Page, { x, y }: { x: number; y: number }) =>
+const doesClickReachHighlightAt = (
+  page: Page,
+  { x, y }: { x: number; y: number },
+) =>
   page.evaluate(
     ({ x, y }) =>
       !!document.elementFromPoint(x, y)?.closest("[data-highlight-rect]"),
@@ -158,12 +188,10 @@ const isHighlightAt = (page: Page, { x, y }: { x: number; y: number }) =>
   )
 
 /**
- * The lines of a paragraph that holds only text, in one column, and the
- * paragraph's own box, in the window. WebKit gives a line of text in several
- * rects, split where the source breaks the line, so the rects at one height
- * make one line.
+ * The boxes of the text of a paragraph that holds only text, the paragraph's
+ * own box, both in the window, and the sizes of the window and of a page.
  */
-const readLinesOfParagraphInWindow = async (
+const readTextOfParagraphInWindow = async (
   page: Page,
   {
     spineItemIndex,
@@ -199,34 +227,45 @@ const readLinesOfParagraphInWindow = async (
         bottom: frameBox.top + bottom,
       })
       const range = loadedDocument.createRange()
-      const lineByTop = new Map<number, ReturnType<typeof toWindow>>()
 
       range.selectNodeContents(text)
 
-      for (const rect of Array.from(range.getClientRects(), toWindow)) {
-        const top = Math.round(rect.top)
-        const line = lineByTop.get(top)
-
-        lineByTop.set(
-          top,
-          line
-            ? {
-                ...line,
-                left: Math.min(line.left, rect.left),
-                right: Math.max(line.right, rect.right),
-              }
-            : rect,
-        )
-      }
-
       return {
-        lines: Array.from(lineByTop.values()),
+        textBoxes: Array.from(range.getClientRects(), toWindow),
         paragraph: toWindow(paragraph.getBoundingClientRect()),
         window: { width: window.innerWidth, height: window.innerHeight },
+        pageSize: reader.viewport.value.pageSize,
       }
     },
     { spineItemIndex, paragraphIndex },
   )
+
+/**
+ * The lines of the text of a paragraph in one column, from the boxes of its
+ * text. WebKit gives a line in several boxes, split where the source breaks
+ * the line, so the boxes that start at one place across the lines make one.
+ */
+const joinTextBoxesIntoLines = (
+  textBoxes: BoxInWindow[],
+  { across: [startAcross], along: [startAlong, endAlong] }: LineAxes,
+) => {
+  const lineByStartAcross = new Map<number, BoxInWindow>()
+
+  for (const textBox of textBoxes) {
+    const lineKey = Math.round(textBox[startAcross])
+    const line = lineByStartAcross.get(lineKey)
+    const joinedLine = { ...textBox }
+
+    if (line) {
+      joinedLine[startAlong] = Math.min(line[startAlong], textBox[startAlong])
+      joinedLine[endAlong] = Math.max(line[endAlong], textBox[endAlong])
+    }
+
+    lineByStartAcross.set(lineKey, joinedLine)
+  }
+
+  return Array.from(lineByStartAcross.values())
+}
 
 /** The pairs of boxes that overlap by more than a pixel each way. */
 const getOverlappingBoxes = (boxes: BoxInWindow[]) =>
@@ -245,9 +284,15 @@ const getOverlappingBoxes = (boxes: BoxInWindow[]) =>
       .map((otherBox) => [box, otherBox]),
   )
 
-/** Opens the book at a chapter, and resolves with its index. */
-const openChapter = async (page: Page, href: string) => {
-  await page.goto("http://localhost:3333/tests/highlights/index.html")
+/** Opens a book at a chapter, and resolves with its index. */
+const openChapter = async (
+  page: Page,
+  href: string,
+  book: ScenarioBook = "ltr",
+) => {
+  await page.goto(
+    `http://localhost:3333/tests/highlights/index.html?book=${book}`,
+  )
 
   const chapterIndex = await getChapterIndex(page, href)
 
@@ -439,76 +484,92 @@ test("reports the annotation of the highlight the user clicks through highlightT
     .toEqual([annotation.id])
 })
 
-test("paints each line of the text of a highlight over a whole paragraph once, and not the blank space beside its lines", async ({
-  page,
-}) => {
-  const chapterIndex = await openChapter(page, "ch01.xhtml")
-  const annotation = await createAnnotationOverText(page, {
-    spineItemIndex: chapterIndex,
-    start: { paragraphIndex: 0, offset: 10 },
-    end: { paragraphIndex: 2, offset: 30 },
-    id: "highlight",
-  })
-  const coveredParagraph = await readLinesOfParagraphInWindow(page, {
-    spineItemIndex: chapterIndex,
-    paragraphIndex: 1,
-  })
+for (const book of ["ltr", "vertical-rl"] as const) {
+  test(`paints each line of the text of a highlight over a whole paragraph once, and not the blank space beside its lines, in the ${book} book`, async ({
+    page,
+  }) => {
+    const lineAxes = LINE_AXES_OF_BOOK[book]
+    const {
+      across: [startAcross, endAcross],
+      along: [, endAlong],
+    } = lineAxes
+    const chapterIndex = await openChapter(page, "ch01.xhtml", book)
+    const annotation = await createAnnotationOverText(page, {
+      spineItemIndex: chapterIndex,
+      start: { paragraphIndex: 0, offset: 10 },
+      end: { paragraphIndex: 2, offset: 30 },
+      id: "highlight",
+    })
+    const { textBoxes, paragraph, window, pageSize } =
+      await readTextOfParagraphInWindow(page, {
+        spineItemIndex: chapterIndex,
+        paragraphIndex: 1,
+      })
+    const lines = joinTextBoxesIntoLines(textBoxes, lineAxes)
 
-  expect(
-    coveredParagraph.lines.length,
-    "the number of lines of the paragraph that the highlight covers whole",
-  ).toBeGreaterThan(1)
-  expect(
-    coveredParagraph.paragraph.bottom <= coveredParagraph.window.height &&
-      coveredParagraph.paragraph.right <= coveredParagraph.window.width,
-    `whether the paragraph, at ${JSON.stringify(coveredParagraph.paragraph)}, is on screen`,
-  ).toBe(true)
-
-  await setAnnotations(page, [annotation])
-  await expect(locateFirstRectOfHighlight(page, annotation.id)).toBeVisible()
-
-  const boxesOfHighlight = await readBoxesOfHighlight(page, annotation.id)
-  const heightOfLine = Math.max(
-    ...coveredParagraph.lines.map(({ top, bottom }) => bottom - top),
-  )
-
-  expect(
-    boxesOfHighlight.filter(
-      ({ top, bottom }) => bottom - top > heightOfLine + 1,
-    ),
-    `the boxes of the highlight higher than a line of text, ${heightOfLine}px`,
-  ).toEqual([])
-  expect(
-    getOverlappingBoxes(boxesOfHighlight),
-    "the boxes of the highlight that overlap",
-  ).toEqual([])
-
-  for (const line of coveredParagraph.lines) {
     expect(
-      await isHighlightAt(page, {
-        x: (line.left + line.right) / 2,
-        y: (line.top + line.bottom) / 2,
-      }),
-      `whether a click on the text of the line at ${JSON.stringify(line)} reaches the highlight`,
+      lines.length,
+      "the number of lines of the paragraph that the highlight covers whole",
+    ).toBeGreaterThan(1)
+    expect(
+      paragraph.right - paragraph.left <= pageSize.width &&
+        paragraph.bottom - paragraph.top <= pageSize.height,
+      `whether the paragraph, at ${JSON.stringify(paragraph)}, fits in a page, ${JSON.stringify(pageSize)}`,
     ).toBe(true)
-  }
+    expect(
+      paragraph.left >= 0 &&
+        paragraph.top >= 0 &&
+        paragraph.right <= window.width &&
+        paragraph.bottom <= window.height,
+      `whether the paragraph, at ${JSON.stringify(paragraph)}, is on screen`,
+    ).toBe(true)
 
-  const shortestLine = coveredParagraph.lines.reduce((shortest, line) =>
-    line.right < shortest.right ? line : shortest,
-  )
+    await setAnnotations(page, [annotation])
+    await expect(locateFirstRectOfHighlight(page, annotation.id)).toBeVisible()
 
-  expect(
-    coveredParagraph.paragraph.right - shortestLine.right,
-    "the width of the blank space beside the shortest line of the paragraph",
-  ).toBeGreaterThan(8)
-  expect(
-    await isHighlightAt(page, {
-      x: (shortestLine.right + coveredParagraph.paragraph.right) / 2,
-      y: (shortestLine.top + shortestLine.bottom) / 2,
-    }),
-    `whether a click on the blank space beside the line at ${JSON.stringify(shortestLine)} reaches the highlight`,
-  ).toBe(false)
-})
+    const boxesOfHighlight = await readBoxesOfHighlight(page, annotation.id)
+    const getThickness = (box: BoxInWindow) => box[endAcross] - box[startAcross]
+    const thicknessOfLine = Math.max(...lines.map(getThickness))
+
+    expect(
+      boxesOfHighlight.filter((box) => getThickness(box) > thicknessOfLine + 1),
+      `the boxes of the highlight thicker than a line of text, ${thicknessOfLine}px`,
+    ).toEqual([])
+    expect(
+      getOverlappingBoxes(boxesOfHighlight),
+      "the boxes of the highlight that overlap",
+    ).toEqual([])
+
+    for (const line of lines) {
+      expect(
+        await doesClickReachHighlightAt(page, {
+          x: (line.left + line.right) / 2,
+          y: (line.top + line.bottom) / 2,
+        }),
+        `whether a click on the text of the line at ${JSON.stringify(line)} reaches the highlight`,
+      ).toBe(true)
+    }
+
+    const shortestLine = lines.reduce((shortest, line) =>
+      line[endAlong] < shortest[endAlong] ? line : shortest,
+    )
+
+    expect(
+      paragraph[endAlong] - shortestLine[endAlong],
+      "the length of the blank space after the shortest line of the paragraph",
+    ).toBeGreaterThan(8)
+    expect(
+      await doesClickReachHighlightAt(
+        page,
+        lineAxes.toPoint({
+          along: (shortestLine[endAlong] + paragraph[endAlong]) / 2,
+          across: (shortestLine[startAcross] + shortestLine[endAcross]) / 2,
+        }),
+      ),
+      `whether a click on the blank space after the line at ${JSON.stringify(shortestLine)} reaches the highlight`,
+    ).toBe(false)
+  })
+}
 
 test("paints no box across the gap between two pages of a highlight over several pages", async ({
   page,
