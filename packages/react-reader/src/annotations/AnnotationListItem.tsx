@@ -1,20 +1,26 @@
 import { Link, List, Stack, Text } from "@chakra-ui/react"
+import type { RuntimeAnnotation } from "@prose-reader/enhancer-annotations"
 import { LuNotebookPen } from "react-icons/lu"
+import { useObserve } from "reactjrx"
 import { useReader } from "../context/useReader.ts"
-import { useAnnotation } from "./useAnnotation.ts"
 
 export const AnnotationListItem = ({
-  id,
+  annotation,
   onNavigate,
 }: {
-  id: string
+  annotation: RuntimeAnnotation
   onNavigate: () => void
 }) => {
   const reader = useReader()
-  const { data: annotation } = useAnnotation(id)
+  const { cfi } = annotation
+  const { data: locatedAnnotation } = useObserve(
+    () => reader?.locateResource({ cfi }),
+    [reader, cfi],
+  )
   const textContent =
-    annotation?.meta.range?.toString() || annotation?.meta.node?.textContent
-  const absolutePageIndex = annotation?.meta.absolutePageIndex
+    locatedAnnotation?.meta.range?.toString() ||
+    locatedAnnotation?.meta.node?.textContent
+  const absolutePageIndex = locatedAnnotation?.meta.absolutePageIndex
   const pageNumber =
     absolutePageIndex === undefined ? undefined : absolutePageIndex + 1
 
@@ -25,12 +31,12 @@ export const AnnotationListItem = ({
         onClick={() => {
           onNavigate()
 
-          reader?.navigation.goToCfi(annotation?.meta.cfi ?? "")
+          reader?.navigation.goToCfi(cfi)
         }}
       >
         <List.Indicator
           asChild
-          visibility={annotation?.resource?.notes ? "visible" : "hidden"}
+          visibility={annotation.notes ? "visible" : "hidden"}
         >
           <LuNotebookPen />
         </List.Indicator>
