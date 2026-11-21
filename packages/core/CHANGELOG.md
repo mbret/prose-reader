@@ -3,6 +3,13 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## [46.1.0](https://github.com/mbret/prose-reader/compare/v46.0.0...v46.1.0) (2026-11-21)
+
+### Features
+
+* **core:** export getNextNodeInDocumentOrder ([42ff512](https://github.com/mbret/prose-reader/commit/42ff5124cff93760b88106534c70c9ddd67c303e))
+
+
 ## [46.0.0](https://github.com/mbret/prose-reader/compare/v45.0.0...v46.0.0) (2026-11-21)
 
 ### ⚠ BREAKING CHANGES

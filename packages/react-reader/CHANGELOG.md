@@ -3,6 +3,18 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## [46.1.0](https://github.com/mbret/prose-reader/compare/v46.0.0...v46.1.0) (2026-11-21)
+
+### Features
+
+* **react-reader:** show the text of a highlight in its row before it is located ([b7ca990](https://github.com/mbret/prose-reader/commit/b7ca990ba2b013ce5eaa3073a2964b983ad6a2ae))
+
+### Bug Fixes
+
+* **react-reader:** show the page of a highlight with no text in its dialog row ([bb37513](https://github.com/mbret/prose-reader/commit/bb37513033a58588fb0257e486925f1e7a670abe))
+* **react-reader:** type the jsdom reader of the tests explicitly ([e977d2c](https://github.com/mbret/prose-reader/commit/e977d2c61dcddfbfa04adf5c3d72d37d75b71798))
+
+
 ## [46.0.0](https://github.com/mbret/prose-reader/compare/v45.0.0...v46.0.0) (2026-11-21)
 
 ### ⚠ BREAKING CHANGES

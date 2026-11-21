@@ -3,6 +3,18 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## [46.1.0](https://github.com/mbret/prose-reader/compare/v46.0.0...v46.1.0) (2026-11-21)
+
+### Features
+
+* **enhancer-annotations:** give a new highlight the text of its range ([2cf68ed](https://github.com/mbret/prose-reader/commit/2cf68eda62efd3653bee4ee7d9b2a2078783f4c6))
+
+### Bug Fixes
+
+* **enhancer-annotations:** keep a drop cap and an image apart from the lines of text ([0e2e164](https://github.com/mbret/prose-reader/commit/0e2e164b779105a82557fbd839e22f4b8796180b))
+* **enhancer-annotations:** paint the lines of a highlight's text, not the boxes of the elements it covers ([fdc3fee](https://github.com/mbret/prose-reader/commit/fdc3fee204fb755e98d476b217c7b97aa8e838ec)), references [#718](https://github.com/mbret/prose-reader/issues/718)
+
+
 ## [46.0.0](https://github.com/mbret/prose-reader/compare/v45.0.0...v46.0.0) (2026-11-21)
 
 ### ⚠ BREAKING CHANGES
