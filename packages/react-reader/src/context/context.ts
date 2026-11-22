@@ -2,6 +2,7 @@ import type { Reader } from "@prose-reader/core"
 import type {
   AnnotateSelectionParams,
   Annotation,
+  NewAnnotation,
   RuntimeAnnotation,
 } from "@prose-reader/enhancer-annotations"
 import type { EnhancerAPI as GesturesEnhancerAPI } from "@prose-reader/enhancer-gestures"
@@ -120,7 +121,11 @@ export type ProviderContextType = {
     changes: Partial<Record<ManagedSettingName, ReactReaderSettingsScope>>,
   ) => void
   annotations?: Annotation[]
-  onAnnotationCreate?: (annotation: Annotation) => void
+  /**
+   * Reports an annotation the user made, without an `id`. Give it an `id` of
+   * your own, store it, and pass it back in `annotations`.
+   */
+  onAnnotationCreate?: (annotation: NewAnnotation) => void
   onAnnotationUpdate?: (
     annotation: Pick<Annotation, "id" | "highlightColor" | "notes">,
   ) => void

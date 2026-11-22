@@ -11,7 +11,7 @@ import { test } from "../../utils/test"
 
 const url = "http://localhost:3333/tests/bookmarks/react-reader/index.html"
 const windowSize = { width: 600, height: 800 }
-const marker = "[data-bookmark-area]"
+const marker = '[role="img"][aria-label="Bookmarked page"]'
 
 /**
  * Records each bookmark marker react-reader puts in the page from now on, and

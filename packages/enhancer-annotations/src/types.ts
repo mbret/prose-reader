@@ -28,6 +28,13 @@ export interface Annotation {
 }
 
 /**
+ * An annotation that the app has not stored yet: it has no `id`. The app
+ * gives it one of its own when it stores it, so it chooses the form of its
+ * ids. Each id must be unique among the annotations given to the reader.
+ */
+export type NewAnnotation = Omit<Annotation, "id">
+
+/**
  * Text a user selected in a spine item, as `reader.selection.getSelection()`
  * gives it. `selection` must be in the document of the spine item at
  * `itemIndex`.
@@ -79,10 +86,11 @@ export type AnnotationsEnhancerAPI = {
      */
     annotationsByItemPage$: Observable<AnnotationsByItemPage>
     /**
-     * Gives a new annotation of a selection, or of a page, its `id`, its
-     * `cfi` and, for a selection, its `highlightedText`: strings and nothing
-     * else, so that the result can be stored as it is. Add the other fields
-     * of your annotation to it, such as `highlightColor` or `notes`.
+     * Gives a new annotation of a selection, or of a page, its `cfi` and, for
+     * a selection, its `highlightedText`: strings and nothing else, so that
+     * the result can be stored as it is. Add an `id` of your own and the
+     * other fields of your annotation to it, such as `highlightColor` or
+     * `notes`.
      *
      * - For a selection, the `cfi` is the range of the selection, and
      *   `highlightedText` is the text of that range.
@@ -95,7 +103,7 @@ export type AnnotationsEnhancerAPI = {
      */
     createAnnotation: (
       params: AnnotateSelectionParams | AnnotateAbsolutePageParams,
-    ) => Pick<Annotation, "id" | "cfi" | "highlightedText"> | undefined
+    ) => Pick<NewAnnotation, "cfi" | "highlightedText"> | undefined
     isTargetWithinHighlight: (target: EventTarget) => boolean
   }
 }
