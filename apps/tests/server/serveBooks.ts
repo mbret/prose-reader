@@ -215,7 +215,7 @@ const REWRITTEN_BOOKS = new Map<string, RewrittenBook>([
     },
   ],
   [
-    "haruko-html-jpeg-blank-pages.epub",
+    "haruko-html-jpeg-pre-paginated-blank-pages.epub",
     {
       fixture: "haruko-html-jpeg.epub",
       /**
@@ -225,15 +225,20 @@ const REWRITTEN_BOOKS = new Map<string, RewrittenBook>([
        * for the left side of a spread, so it and the fifth page each share
        * theirs with a blank page too.
        */
-      rewrite: rewritePackageDocument((fixturePackageDocument) =>
-        replaceInFixture(
+      rewrite: inOrder(
+        rewritePackageDocument((fixturePackageDocument) =>
           replaceInFixture(
             fixturePackageDocument,
             '<itemref idref="about"  properties="page-spread-left rendition:layout-reflowable"  />',
             "",
           ),
-          '<itemref idref="p04" properties="page-spread-right" />',
-          '<itemref idref="p04" properties="page-spread-left" />',
+        ),
+        rewritePackageDocument((fixturePackageDocument) =>
+          replaceInFixture(
+            fixturePackageDocument,
+            '<itemref idref="p04" properties="page-spread-right" />',
+            '<itemref idref="p04" properties="page-spread-left" />',
+          ),
         ),
       ),
     },
