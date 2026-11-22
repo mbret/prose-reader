@@ -104,7 +104,9 @@ does not exist.
 }) => void
 ```
 
-Goes to a page of a spine item.
+Goes to a page of a spine item. A page index after the last page of the item
+goes to its last page. In spreads, the pages of an item can include a
+[blank page](/core-api/pagination#blank-pages-in-spreads).
 
 ### `.goToAbsolutePageIndex()`
 
@@ -113,7 +115,9 @@ Goes to a page of a spine item.
 ```
 
 Goes to a page counted from the start of the book. Does nothing when no such
-page is laid out.
+page is laid out. The index counts the pages of the current layout, including
+the [blank pages](/core-api/pagination#blank-pages-in-spreads) of spreads, so
+it can name another page once the layout changes.
 
 ### Spine item to spine item
 
