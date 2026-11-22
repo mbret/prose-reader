@@ -13,7 +13,7 @@ import {
 } from "../utils"
 import { waitForSettled } from "../utils/pagination"
 import { getReader } from "../utils/reader"
-import type { ScenarioBook } from "../utils/scenarioBooks"
+import type { TextDirectionBook } from "../utils/scenarioBooks"
 import { test } from "../utils/test"
 import { readCfiPositionInWindow } from "../utils/visibility"
 
@@ -288,7 +288,7 @@ const getOverlappingBoxes = (boxes: BoxInWindow[]) =>
 const openChapter = async (
   page: Page,
   href: string,
-  book: ScenarioBook = "ltr",
+  book: TextDirectionBook = "ltr",
 ) => {
   await page.goto(
     `http://localhost:3333/tests/highlights/index.html?book=${book}`,

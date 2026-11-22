@@ -215,19 +215,30 @@ const REWRITTEN_BOOKS = new Map<string, RewrittenBook>([
     },
   ],
   [
-    "haruko-html-jpeg-fully-pre-paginated.epub",
+    "haruko-html-jpeg-pre-paginated-blank-pages.epub",
     {
       fixture: "haruko-html-jpeg.epub",
       /**
        * Without `about`, its only reflowable item, so the book is fully
        * pre-paginated. In spreads, its last page then shares its spread with
-       * a blank page, as its first page already does.
+       * a blank page, as its first page already does. Its fourth page asks
+       * for the left side of a spread, so it and the fifth page each share
+       * theirs with a blank page too.
        */
-      rewrite: rewritePackageDocument((fixturePackageDocument) =>
-        replaceInFixture(
-          fixturePackageDocument,
-          '<itemref idref="about"  properties="page-spread-left rendition:layout-reflowable"  />',
-          "",
+      rewrite: inOrder(
+        rewritePackageDocument((fixturePackageDocument) =>
+          replaceInFixture(
+            fixturePackageDocument,
+            '<itemref idref="about"  properties="page-spread-left rendition:layout-reflowable"  />',
+            "",
+          ),
+        ),
+        rewritePackageDocument((fixturePackageDocument) =>
+          replaceInFixture(
+            fixturePackageDocument,
+            '<itemref idref="p04" properties="page-spread-right" />',
+            '<itemref idref="p04" properties="page-spread-left" />',
+          ),
         ),
       ),
     },
