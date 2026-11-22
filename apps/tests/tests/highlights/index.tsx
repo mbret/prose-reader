@@ -5,7 +5,10 @@ import {
 } from "@prose-reader/enhancer-annotations"
 import { BehaviorSubject } from "rxjs"
 import { openFixtureBook } from "../fixtureBook"
-import { getFileOfRequestedScenarioBook } from "../utils/scenarioBooks"
+import {
+  getFileOfRequestedBook,
+  TEXT_DIRECTION_BOOKS,
+} from "../utils/scenarioBooks"
 
 /**
  * A reader that shows the app's annotations as highlights, and nothing else:
@@ -15,7 +18,9 @@ async function run() {
   const annotations$ = new BehaviorSubject<Annotation[]>([])
 
   const reader = annotationsEnhancer(createReader)({
-    ...(await openFixtureBook(getFileOfRequestedScenarioBook())),
+    ...(await openFixtureBook(
+      getFileOfRequestedBook(TEXT_DIRECTION_BOOKS, "ltr"),
+    )),
     pageTurnAnimation: "none",
     layoutLayerTransition: false,
     annotations: { annotations$ },

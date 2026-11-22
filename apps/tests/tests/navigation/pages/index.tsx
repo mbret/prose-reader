@@ -2,12 +2,17 @@ import { createReader } from "@prose-reader/core"
 import { gesturesEnhancer } from "@prose-reader/enhancer-gestures"
 import { map, tap } from "rxjs"
 import { openFixtureBook } from "../../fixtureBook"
-import { getFileOfRequestedScenarioBook } from "../../utils/scenarioBooks"
+import {
+  getFileOfRequestedBook,
+  TEXT_DIRECTION_BOOKS,
+} from "../../utils/scenarioBooks"
 import type { TappedPage } from "./tappedPage"
 
 async function run() {
   const reader = gesturesEnhancer(createReader)({
-    ...(await openFixtureBook(getFileOfRequestedScenarioBook())),
+    ...(await openFixtureBook(
+      getFileOfRequestedBook(TEXT_DIRECTION_BOOKS, "ltr"),
+    )),
     pageTurnAnimation: "none",
     layoutLayerTransition: false,
   })

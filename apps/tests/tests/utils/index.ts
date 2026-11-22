@@ -1,5 +1,6 @@
 import { expect, type Page } from "@playwright/test"
 import type { NavigationTarget, UserNavigationEntry } from "@prose-reader/core"
+import { readSettledPagination } from "./pagination"
 import { getReader, type SettingsSentIntoPage } from "./reader"
 
 export async function waitForSpineItemReady(page: Page, indexes: number[]) {
@@ -104,6 +105,25 @@ export const getChapterIndex = async (page: Page, href: string) =>
 /** `ch02.xhtml` of `accessible_epub_3.epub`, a chapter of many pages. */
 export const getLongChapterIndex = (page: Page) =>
   getChapterIndex(page, "ch02.xhtml")
+
+/**
+ * Goes to the long chapter, and checks that the reader shows it from its first
+ * page and that it has many pages.
+ */
+export const goToLongChapter = async (page: Page) => {
+  const chapterIndex = await getLongChapterIndex(page)
+
+  await navigateToSpineItem({ page, index: chapterIndex })
+
+  const { spineItemIndex, beginPageIndex, numberOfPages } =
+    await readSettledPagination(page)
+
+  expect(spineItemIndex, "the long chapter is shown").toBe(chapterIndex)
+  expect(beginPageIndex, "the chapter opens on its first page").toBe(0)
+  expect(numberOfPages, "the chapter has many pages").toBeGreaterThan(8)
+
+  return { chapterIndex, numberOfPages }
+}
 
 /** The number of pages of a spine item, as the reader counts them now. */
 export const getNumberOfPagesOfSpineItem = async (page: Page, index: number) =>
