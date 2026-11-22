@@ -9,10 +9,7 @@ import { openFixtureBook } from "../../fixtureBook"
 
 const createAppReader = gesturesEnhancer(createReader)
 
-/**
- * A pre-paginated book read from right to left. The quick menu stays open,
- * with its scrubber.
- */
+/** A pre-paginated book read from right to left. */
 function App({
   book,
 }: {

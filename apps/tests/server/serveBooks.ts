@@ -219,9 +219,9 @@ const REWRITTEN_BOOKS = new Map<string, RewrittenBook>([
     {
       fixture: "haruko-html-jpeg.epub",
       /**
-       * Without its last page, the only one laid out as reflowable. In a
-       * spread, its first page and its last one now each share theirs with a
-       * blank page.
+       * Without `about`, its only reflowable item, so the book is fully
+       * pre-paginated. In spreads, its last page then shares its spread with
+       * a blank page, as its first page already does.
        */
       rewrite: rewritePackageDocument((fixturePackageDocument) =>
         replaceInFixture(

@@ -1,55 +1,24 @@
 import { expect, type Page } from "@playwright/test"
-import { waitForSettled } from "../../utils/pagination"
+import { navigateToSpineItem } from "../../utils"
+import { readSettledPagination, waitForSettled } from "../../utils/pagination"
 import { getReader } from "../../utils/reader"
 import { test } from "../../utils/test"
 
 const url = "http://localhost:3333/tests/navigation/scrubber/index.html"
 const spreadWindowSize = { width: 1000, height: 600 }
 
-/**
- * The spread the reader shows, counted from the start of the book as the
- * scrubber counts them, with the spine item it begins with, once the reader
- * has settled.
- */
-const readSettledSpread = async (page: Page) => {
-  const reader = await getReader(page)
-  const handle = await page.waitForFunction((reader) => {
-    const { isSettled, isUsingSpread, begin, numberOfTotalPages } =
-      reader.pagination.state
+const getScrubber = (page: Page) => page.getByRole("slider")
 
-    if (!isSettled || begin.absolutePageIndex === undefined) return undefined
-
-    return {
-      isUsingSpread,
-      spreadIndex: Math.floor(begin.absolutePageIndex / 2),
-      numberOfSpreads: Math.ceil(numberOfTotalPages / 2),
-      spineItemIndex: begin.spineItemIndex,
-      numberOfPagesInSpineItem: begin.numberOfPagesInSpineItem,
-    }
-  }, reader)
-  const spread = await handle.jsonValue()
-
-  if (!spread) throw new Error("no settled pagination result")
-
-  return spread
-}
-
-/**
- * Clicks the scrubber's rail where it holds the spread at `spreadIndex`. The
- * book reads from right to left, so the rail starts at its right end.
- */
-const clickScrubberAtSpread = async (
-  page: Page,
-  {
-    spreadIndex,
-    numberOfSpreads,
-  }: { spreadIndex: number; numberOfSpreads: number },
-) => {
+/** The book reads from right to left, so the rail starts at its right end. */
+const clickScrubberAtValue = async (page: Page, scrubberValue: number) => {
+  const scrubberMaxValue = Number(
+    await getScrubber(page).getAttribute("aria-valuemax"),
+  )
   const railBox = await page.locator(".rc-slider-rail").boundingBox()
 
   if (!railBox) throw new Error("the scrubber is not shown")
 
-  const fractionOfRailFromRightEnd = spreadIndex / (numberOfSpreads - 1)
+  const fractionOfRailFromRightEnd = scrubberValue / scrubberMaxValue
 
   await page.mouse.click(
     railBox.x + railBox.width * (1 - fractionOfRailFromRightEnd),
@@ -57,9 +26,13 @@ const clickScrubberAtSpread = async (
   )
 }
 
-const pollSettledSpreadIndex = (page: Page) =>
-  expect.poll(async () => (await readSettledSpread(page)).spreadIndex)
+const pollSettledSpineItemIndex = (page: Page) =>
+  expect.poll(async () => (await readSettledPagination(page)).spineItemIndex)
 
+/**
+ * Each spread holds two items, except the first and the last, which hold one
+ * item beside a blank page. Spread 2 begins with item 3, spread 3 with item 5.
+ */
 test.describe("Given a pre-paginated book read from right to left in spreads", () => {
   test("the scrubber moves from the first spread, where the first page shares the spread with a blank page", async ({
     page,
@@ -68,21 +41,17 @@ test.describe("Given a pre-paginated book read from right to left in spreads", (
     await page.goto(url)
     await waitForSettled(page)
 
-    const firstSpread = await readSettledSpread(page)
-
-    expect(firstSpread).toMatchObject({
-      isUsingSpread: true,
-      spreadIndex: 0,
+    expect(await readSettledPagination(page)).toMatchObject({
       spineItemIndex: 0,
-      numberOfPagesInSpineItem: 2,
+      numberOfPages: 2,
     })
+    await expect(getScrubber(page)).toHaveAttribute("aria-valuenow", "0")
+    await expect(getScrubber(page)).toHaveAttribute("aria-valuemax", "6")
 
-    await clickScrubberAtSpread(page, {
-      spreadIndex: 3,
-      numberOfSpreads: firstSpread.numberOfSpreads,
-    })
+    await clickScrubberAtValue(page, 3)
 
-    await pollSettledSpreadIndex(page).toBe(3)
+    await pollSettledSpineItemIndex(page).toBe(5)
+    await expect(getScrubber(page)).toHaveAttribute("aria-valuenow", "3")
   })
 
   test("the scrubber moves back from the last spread, where the last page shares the spread with a blank page", async ({
@@ -92,27 +61,21 @@ test.describe("Given a pre-paginated book read from right to left in spreads", (
     await page.goto(url)
     await waitForSettled(page)
 
-    const reader = await getReader(page)
+    const lastSpineItemIndex = await (await getReader(page)).evaluate(
+      (reader) => reader.spineItemsManager.items.length - 1,
+    )
 
-    await reader.evaluate((reader) => {
-      reader.navigation.goToSpineItem({
-        indexOrId: reader.spineItemsManager.items.length - 1,
-      })
+    await navigateToSpineItem({ page, index: lastSpineItemIndex })
+
+    expect(await readSettledPagination(page)).toMatchObject({
+      spineItemIndex: lastSpineItemIndex,
+      numberOfPages: 2,
     })
+    await expect(getScrubber(page)).toHaveAttribute("aria-valuenow", "6")
 
-    const lastSpread = await readSettledSpread(page)
+    await clickScrubberAtValue(page, 2)
 
-    expect(lastSpread).toMatchObject({
-      isUsingSpread: true,
-      spreadIndex: lastSpread.numberOfSpreads - 1,
-      numberOfPagesInSpineItem: 2,
-    })
-
-    await clickScrubberAtSpread(page, {
-      spreadIndex: 2,
-      numberOfSpreads: lastSpread.numberOfSpreads,
-    })
-
-    await pollSettledSpreadIndex(page).toBe(2)
+    await pollSettledSpineItemIndex(page).toBe(3)
+    await expect(getScrubber(page)).toHaveAttribute("aria-valuenow", "2")
   })
 })
