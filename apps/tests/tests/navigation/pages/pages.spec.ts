@@ -1,23 +1,25 @@
 import { expect, type Page } from "@playwright/test"
 import { navigateToPageOfSpineItem, turnLeft, turnRight } from "../../utils"
 import { layOutAndSettle, readSettledPagination } from "../../utils/pagination"
-import type { ScenarioBook } from "../../utils/scenarioBooks"
+import type { TextDirectionBook } from "../../utils/scenarioBooks"
 import { test } from "../../utils/test"
 import {
   isCfiPositionVisible,
   readCfiPositionInWindow,
 } from "../../utils/visibility"
 import {
+  ODD_SPREAD_WINDOW,
+  SINGLE_PAGE_WINDOW,
+  SPREAD_WINDOW,
+} from "../../utils/windows"
+import {
   addSpacersAroundTextOfShownChapter,
   getScreenOfPage,
-  goToLongChapter,
+  goToLongChapterOfTextDirectionBook,
   moveSpaceBeforeText,
-  ODD_SPREAD_WINDOW,
   openBook,
   readFirstShownNode,
   readPagesOfShownSpineItem,
-  SINGLE_PAGE_WINDOW,
-  SPREAD_WINDOW,
   tapAndReadTappedPage,
   turnScreensOfChapter,
 } from "./pages"
@@ -32,7 +34,7 @@ type ChapterScreen =
 
 /** What tells the books of this scenario apart. */
 type BookCase = {
-  book: ScenarioBook
+  book: TextDirectionBook
   turnToNextPage: Turn
   turnToPreviousPage: Turn
   /** Where the page `pageIndex` is in its item, from the item's top-left. */
@@ -97,7 +99,7 @@ for (const {
       page,
     }) => {
       await openBook(page, book, SINGLE_PAGE_WINDOW)
-      await goToLongChapter(page, book)
+      await goToLongChapterOfTextDirectionBook(page, book)
       const { numberOfPages, pages, itemSize, pageSize } =
         await readPagesOfShownSpineItem(page)
 
@@ -117,7 +119,10 @@ for (const {
       page,
     }) => {
       await openBook(page, book, SINGLE_PAGE_WINDOW)
-      const { chapterIndex } = await goToLongChapter(page, book)
+      const { chapterIndex } = await goToLongChapterOfTextDirectionBook(
+        page,
+        book,
+      )
 
       expect(await tapAndReadTappedPage(page, TAP_POINT)).toEqual({
         spineItemIndex: chapterIndex,
@@ -131,7 +136,10 @@ for (const {
       page,
     }) => {
       await openBook(page, book, SINGLE_PAGE_WINDOW)
-      const { chapterIndex } = await goToLongChapter(page, book)
+      const { chapterIndex } = await goToLongChapterOfTextDirectionBook(
+        page,
+        book,
+      )
 
       await turnScreensOfChapter(page, {
         turnToNextPage,
@@ -163,7 +171,10 @@ for (const {
           page,
         }) => {
           await openBook(page, book, window)
-          const { chapterIndex } = await goToLongChapter(page, book)
+          const { chapterIndex } = await goToLongChapterOfTextDirectionBook(
+            page,
+            book,
+          )
 
           await addSpacersAroundTextOfShownChapter(page)
           await layOutAndSettle(page)
@@ -203,7 +214,10 @@ for (const {
 
         test("turns through the pages in reading order", async ({ page }) => {
           await openBook(page, book, window)
-          const { chapterIndex } = await goToLongChapter(page, book)
+          const { chapterIndex } = await goToLongChapterOfTextDirectionBook(
+            page,
+            book,
+          )
 
           await turnScreensOfChapter(page, {
             turnToNextPage,
@@ -223,10 +237,8 @@ for (const {
 
         test("goes to a page, and to the last page", async ({ page }) => {
           await openBook(page, book, window)
-          const { chapterIndex, numberOfPages } = await goToLongChapter(
-            page,
-            book,
-          )
+          const { chapterIndex, numberOfPages } =
+            await goToLongChapterOfTextDirectionBook(page, book)
 
           await navigateToPageOfSpineItem({
             page,
@@ -261,7 +273,10 @@ for (const {
           page,
         }) => {
           await openBook(page, book, window)
-          const { chapterIndex } = await goToLongChapter(page, book)
+          const { chapterIndex } = await goToLongChapterOfTextDirectionBook(
+            page,
+            book,
+          )
 
           await turnScreensOfChapter(page, {
             turnToNextPage,

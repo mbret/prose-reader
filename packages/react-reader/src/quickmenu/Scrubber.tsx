@@ -6,78 +6,67 @@ import { useNavigationContext } from "../navigation/useNavigationContext.ts"
 import { usePagination } from "../pagination/usePagination.ts"
 import { ThemedSlider } from "./ThemedSlider.tsx"
 
+/**
+ * The slider's values are the pages `useNavigationContext` counts, one value
+ * per spread when the reader shows spreads.
+ */
 const useSliderValues = () => {
   const pagination = usePagination()
-  const isUsingSpread = pagination?.isUsingSpread
-  const { beginPageIndex: currentRealPage, totalApproximatePages = 0 } =
-    useNavigationContext()
-  const currentPage = isUsingSpread
-    ? Math.floor((currentRealPage || 0) / 2)
-    : currentRealPage
+  const {
+    beginPageIndex,
+    totalApproximatePages = 0,
+    goToPageIndex,
+  } = useNavigationContext()
+  const numberOfPagesPerSliderValue = pagination?.isUsingSpread ? 2 : 1
+  const currentSliderValue = Math.floor(
+    beginPageIndex / numberOfPagesPerSliderValue,
+  )
   const [value, valueSignal] = useSignalState(() =>
     signal({
-      default: currentPage || 0,
+      default: currentSliderValue,
     }),
   )
   const min = 0
   const max = Math.max(
     0,
-    isUsingSpread
-      ? Math.floor((totalApproximatePages - 1) / 2)
-      : totalApproximatePages - 1,
+    Math.ceil(totalApproximatePages / numberOfPagesPerSliderValue) - 1,
   )
 
   useEffect(() => {
-    valueSignal.update(currentPage || 0)
-  }, [currentPage, valueSignal])
+    valueSignal.update(currentSliderValue)
+  }, [currentSliderValue, valueSignal])
+
+  const goToSliderValue = (sliderValue: number) => {
+    valueSignal.update(sliderValue)
+
+    goToPageIndex({
+      pageIndex: Math.floor(sliderValue) * numberOfPagesPerSliderValue,
+      animation: false,
+    })
+  }
 
   return {
     value,
     valueSignal,
     min,
     max,
+    goToSliderValue,
   }
 }
 
 export const Scrubber = (props: ComponentProps<typeof ThemedSlider>) => {
   const reader = useReader()
-  const pagination = usePagination()
   const { data: { manifest } = {} } =
     useObserve(() => reader?.context, [reader]) ?? {}
   const reverse = manifest?.readingDirection === "rtl"
-  const isUsingSpread = pagination?.isUsingSpread
-  const { totalApproximatePages = 0, isBeginWithinChapter } =
-    useNavigationContext()
-  const step = 1
-  const isScrubberWithinChapter = isBeginWithinChapter
-  const { value, valueSignal, min, max } = useSliderValues()
+  const { value, valueSignal, min, max, goToSliderValue } = useSliderValues()
 
   const onChange: NonNullable<ComponentProps<typeof ThemedSlider>["onChange"]> =
-    useCallback(
-      (values) => {
-        const [value = 0] = Array.isArray(values) ? values : [values]
+    function goToSliderValueOfChange(values) {
+      const [value = 0] = Array.isArray(values) ? values : [values]
 
-        valueSignal.update(value)
-
-        const pageIndex = isUsingSpread
-          ? Math.floor(value) * 2
-          : Math.floor(value)
-
-        if (!isScrubberWithinChapter) {
-          reader?.navigation.goToAbsolutePageIndex({
-            absolutePageIndex: pageIndex,
-            animation: false,
-          })
-        } else {
-          reader?.navigation.goToPageOfSpineItem({
-            pageIndex,
-            spineItemId: reader.pagination.state.begin.spineItemIndex ?? 0,
-            animation: false,
-          })
-        }
-      },
-      [reader, isUsingSpread, valueSignal, isScrubberWithinChapter],
-    )
+      goToSliderValue(value)
+    }
 
   /**
    * @note
@@ -95,22 +84,9 @@ export const Scrubber = (props: ComponentProps<typeof ThemedSlider>) => {
 
   useSubscribe(throttleLock)
 
-  // const marks =
-  //   max > 1
-  //     ? Array.from({ length: max + 1 }, (_, i) => i).reduce(
-  //         (acc: number[], val) => [...acc, val],
-  //         [],
-  //       )
-  //     : []
+  const hasOneSliderValueOnly = max === 0
 
-  const disabled =
-    totalApproximatePages === 1 ||
-    (isUsingSpread && totalApproximatePages === 2)
-
-  // @tmp not available yet in chakra
-  // if (reverse) return null
-
-  if (disabled) return <Box style={props.style} />
+  if (hasOneSliderValueOnly) return <Box style={props.style} />
 
   return (
     <ThemedSlider
@@ -118,24 +94,9 @@ export const Scrubber = (props: ComponentProps<typeof ThemedSlider>) => {
       max={max}
       min={min}
       reverse={reverse}
-      step={step}
+      step={1}
       onChange={onChange}
       {...props}
     />
   )
-  // return (
-  //   <Slider
-  //     value={[value]}
-  //     max={max}
-  //     min={min}
-  //     marks={marks}
-  //     onChange={e => {
-  //       debugger
-  //     }}
-  //     onValueChange={onChange}
-  //     // reverse={reverse}
-  //     orientation="horizontal"
-  //     step={step}
-  //   />
-  // )
 }

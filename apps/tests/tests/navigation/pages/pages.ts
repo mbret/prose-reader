@@ -1,52 +1,21 @@
 import { expect, type Page } from "@playwright/test"
-import { getLongChapterIndex, navigateToSpineItem } from "../../utils"
+import { goToLongChapter } from "../../utils"
 import { readSettledPagination } from "../../utils/pagination"
 import { getReader } from "../../utils/reader"
-import type { ScenarioBook } from "../../utils/scenarioBooks"
+import type { TextDirectionBook } from "../../utils/scenarioBooks"
+import { openScenarioInWindow, type ScenarioWindow } from "../../utils/windows"
 import type { TappedPage } from "./tappedPage"
 
-export type ScenarioWindow = {
-  size: { width: number; height: number }
-  pagesPerScreen: number
-}
-
-export const SINGLE_PAGE_WINDOW: ScenarioWindow = {
-  size: { width: 600, height: 800 },
-  pagesPerScreen: 1,
-}
-
-export const SPREAD_WINDOW: ScenarioWindow = {
-  size: { width: 1200, height: 800 },
-  pagesPerScreen: 2,
-}
-
-/** A spread whose pages are half a pixel wider than a whole pixel count. */
-export const ODD_SPREAD_WINDOW: ScenarioWindow = {
-  size: { width: 1201, height: 800 },
-  pagesPerScreen: 2,
-}
-
-export const openBook = async (
+export const openBook = (
   page: Page,
-  book: ScenarioBook,
-  { size, pagesPerScreen }: ScenarioWindow,
-) => {
-  await page.setViewportSize(size)
-  await page.goto(
+  book: TextDirectionBook,
+  window: ScenarioWindow,
+) =>
+  openScenarioInWindow(
+    page,
     `http://localhost:3333/tests/navigation/pages/index.html?book=${book}`,
+    window,
   )
-  await readSettledPagination(page)
-
-  const viewport = await (await getReader(page)).evaluate((reader) => ({
-    isSpread: reader.viewport.value.isSpread,
-    pageWidth: reader.viewport.value.pageSize.width,
-  }))
-
-  expect(viewport, `the window shows ${pagesPerScreen} page(s)`).toEqual({
-    isSpread: pagesPerScreen === 2,
-    pageWidth: size.width / pagesPerScreen,
-  })
-}
 
 /** The pages a window shows together when it shows the page `pageIndex`. */
 export const getScreenOfPage = (pageIndex: number, pagesPerScreen: number) => {
@@ -58,17 +27,15 @@ export const getScreenOfPage = (pageIndex: number, pagesPerScreen: number) => {
   }
 }
 
-export const goToLongChapter = async (page: Page, book: ScenarioBook) => {
-  const chapterIndex = await getLongChapterIndex(page)
-
-  await navigateToSpineItem({ page, index: chapterIndex })
-
-  const { spineItemIndex, beginPageIndex, numberOfPages } =
-    await readSettledPagination(page)
-
-  expect(spineItemIndex, "the long chapter is shown").toBe(chapterIndex)
-  expect(beginPageIndex, "the chapter opens on its first page").toBe(0)
-  expect(numberOfPages, "the chapter has many pages").toBeGreaterThan(8)
+/**
+ * Goes to the long chapter, and checks that the reader reads `book` in its
+ * direction of text.
+ */
+export const goToLongChapterOfTextDirectionBook = async (
+  page: Page,
+  book: TextDirectionBook,
+) => {
+  const { chapterIndex, numberOfPages } = await goToLongChapter(page)
 
   const bookAsRead = await (await getReader(page)).evaluate(
     (reader, chapterIndex) => ({

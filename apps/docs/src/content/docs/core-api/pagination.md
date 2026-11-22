@@ -35,6 +35,30 @@ of the first spine item whatever page the book opens on. Nothing else is known
 yet: `chapterInfo`, `spineItemReadingDirection` and `absolutePageIndex` are
 `undefined`, and `numberOfTotalPages` and `percentageEstimateOfBook` are `0`.
 
+## Blank pages in spreads
+
+In spreads, the reader adds a blank page beside a spine item when:
+
+- the item asks for a side of the spread with `page-spread-left` or
+  `page-spread-right`, and would fall on the other side;
+- the item is the last one of a fully pre-paginated book, and starts a spread;
+- the item is reflowable, and its last page does not fill its last spread.
+
+The blank page is a page of its spine item, and every page count includes it:
+
+- It has a `pageIndexInSpineItem`, and `numberOfPagesInSpineItem` counts it. A
+  pre-paginated item with a blank page beside it has 2 pages in spreads and 1
+  without them.
+- An edge can be on it: `begin` is on it when it comes first in reading order.
+- It has an `absolutePageIndex`, and `numberOfTotalPages` counts it. So the
+  same `absolutePageIndex` can be another page of the book once spreads turn on
+  or off.
+
+To reach a page of a pre-paginated book whatever the layout, go to its spine
+item with
+[`reader.navigation.goToSpineItem()`](/core-api/navigation#gotospineitem), or
+to a cfi.
+
 ## Types
 
 A result is the core result, enriched by the pagination enhancer that every
