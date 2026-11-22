@@ -1,6 +1,9 @@
+import type { Reader } from "@prose-reader/core"
+import { useReader } from "../context/useReader.ts"
 import { usePagination } from "../pagination/usePagination.ts"
 
 export const useNavigationContext = () => {
+  const reader = useReader()
   const pagination = usePagination()
   const hasOnlyOnePage = pagination?.numberOfTotalPages === 1
 
@@ -27,6 +30,34 @@ export const useNavigationContext = () => {
     ? pagination?.begin.numberOfPagesInSpineItem
     : pagination?.numberOfTotalPages
 
+  /**
+   * Goes to a page counted the way `beginPageIndex` and
+   * `totalApproximatePages` count it: in the spine item the view begins with
+   * when the book has chapters, in the whole book otherwise.
+   */
+  const goToPageIndex = ({
+    pageIndex,
+    animation,
+  }: {
+    pageIndex: number
+  } & Pick<
+    Parameters<Reader["navigation"]["goToAbsolutePageIndex"]>[0],
+    "animation"
+  >) => {
+    if (pagination?.hasChapters) {
+      reader?.navigation.goToPageOfSpineItem({
+        pageIndex,
+        spineItemId: pagination.begin.spineItemIndex ?? 0,
+        animation,
+      })
+    } else {
+      reader?.navigation.goToAbsolutePageIndex({
+        absolutePageIndex: pageIndex,
+        animation,
+      })
+    }
+  }
+
   return {
     hasOnlyOnePage,
     beginPageIndex,
@@ -35,5 +66,6 @@ export const useNavigationContext = () => {
     totalApproximatePages,
     leftPageIndex,
     rightPageIndex,
+    goToPageIndex,
   }
 }
