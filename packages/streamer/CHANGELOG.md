@@ -3,6 +3,14 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## [47.0.0](https://github.com/mbret/prose-reader/compare/v46.1.0...v47.0.0) (2026-11-22)
+
+**Note:** Version bump only for package @prose-reader/streamer
+
+
+
+
+
 ## [46.0.0](https://github.com/mbret/prose-reader/compare/v45.0.0...v46.0.0) (2026-11-21)
 
 ### ⚠ BREAKING CHANGES

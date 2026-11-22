@@ -3,6 +3,22 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## [47.0.0](https://github.com/mbret/prose-reader/compare/v46.1.0...v47.0.0) (2026-11-22)
+
+### ⚠ BREAKING CHANGES
+
+* **enhancer-annotations:** `reader.annotations.createAnnotation()` returns
+  `{ cfi, highlightedText }` for a selection and `{ cfi }` for a page,
+  without an `id`. react-reader's `onAnnotationCreate` reports a
+  `NewAnnotation`, without an `id`. Give the annotation an `id` of your
+  own, unique among the annotations you pass to the reader, before you
+  store it.
+
+### Features
+
+* **enhancer-annotations:** let the app give a new annotation its id ([136cc17](https://github.com/mbret/prose-reader/commit/136cc17f4cffe815d7a4463949081e0b2f510f2c)), closes [#887](https://github.com/mbret/prose-reader/issues/887)
+
+
 ## [46.1.0](https://github.com/mbret/prose-reader/compare/v46.0.0...v46.1.0) (2026-11-21)
 
 ### Features
