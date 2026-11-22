@@ -10,16 +10,27 @@ export const SCENARIO_BOOKS = {
 
 export type ScenarioBook = keyof typeof SCENARIO_BOOKS
 
-const isScenarioBook = (value: string): value is ScenarioBook =>
-  Object.keys(SCENARIO_BOOKS).includes(value)
+/**
+ * The file of the book that the scenario's URL asks for with `?book=`, among
+ * the books the scenario opens by name. Without `?book=`, `defaultBook`.
+ */
+export const getFileOfRequestedBook = <Book extends string>(
+  booksOfScenario: Record<Book, string>,
+  defaultBook: Book,
+) => {
+  const book = new URLSearchParams(window.location.search).get("book")
+  const isBookOfScenario = (value: string): value is Book =>
+    Object.keys(booksOfScenario).includes(value)
 
-/** The file of the book that the scenario's URL asks for with `?book=`. */
-export const getFileOfRequestedScenarioBook = () => {
-  const book = new URLSearchParams(window.location.search).get("book") ?? "ltr"
+  if (book === null) return booksOfScenario[defaultBook]
 
-  if (!isScenarioBook(book)) {
+  if (!isBookOfScenario(book)) {
     throw new Error(`this scenario has no ${book} book`)
   }
 
-  return SCENARIO_BOOKS[book]
+  return booksOfScenario[book]
 }
+
+/** The file of the book of `SCENARIO_BOOKS` that the scenario's URL asks for. */
+export const getFileOfRequestedScenarioBook = () =>
+  getFileOfRequestedBook<ScenarioBook>(SCENARIO_BOOKS, "ltr")

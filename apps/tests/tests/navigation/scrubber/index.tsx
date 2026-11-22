@@ -6,10 +6,19 @@ import { ReactReader, ReactReaderProvider } from "@prose-reader/react-reader"
 import { useCallback } from "react"
 import { createRoot } from "react-dom/client"
 import { openFixtureBook } from "../../fixtureBook"
+import { getFileOfRequestedBook } from "../../utils/scenarioBooks"
 
 const createAppReader = gesturesEnhancer(createReader)
 
-/** A pre-paginated book read from right to left. */
+/**
+ * The books of the scenario, by the name its URL asks for with `?book=`.
+ * `server/serveBooks.ts` makes the pre-paginated one.
+ */
+const SCRUBBER_SCENARIO_BOOKS = {
+  "pre-paginated-rtl": "haruko-html-jpeg-blank-pages.epub",
+  "reflowable-with-chapters": "accessible_epub_3.epub",
+}
+
 function App({
   book,
 }: {
@@ -38,9 +47,8 @@ function App({
 }
 
 async function run() {
-  // `server/serveBooks.ts` makes the book.
   const book = await openFixtureBook(
-    "haruko-html-jpeg-fully-pre-paginated.epub",
+    getFileOfRequestedBook(SCRUBBER_SCENARIO_BOOKS, "pre-paginated-rtl"),
   )
 
   // biome-ignore lint/style/noNonNullAssertion: the page holds the element
