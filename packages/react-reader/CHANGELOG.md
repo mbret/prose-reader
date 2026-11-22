@@ -3,6 +3,13 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## [47.0.1](https://github.com/mbret/prose-reader/compare/v47.0.0...v47.0.1) (2026-11-22)
+
+### Bug Fixes
+
+* **react-reader:** scrub the pages of the book when it has no chapters ([a9c54c6](https://github.com/mbret/prose-reader/commit/a9c54c6689351b8bf61d40a23aa22935cac09dd8))
+
+
 ## [47.0.0](https://github.com/mbret/prose-reader/compare/v46.1.0...v47.0.0) (2026-11-22)
 
 ### ⚠ BREAKING CHANGES
