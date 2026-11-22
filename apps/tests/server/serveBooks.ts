@@ -96,20 +96,27 @@ const embedLiberationSans = async (bookZip: JSZip) => {
   )
 }
 
-const makeSpineProgressRightToLeft = async (bookZip: JSZip) => {
-  const [packageDocument] = bookZip.file(/\.opf$/)
+const rewritePackageDocument =
+  (rewriteFixturePackageDocument: (fixturePackageDocument: string) => string) =>
+  async (bookZip: JSZip) => {
+    const [packageDocument] = bookZip.file(/\.opf$/)
 
-  if (!packageDocument) throw new Error("the fixture has no package document")
+    if (!packageDocument) throw new Error("the fixture has no package document")
 
-  bookZip.file(
-    packageDocument.name,
+    bookZip.file(
+      packageDocument.name,
+      rewriteFixturePackageDocument(await packageDocument.async("string")),
+    )
+  }
+
+const makeSpineProgressRightToLeft = rewritePackageDocument(
+  (fixturePackageDocument) =>
     replaceInFixture(
-      await packageDocument.async("string"),
+      fixturePackageDocument,
       "<spine>",
       '<spine page-progression-direction="rtl">',
     ),
-  )
-}
+)
 
 /**
  * Books made from a fixture by rewriting it, for the scenarios that need a
@@ -203,6 +210,24 @@ const REWRITTEN_BOOKS = new Map<string, RewrittenBook>([
             "</head>",
             "<style>html { writing-mode: vertical-rl; }</style></head>",
           ),
+        ),
+      ),
+    },
+  ],
+  [
+    "haruko-html-jpeg-fully-pre-paginated.epub",
+    {
+      fixture: "haruko-html-jpeg.epub",
+      /**
+       * Without `about`, its only reflowable item, so the book is fully
+       * pre-paginated. In spreads, its last page then shares its spread with
+       * a blank page, as its first page already does.
+       */
+      rewrite: rewritePackageDocument((fixturePackageDocument) =>
+        replaceInFixture(
+          fixturePackageDocument,
+          '<itemref idref="about"  properties="page-spread-left rendition:layout-reflowable"  />',
+          "",
         ),
       ),
     },
