@@ -1,4 +1,4 @@
-export { compare } from "./compare.ts"
+export { collapse, compare } from "./compare.ts"
 export * from "./constants.ts"
 export { generate } from "./generate.ts"
 export { type CfiPart, type ParsedCfi, parse } from "./parse.ts"

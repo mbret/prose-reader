@@ -1,26 +1,44 @@
 import { type CfiPart, type ParsedCfi, parse } from "./parse.ts"
+import { isParsedCfiRange } from "./utils.ts"
 
 /**
- * Collapses a parsed CFI to a single path (private helper for compare)
- * @param parsed The parsed CFI to collapse
- * @param toEnd Whether to collapse to the end of a range
- * @returns A collapsed CFI
+ * `parse` gives a boundary of a range that is only an offset (`,:5`) as a
+ * copy of the last parent path that carries the offset. A boundary with steps
+ * of its own (`,/1:5`) is a path under the parent, and none can repeat the
+ * parent's own steps down to an offset: an offset is in a text node, which
+ * has no child.
  */
-function collapse(parsed: ParsedCfi, toEnd = false): CfiPart[][] {
-  if (typeof parsed === "string") {
-    return collapse(parse(parsed), toEnd)
-  }
+const isOffsetOfParentPath = (
+  boundaryPath: CfiPart[],
+  lastParentPath: CfiPart[],
+) =>
+  boundaryPath.length === lastParentPath.length &&
+  boundaryPath.at(-1)?.offset !== undefined &&
+  boundaryPath.every(
+    (part, index) => part.index === lastParentPath[index]?.index,
+  )
 
-  if ("parent" in parsed) {
-    // It's a range
-    if (toEnd) {
-      return parsed.parent.concat(parsed.end)
-    }
-    return parsed.parent.concat(parsed.start)
-  }
+/**
+ * Gives the one point a CFI collapses to: the start of a range, or its end
+ * with `toEnd`. A CFI that is not a range is a point already.
+ */
+export function collapse(cfi: ParsedCfi | string, toEnd = false): CfiPart[][] {
+  const parsed = typeof cfi === "string" ? parse(cfi) : cfi
 
-  // It's a single CFI
-  return parsed
+  if (!isParsedCfiRange(parsed)) return parsed
+
+  const boundaryPath = (toEnd ? parsed.end : parsed.start)[0] ?? []
+  const lastParentPath = parsed.parent.at(-1) ?? []
+
+  // The boundary continues the last path of the parent: the two are in the
+  // same document. Kept as a path of its own, it would read as a step into
+  // another document.
+  return [
+    ...parsed.parent.slice(0, -1),
+    isOffsetOfParentPath(boundaryPath, lastParentPath)
+      ? boundaryPath
+      : [...lastParentPath, ...boundaryPath],
+  ]
 }
 
 /**

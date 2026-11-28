@@ -94,6 +94,18 @@ const result = compare(
 // Returns -1 if first CFI is before second, 0 if equal, 1 if after
 ```
 
+A range is compared by its start, then by its end. To compare starts only, such as to find the range a position falls in, collapse each CFI first:
+
+```typescript
+import { collapse, compare } from '@prose-reader/cfi'
+
+const range = 'epubcfi(/6/4[chap01ref]!/4[body01]/10[para05]/1,:100,:150)'
+const position = 'epubcfi(/6/4[chap01ref]!/4[body01]/10[para05]/1:120)'
+
+// -1: the range starts before the position
+compare(collapse(range), collapse(position))
+```
+
 ### Serialize
 
 Convert a parsed CFI back to a string.
@@ -161,6 +173,16 @@ Compares two CFIs according to the EPUB CFI specification sorting rules. Returns
 * -1 if first CFI is before second
 * 0 if CFIs are equal
 * 1 if first CFI is after second
+
+A range is compared by its start, then by its end. A range and a point at its start are therefore not equal: the range comes after.
+
+### Collapse
+
+```typescript
+function collapse(cfi: ParsedCfi | string, toEnd?: boolean): CfiPart[][]
+```
+
+Gives the one point a CFI collapses to, as a parsed CFI: the start of a range, or its end when `toEnd` is `true`. A CFI that is not a range is a point already, and comes back as it is.
 
 ### Serialize
 
