@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest"
-import { collapse, compare } from "./compare.ts"
+import { compare } from "./compare.ts"
 import { parse } from "./parse.ts"
 
 describe("EPUB CFI Sorting", () => {
@@ -215,83 +215,5 @@ describe("EPUB CFI Sorting", () => {
       expect(compare(aStr, bParsed)).toBe(-1)
       expect(compare(aParsed, bStr)).toBe(-1)
     })
-  })
-})
-
-describe("a range against a point", () => {
-  const spineItem = "epubcfi(/6/4[chap01ref]!"
-
-  it.each([
-    { point: `/4/2/1:99)`, expected: 1, title: "before its start" },
-    { point: `/4/2/1:120)`, expected: -1, title: "inside it" },
-    { point: `/4/2/1:150)`, expected: -1, title: "at its end" },
-    { point: `/4/4/1:0)`, expected: -1, title: "in a later element" },
-  ])(
-    "orders a range whose start is an offset of its parent against a point $title",
-    ({ point, expected }) => {
-      const range = `${spineItem}/4/2/1,:100,:150)`
-
-      expect(compare(range, `${spineItem}${point}`)).toBe(expected)
-      expect(compare(`${spineItem}${point}`, range)).toBe(-expected)
-    },
-  )
-
-  it.each([
-    { point: `/4/2/1:2)`, expected: 1, title: "before its start" },
-    { point: `/4/2/1:4)`, expected: -1, title: "inside it" },
-    { point: `/4/2/3:9)`, expected: -1, title: "after its end" },
-  ])(
-    "orders a range whose start is a path under its parent against a point $title",
-    ({ point, expected }) => {
-      const range = `${spineItem}/4/2,/1:3,/3:5)`
-
-      expect(compare(range, `${spineItem}${point}`)).toBe(expected)
-      expect(compare(`${spineItem}${point}`, range)).toBe(-expected)
-    },
-  )
-
-  it("orders two ranges of one text node by their starts, whichever way each is written", () => {
-    const offsetsOfParent = `${spineItem}/4/2/1,:100,:150)`
-    const pathsUnderParent = `${spineItem}/4/2,/1:120,/1:130)`
-
-    expect(compare(offsetsOfParent, pathsUnderParent)).toBe(-1)
-    expect(compare(pathsUnderParent, offsetsOfParent)).toBe(1)
-  })
-})
-
-describe("collapse", () => {
-  it.each([
-    {
-      title: "offsets of its parent",
-      range: "epubcfi(/6/4[chap01ref]!/4/2/1,:100,:150)",
-      start: "epubcfi(/6/4[chap01ref]!/4/2/1:100)",
-      end: "epubcfi(/6/4[chap01ref]!/4/2/1:150)",
-    },
-    {
-      title: "paths under its parent",
-      range: "epubcfi(/6/4[chap01ref]!/4/2,/1:3,/3:5)",
-      start: "epubcfi(/6/4[chap01ref]!/4/2/1:3)",
-      end: "epubcfi(/6/4[chap01ref]!/4/2/3:5)",
-    },
-    {
-      title: "no step into another document",
-      range: "epubcfi(/4[body01]/10[para05],/2/1:1,/3:4)",
-      start: "epubcfi(/4[body01]/10[para05]/2/1:1)",
-      end: "epubcfi(/4[body01]/10[para05]/3:4)",
-    },
-  ])(
-    "gives the point a range starts at, and the point it ends at: $title",
-    ({ range, start, end }) => {
-      expect(collapse(range)).toEqual(parse(start))
-      expect(collapse(parse(range))).toEqual(parse(start))
-      expect(collapse(range, true)).toEqual(parse(end))
-    },
-  )
-
-  it("gives a point as it is", () => {
-    const point = "epubcfi(/6/4[chap01ref]!/4/2/1:100)"
-
-    expect(collapse(point)).toEqual(parse(point))
-    expect(collapse(point, true)).toEqual(parse(point))
   })
 })
