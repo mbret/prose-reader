@@ -6,8 +6,12 @@ import {
   installNarrationReaderTestEnvironment,
   mountNarrationReader,
   recordNarrationStates,
-} from "../tests/narrationReader.ts"
-import type { NarrationSource, NarrationState } from "../types.ts"
+} from "./tests/narrationReader.ts"
+import type {
+  NarrationProgress,
+  NarrationSource,
+  NarrationState,
+} from "./types.ts"
 
 installNarrationReaderTestEnvironment()
 
@@ -214,9 +218,7 @@ describe("narration playback", () => {
     reader.narration.play()
     getLatest(narrationRequests).answerWithUnits(["cfi-0-0"])
     getLatest(playbacks).reportUnitHeard(0)
-    // Every following spine item ends as soon as it starts. Were each one
-    // started from inside the end of the previous one, the stack would
-    // overflow before the last, and the narration would stay `loading`.
+    // Every following spine item ends as soon as it starts.
     getLatest(playbacks).complete()
 
     expect(reader.narration.state).toEqual({
@@ -254,45 +256,37 @@ describe("narration sources", () => {
     expect(second.narrationRequests).toHaveLength(1)
   })
 
-  it("asks the next source when one fails to answer, and reports the error", async () => {
+  it("asks the second source when the first gives a narration with no unit", async () => {
     const first = createControlledSource()
     const second = createControlledSource()
     const reader = await mountNarrationReader([first.source, second.source])
-    const error = new Error("the source cannot read the spine item")
+
+    reader.narration.play()
+    getLatest(first.narrationRequests).answerWithUnits([])
+
+    expect(getSpineItemIndexes(second.narrationRequests)).toEqual([0])
+  })
+
+  it("pauses on the spine item when a source fails to answer, without asking the next source", async () => {
+    const first = createControlledSource()
+    const second = createControlledSource()
+    const reader = await mountNarrationReader([first.source, second.source])
+    const error = new Error("the source is offline")
 
     reader.narration.play()
     getLatest(first.narrationRequests).fail(error)
 
-    expect(second.narrationRequests).toHaveLength(1)
-
-    getLatest(second.narrationRequests).answerWithUnits(["second-0-0"])
-    getLatest(second.playbacks).reportUnitHeard(0)
-
-    expect(reader.narration.state).toEqual({
-      status: "playing",
-      activeUnit: { cfi: "second-0-0", spineItemIndex: 0, unitIndex: 0 },
-    })
-
-    vi.runAllTimers()
-    expect(reportedErrors).toEqual([error])
-  })
-
-  it("pauses on the spine item when a source failed and no other has units for it", async () => {
-    const first = createControlledSource()
-    const second = createControlledSource()
-    const reader = await mountNarrationReader([first.source, second.source])
-
-    reader.narration.play()
-    getLatest(first.narrationRequests).fail(new Error("the source is offline"))
-    getLatest(second.narrationRequests).answerWithUnits(undefined)
-
-    // The spine item is not skipped: the source that failed may narrate it.
-    expect(getSpineItemIndexes(first.narrationRequests)).toEqual([0])
+    // The spine item is not skipped, and not given to another source: the
+    // source that failed may be the one that narrates it.
+    expect(second.narrationRequests).toHaveLength(0)
     expect(reader.narration.state).toEqual({
       status: "paused",
       activeUnit: undefined,
       hasError: true,
     })
+
+    vi.runAllTimers()
+    expect(reportedErrors).toEqual([error])
 
     reader.narration.play()
 
@@ -381,7 +375,8 @@ describe("narration commands", () => {
       { status: "paused", activeUnit: undefined, hasError: false },
     ])
 
-    // The reader shows another spine item: the narration resumes at its own.
+    // The reader shows spine item 0, and the narration resumes at spine item
+    // 1, where it paused.
     reader.navigation.goToSpineItem({ indexOrId: 0 })
     await vi.runAllTimersAsync()
     reader.narration.play()
@@ -399,9 +394,21 @@ describe("narration commands", () => {
     expect(states).toEqual([{ status: "idle", activeUnit: undefined }])
   })
 
-  it("stop stops the sound and forgets the unit", async () => {
+  it("stop stops the sound and forgets the place: the next play is a first start", async () => {
     const { reader, narrationRequests, playbacks } =
       await mountReaderPlayingFirstUnit()
+
+    // The narration is on the second unit of spine item 1, and the reader
+    // shows spine item 0.
+    getLatest(playbacks).complete()
+    getLatest(narrationRequests).answerWithUnits(["cfi-1-0", "cfi-1-1"])
+    getLatest(playbacks).reportUnitHeard(1)
+    expect(reader.narration.state.activeUnit).toEqual({
+      cfi: "cfi-1-1",
+      spineItemIndex: 1,
+      unitIndex: 1,
+    })
+    expect(reader.pagination.state.begin.spineItemIndex).toBe(0)
     const stoppedPlayback = getLatest(playbacks)
 
     reader.narration.stop()
@@ -414,7 +421,11 @@ describe("narration commands", () => {
 
     reader.narration.play()
 
-    expect(getSpineItemIndexes(narrationRequests)).toEqual([0, 0])
+    expect(getSpineItemIndexes(narrationRequests)).toEqual([0, 1, 0])
+
+    getLatest(narrationRequests).answerWithUnits(["cfi-0-0", "cfi-0-1"])
+
+    expect(getLatest(playbacks).startUnitIndex).toBe(0)
   })
 
   it.each([
@@ -493,6 +504,31 @@ describe("narration errors", () => {
       activeUnit: { cfi: "cfi-0-0", spineItemIndex: 0, unitIndex: 0 },
       hasError: true,
     })
+  })
+
+  it("a report that is not a progress pauses with an error, and the narration still answers", async () => {
+    const reader = await mountNarrationReader([
+      {
+        getNarrationOfSpineItem: () =>
+          of({
+            units: [{ cfi: "cfi-0-0" }],
+            // What a source written in plain JavaScript could emit.
+            play: () => of(undefined as unknown as NarrationProgress),
+          }),
+      },
+    ])
+
+    reader.narration.play()
+
+    expect(reader.narration.state).toEqual({
+      status: "paused",
+      activeUnit: { cfi: "cfi-0-0", spineItemIndex: 0, unitIndex: 0 },
+      hasError: true,
+    })
+
+    reader.narration.stop()
+
+    expect(reader.narration.state.status).toBe("idle")
   })
 
   it("stop forgets the error with the place", async () => {
@@ -602,6 +638,37 @@ describe("narration states", () => {
     expect(reader.narration.state.status).toBe("paused")
   })
 
+  it("applies at once a play then a pause that a subscriber sends while it receives a state", async () => {
+    const { source, narrationRequests, playbacks } = createControlledSource()
+    const reader = await mountNarrationReader([source])
+    let hasRetried = false
+
+    reader.narration.state$.subscribe((state) => {
+      if (hasRetried || state.status !== "paused" || !state.hasError) return
+
+      hasRetried = true
+      reader.narration.play()
+      // Were the play still waiting, the pause would find the narration
+      // paused on its error and change nothing, and the play would be lost.
+      reader.narration.pause()
+    })
+
+    reader.narration.play()
+    getLatest(narrationRequests).answerWithUnits(["cfi-0-0"])
+    getLatest(playbacks).reportUnitHeard(0)
+    getLatest(playbacks).fail(new Error("the voice failed"))
+
+    expect(hasRetried).toBe(true)
+    expect(playbacks.map(({ startUnitIndex }) => startUnitIndex)).toEqual([
+      0, 0,
+    ])
+    expect(reader.narration.state).toEqual({
+      status: "paused",
+      activeUnit: { cfi: "cfi-0-0", spineItemIndex: 0, unitIndex: 0 },
+      hasError: false,
+    })
+  })
+
   it("plays again when a subscriber pauses then plays while it receives a state", async () => {
     const { source, narrationRequests, playbacks } = createControlledSource()
     const reader = await mountNarrationReader([source])
@@ -612,8 +679,8 @@ describe("narration states", () => {
 
       hasRestarted = true
       reader.narration.pause()
-      // The pause is not applied yet. The play must not be dropped as one
-      // sent while the narration plays.
+      // The state still reads `playing`, but the pause applied: this play
+      // must not be dropped as one sent while the narration plays.
       reader.narration.play()
     })
 

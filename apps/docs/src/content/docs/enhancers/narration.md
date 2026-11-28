@@ -151,6 +151,7 @@ type NarrationProgress = {
 
 * **`getNarrationOfSpineItem()`** emits once. `undefined`, or a narration with no unit, means that the source has nothing for the spine item: the enhancer asks the next source.
 * **`units`** are the units of the spine item, in reading order.
+* The enhancer keeps the narration of a spine item while it is on that spine item. It calls `play()` again to resume after a pause.
 * **`play()`** makes the units heard in order, from the one at `startUnitIndex` to the last one.
   * It emits the index of a unit when that unit starts to be **heard**, not when its sound is requested or fetched. The active unit follows what it emits. An index that `units` does not have is ignored.
   * It completes once the last unit was heard. The narration then continues with the next spine item.
@@ -196,7 +197,9 @@ const clipsSource: NarrationSource = {
 
 ### Errors
 
-* **An error of `getNarrationOfSpineItem()`**: the enhancer asks the next source. If no other source has units for the spine item, the narration pauses at that spine item, with `hasError` set. It does not skip the spine item: the source that failed may be the one that narrates it.
-* **An error of `play()`**: the narration pauses on the active unit, with `hasError` set. That is the last unit that was heard, or the unit that was about to be heard when none was.
+A source that fails pauses the narration, with `hasError` set. `play()` tries again.
+
+* **An error of `getNarrationOfSpineItem()`**: the narration pauses at that spine item. The enhancer does not ask the next source, and does not skip the spine item: the source that failed may be the one that narrates it. The next `play()` asks the sources again, from the first one.
+* **An error of `play()`**: the narration pauses on the active unit. That is the last unit that was heard, or the unit that was about to be heard when none was. The next `play()` calls `play()` of the same narration, from that unit.
 
 Both errors are reported the way rxjs reports an error that no subscriber handles: `config.onUnhandledError` receives them.

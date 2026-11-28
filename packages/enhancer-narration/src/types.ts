@@ -16,7 +16,12 @@ export type NarrationProgress = {
   unitIndex: number
 }
 
-/** What a source can narrate of one spine item. */
+/**
+ * What a source can narrate of one spine item.
+ *
+ * The enhancer keeps it while the narration is on the spine item: it calls
+ * `play()` again to resume after a pause, and after `play()` failed.
+ */
 export type SpineItemNarration = {
   /** The units of the spine item, in reading order. */
   units: readonly NarrationUnit[]
@@ -42,8 +47,11 @@ export type NarrationSource = {
    * narration reaches the spine item.
    *
    * It emits once: `undefined`, or no unit, when the source has nothing for
-   * the spine item. The enhancer then asks the next source, as it does when
-   * this fails.
+   * the spine item. The enhancer then asks the next source.
+   *
+   * When it fails, the narration pauses at the spine item, and the next
+   * `play()` asks the sources again. The spine item is not given to the next
+   * source: the one that failed may be the one that narrates it.
    */
   getNarrationOfSpineItem: (params: {
     reader: Reader

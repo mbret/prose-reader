@@ -653,6 +653,9 @@ importers:
       '@prose-reader/core':
         specifier: workspace:^
         version: link:../core
+      '@prose-reader/shared':
+        specifier: workspace:^
+        version: link:../shared
       rxjs:
         specifier: ^7.5.5
         version: 7.8.2

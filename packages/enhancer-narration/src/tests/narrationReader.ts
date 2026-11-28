@@ -1,10 +1,6 @@
-import {
-  createReader,
-  DocumentRenderer,
-  type Manifest,
-  type Reader,
-} from "@prose-reader/core"
-import { EMPTY, Observable, of, Subject } from "rxjs"
+import { createReader, DocumentRenderer, type Reader } from "@prose-reader/core"
+import type { Manifest } from "@prose-reader/shared"
+import { EMPTY, type Observable, of, Subject } from "rxjs"
 import { afterEach, beforeAll, vi } from "vitest"
 import { narrationEnhancer } from "../narrationEnhancer.ts"
 import type {
@@ -43,7 +39,6 @@ class EmptyRenderer extends DocumentRenderer {
   }
 }
 
-/** A book of single pages. */
 const createManifest = (numberOfSpineItems: number): Manifest => ({
   filename: "test",
   mediaType: "application/epub+zip",
@@ -106,7 +101,7 @@ export const installNarrationReaderTestEnvironment = () => {
   })
 }
 
-/** A reader that shows the first of its spine items: three by default. */
+/** A reader that shows the first of its spine items. */
 export const mountNarrationReader = async (
   sources: readonly NarrationSource[],
   { numberOfSpineItems = 3 }: { numberOfSpineItems?: number } = {},
@@ -141,8 +136,8 @@ export const recordNarrationStates = (reader: NarrationReader) => {
 /** One call of `play()` on the narration of a spine item. */
 type ControlledPlayback = {
   startUnitIndex: number
-  /** Whether the enhancer still listens: the sound is on until it stops. */
-  isSubscribed: boolean
+  /** Whether the enhancer still listens. It stops the sound by unsubscribing. */
+  readonly isSubscribed: boolean
   reportUnitHeard: (unitIndex: number) => void
   complete: () => void
   fail: (error: unknown) => void
@@ -152,7 +147,7 @@ type ControlledPlayback = {
 type ControlledNarrationRequest = {
   spineItemIndex: number
   /** Whether the enhancer still waits for the answer. */
-  isSubscribed: boolean
+  readonly isSubscribed: boolean
   /** Answers with as many units as cfis, or with nothing for the item. */
   answerWithUnits: (cfis: string[] | undefined) => void
   fail: (error: unknown) => void
@@ -170,54 +165,38 @@ export const createControlledSource = () => {
     units: cfis.map((cfi) => ({ cfi })),
     play: ({ startUnitIndex }) => {
       const progressSubject = new Subject<NarrationProgress>()
-      const playback: ControlledPlayback = {
+
+      playbacks.push({
         startUnitIndex,
-        isSubscribed: false,
+        get isSubscribed() {
+          return progressSubject.observed
+        },
         reportUnitHeard: (unitIndex) => progressSubject.next({ unitIndex }),
         complete: () => progressSubject.complete(),
         fail: (error) => progressSubject.error(error),
-      }
-
-      playbacks.push(playback)
-
-      return new Observable<NarrationProgress>((subscriber) => {
-        playback.isSubscribed = true
-
-        const subscription = progressSubject.subscribe(subscriber)
-
-        return () => {
-          playback.isSubscribed = false
-          subscription.unsubscribe()
-        }
       })
+
+      return progressSubject
     },
   })
 
   const source: NarrationSource = {
     getNarrationOfSpineItem: ({ spineItem }) => {
       const answerSubject = new Subject<SpineItemNarration | undefined>()
-      const narrationRequest: ControlledNarrationRequest = {
+
+      narrationRequests.push({
         spineItemIndex: spineItem.index,
-        isSubscribed: false,
+        get isSubscribed() {
+          return answerSubject.observed
+        },
         answerWithUnits: (cfis) => {
           answerSubject.next(cfis ? createNarration(cfis) : undefined)
           answerSubject.complete()
         },
         fail: (error) => answerSubject.error(error),
-      }
-
-      narrationRequests.push(narrationRequest)
-
-      return new Observable<SpineItemNarration | undefined>((subscriber) => {
-        narrationRequest.isSubscribed = true
-
-        const subscription = answerSubject.subscribe(subscriber)
-
-        return () => {
-          narrationRequest.isSubscribed = false
-          subscription.unsubscribe()
-        }
       })
+
+      return answerSubject
     },
   }
 

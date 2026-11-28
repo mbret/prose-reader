@@ -39,6 +39,9 @@
     "build": "tsc && vite build && tsc -p tsconfig.build.json",
     "test": "vitest run --coverage"
   },
+  "dependencies": {
+    "@prose-reader/shared": "workspace:^"
+  },
   "peerDependencies": {
     "@prose-reader/core": "workspace:^",
     "rxjs": "^7.5.5"
