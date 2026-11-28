@@ -147,6 +147,7 @@ export default defineConfig({
             "enhancers/annotations",
             "enhancers/refit",
             "enhancers/audio",
+            "enhancers/narration",
             "enhancers/koreader",
             "enhancers/cbz-and-comics-archives",
           ],

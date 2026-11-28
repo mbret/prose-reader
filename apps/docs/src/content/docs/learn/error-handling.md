@@ -45,7 +45,9 @@ A layout of the spine can still fail outside the layout of its items, through a 
 
 The [gestures enhancer](/enhancers/gestures#hooks) also recovers from a `beforeTapGesture` hook that errors, or throws as it is called: the tap goes on, and the gestures that follow are recognized as before.
 
-The reader, and the gestures enhancer, report these errors as rxjs reports an error that no subscriber handles. They call `config.onUnhandledError` from rxjs if you set it, or else throw the error in a `setTimeout`, so that the browser reports it as uncaught. rxjs is a peer dependency of prose-reader, so the `config` that your app imports is the one that they use. Set it to send these errors to your error tracker:
+The [narration enhancer](/enhancers/narration#errors) recovers from a source that fails, or that throws as its sound is stopped: the narration pauses, and goes on answering.
+
+The reader, and the gestures and narration enhancers, report these errors as rxjs reports an error that no subscriber handles. They call `config.onUnhandledError` from rxjs if you set it, or else throw the error in a `setTimeout`, so that the browser reports it as uncaught. rxjs is a peer dependency of prose-reader, so the `config` that your app imports is the one that they use. Set it to send these errors to your error tracker:
 
 ```typescript
 import { config } from "rxjs"
