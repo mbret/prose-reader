@@ -15,7 +15,7 @@ import {
   from,
   map,
   materialize,
-  type Observable,
+  Observable,
   type ObservableNotification,
   observeOn,
   of,
@@ -30,6 +30,7 @@ import {
   switchScan,
   take,
   tap,
+  UnsubscriptionError,
 } from "rxjs"
 import type {
   NarrationActiveUnit,
@@ -130,6 +131,38 @@ const playbackStateToNarrationState = (
       }
   }
 }
+
+/**
+ * A source can throw while it is unsubscribed from. The error would leave
+ * through the command that replaces its playback, end the state for good,
+ * and stop the destruction of the reader halfway. It is reported, and the
+ * unsubscription goes on.
+ */
+const reportErrorOfTeardown =
+  <Value>() =>
+  (source$: Observable<Value>) =>
+    new Observable<Value>((subscriber) => {
+      // An observer of its own: given the subscriber itself, the source
+      // would add its teardown to it, and that teardown would run outside
+      // the `try` below.
+      const subscription = source$.subscribe({
+        next: (value) => subscriber.next(value),
+        error: (error: unknown) => subscriber.error(error),
+        complete: () => subscriber.complete(),
+      })
+
+      return () => {
+        try {
+          subscription.unsubscribe()
+        } catch (error) {
+          // rxjs wraps what the teardowns of a subscription throw.
+          const errors =
+            error instanceof UnsubscriptionError ? error.errors : [error]
+
+          errors.forEach(reportRecoveredError)
+        }
+      }
+    })
 
 const isSameNarrationState = (
   previous: NarrationState,
@@ -315,7 +348,7 @@ export class NarrationController {
 
     return range(
       spineItemIndex,
-      Math.max(this.reader.spineItemsManager.items.length - spineItemIndex, 0),
+      this.reader.spineItemsManager.items.length - spineItemIndex,
     ).pipe(
       concatMap((indexOfSpineItemToNarrate) =>
         indexOfSpineItemToNarrate === spineItemIndex
@@ -337,6 +370,8 @@ export class NarrationController {
       tap({ error: reportRecoveredError }),
       // The end and the error of the playback become values, so that the
       // state they lead to is made from the latest one, as every other state.
+      // A spine item starts with a `loading` state, so an error always finds
+      // a playback under way to pause.
       materialize(),
       scan<ObservableNotification<PlaybackUnderWay>, PlaybackState>(
         (latestPlaybackState, notification) => {
@@ -393,9 +428,9 @@ export class NarrationController {
   ): Observable<SpineItemNarration | undefined> {
     return from(this.sources).pipe(
       concatMap((source) =>
-        defer(() =>
-          source.getNarrationOfSpineItem({ reader: this.reader, spineItem }),
-        ).pipe(take(1)),
+        source
+          .getNarrationOfSpineItem({ reader: this.reader, spineItem })
+          .pipe(reportErrorOfTeardown(), take(1)),
       ),
       first(
         (spineItemNarration) =>
@@ -419,6 +454,7 @@ export class NarrationController {
     return defer(() =>
       spineItemNarration.play({ startUnitIndex: firstUnitToHear.unitIndex }),
     ).pipe(
+      reportErrorOfTeardown(),
       concatMap(({ unitIndex }) => {
         const unit = spineItemNarration.units[unitIndex]
 
