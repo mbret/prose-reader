@@ -37,8 +37,18 @@ const getLatest = <Entry>(entries: Entry[]) => {
   return latestEntry
 }
 
-/** More spine items than the stack has room for calls nested in each other. */
-const numberOfSpineItemsOfLongBook = 3000
+/** The number of calls on the stack of the caller. */
+const getStackDepth = () => {
+  const stackTraceLimit = Error.stackTraceLimit
+
+  Error.stackTraceLimit = Number.POSITIVE_INFINITY
+
+  const stackDepth = new Error().stack?.split("\n").length ?? 0
+
+  Error.stackTraceLimit = stackTraceLimit
+
+  return stackDepth
+}
 
 const getSpineItemIndexes = (narrationRequests: { spineItemIndex: number }[]) =>
   narrationRequests.map(({ spineItemIndex }) => spineItemIndex)
@@ -203,28 +213,42 @@ describe("narration playback", () => {
     },
   )
 
-  it("goes through the rest of a long book that has nothing more to narrate, once a spine item was heard", async () => {
+  /**
+   * A spine item with nothing to narrate ends as soon as it starts. Started
+   * inside the end of the one before, a book with thousands of them in a row
+   * would fill the stack.
+   */
+  it("starts each spine item once the one before returned, so the stack does not grow with the spine items", async () => {
     const { source, narrationRequests, playbacks } = createControlledSource()
+    const stackDepthOfRequests: number[] = []
     const sourceOfFirstSpineItemOnly: NarrationSource = {
-      getNarrationOfSpineItem: (params) =>
-        params.spineItem.index === 0
-          ? source.getNarrationOfSpineItem(params)
-          : of(undefined),
+      getNarrationOfSpineItem: (params) => {
+        if (params.spineItem.index === 0) {
+          return source.getNarrationOfSpineItem(params)
+        }
+
+        stackDepthOfRequests.push(getStackDepth())
+
+        return of(undefined)
+      },
     }
     const reader = await mountNarrationReader([sourceOfFirstSpineItemOnly], {
-      numberOfSpineItems: numberOfSpineItemsOfLongBook,
+      numberOfSpineItems: 30,
     })
 
     reader.narration.play()
     getLatest(narrationRequests).answerWithUnits(["cfi-0-0"])
     getLatest(playbacks).reportUnitHeard(0)
-    // Every following spine item ends as soon as it starts.
     getLatest(playbacks).complete()
 
     expect(reader.narration.state).toEqual({
       status: "idle",
       activeUnit: undefined,
     })
+    expect(stackDepthOfRequests).toHaveLength(29)
+    // The spine item after the one that was heard starts the queue. Every
+    // one after it starts from that queue, at the same depth.
+    expect(new Set(stackDepthOfRequests.slice(1)).size).toBe(1)
   })
 })
 
