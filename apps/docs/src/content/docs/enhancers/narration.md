@@ -42,10 +42,10 @@ reader.narration.play()
 
 The narration goes through the book one spine item at a time. A source cuts a spine item into **units**. A unit is a piece of the book that the source can make heard, such as a sentence, and it has a cfi.
 
-1. `play()` starts with the first spine item that is visible.
+1. `play()` starts with the first spine item that is visible, at its first unit.
 2. The enhancer asks its sources, in order, what they can narrate of that spine item.
-3. The first source that has units plays them, and reports each unit when it is heard. The unit that is heard is the **active unit**.
-4. When the last unit was heard, the narration continues with the next spine item. A spine item that no source has units for is skipped.
+3. The first source that has units plays them, and reports each unit when it is heard. The unit the narration is on is the **active unit**.
+4. When that source has played its last unit, the narration continues with the next spine item. A spine item that no source has units for is skipped.
 5. After the last spine item, the narration returns to `idle`.
 
 A command replaces what the previous one started. A source that answers after a `pause()` or a `stop()` changes nothing.
@@ -81,35 +81,41 @@ Stops the sound and forgets the place of the narration. The next `play()` starts
 reader.narration.stop()
 ```
 
-### `.state` / `.state$` { #state-.stateusd }
+### `.state` / `.state$`
 
 The state of the narration, read synchronously or as an RxJS observable.
 
 ```typescript
-type NarrationState = {
-  hasError: boolean
-} & (
+type NarrationState =
   | { status: "idle"; activeUnit: undefined }
-  | { status: "loading" | "paused"; activeUnit: NarrationActiveUnit | undefined }
+  | { status: "loading"; activeUnit: NarrationActiveUnit | undefined }
   | { status: "playing"; activeUnit: NarrationActiveUnit }
-)
+  | {
+      status: "paused"
+      activeUnit: NarrationActiveUnit | undefined
+      hasError: boolean
+    }
 
 type NarrationActiveUnit = {
   cfi: string
   spineItemIndex: number
-  indexInSpineItem: number
+  unitIndex: number
 }
 ```
 
 | Status | Meaning |
 | --- | --- |
 | `idle` | Nothing is narrated |
-| `loading` | Playback is asked, and no unit is heard yet: a source prepares the spine item, or its sound |
+| `loading` | Playback is asked, and no unit is heard yet: a source prepares the spine item, or the sound of the active unit |
 | `playing` | The active unit is heard |
 | `paused` | The sound is stopped, and `play()` resumes from the active unit |
 
-* **`activeUnit`**: the unit the narration is on. `cfi` is where it is in the book, `spineItemIndex` the spine item it belongs to, and `indexInSpineItem` its index in the units of that spine item. While `loading` or `paused` it is `undefined` when the narration is at a spine item whose units are not known yet: at a first start, and between two spine items.
-* **`hasError`**: whether the last playback stopped on an error of its source. The narration is then `paused` on the last unit that was heard, and `play()` tries that unit again. It stays `true` until the next `play()`.
+* **`activeUnit`**: the unit the narration is on. `cfi` is where it is in the book, `spineItemIndex` the spine item it belongs to, and `unitIndex` its index in the units of that spine item.
+  * While `loading`, it is the unit that is about to be heard.
+  * While `loading` or `paused`, it is `undefined` when the narration is at a spine item whose units are not known yet: at a first start, and between two spine items. `play()` then resumes with that spine item.
+* **`hasError`**: only a `paused` state has it. It tells whether a source paused the narration by failing, see [Errors](#errors). `play()` tries again, and `stop()` forgets the error with the place of the narration.
+
+A subscriber can send a command while it receives a state. The command applies at once, and the state it leads to is delivered after the current one, so every subscriber receives the states in the same order.
 
 ```typescript
 reader.narration.state$.subscribe(({ status, activeUnit }) => {
@@ -146,8 +152,8 @@ type NarrationProgress = {
 * **`getNarrationOfSpineItem()`** emits once. `undefined`, or a narration with no unit, means that the source has nothing for the spine item: the enhancer asks the next source.
 * **`units`** are the units of the spine item, in reading order.
 * **`play()`** makes the units heard in order, from the one at `startUnitIndex` to the last one.
-  * It emits the index of a unit when that unit starts to be **heard**, not when its sound is requested or fetched. The active unit follows what it emits.
-  * It completes once the last unit was heard.
+  * It emits the index of a unit when that unit starts to be **heard**, not when its sound is requested or fetched. The active unit follows what it emits. An index that `units` does not have is ignored.
+  * It completes once the last unit was heard. The narration then continues with the next spine item.
   * Unsubscribing stops the sound. The enhancer unsubscribes on `pause()`, on `stop()`, and when the reader is destroyed.
 
 A source that plays one audio clip for each unit:
@@ -190,7 +196,7 @@ const clipsSource: NarrationSource = {
 
 ### Errors
 
-* An error of `getNarrationOfSpineItem()` means that the source has nothing for the spine item. The enhancer asks the next source.
-* An error of `play()` pauses the narration on the last unit that was heard, with `hasError` set.
+* **An error of `getNarrationOfSpineItem()`**: the enhancer asks the next source. If no other source has units for the spine item, the narration pauses at that spine item, with `hasError` set. It does not skip the spine item: the source that failed may be the one that narrates it.
+* **An error of `play()`**: the narration pauses on the active unit, with `hasError` set. That is the last unit that was heard, or the unit that was about to be heard when none was.
 
 Both errors are reported the way rxjs reports an error that no subscriber handles: `config.onUnhandledError` receives them.

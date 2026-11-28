@@ -43,8 +43,8 @@ class EmptyRenderer extends DocumentRenderer {
   }
 }
 
-/** Three single pages. */
-const manifest: Manifest = {
+/** A book of single pages. */
+const createManifest = (numberOfSpineItems: number): Manifest => ({
   filename: "test",
   mediaType: "application/epub+zip",
   title: "test",
@@ -52,16 +52,16 @@ const manifest: Manifest = {
   renditionLayout: "pre-paginated",
   renditionSpread: "none",
   items: [],
-  spineItems: [0, 1, 2].map((index) => ({
+  spineItems: Array.from({ length: numberOfSpineItems }, (_, index) => ({
     href: `/page_${index}.xhtml`,
     containerUri: `page_${index}.xhtml`,
     id: `${index}`,
     index,
     mediaType: "application/xhtml+xml",
-    progressionWeight: 1 / 3,
+    progressionWeight: 1 / numberOfSpineItems,
     renditionLayout: "pre-paginated",
   })),
-}
+})
 
 /** jsdom has neither observer, and nothing here depends on what they report. */
 class InertObserver {
@@ -106,14 +106,15 @@ export const installNarrationReaderTestEnvironment = () => {
   })
 }
 
-/** A reader of three spine items that shows the first one. */
+/** A reader that shows the first of its spine items: three by default. */
 export const mountNarrationReader = async (
   sources: readonly NarrationSource[],
+  { numberOfSpineItems = 3 }: { numberOfSpineItems?: number } = {},
 ): Promise<NarrationReader> => {
   vi.useFakeTimers()
 
   const reader = narrationEnhancer(createReader)({
-    manifest,
+    manifest: createManifest(numberOfSpineItems),
     getRenderer: () => (props) => new EmptyRenderer(props),
     getResource: () => of(new Response("", { status: 200 })),
     narration: { sources },

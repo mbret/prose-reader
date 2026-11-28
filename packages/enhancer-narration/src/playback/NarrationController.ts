@@ -7,21 +7,30 @@ import {
 import {
   BehaviorSubject,
   catchError,
+  concat,
+  concatMap,
   defaultIfEmpty,
   defer,
   distinctUntilChanged,
+  EMPTY,
+  filter,
   first,
   map,
   materialize,
   type Observable,
   type ObservableNotification,
+  observeOn,
   of,
+  queueScheduler,
+  range,
   Subject,
-  type Subscription,
+  Subscription,
   scan,
   startWith,
+  subscribeOn,
   switchMap,
   switchScan,
+  takeWhile,
   tap,
 } from "rxjs"
 import type {
@@ -34,71 +43,54 @@ import type {
 
 type NarrationCommand = "play" | "pause" | "stop"
 
-/** The place the narration is at, or resumes from. */
-type NarrationPosition = {
+/** Where the narration is, or resumes from. */
+type NarrationPlace = {
   spineItemIndex: number
-  unitIndex: number
   /**
    * What a source narrates of the spine item. `undefined` until the sources
-   * were asked: the units of the spine item are not known before.
+   * answered: the units of the spine item are not known before.
    */
   narration: SpineItemNarration | undefined
-}
-
-/** The narration has a place: it is heard, or it can resume. */
-type StartedPlaybackState = {
-  status: "loading" | "playing" | "paused"
-  position: NarrationPosition
-  hasError: boolean
+  /** The unit of `narration` the narration is on. */
+  activeUnit: NarrationActiveUnit | undefined
 }
 
 type PlaybackState =
-  | { status: "idle"; position: undefined; hasError: false }
-  | StartedPlaybackState
+  | { status: "idle" }
+  | ({ status: "loading" } & NarrationPlace)
+  | {
+      status: "playing"
+      spineItemIndex: number
+      narration: SpineItemNarration
+      activeUnit: NarrationActiveUnit
+    }
+  | ({ status: "paused"; hasError: boolean } & NarrationPlace)
 
-/** How far the playback of the units of one spine item went. */
-type PlaybackOfSpineItem = {
-  playbackState: StartedPlaybackState
-  isLastUnitHeard: boolean
+type AnswerOfSources = {
+  narration: SpineItemNarration | undefined
+  /** Whether a source that was asked failed to answer. */
+  hasSourceFailed: boolean
 }
 
-const idlePlaybackState: PlaybackState = {
-  status: "idle",
-  position: undefined,
-  hasError: false,
-}
-
-const getActiveUnitAtPosition = ({
-  narration,
-  spineItemIndex,
-  unitIndex,
-}: NarrationPosition): NarrationActiveUnit | undefined => {
-  const unit = narration?.units[unitIndex]
-
-  return unit
-    ? { cfi: unit.cfi, spineItemIndex, indexInSpineItem: unitIndex }
-    : undefined
-}
+const idlePlaybackState: PlaybackState = { status: "idle" }
 
 const playbackStateToNarrationState = (
   playbackState: PlaybackState,
 ): NarrationState => {
-  if (playbackState.status === "idle") {
-    return { status: "idle", activeUnit: undefined, hasError: false }
+  switch (playbackState.status) {
+    case "idle":
+      return { status: "idle", activeUnit: undefined }
+    case "loading":
+      return { status: "loading", activeUnit: playbackState.activeUnit }
+    case "playing":
+      return { status: "playing", activeUnit: playbackState.activeUnit }
+    case "paused":
+      return {
+        status: "paused",
+        activeUnit: playbackState.activeUnit,
+        hasError: playbackState.hasError,
+      }
   }
-
-  const { status, hasError, position } = playbackState
-  const activeUnit = getActiveUnitAtPosition(position)
-
-  if (status === "playing") {
-    // A playing state is only made for a unit of the narration, so the active
-    // unit exists. `loading` is what the state would mean without one.
-    return activeUnit
-      ? { status, activeUnit, hasError }
-      : { status: "loading", activeUnit, hasError }
-  }
-
-  return { status, activeUnit, hasError }
 }
 
 const isSameNarrationState = (
@@ -106,15 +98,22 @@ const isSameNarrationState = (
   current: NarrationState,
 ) =>
   previous.status === current.status &&
-  previous.hasError === current.hasError &&
-  isShallowEqual(previous.activeUnit, current.activeUnit)
+  isShallowEqual(previous.activeUnit, current.activeUnit) &&
+  (previous.status === "paused" && previous.hasError) ===
+    (current.status === "paused" && current.hasError)
+
+const isPausedOnError = (playbackState: PlaybackState) =>
+  playbackState.status === "paused" && playbackState.hasError
 
 export class NarrationController {
   private readonly commandSubject = new Subject<NarrationCommand>()
+  private readonly playbackStateSubject = new BehaviorSubject<PlaybackState>(
+    idlePlaybackState,
+  )
   private readonly stateSubject = new BehaviorSubject<NarrationState>(
     playbackStateToNarrationState(idlePlaybackState),
   )
-  private readonly stateSubscription: Subscription
+  private readonly subscriptions = new Subscription()
 
   public readonly state$ = this.stateSubject.asObservable()
 
@@ -127,20 +126,36 @@ export class NarrationController {
      * previous one started: `switchScan` unsubscribes from it, which stops the
      * sound of its source, and a late answer of that source changes nothing.
      */
-    this.stateSubscription = this.commandSubject
-      .pipe(
-        switchScan(
-          (playbackState, command) =>
-            this.getPlaybackStatesAfterCommand(playbackState, command),
-          idlePlaybackState,
-        ),
-        // The state before the first command, so that a first state equal to
-        // it is not emitted again.
-        startWith(idlePlaybackState),
-        map(playbackStateToNarrationState),
-        distinctUntilChanged(isSameNarrationState),
-      )
-      .subscribe(this.stateSubject)
+    const playbackState$ = this.commandSubject.pipe(
+      filter(
+        (command) =>
+          !this.wouldCommandRestartPlaybackUnderWay(
+            command,
+            // The state the previous command led to, delivered or not yet.
+            this.playbackStateSubject.value,
+          ),
+      ),
+      switchScan(
+        (playbackState, command) =>
+          this.getPlaybackStatesAfterCommand$(playbackState, command),
+        idlePlaybackState,
+      ),
+    )
+
+    this.subscriptions.add(playbackState$.subscribe(this.playbackStateSubject))
+    this.subscriptions.add(
+      this.playbackStateSubject
+        .pipe(
+          // A subscriber may send a command while it receives a state. The
+          // command applies at once, and the state it leads to waits in the
+          // queue for the end of that delivery: every subscriber receives
+          // the states in the order they were made.
+          observeOn(queueScheduler),
+          map(playbackStateToNarrationState),
+          distinctUntilChanged(isSameNarrationState),
+        )
+        .subscribe(this.stateSubject),
+    )
   }
 
   public get state() {
@@ -148,12 +163,6 @@ export class NarrationController {
   }
 
   public play() {
-    const { status } = this.state
-
-    // The command would replace the playback that is already under way, and
-    // its sound would start again.
-    if (status === "playing" || status === "loading") return
-
     this.commandSubject.next("play")
   }
 
@@ -166,180 +175,245 @@ export class NarrationController {
   }
 
   public destroy() {
-    this.stateSubscription.unsubscribe()
+    this.subscriptions.unsubscribe()
     this.commandSubject.complete()
+    this.playbackStateSubject.complete()
     this.stateSubject.complete()
   }
 
-  private getPlaybackStatesAfterCommand(
+  /**
+   * A `play` replaces the playback under way as every command does, and the
+   * sound of that playback would start again.
+   */
+  private wouldCommandRestartPlaybackUnderWay(
+    command: NarrationCommand,
+    { status }: PlaybackState,
+  ) {
+    return command === "play" && (status === "playing" || status === "loading")
+  }
+
+  private getPlaybackStatesAfterCommand$(
     playbackState: PlaybackState,
     command: NarrationCommand,
   ): Observable<PlaybackState> {
     if (command === "stop") return of(idlePlaybackState)
 
     if (command === "pause") {
-      return of(
-        playbackState.status === "idle"
-          ? playbackState
-          : { ...playbackState, status: "paused" },
-      )
-    }
+      if (playbackState.status === "idle" || playbackState.status === "paused")
+        return of(playbackState)
 
-    return this.narrateFromPosition$(
-      playbackState.position ?? this.getPositionOfFirstVisibleSpineItem(),
-    )
-  }
+      const { spineItemIndex, narration, activeUnit } = playbackState
 
-  private getPositionOfFirstVisibleSpineItem(): NarrationPosition {
-    return {
-      spineItemIndex: this.reader.pagination.state.begin.spineItemIndex ?? 0,
-      unitIndex: 0,
-      narration: undefined,
-    }
-  }
-
-  /**
-   * The states of a playback that starts at `position` and goes on through
-   * the following spine items, to the end of the book.
-   */
-  private narrateFromPosition$(
-    position: NarrationPosition,
-  ): Observable<PlaybackState> {
-    const spineItem = this.reader.spineItemsManager.get(position.spineItemIndex)
-
-    // Past the last spine item: the book is over.
-    if (!spineItem) return of(idlePlaybackState)
-
-    const narration$ = position.narration
-      ? of(position.narration)
-      : this.getNarrationOfSpineItem$(spineItem)
-
-    return narration$.pipe(
-      switchMap((narration) =>
-        narration
-          ? this.playNarrationFromPosition$({ ...position, narration })
-          : this.narrateFromStartOfNextSpineItem$(position),
-      ),
-      startWith<PlaybackState>({
-        status: "loading",
-        position,
+      return of({
+        status: "paused",
         hasError: false,
-      }),
+        spineItemIndex,
+        narration,
+        activeUnit,
+      })
+    }
+
+    return this.narrateFromPlace$(
+      playbackState.status === "idle"
+        ? this.getStartOfFirstVisibleSpineItem()
+        : playbackState,
     )
   }
 
-  private narrateFromStartOfNextSpineItem$({
-    spineItemIndex,
-  }: NarrationPosition) {
-    return this.narrateFromPosition$({
-      spineItemIndex: spineItemIndex + 1,
-      unitIndex: 0,
-      narration: undefined,
-    })
+  private getStartOfFirstVisibleSpineItem(): NarrationPlace {
+    return this.getStartOfSpineItem(
+      this.reader.pagination.state.begin.spineItemIndex ?? 0,
+    )
+  }
+
+  private getStartOfSpineItem(spineItemIndex: number): NarrationPlace {
+    return { spineItemIndex, narration: undefined, activeUnit: undefined }
   }
 
   /**
-   * The narration of the first source that has units for the spine item,
-   * `undefined` when none has.
+   * The states of a playback that starts at `place` and goes on through the
+   * following spine items. It ends `idle` after the last one, or paused where
+   * a source failed.
    */
-  private getNarrationOfSpineItem$(
-    spineItem: SpineItem,
-  ): Observable<SpineItemNarration | undefined> {
-    return this.sources.reduce<Observable<SpineItemNarration | undefined>>(
-      (narrationOfPreviousSources$, source) =>
-        narrationOfPreviousSources$.pipe(
-          switchMap((narration) =>
-            narration
-              ? of(narration)
-              : this.getNarrationOfSpineItemFromSource$(source, spineItem),
+  private narrateFromPlace$({
+    spineItemIndex,
+    narration,
+    activeUnit,
+  }: NarrationPlace): Observable<PlaybackState> {
+    const numberOfSpineItemsFromPlace = Math.max(
+      this.reader.spineItemsManager.items.length - spineItemIndex,
+      0,
+    )
+
+    return concat(
+      range(spineItemIndex, numberOfSpineItemsFromPlace).pipe(
+        concatMap((indexOfSpineItemToNarrate) =>
+          this.narrateSpineItemFromPlace$(
+            indexOfSpineItemToNarrate === spineItemIndex
+              ? { spineItemIndex, narration, activeUnit }
+              : this.getStartOfSpineItem(indexOfSpineItemToNarrate),
+          ).pipe(
+            // A spine item with nothing to narrate can end as soon as it is
+            // subscribed to, and a book can have thousands in a row. Through
+            // the queue, the next one starts once the previous one returned,
+            // not inside it: the stack does not grow with the spine items.
+            subscribeOn(queueScheduler),
           ),
         ),
-      of(undefined),
+      ),
+      of(idlePlaybackState),
+    ).pipe(takeWhile((playbackState) => !isPausedOnError(playbackState), true))
+  }
+
+  /**
+   * The states of the playback of one spine item. It completes once its last
+   * unit was heard, or at once when no source has units for it.
+   */
+  private narrateSpineItemFromPlace$(
+    place: NarrationPlace,
+  ): Observable<PlaybackState> {
+    const spineItem = this.reader.spineItemsManager.get(place.spineItemIndex)
+
+    if (!spineItem) return EMPTY
+
+    const answerOfSources$: Observable<AnswerOfSources> = place.narration
+      ? of({ narration: place.narration, hasSourceFailed: false })
+      : this.askSourcesForNarrationOfSpineItem$(spineItem)
+
+    return answerOfSources$.pipe(
+      switchMap(({ narration, hasSourceFailed }) => {
+        if (narration) {
+          return this.playNarrationFromUnit$({
+            spineItemIndex: place.spineItemIndex,
+            narration,
+            startUnitIndex: place.activeUnit?.unitIndex ?? 0,
+          })
+        }
+
+        // A source that failed may have units for the spine item: skipping it
+        // would skip the whole book while the source is unreachable.
+        return hasSourceFailed
+          ? of<PlaybackState>({ status: "paused", hasError: true, ...place })
+          : EMPTY
+      }),
+      startWith<PlaybackState>({ status: "loading", ...place }),
     )
   }
 
-  private getNarrationOfSpineItemFromSource$(
+  /**
+   * The narration of the first source that has units for the spine item, in
+   * the order of the sources.
+   */
+  private askSourcesForNarrationOfSpineItem$(
+    spineItem: SpineItem,
+  ): Observable<AnswerOfSources> {
+    return this.sources.reduce<Observable<AnswerOfSources>>(
+      (answerOfPreviousSources$, source) =>
+        answerOfPreviousSources$.pipe(
+          switchMap((answerOfPreviousSources) =>
+            answerOfPreviousSources.narration
+              ? of(answerOfPreviousSources)
+              : this.askSourceForNarrationOfSpineItem$(source, spineItem).pipe(
+                  map((answerOfSource) => ({
+                    narration: answerOfSource.narration,
+                    hasSourceFailed:
+                      answerOfPreviousSources.hasSourceFailed ||
+                      answerOfSource.hasSourceFailed,
+                  })),
+                ),
+          ),
+        ),
+      of({ narration: undefined, hasSourceFailed: false }),
+    )
+  }
+
+  private askSourceForNarrationOfSpineItem$(
     source: NarrationSource,
     spineItem: SpineItem,
-  ): Observable<SpineItemNarration | undefined> {
+  ): Observable<AnswerOfSources> {
     return defer(() =>
       source.getNarrationOfSpineItem({ reader: this.reader, spineItem }),
     ).pipe(
       defaultIfEmpty(undefined),
       first(),
-      map((narration) =>
-        narration && narration.units.length > 0 ? narration : undefined,
-      ),
-      // A source that fails has nothing for the spine item. The next source
-      // is asked, and the app sees the error where it sees the reader's own.
+      map((narration) => ({
+        narration:
+          narration && narration.units.length > 0 ? narration : undefined,
+        hasSourceFailed: false,
+      })),
+      // The next source is asked, and the app sees the error where it sees
+      // the reader's own.
       catchError((error: unknown) => {
         reportRecoveredError(error)
 
-        return of(undefined)
+        return of({ narration: undefined, hasSourceFailed: true })
       }),
     )
   }
 
   /**
-   * The states of the playback of one spine item, then of the following ones
-   * once its last unit was heard.
+   * The states of the playback of the units of one spine item, from the unit
+   * at `startUnitIndex`. It completes once the source did, and pauses on the
+   * unit the narration was on when the source fails.
    */
-  private playNarrationFromPosition$(
-    position: NarrationPosition & { narration: SpineItemNarration },
-  ): Observable<PlaybackState> {
-    const { narration } = position
+  private playNarrationFromUnit$({
+    spineItemIndex,
+    narration,
+    startUnitIndex,
+  }: {
+    spineItemIndex: number
+    narration: SpineItemNarration
+    startUnitIndex: number
+  }): Observable<PlaybackState> {
+    const getActiveUnitAtIndex = (
+      unitIndex: number,
+    ): NarrationActiveUnit | undefined => {
+      const unit = narration.units[unitIndex]
 
-    return defer(() =>
-      narration.play({ startUnitIndex: position.unitIndex }),
-    ).pipe(
+      return unit ? { cfi: unit.cfi, spineItemIndex, unitIndex } : undefined
+    }
+
+    // The units are known, and the first one is not heard yet.
+    const playbackStateBeforeFirstUnitIsHeard: PlaybackState & NarrationPlace =
+      {
+        status: "loading",
+        spineItemIndex,
+        narration,
+        activeUnit: getActiveUnitAtIndex(startUnitIndex),
+      }
+
+    return defer(() => narration.play({ startUnitIndex })).pipe(
       tap({ error: reportRecoveredError }),
-      // The end and the error of the source become values, so that the state
-      // they lead to is made from the latest position, as every other state.
+      // The error of the source becomes a value, so that the state it leads
+      // to is made from the latest one, as every other state.
       materialize(),
       scan(
         (
-          latest: PlaybackOfSpineItem,
+          latestPlaybackState: PlaybackState & NarrationPlace,
           notification: ObservableNotification<NarrationProgress>,
-        ): PlaybackOfSpineItem => {
-          if (notification.kind === "C") {
-            return { ...latest, isLastUnitHeard: true }
-          }
+        ): PlaybackState & NarrationPlace => {
+          if (notification.kind === "C") return latestPlaybackState
 
           if (notification.kind === "E") {
             return {
-              ...latest,
-              playbackState: {
-                ...latest.playbackState,
-                status: "paused",
-                hasError: true,
-              },
+              status: "paused",
+              hasError: true,
+              spineItemIndex,
+              narration,
+              activeUnit: latestPlaybackState.activeUnit,
             }
           }
 
-          const { unitIndex } = notification.value
+          const activeUnit = getActiveUnitAtIndex(notification.value.unitIndex)
 
           // A unit the narration does not have: the report is ignored.
-          if (!narration.units[unitIndex]) return latest
-
-          return {
-            ...latest,
-            playbackState: {
-              status: "playing",
-              position: { ...position, unitIndex },
-              hasError: false,
-            },
-          }
+          return activeUnit
+            ? { status: "playing", spineItemIndex, narration, activeUnit }
+            : latestPlaybackState
         },
-        {
-          playbackState: { status: "loading", position, hasError: false },
-          isLastUnitHeard: false,
-        },
+        playbackStateBeforeFirstUnitIsHeard,
       ),
-      switchMap(({ playbackState, isLastUnitHeard }) =>
-        isLastUnitHeard
-          ? this.narrateFromStartOfNextSpineItem$(position)
-          : of(playbackState),
-      ),
+      startWith(playbackStateBeforeFirstUnitIsHeard),
     )
   }
 }

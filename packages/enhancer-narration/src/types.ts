@@ -25,8 +25,9 @@ export type SpineItemNarration = {
    * last one.
    *
    * It emits each time a unit starts to be heard, not when its sound is
-   * requested or fetched, and completes once the last unit was heard.
-   * Unsubscribing stops the sound.
+   * requested or fetched, and completes once the last unit was heard. A
+   * report for a unit that `units` does not have is ignored. Unsubscribing
+   * stops the sound.
    */
   play: (params: { startUnitIndex: number }) => Observable<NarrationProgress>
 }
@@ -41,7 +42,8 @@ export type NarrationSource = {
    * narration reaches the spine item.
    *
    * It emits once: `undefined`, or no unit, when the source has nothing for
-   * the spine item. The enhancer then asks the next source.
+   * the spine item. The enhancer then asks the next source, as it does when
+   * this fails.
    */
   getNarrationOfSpineItem: (params: {
     reader: Reader
@@ -56,32 +58,26 @@ export type NarrationActiveUnit = {
   /** The index in the spine of the item the unit belongs to. */
   spineItemIndex: number
   /** The index of the unit in the units of that spine item, from `0`. */
-  indexInSpineItem: number
+  unitIndex: number
 }
 
-export type NarrationState = {
-  /**
-   * Whether the last playback stopped on an error of its source. It stays
-   * until the next `play()`.
-   */
-  hasError: boolean
-} & (
+export type NarrationState =
   | {
-      /** Nothing is narrated, and nothing is highlighted. */
+      /** Nothing is narrated. */
       status: "idle"
       activeUnit: undefined
     }
   | {
       /**
-       * - `loading`: playback is asked, and no unit is heard yet. The source
-       *   prepares the spine item, or its sound.
-       * - `paused`: `play()` resumes from the active unit, from its start.
-       *
-       * `activeUnit` is `undefined` when the narration is at a spine item
-       * whose units are not known yet: at its first start, and between two
+       * Playback is asked, and no unit is heard yet: a source prepares the
+       * spine item, or the sound of the active unit.
+       */
+      status: "loading"
+      /**
+       * The unit that is about to be heard. `undefined` while the units of
+       * the spine item are not known: at a first start, and between two
        * spine items.
        */
-      status: "loading" | "paused"
       activeUnit: NarrationActiveUnit | undefined
     }
   | {
@@ -89,7 +85,21 @@ export type NarrationState = {
       status: "playing"
       activeUnit: NarrationActiveUnit
     }
-)
+  | {
+      /** The sound is stopped, and `play()` resumes from the active unit. */
+      status: "paused"
+      /**
+       * The unit the narration was on. `undefined` when it was at a spine
+       * item whose units were not known yet: `play()` resumes with that
+       * spine item.
+       */
+      activeUnit: NarrationActiveUnit | undefined
+      /**
+       * Whether a source paused the narration by failing: to play, or to
+       * say what it narrates of the spine item. `play()` tries again.
+       */
+      hasError: boolean
+    }
 
 export type NarrationEnhancerOptions = {
   narration: {
