@@ -128,11 +128,19 @@ export type NarrationEnhancerAPI = {
      * Starts the narration, or resumes it from the active unit. It does
      * nothing while the narration is `playing` or `loading`.
      *
-     * A first start begins with the first spine item that is visible. From
-     * there the narration goes through the book, one spine item after the
-     * other, and returns to `idle` after the last one.
+     * A first start begins with the first unit that starts on the first
+     * visible page. From there the narration goes through the book, one
+     * spine item after the other, and returns to `idle` after the last one.
      */
     play: () => void
+    /**
+     * Plays from the unit that holds the cfi, whatever the narration was
+     * doing: "read aloud from here". Between two units, it is the one
+     * before, and before the first unit of its spine item, the first.
+     *
+     * It does nothing for a cfi that names no spine item of the book.
+     */
+    playFromCfi: (cfi: string) => void
     /**
      * Stops the sound and keeps the place of the narration: `play()` resumes
      * from the active unit, from its start. It does nothing while `idle`.

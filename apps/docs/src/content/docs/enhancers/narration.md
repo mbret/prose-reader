@@ -42,8 +42,8 @@ reader.narration.play()
 
 The narration goes through the book one spine item at a time. A source cuts a spine item into **units**. A unit is a piece of the book that the source can make heard, such as a sentence, and it has a cfi.
 
-1. `play()` starts with the first spine item that is visible, at its first unit.
-2. The enhancer asks its sources, in order, what they can narrate of that spine item.
+1. `play()` starts on the first visible page, with the first unit that starts on it.
+2. The enhancer asks its sources, in order, what they can narrate of the spine item of that page.
 3. The first source that has units plays them, and reports each unit when it is heard. The unit the narration is on is the **active unit**.
 4. When that source has played its last unit, the narration continues with the next spine item. A spine item that no source has units for is skipped.
 5. After the last spine item, the narration returns to `idle`.
@@ -65,6 +65,24 @@ Starts the narration, or resumes it from the active unit. It does nothing while 
 reader.narration.play()
 ```
 
+A first start begins with the first unit that starts on the first visible page:
+
+* A unit that started on the page before is left out, so that the narration does not begin with text the page does not show.
+* When no unit starts on that page or after it in its spine item, the narration begins with the next spine item.
+* While the pagination is not settled, it begins with the first unit of the visible spine item.
+
+### `.playFromCfi()`
+
+Plays from the unit that holds a cfi, whatever the narration was doing. Use it to read aloud from a selection, or from a place the user points at.
+
+```typescript
+reader.narration.playFromCfi(cfi)
+```
+
+* A cfi between two units starts the unit before it. A cfi before the first unit of its spine item starts that first unit.
+* The cfi can be a range: its start counts.
+* A cfi that names no spine item of the book does nothing.
+
 ### `.pause()`
 
 Stops the sound and keeps the place of the narration. `play()` resumes from the active unit, from its start.
@@ -75,7 +93,7 @@ reader.narration.pause()
 
 ### `.stop()`
 
-Stops the sound and forgets the place of the narration. The next `play()` starts with the first visible spine item again.
+Stops the sound and forgets the place of the narration. The next `play()` is a first start again.
 
 ```typescript
 reader.narration.stop()

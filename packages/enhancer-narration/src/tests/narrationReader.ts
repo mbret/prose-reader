@@ -124,6 +124,13 @@ export const mountNarrationReader = async (
   return reader
 }
 
+/**
+ * The cfi of a unit of a spine item of the book: ten characters of its text,
+ * with the units of a spine item one after the other.
+ */
+export const cfiOfUnit = (spineItemIndex: number, unitIndex: number) =>
+  `epubcfi(/6/${(spineItemIndex + 1) * 2}[${spineItemIndex}]!/4/2/1,:${unitIndex * 20},:${unitIndex * 20 + 10})`
+
 /** Every state the narration of a reader goes through, from the current one. */
 export const recordNarrationStates = (reader: NarrationReader) => {
   const states: NarrationState[] = []

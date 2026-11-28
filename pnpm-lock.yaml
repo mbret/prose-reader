@@ -650,6 +650,9 @@ importers:
 
   packages/enhancer-narration:
     dependencies:
+      '@prose-reader/cfi':
+        specifier: workspace:^
+        version: link:../cfi
       '@prose-reader/core':
         specifier: workspace:^
         version: link:../core

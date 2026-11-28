@@ -2,6 +2,7 @@
 import { config, of } from "rxjs"
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
 import {
+  cfiOfUnit,
   createControlledSource,
   installNarrationReaderTestEnvironment,
   mountNarrationReader,
@@ -50,9 +51,9 @@ const mountReaderPlayingFirstUnit = async () => {
 
   reader.narration.play()
   getLatest(controlledSource.narrationRequests).answerWithUnits([
-    "cfi-0-0",
-    "cfi-0-1",
-    "cfi-0-2",
+    cfiOfUnit(0, 0),
+    cfiOfUnit(0, 1),
+    cfiOfUnit(0, 2),
   ])
   getLatest(controlledSource.playbacks).reportUnitHeard(0)
 
@@ -69,7 +70,10 @@ describe("narration playback", () => {
 
     expect(getSpineItemIndexes(narrationRequests)).toEqual([0])
 
-    getLatest(narrationRequests).answerWithUnits(["cfi-0-0", "cfi-0-1"])
+    getLatest(narrationRequests).answerWithUnits([
+      cfiOfUnit(0, 0),
+      cfiOfUnit(0, 1),
+    ])
 
     expect(playbacks.map(({ startUnitIndex }) => startUnitIndex)).toEqual([0])
 
@@ -83,15 +87,15 @@ describe("narration playback", () => {
       // They are, and the first one is not heard yet.
       {
         status: "loading",
-        activeUnit: { cfi: "cfi-0-0", spineItemIndex: 0, unitIndex: 0 },
+        activeUnit: { cfi: cfiOfUnit(0, 0), spineItemIndex: 0, unitIndex: 0 },
       },
       {
         status: "playing",
-        activeUnit: { cfi: "cfi-0-0", spineItemIndex: 0, unitIndex: 0 },
+        activeUnit: { cfi: cfiOfUnit(0, 0), spineItemIndex: 0, unitIndex: 0 },
       },
       {
         status: "playing",
-        activeUnit: { cfi: "cfi-0-1", spineItemIndex: 0, unitIndex: 1 },
+        activeUnit: { cfi: cfiOfUnit(0, 1), spineItemIndex: 0, unitIndex: 1 },
       },
     ])
   })
@@ -122,12 +126,12 @@ describe("narration playback", () => {
       activeUnit: undefined,
     })
 
-    getLatest(narrationRequests).answerWithUnits(["cfi-1-0"])
+    getLatest(narrationRequests).answerWithUnits([cfiOfUnit(1, 0)])
     getLatest(playbacks).reportUnitHeard(0)
 
     expect(reader.narration.state).toEqual({
       status: "playing",
-      activeUnit: { cfi: "cfi-1-0", spineItemIndex: 1, unitIndex: 0 },
+      activeUnit: { cfi: cfiOfUnit(1, 0), spineItemIndex: 1, unitIndex: 0 },
     })
   })
 
@@ -156,7 +160,7 @@ describe("narration playback", () => {
     reader.navigation.goToSpineItem({ indexOrId: 2 })
     await vi.runAllTimersAsync()
     reader.narration.play()
-    getLatest(narrationRequests).answerWithUnits(["cfi-2-0"])
+    getLatest(narrationRequests).answerWithUnits([cfiOfUnit(2, 0)])
     getLatest(playbacks).reportUnitHeard(0)
     getLatest(playbacks).complete()
 
@@ -216,7 +220,7 @@ describe("narration playback", () => {
     })
 
     reader.narration.play()
-    getLatest(narrationRequests).answerWithUnits(["cfi-0-0"])
+    getLatest(narrationRequests).answerWithUnits([cfiOfUnit(0, 0)])
     getLatest(playbacks).reportUnitHeard(0)
     // Every following spine item ends as soon as it starts.
     getLatest(playbacks).complete()
@@ -225,6 +229,165 @@ describe("narration playback", () => {
       status: "idle",
       activeUnit: undefined,
     })
+  })
+})
+
+describe("narration start", () => {
+  /** A cfi in the text of a spine item, at a character of its units. */
+  const cfiOfCharacter = (spineItemIndex: number, characterOffset: number) =>
+    `epubcfi(/6/${(spineItemIndex + 1) * 2}[${spineItemIndex}]!/4/2/1:${characterOffset})`
+
+  /**
+   * jsdom lays nothing out, so the pagination of the reader never names a
+   * character. This gives it the first visible character a browser would.
+   */
+  const showPageStartingAt = (
+    reader: Awaited<ReturnType<typeof mountNarrationReader>>,
+    { cfi, isSettled }: { cfi: string; isSettled: boolean },
+  ) => {
+    const pagination = reader.pagination.state
+
+    vi.spyOn(reader.pagination, "state", "get").mockReturnValue({
+      ...pagination,
+      isSettled,
+      begin: { ...pagination.begin, cfi },
+      end: { ...pagination.end, cfi },
+    })
+  }
+
+  it("a first start begins with the first unit that starts on the visible page", async () => {
+    const { source, narrationRequests, playbacks } = createControlledSource()
+    const reader = await mountNarrationReader([source])
+
+    // The page starts in the middle of the second unit.
+    showPageStartingAt(reader, { cfi: cfiOfCharacter(0, 25), isSettled: true })
+    reader.narration.play()
+    getLatest(narrationRequests).answerWithUnits([
+      cfiOfUnit(0, 0),
+      cfiOfUnit(0, 1),
+      cfiOfUnit(0, 2),
+    ])
+
+    expect(getLatest(playbacks).startUnitIndex).toBe(2)
+    expect(reader.narration.state).toEqual({
+      status: "loading",
+      activeUnit: { cfi: cfiOfUnit(0, 2), spineItemIndex: 0, unitIndex: 2 },
+    })
+  })
+
+  it("a first start goes to the next spine item when no unit starts on the visible page or after it", async () => {
+    const { source, narrationRequests, playbacks } = createControlledSource()
+    const reader = await mountNarrationReader([source])
+
+    // The last page of the spine item shows the end of its last unit.
+    showPageStartingAt(reader, { cfi: cfiOfCharacter(0, 25), isSettled: true })
+    reader.narration.play()
+    getLatest(narrationRequests).answerWithUnits([
+      cfiOfUnit(0, 0),
+      cfiOfUnit(0, 1),
+    ])
+
+    expect(playbacks).toHaveLength(0)
+    expect(getSpineItemIndexes(narrationRequests)).toEqual([0, 1])
+
+    getLatest(narrationRequests).answerWithUnits([cfiOfUnit(1, 0)])
+
+    expect(getLatest(playbacks).startUnitIndex).toBe(0)
+  })
+
+  it("a first start begins with the first unit while the pagination is not settled", async () => {
+    const { source, narrationRequests, playbacks } = createControlledSource()
+    const reader = await mountNarrationReader([source])
+
+    // The cfi is still the one of the page shown before.
+    showPageStartingAt(reader, { cfi: cfiOfCharacter(0, 25), isSettled: false })
+    reader.narration.play()
+    getLatest(narrationRequests).answerWithUnits([
+      cfiOfUnit(0, 0),
+      cfiOfUnit(0, 1),
+      cfiOfUnit(0, 2),
+    ])
+
+    expect(getLatest(playbacks).startUnitIndex).toBe(0)
+  })
+
+  it("a resume begins with the active unit, not with the visible page", async () => {
+    const { reader, playbacks } = await mountReaderPlayingFirstUnit()
+
+    reader.narration.pause()
+    showPageStartingAt(reader, { cfi: cfiOfCharacter(0, 25), isSettled: true })
+    reader.narration.play()
+
+    expect(getLatest(playbacks).startUnitIndex).toBe(0)
+  })
+
+  it("plays from the unit that holds a cfi, in the spine item of that cfi", async () => {
+    const { source, narrationRequests, playbacks } = createControlledSource()
+    const reader = await mountNarrationReader([source])
+
+    reader.narration.playFromCfi(cfiOfCharacter(1, 25))
+
+    expect(getSpineItemIndexes(narrationRequests)).toEqual([1])
+
+    getLatest(narrationRequests).answerWithUnits([
+      cfiOfUnit(1, 0),
+      cfiOfUnit(1, 1),
+      cfiOfUnit(1, 2),
+    ])
+
+    // Character 25 is in the second unit, which starts at character 20.
+    expect(getLatest(playbacks).startUnitIndex).toBe(1)
+    expect(reader.narration.state).toEqual({
+      status: "loading",
+      activeUnit: { cfi: cfiOfUnit(1, 1), spineItemIndex: 1, unitIndex: 1 },
+    })
+  })
+
+  it("plays from a cfi of the spine item it is on without asking its source again", async () => {
+    const { reader, narrationRequests, playbacks } =
+      await mountReaderPlayingFirstUnit()
+    const replacedPlayback = getLatest(playbacks)
+
+    reader.narration.playFromCfi(cfiOfCharacter(0, 45))
+
+    expect(replacedPlayback.isSubscribed).toBe(false)
+    expect(narrationRequests).toHaveLength(1)
+    expect(playbacks.map(({ startUnitIndex }) => startUnitIndex)).toEqual([
+      0, 2,
+    ])
+  })
+
+  it("plays from a cfi of another spine item while it plays", async () => {
+    const { reader, narrationRequests, playbacks } =
+      await mountReaderPlayingFirstUnit()
+    const replacedPlayback = getLatest(playbacks)
+
+    reader.narration.playFromCfi(cfiOfCharacter(2, 0))
+
+    expect(replacedPlayback.isSubscribed).toBe(false)
+    expect(getSpineItemIndexes(narrationRequests)).toEqual([0, 2])
+    expect(reader.narration.state).toEqual({
+      status: "loading",
+      activeUnit: undefined,
+    })
+  })
+
+  it.each([
+    {
+      title: "a spine item the book does not have",
+      cfi: "epubcfi(/6/40!/4/2/1:0)",
+    },
+    { title: "a text that is not a cfi", cfi: "not a cfi" },
+  ])("keeps playing when asked to play from $title", async ({ cfi }) => {
+    const { reader, narrationRequests, playbacks } =
+      await mountReaderPlayingFirstUnit()
+    const states = recordNarrationStates(reader)
+
+    reader.narration.playFromCfi(cfi)
+
+    expect(getLatest(playbacks).isSubscribed).toBe(true)
+    expect(narrationRequests).toHaveLength(1)
+    expect(states).toHaveLength(1)
   })
 })
 
@@ -243,16 +406,16 @@ describe("narration sources", () => {
 
     expect(getSpineItemIndexes(second.narrationRequests)).toEqual([0])
 
-    getLatest(second.narrationRequests).answerWithUnits(["second-0-0"])
+    getLatest(second.narrationRequests).answerWithUnits([cfiOfUnit(0, 5)])
     getLatest(second.playbacks).complete()
 
     // Each spine item is offered to the first source again.
     expect(getSpineItemIndexes(first.narrationRequests)).toEqual([0, 1])
 
-    getLatest(first.narrationRequests).answerWithUnits(["first-1-0"])
+    getLatest(first.narrationRequests).answerWithUnits([cfiOfUnit(1, 3)])
     getLatest(first.playbacks).reportUnitHeard(0)
 
-    expect(reader.narration.state.activeUnit?.cfi).toBe("first-1-0")
+    expect(reader.narration.state.activeUnit?.cfi).toBe(cfiOfUnit(1, 3))
     expect(second.narrationRequests).toHaveLength(1)
   })
 
@@ -311,7 +474,7 @@ describe("narration commands", () => {
     expect(pausedPlayback.isSubscribed).toBe(false)
     expect(reader.narration.state).toEqual({
       status: "paused",
-      activeUnit: { cfi: "cfi-0-1", spineItemIndex: 0, unitIndex: 1 },
+      activeUnit: { cfi: cfiOfUnit(0, 1), spineItemIndex: 0, unitIndex: 1 },
       hasError: false,
     })
 
@@ -324,7 +487,7 @@ describe("narration commands", () => {
     ])
     expect(reader.narration.state).toEqual({
       status: "loading",
-      activeUnit: { cfi: "cfi-0-1", spineItemIndex: 0, unitIndex: 1 },
+      activeUnit: { cfi: cfiOfUnit(0, 1), spineItemIndex: 0, unitIndex: 1 },
     })
 
     getLatest(playbacks).reportUnitHeard(1)
@@ -337,12 +500,15 @@ describe("narration commands", () => {
     const reader = await mountNarrationReader([source])
 
     reader.narration.play()
-    getLatest(narrationRequests).answerWithUnits(["cfi-0-0", "cfi-0-1"])
+    getLatest(narrationRequests).answerWithUnits([
+      cfiOfUnit(0, 0),
+      cfiOfUnit(0, 1),
+    ])
     reader.narration.pause()
 
     expect(reader.narration.state).toEqual({
       status: "paused",
-      activeUnit: { cfi: "cfi-0-0", spineItemIndex: 0, unitIndex: 0 },
+      activeUnit: { cfi: cfiOfUnit(0, 0), spineItemIndex: 0, unitIndex: 0 },
       hasError: false,
     })
 
@@ -368,7 +534,7 @@ describe("narration commands", () => {
 
     expect(replacedRequest.isSubscribed).toBe(false)
 
-    replacedRequest.answerWithUnits(["cfi-1-0"])
+    replacedRequest.answerWithUnits([cfiOfUnit(1, 0)])
 
     expect(playbacks).toHaveLength(0)
     expect(states).toEqual([
@@ -401,10 +567,13 @@ describe("narration commands", () => {
     // The narration is on the second unit of spine item 1, and the reader
     // shows spine item 0.
     getLatest(playbacks).complete()
-    getLatest(narrationRequests).answerWithUnits(["cfi-1-0", "cfi-1-1"])
+    getLatest(narrationRequests).answerWithUnits([
+      cfiOfUnit(1, 0),
+      cfiOfUnit(1, 1),
+    ])
     getLatest(playbacks).reportUnitHeard(1)
     expect(reader.narration.state.activeUnit).toEqual({
-      cfi: "cfi-1-1",
+      cfi: cfiOfUnit(1, 1),
       spineItemIndex: 1,
       unitIndex: 1,
     })
@@ -423,7 +592,10 @@ describe("narration commands", () => {
 
     expect(getSpineItemIndexes(narrationRequests)).toEqual([0, 1, 0])
 
-    getLatest(narrationRequests).answerWithUnits(["cfi-0-0", "cfi-0-1"])
+    getLatest(narrationRequests).answerWithUnits([
+      cfiOfUnit(0, 0),
+      cfiOfUnit(0, 1),
+    ])
 
     expect(getLatest(playbacks).startUnitIndex).toBe(0)
   })
@@ -475,7 +647,7 @@ describe("narration errors", () => {
 
     expect(reader.narration.state).toEqual({
       status: "paused",
-      activeUnit: { cfi: "cfi-0-2", spineItemIndex: 0, unitIndex: 2 },
+      activeUnit: { cfi: cfiOfUnit(0, 2), spineItemIndex: 0, unitIndex: 2 },
       hasError: true,
     })
 
@@ -487,7 +659,7 @@ describe("narration errors", () => {
     expect(getLatest(playbacks).startUnitIndex).toBe(2)
     expect(reader.narration.state).toEqual({
       status: "loading",
-      activeUnit: { cfi: "cfi-0-2", spineItemIndex: 0, unitIndex: 2 },
+      activeUnit: { cfi: cfiOfUnit(0, 2), spineItemIndex: 0, unitIndex: 2 },
     })
   })
 
@@ -496,12 +668,15 @@ describe("narration errors", () => {
     const reader = await mountNarrationReader([source])
 
     reader.narration.play()
-    getLatest(narrationRequests).answerWithUnits(["cfi-0-0", "cfi-0-1"])
+    getLatest(narrationRequests).answerWithUnits([
+      cfiOfUnit(0, 0),
+      cfiOfUnit(0, 1),
+    ])
     getLatest(playbacks).fail(new Error("the voice failed"))
 
     expect(reader.narration.state).toEqual({
       status: "paused",
-      activeUnit: { cfi: "cfi-0-0", spineItemIndex: 0, unitIndex: 0 },
+      activeUnit: { cfi: cfiOfUnit(0, 0), spineItemIndex: 0, unitIndex: 0 },
       hasError: true,
     })
   })
@@ -511,7 +686,7 @@ describe("narration errors", () => {
       {
         getNarrationOfSpineItem: () =>
           of({
-            units: [{ cfi: "cfi-0-0" }],
+            units: [{ cfi: cfiOfUnit(0, 0) }],
             // What a source written in plain JavaScript could emit.
             play: () => of(undefined as unknown as NarrationProgress),
           }),
@@ -522,7 +697,7 @@ describe("narration errors", () => {
 
     expect(reader.narration.state).toEqual({
       status: "paused",
-      activeUnit: { cfi: "cfi-0-0", spineItemIndex: 0, unitIndex: 0 },
+      activeUnit: { cfi: cfiOfUnit(0, 0), spineItemIndex: 0, unitIndex: 0 },
       hasError: true,
     })
 
@@ -580,30 +755,36 @@ describe("narration states", () => {
       reader.narration.play()
     }
     const hearUnit = (spineItemIndex: number, unitIndex: number) => {
-      unitsHeard.push(`cfi-${spineItemIndex}-${unitIndex}`)
+      unitsHeard.push(cfiOfUnit(spineItemIndex, unitIndex))
       getLatest(playbacks).reportUnitHeard(unitIndex)
     }
 
     play()
-    getLatest(narrationRequests).answerWithUnits(["cfi-0-0", "cfi-0-1"])
+    getLatest(narrationRequests).answerWithUnits([
+      cfiOfUnit(0, 0),
+      cfiOfUnit(0, 1),
+    ])
     hearUnit(0, 0)
     reader.narration.pause()
     play()
     hearUnit(0, 0)
     hearUnit(0, 1)
     getLatest(playbacks).complete()
-    getLatest(narrationRequests).answerWithUnits(["cfi-1-0"])
+    getLatest(narrationRequests).answerWithUnits([cfiOfUnit(1, 0)])
     reader.narration.stop()
     play()
-    getLatest(narrationRequests).answerWithUnits(["cfi-0-0", "cfi-0-1"])
+    getLatest(narrationRequests).answerWithUnits([
+      cfiOfUnit(0, 0),
+      cfiOfUnit(0, 1),
+    ])
     hearUnit(0, 0)
 
     expect(unitsReportedPlayingBeforeHeard).toEqual([])
     expect(unitsReportedPlaying).toEqual([
-      "cfi-0-0",
-      "cfi-0-0",
-      "cfi-0-1",
-      "cfi-0-0",
+      cfiOfUnit(0, 0),
+      cfiOfUnit(0, 0),
+      cfiOfUnit(0, 1),
+      cfiOfUnit(0, 0),
     ])
   })
 
@@ -624,7 +805,7 @@ describe("narration states", () => {
     })
 
     reader.narration.play()
-    getLatest(narrationRequests).answerWithUnits(["cfi-0-0"])
+    getLatest(narrationRequests).answerWithUnits([cfiOfUnit(0, 0)])
     getLatest(playbacks).reportUnitHeard(0)
 
     expect(statesOfFirstSubscriber).toEqual([
@@ -654,7 +835,7 @@ describe("narration states", () => {
     })
 
     reader.narration.play()
-    getLatest(narrationRequests).answerWithUnits(["cfi-0-0"])
+    getLatest(narrationRequests).answerWithUnits([cfiOfUnit(0, 0)])
     getLatest(playbacks).reportUnitHeard(0)
     getLatest(playbacks).fail(new Error("the voice failed"))
 
@@ -664,7 +845,7 @@ describe("narration states", () => {
     ])
     expect(reader.narration.state).toEqual({
       status: "paused",
-      activeUnit: { cfi: "cfi-0-0", spineItemIndex: 0, unitIndex: 0 },
+      activeUnit: { cfi: cfiOfUnit(0, 0), spineItemIndex: 0, unitIndex: 0 },
       hasError: false,
     })
   })
@@ -685,7 +866,7 @@ describe("narration states", () => {
     })
 
     reader.narration.play()
-    getLatest(narrationRequests).answerWithUnits(["cfi-0-0"])
+    getLatest(narrationRequests).answerWithUnits([cfiOfUnit(0, 0)])
     getLatest(playbacks).reportUnitHeard(0)
 
     expect(playbacks.map(({ isSubscribed }) => isSubscribed)).toEqual([

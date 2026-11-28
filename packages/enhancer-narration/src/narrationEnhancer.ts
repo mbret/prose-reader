@@ -30,6 +30,7 @@ export const narrationEnhancer =
           return controller.state
         },
         play: () => controller.play(),
+        playFromCfi: (cfi) => controller.playFromCfi(cfi),
         pause: () => controller.pause(),
         stop: () => controller.stop(),
       },

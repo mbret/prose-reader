@@ -37,8 +37,13 @@ import type {
   NarrationState,
   SpineItemNarration,
 } from "../types.ts"
+import { getIndexOfStartUnit, type StartUnitOfSpineItem } from "./startUnit.ts"
 
-type NarrationCommand = "play" | "pause" | "stop"
+type NarrationCommand =
+  | { type: "play" }
+  | { type: "playFromCfi"; cfi: string; spineItemIndex: number }
+  | { type: "pause" }
+  | { type: "stop" }
 
 /** A unit of what a source narrates of its spine item. */
 type NarrationPlaceOnUnit = {
@@ -47,10 +52,16 @@ type NarrationPlaceOnUnit = {
 }
 
 /**
- * Where the narration is, or resumes from: a unit, or the start of a spine
- * item whose units are not known because the sources did not answer yet.
+ * A spine item whose units are not known, because the sources did not answer
+ * yet, with the unit to start with once they are.
  */
-type NarrationPlace = NarrationPlaceOnUnit | { spineItemIndex: number }
+type NarrationPlaceInSpineItem = {
+  spineItemIndex: number
+  startUnit: StartUnitOfSpineItem
+}
+
+/** Where the narration is, or resumes from. */
+type NarrationPlace = NarrationPlaceOnUnit | NarrationPlaceInSpineItem
 
 type PlaybackUnderWay =
   | { status: "loading"; place: NarrationPlace }
@@ -71,6 +82,27 @@ const getSpineItemIndexOfPlace = (place: NarrationPlace) =>
 
 const getActiveUnitOfPlace = (place: NarrationPlace) =>
   isPlaceOnUnit(place) ? place.activeUnit : undefined
+
+/**
+ * The unit a spine item starts with, once a source gave its units.
+ * `undefined` when the narration has no such unit: the spine item has nothing
+ * to narrate from there.
+ */
+const getPlaceOnStartUnit = (
+  spineItemNarration: SpineItemNarration,
+  { spineItemIndex, startUnit }: NarrationPlaceInSpineItem,
+): NarrationPlaceOnUnit | undefined => {
+  const unitIndex = getIndexOfStartUnit(spineItemNarration.units, startUnit)
+  const unit =
+    unitIndex === undefined ? undefined : spineItemNarration.units[unitIndex]
+
+  return unit && unitIndex !== undefined
+    ? {
+        spineItemNarration,
+        activeUnit: { cfi: unit.cfi, spineItemIndex, unitIndex },
+      }
+    : undefined
+}
 
 const isPlaybackUnderWay = (
   playbackState: PlaybackState,
@@ -137,7 +169,7 @@ export class NarrationController {
           // playback, so this reads the state the pipeline itself made: the
           // one the previous command led to, delivered or not yet.
           !(
-            command === "play" &&
+            command.type === "play" &&
             isPlaybackUnderWay(this.playbackStateSubject.value)
           ),
       ),
@@ -169,15 +201,29 @@ export class NarrationController {
   }
 
   public play() {
-    this.commandSubject.next("play")
+    this.commandSubject.next({ type: "play" })
+  }
+
+  public playFromCfi(cfi: string) {
+    const spineItem = this.reader.cfi.getSpineItemFromCfi(cfi)
+
+    // A cfi of no spine item of the book: there is nothing to play, and the
+    // command would only stop the playback under way.
+    if (!spineItem) return
+
+    this.commandSubject.next({
+      type: "playFromCfi",
+      cfi,
+      spineItemIndex: spineItem.index,
+    })
   }
 
   public pause() {
-    this.commandSubject.next("pause")
+    this.commandSubject.next({ type: "pause" })
   }
 
   public stop() {
-    this.commandSubject.next("stop")
+    this.commandSubject.next({ type: "stop" })
   }
 
   public destroy() {
@@ -191,23 +237,71 @@ export class NarrationController {
     playbackState: PlaybackState,
     command: NarrationCommand,
   ): Observable<PlaybackState> {
-    if (command === "stop") return of(idlePlaybackState)
+    switch (command.type) {
+      case "stop":
+        return of(idlePlaybackState)
+      case "pause":
+        return of(
+          isPlaybackUnderWay(playbackState)
+            ? { status: "paused", hasError: false, place: playbackState.place }
+            : playbackState,
+        )
+      case "play":
+        return this.narrateFromPlace$(
+          playbackState.status === "idle"
+            ? this.getPlaceOfFirstVisibleCharacter()
+            : playbackState.place,
+        )
+      case "playFromCfi":
+        return this.narrateFromPlace$(
+          this.getPlaceOfCfi(command, playbackState),
+        )
+    }
+  }
 
-    if (command === "pause") {
-      return of(
-        isPlaybackUnderWay(playbackState)
-          ? { status: "paused", hasError: false, place: playbackState.place }
-          : playbackState,
-      )
+  /**
+   * Where a first start begins: with the first unit that starts on the first
+   * visible page. A unit that started on the page before is left out, so that
+   * the narration does not begin with text the page does not show.
+   */
+  private getPlaceOfFirstVisibleCharacter(): NarrationPlaceInSpineItem {
+    const pagination = this.reader.pagination.state
+    const spineItemIndex = pagination.begin.spineItemIndex ?? 0
+
+    return {
+      spineItemIndex,
+      // Until the pagination settles, its cfi can still be the one of the
+      // page shown before.
+      startUnit: pagination.isSettled
+        ? { type: "firstStartingAtOrAfterCfi", cfi: pagination.begin.cfi }
+        : { type: "first" },
+    }
+  }
+
+  /**
+   * The unit that holds the cfi. The narration of the spine item the
+   * narration is on is used again: its source is not asked a second time.
+   */
+  private getPlaceOfCfi(
+    { cfi, spineItemIndex }: { cfi: string; spineItemIndex: number },
+    playbackState: PlaybackState,
+  ): NarrationPlace {
+    const startUnit: StartUnitOfSpineItem = { type: "holdingCfi", cfi }
+    const placeInSpineItem = { spineItemIndex, startUnit }
+
+    if (
+      playbackState.status === "idle" ||
+      !isPlaceOnUnit(playbackState.place) ||
+      playbackState.place.activeUnit.spineItemIndex !== spineItemIndex
+    ) {
+      return placeInSpineItem
     }
 
-    return this.narrateFromPlace$(
-      playbackState.status === "idle"
-        ? {
-            spineItemIndex:
-              this.reader.pagination.state.begin.spineItemIndex ?? 0,
-          }
-        : playbackState.place,
+    return (
+      getPlaceOnStartUnit(
+        playbackState.place.spineItemNarration,
+        placeInSpineItem,
+      ) ?? placeInSpineItem
     )
   }
 
@@ -229,6 +323,7 @@ export class NarrationController {
             this.narrateSpineItemFromPlace$(place)
           : this.narrateSpineItemFromPlace$({
               spineItemIndex: indexOfSpineItemToNarrate,
+              startUnit: { type: "first" },
             }).pipe(
               // A spine item with nothing to narrate can end as soon as it
               // is subscribed to, and a book can have thousands in a row.
@@ -271,20 +366,17 @@ export class NarrationController {
   ): Observable<PlaybackUnderWay> {
     if (isPlaceOnUnit(place)) return this.playSpineItemNarrationFromUnit$(place)
 
-    const { spineItemIndex } = place
-    const spineItem = this.reader.spineItemsManager.get(spineItemIndex)
+    const spineItem = this.reader.spineItemsManager.get(place.spineItemIndex)
 
     if (!spineItem) return EMPTY
 
     return this.askSourcesForNarrationOfSpineItem$(spineItem).pipe(
       switchMap((spineItemNarration) => {
-        const firstUnit = spineItemNarration?.units[0]
+        const placeOnStartUnit =
+          spineItemNarration && getPlaceOnStartUnit(spineItemNarration, place)
 
-        return spineItemNarration && firstUnit
-          ? this.playSpineItemNarrationFromUnit$({
-              spineItemNarration,
-              activeUnit: { cfi: firstUnit.cfi, spineItemIndex, unitIndex: 0 },
-            })
+        return placeOnStartUnit
+          ? this.playSpineItemNarrationFromUnit$(placeOnStartUnit)
           : EMPTY
       }),
       startWith<PlaybackUnderWay>({ status: "loading", place }),
