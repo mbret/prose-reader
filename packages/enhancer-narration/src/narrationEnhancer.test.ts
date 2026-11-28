@@ -1,5 +1,5 @@
 // @vitest-environment jsdom
-import { config, of } from "rxjs"
+import { concat, config, NEVER, Observable, of } from "rxjs"
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
 import {
   createControlledSource,
@@ -456,12 +456,19 @@ describe("narration commands", () => {
     expect(states).toHaveLength(1)
   })
 
-  it("destroying the reader stops the sound", async () => {
+  it("destroying the reader stops the sound and completes the state", async () => {
     const { reader, playbacks } = await mountReaderPlayingFirstUnit()
+    let isStateComplete = false
 
+    reader.narration.state$.subscribe({
+      complete: () => {
+        isStateComplete = true
+      },
+    })
     reader.destroy()
 
     expect(getLatest(playbacks).isSubscribed).toBe(false)
+    expect(isStateComplete).toBe(true)
   })
 })
 
@@ -553,6 +560,119 @@ describe("narration errors", () => {
       status: "paused",
       hasError: true,
     })
+  })
+})
+
+describe("narration sources that misbehave", () => {
+  it("pauses on the unit that was about to be heard when play throws as it is called", async () => {
+    const error = new Error("the source cannot play")
+    const reader = await mountNarrationReader([
+      {
+        getNarrationOfSpineItem: () =>
+          of({
+            units: [{ cfi: "cfi-0-0" }],
+            play: () => {
+              throw error
+            },
+          }),
+      },
+    ])
+
+    reader.narration.play()
+
+    expect(reader.narration.state).toEqual({
+      status: "paused",
+      activeUnit: { cfi: "cfi-0-0", spineItemIndex: 0, unitIndex: 0 },
+      hasError: true,
+    })
+
+    vi.runAllTimers()
+    expect(reportedErrors).toEqual([error])
+  })
+
+  it("pauses at the spine item its source fails for, after the first one, and play asks for that spine item again", async () => {
+    const { reader, narrationRequests, playbacks } =
+      await mountReaderPlayingFirstUnit()
+
+    getLatest(playbacks).complete()
+    getLatest(narrationRequests).fail(new Error("the source is offline"))
+
+    expect(reader.narration.state).toEqual({
+      status: "paused",
+      activeUnit: undefined,
+      hasError: true,
+    })
+
+    reader.narration.play()
+
+    expect(getSpineItemIndexes(narrationRequests)).toEqual([0, 1, 1])
+  })
+
+  it("takes the first answer of a source that never completes", async () => {
+    const reader = await mountNarrationReader([
+      { getNarrationOfSpineItem: () => concat(of(undefined), NEVER) },
+    ])
+
+    reader.narration.play()
+
+    // The three spine items were asked for, one after the other.
+    expect(reader.narration.state.status).toBe("idle")
+  })
+
+  /** A source whose sound cannot be stopped without an error. */
+  const createSourceThatThrowsWhenStopped = (
+    error: Error,
+  ): NarrationSource => ({
+    getNarrationOfSpineItem: () =>
+      of({
+        units: [{ cfi: "cfi-0-0" }],
+        play: () =>
+          new Observable<NarrationProgress>((subscriber) => {
+            subscriber.next({ unitIndex: 0 })
+
+            return () => {
+              throw error
+            }
+          }),
+      }),
+  })
+
+  it("pauses, and goes on answering, when its source throws as its sound is stopped", async () => {
+    const error = new Error("the sound cannot be stopped")
+    const reader = await mountNarrationReader([
+      createSourceThatThrowsWhenStopped(error),
+    ])
+
+    reader.narration.play()
+    expect(reader.narration.state.status).toBe("playing")
+
+    reader.narration.pause()
+
+    expect(reader.narration.state.status).toBe("paused")
+
+    vi.runAllTimers()
+    expect(reportedErrors).toEqual([error])
+
+    reader.narration.play()
+
+    expect(reader.narration.state.status).toBe("playing")
+  })
+
+  it("destroys the reader when its source throws as its sound is stopped", async () => {
+    const reader = await mountNarrationReader([
+      createSourceThatThrowsWhenStopped(
+        new Error("the sound cannot be stopped"),
+      ),
+    ])
+    let isReaderDestroyed = false
+
+    reader.$.destroy$.subscribe(() => {
+      isReaderDestroyed = true
+    })
+    reader.narration.play()
+    reader.destroy()
+
+    expect(isReaderDestroyed).toBe(true)
   })
 })
 

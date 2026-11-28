@@ -115,7 +115,7 @@ type NarrationActiveUnit = {
   * While `loading` or `paused`, it is `undefined` when the narration is at a spine item whose units are not known yet: at a first start, and between two spine items. `play()` then resumes with that spine item.
 * **`hasError`**: only a `paused` state has it. It tells whether a source paused the narration by failing, see [Errors](#errors). `play()` tries again, and `stop()` forgets the error with the place of the narration.
 
-A subscriber can send a command while it receives a state. The command applies at once, and the state it leads to is delivered after the current one, so every subscriber receives the states in the same order.
+A subscriber can send a command while it receives a state. The command applies at once, and the state it leads to is delivered after the current one, so every subscriber receives the states in the same order. Until then `reader.narration.state` is the state being delivered.
 
 ```typescript
 reader.narration.state$.subscribe(({ status, activeUnit }) => {
@@ -202,4 +202,6 @@ A source that fails pauses the narration, with `hasError` set. `play()` tries ag
 * **An error of `getNarrationOfSpineItem()`**: the narration pauses at that spine item. The enhancer does not ask the next source, and does not skip the spine item: the source that failed may be the one that narrates it. The next `play()` asks the sources again, from the first one.
 * **An error of `play()`**: the narration pauses on the active unit. That is the last unit that was heard, or the unit that was about to be heard when none was. The next `play()` calls `play()` of the same narration, from that unit.
 
-Both errors are reported the way rxjs reports an error that no subscriber handles: `config.onUnhandledError` receives them.
+A source that throws while its sound is stopped does not stop the command: the narration pauses, stops or is destroyed all the same.
+
+These errors are reported the way rxjs reports an error that no subscriber handles: `config.onUnhandledError` receives them. [Error handling](/learn/error-handling) says how to send them to an error tracker.
