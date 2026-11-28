@@ -1,0 +1,49 @@
+{
+  "name": "@prose-reader/enhancer-narration",
+  "version": "36.0.0",
+  "description": "Read aloud for prose: one player for the sources that can narrate a book, with play, pause and the unit being heard.",
+  "keywords": [
+    "prose-reader",
+    "read aloud",
+    "narration",
+    "text-to-speech",
+    "tts",
+    "media overlays",
+    "ebook"
+  ],
+  "homepage": "https://doc.prose-reader.com/enhancers/narration",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/mbret/prose-reader.git",
+    "directory": "packages/enhancer-narration"
+  },
+  "type": "module",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "license": "MIT",
+  "files": [
+    "/dist"
+  ],
+  "publishConfig": {
+    "access": "public",
+    "registry": "https://registry.npmjs.org/"
+  },
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
+    }
+  },
+  "scripts": {
+    "start": "node ../../config/watchLibraryBuild.mjs",
+    "build": "tsc && vite build && tsc -p tsconfig.build.json",
+    "test": "vitest run --coverage"
+  },
+  "peerDependencies": {
+    "@prose-reader/core": "workspace:^",
+    "rxjs": "^7.5.5"
+  },
+  "engines": {
+    "node": ">=22.12"
+  }
+}
