@@ -42,7 +42,7 @@ reader.narration.play()
 
 The narration goes through the book one spine item at a time. A source cuts a spine item into **units**. A unit is a piece of the book that the source can make heard, such as a sentence, and it has a cfi.
 
-1. `play()` starts on the first visible page, with the first unit that starts on it.
+1. `play()` starts on the first visible page, with the unit that the page starts in.
 2. The enhancer asks its sources, in order, what they can narrate of the spine item of that page.
 3. The first source that has units plays them, and reports each unit when it is heard. The unit the narration is on is the **active unit**.
 4. When that source has played its last unit, the narration continues with the next spine item. A spine item that no source has units for is skipped.
@@ -65,23 +65,24 @@ Starts the narration, or resumes it from the active unit. It does nothing while 
 reader.narration.play()
 ```
 
-A first start begins with the first unit that starts on the first visible page:
+A first start begins at the start of the first visible page, as `playFromCfi()` does for a cfi:
 
-* A unit that started on the page before is left out, so that the narration does not begin with text the page does not show.
-* When no unit starts on that page or after it in its spine item, the narration begins with the next spine item.
+* It begins with the unit that the page starts in. That unit can start on the page before: the narration leaves out no text of the page.
+* When the page starts after the last unit of its spine item, the narration begins with the next spine item.
 * While the reader moves or lays out, the pagination still names the page shown before. A first start waits for the pagination to settle, with the narration `loading`, and begins on the page the reader lands on.
 
 ### `.playFromCfi()`
 
-Plays from the unit that holds a cfi, whatever the narration was doing. Use it to read aloud from a selection, or from a place the user points at.
+Plays from a cfi, whatever the narration was doing. Use it to read aloud from a selection, or from a place the user points at.
 
 ```typescript
 reader.narration.playFromCfi(cfi)
 ```
 
-* A cfi between two units starts the unit before it. A cfi before the first unit of its spine item starts that first unit.
-* The cfi can be a range: its start counts.
-* A cfi that names no spine item of the book does nothing.
+* The narration begins with the unit the cfi is in. A cfi between two units begins with the next unit.
+* A cfi after the last unit of its spine item begins with the next spine item.
+* The cfi can be a range: its start counts. The cfi of a unit plays that unit.
+* A cfi that the reader finds no spine item for does nothing.
 
 ### `.pause()`
 
@@ -168,9 +169,11 @@ type NarrationProgress = {
 ```
 
 * **`getNarrationOfSpineItem()`** emits once. `undefined`, or a narration with no unit, means that the source has nothing for the spine item: the enhancer asks the next source.
-* **`units`** are the units of the spine item, in reading order, which is the order of their cfis. The enhancer finds the unit at a place of the book by that order.
+* **`units`** are the units of the spine item, in reading order, which is the order of their cfis. The enhancer finds the unit at a place of the book by where each unit starts and ends.
+  * `cfi` is a cfi of the book, as `reader.cfi` makes them: `reader.cfi.generateCfiFromRange(range, spineItem.item)` gives the cfi of a unit from the DOM range of its text.
+  * Give a range, from the start of the unit to its end. A cfi that is not a range is a unit with no length: the narration starts with it only for a place at it or before it.
   * `cfi` can be a getter that works the cfi out when it is read. The enhancer reads the cfi of the units it needs, not of all of them: a spine item can have tens of thousands of units.
-* The enhancer keeps the narration of a spine item while it is on that spine item. It calls `play()` again to resume after a pause.
+* The enhancer keeps the narration of a spine item while it is on that spine item. It calls `play()` again to resume after a pause, and for a `playFromCfi()` in that spine item.
 * **`play()`** makes the units heard in order, from the one at `startUnitIndex` to the last one.
   * It emits the index of a unit when that unit starts to be **heard**, not when its sound is requested or fetched. The active unit follows what it emits. An index that `units` does not have is ignored.
   * It completes once the last unit was heard. The narration then continues with the next spine item.
@@ -220,6 +223,7 @@ A source that fails pauses the narration, with `hasError` set. `play()` tries ag
 
 * **An error of `getNarrationOfSpineItem()`**: the narration pauses at that spine item. The enhancer does not ask the next source, and does not skip the spine item: the source that failed may be the one that narrates it. The next `play()` asks the sources again, from the first one.
 * **An error of `play()`**: the narration pauses on the active unit. That is the last unit that was heard, or the unit that was about to be heard when none was. The next `play()` calls `play()` of the same narration, from that unit.
+* **A unit whose cfi cannot be read**: the narration pauses at the spine item when it looks for the unit to start with. That is at a first start, and at a `playFromCfi()`.
 
 A source that throws while its sound is stopped does not stop the command: the narration pauses, stops or is destroyed all the same.
 

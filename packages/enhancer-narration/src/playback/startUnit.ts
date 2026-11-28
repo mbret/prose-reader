@@ -2,42 +2,41 @@ import { collapse, compare } from "@prose-reader/cfi"
 import type { NarrationUnit } from "../types.ts"
 
 /**
- * The unit the narration of a spine item starts with, said before the units
- * of that spine item are known.
+ * Whether the unit ends after the point: the point is in the unit, or before
+ * it. A unit whose cfi is not a range has no length, so it ends after a point
+ * that it is at.
  */
-export type StartUnitOfSpineItem =
-  | { type: "first" }
-  /**
-   * The first unit that starts at the cfi or after it: a unit that the cfi
-   * falls in started before it, and is not the one.
-   */
-  | { type: "firstStartingAtOrAfterCfi"; cfi: string }
-  /**
-   * The unit the cfi falls in. Between two units, it is the one before. Before
-   * the first unit, it is the first.
-   */
-  | { type: "holdingCfi"; cfi: string }
+const isUnitEndingAfterPoint = (unit: NarrationUnit, pointCfi: string) => {
+  // A source can work out the cfi of a unit each time it is read.
+  const unitCfi = unit.cfi
+
+  return (
+    compare(collapse(unitCfi, { to: "end" }), pointCfi) > 0 ||
+    compare(collapse(unitCfi), pointCfi) >= 0
+  )
+}
 
 /**
- * Negative when the unit starts before the cfi, zero when it starts at it,
- * positive when it starts after.
- */
-const compareStartOfUnitWithCfi = (unit: NarrationUnit, cfi: string) =>
-  compare(collapse(unit.cfi), collapse(cfi))
-
-/**
- * The index of the first unit that `isAfterBoundary` holds for, or the number
- * of units when it holds for none. It holds for every unit after the first
- * one it holds for, as the units are in the order of their cfis.
+ * The index of the unit a narration starts with: the first unit that ends
+ * after `startCfi`, or the first unit when there is no `startCfi`. That is
+ * the unit `startCfi` is in, or the next one when it is between two units.
  *
- * A source can work out the cfi of a unit only when it is read, and a spine
+ * `undefined` when the narration has no such unit: it has no unit at all, or
+ * they all end at `startCfi` or before it.
+ *
+ * The units are in the order of their cfis, so the search is a binary one. A
+ * source can work out the cfi of a unit only when it is read, and a spine
  * item can have tens of thousands of units: the search reads a few of them,
  * where a scan would read them all.
  */
-const getIndexOfFirstUnitAfterBoundary = (
+export const getIndexOfStartUnit = (
   units: readonly NarrationUnit[],
-  isAfterBoundary: (unit: NarrationUnit) => boolean,
-) => {
+  startCfi: string | undefined,
+): number | undefined => {
+  if (startCfi === undefined) return units.length > 0 ? 0 : undefined
+
+  // A range starts the narration where the range starts.
+  const startPointCfi = collapse(startCfi)
   let lowestCandidateIndex = 0
   let indexAfterCandidates = units.length
 
@@ -47,43 +46,14 @@ const getIndexOfFirstUnitAfterBoundary = (
     )
     const middleUnit = units[middleIndex]
 
-    if (middleUnit && isAfterBoundary(middleUnit)) {
+    if (middleUnit && isUnitEndingAfterPoint(middleUnit, startPointCfi)) {
       indexAfterCandidates = middleIndex
     } else {
       lowestCandidateIndex = middleIndex + 1
     }
   }
 
-  return lowestCandidateIndex
-}
-
-/**
- * The index of the unit a narration starts with, `undefined` when it has
- * none: no unit at all, or none at the cfi or after it.
- */
-export const getIndexOfStartUnit = (
-  units: readonly NarrationUnit[],
-  startUnit: StartUnitOfSpineItem,
-): number | undefined => {
-  if (units.length === 0) return undefined
-
-  if (startUnit.type === "first") return 0
-
-  if (startUnit.type === "firstStartingAtOrAfterCfi") {
-    const index = getIndexOfFirstUnitAfterBoundary(
-      units,
-      (unit) => compareStartOfUnitWithCfi(unit, startUnit.cfi) >= 0,
-    )
-
-    return index === units.length ? undefined : index
-  }
-
-  // The unit before the first one that starts after the cfi.
-  return Math.max(
-    getIndexOfFirstUnitAfterBoundary(
-      units,
-      (unit) => compareStartOfUnitWithCfi(unit, startUnit.cfi) > 0,
-    ) - 1,
-    0,
-  )
+  return lowestCandidateIndex === units.length
+    ? undefined
+    : lowestCandidateIndex
 }

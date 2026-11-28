@@ -6,7 +6,14 @@ import type { Observable } from "rxjs"
  * speaks, or a text element with its recorded audio clip.
  */
 export type NarrationUnit = {
-  /** Where the unit is in the book. */
+  /**
+   * Where the unit is in the book: a cfi of the book, as `reader.cfi` makes
+   * them.
+   *
+   * Give a range, from the start of the unit to its end: the enhancer finds
+   * the unit at a place of the book by where each unit starts and ends. A
+   * cfi that is not a range is a unit with no length.
+   */
   cfi: string
 }
 
@@ -20,7 +27,8 @@ export type NarrationProgress = {
  * What a source can narrate of one spine item.
  *
  * The enhancer keeps it while the narration is on the spine item: it calls
- * `play()` again to resume after a pause, and after `play()` failed.
+ * `play()` again to resume after a pause, after `play()` failed, and to play
+ * from a cfi of the spine item.
  */
 export type SpineItemNarration = {
   /**
@@ -134,18 +142,19 @@ export type NarrationEnhancerAPI = {
      * Starts the narration, or resumes it from the active unit. It does
      * nothing while the narration is `playing` or `loading`.
      *
-     * A first start begins with the first unit that starts on the first
-     * visible page, once the pagination is settled. From there the narration
-     * goes through the book, one spine item after the other, and returns to
-     * `idle` after the last one.
+     * A first start begins at the start of the first visible page, as
+     * `playFromCfi()` does for a cfi, once the pagination is settled. From
+     * there the narration goes through the book, one spine item after the
+     * other, and returns to `idle` after the last one.
      */
     play: () => void
     /**
-     * Plays from the unit that holds the cfi, whatever the narration was
-     * doing: "read aloud from here". Between two units, it is the one
-     * before, and before the first unit of its spine item, the first.
+     * Plays from the cfi, whatever the narration was doing: "read aloud from
+     * here". It begins with the unit the cfi is in, or with the next one
+     * when the cfi is between two units. After the last unit of its spine
+     * item, it begins with the next spine item.
      *
-     * It does nothing for a cfi that names no spine item of the book.
+     * It does nothing for a cfi that the reader finds no spine item for.
      */
     playFromCfi: (cfi: string) => void
     /**
