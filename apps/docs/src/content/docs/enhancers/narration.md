@@ -69,7 +69,7 @@ A first start begins with the first unit that starts on the first visible page:
 
 * A unit that started on the page before is left out, so that the narration does not begin with text the page does not show.
 * When no unit starts on that page or after it in its spine item, the narration begins with the next spine item.
-* While the pagination is not settled, it begins with the first unit of the visible spine item.
+* While the reader moves or lays out, the pagination still names the page shown before. A first start waits for the pagination to settle, with the narration `loading`, and begins on the page the reader lands on.
 
 ### `.playFromCfi()`
 
@@ -130,7 +130,7 @@ type NarrationActiveUnit = {
 
 * **`activeUnit`**: the unit the narration is on. `cfi` is where it is in the book, `spineItemIndex` the spine item it belongs to, and `unitIndex` its index in the units of that spine item.
   * While `loading`, it is the unit that is about to be heard.
-  * While `loading` or `paused`, it is `undefined` when the narration is at a spine item whose units are not known yet: at a first start, and between two spine items. `play()` then resumes with that spine item.
+  * While `loading` or `paused`, it is `undefined` when the narration is at a place whose units are not known yet: at a first start, and between two spine items. `play()` then resumes with that place.
 * **`hasError`**: only a `paused` state has it. It tells whether a source paused the narration by failing, see [Errors](#errors). `play()` tries again, and `stop()` forgets the error with the place of the narration.
 
 A subscriber can send a command while it receives a state. The command applies at once, and the state it leads to is delivered after the current one, so every subscriber receives the states in the same order. Until then `reader.narration.state` is the state being delivered.

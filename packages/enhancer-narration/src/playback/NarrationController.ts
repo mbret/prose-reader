@@ -61,8 +61,19 @@ type NarrationPlaceInSpineItem = {
   startUnit: StartUnitOfSpineItem
 }
 
-/** Where the narration is, or resumes from. */
-type NarrationPlace = NarrationPlaceOnUnit | NarrationPlaceInSpineItem
+/**
+ * Where the narration is, or resumes from. `firstVisiblePage` is the place of
+ * a first start, until the pagination says which page that is.
+ */
+type NarrationPlace =
+  | NarrationPlaceOnUnit
+  | NarrationPlaceInSpineItem
+  | "firstVisiblePage"
+
+type SettledPagination = Extract<
+  Reader["pagination"]["state"],
+  { isSettled: true }
+>
 
 type PlaybackUnderWay =
   | { status: "loading"; place: NarrationPlace }
@@ -76,9 +87,11 @@ type PlaybackState =
 const idlePlaybackState: PlaybackState = { status: "idle" }
 
 const isPlaceOnUnit = (place: NarrationPlace): place is NarrationPlaceOnUnit =>
-  "activeUnit" in place
+  typeof place === "object" && "activeUnit" in place
 
-const getSpineItemIndexOfPlace = (place: NarrationPlace) =>
+const getSpineItemIndexOfPlace = (
+  place: NarrationPlaceOnUnit | NarrationPlaceInSpineItem,
+) =>
   isPlaceOnUnit(place) ? place.activeUnit.spineItemIndex : place.spineItemIndex
 
 const getActiveUnitOfPlace = (place: NarrationPlace) =>
@@ -282,7 +295,7 @@ export class NarrationController {
       case "play":
         return this.narrateFromPlace$(
           playbackState.status === "idle"
-            ? this.getPlaceOfFirstVisibleCharacter()
+            ? "firstVisiblePage"
             : playbackState.place,
         )
       case "playFromCfi":
@@ -293,22 +306,30 @@ export class NarrationController {
   }
 
   /**
-   * Where a first start begins: with the first unit that starts on the first
-   * visible page. A unit that started on the page before is left out, so that
-   * the narration does not begin with text the page does not show.
+   * The states of a first start: `loading` until the pagination is settled,
+   * then a playback from the first unit that starts on the first visible
+   * page. A unit that started on the page before is left out, so that the
+   * narration does not begin with text the page does not show.
+   *
+   * While the reader moves or lays out, the pagination still names the page
+   * shown before: a start made then would narrate the place the reader left.
    */
-  private getPlaceOfFirstVisibleCharacter(): NarrationPlaceInSpineItem {
-    const pagination = this.reader.pagination.state
-    const spineItemIndex = pagination.begin.spineItemIndex ?? 0
-
-    return {
-      spineItemIndex,
-      // Until the pagination settles, its cfi can still be the one of the
-      // page shown before.
-      startUnit: pagination.isSettled
-        ? { type: "firstStartingAtOrAfterCfi", cfi: pagination.begin.cfi }
-        : { type: "first" },
-    }
+  private narrateFromFirstVisiblePage$(): Observable<PlaybackState> {
+    return this.reader.pagination.state$.pipe(
+      first(
+        (pagination): pagination is SettledPagination => pagination.isSettled,
+      ),
+      switchMap(({ begin }) =>
+        this.narrateFromPlace$({
+          spineItemIndex: begin.spineItemIndex ?? 0,
+          startUnit: { type: "firstStartingAtOrAfterCfi", cfi: begin.cfi },
+        }),
+      ),
+      startWith<PlaybackState>({
+        status: "loading",
+        place: "firstVisiblePage",
+      }),
+    )
   }
 
   /**
@@ -344,6 +365,8 @@ export class NarrationController {
    * the latest place when a source fails.
    */
   private narrateFromPlace$(place: NarrationPlace): Observable<PlaybackState> {
+    if (place === "firstVisiblePage") return this.narrateFromFirstVisiblePage$()
+
     const spineItemIndex = getSpineItemIndexOfPlace(place)
 
     return range(
@@ -397,7 +420,7 @@ export class NarrationController {
    * source played its last unit, or at once when no source has units for it.
    */
   private narrateSpineItemFromPlace$(
-    place: NarrationPlace,
+    place: NarrationPlaceOnUnit | NarrationPlaceInSpineItem,
   ): Observable<PlaybackUnderWay> {
     if (isPlaceOnUnit(place)) return this.playSpineItemNarrationFromUnit$(place)
 

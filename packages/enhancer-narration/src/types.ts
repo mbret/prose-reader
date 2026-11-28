@@ -135,8 +135,9 @@ export type NarrationEnhancerAPI = {
      * nothing while the narration is `playing` or `loading`.
      *
      * A first start begins with the first unit that starts on the first
-     * visible page. From there the narration goes through the book, one
-     * spine item after the other, and returns to `idle` after the last one.
+     * visible page, once the pagination is settled. From there the narration
+     * goes through the book, one spine item after the other, and returns to
+     * `idle` after the last one.
      */
     play: () => void
     /**

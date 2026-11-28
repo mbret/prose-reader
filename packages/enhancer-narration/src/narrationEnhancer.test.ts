@@ -243,16 +243,19 @@ describe("narration start", () => {
    */
   const showPageStartingAt = (
     reader: Awaited<ReturnType<typeof mountNarrationReader>>,
-    { cfi, isSettled }: { cfi: string; isSettled: boolean },
+    cfi: string,
   ) => {
     const pagination = reader.pagination.state
 
-    vi.spyOn(reader.pagination, "state", "get").mockReturnValue({
-      ...pagination,
-      isSettled,
-      begin: { ...pagination.begin, cfi },
-      end: { ...pagination.end, cfi },
-    })
+    if (!pagination.isSettled) throw new Error("the pagination is not settled")
+
+    vi.spyOn(reader.pagination, "state$", "get").mockReturnValue(
+      of({
+        ...pagination,
+        begin: { ...pagination.begin, cfi },
+        end: { ...pagination.end, cfi },
+      }),
+    )
   }
 
   it("a first start begins with the first unit that starts on the visible page", async () => {
@@ -260,7 +263,7 @@ describe("narration start", () => {
     const reader = await mountNarrationReader([source])
 
     // The page starts in the middle of the second unit.
-    showPageStartingAt(reader, { cfi: cfiOfCharacter(0, 25), isSettled: true })
+    showPageStartingAt(reader, cfiOfCharacter(0, 25))
     reader.narration.play()
     getLatest(narrationRequests).answerWithUnits([
       cfiOfUnit(0, 0),
@@ -280,7 +283,7 @@ describe("narration start", () => {
     const reader = await mountNarrationReader([source])
 
     // The last page of the spine item shows the end of its last unit.
-    showPageStartingAt(reader, { cfi: cfiOfCharacter(0, 25), isSettled: true })
+    showPageStartingAt(reader, cfiOfCharacter(0, 25))
     reader.narration.play()
     getLatest(narrationRequests).answerWithUnits([
       cfiOfUnit(0, 0),
@@ -295,27 +298,55 @@ describe("narration start", () => {
     expect(getLatest(playbacks).startUnitIndex).toBe(0)
   })
 
-  it("a first start begins with the first unit while the pagination is not settled", async () => {
-    const { source, narrationRequests, playbacks } = createControlledSource()
+  it("a first start waits for the reader to land, and begins with the spine item it lands on", async () => {
+    const { source, narrationRequests } = createControlledSource()
+    const reader = await mountNarrationReader([source])
+    const states = recordNarrationStates(reader)
+
+    // The pagination still names the first spine item.
+    reader.navigation.goToSpineItem({ indexOrId: 2 })
+    reader.narration.play()
+
+    expect(reader.pagination.state.isSettled).toBe(false)
+    expect(narrationRequests).toHaveLength(0)
+
+    await vi.runAllTimersAsync()
+
+    expect(getSpineItemIndexes(narrationRequests)).toEqual([2])
+    expect(states).toEqual([
+      { status: "idle", activeUnit: undefined },
+      { status: "loading", activeUnit: undefined },
+    ])
+  })
+
+  it("a pause while a first start waits keeps the start, for the page shown at the next play", async () => {
+    const { source, narrationRequests } = createControlledSource()
     const reader = await mountNarrationReader([source])
 
-    // The cfi is still the one of the page shown before.
-    showPageStartingAt(reader, { cfi: cfiOfCharacter(0, 25), isSettled: false })
+    reader.navigation.goToSpineItem({ indexOrId: 2 })
     reader.narration.play()
-    getLatest(narrationRequests).answerWithUnits([
-      cfiOfUnit(0, 0),
-      cfiOfUnit(0, 1),
-      cfiOfUnit(0, 2),
-    ])
+    reader.narration.pause()
+    await vi.runAllTimersAsync()
 
-    expect(getLatest(playbacks).startUnitIndex).toBe(0)
+    expect(narrationRequests).toHaveLength(0)
+    expect(reader.narration.state).toEqual({
+      status: "paused",
+      activeUnit: undefined,
+      hasError: false,
+    })
+
+    reader.navigation.goToSpineItem({ indexOrId: 1 })
+    await vi.runAllTimersAsync()
+    reader.narration.play()
+
+    expect(getSpineItemIndexes(narrationRequests)).toEqual([1])
   })
 
   it("a resume begins with the active unit, not with the visible page", async () => {
     const { reader, playbacks } = await mountReaderPlayingFirstUnit()
 
     reader.narration.pause()
-    showPageStartingAt(reader, { cfi: cfiOfCharacter(0, 25), isSettled: true })
+    showPageStartingAt(reader, cfiOfCharacter(0, 25))
     reader.narration.play()
 
     expect(getLatest(playbacks).startUnitIndex).toBe(0)
@@ -745,7 +776,7 @@ describe("narration sources that misbehave", () => {
       {
         getNarrationOfSpineItem: () =>
           of({
-            units: [{ cfi: "cfi-0-0" }],
+            units: [{ cfi: cfiOfUnit(0, 0) }],
             play: () => {
               throw error
             },
@@ -757,7 +788,7 @@ describe("narration sources that misbehave", () => {
 
     expect(reader.narration.state).toEqual({
       status: "paused",
-      activeUnit: { cfi: "cfi-0-0", spineItemIndex: 0, unitIndex: 0 },
+      activeUnit: { cfi: cfiOfUnit(0, 0), spineItemIndex: 0, unitIndex: 0 },
       hasError: true,
     })
 
@@ -800,7 +831,7 @@ describe("narration sources that misbehave", () => {
   ): NarrationSource => ({
     getNarrationOfSpineItem: () =>
       of({
-        units: [{ cfi: "cfi-0-0" }],
+        units: [{ cfi: cfiOfUnit(0, 0) }],
         play: () =>
           new Observable<NarrationProgress>((subscriber) => {
             subscriber.next({ unitIndex: 0 })
