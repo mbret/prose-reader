@@ -119,19 +119,29 @@ describe("getIndexOfStartUnit", () => {
     })
   })
 
-  it("reads the units in the order of the narration, sorted by cfi or not", () => {
-    const [first, second, third, fourth] = units
+  it("reads the cfi of a few units only, of a narration that has many", () => {
+    let numberOfCfisRead = 0
+    const manyUnits = Array.from({ length: 20000 }, (_, index) => ({
+      get cfi() {
+        numberOfCfisRead++
 
-    if (!first || !second || !third || !fourth) throw new Error("four units")
-
-    // The narration reads the second paragraph first.
-    const unitsOutOfDocumentOrder = [fourth, first, second, third]
+        return `${paragraph(1)}/1,:${index * 10},:${index * 10 + 5})`
+      },
+    }))
 
     expect(
-      getIndexOfStartUnit(unitsOutOfDocumentOrder, {
+      getIndexOfStartUnit(manyUnits, {
         type: "firstStartingAtOrAfterCfi",
-        cfi: `${paragraph(1)}/1:11)`,
+        cfi: `${paragraph(1)}/1:123456)`,
       }),
-    ).toBe(0)
+    ).toBe(12346)
+    expect(
+      getIndexOfStartUnit(manyUnits, {
+        type: "holdingCfi",
+        cfi: `${paragraph(1)}/1:123456)`,
+      }),
+    ).toBe(12345)
+    // Two searches of twenty thousand units: fifteen steps each.
+    expect(numberOfCfisRead).toBeLessThanOrEqual(30)
   })
 })

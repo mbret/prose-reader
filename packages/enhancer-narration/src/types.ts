@@ -23,7 +23,13 @@ export type NarrationProgress = {
  * `play()` again to resume after a pause, and after `play()` failed.
  */
 export type SpineItemNarration = {
-  /** The units of the spine item, in reading order. */
+  /**
+   * The units of the spine item, in reading order, which is the order of
+   * their cfis: the unit at a place of the book is found by that order.
+   *
+   * The `cfi` of a unit can be a getter that works it out when it is read.
+   * The enhancer reads the cfi of the units it needs, not of all of them.
+   */
   units: readonly NarrationUnit[]
   /**
    * Makes the units heard in order, from the one at `startUnitIndex` to the

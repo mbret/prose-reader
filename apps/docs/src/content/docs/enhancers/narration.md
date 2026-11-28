@@ -168,7 +168,8 @@ type NarrationProgress = {
 ```
 
 * **`getNarrationOfSpineItem()`** emits once. `undefined`, or a narration with no unit, means that the source has nothing for the spine item: the enhancer asks the next source.
-* **`units`** are the units of the spine item, in reading order.
+* **`units`** are the units of the spine item, in reading order, which is the order of their cfis. The enhancer finds the unit at a place of the book by that order.
+  * `cfi` can be a getter that works the cfi out when it is read. The enhancer reads the cfi of the units it needs, not of all of them: a spine item can have tens of thousands of units.
 * The enhancer keeps the narration of a spine item while it is on that spine item. It calls `play()` again to resume after a pause.
 * **`play()`** makes the units heard in order, from the one at `startUnitIndex` to the last one.
   * It emits the index of a unit when that unit starts to be **heard**, not when its sound is requested or fetched. The active unit follows what it emits. An index that `units` does not have is ignored.
