@@ -165,6 +165,54 @@ export const readFirstShownNode = async (page: Page) => {
 }
 
 /**
+ * Puts a paragraph at the start of the chapter shown: `text`, then an inline
+ * element, then more text. The first page of the chapter then starts with
+ * `text`, once the reader has laid out.
+ */
+export const startShownChapterWithTextBeforeInlineElement = async (
+  page: Page,
+  text: string,
+) =>
+  (await getReader(page)).evaluate((reader, text) => {
+    const chapterDocument = reader.spineItemsManager.get(
+      reader.pagination.state.begin.spineItemIndex,
+    )?.loadedDocument
+
+    if (!chapterDocument) throw new Error("the chapter shown has no document")
+
+    const paragraph = chapterDocument.createElement("p")
+    const inlineElement = chapterDocument.createElement("em")
+
+    inlineElement.textContent = "an inline element"
+    paragraph.append(text, inlineElement, " and the end of the sentence.")
+    chapterDocument.body.prepend(paragraph)
+  }, text)
+
+/**
+ * The text of the node the first page shown starts in, which is the node its
+ * cfi names, read with the settled result.
+ */
+export const readTextOfFirstNodeOfFirstShownPage = async (page: Page) => {
+  const reader = await getReader(page)
+  const handle = await page.waitForFunction((reader) => {
+    const { isSettled, begin } = reader.pagination.state
+
+    if (!isSettled) return undefined
+
+    const { node } = reader.cfi.resolveCfi({ cfi: begin.cfi })
+
+    if (!node) throw new Error(`${begin.cfi} names no node`)
+
+    return { text: node.textContent }
+  }, reader)
+  const firstNode = await handle.jsonValue()
+
+  if (!firstNode) throw new Error("no settled pagination result")
+
+  return firstNode.text
+}
+
+/**
  * Puts a spacer before the text of the chapter shown and another after it,
  * two pages long, in the direction its blocks follow. `moveSpaceBeforeText`
  * then moves the text two pages on, while the chapter keeps its number of

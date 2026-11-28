@@ -100,116 +100,121 @@ const getStartOfLineBox = (lineBox: DOMRect, element: Element) => {
   }
 }
 
+const isElementNode = (node: Node): node is Element =>
+  node.nodeType === Node.ELEMENT_NODE
+
+const isTextNode = (node: Node): node is Text =>
+  node.nodeType === Node.TEXT_NODE
+
+/**
+ * Where the text of `text` starts in `box`: the offset of its first character
+ * there, `undefined` when none of its text is in `box`. `range` is one the
+ * lookup uses again for each text it measures.
+ */
+const getOffsetOfFirstCharacterInBox = (
+  text: Text,
+  parentElement: Element,
+  box: Box,
+  range: Range,
+) => {
+  range.selectNodeContents(text)
+
+  // this forces layout ? needs to find better approach
+  const lineBoxInBox = Array.from(range.getClientRects()).find((rect) =>
+    isRectInBox(rect, box),
+  )
+
+  if (!lineBoxInBox) return undefined
+
+  /**
+   * The text is in the box. Finding which of its characters is the first one
+   * there by measuring them is an incredibly expensive operation, so we ask
+   * the browser for the caret at the start of the line.
+   * @important
+   * when using float value it looks like sometime when at the begin of the book the returned range will be the last offset of the page
+   * it can be tested with moby-dick.txt by using different font size. Whenever using something different than default font size we might
+   * have floating point for font and we start having issue. Using ceil "make sure" to be inside the point. Hopefully.
+   */
+  const startOfLineBox = getStartOfLineBox(lineBoxInBox, parentElement)
+  const rangeOrCaret = createRangeOrCaretFromPoint(
+    text.ownerDocument,
+    startOfLineBox.x,
+    startOfLineBox.y,
+  )
+
+  // A caret in another node says nothing about this one: the text still
+  // starts in the box, at an offset we do not know.
+  if (rangeOrCaret && `startContainer` in rangeOrCaret) {
+    return rangeOrCaret.startContainer === text ? rangeOrCaret.startOffset : 0
+  }
+
+  if (rangeOrCaret && `offsetNode` in rangeOrCaret) {
+    return rangeOrCaret.offsetNode === text ? rangeOrCaret.offset : 0
+  }
+
+  return 0
+}
+
 /**
  * The first node, in document order, with a box in `box`, and the offset in
  * it of the first character there. `box` is in the coordinates of the
  * document's own viewport, as `getClientRects()` measures them.
  *
+ * A text comes before the elements that follow it in its parent: for
+ * `<p>One <em>two</em></p>` at the start of the box, the node is `One `.
+ *
  * @todo optimize
  */
 export const getFirstNodeInBox = (documentToSearch: Document, box: Box) => {
-  const element = getFirstElementInBox(documentToSearch.body, box)
+  const range = documentToSearch.createRange()
 
-  if (element) {
-    let lastValidRange: Range | undefined
-    let lastValidOffset = 0
-    const range = documentToSearch.createRange()
-
+  const getFirstNodeInBoxOfElement = (
+    element: Element,
+  ): { node: Node; offset: number } | undefined => {
+    const elementRect = element.getBoundingClientRect()
+    const isElementInBox = isRectInBox(elementRect, box)
     /**
-     * We iterate through children to ensure we match the writing mode (direction)
-     * of the document (This is easier than having to do some heuristics to match the direction)
-     * Although probably not perfect ?
+     * A text is laid out in the box of its parent, so the texts of an
+     * element that is out of the box are not measured: that is one layout
+     * read less for each text before the box. An element with no box of its
+     * own, such as one with `display: contents`, has its text in the box of
+     * an ancestor.
      */
-    Array.from(element.childNodes).some((childNode) => {
-      range.selectNodeContents(childNode)
+    const canHaveTextInBox =
+      isElementInBox || (elementRect.width === 0 && elementRect.height === 0)
 
-      const rects = range.getClientRects() // this forces layout ? needs to find better approach
-
-      const visibleRect = Array.from(rects).find((rect) =>
-        isRectInBox(rect, box),
-      )
-
-      // At this point we know the range is valid and contains visible rect.
-      // This means we have a valid Node. We still need to know the visible offset to be 100% accurate
-      if (visibleRect) {
-        lastValidRange = range.cloneRange()
-
+    for (const childNode of element.childNodes) {
+      if (isElementNode(childNode)) {
         /**
-         * Now we will try to refine the search to get the offset
-         * this is an incredibly expensive operation so we will try to
-         * use native functions to get something
          * @important
-         * when using float value it looks like sometime when at the begin of the book the returned range will be the last offset of the page
-         * it can be tested with moby-dick.txt by using different font size. Whenever using something different than default font size we might
-         * have floating point for font and we start having issue. Using ceil "make sure" to be inside the point. Hopefully.
+         * We cannot skip the children of an element that is out of the box:
+         * a child can be positioned outside of its parent.
          */
-        const startOfLineBox = getStartOfLineBox(visibleRect, element)
-        const rangeOrCaret = createRangeOrCaretFromPoint(
-          documentToSearch,
-          startOfLineBox.x,
-          startOfLineBox.y,
+        const nodeInBox = getFirstNodeInBoxOfElement(childNode)
+
+        if (nodeInBox) return nodeInBox
+      } else if (
+        canHaveTextInBox &&
+        isTextNode(childNode) &&
+        // Blank text between two elements is most of the texts of a document,
+        // and is never what a page starts with.
+        /\S/.test(childNode.data)
+      ) {
+        const offset = getOffsetOfFirstCharacterInBox(
+          childNode,
+          element,
+          box,
+          range,
         )
 
-        // good news we found something with same node so we can assume the offset is already better than nothing
-        if (
-          rangeOrCaret &&
-          `startContainer` in rangeOrCaret &&
-          rangeOrCaret.startContainer === lastValidRange.startContainer
-        ) {
-          lastValidOffset = rangeOrCaret.startOffset
-        }
-        if (
-          rangeOrCaret &&
-          `offsetNode` in rangeOrCaret &&
-          rangeOrCaret.offsetNode === lastValidRange.startContainer
-        ) {
-          lastValidOffset = rangeOrCaret.offset
-        }
-        return true
-      }
-      return false
-    })
-
-    if (lastValidRange) {
-      return {
-        node: lastValidRange.startContainer,
-        offset: lastValidOffset,
+        if (offset !== undefined) return { node: childNode, offset }
       }
     }
 
-    return { node: element, offset: 0 }
+    return isElementInBox ? { node: element, offset: 0 } : undefined
   }
 
-  return undefined
-}
-
-const getFirstElementInBox = (
-  element: Element,
-  box: Box,
-): Element | undefined => {
-  let lastValidElement: Element | undefined
-
-  /**
-   * @important
-   * We cannot safely early return if the element is completely outside bounds. This is
-   * because a children of that element could very much be positioned outside of its parent.
-   *
-   * We could do some heuristic assumptions or checking depth but nothing is quite safe at 100%
-   */
-
-  if (isRectInBox(element.getBoundingClientRect(), box)) {
-    lastValidElement = element
-  }
-
-  for (const child of element.children) {
-    const childInBox = getFirstElementInBox(child, box)
-
-    if (childInBox) {
-      return childInBox
-    }
-  }
-
-  return lastValidElement
+  return getFirstNodeInBoxOfElement(documentToSearch.body)
 }
 
 export const getRangeFromNode = (node: Node, offset: number) => {

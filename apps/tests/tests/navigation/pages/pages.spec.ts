@@ -20,6 +20,8 @@ import {
   openBook,
   readFirstShownNode,
   readPagesOfShownSpineItem,
+  readTextOfFirstNodeOfFirstShownPage,
+  startShownChapterWithTextBeforeInlineElement,
   tapAndReadTappedPage,
   turnScreensOfChapter,
 } from "./pages"
@@ -112,6 +114,30 @@ for (const {
       )
       expect(pages.map(({ pageIndex }) => pageIndex)).toEqual(
         pages.map((_, index) => index),
+      )
+    })
+
+    /**
+     * The text of an element comes before its inline elements when it is
+     * before them in the document: a page starts in that text, not in the
+     * first inline element it shows.
+     */
+    test("starts its first page in the text before an inline element", async ({
+      page,
+    }) => {
+      const textBeforeInlineElement = "The first words of the chapter, then "
+
+      await openBook(page, book, SINGLE_PAGE_WINDOW)
+      await goToLongChapterOfTextDirectionBook(page, book)
+      await startShownChapterWithTextBeforeInlineElement(
+        page,
+        textBeforeInlineElement,
+      )
+      await layOutAndSettle(page)
+
+      expect((await readSettledPagination(page)).beginPageIndex).toBe(0)
+      expect(await readTextOfFirstNodeOfFirstShownPage(page)).toBe(
+        textBeforeInlineElement,
       )
     })
 
