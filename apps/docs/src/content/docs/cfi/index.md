@@ -94,6 +94,31 @@ const result = compare(
 // Returns -1 if first CFI is before second, 0 if equal, 1 if after
 ```
 
+### Collapse
+
+Get the point a range CFI starts at, or the point it ends at.
+
+```typescript
+import { collapse, compare } from '@prose-reader/cfi'
+
+const range = 'epubcfi(/6/4[chap01ref]!/4[body01]/10[para05]/1,:100,:150)'
+
+collapse(range)
+// 'epubcfi(/6/4[chap01ref]!/4[body01]/10[para05]/1:100)'
+
+collapse(range, { to: 'end' })
+// 'epubcfi(/6/4[chap01ref]!/4[body01]/10[para05]/1:150)'
+```
+
+To know whether a range starts before or after a position, such as to find the range a position falls in, compare the points:
+
+```typescript
+const position = 'epubcfi(/6/4[chap01ref]!/4[body01]/10[para05]/1:120)'
+
+// -1: the range starts before the position
+compare(collapse(range), collapse(position))
+```
+
 ### Serialize
 
 Convert a parsed CFI back to a string.
@@ -161,6 +186,16 @@ Compares two CFIs according to the EPUB CFI specification sorting rules. Returns
 * -1 if first CFI is before second
 * 0 if CFIs are equal
 * 1 if first CFI is after second
+
+### Collapse
+
+```typescript
+function collapse(cfi: string, options?: { to?: "start" | "end" }): string
+```
+
+Gives the point a range CFI starts at, as a CFI, or the point it ends at with `to: "end"`. A CFI that is not a range is a point already, and comes back as it is.
+
+It reads the text of the CFI and no document: a range is written `parent,start,end`, and the point is the parent path followed by the boundary. It throws for a CFI that has one boundary only, or more than two.
 
 ### Serialize
 

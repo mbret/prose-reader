@@ -1,3 +1,4 @@
+export { collapse } from "./collapse.ts"
 export { compare } from "./compare.ts"
 export * from "./constants.ts"
 export { generate } from "./generate.ts"
